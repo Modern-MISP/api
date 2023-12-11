@@ -1,0 +1,21 @@
+[project]
+name = "mmisp-api"
+version = "0.1.0"
+description = ""
+authors = []
+readme = "README.md"
+requires-python = ">=3.11.0"
+
+
+dependencies = [
+  "fastapi==0.104.1",
+  "SQLAlchemy==2.0.23",
+  "pydantic==2.5.2",
+  "uvicorn==0.24.0.post1",
+]
+
+
+[project.optional-dependencies]
+dev = [
+  "ruff==0.1.7"
+]
