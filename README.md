@@ -1,6 +1,6 @@
 # Modern MISP - API
 
-[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff) [![Conventional Commits](https://img.shields.io/badge/Conventional_Commits-1.0.0-orange.svg)](https://conventionalcommits.org)
 
 ## Getting started
 
