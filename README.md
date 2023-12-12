@@ -6,7 +6,7 @@
 
 Clone the project and install Python version `3.11.0`. It is recommended to install Python using [pyenv](https://github.com/pyenv/pyenv#installation). Then install all dependencies by typing `make setup` into your terminal and start the development server using `make dev`.
 
-You should now be able to access the api under `localhost:4000`.
+You should now be able to access the api on `localhost:4000`.
 
 ## Setting up your IDE
 
