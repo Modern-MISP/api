@@ -1,10 +1,10 @@
 install:
-	pip install .
+	pip install '.[dev]'
 
 setup:
 	virtualenv venv; \
 	source ./venv/bin/activate; \
-	pip install .
+	pip install '.[dev]'
 
 dev:
 	source ./venv/bin/activate; \
