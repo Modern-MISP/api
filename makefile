@@ -1,5 +1,5 @@
 install:
-	pip install '.[dev]'
+	pip install ".[dev]"
 
 prepare:
 	pre-commit install --install-hooks
@@ -7,7 +7,7 @@ prepare:
 setup:
 	virtualenv venv; \
 	source ./venv/bin/activate; \
-	pip install '.[dev]'; \
+	pip install ".[dev]"; \
 	pre-commit install --install-hooks
 
 dev:
