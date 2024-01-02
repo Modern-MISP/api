@@ -1,6 +1,6 @@
 from typing import Union
 from fastapi import FastAPI
-from .routers import AuthKey
+from routers import AuthKey
 
 app = FastAPI()
 

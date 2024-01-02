@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from typing import List, Annotated
-from fastapi import FastAPI, HTTPException, APIRouter
+from fastapi import APIRouter
 from . import User
 
 class AuthKey(BaseModel):
@@ -18,19 +18,16 @@ class AuthKey(BaseModel):
     unique_ips: List[str]
     authkey_raw: str
 
+router = APIRouter(prefix="/auth_keys")
 
-router = APIRouter(
-    prefix='/auth_keys',
-    tags='auth_keys'
-)
 
 #query and return a list of existing authkey objects and associated users
-@router.get('/')
+@router.get("/")
 async def auth_keys_get():  # Request Body into brackets
     return {AuthKey(), User.User()}  # return body in after return
 
 #search auth keys
-@router.post('/')
+@router.post("/")
 async def auth_keys_post(
     authkey: AuthKey,
 ):
@@ -38,7 +35,7 @@ async def auth_keys_post(
 
 #Add Auth Keys
 #might want to revise the route, contrary to Pflichtenheft I might have messed up here.
-@router.post('/add/{UserId}')
+@router.post("/add/{UserId}")
 async def auth_keys_add_User(UserId: str, authKey: AuthKey):
     return AuthKey()
 
@@ -56,4 +53,3 @@ async def auth_keys_edit_AuthKey():
 @router.delete("/auth_keys/{AuthKeyId}")
 async def auth_keys_delete_AuthKey():
     return AuthKey()
-
