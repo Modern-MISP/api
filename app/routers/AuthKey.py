@@ -2,7 +2,6 @@ from pydantic import BaseModel
 from typing import List, Annotated
 from fastapi import APIRouter
 from . import User
->>>>>>> gettingROuteTOWork
 
 class AuthKey(BaseModel):
     id: str = ""
@@ -20,17 +19,11 @@ class AuthKey(BaseModel):
     authkey_raw: str = ""
 
 router = APIRouter(prefix="/auth_keys")
-
-<<<<<<< HEAD
->>>>>>> gettingROuteTOWork
-
 #query and return a list of existing authkey objects and associated users
 @router.get("/")
 async def auth_keys_get():  # Request Body into brackets
     return {AuthKey(), User.User()}  # return body in after return
 
-<<<<<<< HEAD
-=======
 #search auth keys
 @router.post("/")
 async def auth_keys_post(
@@ -42,7 +35,6 @@ async def auth_keys_post(
 #might want to revise the route, contrary to Pflichtenheft I might have messed up here.
 @router.post("/add/{UserId}")
 async def auth_keys_add_User(UserId: str, authKey: AuthKey):
->>>>>>> gettingROuteTOWork
     return AuthKey()
 
 #View AuthKey by AuthKeyId
