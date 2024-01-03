@@ -29,7 +29,7 @@ async def auth_keys_get():  # Request Body into brackets
 async def auth_keys_post(
     authkey: AuthKey,
 ):
-    return {{AuthKey(), User.User()}}
+    return AuthKey(), User.User()
 
 #Add Auth Keys
 #might want to revise the route, contrary to Pflichtenheft I might have messed up here.
