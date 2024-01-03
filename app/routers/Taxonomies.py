@@ -103,32 +103,35 @@ async def update_taxonomies():
 @router.get("/taxonomy_tags/{taxonomyId}")
 async def get_taxonomy_extanded():
     return {Taxonomies(),
-            {
-                "tag": str,
+        "entries"[{
+            "tag": str,
+            "expanded": str,
+            "exclusive_predicate": bool,
+            "description": str,
+            "existing_tag": str,
+            "events": int,
+            "attributes": int
+            }]
+        }
+
+@router.get("export/{taxonomyId}")
+async def export_taxonomy():
+    return {
+        "namespace": str,
+        "description": str,
+        "version": int,
+        "exclusive": bool,
+        "predicates": [{
+            "description": str,
+            "value": str,
+            "expanded": str
+        }],
+        "values":[{
+            "predicate": str,
+            "entry":[{
+                "value": str,
                 "expanded": str,
-                "exclusive_predicate": bool,
-                "description": str,
-                "existing_tag": str,
-                "server_id": str,
-                "email": str,
-                "autoalert": bool,
-                "authkey": str,
-                "invited_by": str,
-                "gpgkey": str,
-                "certif_public": str,
-                "nids_sid": str,
-                "termsaccepted": bool,
-                "newsread": str,
-                "role_id": str,
-                "change_pw": str,
-                "contactalert": bool,
-                "disabled": bool,
-                "expiration": str,
-                "current_login": str,
-                "last_login": str,
-                "force_logout": bool,
-                "date_created": str,
-                "date_modified": str,
-                "events": int,
-                "attributes": int
-            }}
+                "description": str
+            }]
+        }]
+    }
