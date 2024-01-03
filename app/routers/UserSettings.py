@@ -7,11 +7,11 @@ class UserSettings(BaseModel):
     setting: str = ""
     value: dict = {
         "widget": str,
-        "postition": {
+        "position": {
             "x": int,
             "y": int,
             "width": int,
-            "height":int
+            "height": int
         }
     }
     user_id: str = ""
