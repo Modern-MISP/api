@@ -38,16 +38,16 @@ async def auth_keys_add_User(UserId: str, authKey: AuthKey):
     return AuthKey()
 
 #View AuthKey by AuthKeyId
-@router.get("/auth_keys/view/{AuthKeyId}")
+@router.get("/view/{AuthKeyId}")
 async def auth_keys_view_AuthKey():
     return AuthKey()
 
 #Edit AuthKey by ID
-@router.put("/auth_keys/edit/{AuthKeyId}")
+@router.put("/edit/{AuthKeyId}")
 async def auth_keys_edit_AuthKey():
     return AuthKey()
 
 #Delete AuthKey by ID
-@router.delete("/auth_keys/{AuthKeyId}")
+@router.delete("/{AuthKeyId}")
 async def auth_keys_delete_AuthKey():
     return AuthKey()
