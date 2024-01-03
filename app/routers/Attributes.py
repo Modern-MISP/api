@@ -1,8 +1,8 @@
 from typing import List, Union
 
-import Events
-import Objects
-import Tags
+from . import Events
+from . import Objects
+from . import Tags
 from fastapi import FastAPI
 from pydantic import BaseModel
 
