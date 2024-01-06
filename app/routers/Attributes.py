@@ -1,9 +1,9 @@
-from pydantic import BaseModel
 from typing import List, Union
+
 from fastapi import APIRouter
-from . import Events
-from . import Objects
-from . import Tags
+from pydantic import BaseModel
+
+from . import Events, Objects, Tags
 
 
 class Attributes(BaseModel):
