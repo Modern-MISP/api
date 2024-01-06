@@ -1,17 +1,19 @@
 from typing import Union
-from fastapi import FastAPI
-from routers import AuthKey, UserSettings#, Attributes
 
-description = """" 
+from fastapi import FastAPI
+from routers import AuthKey, UserSettings  # , Attributes
+
+description = """
 MISP API lets you use MISP as an API
 """
 
 app = FastAPI()
 
-#include Routes
-#app.include_router(Attributes.router)
+# include Routes
+# app.include_router(Attributes.router)
 app.include_router(AuthKey.router)
 app.include_router(UserSettings.router)
+
 
 @app.get("/")
 def read_root() -> dict:
