@@ -1,5 +1,3 @@
-from typing import Optional
-
 from pydantic import BaseModel
 
 
@@ -8,27 +6,27 @@ class FeedSchema(BaseModel):
     name: str
     provider: str
     url: str
-    rules: Optional[str] = None
+    rules: str
     enabled: bool
-    distribution: Optional[str] = None
-    sharing_group_id: Optional[str] = None
-    tag_id: Optional[str] = None
+    distribution: str
+    sharing_group_id: str
+    tag_id: str
     default: bool
-    source_format: Optional[str] = None
+    source_format: str
     fixed_event: bool
     delta_merge: bool
-    event_id: Optional[str] = None
+    event_id: str
     publish: bool
     override_ids: bool
-    settings: Optional[str] = None
-    input_source: Optional[str] = None
+    settings: str
+    input_source: str
     delete_local_file: bool
     lookup_visible: bool
-    headers: Optional[str] = None
+    headers: str
     caching_enabled: bool
     force_to_ids: bool
-    orgc_id: Optional[str] = None
-    cache_timestamp: Optional[str] = None
+    orgc_id: str
+    cache_timestamp: str
 
     class Config:
         orm_mode = True
