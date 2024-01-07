@@ -7,7 +7,6 @@ from ..database import get_db
 from ..models.feed import Feed
 from ..schemas.feed_schema import FeedSchema
 
-
 router = APIRouter(prefix="/feeds")
 
 

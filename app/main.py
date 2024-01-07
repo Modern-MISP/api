@@ -1,9 +1,10 @@
 from typing import Union
 
 from fastapi import FastAPI
-from .routers import auth_key, user_settings, feeds  # , Attributes
+
 from .database import engine
 from .models.feed import Base
+from .routers import auth_key, feeds, user_settings  # , Attributes
 
 description = """
 MISP API lets you use MISP as an API
