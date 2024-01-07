@@ -16,3 +16,6 @@ class SightingSchema(BaseModel):
         id: str
         uuid: str
         name: str
+
+    class Config:
+        orm_mode = True
