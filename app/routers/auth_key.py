@@ -3,7 +3,7 @@ from typing import List
 from fastapi import APIRouter
 from pydantic import BaseModel
 
-from . import User
+from . import user
 
 
 class AuthKey(BaseModel):
@@ -28,7 +28,7 @@ router = APIRouter(prefix="/auth_keys")
 # query and return a list of existing authkey objects and associated users
 @router.get("/")
 async def auth_keys_get():  # Request Body into brackets
-    return {AuthKey(), User.User()}  # return body in after return
+    return {AuthKey(), user.User()}  # return body in after return
 
 
 # search auth keys
@@ -36,7 +36,7 @@ async def auth_keys_get():  # Request Body into brackets
 async def auth_keys_post(
     authkey: AuthKey,
 ):
-    return AuthKey(), User.User()
+    return AuthKey(), user.User()
 
 
 # Add Auth Keys

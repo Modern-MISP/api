@@ -3,7 +3,7 @@ from typing import List, Union
 from fastapi import APIRouter
 from pydantic import BaseModel
 
-from . import Events, Objects, Tags
+from . import events, objects, tags
 
 
 class Attributes(BaseModel):
@@ -35,9 +35,9 @@ router = APIRouter(prefix="/attributes")
 
 @router.post("/restSearch")
 async def attributes_reastSearch() -> (
-    Union[Attributes, Events.Events, Objects.Objects, Tags.Tags]
+    Union[Attributes, events.Events, objects.Objects, tags.Tags]
 ):
-    return {Attributes(), Events.Events(), Objects.Objects(), Tags.Tags()} - {
+    return {Attributes(), events.Events(), objects.Objects(), tags.Tags()} - {
         Attributes.value1,
         Attributes.value2,
         Attributes.event_uuid,
