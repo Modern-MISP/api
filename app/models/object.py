@@ -6,7 +6,6 @@ from ..database import Base
 
 class Object(Base):
     __tablename__ = "objects"
-
     page = Column(Integer)
     limit = Column(Integer)
     quickFilter = Column(String)
