@@ -1,5 +1,5 @@
-from typing import Iterator
 import os
+from typing import Iterator
 
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
