@@ -4,7 +4,14 @@ from fastapi import FastAPI
 
 from .database import engine
 from .models.feed import Base
-from .routers import auth_key, feeds, user_settings, objects, sightings  # , attributes
+from .routers import (
+    auth_key,
+    feeds,
+    user_settings,
+    objects,
+    sightings,
+    tags,
+)  # , attributes
 
 description = """
 MISP API lets you use MISP as an API
@@ -21,6 +28,7 @@ app.include_router(user_settings.router)
 app.include_router(feeds.router)
 app.include_router(objects.router)
 app.include_router(sightings.router)
+app.include_router(tags.router)
 
 
 @app.get("/")
