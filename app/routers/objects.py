@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 
 # from ..models.object import Object
-from ..schemas.object_schema import ObjectSchema, ResponseSchema, ObjectDeleteSchema
+from ..schemas.object_schema import ObjectDeleteSchema, ObjectSchema, ResponseSchema
 
 router = APIRouter(prefix="/objects")
 
