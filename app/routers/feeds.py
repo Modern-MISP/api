@@ -5,7 +5,13 @@ from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..models.feed import Feed
-from ..schemas.feed_schema import FeedSchema
+from ..schemas.feed_schema import (
+    FeedSchema,
+    FeedViewSchema,
+    FeedTogleSchema,
+    FeedCacheSchema,
+    FeedFetchSchema,
+)
 
 router = APIRouter(prefix="/feeds")
 
@@ -19,8 +25,8 @@ async def get_feeds(db: Session = Depends(get_db)) -> List[Feed]:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/view/{feedId}", response_model=FeedSchema)
-@router.get("/{feed_id}", response_model=FeedSchema)
+@router.get("/view/{feedId}", response_model=FeedViewSchema)
+@router.get("/{feed_id}", response_model=FeedViewSchema)
 async def get_feed_details(feed_id: str, db: Session = Depends(get_db)) -> Feed:
     feed = db.query(Feed).filter(Feed.id == feed_id).first()
     if feed is None:
@@ -52,21 +58,21 @@ async def update_feed(
     return feed
 
 
-@router.post("/enable/{feedId}", response_model=FeedSchema)
+@router.post("/enable/{feedId}", response_model=FeedTogleSchema)
 async def enable_feed(
     feed_id: str, enable: bool, db: Session = Depends(get_db)
 ) -> None:
     pass
 
 
-@router.post("/disable/{feedId}", response_model=FeedSchema)
+@router.post("/disable/{feedId}", response_model=FeedTogleSchema)
 async def disable_feed(
     feed_id: str, disable: bool, db: Session = Depends(get_db)
 ) -> None:
     pass
 
 
-@router.patch("/{feedId}", response_model=FeedSchema)
+@router.patch("/{feedId}", response_model=FeedTogleSchema)
 async def toggle_feed(
     feed_id: str, enable: bool, db: Session = Depends(get_db)
 ) -> dict:
@@ -81,18 +87,18 @@ async def toggle_feed(
     }
 
 
-@router.post("/cacheFeeds/{cacheFeedsScope}", response_model=FeedSchema)
+@router.post("/cacheFeeds/{cacheFeedsScope}", response_model=FeedCacheSchema)
 async def cache_feeds(cache_feeds_scope: dict, db: Session = Depends(get_db)) -> None:
     pass
 
 
-@router.post("/fetchFromFeed/{feedId}", response_model=FeedSchema)
-@router.get("/fetchFromFeed/{feedId}", response_model=FeedSchema)
+@router.post("/fetchFromFeed/{feedId}", response_model=FeedFetchSchema)
+@router.get("/fetchFromFeed/{feedId}", response_model=FeedFetchSchema)
 async def fetch_from_feed(feed_id: str, db: Session = Depends(get_db)) -> None:
     pass
 
 
-@router.post("/fetchFromAllFeeds", response_model=FeedSchema)
-@router.get("/fetchFromAllFeeds", response_model=FeedSchema)
+@router.post("/fetchFromAllFeeds", response_model=FeedFetchSchema)
+@router.get("/fetchFromAllFeeds", response_model=FeedFetchSchema)
 async def fetch_data_from_all_feeds(db: Session = Depends(get_db)) -> None:
     pass
