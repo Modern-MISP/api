@@ -1,61 +1,59 @@
-from sqlalchemy import Boolean, Column, BigInteger, Integer, String
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy import Boolean, Column, String
+from typing import List
 
 from ..database import Base
 
 
+class Attribute(Base):
+    __tablename__ = "attributes"
+    id = Column(String, primary_key=True)
+    event_id = Column(String)
+    object_id = Column(String)
+    object_relation = Column(String)
+    category = Column(String)
+    type = Column(String)
+    value = Column(String)
+    to_ids = Column(Boolean)
+    uuid = Column(String)
+    timestamp = Column(String)
+    distribution = Column(String)
+    sharing_group_id = Column(String)
+    comment = Column(String)
+    deleted = Column(Boolean)
+    disable_correlation = Column(Boolean)
+    first_seen = Column(String)
+    last_seen = Column(String)
+
+
 class Object(Base):
     __tablename__ = "objects"
-    page = Column(Integer)
-    limit = Column(Integer)
-    quickFilter = Column(String)
-    searchall = Column(String)
-    timestamp = Column(String)
-    object_name = Column(String)
-    object_template_uuid = Column(String)
-    object_template_version = Column(String)
-    eventid = Column(String)
-    eventinfo = Column(String)
-    ignore = Column(Boolean)
-    from_ = Column(String)
-    to = Column(String)
-    date = Column(String)
-    tags = Column(JSONB)
-    last = Column(Integer)
-    event_timestamp = Column(String)
-    publish_timestamp = Column(String)
-    org = Column(String)
+    id = Column(String, primary_key=True)
+    name = Column(String)
+    meta_category = Column(String)
+    description = Column(String)
+    template_uuid = Column(String)
+    template_version = Column(String)
+    event_id = Column(String)
     uuid = Column(String)
-    value = Column(String)
-    type = Column(String)
-    category = Column(String)
-    object_relation = Column(String)
-    attribute_timestamp = Column(String)
-    first_seen = Column(BigInteger)
-    last_seen = Column(BigInteger)
+    timestamp = Column(String)
+    distribution = Column(String)
+    sharing_group_id = Column(String)
     comment = Column(String)
-    to_ids = Column(Boolean)
-    published = Column(Boolean)
     deleted = Column(Boolean)
-    withAttachments = Column(Boolean)
-    enforceWarninglist = Column(Boolean)
-    includeAllTags = Column(Boolean)
-    includeEventUuid = Column(Boolean)
-    include_event_uuid = Column(Boolean)
-    includeEventTags = Column(Boolean)
-    includeProposals = Column(Boolean)
-    includeWarninglistHits = Column(Boolean)
-    includeContext = Column(Boolean)
-    includeSightings = Column(Boolean)
-    includeSightingdb = Column(Boolean)
-    includeCorrelations = Column(Boolean)
-    includeDecayScore = Column(Boolean)
-    includeFullModel = Column(Boolean)
-    allow_proposal_blocking = Column(Boolean)
-    metadata = Column(Boolean)
-    attackGalaxy = Column(String)
-    excludeDecayed = Column(Boolean)
-    decayingModel = Column(String)
-    modelOverrides = Column(JSONB)
-    score = Column(String)
-    returnFormat = Column(String)
+    first_seen = Column(String)
+    last_seen = Column(String)
+    Attribute: List[Attribute]
+
+
+class Response(Base):
+    __tablename__ = "response"
+    Object: Object
+
+
+class ObjectDelete(Base):
+    __tablename__ = "delete_object"
+    saved = Column(String, primary_key=True)
+    success = Column(String)
+    name = Column(String)
+    message = Column(String)
+    url = Column(String)

@@ -1,116 +1,62 @@
 from pydantic import BaseModel
+from typing import List
+
+
+class AttributeSchema(BaseModel):
+    id: str
+    event_id: str
+    object_id: str
+    object_relation: str
+    category: str
+    type: str
+    value: str
+    to_ids: bool
+    uuid: str
+    timestamp: str
+    distribution: str
+    sharing_group_id: str
+    comment: str
+    deleted: bool
+    disable_correlation: bool
+    first_seen: str
+    last_seen: str
 
 
 class ObjectSchema(BaseModel):
-    page: int
-    limit: int
-    quickFilter: str
-    searchall: str
-    timestamp: str
-    object_name: str
-    object_template_uuid: str
-    object_template_version: str
-    eventid: str
-    eventinfo: str
-    ignore: bool
-    from_: str  # 'from' is a reserved keyword in Python, so an underscore is added
-    to: str
-    date: str
-    tags: list[str]
-    last: int
-    event_timestamp: str
-    publish_timestamp: str
-    org: str
+    id: str
+    name: str
+    meta_category: str
+    description: str
+    template_uuid: str
+    template_version: str
+    event_id: str
     uuid: str
-    value: str
-    type: str
-    category: str
-    object_relation: str
-    attribute_timestamp: str
+    timestamp: str
+    distribution: str
+    sharing_group_id: str
+    comment: str
+    deleted: bool
     first_seen: str
     last_seen: str
-    comment: str
-    to_ids: bool
-    published: bool
-    deleted: bool
-    withAttachments: bool
-    enforceWarninglist: bool
-    includeAllTags: bool
-    includeEventUuid: bool
-    include_event_uuid: bool
-    includeEventTags: bool
-    includeProposals: bool
-    includeWarninglistHits: bool
-    includeContext: bool
-    includeSightings: bool
-    includeSightingdb: bool
-    includeCorrelations: bool
-    includeDecayScore: bool
-    includeFullModel: bool
-    allow_proposal_blocking: bool
-    metadata: bool
-    attackGalaxy: str
-    excludeDecayed: bool
-    decayingModel: str
-    modelOverrides: dict
-    score: str
-    returnFormat: str
+    Attribute: List[AttributeSchema]
 
     class Config:
         orm_mode = True
 
 
-# class ObjectCreateSchema(BaseModel):
-#     page: int
-#     limit: int
-#     quickFilter: str
-#     searchall: str
-#     timestamp: str
-#     object_name: str
-#     object_template_uuid: str
-#     object_template_version: str
-#     eventid: str
-#     eventinfo: str
-#     ignore: bool
-#     from_: str  # 'from' is a reserved keyword in Python, so an underscore is added
-#     to: str
-#     date: str
-#     tags: list[str]
-#     last: int
-#     event_timestamp: str
-#     publish_timestamp: str
-#     org: str
-#     uuid: str
-#     value: str
-#     type_: str  # remove '_'
-#     category: str
-#     object_relation: str
-#     attribute_timestamp: str
-#     first_seen: str
-#     last_seen: str
-#     comment: str
-#     to_ids: bool
-#     published: bool
-#     deleted: bool
-#     withAttachments: bool
-#     enforceWarninglist: bool
-#     includeAllTags: bool
-#     includeEventUuid: bool
-#     include_event_uuid: bool
-#     includeEventTags: bool
-#     includeProposals: bool
-#     includeWarninglistHits: bool
-#     includeContext: bool
-#     includeSightings: bool
-#     includeSightingdb: bool
-#     includeCorrelations: bool
-#     includeDecayScore: bool
-#     includeFullModel: bool
-#     allow_proposal_blocking: bool
-#     metadata: bool
-#     attackGalaxy: str
-#     excludeDecayed: bool
-#     decayingModel: str
-#     modelOverrides: dict
-#     score: str
-#     returnFormat: str
+class ResponseSchema(BaseModel):
+    Object: ObjectSchema
+
+    class Config:
+        orm_mode = True
+
+
+class ObjectDeleteSchema(BaseModel):
+    saved: str
+    success: str
+    name: str
+    message: str
+    url: str
+
+    class Config:
+        orm_mode = True
