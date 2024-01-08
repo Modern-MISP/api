@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..models.attribute import Attribute
-from schemas.attribute_schema import (
+from ..schemas.attribute_schema import (
     AttributeSchema,
     AttributeRestSearchSchema,
     AttributeAddSchema,
