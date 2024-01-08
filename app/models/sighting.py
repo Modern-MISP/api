@@ -16,6 +16,6 @@ class Sighting(Base):
     attribute_uuid = Column(String)
 
     class Organisation:
-        id = Column(String)
+        id = Column(String, primary_key=True)
         uuid = Column(String)
         name = Column(String)
