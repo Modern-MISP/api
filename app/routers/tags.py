@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 
 # from ..models.tag import Tag
-from ..schemas.tag_schema import TagSchema, TagDeleteSchema, TagSearchSchema
+from ..schemas.tag_schema import TagDeleteSchema, TagSchema, TagSearchSchema
 
 router = APIRouter(prefix="/tags")
 
