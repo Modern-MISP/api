@@ -1,52 +1,32 @@
-from typing import List, Union
+from typing import List
 
-from fastapi import APIRouter
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
 
-from . import events, objects, tags
+from ..database import get_db
+from ..models.attribute import Attribute
+from schemas.attribute_schema import AttributeSchema
 
-
-class Attributes(BaseModel):
-    id: str = ""
-    event_id: str = ""
-    object_id: str = ""
-    object_relation: str = ""
-    category: str = ""
-    type: str = ""
-    value: str = ""
-    value1: str = ""
-    value2: str = ""
-    to_ids: bool = True
-    uuid: str = ""
-    timestamp: str = ""
-    distribution: str = ""
-    sharing_group_id: str = ""
-    comment: str = ""
-    deleted: bool = False
-    disable_correlation: bool = False
-    first_seen: str = ""
-    last_seen: str = ""
-    event_uuid: str = ""
-    AttributeTag: List[str] = [""]
-
+# from . import events, objects, tags
 
 router = APIRouter(prefix="/attributes")
 
 
-@router.post("/restSearch")
-async def attributes_reastSearch() -> (
-    Union[Attributes, events.Events, objects.Objects, tags.Tags]
-):
-    return {Attributes(), events.Events(), objects.Objects(), tags.Tags()} - {
+@router.post("/restSearch", response_model=List[AttributeSchema])
+async def attributes_reastSearch(db: Session = Depends(get_db)) -> List[Attribute]:
+    pass
+    """
+        {Attributes(), events.Events(), objects.Objects(), tags.Tags()} - {
         Attributes.value1,
         Attributes.value2,
         Attributes.event_uuid,
-        Attributes.AttributeTag,
+        Attributes.attributeTag,
     }
+    """
 
 
-@router.post("/add/{eventId}")
-@router.post("/{eventId}")
+@router.post("/add/{eventId}", response_model=AttributeSchema)
+@router.post("/{eventId}", response_model=AttributeSchema)
 async def attributes_post(
     value: str,
     type: str,
@@ -55,12 +35,16 @@ async def attributes_post(
     distribution: str,
     comment: str,
     disable_correlation: bool,
-) -> {Attributes}:
+    db: Session = Depends(get_db),
+) -> Attribute:
+    pass
+    """
     return {Attributes} - {Attributes.event_uuid}
+    """
 
 
-@router.put("/edit/{attributeId}")
-@router.put("/{attributeId}")
+@router.put("/edit/{attributeId}", response_model=AttributeSchema)
+@router.put("/{attributeId}", response_model=AttributeSchema)
 async def attributes_put(
     category: str,
     value: str,
@@ -68,20 +52,29 @@ async def attributes_put(
     distribution: str,
     comment: str,
     disable_correlation: bool,
-) -> {Attributes}:
-    return {Attributes} - {Attributes.AttributeTag}
+    db: Session = Depends(get_db),
+) -> Attribute:
+    pass
+    """
+    return {Attributes} - {Attributes.attributeTag}
+    """
 
 
-@router.delete("/delete/{attributeId}")
-@router.delete("/{attributeID}")
+@router.delete("/delete/{attributeId}", response_model=str)
+@router.delete("/{attributeID}", response_model=str)
 async def attributes_delete() -> str:
+    pass
+    """
     return "message: Attribute deleted."
+    """
 
 
-@router.post("/deleteSelected/{event_id}")
+@router.post("/deleteSelected/{event_id}", response_model=str)
 async def attributes_deleteSelected(
-    id: str, event_id: str, allow_hard_delete: bool
+    id: str, event_id: str, allow_hard_delete: bool, db: Session = Depends(get_db)
 ) -> str:
+    pass
+    """
     return (
         '"saved": true,'
         + '"success": true,'
@@ -90,41 +83,65 @@ async def attributes_deleteSelected(
         + '"url": "/deleteSelected/{event_id}",'
         + '"id": "{event_id}"'
     )
+    """
 
 
-@router.post("/restore/{attributeId}")
-async def attributes_restore() -> {Attributes}:
-    return {Attributes} - {Attributes.AttributeTag}
+@router.post("/restore/{attributeId}", response_model=AttributeSchema)
+async def attributes_restore(db: Session = Depends(get_db)) -> Attribute:
+    pass
+    """
+    return {Attributes} - {Attributes.attributeTag}
+    """
 
 
-@router.post("/addTag/{attributeId}/{tagId}/local:{local}")
-async def attributes_addTag() -> str:
+@router.post("/addTag/{attributeId}/{tagId}/local:{local}", response_model=str)
+async def attributes_addTag(db: Session = Depends(get_db)) -> str:
+    pass
+    """
     return '"saved": true,' + '"success": "Tag added.",' + '"check_publish": true'
+    """
 
 
-@router.post("/removeTag/{attributeId}/{tagId}")
-async def attributes_removeTag() -> str:
+@router.post("/removeTag/{attributeId}/{tagId}", response_model=str)
+async def attributes_removeTag(db: Session = Depends(get_db)) -> str:
+    pass
+    """
     return '"saved": true,' + '"success": "Tag removed.",' + '"check_publish": true'
+    """
 
 
-@router.get("/attributes")
-async def attributes_get() -> {Attributes}:
-    return {Attributes} - {Attributes.event_uuid, Attributes.AttributeTag}
+@router.get("/attributes", response_model=AttributeSchema)
+async def attributes_get(db: Session = Depends(get_db)) -> Attribute:
+    pass
+    """
+    return {Attributes} - {Attributes.event_uuid, Attributes.attributeTag}
+    """
 
 
-@router.get("/view/{attributeId}")
-@router.get("/{attributeId}")
-async def attributes_getSpecifiedAttribute() -> {Attributes}:
+@router.get("/view/{attributeId}", response_model=AttributeSchema)
+@router.get("/{attributeId}", response_model=AttributeSchema)
+async def attributes_getSpecifiedAttribute(
+    db: Session = Depends(get_db),
+) -> Attribute:
+    pass
+    """
     return {Attributes} - {Attributes.value1, Attributes.value2}
+    """
 
 
-@router.get("/attributeStatistics/{context}/{percentage}")
-async def attributes_statistics() -> str:
+@router.get("/attributeStatistics/{context}/{percentage}", response_model=str)
+async def attributes_statistics(db: Session = Depends(get_db)) -> str:
+    pass
+    """
     return (
         '"[Type/Category]": "[Count/Percentage of attributes with this type/category]"'
     )
+    """
 
 
-@router.get("/describeTypes")
-async def attributes_describeTypes() -> str:
+@router.get("/describeTypes", response_model=str)
+async def attributes_describeTypes(db: Session = Depends(get_db)) -> str:
+    pass
+    """
     return "[List all attribute categories and types]"
+    """

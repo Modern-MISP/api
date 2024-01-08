@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from typing import List, Union
 from fastapi import APIRouter
-from . import attributes, objects, tags
+from . import attributes, galaxies, objects, organisations, tags
 
 
 class Events(BaseModel):
@@ -24,6 +24,7 @@ class Events(BaseModel):
     disable_correlation: bool = False
     extends_uuid: str = ""
     event_creator_email: str = ""
+    protected: str = ""
     chryprographicKey: List[str] = [""]
 
 
@@ -42,6 +43,7 @@ class EventReport(BaseModel):
 router = APIRouter(prefix="/events")
 
 
+# ObjectReference[] missing
 @router.post("/restSearch")
 async def events_restSearch() -> (
     Union[
@@ -63,13 +65,23 @@ async def events_restSearch() -> (
 
 @router.post("/add")
 @router.post("")
-async def events_post():
-    return
+async def events_post() -> {Events, organisations}:
+    return {Events, organisations.local} - {Events.sighting_timestamp}
 
 
+# ObjectReference[] missing
+@router.put("/edit/{eventId}")
 @router.put("/{eventId}")
-async def events_put():
-    return
+async def events_put() -> (
+    {Events, galaxies.Galaxies, attributes.ShadowAttribute, tags.Tags}
+):
+    return {
+        Events,
+        galaxies.Galaxies,
+        attributes.ShadowAttribute,
+        object.ObjectReference,
+        tags.Tags,
+    }
 
 
 @router.delete("/delete/{eventId}")
