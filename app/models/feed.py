@@ -33,7 +33,7 @@ class Feed(Base):
 
 
 class FeedView(Base):
-    __tablename__ = "feeds"
+    __tablename__ = "view_feeds"
     id = Column(String, primary_key=True)
     name = Column(String)
     provider = Column(String)
@@ -64,12 +64,14 @@ class FeedView(Base):
 
 
 class FeedTogle(Base):
+    __tablename__ = "togle_feeds"
     name = Column(String)
     message = Column(String)
     url = Column(String)
 
 
 class FeedCache(Base):
+    __tablename__ = "cache_feeds"
     name = Column(String)
     message = Column(String)
     url = Column(String)
@@ -78,4 +80,5 @@ class FeedCache(Base):
 
 
 class FeedFetch(Base):
+    __tablename__ = "fetch_feeds"
     result = Column(String)

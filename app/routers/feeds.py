@@ -35,6 +35,7 @@ async def get_feed_details(feed_id: str, db: Session = Depends(get_db)) -> Feed:
 
 
 @router.post("/add", response_model=FeedSchema)
+@router.post("/", response_model=FeedSchema)
 async def add_feed(feed_data: FeedSchema, db: Session = Depends(get_db)) -> Feed:
     new_feed = Feed(**feed_data.dict())
     db.add(new_feed)
