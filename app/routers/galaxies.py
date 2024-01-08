@@ -1,62 +1,57 @@
-from pydantic import BaseModel
 from typing import List
-from fastapi import APIRouter
 
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
 
-class Galaxies(BaseModel):
-    id: str = ""
-    uuid: str = ""
-    name: str = ""
-    type: str = ""
-    description: str = ""
-    version: str = ""
-    icon: str = ""
-    namespace: str = ""
-    kill_chain_order: List[str] = [""]
+from ..database import get_db
+from ..models.galaxy import Galaxy
+from ..schemas.galaxy_schema import GalaxySchema
 
 
 router = APIRouter(prefix="/galaxies")
 
 
-@router.get("/galaxies")
-async def galaxies_get():
-    return
+@router.get("", response_model=List[GalaxySchema])
+async def galaxies_get(db: Session = Depends(get_db)) -> List[Galaxy]:
+    pass
 
 
-@router.post("/galaxies")
-async def galaxies_post():
-    return
+@router.post("", response_model=List[GalaxySchema])
+async def galaxies_post(db: Session = Depends(get_db)) -> List[Galaxy]:
+    pass
 
 
-@router.get("/galaxies/view/{galaxyId}")
-@router.get("/galaxies/{galaxyId}")
-async def galaxies_getById():
-    return
+@router.get("/view/{galaxyId}", response_model=GalaxySchema)
+@router.get("/{galaxyId}", response_model=GalaxySchema)
+async def galaxies_getById(db: Session = Depends(get_db)) -> Galaxy:
+    pass
 
 
-@router.post("/galaxies/update")
-async def galaxies_update():
-    return
+@router.post("/update", response_model=str)
+async def galaxies_update(db: Session = Depends(get_db)) -> str:
+    pass
 
 
-@router.delete("/galaxies/delete/{galaxyId}")
-@router.delete("/galaxies/{galaxyId}")
-async def galaxies_delete():
-    return
+@router.delete("/delete/{galaxyId}", response_model=str)
+@router.delete("/{galaxyId}")
+async def galaxies_delete(db: Session = Depends(get_db)) -> str:
+    pass
 
 
-@router.post("/galaxies/import")
-async def galaxies_import():
-    return
+# import GalaxyClusterSchema and Galaxy
+@router.post("/import")  # , response_model=List[GalaxyClusterSchema]
+async def galaxies_import(db: Session = Depends(get_db)):  # -> List[GalaxyCluster]
+    pass
 
 
-@router.post("/galaxies/export/{galaxyId}")
-async def galaxies_export():
-    return
+@router.post("/export/{galaxyId}")  # , response_model=GalaxyClusterSchema
+async def galaxies_export(db: Session = Depends(get_db)):  # -> GalaxyCluster:
+    pass
 
 
 @router.post(
-    "/galaxies/attachCluster/{attachTargetId}/{attachTargetType}/local:{local}"
+    "/attachCluster/{attachTargetId}/{attachTargetType}/local:{local}",
+    response_model=str,
 )
-async def galaxies_attachCluster():
-    return
+async def galaxies_attachCluster(db: Session = Depends(get_db)) -> str:
+    pass
