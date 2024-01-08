@@ -5,14 +5,23 @@ from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..models.attribute import Attribute
-from schemas.attribute_schema import AttributeSchema
+from schemas.attribute_schema import (
+    AttributeSchema,
+    AttributeRestSearchSchema,
+    AttributeAddSchema,
+    AttributeEditSchema,
+    AttributeDeleteSchema,
+    AttributeDeleteSelectedSchema,
+    AttributeTagSchema,
+    AttributeGetByIdSchema,
+)
 
 # from . import events, objects, tags
 
 router = APIRouter(prefix="/attributes")
 
 
-@router.post("/restSearch", response_model=List[AttributeSchema])
+@router.post("/restSearch", response_model=List[AttributeRestSearchSchema])
 async def attributes_reastSearch(db: Session = Depends(get_db)) -> List[Attribute]:
     pass
     """
@@ -25,8 +34,8 @@ async def attributes_reastSearch(db: Session = Depends(get_db)) -> List[Attribut
     """
 
 
-@router.post("/add/{eventId}", response_model=AttributeSchema)
-@router.post("/{eventId}", response_model=AttributeSchema)
+@router.post("/add/{eventId}", response_model=AttributeAddSchema)
+@router.post("/{eventId}", response_model=AttributeAddSchema)
 async def attributes_post(
     value: str,
     type: str,
@@ -43,8 +52,8 @@ async def attributes_post(
     """
 
 
-@router.put("/edit/{attributeId}", response_model=AttributeSchema)
-@router.put("/{attributeId}", response_model=AttributeSchema)
+@router.put("/edit/{attributeId}", response_model=AttributeEditSchema)
+@router.put("/{attributeId}", response_model=AttributeEditSchema)
 async def attributes_put(
     category: str,
     value: str,
@@ -60,8 +69,8 @@ async def attributes_put(
     """
 
 
-@router.delete("/delete/{attributeId}", response_model=str)
-@router.delete("/{attributeID}", response_model=str)
+@router.delete("/delete/{attributeId}", response_model=AttributeDeleteSchema)
+@router.delete("/{attributeID}", response_model=AttributeDeleteSchema)
 async def attributes_delete() -> str:
     pass
     """
@@ -69,7 +78,7 @@ async def attributes_delete() -> str:
     """
 
 
-@router.post("/deleteSelected/{event_id}", response_model=str)
+@router.post("/deleteSelected/{event_id}", response_model=AttributeDeleteSelectedSchema)
 async def attributes_deleteSelected(
     id: str, event_id: str, allow_hard_delete: bool, db: Session = Depends(get_db)
 ) -> str:
@@ -86,7 +95,7 @@ async def attributes_deleteSelected(
     """
 
 
-@router.post("/restore/{attributeId}", response_model=AttributeSchema)
+@router.post("/restore/{attributeId}", response_model=AttributeEditSchema)
 async def attributes_restore(db: Session = Depends(get_db)) -> Attribute:
     pass
     """
@@ -94,7 +103,9 @@ async def attributes_restore(db: Session = Depends(get_db)) -> Attribute:
     """
 
 
-@router.post("/addTag/{attributeId}/{tagId}/local:{local}", response_model=str)
+@router.post(
+    "/addTag/{attributeId}/{tagId}/local:{local}", response_model=AttributeTagSchema
+)
 async def attributes_addTag(db: Session = Depends(get_db)) -> str:
     pass
     """
@@ -102,7 +113,7 @@ async def attributes_addTag(db: Session = Depends(get_db)) -> str:
     """
 
 
-@router.post("/removeTag/{attributeId}/{tagId}", response_model=str)
+@router.post("/removeTag/{attributeId}/{tagId}", response_model=AttributeTagSchema)
 async def attributes_removeTag(db: Session = Depends(get_db)) -> str:
     pass
     """
@@ -118,9 +129,10 @@ async def attributes_get(db: Session = Depends(get_db)) -> Attribute:
     """
 
 
-@router.get("/view/{attributeId}", response_model=AttributeSchema)
-@router.get("/{attributeId}", response_model=AttributeSchema)
-async def attributes_getSpecifiedAttribute(
+@router.get("/view/{attributeId}", response_model=AttributeGetByIdSchema)
+@router.get("/{attributeId}", response_model=AttributeGetByIdSchema)
+async def attributes_getById(
+    attributeId: str,
     db: Session = Depends(get_db),
 ) -> Attribute:
     pass
