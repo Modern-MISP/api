@@ -6,17 +6,18 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 
 # from ..models.object import Object
-from ..schemas.object_schema import ObjectSchema
+from ..schemas.object_schema import ObjectSchema, ResponseSchema, ObjectDeleteSchema
 
 router = APIRouter(prefix="/objects")
 
 
-@router.post("/restsearch", response_model=List[ObjectSchema])
+@router.post("/restsearch", response_model=List[ResponseSchema])
 async def restsearch(db: Session = Depends(get_db)) -> None:
     pass
 
 
 @router.post("/add/{eventId}/{objectTemplateId}", response_model=List[ObjectSchema])
+@router.post("/{eventId}/{objectTemplateId}", response_model=List[ObjectSchema])
 async def add_object(
     event_id: str, object_template_id: str, db: Session = Depends(get_db)
 ) -> None:
@@ -29,7 +30,9 @@ async def get_feed_details(object_id: str, db: Session = Depends(get_db)) -> Non
     pass
 
 
-@router.delete("/delete/{objectId}/{hardDelete}", response_model=List[ObjectSchema])
+@router.delete(
+    "/delete/{objectId}/{hardDelete}", response_model=List[ObjectDeleteSchema]
+)
 @router.delete("/{objectId}/{hardDelete}")
 async def delete_object(
     objectId: str, hardDelete: bool, db: Session = Depends(get_db)
