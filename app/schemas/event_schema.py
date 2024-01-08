@@ -3,7 +3,7 @@ from typing import List
 from pydantic import BaseModel
 
 
-class Events(BaseModel):
+class EventSchema(BaseModel):
     id: str
     org_id: str  # owner org
     distribution: str
@@ -30,7 +30,7 @@ class Events(BaseModel):
         orm_mode = True
 
 
-class EventReport(BaseModel):
+class EventReportSchema(BaseModel):
     id: str
     uuid: str
     event_id: str

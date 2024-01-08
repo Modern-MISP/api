@@ -1,59 +1,23 @@
-from pydantic import BaseModel
-from typing import List, Union
-from fastapi import APIRouter
-from . import attributes, galaxies, objects, organisations, tags
+from typing import List
 
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
 
-class Events(BaseModel):
-    id: str = ""
-    org_id: str = ""  # owner org
-    distribution: str = ""
-    orgc_id: str = ""  # creator org
-    uuid: str = ""
-    date: str = ""
-    published: bool = False
-    analysis: str = ""
-    attribute_count: str = ""
-    timestamp: str = ""
-    sharing_group_id: str = ""
-    proposal_email_lock: bool
-    locked: bool
-    threat_level_id: str = ""
-    publish_timestamp: str = ""
-    sighting_timestamp: str = ""
-    disable_correlation: bool = False
-    extends_uuid: str = ""
-    event_creator_email: str = ""
-    protected: str = ""
-    chryprographicKey: List[str] = [""]
-
-
-class EventReport(BaseModel):
-    id: str = ""
-    uuid: str = ""
-    event_id: str = ""
-    name: str = ""
-    content: str = ""
-    distribution: str = ""
-    sharing_group_id: str = ""
-    timestamp: str = ""
-    deleted: bool
+from ..database import get_db
+from ..models.attribute import Attribute
+from ..models.event import Event
+from schemas.attribute_schema import AttributeSchema
+from schemas.event_schema import EventSchema
 
 
 router = APIRouter(prefix="/events")
 
 
 # ObjectReference[] missing
-@router.post("/restSearch")
-async def events_restSearch() -> (
-    Union[
-        Events,
-        attributes.Attributes,
-        EventReport.EventReport,
-        objects.Objects,
-        tags.Tags,
-    ]
-):
+@router.post("/restSearch", response_model=List[EventSchema])
+async def events_restSearch(db: Session = Depends(get_db)) -> List[Event]:
+    pass
+    """
     return {
         Events(),
         attributes.Attributes(),
@@ -61,20 +25,24 @@ async def events_restSearch() -> (
         objects.Objects(),
         tags.Tags(),
     } - {Events.sighting_timestamp, tags.org_id, tags.inherited}
+    """
 
 
-@router.post("/add")
-@router.post("")
-async def events_post() -> {Events, organisations}:
+@router.post("/add", response_model=EventSchema)
+@router.post("", response_model=EventSchema)
+async def events_post(db: Session = Depends(get_db)) -> Event:
+    pass
+    """
     return {Events, organisations.local} - {Events.sighting_timestamp}
+    """
 
 
 # ObjectReference[] missing
-@router.put("/edit/{eventId}")
-@router.put("/{eventId}")
-async def events_put() -> (
-    {Events, galaxies.Galaxies, attributes.ShadowAttribute, tags.Tags}
-):
+@router.put("/edit/{eventId}", response_model=EventSchema)
+@router.put("/{eventId}", response_model=EventSchema)
+async def events_put(db: Session = Depends(get_db)) -> Event:
+    pass
+    """
     return {
         Events,
         galaxies.Galaxies,
@@ -82,50 +50,51 @@ async def events_put() -> (
         object.ObjectReference,
         tags.Tags,
     }
+    """
 
 
-@router.delete("/delete/{eventId}")
-@router.delete("/{eventId}")
-async def events_delete():
-    return
+@router.delete("/delete/{eventId}", response_model=str)
+@router.delete("/{eventId}", response_model=str)
+async def events_delete(db: Session = Depends(get_db)) -> str:
+    pass
 
 
-@router.get("")
-async def events_get():
-    return
+@router.get("", response_model=List[EventSchema])
+async def events_get(db: Session = Depends(get_db)) -> List[Event]:
+    pass
 
 
-@router.post("/index")
-async def events_index():
-    return
+@router.post("/index", response_model=List[EventSchema])
+async def events_index(db: Session = Depends(get_db)) -> List[Event]:
+    pass
 
 
-@router.get("/view/{eventId}")
-@router.get("/{eventId}")
-async def events_getById():
-    return
+@router.get("/view/{eventId}", response_model=EventSchema)
+@router.get("/{eventId}", response_model=EventSchema)
+async def events_getById(db: Session = Depends(get_db)) -> Event:
+    pass
 
 
-@router.post("/publish/{eventId}")
-async def events_publish():
-    return
+@router.post("/publish/{eventId}", response_model=str)
+async def events_publish(db: Session = Depends(get_db)) -> str:
+    pass
 
 
-@router.post("/unpublish/{eventId}")
-async def events_unpublish():
-    return
+@router.post("/unpublish/{eventId}", response_model=str)
+async def events_unpublish(db: Session = Depends(get_db)) -> str:
+    pass
 
 
-@router.post("/addTag/{eventId}/{tagId}/local:{local}")
-async def events_addTag():
-    return
+@router.post("/addTag/{eventId}/{tagId}/local:{local}", response_model=str)
+async def events_addTag(db: Session = Depends(get_db)) -> str:
+    pass
 
 
-@router.post("/removeTag/{eventId}/{tagId}")
-async def events_removeTag():
-    return
+@router.post("/removeTag/{eventId}/{tagId}", response_model=str)
+async def events_removeTag(db: Session = Depends(get_db)) -> str:
+    pass
 
 
-@router.post("/freeTextImport/{eventId}")
-async def events_freeTextImport():
-    return
+@router.post("/freeTextImport/{eventId}", response_model=AttributeSchema)
+async def events_freeTextImport(value: str, db: Session = Depends(get_db)) -> Attribute:
+    pass

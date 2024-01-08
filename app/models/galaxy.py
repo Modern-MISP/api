@@ -5,7 +5,7 @@ from sqlalchemy import Column, String
 from ..database import Base
 
 
-class Galaxies(Base):
+class Galaxy(Base):
     id = Column(String)
     uuid = Column(String)
     name = Column(String)

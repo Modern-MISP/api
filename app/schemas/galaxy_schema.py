@@ -3,7 +3,7 @@ from typing import List
 from pydantic import BaseModel
 
 
-class Galaxies(BaseModel):
+class GalaxySchema(BaseModel):
     id: str
     uuid: str
     name: str

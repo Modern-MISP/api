@@ -5,7 +5,7 @@ from sqlalchemy import Boolean, Column, String
 from ..database import Base
 
 
-class Events(Base):
+class Event(Base):
     id = Column(String)
     org_id = Column(String)  # owner org
     distribution = Column(String)
