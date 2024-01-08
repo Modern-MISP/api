@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 
 # from ..models.sighting import Sighting
-from ..schemas.sighting_schema import SightingSchema
+from ..schemas.sighting_schema import SightingDeleteSchema, SightingSchema
 
 router = APIRouter(prefix="/sightings")
 
@@ -35,7 +35,7 @@ async def add_sightings_at_index(
     pass
 
 
-@router.post("/delete/{sightingId}", response_model=List[SightingSchema])
-@router.post("/{sightingId}", response_model=List[SightingSchema])
+@router.post("/delete/{sightingId}", response_model=List[SightingDeleteSchema])
+@router.post("/{sightingId}", response_model=List[SightingDeleteSchema])
 async def delete_sighting(sighting_id: str, db: Session = Depends(get_db)) -> None:
     pass
