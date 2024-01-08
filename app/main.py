@@ -15,7 +15,7 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI()
 
 # include Routes
-# app.include_router(Attributes.router)
+# app.include_router(attributes.router)
 app.include_router(auth_key.router)
 app.include_router(user_settings.router)
 app.include_router(feeds.router)
