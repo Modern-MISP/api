@@ -1,11 +1,11 @@
 from typing import List
 
 from fastapi import APIRouter, Depends
+from schemas.attribute_schema import AttributeSchema
 from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..models.attribute import Attribute
-from schemas.attribute_schema import AttributeSchema
 
 # from . import events, objects, tags
 

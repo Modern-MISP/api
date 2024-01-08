@@ -6,11 +6,11 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 from ..models.feed import Feed
 from ..schemas.feed_schema import (
-    FeedSchema,
-    FeedViewSchema,
-    FeedTogleSchema,
     FeedCacheSchema,
     FeedFetchSchema,
+    FeedSchema,
+    FeedTogleSchema,
+    FeedViewSchema,
 )
 
 router = APIRouter(prefix="/feeds")

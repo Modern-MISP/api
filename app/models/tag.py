@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, String, Integer
+from sqlalchemy import Boolean, Column, Integer, String
 
 from ..database import Base
 
@@ -16,9 +16,6 @@ class Tag(Base):
     is_galaxy = Column(Boolean)
     is_custom_galaxy = Column(Boolean)
     inherited = Column(Integer)
-
-    class Config:
-        orm_mode = True
 
 
 class Taxonomy(Base):
