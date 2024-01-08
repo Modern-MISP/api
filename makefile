@@ -5,6 +5,7 @@ prepare:
 	pre-commit install --install-hooks
 
 setup:
+	pip install virtualenv; \
 	virtualenv venv; \
 	source ./venv/bin/activate; \
 	pip install ".[dev]"; \
