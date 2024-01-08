@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, String, Integer
+from sqlalchemy import Boolean, Column, Integer, String
 
 from ..database import Base
 
@@ -65,14 +65,14 @@ class FeedView(Base):
 
 class FeedTogle(Base):
     __tablename__ = "togle_feeds"
-    name = Column(String)
+    name = Column(String, primary_key=True)
     message = Column(String)
     url = Column(String)
 
 
 class FeedCache(Base):
     __tablename__ = "cache_feeds"
-    name = Column(String)
+    name = Column(String, primary_key=True)
     message = Column(String)
     url = Column(String)
     saved = Column(Boolean)  # new
@@ -81,4 +81,4 @@ class FeedCache(Base):
 
 class FeedFetch(Base):
     __tablename__ = "fetch_feeds"
-    result = Column(String)
+    result = Column(String, primary_key=True)

@@ -1,3 +1,5 @@
+from typing import Union
+
 from pydantic import BaseModel
 
 
@@ -12,7 +14,46 @@ class TagSchema(BaseModel):
     numerical_value: str
     is_galaxy: bool
     is_custom_galaxy: bool
-    inherited: int
+    inherited: Union[int, bool]
+
+    class Config:
+        orm_mode = True
+
+
+class TaxonomySchema(BaseModel):
+    id: str
+    namespace: str
+    description: str
+    version: str
+    enabled: bool
+    exclusive: bool
+    required: bool
+
+
+class TaxonomyPredicateSchema(BaseModel):
+    id: str
+    taxonomy_id: str
+    value: str
+    expanded: str
+    colour: str
+    description: str
+    exclusive: bool
+    numerical_value: int
+
+
+class TagDeleteSchema(BaseModel):
+    name: str
+    message: str
+    url: str
+
+    class Config:
+        orm_mode = True
+
+
+class TagSearchSchema(BaseModel):
+    Tag: TagSchema
+    Taxonomy: TaxonomySchema
+    TaxonomyPredicate: TaxonomyPredicateSchema
 
     class Config:
         orm_mode = True

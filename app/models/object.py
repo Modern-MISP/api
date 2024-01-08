@@ -1,11 +1,13 @@
-from sqlalchemy import Boolean, Column, String
 from typing import List
+
+from sqlalchemy import Boolean, Column, String
 
 from ..database import Base
 
 
 class Attribute(Base):
-    id = Column(String)
+    __tablename__ = "attributes"
+    id = Column(String, primary_key=True)
     event_id = Column(String)
     object_id = Column(String)
     object_relation = Column(String)
@@ -25,7 +27,8 @@ class Attribute(Base):
 
 
 class Object(Base):
-    id = Column(String)
+    __tablename__ = "objects"
+    id = Column(String, primary_key=True)
     name = Column(String)
     meta_category = Column(String)
     description = Column(String)
@@ -44,11 +47,13 @@ class Object(Base):
 
 
 class Response(Base):
+    __tablename__ = "response"
     Object: Object
 
 
 class ObjectDelete(Base):
-    saved = Column(String)
+    __tablename__ = "delete_object"
+    saved = Column(String, primary_key=True)
     success = Column(String)
     name = Column(String)
     message = Column(String)
