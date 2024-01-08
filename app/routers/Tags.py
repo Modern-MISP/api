@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 
 # from ..models.tag import Tag
-from ..schemas.tag_schema import TagSchema
+from ..schemas.tag_schema import TagSchema, TagDeleteSchema, TagSearchSchema
 
 router = APIRouter(prefix="/tags")
 
@@ -28,8 +28,8 @@ async def add_tag(db: Session = Depends(get_db)) -> None:
     pass
 
 
-@router.delete("/delete/{tagId}", response_model=List[TagSchema])
-@router.delete("/{tagId}", response_model=List[TagSchema])
+@router.delete("/delete/{tagId}", response_model=List[TagDeleteSchema])
+@router.delete("/{tagId}", response_model=List[TagDeleteSchema])
 async def delete_tag(tag_id: str, db: Session = Depends(get_db)) -> None:
     pass
 
@@ -40,6 +40,6 @@ async def edit_tag(tag_id: str, db: Session = Depends(get_db)) -> None:
     pass
 
 
-@router.get("search/{tagSearchTerm}", response_model=List[TagSchema])
+@router.get("search/{tagSearchTerm}", response_model=List[TagSearchSchema])
 async def search_tags(tagSearchTerm: str, db: Session = Depends(get_db)) -> None:
     pass
