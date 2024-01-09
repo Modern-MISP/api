@@ -1,5 +1,3 @@
-from typing import List
-
 from fastapi import APIRouter, Header
 
 from app.schemas.taxonomies.enable_disable_taxonomy_out import TaxonomyAbleSchema
@@ -13,7 +11,7 @@ router = APIRouter(prefix="/taxonomies")
 
 # Returns all taxonomies
 @router.get("/")
-async def get_taxonomies() -> List[TaxonomyViewSchema]:
+async def get_taxonomies() -> list[TaxonomyViewSchema]:
     return TaxonomyViewSchema()
 
 
