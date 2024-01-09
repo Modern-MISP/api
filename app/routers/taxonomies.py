@@ -18,7 +18,7 @@ async def get_taxonomies() -> List[TaxonomyViewSchema]:
 
 
 # Get Taxonomy by ID
-@router.get("/view/{taxonomy_id_parameter}")  # deprecated
+@router.get("/view/{taxonomy_id_parameter}", deprecated=True)  # deprecated
 @router.get("/{taxonomy_id_parameter}")
 async def get_taxonomy_by_id_depr() -> TaxonomyEntrySchema:
     return TaxonomyEntrySchema()
@@ -37,7 +37,7 @@ async def disable_taxonomies() -> TaxonomyAbleSchema:
 
 
 # Update Taxonomies.
-@router.post("/taxonomies/update")  # Deprecated
+@router.post("/taxonomies/update", deprecated=True)  # Deprecated
 @router.put("/taxonomies")
 async def update_taxonomies_depr() -> TaxonomyUpdateSchema:
     return TaxonomyUpdateSchema()
