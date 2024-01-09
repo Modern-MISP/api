@@ -1,7 +1,8 @@
 from pydantic import BaseModel
 
+from ..user_schema import User
 
-class AuthKey(BaseModel):
+class AuthKeyGetSchema(BaseModel):
     id: str = ""
     uuid: str = ""
     authkey_start: str = ""
@@ -14,4 +15,4 @@ class AuthKey(BaseModel):
     allowed_ips: str = ""  # Stringified JSON Array of IP addresses
     last_used: str = ""
     unique_ips: list[str] = [""]
-    authkey_raw: str = ""
+    user: User

@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Header
 
 from app.schemas.taxonomies.enable_disable_taxonomy_out import TaxonomyAbleSchema
 from app.schemas.taxonomies.export_taxonomies_out import TaxonomyExportSchema
