@@ -1,14 +1,13 @@
 from typing import List
 
 from fastapi import APIRouter, Depends
+from schemas.attribute_schema import AttributeSchema
+from schemas.event_schema import EventSchema
 from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..models.attribute import Attribute
 from ..models.event import Event
-from schemas.attribute_schema import AttributeSchema
-from schemas.event_schema import EventSchema
-
 
 router = APIRouter(prefix="/events")
 

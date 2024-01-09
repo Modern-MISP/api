@@ -1,5 +1,6 @@
-from pydantic import BaseModel
 from typing import Union
+
+from pydantic import BaseModel
 
 
 class TagSchema(BaseModel):
@@ -45,8 +46,14 @@ class TagDeleteSchema(BaseModel):
     message: str
     url: str
 
+    class Config:
+        orm_mode = True
+
 
 class TagSearchSchema(BaseModel):
     Tag: TagSchema
     Taxonomy: TaxonomySchema
     TaxonomyPredicate: TaxonomyPredicateSchema
+
+    class Config:
+        orm_mode = True

@@ -1,6 +1,12 @@
 from pydantic import BaseModel
 
 
+class OrganisationSchema(BaseModel):
+    id: str
+    uuid: str
+    name: str
+
+
 class SightingSchema(BaseModel):
     id: str
     attribute_id: str
@@ -11,11 +17,15 @@ class SightingSchema(BaseModel):
     source: str
     type: str
     attribute_uuid: str
-
-    class Organisation:
-        id: str
-        uuid: str
-        name: str
+    Organisation: OrganisationSchema
 
     class Config:
         orm_mode = True
+
+
+class SightingDeleteSchema(BaseModel):
+    saved: str
+    success: str
+    name: str
+    message: str
+    url: str

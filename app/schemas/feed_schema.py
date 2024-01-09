@@ -65,7 +65,7 @@ class FeedViewSchema(BaseModel):
         orm_mode = True
 
 
-class FeedTogleSchema(BaseModel):
+class FeedTogleSchema(BaseModel): #Typo: should this not be "Toggle"?
     name: str
     message: str
     url: str
