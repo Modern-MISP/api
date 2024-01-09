@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 
-class FeedAddUpdateBody(BaseModel):
+class FeedCreateAndUpdateBody(BaseModel):
     name: str
     provider: str
     url: str

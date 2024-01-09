@@ -6,14 +6,13 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 
 # from ..models.feed import Feed
+from ..schemas.feeds.cache_feed_response import FeedCacheResponse
+from ..schemas.feeds.create_update_feed_body import FeedCreateAndUpdateBody
+from ..schemas.feeds.enable_disable_feed_response import FeedEnableDisableResponse
+from ..schemas.feeds.fetch_feeds_response import FeedFetchResponse
 from ..schemas.feeds.get_all_feeds_response import FeedsResponse
 from ..schemas.feeds.get_feed_response import FeedResponse
-from ..schemas.feeds.create_update_feed_body import FeedAddUpdateBody
-from ..schemas.feeds.enable_disable_feed_response import FeedEnableDisableResponse
 from ..schemas.feeds.toggle_feed_body import FeedToggleBody
-from ..schemas.feeds.cache_feed_response import FeedCacheResponse
-from ..schemas.feeds.fetch_feeds_response import FeedFetchResponse
-
 
 router = APIRouter(prefix="/feeds", tags=["feeds"])
 
@@ -29,8 +28,8 @@ async def get_feeds(db: Session = Depends(get_db)) -> List[FeedsResponse]:
     #     raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/view/{feedId}")
-@router.get("/{feed_id}")
+@router.get("/view/{feedId}", deprecated=True)  # deprecated
+@router.get("/{feed_id}")  # new
 async def get_feed_details(feed_id: str, db: Session = Depends(get_db)) -> FeedResponse:
     return FeedResponse(feed=[])
 
@@ -40,10 +39,10 @@ async def get_feed_details(feed_id: str, db: Session = Depends(get_db)) -> FeedR
     # return feed
 
 
-@router.post("/add")
-@router.post("/")
+@router.post("/add", deprecated=True)  # deprecated
+@router.post("/")  # new
 async def add_feed(
-    body: FeedAddUpdateBody, db: Session = Depends(get_db)
+    body: FeedCreateAndUpdateBody, db: Session = Depends(get_db)
 ) -> FeedResponse:
     return FeedResponse(feed=[])
 
@@ -54,10 +53,10 @@ async def add_feed(
     # return new_feed
 
 
-@router.put("/edit/{feedId}")
-@router.put("/{feed_id}")
+@router.put("/edit/{feedId}", deprecated=True)  # deprecated
+@router.put("/{feed_id}")  # new
 async def update_feed(
-    feed_id: str, body: FeedAddUpdateBody, db: Session = Depends(get_db)
+    feed_id: str, body: FeedCreateAndUpdateBody, db: Session = Depends(get_db)
 ) -> FeedResponse:
     return FeedResponse(feed=[])
 
@@ -71,21 +70,21 @@ async def update_feed(
     # return feed
 
 
-@router.post("/enable/{feedId}")
+@router.post("/enable/{feedId}", deprecated=True)  # deprecated
 async def enable_feed(
     feed_id: str, enable: bool, db: Session = Depends(get_db)
 ) -> FeedEnableDisableResponse:
     return FeedEnableDisableResponse(name="", message="", url="")
 
 
-@router.post("/disable/{feedId}")
+@router.post("/disable/{feedId}", deprecated=True)  # deprecated
 async def disable_feed(
     feed_id: str, disable: bool, db: Session = Depends(get_db)
 ) -> FeedEnableDisableResponse:
     return FeedEnableDisableResponse(name="", message="", url="")
 
 
-@router.patch("/{feedId}")
+@router.patch("/{feedId}")  # new
 async def toggle_feed(
     feed_id: str, body: FeedToggleBody, db: Session = Depends(get_db)
 ) -> FeedEnableDisableResponse:
@@ -109,15 +108,15 @@ async def cache_feeds(
     return FeedCacheResponse(name="", message="", url="", saved=False, success=False)
 
 
-@router.post("/fetchFromFeed/{feedId}")
-@router.get("/fetchFromFeed/{feedId}")
+@router.post("/fetchFromFeed/{feedId}", deprecated=True)  # deprecated
+@router.get("/fetchFromFeed/{feedId}")  # new
 async def fetch_from_feed(
     feed_id: str, db: Session = Depends(get_db)
 ) -> FeedFetchResponse:
     return FeedFetchResponse(result="")
 
 
-@router.post("/fetchFromAllFeeds")
-@router.get("/fetchFromAllFeeds")
+@router.post("/fetchFromAllFeeds", deprecated=True)  # deprecated
+@router.get("/fetchFromAllFeeds")  # new
 async def fetch_data_from_all_feeds(db: Session = Depends(get_db)) -> FeedFetchResponse:
     return FeedFetchResponse(result="")
