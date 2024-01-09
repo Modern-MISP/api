@@ -1,13 +1,13 @@
 from pydantic import BaseModel
 
 
-class UserOrgId:
+class UserOrgId(BaseModel):
     id: str = ""
     org_id: str = ""
 
 
 class AuthKeyEditSchema(BaseModel):
-    id: str = ""
+    id: int = ""
     uuid: str = ""
     authkey_start: str = ""
     authkey_end: str = ""
@@ -17,4 +17,4 @@ class AuthKeyEditSchema(BaseModel):
     user_id: str = ""
     comment: str = ""
     allowed_ips: list[str] = {""}
-    user: UserOrgId
+    user: UserOrgId = UserOrgId()
