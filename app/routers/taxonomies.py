@@ -8,7 +8,8 @@ from ..schemas.taxonomy_schema import (
     TaxonomyViewSchema,
     TaxonomyEntrySchema,
     TaxonomyAbleSchema,
-    TaxonomyUpdateSchema
+    TaxonomyUpdateSchema,
+    TaxonomyExportSchema
 )
 
 
@@ -55,6 +56,4 @@ async def get_taxonomy_extended() -> TaxonomyEntrySchema:
 
 @router.get("export/{taxonomyId}")
 async def export_taxonomy():
-    return {
-
-    }
+    return TaxonomyExportSchema()
