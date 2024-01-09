@@ -37,5 +37,6 @@ async def get_auth_key_by_id() -> UserSettings():
 
 # Delete AuthKey by ID
 @router.delete("/{userSettingsId")
+@router.delete("/delete/{userSettingsId", deprecated=True)  # Deprecated
 async def delete_user_settings() -> UserSettings():
     return {"saved": bool, "success": bool, "name": str, "message": str, "url": str}
