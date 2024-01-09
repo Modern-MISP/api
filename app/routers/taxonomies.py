@@ -1,15 +1,14 @@
 from typing import List
 
 from fastapi import APIRouter
-from pydantic import BaseModel
+# from pydantic import BaseModel
 
 from ..schemas.taxonomy_schema import (
-    Taxonomy,
     TaxonomyViewSchema,
     TaxonomyEntrySchema,
     TaxonomyAbleSchema,
     TaxonomyUpdateSchema,
-    TaxonomyExportSchema
+    TaxonomyExportSchema,
 )
 
 
