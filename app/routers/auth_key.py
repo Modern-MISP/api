@@ -8,7 +8,7 @@ from ..schemas.auth_key.search_get_all_auth_keys_users_out import AuthKeyGetSche
 from ..schemas.auth_key.add_auth_key_out import AuthKey
 from ..schemas.auth_key.view_auth_key_out import AuthKeyViewSchema
 from ..schemas.auth_key.edit_auth_key_out import AuthKeyEditSchema
-from ..schemas.auth_key.delete_auth_key_out import AuthKeyDelete
+from ..schemas.auth_key.delete_auth_key_out import AuthKeyDeleteSchema
 from ..database import get_db
 
 
@@ -49,11 +49,11 @@ async def auth_keys_view_AuthKey():
 # Edit AuthKey by ID
 @router.put("/edit/{AuthKeyId}")  # Should be without edit in route
 @router.post("/edit/{AuthKeyId}", deprecated=True)  # deprecated
-async def auth_keys_edit_AuthKey():
+async def auth_keys_edit_AuthKey() -> AuthKeyEditSchema:
     return AuthKeyEditSchema()
 
 
 # Delete AuthKey by ID
 @router.delete("/{AuthKeyId}")
-async def auth_keys_delete_AuthKey() -> AuthKeyDelete:
-    return AuthKeyDelete()
+async def auth_keys_delete_AuthKey() -> AuthKeyDeleteSchema:
+    return AuthKeyDeleteSchema()
