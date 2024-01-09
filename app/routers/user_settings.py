@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter
 
-from ..schemas.user_setting_schema import UserSettings
+from app.schemas.user_setting.user_setting_schema import UserSettings
 
 router = APIRouter(prefix="/user_settings")
 

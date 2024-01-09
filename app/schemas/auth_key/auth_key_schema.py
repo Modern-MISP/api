@@ -1,5 +1,5 @@
-from typing import List
 from pydantic import BaseModel
+
 
 class AuthKey(BaseModel):
     id: str = ""
@@ -13,5 +13,5 @@ class AuthKey(BaseModel):
     comment: str = ""
     allowed_ips: str = ""  # Stringified JSON Array of IP addresses
     last_used: str = ""
-    unique_ips: List[str] = [""]
+    unique_ips: list[str] = [""]
     authkey_raw: str = ""

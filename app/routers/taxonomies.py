@@ -1,17 +1,12 @@
 from typing import List
 
 from fastapi import APIRouter
-from pydantic import BaseModel
 
-from ..schemas.taxonomy_schema import (
-    Taxonomy,
-    TaxonomyViewSchema,
-    TaxonomyEntrySchema,
-    TaxonomyAbleSchema,
-    TaxonomyUpdateSchema,
-    TaxonomyExportSchema
-)
-
+from app.schemas.taxonomies.enable_disable_taxonomy_out import TaxonomyAbleSchema
+from app.schemas.taxonomies.export_taxonomies_out import TaxonomyExportSchema
+from app.schemas.taxonomies.get_taxonomy_by_id_out import TaxonomyEntrySchema
+from app.schemas.taxonomies.get_taxonomy_out import TaxonomyViewSchema
+from app.schemas.taxonomies.update_taxonomy_out import TaxonomyUpdateSchema
 
 router = APIRouter(prefix="/taxonomies")
 
