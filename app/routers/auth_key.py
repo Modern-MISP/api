@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from . import user
-from ..schemas.auth_key_schema import (AuthKey)
+from app.schemas.auth_key.auth_key_schema import (AuthKey)
 from ..database import get_db
 
 
@@ -24,7 +24,7 @@ async def auth_keys_get(db: Session = Depends(get_db)) -> List[AuthKey]:  # Requ
 # search auth keys
 @router.post("/")
 async def auth_keys_post(
-    authkey: AuthKey,
+    authkey: AuthKey
 ):
     return AuthKey(), user.User()
 
