@@ -1,34 +1,24 @@
 from typing import List
 
-from fastapi import APIRouter
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
 
 from . import user
-
-
-class AuthKey(BaseModel):
-    id: str = ""
-    uuid: str = ""
-    authkey_start: str = ""
-    authkey_end: str = ""
-    created: str = ""
-    expiration: str = ""
-    read_only: bool = False
-    user_id: str = ""
-    comment: str = ""
-    allowed_ips: str = ""  # Stringified JSON Array of IP addresses
-    last_used: str = ""
-    unique_ips: List[str] = [""]
-    authkey_raw: str = ""
+from ..schemas.auth_key_schema import (AuthKey)
+from ..database import get_db
 
 
 router = APIRouter(prefix="/auth_keys")
 
 
 # query and return a list of existing authkey objects and associated users
-@router.get("/")
-async def auth_keys_get():  # Request Body into brackets
-    return {AuthKey(), user.User()}  # return body in after return
+@router.get("/", response_model=List[AuthKey])
+async def auth_keys_get(db: Session = Depends(get_db)) -> List[AuthKey]:  # Request Body into brackets
+    try:
+        auth_keys = db.query(AuthKey).all()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) #Return of User still missing. Will be implemented later.
+    return {auth_keys}  # return body in after return
 
 
 # search auth keys
