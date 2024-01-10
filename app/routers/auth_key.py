@@ -8,6 +8,9 @@ from ..schemas.auth_key.add_auth_key_out import AuthKey
 from ..schemas.auth_key.view_auth_key_out import AuthKeyViewSchema
 from ..schemas.auth_key.edit_auth_key_out import AuthKeyEditSchema
 from ..schemas.auth_key.delete_auth_key_out import AuthKeyDeleteSchema
+from ..schemas.auth_key.search_auth_keys_in import AuthKeySearch
+from ..schemas.auth_key.add_auth_key_in import AuthKeyAdd
+from ..schemas.auth_key.edit_auth_key_in import AuthKeyEdit
 from ..database import get_db
 
 
@@ -30,27 +33,27 @@ async def auth_keys_get(
 
 # search auth keys
 @router.post("/")
-async def auth_keys_post(authkey: AuthKeyGetSchema):
+async def auth_keys_post(authkey: AuthKeySearch) -> AuthKeyGetSchema:
     return AuthKeyGetSchema()
 
 
 # Add Auth Keys
 # might want to revise the route, contrary to Pflichtenheft I might have messed up here.
 @router.post("/add/{UserId}")
-async def auth_keys_add_User(UserId: str, authKey: AuthKeyGetSchema):
+async def auth_keys_add_User(UserId: str, auth_key_in: AuthKeyAdd) -> AuthKey:
     return AuthKey()
 
 
 # View AuthKey by AuthKeyId
 @router.get("/view/{AuthKeyId}")
-async def auth_keys_view_AuthKey():
+async def auth_keys_view_AuthKey() -> AuthKeyViewSchema:
     return AuthKeyViewSchema()
 
 
 # Edit AuthKey by ID
 @router.put("/edit/{AuthKeyId}")  # Should be without edit in route
 @router.post("/edit/{AuthKeyId}", deprecated=True)  # deprecated
-async def auth_keys_edit_AuthKey() -> AuthKeyEditSchema:
+async def auth_keys_edit_AuthKey(auth_key_in: AuthKeyEdit) -> AuthKeyEditSchema:
     return AuthKeyEditSchema()
 
 
