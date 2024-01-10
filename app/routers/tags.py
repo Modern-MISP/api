@@ -8,7 +8,7 @@ from ..database import get_db
 # from ..models.tag import Tag
 from ..schemas.tags.tag_schema import TagDeleteSchema, TagSchema, TagSearchSchema
 
-router = APIRouter(prefix="/tags", tags=["tags"])
+router = APIRouter(prefix="/tags")
 
 
 @router.get("/", response_model=List[TagSchema])
