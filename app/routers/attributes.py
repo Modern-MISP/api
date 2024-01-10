@@ -1,13 +1,7 @@
-from typing import List
-
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..models.event import Event
-from ..models.object import Object
-from ..models.tag import Tag
-from ..schemas.attributes.attribute_schema import AttributeSchema
 from ..schemas.attributes.delete_attribute_response import AttributeDeleteResponse
 from ..schemas.attributes.get_all_attributes_response import AttributesResponse
 from ..schemas.attributes.get_attribute_response import AttributeResponse
@@ -15,6 +9,22 @@ from ..schemas.attributes.get_attribute_statistics_response import (
     AttributeStatisticsResponse,
 )
 from ..schemas.attributes.get_describe_types_response import DescribeTypesResponse
+from ..schemas.attributes.search_attributes_body import AttributeRestSearchBody
+from ..schemas.attributes.search_attributes_response import AttributeRestSearchResponse
+from ..schemas.attributes.add_attribute_body import AttributeAddBody
+from ..schemas.attributes.add_attribute_response import AttributeAddResponse
+from ..schemas.attributes.delete_selected_attribute_body import (
+    AttributeDeleteSelectedBody,
+)
+from ..schemas.attributes.delete_selected_attribute_response import (
+    AttributeDeleteSelectedResponse,
+)
+from ..schemas.attributes.restore_attribute_reponse import AttributeRestoreResponse
+from ..schemas.attributes.add_remove_tag_attribute_response import (
+    AttributeTagResponse,
+)
+from ..schemas.attributes.edit_attribute_body import AttributeEditBody
+from ..schemas.attributes.edit_attributes_response import AttributeEditResponse
 
 router = APIRouter(prefix="/attributes", tags=["attributes"])
 
@@ -24,7 +34,9 @@ router = APIRouter(prefix="/attributes", tags=["attributes"])
 
 @router.delete("/delete/{attribute_id}", deprecated=True)  # deprecated
 @router.delete("/{attributeID}")  # new
-async def attributes_delete() -> AttributeDeleteResponse:
+async def attributes_delete(
+    attribute_id: str, db: Session = Depends(get_db)
+) -> AttributeDeleteResponse:
     return AttributeDeleteResponse(message="Attribute deleted.")
 
 
@@ -34,13 +46,11 @@ async def attributes_delete() -> AttributeDeleteResponse:
 @router.get("/attributes")
 async def attributes_get(db: Session = Depends(get_db)) -> AttributesResponse:
     return AttributesResponse(attribute=[])
-    """
-    try:
-        attributes = db.query(Attribute).all()
-        return attributes
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    """
+    # try:
+    #     attributes = db.query(Attribute).all()
+    #     return attributes
+    # except Exception as e:
+    #     raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/view/{attribute_id}", deprecated=True)  # deprecated
@@ -50,14 +60,12 @@ async def attributes_getById(
     db: Session = Depends(get_db),
 ) -> AttributeResponse:
     return AttributeResponse(Tag=[])
-    """
-    attribute = (
-        db.query(AttributeGetById).filter(AttributeGetById.id == attribute_id).first()
-    )
-    if attribute is None:
-        raise HTTPException(status_code=404, detail="Feed not found")
-    return attribute
-    """
+    # attribute = (
+    #     db.query(AttributeGetById).filter(AttributeGetById.id == attribute_id).first()
+    # )
+    # if attribute is None:
+    #     raise HTTPException(status_code=404, detail="Feed not found")
+    # return attribute
 
 
 @router.get("/attributeStatistics/{context}/{percentage}")
@@ -81,71 +89,82 @@ async def attributes_describeTypes(
 
 @router.post("/restSearch")
 async def attributes_reastSearch(
+    body: AttributeRestSearchBody,
     db: Session = Depends(get_db),
-) -> List[str]:
-    return str, Event, Object, Tag
+) -> AttributeRestSearchResponse:
+    return AttributeRestSearchResponse(id="")
 
 
-@router.post("/add/{event_id}")
-@router.post("/{event_id}")
+@router.post("/add/{event_id}", deprecated=True)  # deprecated
+@router.post("/{event_id}")  # new
 async def attributes_post(
-    value: str,
-    type: str,
-    category: str,
-    to_ids: bool,
-    distribution: str,
-    comment: str,
-    disable_correlation: bool,
-    attribute_data: AttributeSchema,
+    event_id: str,
+    body: AttributeAddBody,
     db: Session = Depends(get_db),
-) -> str:
-    return str
-
-    """
-    new_attribute = Attribute(**attribute_data.model_dump())
-    db.add(new_attribute)
-    db.commit()
-    db.refresh(new_attribute)
-    return new_attribute
-    """
+) -> AttributeAddResponse:
+    return AttributeAddResponse(id="")
+    # new_attribute = Attribute(**attribute_data.model_dump())
+    # db.add(new_attribute)
+    # db.commit()
+    # db.refresh(new_attribute)
+    # return new_attribute
 
 
 @router.post("/deleteSelected/{event_id}")
 async def attributes_deleteSelected(
-    id: str, event_id: str, allow_hard_delete: bool, db: Session = Depends(get_db)
-) -> str:
-    return '"saved": true, \n "success": true, \n "name": "1 attribute deleted.", \n "message": "1 attribute deleted.", \n "url": "/deleteSelected/{\event_id}", \n "id": "{\event_id}"'
+    event_id: str, body: AttributeDeleteSelectedBody, db: Session = Depends(get_db)
+) -> AttributeDeleteSelectedResponse:
+    return AttributeDeleteSelectedResponse(
+        saved=True,
+        success=True,
+        name="1 attribute deleted",
+        message="1 attribute deleted",
+        url="/attributes/deleteSelected/{\event_id}",
+        id="{\event_id}",
+    )
 
 
 @router.post("/restore/{attribute_id}")
-async def attributes_restore(db: Session = Depends(get_db)) -> str:
-    return str
+async def attributes_restore(
+    attribute_id: str, db: Session = Depends(get_db)
+) -> AttributeRestoreResponse:
+    return AttributeRestoreResponse(id="")
 
 
 @router.post(
     "/addTag/{attribute_id}/{tag_id}/local:{local}",
 )
-async def attributes_addTag(db: Session = Depends(get_db)) -> str:
-    return '"saved": true, \n "success": "Tag added.", \n "check_publish": true'
+async def attributes_addTag(
+    attribute_id: str, tag_id: str, local: int, db: Session = Depends(get_db)
+) -> AttributeTagResponse:
+    return AttributeTagResponse(
+        saved=True,
+        success="Tag added",
+        check_publish=True,
+        errors="Tag could not be added.",
+    )
 
 
 @router.post("/removeTag/{attribute_id}/{tag_id}")
-async def attributes_removeTag(db: Session = Depends(get_db)) -> str:
-    return '"saved": true, \n "success": "Tag removed.", \n "check_publish": true'
+async def attributes_removeTag(
+    attribute_id: str, tag_id: str, db: Session = Depends(get_db)
+) -> AttributeTagResponse:
+    return AttributeTagResponse(
+        saved=True,
+        success="Tag added",
+        check_publish=True,
+        errors="Tag could not be added.",
+    )
 
 
 # -- Put
 
 
-@router.put("/edit/{attribute_id}")
-@router.put("/{attribute_id}")
+@router.put("/edit/{attribute_id}", deprecated=True)  # deprecated
+@router.put("/{attribute_id}")  # new
 async def attributes_put(
-    category: str,
-    value: str,
-    to_ids: bool,
-    distribution: str,
-    comment: str,
-    disable_correlation: bool,
+    attribute_id: str,
+    body: AttributeEditBody,
     db: Session = Depends(get_db),
-) -> str:
-    return str
+) -> AttributeEditResponse:
+    return AttributeEditResponse(id="")

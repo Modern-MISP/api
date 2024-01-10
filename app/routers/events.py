@@ -10,7 +10,7 @@ from ..models.galaxy import Galaxy
 from ..models.object import Object
 from ..models.tag import Tag
 from app.schemas.attributes.attribute_schema import AttributeSchema
-from schemas.event_schema import EventSchema
+from app.schemas.events.event_schema import EventSchema
 
 
 router = APIRouter(prefix="/events", tags=["events"])
@@ -46,24 +46,20 @@ async def events_getById(db: Session = Depends(get_db)) -> Event:
 @router.post("/restSearch", response_model=List[EventSchema])
 async def events_restSearch(db: Session = Depends(get_db)) -> List[Event]:
     return Attribute, Event, EventReport, Object, Tag
-    """
-    return {
-        Events(),
-        attributes.Attributes(),
-        EventReport.EventReport(),
-        objects.Objects(),
-        tags.Tags(),
-    } - {Events.sighting_timestamp, tags.org_id, tags.inherited}
-    """
+    # return {
+    #     Events(),
+    #     attributes.Attributes(),
+    #     EventReport.EventReport(),
+    #     objects.Objects(),
+    #     tags.Tags(),
+    # } - {Events.sighting_timestamp, tags.org_id, tags.inherited}
 
 
 @router.post("/add", response_model=EventSchema)
 @router.post("/", response_model=EventSchema)
 async def events_post(db: Session = Depends(get_db)) -> Event:
     return Event
-    """
-    return {Events, organisations.local} - {Events.sighting_timestamp}
-    """
+    # return {Events, organisations.local} - {Events.sighting_timestamp}
 
 
 @router.post("/index", response_model=List[EventSchema])
@@ -104,12 +100,10 @@ async def events_freeTextImport(value: str, db: Session = Depends(get_db)) -> At
 @router.put("/{eventId}", response_model=EventSchema)
 async def events_put(db: Session = Depends(get_db)) -> Event:
     return ShadowAttribute, Event, Galaxy, Object, Tag
-    """
-    return {
-        Events,
-        galaxies.Galaxies,
-        attributes.ShadowAttribute,
-        object.ObjectReference,
-        tags.Tags,
-    }
-    """
+    # return {
+    #     Events,
+    #     galaxies.Galaxies,
+    #     attributes.ShadowAttribute,
+    #     object.ObjectReference,
+    #     tags.Tags,
+    # }
