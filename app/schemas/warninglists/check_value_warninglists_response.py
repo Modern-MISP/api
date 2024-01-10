@@ -1,8 +1,10 @@
 from pydantic import BaseModel
 
+
 class NameWarninglist(BaseModel):
-    id: str
+    id: int
     name: str
+
 
 class CheckValueWarninglistsResponse(BaseModel):
     response: str
