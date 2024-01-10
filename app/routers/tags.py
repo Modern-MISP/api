@@ -8,7 +8,7 @@ from ..schemas.tags.delete_tag_response import TagDeleteResponse
 from ..schemas.tags.get_tag_response import TagAttributesResponse, TagGetResponse
 from ..schemas.tags.search_tags_response import TagSearchResponse
 
-router = APIRouter(prefix="/tags")
+router = APIRouter(prefix="/tags", tags=["tags"])
 
 
 @router.get("/")
