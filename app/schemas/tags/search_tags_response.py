@@ -1,0 +1,37 @@
+from pydantic import BaseModel
+
+from .get_tag_response import TagAttributesResponse
+
+
+class Taxonomy(BaseModel):
+    id: str
+    namespace: str
+    description: str
+    version: str
+    enabled: bool
+    exclusive: bool
+    required: bool
+
+
+class TaxonomyPredicate(BaseModel):
+    id: str
+    taxonomy_id: str
+    value: str
+    expanded: str
+    colour: str
+    description: str
+    exclusive: bool
+    numerical_value: int
+
+
+class CombinedModel(BaseModel):
+    Tag: TagAttributesResponse
+    Taxonomy: Taxonomy  # TODO: Import from schemas/taxonomie directly
+    TaxonomyPredicate: TaxonomyPredicate  # TODO: Import from schemas/taxonomie directly
+
+
+class TagSearchResponse(BaseModel):
+    root: list[CombinedModel]
+
+    class Config:
+        orm_mode = True
