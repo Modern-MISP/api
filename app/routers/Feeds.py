@@ -1,11 +1,8 @@
-from typing import List
-
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from ..database import get_db
-
 # from ..models.feed import Feed
+from ..database import get_db
 from ..schemas.feeds.cache_feed_response import FeedCacheResponse
 from ..schemas.feeds.create_update_feed_body import FeedCreateAndUpdateBody
 from ..schemas.feeds.enable_disable_feed_response import FeedEnableDisableResponse
@@ -18,7 +15,7 @@ router = APIRouter(prefix="/feeds", tags=["feeds"])
 
 
 @router.get("/")
-async def get_feeds(db: Session = Depends(get_db)) -> List[FeedsResponse]:
+async def get_feeds(db: Session = Depends(get_db)) -> list[FeedsResponse]:
     return []
 
     # try:
