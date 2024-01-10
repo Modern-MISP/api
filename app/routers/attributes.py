@@ -4,38 +4,90 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..models.attribute import Attribute
-from ..schemas.attribute_schema import (
-    AttributeSchema,
-    AttributeRestSearchSchema,
-    AttributeAddSchema,
-    AttributeEditSchema,
-    AttributeDeleteSchema,
-    AttributeDeleteSelectedSchema,
-    AttributeTagSchema,
-    AttributeGetByIdSchema,
+from ..models.event import Event
+from ..models.object import Object
+from ..models.tag import Tag
+from ..schemas.attributes.attribute_schema import AttributeSchema
+from ..schemas.attributes.delete_attribute_response import AttributeDeleteResponse
+from ..schemas.attributes.get_all_attributes_response import AttributesResponse
+from ..schemas.attributes.get_attribute_response import AttributeResponse
+from ..schemas.attributes.get_attribute_statistics_response import (
+    AttributeStatisticsResponse,
 )
+from ..schemas.attributes.get_describe_types_response import DescribeTypesResponse
 
-# from . import events, objects, tags
-
-router = APIRouter(prefix="/attributes")
+router = APIRouter(prefix="/attributes", tags=["attributes"])
 
 
-@router.post("/restSearch", response_model=List[AttributeRestSearchSchema])
-async def attributes_reastSearch(db: Session = Depends(get_db)) -> List[Attribute]:
-    pass
+# -- Delete
+
+
+@router.delete("/delete/{attribute_id}", deprecated=True)  # deprecated
+@router.delete("/{attributeID}")  # new
+async def attributes_delete() -> AttributeDeleteResponse:
+    return AttributeDeleteResponse(message="Attribute deleted.")
+
+
+# -- Get
+
+
+@router.get("/attributes")
+async def attributes_get(db: Session = Depends(get_db)) -> AttributesResponse:
+    return AttributesResponse(attribute=[])
     """
-        {Attributes(), events.Events(), objects.Objects(), tags.Tags()} - {
-        Attributes.value1,
-        Attributes.value2,
-        Attributes.event_uuid,
-        Attributes.attributeTag,
-    }
+    try:
+        attributes = db.query(Attribute).all()
+        return attributes
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
     """
 
 
-@router.post("/add/{eventId}", response_model=AttributeAddSchema)
-@router.post("/{eventId}", response_model=AttributeAddSchema)
+@router.get("/view/{attribute_id}", deprecated=True)  # deprecated
+@router.get("/{attribute_id}")  # new
+async def attributes_getById(
+    attribute_id: str,
+    db: Session = Depends(get_db),
+) -> AttributeResponse:
+    return AttributeResponse(Tag=[])
+    """
+    attribute = (
+        db.query(AttributeGetById).filter(AttributeGetById.id == attribute_id).first()
+    )
+    if attribute is None:
+        raise HTTPException(status_code=404, detail="Feed not found")
+    return attribute
+    """
+
+
+@router.get("/attributeStatistics/{context}/{percentage}")
+async def attributes_statistics(
+    context: str, percentage: int, db: Session = Depends(get_db)
+) -> AttributeStatisticsResponse:
+    return (
+        '"[Type/Category]": "[Count/Percentage of attributes with this type/category]"'
+    )
+
+
+@router.get("/describeTypes")
+async def attributes_describeTypes(
+    db: Session = Depends(get_db),
+) -> DescribeTypesResponse:
+    return "[List all attribute categories and types]"
+
+
+# -- Post
+
+
+@router.post("/restSearch")
+async def attributes_reastSearch(
+    db: Session = Depends(get_db),
+) -> List[str]:
+    return str, Event, Object, Tag
+
+
+@router.post("/add/{event_id}")
+@router.post("/{event_id}")
 async def attributes_post(
     value: str,
     type: str,
@@ -44,16 +96,49 @@ async def attributes_post(
     distribution: str,
     comment: str,
     disable_correlation: bool,
+    attribute_data: AttributeSchema,
     db: Session = Depends(get_db),
-) -> Attribute:
-    pass
+) -> str:
+    return str
+
     """
-    return {Attributes} - {Attributes.event_uuid}
+    new_attribute = Attribute(**attribute_data.model_dump())
+    db.add(new_attribute)
+    db.commit()
+    db.refresh(new_attribute)
+    return new_attribute
     """
 
 
-@router.put("/edit/{attributeId}", response_model=AttributeEditSchema)
-@router.put("/{attributeId}", response_model=AttributeEditSchema)
+@router.post("/deleteSelected/{event_id}")
+async def attributes_deleteSelected(
+    id: str, event_id: str, allow_hard_delete: bool, db: Session = Depends(get_db)
+) -> str:
+    return '"saved": true, \n "success": true, \n "name": "1 attribute deleted.", \n "message": "1 attribute deleted.", \n "url": "/deleteSelected/{\event_id}", \n "id": "{\event_id}"'
+
+
+@router.post("/restore/{attribute_id}")
+async def attributes_restore(db: Session = Depends(get_db)) -> str:
+    return str
+
+
+@router.post(
+    "/addTag/{attribute_id}/{tag_id}/local:{local}",
+)
+async def attributes_addTag(db: Session = Depends(get_db)) -> str:
+    return '"saved": true, \n "success": "Tag added.", \n "check_publish": true'
+
+
+@router.post("/removeTag/{attribute_id}/{tag_id}")
+async def attributes_removeTag(db: Session = Depends(get_db)) -> str:
+    return '"saved": true, \n "success": "Tag removed.", \n "check_publish": true'
+
+
+# -- Put
+
+
+@router.put("/edit/{attribute_id}")
+@router.put("/{attribute_id}")
 async def attributes_put(
     category: str,
     value: str,
@@ -62,98 +147,5 @@ async def attributes_put(
     comment: str,
     disable_correlation: bool,
     db: Session = Depends(get_db),
-) -> Attribute:
-    pass
-    """
-    return {Attributes} - {Attributes.attributeTag}
-    """
-
-
-@router.delete("/delete/{attributeId}", response_model=AttributeDeleteSchema)
-@router.delete("/{attributeID}", response_model=AttributeDeleteSchema)
-async def attributes_delete() -> str:
-    pass
-    """
-    return "message: Attribute deleted."
-    """
-
-
-@router.post("/deleteSelected/{event_id}", response_model=AttributeDeleteSelectedSchema)
-async def attributes_deleteSelected(
-    id: str, event_id: str, allow_hard_delete: bool, db: Session = Depends(get_db)
 ) -> str:
-    pass
-    """
-    return (
-        '"saved": true,'
-        + '"success": true,'
-        + '"name": "1 attribute deleted.",'
-        + '"message": "1 attribute deleted.",'
-        + '"url": "/deleteSelected/{event_id}",'
-        + '"id": "{event_id}"'
-    )
-    """
-
-
-@router.post("/restore/{attributeId}", response_model=AttributeEditSchema)
-async def attributes_restore(db: Session = Depends(get_db)) -> Attribute:
-    pass
-    """
-    return {Attributes} - {Attributes.attributeTag}
-    """
-
-
-@router.post(
-    "/addTag/{attributeId}/{tagId}/local:{local}", response_model=AttributeTagSchema
-)
-async def attributes_addTag(db: Session = Depends(get_db)) -> str:
-    pass
-    """
-    return '"saved": true,' + '"success": "Tag added.",' + '"check_publish": true'
-    """
-
-
-@router.post("/removeTag/{attributeId}/{tagId}", response_model=AttributeTagSchema)
-async def attributes_removeTag(db: Session = Depends(get_db)) -> str:
-    pass
-    """
-    return '"saved": true,' + '"success": "Tag removed.",' + '"check_publish": true'
-    """
-
-
-@router.get("/attributes", response_model=AttributeSchema)
-async def attributes_get(db: Session = Depends(get_db)) -> Attribute:
-    pass
-    """
-    return {Attributes} - {Attributes.event_uuid, Attributes.attributeTag}
-    """
-
-
-@router.get("/view/{attributeId}", response_model=AttributeGetByIdSchema)
-@router.get("/{attributeId}", response_model=AttributeGetByIdSchema)
-async def attributes_getById(
-    attributeId: str,
-    db: Session = Depends(get_db),
-) -> Attribute:
-    pass
-    """
-    return {Attributes} - {Attributes.value1, Attributes.value2}
-    """
-
-
-@router.get("/attributeStatistics/{context}/{percentage}", response_model=str)
-async def attributes_statistics(db: Session = Depends(get_db)) -> str:
-    pass
-    """
-    return (
-        '"[Type/Category]": "[Count/Percentage of attributes with this type/category]"'
-    )
-    """
-
-
-@router.get("/describeTypes", response_model=str)
-async def attributes_describeTypes(db: Session = Depends(get_db)) -> str:
-    pass
-    """
-    return "[List all attribute categories and types]"
-    """
+    return str
