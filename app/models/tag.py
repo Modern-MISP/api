@@ -1,10 +1,12 @@
-from sqlalchemy import Boolean, Column, Integer, String
+from sqlalchemy import Boolean, Column, Integer, String, ForeignKey
+from sqlalchemy.orm import relationship
 
 from ..database import Base
 
 
 class Tag(Base):
     __tablename__ = "tags"
+
     id = Column(String, primary_key=True)
     name = Column(String)
     colour = Column(String)
@@ -15,11 +17,15 @@ class Tag(Base):
     numerical_value = Column(String)
     is_galaxy = Column(Boolean)
     is_custom_galaxy = Column(Boolean)
-    inherited = Column(Integer)
+    attribute_count = Column(Integer)  # new
+    count = Column(Integer)  # new
+    favourite = Column(Boolean)  # new
+    local_only = Column(Boolean)  # new
 
 
 class Taxonomy(Base):
-    __tablename__ = "tags_schema"
+    __tablename__ = "taxonomies"
+
     id = Column(String, primary_key=True)
     namespace = Column(String)
     description = Column(String)
@@ -28,28 +34,17 @@ class Taxonomy(Base):
     exclusive = Column(Boolean)
     required = Column(Boolean)
 
+    predicates = relationship("TaxonomyPredicate", backref="taxonomy")
+
 
 class TaxonomyPredicate(Base):
-    __tablename__ = "predicate_feed"
+    __tablename__ = "taxonomy_predicates"
+
     id = Column(String, primary_key=True)
-    taxonomy_id = Column(String)
+    taxonomy_id = Column(String, ForeignKey("taxonomies.id"))
     value = Column(String)
     expanded = Column(String)
     colour = Column(String)
     description = Column(String)
     exclusive = Column(Boolean)
     numerical_value = Column(Integer)
-
-
-class TagDelete(Base):
-    __tablename__ = "delete_feed"
-    name = Column(String, primary_key=True)
-    message = Column(String)
-    url = Column(String)
-
-
-class TagSearch(Base):
-    __tablename__ = "search_feeds"
-    Tag: Tag
-    Taxonomy: Taxonomy
-    TaxonomyPredicate: TaxonomyPredicate
