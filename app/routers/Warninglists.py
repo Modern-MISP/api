@@ -43,10 +43,14 @@ async def get_all_warninglists() -> GetSelectedAllWarninglistsResponse:
 
 
 @router.post("/warninglists/")
-@router.get("/warninglists?value=String&enabled=boolean")
 async def search_warninglists(
     body: GetSelectedWarninglistsBody,
 ) -> GetSelectedAllWarninglistsResponse:
+    return None
+
+
+@router.get("/warninglists?value=String&enabled=boolean")
+async def get_warninglists_by_param() -> GetSelectedAllWarninglistsResponse:
     return None
 
 
@@ -61,6 +65,13 @@ async def post_toggleEnable(
 @router.get("/warningslists/{warninglistId}")
 async def view_warninglist(id: int) -> Warninglist:
     return Warninglist()
+
+
+@router.post("/warninglists/checkValue")
+async def get_warninglists_by_value(
+    body: CheckValueWarninglistsBody,
+) -> CheckValueWarninglistsResponse:
+    return CheckValueWarninglistsResponse()
 
 
 @router.post("/warninglists/update")
