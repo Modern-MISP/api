@@ -18,7 +18,7 @@ from ..schemas.attribute_schema import (
 
 # from . import events, objects, tags
 
-router = APIRouter(prefix="/attributes", tags=["attributes"])
+router = APIRouter(prefix="/attributes")
 
 
 @router.post("/restSearch", response_model=List[AttributeRestSearchSchema])
