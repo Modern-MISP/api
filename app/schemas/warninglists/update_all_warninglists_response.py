@@ -1,10 +1,8 @@
 from pydantic import BaseModel
 
-
-class DeleteSharingGroupLegacyOut(BaseModel):
+class UpdateAllWarninglistsResponse(BaseModel):
     saved: bool
     success: bool
-    id: str
     name: str
     message: str
     url: str

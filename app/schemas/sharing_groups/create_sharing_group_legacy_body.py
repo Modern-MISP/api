@@ -2,7 +2,7 @@ from datetime import datetime
 from pydantic import Field, BaseModel
 
 
-class CreateSharingGroupLegacyIn(BaseModel):
+class CreateSharingGroupLegacyBody(BaseModel):
     uuid: str | None = Field(default=None, max_length=36)
     name: str = Field(max_length=255)
     description: str | None = Field(default=None, max_length=65535)
