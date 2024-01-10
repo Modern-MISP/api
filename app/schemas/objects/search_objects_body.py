@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 
-class ModelSearchOverrides(BaseModel):
+class ModelSearchOverridesBody(BaseModel):
     lifetime: int
     decay_speed: float
     threshold: int
@@ -62,7 +62,7 @@ class ObjectSearchBody(BaseModel):
     attackGalaxy: str
     excludeDecayed: bool
     decayingModel: str
-    modelOverrides: ModelSearchOverrides
+    modelOverrides: ModelSearchOverridesBody
     score: str
     returnFormat: str
 
