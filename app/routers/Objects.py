@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends  # , HTTPException
 from sqlalchemy.orm import Session
 
+# from ..models.object import Object
 from ..database import get_db
 from ..schemas.objects.create_object_body import ObjectCreateBody
 from ..schemas.objects.delete_object_response import ObjectDeleteResponse
@@ -9,8 +10,6 @@ from ..schemas.objects.get_object_response import (
     ObjectResponse,
     ObjectWithAttributesAndEventSearchResponse,
 )
-
-# from ..models.object import Object
 from ..schemas.objects.search_objects_body import ObjectSearchBody
 from ..schemas.objects.search_objects_response import (
     ObjectSearchResponse,
