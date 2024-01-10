@@ -7,7 +7,7 @@ from ..database import get_db
 from ..models.galaxy import Galaxy
 from ..schemas.galaxy_schema import GalaxySchema
 
-router = APIRouter(prefix="/galaxies", tags=["galaxies"])
+router = APIRouter(prefix="/galaxies")
 
 
 @router.get("", response_model=List[GalaxySchema])
