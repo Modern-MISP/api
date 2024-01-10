@@ -6,9 +6,9 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 
 # from ..models.sighting import Sighting
-from ..schemas.sighting_schema import SightingDeleteSchema, SightingSchema
+from ..schemas.sightings.sighting_schema import SightingDeleteSchema, SightingSchema
 
-router = APIRouter(prefix="/sightings")
+router = APIRouter(prefix="/sightings", tags=["sightings"])
 
 
 @router.get("/", response_model=List[SightingSchema])

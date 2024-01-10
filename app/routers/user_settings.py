@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter
 
-from ..schemas.user_setting_schema import UserSettings
+from app.schemas.user_setting.user_setting_schema import UserSettings
 
-router = APIRouter(prefix="/user_settings")
+router = APIRouter(prefix="/user_settings", tags=["user_settings"])
 
 
 # Returns all User Settings
@@ -37,5 +37,6 @@ async def get_auth_key_by_id() -> UserSettings():
 
 # Delete AuthKey by ID
 @router.delete("/{userSettingsId")
+@router.delete("/delete/{userSettingsId", deprecated=True)  # Deprecated
 async def delete_user_settings() -> UserSettings():
     return {"saved": bool, "success": bool, "name": str, "message": str, "url": str}

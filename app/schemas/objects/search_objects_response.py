@@ -1,16 +1,16 @@
-from typing import List
-
 from pydantic import BaseModel
 
 
-class AttributeSchema(BaseModel):
+class ObjectAttributesResponse(BaseModel):
     id: str
     event_id: str
     object_id: str
     object_relation: str
     category: str
     type: str
-    value: str
+    value: str  # omitted
+    value1: str  # new
+    value2: str  # new
     to_ids: bool
     uuid: str
     timestamp: str
@@ -23,7 +23,7 @@ class AttributeSchema(BaseModel):
     last_seen: str
 
 
-class ObjectSchema(BaseModel):
+class ObjectWithAttributesSearchResponse(BaseModel):
     id: str
     name: str
     meta_category: str
@@ -39,25 +39,15 @@ class ObjectSchema(BaseModel):
     deleted: bool
     first_seen: str
     last_seen: str
-    Attribute: List[AttributeSchema]
-
-    class Config:
-        orm_mode = True
+    attributes: list[ObjectAttributesResponse]
 
 
-class ResponseSchema(BaseModel):
-    Object: ObjectSchema
-
-    class Config:
-        orm_mode = True
+class ObjectResponse(BaseModel):
+    object: ObjectWithAttributesSearchResponse
 
 
-class ObjectDeleteSchema(BaseModel):
-    saved: str
-    success: str
-    name: str
-    message: str
-    url: str
+class ObjectSearchResponse(BaseModel):
+    response: list[ObjectResponse]
 
     class Config:
         orm_mode = True
