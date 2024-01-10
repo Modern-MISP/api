@@ -1,32 +1,51 @@
 from fastapi import APIRouter
 
-from app.schemas.sharing_groups.create_sharing_group_legacy_in import (
-    CreateSharingGroupLegacyIn,
+from app.schemas.sharing_groups.create_sharing_group_legacy_body import (
+    CreateSharingGroupLegacyBody,
 )
-from app.schemas.sharing_groups.create_sharing_group_legacy_out import (
-    CreateSharingGroupLegacyOut,
+from app.schemas.sharing_groups.create_sharing_group_legacy_response import (
+    CreateSharingGroupLegacyResponse,
 )
-from app.schemas.sharing_groups.create_update_sharing_group_in import (
-    CreateUpdateSharingGroupIn,
+from app.schemas.sharing_groups.create_update_sharing_group_body import (
+    CreateUpdateSharingGroupBody,
 )
-from app.schemas.sharing_groups.delete_sharing_group_legacy_out import (
-    DeleteSharingGroupLegacyOut,
+from app.schemas.sharing_groups.delete_sharing_group_legacy_response import (
+    DeleteSharingGroupLegacyResponse,
 )
 from app.schemas.sharing_groups.sharing_group import SharingGroup
-from app.schemas.sharing_groups.update_sharing_group_legacy_in import (
-    UpdateSharingGroupLegacyIn,
+from app.schemas.sharing_groups.update_sharing_group_legacy_body import (
+    UpdateSharingGroupLegacyBody,
 )
-from app.schemas.sharing_groups.view_sharing_group_legacy_out import (
-    ViewSharingGroupLegacyOut,
+from app.schemas.sharing_groups.view_sharing_group_legacy_response import (
+    ViewSharingGroupLegacyResponse,
 )
-from app.schemas.sharing_groups.get_all_sharing_groups_out import GetAllSharingGroupsOut
-from app.schemas.sharing_groups.get_sharing_group_info_out import GetSharingGroupInfoOut
+from app.schemas.sharing_groups.get_all_sharing_groups_response import (
+    GetAllSharingGroupsResponse,
+)
+from app.schemas.sharing_groups.get_sharing_group_info_response import (
+    GetSharingGroupInfoResponse,
+)
+from app.schemas.sharing_groups.add_org_to_sharing_group_legacy_body import (
+    AddOrgToSharingGroupLegacyBody,
+)
+from app.schemas.sharing_groups.add_org_to_sharing_group_body import (
+    AddOrgToSharingGroupBody,
+)
+from app.schemas.sharing_groups.sharing_group_org import SharingGroupOrg
+from app.schemas.standard_status_response import StandardStatusResponse
+from app.schemas.sharing_groups.add_server_to_sharing_group_legacy_body import (
+    AddServerToSharingGroupLegacyBody,
+)
+from app.schemas.sharing_groups.add_server_to_sharing_group_body import (
+    AddServerToSharingGroupBody,
+)
+from app.schemas.sharing_groups.sharing_group_server import SharingGroupServer
 
 router = APIRouter(tags=["sharing_groups"])
 
 
 @router.post("/sharing_groups", status_code=201)
-async def create_sharing_group(body: CreateUpdateSharingGroupIn) -> SharingGroup:
+async def create_sharing_group(body: CreateUpdateSharingGroupBody) -> SharingGroup:
     return SharingGroup()
 
 
@@ -37,7 +56,8 @@ async def get_sharing_group(id: str) -> SharingGroup:
 
 @router.put("/sharing_groups/{id}")
 async def update_sharing_group(
-    id: str, body: CreateUpdateSharingGroupIn
+    id: str,
+    body: CreateUpdateSharingGroupBody,
 ) -> SharingGroup:
     return SharingGroup()
 
@@ -48,13 +68,45 @@ async def delete_sharing_group(id: str) -> SharingGroup:
 
 
 @router.get("/sharing_groups")
-async def get_all_sharing_groups() -> GetAllSharingGroupsOut:
+async def get_all_sharing_groups() -> GetAllSharingGroupsResponse:
     return None
 
 
 @router.get("/sharing_groups/{id}/info")
-async def get_sharing_group_info(id: str) -> GetSharingGroupInfoOut:
-    return GetSharingGroupInfoOut()
+async def get_sharing_group_info(id: str) -> GetSharingGroupInfoResponse:
+    return GetSharingGroupInfoResponse()
+
+
+@router.patch("/sharing_groups/{id}/organizations")
+async def add_org_to_sharing_group(
+    id: str,
+    body: AddOrgToSharingGroupBody,
+) -> SharingGroupOrg:
+    return SharingGroupOrg()
+
+
+@router.delete("/sharing_groups/{id}/organizations/{organisationId}")
+async def remove_org_from_sharing_group(
+    id: str,
+    organisationId: str,
+) -> SharingGroupOrg:
+    return SharingGroupOrg()
+
+
+@router.patch("/sharing_groups/{id}/servers")
+async def add_server_to_sharing_group(
+    id: str,
+    body: AddServerToSharingGroupBody,
+) -> SharingGroupServer:
+    return SharingGroupServer()
+
+
+@router.delete("/sharing_groups/{id}/servers/{serverId}")
+async def remove_server_from_sharing_group(
+    id: str,
+    serverId: str,
+) -> SharingGroupServer:
+    return SharingGroupServer()
 
 
 # --- deprecated ---
@@ -62,20 +114,22 @@ async def get_sharing_group_info(id: str) -> GetSharingGroupInfoOut:
 
 @router.post("/sharing_groups/add", deprecated=True, status_code=201)
 async def create_sharing_group_legacy(
-    body: CreateSharingGroupLegacyIn,
-) -> CreateSharingGroupLegacyOut:
-    return CreateSharingGroupLegacyOut()
+    body: CreateSharingGroupLegacyBody,
+) -> CreateSharingGroupLegacyResponse:
+    return CreateSharingGroupLegacyResponse()
 
 
 @router.get("/sharing_groups/view/{sharingGroupId}", deprecated=True)
-async def view_sharing_group_legacy(sharingGroupId: str) -> ViewSharingGroupLegacyOut:
-    return ViewSharingGroupLegacyOut()
+async def view_sharing_group_legacy(
+    sharingGroupId: str,
+) -> ViewSharingGroupLegacyResponse:
+    return ViewSharingGroupLegacyResponse()
 
 
 @router.post("/sharing_groups/edit/{sharingGroupId}", deprecated=True)
 async def update_sharing_group_legacy(
     sharingGroupId: str,
-    body: UpdateSharingGroupLegacyIn,
+    body: UpdateSharingGroupLegacyBody,
 ) -> SharingGroup:
     return SharingGroup()
 
@@ -83,5 +137,51 @@ async def update_sharing_group_legacy(
 @router.delete("/sharing_groups/delete/{sharingGroupId}", deprecated=True)
 async def delete_sharing_group_legacy(
     sharingGroupId: str,
-) -> DeleteSharingGroupLegacyOut:
-    return DeleteSharingGroupLegacyOut()
+) -> DeleteSharingGroupLegacyResponse:
+    return DeleteSharingGroupLegacyResponse()
+
+
+@router.post(
+    "/sharing_groups/addOrg/{sharingGroupId}/{organisationId}",
+    deprecated=True,
+)
+async def add_org_to_sharing_group_legacy(
+    sharingGroupId: str,
+    organisationId: str,
+    body: AddOrgToSharingGroupLegacyBody,
+) -> StandardStatusResponse:
+    return StandardStatusResponse()
+
+
+@router.post(
+    "/sharing_groups/removeOrg/{sharingGroupId}/{organisationId}",
+    deprecated=True,
+)
+async def remove_org_from_sharing_group_legacy(
+    sharingGroupId: str,
+    organisationId: str,
+) -> StandardStatusResponse:
+    return StandardStatusResponse()
+
+
+@router.post(
+    "/sharing_groups/addServer/{sharingGroupId}/{serverId}",
+    deprecated=True,
+)
+async def add_server_to_sharing_group_legacy(
+    sharingGroupId: str,
+    serverId: str,
+    body: AddServerToSharingGroupLegacyBody,
+) -> StandardStatusResponse:
+    return StandardStatusResponse()
+
+
+@router.post(
+    "/sharing_groups/removeServer/{sharingGroupId}/{serverId}",
+    deprecated=True,
+)
+async def remove_server_from_sharing_group_legacy(
+    sharingGroupId: str,
+    serverId: str,
+) -> StandardStatusResponse:
+    return StandardStatusResponse()
