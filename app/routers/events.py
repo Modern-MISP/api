@@ -9,7 +9,7 @@ from ..database import get_db
 from ..models.attribute import Attribute
 from ..models.event import Event
 
-router = APIRouter(prefix="/events")
+router = APIRouter(prefix="/events", tags=["events"])
 
 
 # ObjectReference[] missing

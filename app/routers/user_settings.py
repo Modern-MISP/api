@@ -2,7 +2,7 @@ from fastapi import APIRouter
 
 from app.schemas.user_setting.user_setting_schema import UserSettings
 
-router = APIRouter(prefix="/user_settings")
+router = APIRouter(prefix="/user_settings", tags=["user_settings"])
 
 
 # Returns all User Settings
