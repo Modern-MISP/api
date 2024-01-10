@@ -1,5 +1,3 @@
-from typing import List
-
 from pydantic import BaseModel
 
 
@@ -7,6 +5,7 @@ class EventSchema(BaseModel):
     id: str
     org_id: str  # owner org
     distribution: str
+    info: str
     orgc_id: str  # creator org
     uuid: str
     date: str
@@ -24,7 +23,7 @@ class EventSchema(BaseModel):
     extends_uuid: str
     event_creator_email: str
     protected: str
-    chryprographicKey: List[str]
+    chryprographicKey: list[str]
 
     class Config:
         orm_mode = True
@@ -40,6 +39,29 @@ class EventReportSchema(BaseModel):
     sharing_group_id: str
     timestamp: str
     deleted: bool
+
+    class Config:
+        orm_mode = True
+
+
+class AttributeFreeTextImport(BaseModel):
+    comment: str
+    value: str
+    original_value: str
+    to_ids: str
+    type: str
+    category: str
+    distribution: str
+
+    class Config:
+        orm_mode = True
+
+
+class ShadowAttribute(BaseModel):
+    value: str
+    to_ids: bool
+    type: str
+    category: str
 
     class Config:
         orm_mode = True
