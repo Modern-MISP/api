@@ -28,9 +28,6 @@ class EventResponseForAttributeRestSearch:
     protected: str
     chryprographicKey: list[str]
 
-    class Config:
-        orm_mode = True
-
 
 class ObjectResponseForAttributeRestSearch(BaseModel):
     id: str

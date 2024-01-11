@@ -22,9 +22,6 @@ class AttributeAttributesResponse(BaseModel):
     first_seen: str
     last_seen: str
 
-    class Config:
-        orm_mode = True
-
 
 class AttributesResponse(BaseModel):
     attribute: list[AttributeAttributesResponse]

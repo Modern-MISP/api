@@ -110,3 +110,6 @@ class AttributeStatisticsResponse(BaseModel):
     x509_fingerprint_sha1: int
     x509_fingerprint_sha256: int
     yara: int
+
+    class Config:
+        orm_mode = True

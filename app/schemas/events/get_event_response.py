@@ -7,18 +7,12 @@ class OrgResponse(BaseModel):
     uuid: str
     local: bool
 
-    class Config:
-        orm_mode = True
-
 
 class ShadowAttribute(BaseModel):
     value: str
     to_ids: bool
     type: str
     category: str
-
-    class Config:
-        orm_mode = True
 
 
 class EventReportResponse(BaseModel):
@@ -31,9 +25,6 @@ class EventReportResponse(BaseModel):
     sharing_group_id: str
     timestamp: str
     deleted: bool
-
-    class Config:
-        orm_mode = True
 
 
 class EventResponse(BaseModel):

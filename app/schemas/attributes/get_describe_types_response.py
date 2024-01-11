@@ -5,9 +5,6 @@ class SaneDefaultsAttributesDetailsResponse(BaseModel):
     default_category: str
     to_ids: int
 
-    class Config:
-        orm_mode = True
-
 
 class SaneDefaultsAttributesResponse(BaseModel):
     md5: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
@@ -327,15 +324,9 @@ class SaneDefaultsAttributesResponse(BaseModel):
     boolean: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
     anonymised: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
 
-    class Config:
-        orm_mode = True
-
 
 class SaneDefaultsResponse(BaseModel):
     sane_defaults: str
-
-    class Config:
-        orm_mode = True
 
 
 class TypesResponse(BaseModel):
@@ -530,9 +521,6 @@ class TypesResponse(BaseModel):
         "anonymised",
     ]
 
-    class Config:
-        orm_mode = True
-
 
 class CategoriesResponse(BaseModel):
     categories: list[str] = [
@@ -553,9 +541,6 @@ class CategoriesResponse(BaseModel):
         "Person",
         "Other",
     ]
-
-    class Config:
-        orm_mode = True
 
 
 class CategoryTypeMappingsResponse(BaseModel):
@@ -1063,18 +1048,12 @@ class CategoryTypeMappingsResponse(BaseModel):
         "pgp-private-key",
     ]
 
-    class Config:
-        orm_mode = True
-
 
 class DescribeTypesAttributesResponse(BaseModel):
     sane_defaults: SaneDefaultsResponse
     types: TypesResponse
     categories: CategoriesResponse
     category_type_mappings: CategoryTypeMappingsResponse
-
-    class Config:
-        orm_mode = True
 
 
 class DescribeTypesResponse(BaseModel):

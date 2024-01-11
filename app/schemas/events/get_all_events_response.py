@@ -6,24 +6,15 @@ class OrgResponse(BaseModel):
     name: str
     uuid: str
 
-    class Config:
-        orm_mode = True
-
 
 class GalaxyClusterMetaResponse(BaseModel):
     date: list[str]
     kill_chain: list[str]
     refs: list[str]
 
-    class Config:
-        orm_mode = True
-
 
 class GalaxyClusterGalaxyKillChainOrderResponse(BaseModel):
     example_of_threats: list[str]
-
-    class Config:
-        orm_mode = True
 
 
 class GalaxyClusterGalaxyResponse(BaseModel):
@@ -38,9 +29,6 @@ class GalaxyClusterGalaxyResponse(BaseModel):
     enabled: bool
     local_only: bool
     kill_chain_order: GalaxyClusterGalaxyKillChainOrderResponse
-
-    class Config:
-        orm_mode = True
 
 
 class GalaxyClusterResponse(BaseModel):
@@ -70,18 +58,12 @@ class GalaxyClusterResponse(BaseModel):
     local: bool
     relationship_type: str
 
-    class Config:
-        orm_mode = True
-
 
 class EventTagTagResponse(BaseModel):
     id: str
     name: str
     colour: str
     is_galaxy: bool
-
-    class Config:
-        orm_mode = True
 
 
 class EventTagResponse(BaseModel):
@@ -91,9 +73,6 @@ class EventTagResponse(BaseModel):
     local: bool
     relationship_type: str
     Tag: list[EventTagTagResponse]
-
-    class Config:
-        orm_mode = True
 
 
 class EventsAttributesResponse(BaseModel):
@@ -122,9 +101,6 @@ class EventsAttributesResponse(BaseModel):
     Orgc: OrgResponse
     GalaxyCluster: list[GalaxyClusterResponse]
     EventTag: list[EventTagResponse]
-
-    class Config:
-        orm_mode = True
 
 
 class EventsResponse(BaseModel):

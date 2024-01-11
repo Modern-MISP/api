@@ -13,9 +13,6 @@ class EventReportResponse(BaseModel):
     timestamp: str
     deleted: bool
 
-    class Config:
-        orm_mode = True
-
 
 class EventsAttributesResponse(BaseModel):
     id: str

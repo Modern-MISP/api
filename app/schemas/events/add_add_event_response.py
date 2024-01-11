@@ -33,9 +33,6 @@ class EventAttributesResponse(BaseModel):
     EventReport: []
     CryptographicKey: []
 
-    class Config:
-        orm_mode: True
-
 
 class EventAddOrEditResponse(BaseModel):
     Event: EventAttributesResponse

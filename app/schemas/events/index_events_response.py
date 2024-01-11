@@ -28,9 +28,6 @@ class EventsAttributesResponse(BaseModel):
     GalaxyCluster: []
     EventTag: []
 
-    class Config:
-        orm_mode: True
-
 
 class EventsIndexResponse(BaseModel):
     events: list[EventsAttributesResponse]

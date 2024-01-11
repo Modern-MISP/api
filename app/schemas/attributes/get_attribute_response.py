@@ -9,9 +9,6 @@ class AttributeTagResponse(BaseModel):
     is_galaxy: bool
     local: bool
 
-    class Config:
-        orm_mode = True
-
 
 class AttributeResponse(BaseModel):
     id: str

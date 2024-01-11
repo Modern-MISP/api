@@ -13,9 +13,6 @@ class AttributeTagResponse(BaseModel):
     is_costum_galaxy: bool
     local_only: bool
 
-    class Config:
-        orm_mode = True
-
 
 class AttributeEditResponse(BaseModel):
     id: str
