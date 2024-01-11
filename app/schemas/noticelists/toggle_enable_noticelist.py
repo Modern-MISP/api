@@ -1,4 +1,5 @@
-from pydantic import Field, BaseModel
+from pydantic import BaseModel
+
 
 class ToggleEnableNoticelist(BaseModel):
     saved: bool
@@ -7,3 +8,6 @@ class ToggleEnableNoticelist(BaseModel):
     message: str
     url: str
     id: int
+
+    class Config:
+        orm_mode = True

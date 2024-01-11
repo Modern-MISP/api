@@ -1,4 +1,5 @@
-from pydantic import Field, BaseModel
+from pydantic import BaseModel
+
 
 class UpdateNoticelist(BaseModel):
     saved: bool
@@ -6,3 +7,6 @@ class UpdateNoticelist(BaseModel):
     name: str
     message: str
     url: str
+
+    class Config:
+        orm_mode = True

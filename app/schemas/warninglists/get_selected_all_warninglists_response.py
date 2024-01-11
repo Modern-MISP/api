@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 
-from .warninglists import Warninglist, Type, Category
+from .warninglists import Type, Category
 
 
 class GetSelectedAllWarninglists(BaseModel):
@@ -18,3 +18,6 @@ class GetSelectedAllWarninglists(BaseModel):
 
 class GetSelectedAllWarninglistsResponse(BaseModel):
     response: list[GetSelectedAllWarninglists]
+
+    class Config:
+        orm_mode = True
