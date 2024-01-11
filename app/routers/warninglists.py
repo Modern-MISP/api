@@ -70,7 +70,7 @@ async def get_warninglists_by_param() -> GetSelectedAllWarninglistsResponse:
 @router.get(
     "/warninglists/toggleEnable",
     summary="Disable/Enable warninglist",
-    description="Disable/Enable a specific warninglist by its ID.",
+    description="Disable/Enable a specific warninglist by its ID or name.",
 )
 async def post_toggleEnable(
     body: ToggleEnableWarninglistsBody,
@@ -93,24 +93,45 @@ async def view_warninglist(id: int) -> Warninglist:
     return Warninglist()
 
 
-@router.post("/warninglists/checkValue")
+@router.post(
+    "/warninglists/checkValue",
+    summary="Get a list of ID and name of warninglists",
+    description="Retrieve a list of ID and name of warninglists, which match has the given search term as Entry.",
+)
 async def get_warninglists_by_value(
     body: CheckValueWarninglistsBody,
 ) -> CheckValueWarninglistsResponse:
     return CheckValueWarninglistsResponse()
 
 
-@router.post("/warninglists/update")
-@router.put("/warninglists")
+@router.post(
+    "/warninglists/update",
+    deprecated=True,
+    summary="Update warninglists (Deprecated)",
+    description="Deprecated. Update all warninglists.",
+)
+@router.put(
+    "/warninglists",
+    summary="Update warninglists",
+    description="Update all warninglists.",
+)
 async def update_all_warninglists() -> UpdateAllWarninglistsResponse:
     return UpdateAllWarninglistsResponse()
 
 
-@router.post("warninglists/new")
+@router.post(
+    "warninglists/new",
+    summary="Add a new warninglist",
+    description="Add a new warninglist with given details.",
+)
 async def create_new_warninglist(body: CreateWarninglistBody) -> Warninglist:
     return Warninglist()
 
 
-@router.delete("warninglists/{id}")
+@router.delete(
+    "warninglists/{id}",
+    summary="Delete warninglist",
+    description="Delete a specific warninglist.",
+)
 async def delete_warninglist(id: int) -> DeleteWarninglistResponse:
     return DeleteWarninglistResponse()
