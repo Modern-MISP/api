@@ -4,16 +4,15 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..models.attribute import Attribute, ShadowAttribute
-from ..models.event import Event, EventReport
-from ..models.galaxy import Galaxy
-from ..models.object import Object
-from ..models.tag import Tag
 from ..schemas.events.delete_events_response import EventsDeleteResponse
-from ..schemas.events.get_all_events import EventsResponse
+from ..schemas.events.get_all_events_response import EventsResponse
 from ..schemas.events.get_event_response import EventResponse
-
-
+from ..schemas.events.search_events_body import EventsRestSearchBody
+from ..schemas.events.search_events_response import EventsRestSearchResponse
+from ..schemas.events.add_event_body import EventAddBody
+from ..schemas.events.add_add_event_response import EventAddOrEditResponse
+from ..schemas.events.index_events_body import EventsIndexBody
+from ..schemas.events.index_events_response import EventsIndexResponse
 from ..schemas.events.publish_event_response import EventPublishResponse
 from ..schemas.events.unpublish_event_response import EventUnpublishResponse
 from ..schemas.events.add_remove_tag_events_response import EventsTagResponse
@@ -23,6 +22,7 @@ from ..schemas.events.add_attribute_via_free_text_import_body import (
 from ..schemas.events.add_attribute_via_free_text_import_response import (
     EventsFreeTextImportResponse,
 )
+from ..schemas.events.edit_event_body import EventEditBody
 
 router = APIRouter(prefix="/events", tags=["events"])
 
@@ -62,29 +62,26 @@ async def events_getById(event_id: str, db: Session = Depends(get_db)) -> EventR
 # -- Post
 
 
-# ObjectReference[] missing
 @router.post("/restSearch")
-async def events_restSearch(db: Session = Depends(get_db)) -> List[Event]:
-    return Attribute, Event, EventReport, Object, Tag
-    # return {
-    #     Events(),
-    #     attributes.Attributes(),
-    #     EventReport.EventReport(),
-    #     objects.Objects(),
-    #     tags.Tags(),
-    # } - {Events.sighting_timestamp, tags.org_id, tags.inherited}
+async def events_restSearch(
+    body: EventsRestSearchBody, db: Session = Depends(get_db)
+) -> List[EventsRestSearchResponse]:
+    return EventsRestSearchResponse(response=[])
 
 
-@router.post("/add")
-@router.post("/")
-async def events_post(db: Session = Depends(get_db)) -> Event:
-    return Event
-    # return {Events, organisations.local} - {Events.sighting_timestamp}
+@router.post("/add", deprecated=True)  # deprecated
+@router.post("/")  # new
+async def events_post(
+    body: EventAddBody, db: Session = Depends(get_db)
+) -> EventAddOrEditResponse:
+    return EventAddOrEditResponse(Event="")
 
 
 @router.post("/index")
-async def events_index(db: Session = Depends(get_db)) -> List[Event]:
-    return []
+async def events_index(
+    body: EventsIndexBody, db: Session = Depends(get_db)
+) -> List[EventsIndexResponse]:
+    return EventsIndexResponse(events=[])
 
 
 @router.post("/publish/{event_id}")
@@ -135,21 +132,15 @@ async def events_removeTag(
 async def events_freeTextImport(
     event_id: str, body: EventsFreeTextImportBody, db: Session = Depends(get_db)
 ) -> EventsFreeTextImportResponse:
-    return EventsFreeTextImportResponse
+    return EventsFreeTextImportResponse(comment="")
 
 
 # -- Put
 
 
-# ObjectReference[] missing
-@router.put("/edit/{event_id}")
-@router.put("/{event_id}")
-async def events_put(db: Session = Depends(get_db)) -> Event:
-    return ShadowAttribute, Event, Galaxy, Object, Tag
-    # return {
-    #     Events,
-    #     galaxies.Galaxies,
-    #     attributes.ShadowAttribute,
-    #     object.ObjectReference,
-    #     tags.Tags,
-    # }
+@router.put("/edit/{event_id}", deprecated=True)  # deprecated
+@router.put("/{event_id}")  # new
+async def events_put(
+    event_id: str, body: EventEditBody, db: Session = Depends(get_db)
+) -> EventAddOrEditResponse:
+    return EventAddOrEditResponse(Event="")
