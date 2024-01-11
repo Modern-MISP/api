@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 
+
 class DeleteWarninglistResponse(BaseModel):
     saved: bool
     success: bool
@@ -7,3 +8,6 @@ class DeleteWarninglistResponse(BaseModel):
     name: str
     message: str
     url: str
+
+    class Config:
+        orm_mode = True
