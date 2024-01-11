@@ -37,32 +37,58 @@ from app.schemas.warninglists.create_warninglist_body import (
 router = APIRouter(tags=["warninglists"])
 
 
-@router.get("/warninglists/")
+@router.get(
+    "/warninglists/",
+    summary="Get all warninglists",
+    description="Retrieve a list of all warninglists.",
+)
 async def get_all_warninglists() -> GetSelectedAllWarninglistsResponse:
     return None
 
 
-@router.post("/warninglists/")
+@router.post(
+    "/warninglists/",
+    deprecated=True,
+    summary="Get selected noticelists (Deprecated)",
+    description="Retrieve a list of noticelists, which match given search terms using the old route.",
+)
 async def search_warninglists(
     body: GetSelectedWarninglistsBody,
 ) -> GetSelectedAllWarninglistsResponse:
     return None
 
 
-@router.get("/warninglists?value=String&enabled=boolean")
+@router.get(
+    "/warninglists?value=String&enabled=boolean",
+    summary="Get selected noticelists",
+    description="Retrieve a list of noticelists, which match given search terms using the old route.",
+)
 async def get_warninglists_by_param() -> GetSelectedAllWarninglistsResponse:
     return None
 
 
-@router.get("/warninglists/toggleEnable")
+@router.get(
+    "/warninglists/toggleEnable",
+    summary="Disable/Enable warninglist",
+    description="Disable/Enable a specific warninglist by its ID.",
+)
 async def post_toggleEnable(
     body: ToggleEnableWarninglistsBody,
 ) -> ToggleEnableWarninglistsResponse:
     return ToggleEnableWarninglistsBody()
 
 
-@router.get("/warninglists/view/{warninglistId}")
-@router.get("/warningslists/{warninglistId}")
+@router.get(
+    "/warninglists/view/{warninglistId}",
+    deprecated=True,
+    summary="Get warninglist details (Deprecated)",
+    description="Deprecated. Retrieve details of a specific warninglist by its ID using the old route.",
+)
+@router.get(
+    "/warningslists/{warninglistId}",
+    summary="Get warninglist details",
+    description="Retrieve details of a specific warninglist by its ID.",
+)
 async def view_warninglist(id: int) -> Warninglist:
     return Warninglist()
 
