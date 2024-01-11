@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from .get_attribute_response import AttributeTagResponse
 
 
-class EventResponseForAttributeRestSearch:
+class EventResponseForAttributeRestSearch(BaseModel):
     id: str
     org_id: str
     distribution: str

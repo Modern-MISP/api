@@ -50,12 +50,12 @@ class EventResponse(BaseModel):
     event_creator_email: str
     protected: str
     ShadowAttribute: list[ShadowAttribute]
-    RelatedEvent: []
-    Galaxy: []
-    Object: []
+    RelatedEvent: list[str]
+    Galaxy: list[str]
+    Object: list[str]
     EventResport: [EventReportResponse]
     CryptographicKey: list[str]
-    Tag: []
+    Tag: [str]
 
     class Config:
         orm_mode = True
