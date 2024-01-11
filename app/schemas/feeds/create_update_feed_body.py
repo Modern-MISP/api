@@ -23,3 +23,6 @@ class FeedCreateAndUpdateBody(BaseModel):
     caching_enabled: str
     force_to_ids: str
     orgc_id: str
+
+    class Config:
+        orm_mode = True
