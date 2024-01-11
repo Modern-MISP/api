@@ -11,6 +11,7 @@ from .routers import (
     user_settings,
     sharing_groups,
     authentication,
+    users,
 )
 
 description = """
@@ -29,4 +30,5 @@ app.include_router(objects.router)
 app.include_router(sightings.router)
 app.include_router(tags.router)
 app.include_router(sharing_groups.router)
+app.include_router(users.router)
 app.include_router(authentication.router)
