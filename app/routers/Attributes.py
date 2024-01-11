@@ -72,16 +72,14 @@ async def attributes_getById(
 async def attributes_statistics(
     context: str, percentage: int, db: Session = Depends(get_db)
 ) -> AttributeStatisticsResponse:
-    return (
-        '"[Type/Category]": "[Count/Percentage of attributes with this type/category]"'
-    )
+    return AttributeStatisticsResponse()
 
 
 @router.get("/describeTypes")
 async def attributes_describeTypes(
     db: Session = Depends(get_db),
 ) -> DescribeTypesResponse:
-    return "[List all attribute categories and types]"
+    return DescribeTypesResponse()
 
 
 # -- Post
