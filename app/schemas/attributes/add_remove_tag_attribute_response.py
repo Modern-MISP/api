@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 
-class AttributeTagResponse(BaseModel):
+class AddRemoveTagToAttributeResponse(BaseModel):
     saved: bool
     success: str
     check_publish: bool

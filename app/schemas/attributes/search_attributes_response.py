@@ -1,9 +1,9 @@
 from pydantic import BaseModel
 
-from .get_attribute_response import AttributeTagResponse
+from .get_attribute_response import GetAttributeTag
 
 
-class EventResponseForAttributeRestSearch(BaseModel):
+class SearchAttributesEvent(BaseModel):
     id: str
     org_id: str
     distribution: str
@@ -28,7 +28,7 @@ class EventResponseForAttributeRestSearch(BaseModel):
     chryprographicKey: list[str]
 
 
-class ObjectResponseForAttributeRestSearch(BaseModel):
+class SearchAttributesObject(BaseModel):
     id: str
     distribution: str
     sharing_group_id: str
@@ -51,7 +51,7 @@ class ObjectResponseForAttributeRestSearch(BaseModel):
     last_seen: str
 
 
-class AttributeRestSearchResponse(BaseModel):
+class SearchAttributesResponse(BaseModel):
     id: str
     event_id: str
     object_id: str
@@ -69,9 +69,9 @@ class AttributeRestSearchResponse(BaseModel):
     disable_correlation: bool
     first_seen: str
     last_seen: str
-    Event: EventResponseForAttributeRestSearch
-    Object: ObjectResponseForAttributeRestSearch
-    Tag: list[AttributeTagResponse]
+    Event: SearchAttributesEvent
+    Object: SearchAttributesObject
+    Tag: list[GetAttributeTag]
 
     class Config:
         orm_mode = True

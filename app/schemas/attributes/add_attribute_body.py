@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 
-class AttributeAddBody(BaseModel):
+class AddAttributeBody(BaseModel):
     # -- mandatory
     value: str
     type: str

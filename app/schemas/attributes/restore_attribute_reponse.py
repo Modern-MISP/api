@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 
-class AttributeRestoreResponse(BaseModel):
+class RestoreAttributeResponse(BaseModel):
     id: str
     event_id: str
     object_id: str

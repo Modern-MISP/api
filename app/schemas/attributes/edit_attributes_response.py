@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 
-class AttributeTagResponse(BaseModel):
+class EditAttributeTag(BaseModel):
     id: str
     name: str
     colour: str
@@ -14,7 +14,7 @@ class AttributeTagResponse(BaseModel):
     local_only: bool
 
 
-class AttributeEditResponse(BaseModel):
+class EditAttributeResponse(BaseModel):
     id: str
     event_id: str
     object_id: str
@@ -32,7 +32,7 @@ class AttributeEditResponse(BaseModel):
     disable_correlation: bool
     first_seen: str
     last_seen: str
-    Tag: list[AttributeTagResponse]  # new
+    Tag: list[EditAttributeTag]  # new
 
     class Config:
         orm_mode = True

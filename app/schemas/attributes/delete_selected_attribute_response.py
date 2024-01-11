@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 
-class AttributeDeleteSelectedResponse(BaseModel):
+class DeleteSelectedAttributeResponse(BaseModel):
     saved: bool
     success: bool
     name: str
