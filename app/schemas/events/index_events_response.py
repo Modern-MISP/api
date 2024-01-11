@@ -25,12 +25,12 @@ class EventsAttributesResponse(BaseModel):
     protected: bool
     Org: OrgResponse
     Orgc: OrgResponse
-    GalaxyCluster: []
-    EventTag: []
+    GalaxyCluster: list[str]
+    EventTag: list[str]
 
 
 class EventsIndexResponse(BaseModel):
     events: list[EventsAttributesResponse]
 
     class Config:
-        orm_mode: True
+        orm_mode = True

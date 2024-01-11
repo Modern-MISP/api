@@ -31,4 +31,4 @@ class EventsRestSearchBody(BaseModel):
     threat_level_id: str
 
     class Config:
-        orm_mode: True
+        orm_mode = True

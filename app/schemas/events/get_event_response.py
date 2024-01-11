@@ -53,9 +53,9 @@ class EventResponse(BaseModel):
     RelatedEvent: list[str]
     Galaxy: list[str]
     Object: list[str]
-    EventResport: [EventReportResponse]
+    EventResport: list[EventReportResponse]
     CryptographicKey: list[str]
-    Tag: [str]
+    Tag: list[str]
 
     class Config:
         orm_mode = True

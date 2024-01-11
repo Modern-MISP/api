@@ -25,4 +25,4 @@ class EventsIndexBody(BaseModel):
     minimal: bool
 
     class Config:
-        orm_mode: True
+        orm_mode = True

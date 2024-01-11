@@ -25,17 +25,17 @@ class EventAttributesResponse(BaseModel):
     event_creator_email: str
     Org: OrgResponse
     Orgc: OrgResponse
-    Attribute: []
-    ShadowAttribute: []
-    RelatedEvent: []
-    Galaxy: []
-    Object: []
-    EventReport: []
-    CryptographicKey: []
+    Attribute: list[str]
+    ShadowAttribute: list[str]
+    RelatedEvent: list[str]
+    Galaxy: list[str]
+    Object: list[str]
+    EventReport: list[str]
+    CryptographicKey: list[str]
 
 
 class EventAddOrEditResponse(BaseModel):
     Event: EventAttributesResponse
 
     class Config:
-        orm_mode: True
+        orm_mode = True

@@ -9,3 +9,6 @@ class AttributeEditBody(BaseModel):
     distribution: str
     comment: str
     disable_correlation: bool
+
+    class Config:
+        orm_mode = True

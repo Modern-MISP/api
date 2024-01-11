@@ -18,4 +18,4 @@ class EventAddBody(BaseModel):
     EventTag: str
 
     class Config:
-        orm_mode: True
+        orm_mode = True
