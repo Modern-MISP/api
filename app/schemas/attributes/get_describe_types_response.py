@@ -7,322 +7,194 @@ class SaneDefaultsAttributesDetailsResponse(BaseModel):
 
 
 class SaneDefaultsAttributesResponse(BaseModel):
-    md5: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    sha1: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    sha256: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    filename: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    pdb: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    filename_md5: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    filename_sha1: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    filename_sha256: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    ip_src: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    ip_dst: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    hostname: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    domain: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    domain_ip: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    email: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    email_src: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    eppn: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    email_dst: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    email_subject: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    email_attachment: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    email_body: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    float: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    git_commit_id: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    url: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    http_method: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    user_agent: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    ja3_fingerprint_md5: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    jarm_fingerprint: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    favicon_mmh3: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    hassh_md5: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    hasshserver_md5: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    regkey: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    regkey_value: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    AS: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    snort: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    bro: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    zeek: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    community_id: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    pattern_in_file: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    pattern_in_traffic: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    pattern_in_memory: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    filename_pattern: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    pgp_public_key: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
+    md5: SaneDefaultsAttributesDetailsResponse
+    sha1: SaneDefaultsAttributesDetailsResponse
+    sha256: SaneDefaultsAttributesDetailsResponse
+    filename: SaneDefaultsAttributesDetailsResponse
+    pdb: SaneDefaultsAttributesDetailsResponse
+    filename_md5: SaneDefaultsAttributesDetailsResponse
+    filename_sha1: SaneDefaultsAttributesDetailsResponse
+    filename_sha256: SaneDefaultsAttributesDetailsResponse
+    ip_src: SaneDefaultsAttributesDetailsResponse
+    ip_dst: SaneDefaultsAttributesDetailsResponse
+    hostname: SaneDefaultsAttributesDetailsResponse
+    domain: SaneDefaultsAttributesDetailsResponse
+    domain_ip: SaneDefaultsAttributesDetailsResponse
+    email: SaneDefaultsAttributesDetailsResponse
+    email_src: SaneDefaultsAttributesDetailsResponse
+    eppn: SaneDefaultsAttributesDetailsResponse
+    email_dst: SaneDefaultsAttributesDetailsResponse
+    email_subject: SaneDefaultsAttributesDetailsResponse
+    email_attachment: SaneDefaultsAttributesDetailsResponse
+    email_body: SaneDefaultsAttributesDetailsResponse
+    float: SaneDefaultsAttributesDetailsResponse
+    git_commit_id: SaneDefaultsAttributesDetailsResponse
+    url: SaneDefaultsAttributesDetailsResponse
+    http_method: SaneDefaultsAttributesDetailsResponse
+    user_agent: SaneDefaultsAttributesDetailsResponse
+    ja3_fingerprint_md5: SaneDefaultsAttributesDetailsResponse
+    jarm_fingerprint: SaneDefaultsAttributesDetailsResponse
+    favicon_mmh3: SaneDefaultsAttributesDetailsResponse
+    hassh_md5: SaneDefaultsAttributesDetailsResponse
+    hasshserver_md5: SaneDefaultsAttributesDetailsResponse
+    regkey: SaneDefaultsAttributesDetailsResponse
+    regkey_value: SaneDefaultsAttributesDetailsResponse
+    AS: SaneDefaultsAttributesDetailsResponse
+    snort: SaneDefaultsAttributesDetailsResponse
+    bro: SaneDefaultsAttributesDetailsResponse
+    zeek: SaneDefaultsAttributesDetailsResponse
+    community_id: SaneDefaultsAttributesDetailsResponse
+    pattern_in_file: SaneDefaultsAttributesDetailsResponse
+    pattern_in_traffic: SaneDefaultsAttributesDetailsResponse
+    pattern_in_memory: SaneDefaultsAttributesDetailsResponse
+    filename_pattern: SaneDefaultsAttributesDetailsResponse
+    pgp_public_key: SaneDefaultsAttributesDetailsResponse
     pgp_private_key: SaneDefaultsAttributesDetailsResponse
-    ssh_fingerprint: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    yara: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    stix2_pattern: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    sigma: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    gene: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    kusto_query: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    mime_type: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    identity_card_number: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    cookie: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    vulnerability: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    cpe: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    weakness: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    attachment: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    malware_sample: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    link: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    comment: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    text: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    hex: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    other: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    named_pipe: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    mutex: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    process_state: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    target_user: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    target_email: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    target_machine: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    target_org: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    target_location: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    target_external: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    btc: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    dash: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    xmr: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    iban: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    bic: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    bank_account_nr: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    aba_rtn: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    bin: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    cc_number: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    prtn: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    phone_number: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    threat_actor: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    campaign_name: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    campaign_id: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    malware_type: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    uri: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    authentihash: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    vhash: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    ssdeep: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    imphash: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    telfhash: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    pehash: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    impfuzzy: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    sha224: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    sha384: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    sha512: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    sha512_224: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    sha512_256: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    sha3_224: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    sha3_256: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    sha3_384: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    sha3_512: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    tlsh: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    cdhash: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    filename_authentihash: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    filename_vhash: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    filename_ssdeep: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    filename_imphash: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    filename_impfuzzy: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    filename_pehash: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    filename_sha224: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    filename_sha384: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    filename_sha512: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    filename_sha512_224: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    filename_sha512_256: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    filename_sha3_224: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    filename_sha3_256: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    filename_sha3_384: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    filename_sha3_512: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    filename_tlsh: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    windows_scheduled_task: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    windows_service_name: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    windows_service_displayname: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    whois_registrant_email: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    whois_registrant_phone: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    whois_registrant_name: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    whois_registrant_org: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    whois_registrar: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    whois_creation_date: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    x509_fingerprint_sha1: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    x509_fingerprint_md5: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    x509_fingerprint_sha256: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    dns_soa_email: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    size_in_bytes: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    counter: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    datetime: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    port: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    ip_dst_port: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    ip_src_port: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    hostname_port: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    mac_address: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    mac_eui_64: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    email_dst_display_name: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    email_src_display_name: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    email_header: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    email_reply_to: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    email_x_mailer: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    email_mime_boundary: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    email_thread_index: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    email_message_id: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    github_username: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    github_repository: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    github_organisation: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    jabber_id: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    twitter_id: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    dkim: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    dkim_signature: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    first_name: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    middle_name: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    last_name: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    full_name: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    date_of_birth: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    place_of_birth: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    gender: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    passport_number: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    passport_country: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    passport_expiration: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    redress_number: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    nationality: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    visa_number: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    issue_date_of_the_visa: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    primary_residence: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    country_of_residence: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    special_service_request: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    frequent_flyer_number: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    travel_details: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    payment_details: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    place_port_of_original_embarkation: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    place_port_of_clearance: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    place_port_of_onward_foreign_destination: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    passenger_name_record_locator_number: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    mobile_application_id: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    azure_application_id: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    chrome_extension_id: SaneDefaultsAttributesDetailsResponse(
-        default_category="", to_ids=1
-    )
-    cortex: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    boolean: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
-    anonymised: SaneDefaultsAttributesDetailsResponse(default_category="", to_ids=1)
+    ssh_fingerprint: SaneDefaultsAttributesDetailsResponse
+    yara: SaneDefaultsAttributesDetailsResponse
+    stix2_pattern: SaneDefaultsAttributesDetailsResponse
+    sigma: SaneDefaultsAttributesDetailsResponse
+    gene: SaneDefaultsAttributesDetailsResponse
+    kusto_query: SaneDefaultsAttributesDetailsResponse
+    mime_type: SaneDefaultsAttributesDetailsResponse
+    identity_card_number: SaneDefaultsAttributesDetailsResponse
+    cookie: SaneDefaultsAttributesDetailsResponse
+    vulnerability: SaneDefaultsAttributesDetailsResponse
+    cpe: SaneDefaultsAttributesDetailsResponse
+    weakness: SaneDefaultsAttributesDetailsResponse
+    attachment: SaneDefaultsAttributesDetailsResponse
+    malware_sample: SaneDefaultsAttributesDetailsResponse
+    link: SaneDefaultsAttributesDetailsResponse
+    comment: SaneDefaultsAttributesDetailsResponse
+    text: SaneDefaultsAttributesDetailsResponse
+    hex: SaneDefaultsAttributesDetailsResponse
+    other: SaneDefaultsAttributesDetailsResponse
+    named_pipe: SaneDefaultsAttributesDetailsResponse
+    mutex: SaneDefaultsAttributesDetailsResponse
+    process_state: SaneDefaultsAttributesDetailsResponse
+    target_user: SaneDefaultsAttributesDetailsResponse
+    target_email: SaneDefaultsAttributesDetailsResponse
+    target_machine: SaneDefaultsAttributesDetailsResponse
+    target_org: SaneDefaultsAttributesDetailsResponse
+    target_location: SaneDefaultsAttributesDetailsResponse
+    target_external: SaneDefaultsAttributesDetailsResponse
+    btc: SaneDefaultsAttributesDetailsResponse
+    dash: SaneDefaultsAttributesDetailsResponse
+    xmr: SaneDefaultsAttributesDetailsResponse
+    iban: SaneDefaultsAttributesDetailsResponse
+    bic: SaneDefaultsAttributesDetailsResponse
+    bank_account_nr: SaneDefaultsAttributesDetailsResponse
+    aba_rtn: SaneDefaultsAttributesDetailsResponse
+    bin: SaneDefaultsAttributesDetailsResponse
+    cc_number: SaneDefaultsAttributesDetailsResponse
+    prtn: SaneDefaultsAttributesDetailsResponse
+    phone_number: SaneDefaultsAttributesDetailsResponse
+    threat_actor: SaneDefaultsAttributesDetailsResponse
+    campaign_name: SaneDefaultsAttributesDetailsResponse
+    campaign_id: SaneDefaultsAttributesDetailsResponse
+    malware_type: SaneDefaultsAttributesDetailsResponse
+    uri: SaneDefaultsAttributesDetailsResponse
+    authentihash: SaneDefaultsAttributesDetailsResponse
+    vhash: SaneDefaultsAttributesDetailsResponse
+    ssdeep: SaneDefaultsAttributesDetailsResponse
+    imphash: SaneDefaultsAttributesDetailsResponse
+    telfhash: SaneDefaultsAttributesDetailsResponse
+    pehash: SaneDefaultsAttributesDetailsResponse
+    impfuzzy: SaneDefaultsAttributesDetailsResponse
+    sha224: SaneDefaultsAttributesDetailsResponse
+    sha384: SaneDefaultsAttributesDetailsResponse
+    sha512: SaneDefaultsAttributesDetailsResponse
+    sha512_224: SaneDefaultsAttributesDetailsResponse
+    sha512_256: SaneDefaultsAttributesDetailsResponse
+    sha3_224: SaneDefaultsAttributesDetailsResponse
+    sha3_256: SaneDefaultsAttributesDetailsResponse
+    sha3_384: SaneDefaultsAttributesDetailsResponse
+    sha3_512: SaneDefaultsAttributesDetailsResponse
+    tlsh: SaneDefaultsAttributesDetailsResponse
+    cdhash: SaneDefaultsAttributesDetailsResponse
+    filename_authentihash: SaneDefaultsAttributesDetailsResponse
+    filename_vhash: SaneDefaultsAttributesDetailsResponse
+    filename_ssdeep: SaneDefaultsAttributesDetailsResponse
+    filename_imphash: SaneDefaultsAttributesDetailsResponse
+    filename_impfuzzy: SaneDefaultsAttributesDetailsResponse
+    filename_pehash: SaneDefaultsAttributesDetailsResponse
+    filename_sha224: SaneDefaultsAttributesDetailsResponse
+    filename_sha384: SaneDefaultsAttributesDetailsResponse
+    filename_sha512: SaneDefaultsAttributesDetailsResponse
+    filename_sha512_224: SaneDefaultsAttributesDetailsResponse
+    filename_sha512_256: SaneDefaultsAttributesDetailsResponse
+    filename_sha3_224: SaneDefaultsAttributesDetailsResponse
+    filename_sha3_256: SaneDefaultsAttributesDetailsResponse
+    filename_sha3_384: SaneDefaultsAttributesDetailsResponse
+    filename_sha3_512: SaneDefaultsAttributesDetailsResponse
+    filename_tlsh: SaneDefaultsAttributesDetailsResponse
+    windows_scheduled_task: SaneDefaultsAttributesDetailsResponse
+    windows_service_name: SaneDefaultsAttributesDetailsResponse
+    windows_service_displayname: SaneDefaultsAttributesDetailsResponse
+    whois_registrant_email: SaneDefaultsAttributesDetailsResponse
+    whois_registrant_phone: SaneDefaultsAttributesDetailsResponse
+    whois_registrant_name: SaneDefaultsAttributesDetailsResponse
+    whois_registrant_org: SaneDefaultsAttributesDetailsResponse
+    whois_registrar: SaneDefaultsAttributesDetailsResponse
+    whois_creation_date: SaneDefaultsAttributesDetailsResponse
+    x509_fingerprint_sha1: SaneDefaultsAttributesDetailsResponse
+    x509_fingerprint_md5: SaneDefaultsAttributesDetailsResponse
+    x509_fingerprint_sha256: SaneDefaultsAttributesDetailsResponse
+    dns_soa_email: SaneDefaultsAttributesDetailsResponse
+    size_in_bytes: SaneDefaultsAttributesDetailsResponse
+    counter: SaneDefaultsAttributesDetailsResponse
+    datetime: SaneDefaultsAttributesDetailsResponse
+    port: SaneDefaultsAttributesDetailsResponse
+    ip_dst_port: SaneDefaultsAttributesDetailsResponse
+    ip_src_port: SaneDefaultsAttributesDetailsResponse
+    hostname_port: SaneDefaultsAttributesDetailsResponse
+    mac_address: SaneDefaultsAttributesDetailsResponse
+    mac_eui_64: SaneDefaultsAttributesDetailsResponse
+    email_dst_display_name: SaneDefaultsAttributesDetailsResponse
+    email_src_display_name: SaneDefaultsAttributesDetailsResponse
+    email_header: SaneDefaultsAttributesDetailsResponse
+    email_reply_to: SaneDefaultsAttributesDetailsResponse
+    email_x_mailer: SaneDefaultsAttributesDetailsResponse
+    email_mime_boundary: SaneDefaultsAttributesDetailsResponse
+    email_thread_index: SaneDefaultsAttributesDetailsResponse
+    email_message_id: SaneDefaultsAttributesDetailsResponse
+    github_username: SaneDefaultsAttributesDetailsResponse
+    github_repository: SaneDefaultsAttributesDetailsResponse
+    github_organisation: SaneDefaultsAttributesDetailsResponse
+    jabber_id: SaneDefaultsAttributesDetailsResponse
+    twitter_id: SaneDefaultsAttributesDetailsResponse
+    dkim: SaneDefaultsAttributesDetailsResponse
+    dkim_signature: SaneDefaultsAttributesDetailsResponse
+    first_name: SaneDefaultsAttributesDetailsResponse
+    middle_name: SaneDefaultsAttributesDetailsResponse
+    last_name: SaneDefaultsAttributesDetailsResponse
+    full_name: SaneDefaultsAttributesDetailsResponse
+    date_of_birth: SaneDefaultsAttributesDetailsResponse
+    place_of_birth: SaneDefaultsAttributesDetailsResponse
+    gender: SaneDefaultsAttributesDetailsResponse
+    passport_number: SaneDefaultsAttributesDetailsResponse
+    passport_country: SaneDefaultsAttributesDetailsResponse
+    passport_expiration: SaneDefaultsAttributesDetailsResponse
+    redress_number: SaneDefaultsAttributesDetailsResponse
+    nationality: SaneDefaultsAttributesDetailsResponse
+    visa_number: SaneDefaultsAttributesDetailsResponse
+    issue_date_of_the_visa: SaneDefaultsAttributesDetailsResponse
+    primary_residence: SaneDefaultsAttributesDetailsResponse
+    country_of_residence: SaneDefaultsAttributesDetailsResponse
+    special_service_request: SaneDefaultsAttributesDetailsResponse
+    frequent_flyer_number: SaneDefaultsAttributesDetailsResponse
+    travel_details: SaneDefaultsAttributesDetailsResponse
+    payment_details: SaneDefaultsAttributesDetailsResponse
+    place_port_of_original_embarkation: SaneDefaultsAttributesDetailsResponse
+    place_port_of_clearance: SaneDefaultsAttributesDetailsResponse
+    place_port_of_onward_foreign_destination: SaneDefaultsAttributesDetailsResponse
+    passenger_name_record_locator_number: SaneDefaultsAttributesDetailsResponse
+    mobile_application_id: SaneDefaultsAttributesDetailsResponse
+    azure_application_id: SaneDefaultsAttributesDetailsResponse
+    chrome_extension_id: SaneDefaultsAttributesDetailsResponse
+    cortex: SaneDefaultsAttributesDetailsResponse
+    boolean: SaneDefaultsAttributesDetailsResponse
+    anonymised: SaneDefaultsAttributesDetailsResponse
 
 
 class SaneDefaultsResponse(BaseModel):
