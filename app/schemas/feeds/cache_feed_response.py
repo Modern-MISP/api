@@ -7,3 +7,6 @@ class FeedCacheResponse(BaseModel):
     url: str
     saved: bool  # new
     success: bool  # new
+
+    class Config:
+        orm_mode = True
