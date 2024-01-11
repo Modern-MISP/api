@@ -10,7 +10,6 @@ class EventResponseForAttributeRestSearch:
     info: str
     orgc_id: str
     uuid: str
-    # -- omitted
     date: str
     published: bool
     analysis: str
@@ -33,7 +32,6 @@ class ObjectResponseForAttributeRestSearch(BaseModel):
     id: str
     distribution: str
     sharing_group_id: str
-    # -- omitted
     event_id: str
     object_id: str
     object_relation: str
