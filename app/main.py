@@ -3,7 +3,9 @@ from fastapi import FastAPI
 from .database import engine
 from .models.feed import Base
 from .routers import (
+    attributes,
     auth_key,
+    events,
     feeds,
     objects,
     sightings,
@@ -23,7 +25,9 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI()
 
 # include Routes
+app.include_router(attributes.router)
 app.include_router(auth_key.router)
+app.include_router(events.router)
 app.include_router(user_settings.router)
 app.include_router(feeds.router)
 app.include_router(objects.router)
