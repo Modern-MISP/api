@@ -1,20 +1,8 @@
 from pydantic import BaseModel
-from .get_event_response import OrgResponse
+from .get_event_response import GetEventOrg, GetEventEventReport
 
 
-class EventReportResponse(BaseModel):
-    id: str
-    uuid: str
-    event_id: str
-    name: str
-    content: str
-    distribution: str
-    sharing_group_id: str
-    timestamp: str
-    deleted: bool
-
-
-class EventsAttributesResponse(BaseModel):
+class SearchEventsAttributes(BaseModel):
     id: str
     orgc_id: str
     org_id: str
@@ -35,20 +23,20 @@ class EventsAttributesResponse(BaseModel):
     extends_uuid: str
     protected: bool
     event_creator_email: str
-    Org: OrgResponse
-    Orgc: OrgResponse
+    Org: GetEventOrg
+    Orgc: GetEventOrg
     Attribute: list[str]
     ShadowAttribute: list[str]
     RelatedEvent: list[str]
     Galaxy: list[str]
     Object: list[str]
-    EventReport: list[EventReportResponse]
+    EventReport: list[GetEventEventReport]
     CryptographicKey: list[str]
     Tag: list[str]
 
 
-class EventsRestSearchResponse(BaseModel):
-    response: list[EventsAttributesResponse]
+class SearchEventsResponse(BaseModel):
+    response: list[SearchEventsAttributes]
 
     class Config:
         orm_mode = True

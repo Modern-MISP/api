@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 
-class EventEditBody(BaseModel):
+class EditEventBody(BaseModel):
     info: str
     threat_level_id: str
     analysis: str

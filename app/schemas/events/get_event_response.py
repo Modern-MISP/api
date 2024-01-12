@@ -1,21 +1,21 @@
 from pydantic import BaseModel
 
 
-class OrgResponse(BaseModel):
+class GetEventOrg(BaseModel):
     id: str
     name: str
     uuid: str
     local: bool
 
 
-class ShadowAttribute(BaseModel):
+class GetEventShadowAttribute(BaseModel):
     value: str
     to_ids: bool
     type: str
     category: str
 
 
-class EventReportResponse(BaseModel):
+class GetEventEventReport(BaseModel):
     id: str
     uuid: str
     event_id: str
@@ -27,7 +27,7 @@ class EventReportResponse(BaseModel):
     deleted: bool
 
 
-class EventResponse(BaseModel):
+class GetEventResponse(BaseModel):
     id: str
     org_id: str  # owner org
     distribution: str
@@ -49,11 +49,11 @@ class EventResponse(BaseModel):
     extends_uuid: str
     event_creator_email: str
     protected: str
-    ShadowAttribute: list[ShadowAttribute]
+    ShadowAttribute: list[GetEventShadowAttribute]
     RelatedEvent: list[str]
     Galaxy: list[str]
     Object: list[str]
-    EventResport: list[EventReportResponse]
+    EventResport: list[GetEventEventReport]
     CryptographicKey: list[str]
     Tag: list[str]
 

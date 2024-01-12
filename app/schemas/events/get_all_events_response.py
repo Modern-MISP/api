@@ -1,23 +1,13 @@
 from pydantic import BaseModel
 
 
-class OrgResponse(BaseModel):
+class GetAllEventsOrg(BaseModel):
     id: str
     name: str
     uuid: str
 
 
-class GalaxyClusterMetaResponse(BaseModel):
-    date: list[str]
-    kill_chain: list[str]
-    refs: list[str]
-
-
-class GalaxyClusterGalaxyKillChainOrderResponse(BaseModel):
-    example_of_threats: list[str]
-
-
-class GalaxyClusterGalaxyResponse(BaseModel):
+class GetAllEventsGalaxyClusterGalaxy(BaseModel):
     id: str
     uuid: str
     name: str
@@ -28,10 +18,10 @@ class GalaxyClusterGalaxyResponse(BaseModel):
     namespace: str
     enabled: bool
     local_only: bool
-    kill_chain_order: GalaxyClusterGalaxyKillChainOrderResponse
+    kill_chain_order: list[str]  # optional
 
 
-class GalaxyClusterResponse(BaseModel):
+class GetAllEventsGalaxyCluster(BaseModel):
     id: str
     uuid: str
     collection_uuid: str
@@ -53,29 +43,30 @@ class GalaxyClusterResponse(BaseModel):
     extends_version: str
     published: bool
     deleted: bool
-    Galaxy: list[GalaxyClusterGalaxyResponse]
+    Galaxy: list[GetAllEventsGalaxyClusterGalaxy]
+    meta: list[str]
     tag_id: str
     local: bool
     relationship_type: str
 
 
-class EventTagTagResponse(BaseModel):
+class GetAllEventsEventTagTag(BaseModel):
     id: str
     name: str
     colour: str
     is_galaxy: bool
 
 
-class EventTagResponse(BaseModel):
+class GetAllEventsEventTag(BaseModel):
     id: str
     event_id: str
     tag_id: str
     local: bool
     relationship_type: str
-    Tag: list[EventTagTagResponse]
+    Tag: list[GetAllEventsEventTagTag]
 
 
-class EventsAttributesResponse(BaseModel):
+class GetAllEventsAttributes(BaseModel):
     id: str
     org_id: str  # owner org
     distribution: str
@@ -97,14 +88,14 @@ class EventsAttributesResponse(BaseModel):
     extends_uuid: str
     event_creator_email: str  # omitted
     protected: str
-    Org: OrgResponse
-    Orgc: OrgResponse
-    GalaxyCluster: list[GalaxyClusterResponse]
-    EventTag: list[EventTagResponse]
+    Org: GetAllEventsOrg
+    Orgc: GetAllEventsOrg
+    GalaxyCluster: list[GetAllEventsGalaxyCluster]
+    EventTag: list[GetAllEventsEventTag]
 
 
-class EventsResponse(BaseModel):
-    events: list[EventsAttributesResponse]
+class GetAllEventsResponse(BaseModel):
+    events: list[GetAllEventsAttributes]
 
     class Config:
         orm_mode = True

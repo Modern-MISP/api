@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 
-class EventsIndexBody(BaseModel):
+class IndexEventsBody(BaseModel):
     # -- optional
     all: str
     attribute: str

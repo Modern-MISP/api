@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 
-class EventsRestSearchBody(BaseModel):
+class SearchEventsBody(BaseModel):
     returnFormat: str  # mandatory
     # -- optional
     page: int

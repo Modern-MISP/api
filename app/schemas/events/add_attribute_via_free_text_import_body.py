@@ -1,12 +1,12 @@
 from pydantic import BaseModel
 
 
-class EventsFreeTextImportAttributesBody(BaseModel):
+class AddAttributeViaFreeTextImportToEventAttributes(BaseModel):
     value: str
 
 
-class EventsFreeTextImportBody(BaseModel):
-    Attribute: EventsFreeTextImportAttributesBody
+class AddAttributeViaFreeTextImportToEventBody(BaseModel):
+    Attribute: AddAttributeViaFreeTextImportToEventAttributes
 
     class Config:
         orm_mode = True

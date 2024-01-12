@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 
-class EventsFreeTextImportResponse(BaseModel):
+class AddAttributeViaFreeTextImportToEventResponse(BaseModel):
     comment: str
     value: str
     original_value: str

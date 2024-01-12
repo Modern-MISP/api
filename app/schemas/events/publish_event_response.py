@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 
-class EventPublishResponse(BaseModel):
+class PublishEventResponse(BaseModel):
     name: str
     message: str
     url: str

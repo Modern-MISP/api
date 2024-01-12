@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 
-class EventAddBody(BaseModel):
+class AddEventBody(BaseModel):
     info: str  # mandatory
     # -- optional
     threat_level_id: str

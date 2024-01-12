@@ -1,8 +1,8 @@
 from pydantic import BaseModel
-from .get_event_response import OrgResponse
+from .get_event_response import GetEventOrg
 
 
-class EventAttributesResponse(BaseModel):
+class AddEditEventAttributes(BaseModel):
     id: str
     orgc_id: str
     org_id: str
@@ -23,8 +23,8 @@ class EventAttributesResponse(BaseModel):
     extends_uuid: str
     protected: bool
     event_creator_email: str
-    Org: OrgResponse
-    Orgc: OrgResponse
+    Org: GetEventOrg
+    Orgc: GetEventOrg
     Attribute: list[str]
     ShadowAttribute: list[str]
     RelatedEvent: list[str]
@@ -34,8 +34,8 @@ class EventAttributesResponse(BaseModel):
     CryptographicKey: list[str]
 
 
-class EventAddOrEditResponse(BaseModel):
-    Event: EventAttributesResponse
+class AddEditEventResponse(BaseModel):
+    Event: AddEditEventAttributes
 
     class Config:
         orm_mode = True

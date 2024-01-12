@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 
-class EventsTagResponse(BaseModel):
+class AddRemoveTagEventsResponse(BaseModel):
     saved: bool
     success: str
     check_publish: bool

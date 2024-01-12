@@ -1,8 +1,8 @@
 from pydantic import BaseModel
-from .get_all_events_response import OrgResponse
+from .get_all_events_response import GetAllEventsOrg
 
 
-class EventsAttributesResponse(BaseModel):
+class IndexEventsAttributes(BaseModel):
     id: str
     org_id: str
     date: str
@@ -23,14 +23,14 @@ class EventsAttributesResponse(BaseModel):
     disable_correlation: bool
     extends_uuid: str
     protected: bool
-    Org: OrgResponse
-    Orgc: OrgResponse
+    Org: GetAllEventsOrg
+    Orgc: GetAllEventsOrg
     GalaxyCluster: list[str]
     EventTag: list[str]
 
 
-class EventsIndexResponse(BaseModel):
-    events: list[EventsAttributesResponse]
+class IndexEventsResponse(BaseModel):
+    events: list[IndexEventsAttributes]
 
     class Config:
         orm_mode = True

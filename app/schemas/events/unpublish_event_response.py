@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 
-class EventUnpublishResponse(BaseModel):
+class UnpublishEventResponse(BaseModel):
     saved: bool
     success: bool
     name: str
