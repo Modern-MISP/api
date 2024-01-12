@@ -1,15 +1,16 @@
-from typing import List
-
 from sqlalchemy import Boolean, Column, String
+from sqlalchemy import ForeignKey
 
 from ..database import Base
 
 
 class Event(Base):
-    id = Column(String)
-    org_id = Column(String)  # owner org
+    __tablename__ = "events"
+
+    id = Column(String, primary_key=True)
+    org_id = Column(String, ForeignKey("organisations.id"))  # owner org
+    orgc_id = Column(String, ForeignKey("organisations.id"))  # creator org
     distribution = Column(String)
-    orgc_id = Column(String)  # creator org
     uuid = Column(String)
     date = Column(String)
     published = Column(Boolean)
@@ -25,17 +26,19 @@ class Event(Base):
     disable_correlation = Column(Boolean)
     extends_uuid = Column(String)
     event_creator_email = Column(String)
-    protected = Column(String)
-    chryprographicKey: Column(List[str])
+    protected = Column(Boolean)
+    cryprographicKey: Column(list[str])
 
 
 class EventReport(Base):
-    id = Column(String)
+    __tablename__ = "event_report"
+
+    id = Column(String, primary_key=True)
     uuid = Column(String)
-    event_id = Column(String)
+    event_id = Column(String, ForeignKey("events.id"))
     name = Column(String)
     content = Column(String)
     distribution = Column(String)
-    sharing_group_id = Column(String)
+    sharing_group_id = Column(String, ForeignKey("sharing_groups.id"))
     timestamp = Column(String)
     deleted = Column(Boolean)

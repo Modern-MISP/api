@@ -1,12 +1,10 @@
-from typing import List
-
 from sqlalchemy import Column, String
 
 from ..database import Base
 
 
 class Galaxy(Base):
-    id = Column(String)
+    id = Column(String, primary_key=True)
     uuid = Column(String)
     name = Column(String)
     type = Column(String)
@@ -14,4 +12,4 @@ class Galaxy(Base):
     version = Column(String)
     icon = Column(String)
     namespace = Column(String)
-    kill_chain_order = Column(List[str])
+    kill_chain_order = Column(list[str])
