@@ -8,7 +8,6 @@ from ..schemas.feeds.cache_feed_response import FeedCacheResponse
 from ..schemas.feeds.create_update_feed_body import FeedCreateAndUpdateBody
 from ..schemas.feeds.enable_disable_feed_response import FeedEnableDisableResponse
 from ..schemas.feeds.fetch_feeds_response import FeedFetchResponse
-from ..schemas.feeds.get_all_feeds_response import FeedsResponse
 from ..schemas.feeds.get_feed_response import FeedResponse
 from ..schemas.feeds.toggle_feed_body import FeedToggleBody
 
@@ -16,7 +15,7 @@ router = APIRouter(prefix="/feeds", tags=["feeds"])
 
 
 @router.get("/", summary="Get all feeds", description="Retrieve a list of all feeds.")
-async def get_feeds(db: Session = Depends(get_db)) -> list[FeedsResponse]:
+async def get_feeds(db: Session = Depends(get_db)) -> list[FeedResponse]:
     # Logic to fetch feeds goes here
 
     # try:
