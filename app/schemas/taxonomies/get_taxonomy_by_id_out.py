@@ -11,7 +11,7 @@ class TaxonomyEntrySchema:
     existing_tag: bool | TagSchema  # Kann auch Tag Objekt sein, nicht zwingend bool laut Pflichtenheft. In Implementierung schauen
 
 
-class TaxonomyEntrySchema(BaseModel):
+class TaxonomyTagSchema(BaseModel):
     id: str
     namespace: str
     description: str
@@ -20,6 +20,7 @@ class TaxonomyEntrySchema(BaseModel):
     exclusive: bool
     required: bool
     highlighted: bool
+    entries: list[TaxonomyEntrySchema]
 
     class Config:
         orm_mode = True

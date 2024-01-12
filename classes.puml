@@ -1,0 +1,206 @@
+@startuml classes
+set namespaceSeparator none
+class "Config" as app.schemas.objects.create_object_body.ObjectCreateBody.Config {
+  orm_mode : bool
+}
+class "Config" as app.schemas.objects.delete_object_response.ObjectDeleteResponse.Config {
+  orm_mode : bool
+}
+class "Config" as app.schemas.objects.get_added_object_response.ObjectGetAddedResponse.Config {
+  orm_mode : bool
+}
+class "Config" as app.schemas.objects.get_object_response.ObjectResponse.Config {
+  orm_mode : bool
+}
+class "Config" as app.schemas.objects.search_objects_body.ObjectSearchBody.Config {
+  orm_mode : bool
+}
+class "Config" as app.schemas.objects.search_objects_response.ObjectSearchResponse.Config {
+  orm_mode : bool
+}
+class "ModelSearchOverridesBody" as app.schemas.objects.search_objects_body.ModelSearchOverridesBody {
+  base_score_config : dict[str, float]
+  decay_speed : float
+  default_base_score : int
+  lifetime : int
+  threshold : int
+}
+class "ObjectAttributesResponse" as app.schemas.objects.get_object_response.ObjectAttributesResponse {
+  attribute_tag : list
+  category : str
+  comment : str
+  deleted : bool
+  disable_correlation : bool
+  distribution : str
+  event_id : str
+  first_seen : str
+  id : str
+  last_seen : str
+  object_id : str
+  object_relation : str
+  sharing_group_id : str
+  timestamp : str
+  to_ids : bool
+  type : str
+  uuid : str
+  value : str
+  value1 : str
+  value2 : str
+}
+class "ObjectAttributesResponse" as app.schemas.objects.search_objects_response.ObjectAttributesResponse {
+  category : str
+  comment : str
+  deleted : bool
+  disable_correlation : bool
+  distribution : str
+  event_id : str
+  first_seen : str
+  id : str
+  last_seen : str
+  object_id : str
+  object_relation : str
+  sharing_group_id : str
+  timestamp : str
+  to_ids : bool
+  type : str
+  uuid : str
+  value : str
+  value1 : str
+  value2 : str
+}
+class "ObjectCreateAttributesBody" as app.schemas.objects.create_object_body.ObjectCreateAttributesBody {
+  category : str
+  comment : str
+  disable_correlation : bool
+  distribution : str
+  object_relation : str
+  to_ids : bool
+  value : str
+}
+class "ObjectCreateBody" as app.schemas.objects.create_object_body.ObjectCreateBody {
+  attributes : list[ObjectCreateAttributesBody]
+}
+class "ObjectDeleteResponse" as app.schemas.objects.delete_object_response.ObjectDeleteResponse {
+  message : str
+  name : str
+  saved : bool
+  success : bool
+  url : str
+}
+class "ObjectEventResponse" as app.schemas.objects.get_object_response.ObjectEventResponse {
+  id : str
+  info : str
+  org_id : str
+  orgc_id : str
+}
+class "ObjectGetAddedResponse" as app.schemas.objects.get_added_object_response.ObjectGetAddedResponse {
+  object: "ObjectWithAttributesSearchResponse"
+}
+class "ObjectResponse" as app.schemas.objects.get_object_response.ObjectResponse {
+  object: ObjectWithAttributesSearchResponse
+}
+class "ObjectResponse" as app.schemas.objects.search_objects_response.ObjectResponse {
+  object
+}
+class "ObjectSearchBody" as app.schemas.objects.search_objects_body.ObjectSearchBody {
+  allow_proposal_blocking : bool
+  attackGalaxy : str
+  attribute_timestamp : str
+  category : str
+  comment : str
+  date : str
+  decayingModel : str
+  deleted : bool
+  enforceWarninglist : bool
+  event_timestamp : str
+  eventid : str
+  eventinfo : str
+  excludeDecayed : bool
+  first_seen : str
+  from_ : str
+  ignore : bool
+  includeAllTags : bool
+  includeContext : bool
+  includeCorrelations : bool
+  includeDecayScore : bool
+  includeEventTags : bool
+  includeEventUuid : bool
+  includeFullModel : bool
+  includeProposals : bool
+  includeSightingdb : bool
+  includeSightings : bool
+  includeWarninglistHits : bool
+  include_event_uuid : bool
+  last : int
+  last_seen : str
+  limit : int
+  metadata : bool
+  modelOverrides
+  object_name : str
+  object_relation : str
+  object_template_uuid : str
+  object_template_version : str
+  org : str
+  page : int
+  publish_timestamp : str
+  published : bool
+  quickFilter : str
+  returnFormat : str
+  score : str
+  searchall : str
+  tags : list[str]
+  timestamp : str
+  to : str
+  to_ids : bool
+  type : str
+  uuid : str
+  value : str
+  value1 : str
+  value2 : str
+  withAttachments : bool
+}
+class "ObjectSearchResponse" as app.schemas.objects.search_objects_response.ObjectSearchResponse {
+  response : list[ObjectResponse]
+}
+class "ObjectWithAttributesAndEventSearchResponse" as app.schemas.objects.get_object_response.ObjectWithAttributesAndEventSearchResponse {
+  attributes : list[ObjectAttributesResponse]
+  comment : str
+  deleted : bool
+  description : str
+  distribution : str
+  event : list[ObjectEventResponse]
+  event_id : str
+  first_seen : str
+  id : str
+  last_seen : str
+  meta_category : str
+  name : str
+  sharing_group_id : str
+  template_uuid : str
+  template_version : str
+  timestamp : str
+  uuid : str
+}
+class "ObjectWithAttributesSearchResponse" as app.schemas.objects.search_objects_response.ObjectWithAttributesSearchResponse {
+  attributes : list[ObjectAttributesResponse]
+  comment : str
+  deleted : bool
+  description : str
+  distribution : str
+  event_id : str
+  first_seen : str
+  id : str
+  last_seen : str
+  meta_category : str
+  name : str
+  sharing_group_id : str
+  template_uuid : str
+  template_version : str
+  timestamp : str
+  uuid : str
+}
+app.schemas.objects.get_object_response.ObjectWithAttributesAndEventSearchResponse --* app.schemas.objects.get_object_response.ObjectResponse : object
+app.schemas.objects.search_objects_body.ModelSearchOverridesBody --* app.schemas.objects.search_objects_body.ObjectSearchBody : modelOverrides
+app.schemas.objects.search_objects_response.ObjectWithAttributesSearchResponse --* app.schemas.objects.get_added_object_response.ObjectGetAddedResponse : object
+app.schemas.objects.search_objects_response.ObjectWithAttributesSearchResponse --* app.schemas.objects.search_objects_response.ObjectResponse : object
+@enduml
