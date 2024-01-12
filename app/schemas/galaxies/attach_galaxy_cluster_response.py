@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
 
-class GalaxyAttachClusterResponse(BaseModel):
+class AttachClusterGalaxyResponse(BaseModel):
     class Config:
         orm_mode = True

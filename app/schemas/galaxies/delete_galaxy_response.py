@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
 
-class GalaxyDeleteResponse(BaseModel):
+class DeleteGalaxyResponse(BaseModel):
     class Config:
         orm_mode = True

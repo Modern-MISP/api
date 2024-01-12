@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
 
-class GalaxyGetResponse(BaseModel):
+class GetGalaxyResponse(BaseModel):
     class Config:
         orm_mode = True

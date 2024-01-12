@@ -92,7 +92,7 @@ async def attributes_describeTypes(
 # -- Post
 
 
-@router.post("/restSearch", summary="Get a filtered list of attributes")
+@router.post("/restSearch", summary="Get a filtered and paginated list of attributes")
 async def attributes_reastSearch(
     body: SearchAttributesBody,
     db: Session = Depends(get_db),

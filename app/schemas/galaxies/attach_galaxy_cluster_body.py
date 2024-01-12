@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
 
-class GalaxyAttachClusterBody(BaseModel):
+class AttachClusterGalaxyBody(BaseModel):
     class Config:
         orm_mode = True

@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
 
-class GalaxySearchResponse(BaseModel):
+class SearchGalaxiesResponse(BaseModel):
     class Config:
         orm_mode = True

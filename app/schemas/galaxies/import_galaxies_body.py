@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
 
-class GalaxyImportBody(BaseModel):
+class ImportGalaxyBody(BaseModel):
     class Config:
         orm_mode = True
