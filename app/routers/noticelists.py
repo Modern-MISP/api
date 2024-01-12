@@ -56,7 +56,7 @@ async def post_toggleEnable(id: int) -> ToggleEnableNoticelist:
     description="Deprecated. Update all noticelists.",
 )
 @router.put(
-    "noticelists/update",
+    "noticelists/",
     summary="Update noticelists",
     description="Update all noticelists.",
 )

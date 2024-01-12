@@ -30,7 +30,8 @@ class Warninglist(BaseModel):
     version: int
     enabled: bool
     default: bool
-    category: str
+    category: Category
+    warninglist_entry_count: int
     WarninglistEntry: list[WarninglistEntry]
 
     class Config:
