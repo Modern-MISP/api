@@ -28,7 +28,7 @@ router = APIRouter(prefix="/galaxies", tags=["galaxies"])
 async def galaxies_delete(
     galagxy_id: str, db: Session = Depends(get_db)
 ) -> GalaxyDeleteResponse:
-    return GalaxyDeleteResponse
+    return GalaxyDeleteResponse()
 
 
 # -- Get
@@ -36,13 +36,13 @@ async def galaxies_delete(
 
 @router.get("/")
 async def galaxies_get(db: Session = Depends(get_db)) -> GalaxiesGetResponse:
-    return GalaxiesGetResponse
+    return GalaxiesGetResponse()
 
 
 @router.get("/view/{galaxy_id}", deprecated=True)  # deprecated
 @router.get("/{galaxy_id}")  # new
 async def galaxies_getById(db: Session = Depends(get_db)) -> GalaxyGetResponse:
-    return GalaxyGetResponse
+    return GalaxyGetResponse()
 
 
 # -- Post
@@ -52,7 +52,7 @@ async def galaxies_getById(db: Session = Depends(get_db)) -> GalaxyGetResponse:
 async def galaxies_post(
     body: GalaxySearchBody, db: Session = Depends(get_db)
 ) -> GalaxySearchResponse:
-    return GalaxySearchResponse
+    return GalaxySearchResponse()
 
 
 @router.post("/update")
@@ -64,14 +64,14 @@ async def galaxies_update(db: Session = Depends(get_db)) -> GalaxyUpdateResponse
 async def galaxies_import(
     body: GalaxyImportBody, db: Session = Depends(get_db)
 ) -> GalaxyImportResponse:
-    return GalaxyImportResponse
+    return GalaxyImportResponse()
 
 
 @router.post("/export/{galaxy_id}")
 async def galaxies_export(
     galagxy_id: str, body: GalaxyExportBody, db: Session = Depends(get_db)
 ) -> GalaxyExportResponse:
-    return GalaxyExportResponse
+    return GalaxyExportResponse()
 
 
 @router.post("/attachCluster/{attachTarget_id}/{attachTargetType}/local:{local}")
@@ -82,4 +82,4 @@ async def galaxies_attachCluster(
     body: GalaxyAttachClusterBody,
     db: Session = Depends(get_db),
 ) -> GalaxyAttachClusterResponse:
-    return GalaxyAttachClusterResponse
+    return GalaxyAttachClusterResponse()

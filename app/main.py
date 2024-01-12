@@ -7,6 +7,7 @@ from .routers import (
     auth_key,
     events,
     feeds,
+    galaxies,
     objects,
     sightings,
     tags,
@@ -30,6 +31,7 @@ app.include_router(auth_key.router)
 app.include_router(events.router)
 app.include_router(user_settings.router)
 app.include_router(feeds.router)
+app.include_router(galaxies.router)
 app.include_router(objects.router)
 app.include_router(sightings.router)
 app.include_router(tags.router)
