@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 
-class AttributeStatisticsResponse(BaseModel):
+class GetAttributeStatisticsResponse(BaseModel):
     AS: str
     attachment: str
     authentihash: str

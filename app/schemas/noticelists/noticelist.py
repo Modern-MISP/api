@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 
+
 class Data(BaseModel):
     scope: list[str]
     field: list[str]
@@ -7,10 +8,12 @@ class Data(BaseModel):
     tags: list[str]
     message: str
 
+
 class NoticelistEntry(BaseModel):
     id: int
     noticelistId: int
     data: Data
+
 
 class Noticelist(BaseModel):
     id: int
@@ -21,3 +24,6 @@ class Noticelist(BaseModel):
     version: int
     enabled: bool
     NoticelistEntry: list[NoticelistEntry]
+
+    class Config:
+        orm_mode = True

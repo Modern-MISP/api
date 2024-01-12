@@ -10,3 +10,6 @@ class CreateWarninglistBody(BaseModel):
     category: Category
     accepted_attribute_type: str
     values: str = Field(max_length=65535)
+
+    class Config:
+        orm_mode = True

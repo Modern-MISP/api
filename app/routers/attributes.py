@@ -2,29 +2,29 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..schemas.attributes.delete_attribute_response import AttributeDeleteResponse
-from ..schemas.attributes.get_all_attributes_response import AttributesResponse
-from ..schemas.attributes.get_attribute_response import AttributeResponse
+from ..schemas.attributes.delete_attribute_response import DeleteAttributeResponse
+from ..schemas.attributes.get_all_attributes_response import GetAllAttributesResponse
+from ..schemas.attributes.get_attribute_response import GetAttributeResponse
 from ..schemas.attributes.get_attribute_statistics_response import (
-    AttributeStatisticsResponse,
+    GetAttributeStatisticsResponse,
 )
-from ..schemas.attributes.get_describe_types_response import DescribeTypesResponse
-from ..schemas.attributes.search_attributes_body import AttributeRestSearchBody
-from ..schemas.attributes.search_attributes_response import AttributeRestSearchResponse
-from ..schemas.attributes.add_attribute_body import AttributeAddBody
-from ..schemas.attributes.add_attribute_response import AttributeAddResponse
+from ..schemas.attributes.get_describe_types_response import GetDescribeTypesResponse
+from ..schemas.attributes.search_attributes_body import SearchAttributesBody
+from ..schemas.attributes.search_attributes_response import SearchAttributesResponse
+from ..schemas.attributes.add_attribute_body import AddAttributeBody
+from ..schemas.attributes.add_attribute_response import AddAttributeResponse
 from ..schemas.attributes.delete_selected_attribute_body import (
-    AttributeDeleteSelectedBody,
+    DeleteSelectedAttributeBody,
 )
 from ..schemas.attributes.delete_selected_attribute_response import (
-    AttributeDeleteSelectedResponse,
+    DeleteSelectedAttributeResponse,
 )
-from ..schemas.attributes.restore_attribute_reponse import AttributeRestoreResponse
+from ..schemas.attributes.restore_attribute_reponse import RestoreAttributeResponse
 from ..schemas.attributes.add_remove_tag_attribute_response import (
-    AttributeTagResponse,
+    AddRemoveTagToAttributeResponse,
 )
-from ..schemas.attributes.edit_attribute_body import AttributeEditBody
-from ..schemas.attributes.edit_attributes_response import AttributeEditResponse
+from ..schemas.attributes.edit_attribute_body import EditAttributeBody
+from ..schemas.attributes.edit_attributes_response import EditAttributeResponse
 
 router = APIRouter(prefix="/attributes", tags=["attributes"])
 
@@ -36,16 +36,16 @@ router = APIRouter(prefix="/attributes", tags=["attributes"])
 @router.delete("/{attributeID}")  # new
 async def attributes_delete(
     attribute_id: str, db: Session = Depends(get_db)
-) -> AttributeDeleteResponse:
-    return AttributeDeleteResponse(message="Attribute deleted.")
+) -> DeleteAttributeResponse:
+    return DeleteAttributeResponse(message="Attribute deleted.")
 
 
 # -- Get
 
 
 @router.get("/attributes")
-async def attributes_get(db: Session = Depends(get_db)) -> AttributesResponse:
-    return AttributesResponse(attribute=[])
+async def attributes_get(db: Session = Depends(get_db)) -> GetAllAttributesResponse:
+    return GetAllAttributesResponse(attribute=[])
     # try:
     #     attributes = db.query(Attribute).all()
     #     return attributes
@@ -58,8 +58,8 @@ async def attributes_get(db: Session = Depends(get_db)) -> AttributesResponse:
 async def attributes_getById(
     attribute_id: str,
     db: Session = Depends(get_db),
-) -> AttributeResponse:
-    return AttributeResponse(Tag=[])
+) -> GetAttributeResponse:
+    return GetAttributeResponse(Tag=[])
     # attribute = (
     #     db.query(AttributeGetById).filter(AttributeGetById.id == attribute_id).first()
     # )
@@ -71,15 +71,15 @@ async def attributes_getById(
 @router.get("/attributeStatistics/{context}/{percentage}")
 async def attributes_statistics(
     context: str, percentage: int, db: Session = Depends(get_db)
-) -> AttributeStatisticsResponse:
-    return AttributeStatisticsResponse()
+) -> GetAttributeStatisticsResponse:
+    return GetAttributeStatisticsResponse()
 
 
 @router.get("/describeTypes")
 async def attributes_describeTypes(
     db: Session = Depends(get_db),
-) -> DescribeTypesResponse:
-    return DescribeTypesResponse()
+) -> GetDescribeTypesResponse:
+    return GetDescribeTypesResponse()
 
 
 # -- Post
@@ -87,20 +87,20 @@ async def attributes_describeTypes(
 
 @router.post("/restSearch")
 async def attributes_reastSearch(
-    body: AttributeRestSearchBody,
+    body: SearchAttributesBody,
     db: Session = Depends(get_db),
-) -> AttributeRestSearchResponse:
-    return AttributeRestSearchResponse(id="")
+) -> SearchAttributesResponse:
+    return SearchAttributesResponse(id="")
 
 
 @router.post("/add/{event_id}", deprecated=True)  # deprecated
 @router.post("/{event_id}")  # new
 async def attributes_post(
     event_id: str,
-    body: AttributeAddBody,
+    body: AddAttributeBody,
     db: Session = Depends(get_db),
-) -> AttributeAddResponse:
-    return AttributeAddResponse(id="")
+) -> AddAttributeResponse:
+    return AddAttributeResponse(id="")
     # new_attribute = Attribute(**attribute_data.model_dump())
     # db.add(new_attribute)
     # db.commit()
@@ -110,9 +110,9 @@ async def attributes_post(
 
 @router.post("/deleteSelected/{event_id}")
 async def attributes_deleteSelected(
-    event_id: str, body: AttributeDeleteSelectedBody, db: Session = Depends(get_db)
-) -> AttributeDeleteSelectedResponse:
-    return AttributeDeleteSelectedResponse(
+    event_id: str, body: DeleteSelectedAttributeBody, db: Session = Depends(get_db)
+) -> DeleteSelectedAttributeResponse:
+    return DeleteSelectedAttributeResponse(
         saved=True,
         success=True,
         name="1 attribute deleted",
@@ -125,8 +125,8 @@ async def attributes_deleteSelected(
 @router.post("/restore/{attribute_id}")
 async def attributes_restore(
     attribute_id: str, db: Session = Depends(get_db)
-) -> AttributeRestoreResponse:
-    return AttributeRestoreResponse(id="")
+) -> RestoreAttributeResponse:
+    return RestoreAttributeResponse(id="")
 
 
 @router.post(
@@ -134,8 +134,8 @@ async def attributes_restore(
 )
 async def attributes_addTag(
     attribute_id: str, tag_id: str, local: int, db: Session = Depends(get_db)
-) -> AttributeTagResponse:
-    return AttributeTagResponse(
+) -> AddRemoveTagToAttributeResponse:
+    return AddRemoveTagToAttributeResponse(
         saved=True,
         success="Tag added",
         check_publish=True,
@@ -146,8 +146,8 @@ async def attributes_addTag(
 @router.post("/removeTag/{attribute_id}/{tag_id}")
 async def attributes_removeTag(
     attribute_id: str, tag_id: str, db: Session = Depends(get_db)
-) -> AttributeTagResponse:
-    return AttributeTagResponse(
+) -> AddRemoveTagToAttributeResponse:
+    return AddRemoveTagToAttributeResponse(
         saved=True,
         success="Tag added",
         check_publish=True,
@@ -162,7 +162,7 @@ async def attributes_removeTag(
 @router.put("/{attribute_id}")  # new
 async def attributes_put(
     attribute_id: str,
-    body: AttributeEditBody,
+    body: EditAttributeBody,
     db: Session = Depends(get_db),
-) -> AttributeEditResponse:
-    return AttributeEditResponse(id="")
+) -> EditAttributeResponse:
+    return EditAttributeResponse(id="")

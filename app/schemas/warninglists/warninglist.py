@@ -32,3 +32,6 @@ class Warninglist(BaseModel):
     default: bool
     category: str
     WarninglistEntry: list[WarninglistEntry]
+
+    class Config:
+        orm_mode = True

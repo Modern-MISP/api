@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 
-class AttributeEditBody(BaseModel):
+class EditAttributeBody(BaseModel):
     # -- optional
     category: str
     value: str

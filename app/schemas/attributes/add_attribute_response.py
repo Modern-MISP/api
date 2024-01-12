@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 
-class AttributeAddResponse(BaseModel):
+class AddAttributeResponse(BaseModel):
     id: str
     event_id: str
     object_id: str

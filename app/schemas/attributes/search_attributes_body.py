@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 
-class AttributeRestSearchBody(BaseModel):
+class SearchAttributesBody(BaseModel):
     return_Format: str  # mandatory
     # -- optional
     page: int

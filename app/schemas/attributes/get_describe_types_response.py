@@ -1,207 +1,207 @@
 from pydantic import BaseModel
 
 
-class SaneDefaultsAttributesDetailsResponse(BaseModel):
+class GetDescribeTypesSaneDefaultsAttributesDetails(BaseModel):
     default_category: str
     to_ids: int
 
 
-class SaneDefaultsAttributesResponse(BaseModel):
-    md5: SaneDefaultsAttributesDetailsResponse
-    sha1: SaneDefaultsAttributesDetailsResponse
-    sha256: SaneDefaultsAttributesDetailsResponse
-    filename: SaneDefaultsAttributesDetailsResponse
-    pdb: SaneDefaultsAttributesDetailsResponse
-    filename_md5: SaneDefaultsAttributesDetailsResponse
-    filename_sha1: SaneDefaultsAttributesDetailsResponse
-    filename_sha256: SaneDefaultsAttributesDetailsResponse
-    ip_src: SaneDefaultsAttributesDetailsResponse
-    ip_dst: SaneDefaultsAttributesDetailsResponse
-    hostname: SaneDefaultsAttributesDetailsResponse
-    domain: SaneDefaultsAttributesDetailsResponse
-    domain_ip: SaneDefaultsAttributesDetailsResponse
-    email: SaneDefaultsAttributesDetailsResponse
-    email_src: SaneDefaultsAttributesDetailsResponse
-    eppn: SaneDefaultsAttributesDetailsResponse
-    email_dst: SaneDefaultsAttributesDetailsResponse
-    email_subject: SaneDefaultsAttributesDetailsResponse
-    email_attachment: SaneDefaultsAttributesDetailsResponse
-    email_body: SaneDefaultsAttributesDetailsResponse
-    float: SaneDefaultsAttributesDetailsResponse
-    git_commit_id: SaneDefaultsAttributesDetailsResponse
-    url: SaneDefaultsAttributesDetailsResponse
-    http_method: SaneDefaultsAttributesDetailsResponse
-    user_agent: SaneDefaultsAttributesDetailsResponse
-    ja3_fingerprint_md5: SaneDefaultsAttributesDetailsResponse
-    jarm_fingerprint: SaneDefaultsAttributesDetailsResponse
-    favicon_mmh3: SaneDefaultsAttributesDetailsResponse
-    hassh_md5: SaneDefaultsAttributesDetailsResponse
-    hasshserver_md5: SaneDefaultsAttributesDetailsResponse
-    regkey: SaneDefaultsAttributesDetailsResponse
-    regkey_value: SaneDefaultsAttributesDetailsResponse
-    AS: SaneDefaultsAttributesDetailsResponse
-    snort: SaneDefaultsAttributesDetailsResponse
-    bro: SaneDefaultsAttributesDetailsResponse
-    zeek: SaneDefaultsAttributesDetailsResponse
-    community_id: SaneDefaultsAttributesDetailsResponse
-    pattern_in_file: SaneDefaultsAttributesDetailsResponse
-    pattern_in_traffic: SaneDefaultsAttributesDetailsResponse
-    pattern_in_memory: SaneDefaultsAttributesDetailsResponse
-    filename_pattern: SaneDefaultsAttributesDetailsResponse
-    pgp_public_key: SaneDefaultsAttributesDetailsResponse
-    pgp_private_key: SaneDefaultsAttributesDetailsResponse
-    ssh_fingerprint: SaneDefaultsAttributesDetailsResponse
-    yara: SaneDefaultsAttributesDetailsResponse
-    stix2_pattern: SaneDefaultsAttributesDetailsResponse
-    sigma: SaneDefaultsAttributesDetailsResponse
-    gene: SaneDefaultsAttributesDetailsResponse
-    kusto_query: SaneDefaultsAttributesDetailsResponse
-    mime_type: SaneDefaultsAttributesDetailsResponse
-    identity_card_number: SaneDefaultsAttributesDetailsResponse
-    cookie: SaneDefaultsAttributesDetailsResponse
-    vulnerability: SaneDefaultsAttributesDetailsResponse
-    cpe: SaneDefaultsAttributesDetailsResponse
-    weakness: SaneDefaultsAttributesDetailsResponse
-    attachment: SaneDefaultsAttributesDetailsResponse
-    malware_sample: SaneDefaultsAttributesDetailsResponse
-    link: SaneDefaultsAttributesDetailsResponse
-    comment: SaneDefaultsAttributesDetailsResponse
-    text: SaneDefaultsAttributesDetailsResponse
-    hex: SaneDefaultsAttributesDetailsResponse
-    other: SaneDefaultsAttributesDetailsResponse
-    named_pipe: SaneDefaultsAttributesDetailsResponse
-    mutex: SaneDefaultsAttributesDetailsResponse
-    process_state: SaneDefaultsAttributesDetailsResponse
-    target_user: SaneDefaultsAttributesDetailsResponse
-    target_email: SaneDefaultsAttributesDetailsResponse
-    target_machine: SaneDefaultsAttributesDetailsResponse
-    target_org: SaneDefaultsAttributesDetailsResponse
-    target_location: SaneDefaultsAttributesDetailsResponse
-    target_external: SaneDefaultsAttributesDetailsResponse
-    btc: SaneDefaultsAttributesDetailsResponse
-    dash: SaneDefaultsAttributesDetailsResponse
-    xmr: SaneDefaultsAttributesDetailsResponse
-    iban: SaneDefaultsAttributesDetailsResponse
-    bic: SaneDefaultsAttributesDetailsResponse
-    bank_account_nr: SaneDefaultsAttributesDetailsResponse
-    aba_rtn: SaneDefaultsAttributesDetailsResponse
-    bin: SaneDefaultsAttributesDetailsResponse
-    cc_number: SaneDefaultsAttributesDetailsResponse
-    prtn: SaneDefaultsAttributesDetailsResponse
-    phone_number: SaneDefaultsAttributesDetailsResponse
-    threat_actor: SaneDefaultsAttributesDetailsResponse
-    campaign_name: SaneDefaultsAttributesDetailsResponse
-    campaign_id: SaneDefaultsAttributesDetailsResponse
-    malware_type: SaneDefaultsAttributesDetailsResponse
-    uri: SaneDefaultsAttributesDetailsResponse
-    authentihash: SaneDefaultsAttributesDetailsResponse
-    vhash: SaneDefaultsAttributesDetailsResponse
-    ssdeep: SaneDefaultsAttributesDetailsResponse
-    imphash: SaneDefaultsAttributesDetailsResponse
-    telfhash: SaneDefaultsAttributesDetailsResponse
-    pehash: SaneDefaultsAttributesDetailsResponse
-    impfuzzy: SaneDefaultsAttributesDetailsResponse
-    sha224: SaneDefaultsAttributesDetailsResponse
-    sha384: SaneDefaultsAttributesDetailsResponse
-    sha512: SaneDefaultsAttributesDetailsResponse
-    sha512_224: SaneDefaultsAttributesDetailsResponse
-    sha512_256: SaneDefaultsAttributesDetailsResponse
-    sha3_224: SaneDefaultsAttributesDetailsResponse
-    sha3_256: SaneDefaultsAttributesDetailsResponse
-    sha3_384: SaneDefaultsAttributesDetailsResponse
-    sha3_512: SaneDefaultsAttributesDetailsResponse
-    tlsh: SaneDefaultsAttributesDetailsResponse
-    cdhash: SaneDefaultsAttributesDetailsResponse
-    filename_authentihash: SaneDefaultsAttributesDetailsResponse
-    filename_vhash: SaneDefaultsAttributesDetailsResponse
-    filename_ssdeep: SaneDefaultsAttributesDetailsResponse
-    filename_imphash: SaneDefaultsAttributesDetailsResponse
-    filename_impfuzzy: SaneDefaultsAttributesDetailsResponse
-    filename_pehash: SaneDefaultsAttributesDetailsResponse
-    filename_sha224: SaneDefaultsAttributesDetailsResponse
-    filename_sha384: SaneDefaultsAttributesDetailsResponse
-    filename_sha512: SaneDefaultsAttributesDetailsResponse
-    filename_sha512_224: SaneDefaultsAttributesDetailsResponse
-    filename_sha512_256: SaneDefaultsAttributesDetailsResponse
-    filename_sha3_224: SaneDefaultsAttributesDetailsResponse
-    filename_sha3_256: SaneDefaultsAttributesDetailsResponse
-    filename_sha3_384: SaneDefaultsAttributesDetailsResponse
-    filename_sha3_512: SaneDefaultsAttributesDetailsResponse
-    filename_tlsh: SaneDefaultsAttributesDetailsResponse
-    windows_scheduled_task: SaneDefaultsAttributesDetailsResponse
-    windows_service_name: SaneDefaultsAttributesDetailsResponse
-    windows_service_displayname: SaneDefaultsAttributesDetailsResponse
-    whois_registrant_email: SaneDefaultsAttributesDetailsResponse
-    whois_registrant_phone: SaneDefaultsAttributesDetailsResponse
-    whois_registrant_name: SaneDefaultsAttributesDetailsResponse
-    whois_registrant_org: SaneDefaultsAttributesDetailsResponse
-    whois_registrar: SaneDefaultsAttributesDetailsResponse
-    whois_creation_date: SaneDefaultsAttributesDetailsResponse
-    x509_fingerprint_sha1: SaneDefaultsAttributesDetailsResponse
-    x509_fingerprint_md5: SaneDefaultsAttributesDetailsResponse
-    x509_fingerprint_sha256: SaneDefaultsAttributesDetailsResponse
-    dns_soa_email: SaneDefaultsAttributesDetailsResponse
-    size_in_bytes: SaneDefaultsAttributesDetailsResponse
-    counter: SaneDefaultsAttributesDetailsResponse
-    datetime: SaneDefaultsAttributesDetailsResponse
-    port: SaneDefaultsAttributesDetailsResponse
-    ip_dst_port: SaneDefaultsAttributesDetailsResponse
-    ip_src_port: SaneDefaultsAttributesDetailsResponse
-    hostname_port: SaneDefaultsAttributesDetailsResponse
-    mac_address: SaneDefaultsAttributesDetailsResponse
-    mac_eui_64: SaneDefaultsAttributesDetailsResponse
-    email_dst_display_name: SaneDefaultsAttributesDetailsResponse
-    email_src_display_name: SaneDefaultsAttributesDetailsResponse
-    email_header: SaneDefaultsAttributesDetailsResponse
-    email_reply_to: SaneDefaultsAttributesDetailsResponse
-    email_x_mailer: SaneDefaultsAttributesDetailsResponse
-    email_mime_boundary: SaneDefaultsAttributesDetailsResponse
-    email_thread_index: SaneDefaultsAttributesDetailsResponse
-    email_message_id: SaneDefaultsAttributesDetailsResponse
-    github_username: SaneDefaultsAttributesDetailsResponse
-    github_repository: SaneDefaultsAttributesDetailsResponse
-    github_organisation: SaneDefaultsAttributesDetailsResponse
-    jabber_id: SaneDefaultsAttributesDetailsResponse
-    twitter_id: SaneDefaultsAttributesDetailsResponse
-    dkim: SaneDefaultsAttributesDetailsResponse
-    dkim_signature: SaneDefaultsAttributesDetailsResponse
-    first_name: SaneDefaultsAttributesDetailsResponse
-    middle_name: SaneDefaultsAttributesDetailsResponse
-    last_name: SaneDefaultsAttributesDetailsResponse
-    full_name: SaneDefaultsAttributesDetailsResponse
-    date_of_birth: SaneDefaultsAttributesDetailsResponse
-    place_of_birth: SaneDefaultsAttributesDetailsResponse
-    gender: SaneDefaultsAttributesDetailsResponse
-    passport_number: SaneDefaultsAttributesDetailsResponse
-    passport_country: SaneDefaultsAttributesDetailsResponse
-    passport_expiration: SaneDefaultsAttributesDetailsResponse
-    redress_number: SaneDefaultsAttributesDetailsResponse
-    nationality: SaneDefaultsAttributesDetailsResponse
-    visa_number: SaneDefaultsAttributesDetailsResponse
-    issue_date_of_the_visa: SaneDefaultsAttributesDetailsResponse
-    primary_residence: SaneDefaultsAttributesDetailsResponse
-    country_of_residence: SaneDefaultsAttributesDetailsResponse
-    special_service_request: SaneDefaultsAttributesDetailsResponse
-    frequent_flyer_number: SaneDefaultsAttributesDetailsResponse
-    travel_details: SaneDefaultsAttributesDetailsResponse
-    payment_details: SaneDefaultsAttributesDetailsResponse
-    place_port_of_original_embarkation: SaneDefaultsAttributesDetailsResponse
-    place_port_of_clearance: SaneDefaultsAttributesDetailsResponse
-    place_port_of_onward_foreign_destination: SaneDefaultsAttributesDetailsResponse
-    passenger_name_record_locator_number: SaneDefaultsAttributesDetailsResponse
-    mobile_application_id: SaneDefaultsAttributesDetailsResponse
-    azure_application_id: SaneDefaultsAttributesDetailsResponse
-    chrome_extension_id: SaneDefaultsAttributesDetailsResponse
-    cortex: SaneDefaultsAttributesDetailsResponse
-    boolean: SaneDefaultsAttributesDetailsResponse
-    anonymised: SaneDefaultsAttributesDetailsResponse
+class GetDescribeTypesSaneDefaultsAttributes(BaseModel):
+    md5: GetDescribeTypesSaneDefaultsAttributesDetails
+    sha1: GetDescribeTypesSaneDefaultsAttributesDetails
+    sha256: GetDescribeTypesSaneDefaultsAttributesDetails
+    filename: GetDescribeTypesSaneDefaultsAttributesDetails
+    pdb: GetDescribeTypesSaneDefaultsAttributesDetails
+    filename_md5: GetDescribeTypesSaneDefaultsAttributesDetails
+    filename_sha1: GetDescribeTypesSaneDefaultsAttributesDetails
+    filename_sha256: GetDescribeTypesSaneDefaultsAttributesDetails
+    ip_src: GetDescribeTypesSaneDefaultsAttributesDetails
+    ip_dst: GetDescribeTypesSaneDefaultsAttributesDetails
+    hostname: GetDescribeTypesSaneDefaultsAttributesDetails
+    domain: GetDescribeTypesSaneDefaultsAttributesDetails
+    domain_ip: GetDescribeTypesSaneDefaultsAttributesDetails
+    email: GetDescribeTypesSaneDefaultsAttributesDetails
+    email_src: GetDescribeTypesSaneDefaultsAttributesDetails
+    eppn: GetDescribeTypesSaneDefaultsAttributesDetails
+    email_dst: GetDescribeTypesSaneDefaultsAttributesDetails
+    email_subject: GetDescribeTypesSaneDefaultsAttributesDetails
+    email_attachment: GetDescribeTypesSaneDefaultsAttributesDetails
+    email_body: GetDescribeTypesSaneDefaultsAttributesDetails
+    float: GetDescribeTypesSaneDefaultsAttributesDetails
+    git_commit_id: GetDescribeTypesSaneDefaultsAttributesDetails
+    url: GetDescribeTypesSaneDefaultsAttributesDetails
+    http_method: GetDescribeTypesSaneDefaultsAttributesDetails
+    user_agent: GetDescribeTypesSaneDefaultsAttributesDetails
+    ja3_fingerprint_md5: GetDescribeTypesSaneDefaultsAttributesDetails
+    jarm_fingerprint: GetDescribeTypesSaneDefaultsAttributesDetails
+    favicon_mmh3: GetDescribeTypesSaneDefaultsAttributesDetails
+    hassh_md5: GetDescribeTypesSaneDefaultsAttributesDetails
+    hasshserver_md5: GetDescribeTypesSaneDefaultsAttributesDetails
+    regkey: GetDescribeTypesSaneDefaultsAttributesDetails
+    regkey_value: GetDescribeTypesSaneDefaultsAttributesDetails
+    AS: GetDescribeTypesSaneDefaultsAttributesDetails
+    snort: GetDescribeTypesSaneDefaultsAttributesDetails
+    bro: GetDescribeTypesSaneDefaultsAttributesDetails
+    zeek: GetDescribeTypesSaneDefaultsAttributesDetails
+    community_id: GetDescribeTypesSaneDefaultsAttributesDetails
+    pattern_in_file: GetDescribeTypesSaneDefaultsAttributesDetails
+    pattern_in_traffic: GetDescribeTypesSaneDefaultsAttributesDetails
+    pattern_in_memory: GetDescribeTypesSaneDefaultsAttributesDetails
+    filename_pattern: GetDescribeTypesSaneDefaultsAttributesDetails
+    pgp_public_key: GetDescribeTypesSaneDefaultsAttributesDetails
+    pgp_private_key: GetDescribeTypesSaneDefaultsAttributesDetails
+    ssh_fingerprint: GetDescribeTypesSaneDefaultsAttributesDetails
+    yara: GetDescribeTypesSaneDefaultsAttributesDetails
+    stix2_pattern: GetDescribeTypesSaneDefaultsAttributesDetails
+    sigma: GetDescribeTypesSaneDefaultsAttributesDetails
+    gene: GetDescribeTypesSaneDefaultsAttributesDetails
+    kusto_query: GetDescribeTypesSaneDefaultsAttributesDetails
+    mime_type: GetDescribeTypesSaneDefaultsAttributesDetails
+    identity_card_number: GetDescribeTypesSaneDefaultsAttributesDetails
+    cookie: GetDescribeTypesSaneDefaultsAttributesDetails
+    vulnerability: GetDescribeTypesSaneDefaultsAttributesDetails
+    cpe: GetDescribeTypesSaneDefaultsAttributesDetails
+    weakness: GetDescribeTypesSaneDefaultsAttributesDetails
+    attachment: GetDescribeTypesSaneDefaultsAttributesDetails
+    malware_sample: GetDescribeTypesSaneDefaultsAttributesDetails
+    link: GetDescribeTypesSaneDefaultsAttributesDetails
+    comment: GetDescribeTypesSaneDefaultsAttributesDetails
+    text: GetDescribeTypesSaneDefaultsAttributesDetails
+    hex: GetDescribeTypesSaneDefaultsAttributesDetails
+    other: GetDescribeTypesSaneDefaultsAttributesDetails
+    named_pipe: GetDescribeTypesSaneDefaultsAttributesDetails
+    mutex: GetDescribeTypesSaneDefaultsAttributesDetails
+    process_state: GetDescribeTypesSaneDefaultsAttributesDetails
+    target_user: GetDescribeTypesSaneDefaultsAttributesDetails
+    target_email: GetDescribeTypesSaneDefaultsAttributesDetails
+    target_machine: GetDescribeTypesSaneDefaultsAttributesDetails
+    target_org: GetDescribeTypesSaneDefaultsAttributesDetails
+    target_location: GetDescribeTypesSaneDefaultsAttributesDetails
+    target_external: GetDescribeTypesSaneDefaultsAttributesDetails
+    btc: GetDescribeTypesSaneDefaultsAttributesDetails
+    dash: GetDescribeTypesSaneDefaultsAttributesDetails
+    xmr: GetDescribeTypesSaneDefaultsAttributesDetails
+    iban: GetDescribeTypesSaneDefaultsAttributesDetails
+    bic: GetDescribeTypesSaneDefaultsAttributesDetails
+    bank_account_nr: GetDescribeTypesSaneDefaultsAttributesDetails
+    aba_rtn: GetDescribeTypesSaneDefaultsAttributesDetails
+    bin: GetDescribeTypesSaneDefaultsAttributesDetails
+    cc_number: GetDescribeTypesSaneDefaultsAttributesDetails
+    prtn: GetDescribeTypesSaneDefaultsAttributesDetails
+    phone_number: GetDescribeTypesSaneDefaultsAttributesDetails
+    threat_actor: GetDescribeTypesSaneDefaultsAttributesDetails
+    campaign_name: GetDescribeTypesSaneDefaultsAttributesDetails
+    campaign_id: GetDescribeTypesSaneDefaultsAttributesDetails
+    malware_type: GetDescribeTypesSaneDefaultsAttributesDetails
+    uri: GetDescribeTypesSaneDefaultsAttributesDetails
+    authentihash: GetDescribeTypesSaneDefaultsAttributesDetails
+    vhash: GetDescribeTypesSaneDefaultsAttributesDetails
+    ssdeep: GetDescribeTypesSaneDefaultsAttributesDetails
+    imphash: GetDescribeTypesSaneDefaultsAttributesDetails
+    telfhash: GetDescribeTypesSaneDefaultsAttributesDetails
+    pehash: GetDescribeTypesSaneDefaultsAttributesDetails
+    impfuzzy: GetDescribeTypesSaneDefaultsAttributesDetails
+    sha224: GetDescribeTypesSaneDefaultsAttributesDetails
+    sha384: GetDescribeTypesSaneDefaultsAttributesDetails
+    sha512: GetDescribeTypesSaneDefaultsAttributesDetails
+    sha512_224: GetDescribeTypesSaneDefaultsAttributesDetails
+    sha512_256: GetDescribeTypesSaneDefaultsAttributesDetails
+    sha3_224: GetDescribeTypesSaneDefaultsAttributesDetails
+    sha3_256: GetDescribeTypesSaneDefaultsAttributesDetails
+    sha3_384: GetDescribeTypesSaneDefaultsAttributesDetails
+    sha3_512: GetDescribeTypesSaneDefaultsAttributesDetails
+    tlsh: GetDescribeTypesSaneDefaultsAttributesDetails
+    cdhash: GetDescribeTypesSaneDefaultsAttributesDetails
+    filename_authentihash: GetDescribeTypesSaneDefaultsAttributesDetails
+    filename_vhash: GetDescribeTypesSaneDefaultsAttributesDetails
+    filename_ssdeep: GetDescribeTypesSaneDefaultsAttributesDetails
+    filename_imphash: GetDescribeTypesSaneDefaultsAttributesDetails
+    filename_impfuzzy: GetDescribeTypesSaneDefaultsAttributesDetails
+    filename_pehash: GetDescribeTypesSaneDefaultsAttributesDetails
+    filename_sha224: GetDescribeTypesSaneDefaultsAttributesDetails
+    filename_sha384: GetDescribeTypesSaneDefaultsAttributesDetails
+    filename_sha512: GetDescribeTypesSaneDefaultsAttributesDetails
+    filename_sha512_224: GetDescribeTypesSaneDefaultsAttributesDetails
+    filename_sha512_256: GetDescribeTypesSaneDefaultsAttributesDetails
+    filename_sha3_224: GetDescribeTypesSaneDefaultsAttributesDetails
+    filename_sha3_256: GetDescribeTypesSaneDefaultsAttributesDetails
+    filename_sha3_384: GetDescribeTypesSaneDefaultsAttributesDetails
+    filename_sha3_512: GetDescribeTypesSaneDefaultsAttributesDetails
+    filename_tlsh: GetDescribeTypesSaneDefaultsAttributesDetails
+    windows_scheduled_task: GetDescribeTypesSaneDefaultsAttributesDetails
+    windows_service_name: GetDescribeTypesSaneDefaultsAttributesDetails
+    windows_service_displayname: GetDescribeTypesSaneDefaultsAttributesDetails
+    whois_registrant_email: GetDescribeTypesSaneDefaultsAttributesDetails
+    whois_registrant_phone: GetDescribeTypesSaneDefaultsAttributesDetails
+    whois_registrant_name: GetDescribeTypesSaneDefaultsAttributesDetails
+    whois_registrant_org: GetDescribeTypesSaneDefaultsAttributesDetails
+    whois_registrar: GetDescribeTypesSaneDefaultsAttributesDetails
+    whois_creation_date: GetDescribeTypesSaneDefaultsAttributesDetails
+    x509_fingerprint_sha1: GetDescribeTypesSaneDefaultsAttributesDetails
+    x509_fingerprint_md5: GetDescribeTypesSaneDefaultsAttributesDetails
+    x509_fingerprint_sha256: GetDescribeTypesSaneDefaultsAttributesDetails
+    dns_soa_email: GetDescribeTypesSaneDefaultsAttributesDetails
+    size_in_bytes: GetDescribeTypesSaneDefaultsAttributesDetails
+    counter: GetDescribeTypesSaneDefaultsAttributesDetails
+    datetime: GetDescribeTypesSaneDefaultsAttributesDetails
+    port: GetDescribeTypesSaneDefaultsAttributesDetails
+    ip_dst_port: GetDescribeTypesSaneDefaultsAttributesDetails
+    ip_src_port: GetDescribeTypesSaneDefaultsAttributesDetails
+    hostname_port: GetDescribeTypesSaneDefaultsAttributesDetails
+    mac_address: GetDescribeTypesSaneDefaultsAttributesDetails
+    mac_eui_64: GetDescribeTypesSaneDefaultsAttributesDetails
+    email_dst_display_name: GetDescribeTypesSaneDefaultsAttributesDetails
+    email_src_display_name: GetDescribeTypesSaneDefaultsAttributesDetails
+    email_header: GetDescribeTypesSaneDefaultsAttributesDetails
+    email_reply_to: GetDescribeTypesSaneDefaultsAttributesDetails
+    email_x_mailer: GetDescribeTypesSaneDefaultsAttributesDetails
+    email_mime_boundary: GetDescribeTypesSaneDefaultsAttributesDetails
+    email_thread_index: GetDescribeTypesSaneDefaultsAttributesDetails
+    email_message_id: GetDescribeTypesSaneDefaultsAttributesDetails
+    github_username: GetDescribeTypesSaneDefaultsAttributesDetails
+    github_repository: GetDescribeTypesSaneDefaultsAttributesDetails
+    github_organisation: GetDescribeTypesSaneDefaultsAttributesDetails
+    jabber_id: GetDescribeTypesSaneDefaultsAttributesDetails
+    twitter_id: GetDescribeTypesSaneDefaultsAttributesDetails
+    dkim: GetDescribeTypesSaneDefaultsAttributesDetails
+    dkim_signature: GetDescribeTypesSaneDefaultsAttributesDetails
+    first_name: GetDescribeTypesSaneDefaultsAttributesDetails
+    middle_name: GetDescribeTypesSaneDefaultsAttributesDetails
+    last_name: GetDescribeTypesSaneDefaultsAttributesDetails
+    full_name: GetDescribeTypesSaneDefaultsAttributesDetails
+    date_of_birth: GetDescribeTypesSaneDefaultsAttributesDetails
+    place_of_birth: GetDescribeTypesSaneDefaultsAttributesDetails
+    gender: GetDescribeTypesSaneDefaultsAttributesDetails
+    passport_number: GetDescribeTypesSaneDefaultsAttributesDetails
+    passport_country: GetDescribeTypesSaneDefaultsAttributesDetails
+    passport_expiration: GetDescribeTypesSaneDefaultsAttributesDetails
+    redress_number: GetDescribeTypesSaneDefaultsAttributesDetails
+    nationality: GetDescribeTypesSaneDefaultsAttributesDetails
+    visa_number: GetDescribeTypesSaneDefaultsAttributesDetails
+    issue_date_of_the_visa: GetDescribeTypesSaneDefaultsAttributesDetails
+    primary_residence: GetDescribeTypesSaneDefaultsAttributesDetails
+    country_of_residence: GetDescribeTypesSaneDefaultsAttributesDetails
+    special_service_request: GetDescribeTypesSaneDefaultsAttributesDetails
+    frequent_flyer_number: GetDescribeTypesSaneDefaultsAttributesDetails
+    travel_details: GetDescribeTypesSaneDefaultsAttributesDetails
+    payment_details: GetDescribeTypesSaneDefaultsAttributesDetails
+    place_port_of_original_embarkation: GetDescribeTypesSaneDefaultsAttributesDetails
+    place_port_of_clearance: GetDescribeTypesSaneDefaultsAttributesDetails
+    place_port_of_onward_foreign_destination: GetDescribeTypesSaneDefaultsAttributesDetails
+    passenger_name_record_locator_number: GetDescribeTypesSaneDefaultsAttributesDetails
+    mobile_application_id: GetDescribeTypesSaneDefaultsAttributesDetails
+    azure_application_id: GetDescribeTypesSaneDefaultsAttributesDetails
+    chrome_extension_id: GetDescribeTypesSaneDefaultsAttributesDetails
+    cortex: GetDescribeTypesSaneDefaultsAttributesDetails
+    boolean: GetDescribeTypesSaneDefaultsAttributesDetails
+    anonymised: GetDescribeTypesSaneDefaultsAttributesDetails
 
 
-class SaneDefaultsResponse(BaseModel):
-    sane_defaults: str
+class GetDescribeTypesSaneDefaults(BaseModel):
+    sane_defaults: GetDescribeTypesSaneDefaultsAttributes
 
 
-class TypesResponse(BaseModel):
+class GetDescribeTypesTypes(BaseModel):
     types: list[str] = [
         "md5",
         "sha1",
@@ -394,7 +394,7 @@ class TypesResponse(BaseModel):
     ]
 
 
-class CategoriesResponse(BaseModel):
+class GetDescribeTypesCategories(BaseModel):
     categories: list[str] = [
         "Internal reference",
         "Targeting data",
@@ -415,7 +415,7 @@ class CategoriesResponse(BaseModel):
     ]
 
 
-class CategoryTypeMappingsResponse(BaseModel):
+class GetDescribeTypesCategoryTypeMappings(BaseModel):
     Internal_reference: list[str] = [
         "text",
         "link",
@@ -921,15 +921,15 @@ class CategoryTypeMappingsResponse(BaseModel):
     ]
 
 
-class DescribeTypesAttributesResponse(BaseModel):
-    sane_defaults: SaneDefaultsResponse
-    types: TypesResponse
-    categories: CategoriesResponse
-    category_type_mappings: CategoryTypeMappingsResponse
+class GetDescribeTypesDescribeTypesAttributes(BaseModel):
+    sane_defaults: GetDescribeTypesSaneDefaults
+    types: GetDescribeTypesTypes
+    categories: GetDescribeTypesCategories
+    category_type_mappings: GetDescribeTypesCategoryTypeMappings
 
 
-class DescribeTypesResponse(BaseModel):
-    result: str
+class GetDescribeTypesResponse(BaseModel):
+    result: GetDescribeTypesDescribeTypesAttributes
 
     class Config:
         orm_mode = True

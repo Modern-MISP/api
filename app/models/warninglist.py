@@ -1,23 +1,25 @@
-from sqlalchemy import Boolean, Column, Integer, String
+from sqlalchemy import Boolean, Column, Integer, String, ForeignKey
+from sqlalchemy.orm import relationship
 
 from ..database import Base
 
 
-class WarninglistEntry(Base):
-    __tablename__ = "warninglistEntry"
-    id = Column(String)
-    value = Column(String)
-    warninglist_id = Column(String)
-    comment = Column(String)
-
-
 class Warninglist(Base):
-    __tablename__ = "warninglist"
+    __tablename__ = "warninglists"
     id = Column(String, primary_key=True)
     name = Column(String)
     type = Column(String)
     description = Column(String)
-    version = Column(String)
+    version = Column(Integer)
     enabled = Column(Boolean)
     category = Column(String)
-    WarninglistEntry = Column(list[WarninglistEntry])
+    warninglist_entry_count = Column(Integer)
+    warninglistEntry = relationship("WarninglistEntries")
+
+
+class WarninglistEntry(Base):
+    __tablename__ = "warninglistEntries"
+    id = Column(String, primary_key=True)
+    value = Column(String)
+    warninglist_id = Column(String, ForeignKey("warninglists.id"))
+    comment = Column(String)

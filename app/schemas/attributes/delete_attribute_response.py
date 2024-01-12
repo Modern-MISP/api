@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 
-class AttributeDeleteResponse(BaseModel):
+class DeleteAttributeResponse(BaseModel):
     message: str
 
     class Config:
