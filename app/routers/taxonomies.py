@@ -2,7 +2,7 @@ from fastapi import APIRouter, Header
 
 from app.schemas.taxonomies.enable_disable_taxonomy_out import TaxonomyAbleSchema
 from app.schemas.taxonomies.export_taxonomies_out import TaxonomyExportSchema
-from app.schemas.taxonomies.get_taxonomy_by_id_out import TaxonomyEntrySchema
+from app.schemas.taxonomies.get_taxonomy_by_id_out import TaxonomyTagSchema
 from app.schemas.taxonomies.get_taxonomy_out import TaxonomyViewSchema
 from app.schemas.taxonomies.update_taxonomy_out import TaxonomyUpdateSchema
 
@@ -18,8 +18,8 @@ async def get_taxonomies() -> list[TaxonomyViewSchema]:
 # Get Taxonomy by ID
 @router.get("/view/{taxonomy_id_parameter}", deprecated=True)  # deprecated
 @router.get("/{taxonomy_id_parameter}")
-async def get_taxonomy_by_id_depr() -> TaxonomyEntrySchema:
-    return TaxonomyEntrySchema()
+async def get_taxonomy_by_id_depr() -> TaxonomyTagSchema:
+    return TaxonomyTagSchema()
 
 
 # Enable Taxonomy
@@ -43,8 +43,8 @@ async def update_taxonomies_depr() -> TaxonomyUpdateSchema:
 
 # Get a Taxonomy extended with Tags used in events and attributes
 @router.get("/taxonomy_tags/{taxonomyId}")
-async def get_taxonomy_extended() -> TaxonomyEntrySchema:
-    return TaxonomyEntrySchema()
+async def get_taxonomy_extended() -> TaxonomyTagSchema:
+    return TaxonomyTagSchema()
 
 
 @router.get("export/{taxonomyId}")
