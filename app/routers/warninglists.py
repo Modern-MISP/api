@@ -49,8 +49,8 @@ async def get_all_warninglists() -> GetSelectedAllWarninglistsResponse:
 @router.post(
     "/warninglists/",
     deprecated=True,
-    summary="Get selected noticelists (Deprecated)",
-    description="Retrieve a list of noticelists, which match given search terms using the old route.",
+    summary="Get selected warninglists (Deprecated)",
+    description="Retrieve a list of warninglists, which match given search terms using the old route.",
 )
 async def search_warninglists(
     body: GetSelectedWarninglistsBody,
@@ -60,14 +60,14 @@ async def search_warninglists(
 
 @router.get(
     "/warninglists?value=String&enabled=boolean",
-    summary="Get selected noticelists",
-    description="Retrieve a list of noticelists, which match given search terms using the old route.",
+    summary="Get selected warninglists",
+    description="Retrieve a list of warninglists, which match given search terms using the old route.",
 )
 async def get_warninglists_by_param() -> GetSelectedAllWarninglistsResponse:
     return None
 
 
-@router.get(
+@router.post(
     "/warninglists/toggleEnable",
     summary="Disable/Enable warninglist",
     description="Disable/Enable a specific warninglist by its ID or name.",

@@ -1,23 +1,10 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
-from .warninglists import Type, Category
-
-
-class GetSelectedAllWarninglists(BaseModel):
-    id: int
-    name: str = Field(max_length=255)
-    type: Type
-    description: str = Field(max_length=65535)
-    version: int
-    enabled: bool
-    default: bool
-    category: Category
-    warninglist_entry_count: int
-    valid_attributes: str
+from .warninglist import Warninglist
 
 
 class GetSelectedAllWarninglistsResponse(BaseModel):
-    response: list[GetSelectedAllWarninglists]
+    response: list[Warninglist]
 
     class Config:
         orm_mode = True
