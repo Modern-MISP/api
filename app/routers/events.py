@@ -4,25 +4,25 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..schemas.events.delete_events_response import EventsDeleteResponse
-from ..schemas.events.get_all_events_response import EventsResponse
-from ..schemas.events.get_event_response import EventResponse
-from ..schemas.events.search_events_body import EventsRestSearchBody
-from ..schemas.events.search_events_response import EventsRestSearchResponse
-from ..schemas.events.add_event_body import EventAddBody
-from ..schemas.events.add_add_event_response import EventAddOrEditResponse
-from ..schemas.events.index_events_body import EventsIndexBody
-from ..schemas.events.index_events_response import EventsIndexResponse
-from ..schemas.events.publish_event_response import EventPublishResponse
-from ..schemas.events.unpublish_event_response import EventUnpublishResponse
-from ..schemas.events.add_remove_tag_events_response import EventsTagResponse
+from ..schemas.events.delete_events_response import DeleteEventsResponse
+from ..schemas.events.get_all_events_response import GetAllEventsResponse
+from ..schemas.events.get_event_response import GetEventResponse
+from ..schemas.events.search_events_body import SearchEventsBody
+from ..schemas.events.search_events_response import SearchEventsResponse
+from ..schemas.events.add_event_body import AddEventBody
+from ..schemas.events.add_edit_event_response import AddEditEventResponse
+from ..schemas.events.index_events_body import IndexEventsBody
+from ..schemas.events.index_events_response import IndexEventsResponse
+from ..schemas.events.publish_event_response import PublishEventResponse
+from ..schemas.events.unpublish_event_response import UnpublishEventResponse
+from ..schemas.events.add_remove_tag_events_response import AddRemoveTagEventsResponse
 from ..schemas.events.add_attribute_via_free_text_import_body import (
-    EventsFreeTextImportBody,
+    AddAttributeViaFreeTextImportToEventBody,
 )
 from ..schemas.events.add_attribute_via_free_text_import_response import (
-    EventsFreeTextImportResponse,
+    AddAttributeViaFreeTextImportToEventResponse,
 )
-from ..schemas.events.edit_event_body import EventEditBody
+from ..schemas.events.edit_event_body import EditEventBody
 
 router = APIRouter(prefix="/events", tags=["events"])
 
@@ -34,8 +34,8 @@ router = APIRouter(prefix="/events", tags=["events"])
 @router.delete("/{event_id}")  # new
 async def events_delete(
     event_id: str, db: Session = Depends(get_db)
-) -> EventsDeleteResponse:
-    return EventsDeleteResponse(
+) -> DeleteEventsResponse:
+    return DeleteEventsResponse(
         saved=True,
         success=True,
         name="Event deleted.",
@@ -49,14 +49,16 @@ async def events_delete(
 
 
 @router.get("/")
-async def events_get(db: Session = Depends(get_db)) -> EventsResponse:
-    return EventsResponse(events=[])
+async def events_get(db: Session = Depends(get_db)) -> GetAllEventsResponse:
+    return GetAllEventsResponse(events=[])
 
 
 @router.get("/view/{event_id}", deprecated=True)  # deprecated
 @router.get("/{event_id}")  # new
-async def events_getById(event_id: str, db: Session = Depends(get_db)) -> EventResponse:
-    return EventResponse(id="")
+async def events_getById(
+    event_id: str, db: Session = Depends(get_db)
+) -> GetEventResponse:
+    return GetEventResponse(id="")
 
 
 # -- Post
@@ -64,38 +66,38 @@ async def events_getById(event_id: str, db: Session = Depends(get_db)) -> EventR
 
 @router.post("/restSearch")
 async def events_restSearch(
-    body: EventsRestSearchBody, db: Session = Depends(get_db)
-) -> List[EventsRestSearchResponse]:
-    return EventsRestSearchResponse(response=[])
+    body: SearchEventsBody, db: Session = Depends(get_db)
+) -> List[SearchEventsResponse]:
+    return SearchEventsResponse(response=[])
 
 
 @router.post("/add", deprecated=True)  # deprecated
 @router.post("/")  # new
 async def events_post(
-    body: EventAddBody, db: Session = Depends(get_db)
-) -> EventAddOrEditResponse:
-    return EventAddOrEditResponse(Event="")
+    body: AddEventBody, db: Session = Depends(get_db)
+) -> AddEditEventResponse:
+    return AddEditEventResponse(Event="")
 
 
 @router.post("/index")
 async def events_index(
-    body: EventsIndexBody, db: Session = Depends(get_db)
-) -> List[EventsIndexResponse]:
-    return EventsIndexResponse(events=[])
+    body: IndexEventsBody, db: Session = Depends(get_db)
+) -> List[IndexEventsResponse]:
+    return IndexEventsResponse(events=[])
 
 
 @router.post("/publish/{event_id}")
 async def events_publish(
     event_id: str, db: Session = Depends(get_db)
-) -> EventPublishResponse:
-    return EventPublishResponse(name="Publish", message="Job queued", url="", id="")
+) -> PublishEventResponse:
+    return PublishEventResponse(name="Publish", message="Job queued", url="", id="")
 
 
 @router.post("/unpublish/{event_id}")
 async def events_unpublish(
     event_id: str, db: Session = Depends(get_db)
-) -> EventUnpublishResponse:
-    return EventUnpublishResponse(
+) -> UnpublishEventResponse:
+    return UnpublishEventResponse(
         saved=True,
         success=True,
         name="Event unpublished.",
@@ -107,8 +109,8 @@ async def events_unpublish(
 @router.post("/addTag/{event_id}/{tag_id}/local:{local}")
 async def events_addTag(
     event_id: str, tag_id: str, local: int, db: Session = Depends(get_db)
-) -> EventsTagResponse:
-    return EventsTagResponse(
+) -> AddRemoveTagEventsResponse:
+    return AddRemoveTagEventsResponse(
         saved=True,
         success="Tag added",
         check_publish=True,
@@ -119,8 +121,8 @@ async def events_addTag(
 @router.post("/removeTag/{event_id}/{tag_id}")
 async def events_removeTag(
     event_id: str, tag_id: str, db: Session = Depends(get_db)
-) -> EventsTagResponse:
-    return EventsTagResponse(
+) -> AddRemoveTagEventsResponse:
+    return AddRemoveTagEventsResponse(
         saved=True,
         success="Tag added",
         check_publish=True,
@@ -130,9 +132,11 @@ async def events_removeTag(
 
 @router.post("/freeTextImport/{event_id}")
 async def events_freeTextImport(
-    event_id: str, body: EventsFreeTextImportBody, db: Session = Depends(get_db)
-) -> EventsFreeTextImportResponse:
-    return EventsFreeTextImportResponse(comment="")
+    event_id: str,
+    body: AddAttributeViaFreeTextImportToEventBody,
+    db: Session = Depends(get_db),
+) -> AddAttributeViaFreeTextImportToEventResponse:
+    return AddAttributeViaFreeTextImportToEventResponse(comment="")
 
 
 # -- Put
@@ -141,6 +145,6 @@ async def events_freeTextImport(
 @router.put("/edit/{event_id}", deprecated=True)  # deprecated
 @router.put("/{event_id}")  # new
 async def events_put(
-    event_id: str, body: EventEditBody, db: Session = Depends(get_db)
-) -> EventAddOrEditResponse:
-    return EventAddOrEditResponse(Event="")
+    event_id: str, body: EditEventBody, db: Session = Depends(get_db)
+) -> AddEditEventResponse:
+    return AddEditEventResponse(Event="")
