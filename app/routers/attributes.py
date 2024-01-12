@@ -32,8 +32,10 @@ router = APIRouter(prefix="/attributes", tags=["attributes"])
 # -- Delete
 
 
-@router.delete("/delete/{attribute_id}", deprecated=True)  # deprecated
-@router.delete("/{attributeID}")  # new
+@router.delete(
+    "/delete/{attribute_id}", summary="Delete an Attribute", deprecated=True
+)  # deprecated
+@router.delete("/{attributeID}", summary="Delete an Attribute")  # new
 async def attributes_delete(
     attribute_id: str, db: Session = Depends(get_db)
 ) -> DeleteAttributeResponse:
@@ -43,7 +45,7 @@ async def attributes_delete(
 # -- Get
 
 
-@router.get("/attributes")
+@router.get("/attributes", summary="Get all Attributes")
 async def attributes_get(db: Session = Depends(get_db)) -> GetAllAttributesResponse:
     return GetAllAttributesResponse(attribute=[])
     # try:
@@ -53,8 +55,10 @@ async def attributes_get(db: Session = Depends(get_db)) -> GetAllAttributesRespo
     #     raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/view/{attribute_id}", deprecated=True)  # deprecated
-@router.get("/{attribute_id}")  # new
+@router.get(
+    "/view/{attribute_id}", summary="Get an Attribute by its ID", deprecated=True
+)  # deprecated
+@router.get("/{attribute_id}", summary="Get an Attribute by its ID")  # new
 async def attributes_getById(
     attribute_id: str,
     db: Session = Depends(get_db),
@@ -68,14 +72,17 @@ async def attributes_getById(
     # return attribute
 
 
-@router.get("/attributeStatistics/{context}/{percentage}")
+@router.get(
+    "/attributeStatistics/{context}/{percentage}",
+    summary="Get the count/percentage of attributes per category/type",
+)
 async def attributes_statistics(
     context: str, percentage: int, db: Session = Depends(get_db)
 ) -> GetAttributeStatisticsResponse:
     return GetAttributeStatisticsResponse()
 
 
-@router.get("/describeTypes")
+@router.get("/describeTypes", summary="Get all available attribute types")
 async def attributes_describeTypes(
     db: Session = Depends(get_db),
 ) -> GetDescribeTypesResponse:
@@ -85,7 +92,7 @@ async def attributes_describeTypes(
 # -- Post
 
 
-@router.post("/restSearch")
+@router.post("/restSearch", summary="Get a filtered list of attributes")
 async def attributes_reastSearch(
     body: SearchAttributesBody,
     db: Session = Depends(get_db),
@@ -93,8 +100,10 @@ async def attributes_reastSearch(
     return SearchAttributesResponse(id="")
 
 
-@router.post("/add/{event_id}", deprecated=True)  # deprecated
-@router.post("/{event_id}")  # new
+@router.post(
+    "/add/{event_id}", summary="Add an attribute", deprecated=True
+)  # deprecated
+@router.post("/{event_id}", summary="Add an attribute")  # new
 async def attributes_post(
     event_id: str,
     body: AddAttributeBody,
@@ -108,7 +117,7 @@ async def attributes_post(
     # return new_attribute
 
 
-@router.post("/deleteSelected/{event_id}")
+@router.post("/deleteSelected/{event_id}", summary="Delete the selected attributes")
 async def attributes_deleteSelected(
     event_id: str, body: DeleteSelectedAttributeBody, db: Session = Depends(get_db)
 ) -> DeleteSelectedAttributeResponse:
@@ -122,7 +131,7 @@ async def attributes_deleteSelected(
     )
 
 
-@router.post("/restore/{attribute_id}")
+@router.post("/restore/{attribute_id}", summary="Restore an attribute")
 async def attributes_restore(
     attribute_id: str, db: Session = Depends(get_db)
 ) -> RestoreAttributeResponse:
@@ -130,7 +139,7 @@ async def attributes_restore(
 
 
 @router.post(
-    "/addTag/{attribute_id}/{tag_id}/local:{local}",
+    "/addTag/{attribute_id}/{tag_id}/local:{local}", summary="Add a tag to an attribute"
 )
 async def attributes_addTag(
     attribute_id: str, tag_id: str, local: int, db: Session = Depends(get_db)
@@ -143,7 +152,9 @@ async def attributes_addTag(
     )
 
 
-@router.post("/removeTag/{attribute_id}/{tag_id}")
+@router.post(
+    "/removeTag/{attribute_id}/{tag_id}", summary="Remove a tag from an attribute"
+)
 async def attributes_removeTag(
     attribute_id: str, tag_id: str, db: Session = Depends(get_db)
 ) -> AddRemoveTagToAttributeResponse:
@@ -158,8 +169,10 @@ async def attributes_removeTag(
 # -- Put
 
 
-@router.put("/edit/{attribute_id}", deprecated=True)  # deprecated
-@router.put("/{attribute_id}")  # new
+@router.put(
+    "/edit/{attribute_id}", summary="Edit an attribute", deprecated=True
+)  # deprecated
+@router.put("/{attribute_id}", summary="Edit an attribute")  # new
 async def attributes_put(
     attribute_id: str,
     body: EditAttributeBody,
