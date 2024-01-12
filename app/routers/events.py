@@ -16,11 +16,11 @@ from ..schemas.events.index_events_response import IndexEventsResponse
 from ..schemas.events.publish_event_response import PublishEventResponse
 from ..schemas.events.unpublish_event_response import UnpublishEventResponse
 from ..schemas.events.add_remove_tag_events_response import AddRemoveTagEventsResponse
-from ..schemas.events.add_attribute_via_free_text_import_body import (
-    AddAttributeViaFreeTextImportToEventBody,
+from ..schemas.events.add_attribute_via_free_text_import_event_body import (
+    AddAttributeViaFreeTextImportEventBody,
 )
-from ..schemas.events.add_attribute_via_free_text_import_response import (
-    AddAttributeViaFreeTextImportToEventResponse,
+from ..schemas.events.add_attribute_via_free_text_import_event_response import (
+    AddAttributeViaFreeTextImportEventResponse,
 )
 from ..schemas.events.edit_event_body import EditEventBody
 
@@ -133,10 +133,10 @@ async def events_removeTag(
 @router.post("/freeTextImport/{event_id}")
 async def events_freeTextImport(
     event_id: str,
-    body: AddAttributeViaFreeTextImportToEventBody,
+    body: AddAttributeViaFreeTextImportEventBody,
     db: Session = Depends(get_db),
-) -> AddAttributeViaFreeTextImportToEventResponse:
-    return AddAttributeViaFreeTextImportToEventResponse(comment="")
+) -> AddAttributeViaFreeTextImportEventResponse:
+    return AddAttributeViaFreeTextImportEventResponse(comment="")
 
 
 # -- Put

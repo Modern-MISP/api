@@ -2,19 +2,19 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..schemas.galaxies.delete_galaxy_response import GalaxyDeleteResponse
-from ..schemas.galaxies.get_all_galaxies import GalaxiesGetResponse
-from ..schemas.galaxies.get_galaxy_response import GalaxyGetResponse
-from ..schemas.galaxies.search_galaxies_body import GalaxySearchBody
-from ..schemas.galaxies.search_galaxies_response import GalaxySearchResponse
-from ..schemas.galaxies.forece_update_galaxies_response import GalaxyUpdateResponse
-from ..schemas.galaxies.import_galaxies_body import GalaxyImportBody
-from ..schemas.galaxies.import_galaxies_response import GalaxyImportResponse
-from ..schemas.galaxies.export_galaxies_body import GalaxyExportBody
-from ..schemas.galaxies.export_galaxies_response import GalaxyExportResponse
-from ..schemas.galaxies.attach_galaxy_cluster_body import GalaxyAttachClusterBody
+from ..schemas.galaxies.delete_galaxy_response import DeleteGalaxyResponse
+from ..schemas.galaxies.get_all_galaxies import GetAllGalaxiesResponse
+from ..schemas.galaxies.get_galaxy_response import GetGalaxyResponse
+from ..schemas.galaxies.search_galaxies_body import SearchGalaxiesBody
+from ..schemas.galaxies.search_galaxies_response import SearchGalaxiesResponse
+from ..schemas.galaxies.force_update_galaxies_response import ForceUpdateGalaxyResponse
+from ..schemas.galaxies.import_galaxies_body import ImportGalaxyBody
+from ..schemas.galaxies.import_galaxies_response import ImportGalaxyResponse
+from ..schemas.galaxies.export_galaxies_body import ExportGalaxyBody
+from ..schemas.galaxies.export_galaxies_response import ExportGalaxyResponse
+from ..schemas.galaxies.attach_galaxy_cluster_body import AttachClusterGalaxyBody
 from ..schemas.galaxies.attach_galaxy_cluster_response import (
-    GalaxyAttachClusterResponse,
+    AttachClusterGalaxyResponse,
 )
 
 router = APIRouter(prefix="/galaxies", tags=["galaxies"])
@@ -27,51 +27,51 @@ router = APIRouter(prefix="/galaxies", tags=["galaxies"])
 @router.delete("/{galaxy_id}")  # new
 async def galaxies_delete(
     galagxy_id: str, db: Session = Depends(get_db)
-) -> GalaxyDeleteResponse:
-    return GalaxyDeleteResponse()
+) -> DeleteGalaxyResponse:
+    return DeleteGalaxyResponse()
 
 
 # -- Get
 
 
 @router.get("/")
-async def galaxies_get(db: Session = Depends(get_db)) -> GalaxiesGetResponse:
-    return GalaxiesGetResponse()
+async def galaxies_get(db: Session = Depends(get_db)) -> GetAllGalaxiesResponse:
+    return GetAllGalaxiesResponse()
 
 
 @router.get("/view/{galaxy_id}", deprecated=True)  # deprecated
 @router.get("/{galaxy_id}")  # new
-async def galaxies_getById(db: Session = Depends(get_db)) -> GalaxyGetResponse:
-    return GalaxyGetResponse()
+async def galaxies_getById(db: Session = Depends(get_db)) -> GetGalaxyResponse:
+    return GetGalaxyResponse()
 
 
 # -- Post
 
 
-@router.post("")
+@router.post("/")
 async def galaxies_post(
-    body: GalaxySearchBody, db: Session = Depends(get_db)
-) -> GalaxySearchResponse:
-    return GalaxySearchResponse()
+    body: SearchGalaxiesBody, db: Session = Depends(get_db)
+) -> SearchGalaxiesResponse:
+    return SearchGalaxiesResponse()
 
 
 @router.post("/update")
-async def galaxies_update(db: Session = Depends(get_db)) -> GalaxyUpdateResponse:
-    return GalaxyUpdateResponse
+async def galaxies_update(db: Session = Depends(get_db)) -> ForceUpdateGalaxyResponse:
+    return ForceUpdateGalaxyResponse
 
 
 @router.post("/import")
 async def galaxies_import(
-    body: GalaxyImportBody, db: Session = Depends(get_db)
-) -> GalaxyImportResponse:
-    return GalaxyImportResponse()
+    body: ImportGalaxyBody, db: Session = Depends(get_db)
+) -> ImportGalaxyResponse:
+    return ImportGalaxyResponse()
 
 
 @router.post("/export/{galaxy_id}")
 async def galaxies_export(
-    galagxy_id: str, body: GalaxyExportBody, db: Session = Depends(get_db)
-) -> GalaxyExportResponse:
-    return GalaxyExportResponse()
+    galagxy_id: str, body: ExportGalaxyBody, db: Session = Depends(get_db)
+) -> ExportGalaxyResponse:
+    return ExportGalaxyResponse()
 
 
 @router.post("/attachCluster/{attachTarget_id}/{attachTargetType}/local:{local}")
@@ -79,7 +79,7 @@ async def galaxies_attachCluster(
     attachTarget_id: str,
     attachTargetType: str,
     local: int,
-    body: GalaxyAttachClusterBody,
+    body: AttachClusterGalaxyBody,
     db: Session = Depends(get_db),
-) -> GalaxyAttachClusterResponse:
-    return GalaxyAttachClusterResponse()
+) -> AttachClusterGalaxyResponse:
+    return AttachClusterGalaxyResponse()
