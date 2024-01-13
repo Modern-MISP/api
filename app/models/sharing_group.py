@@ -3,7 +3,7 @@ from sqlalchemy.dialects.mysql import TINYINT
 from ..database import Base
 
 
-class Feed(Base):
+class SharingGroup(Base):
     __tablename__ = "sharing_groups"
 
     id = Column(Integer, primary_key=True)
