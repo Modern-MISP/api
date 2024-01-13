@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 
-class GetAttributeStatisticsResponse(BaseModel):
+class GetAttributeStatisticsTypesResponse(BaseModel):
     AS: str
     attachment: str
     authentihash: str
@@ -110,6 +110,28 @@ class GetAttributeStatisticsResponse(BaseModel):
     x509_fingerprstr_sha1: str
     x509_fingerprstr_sha256: str
     yara: str
+
+    class Config:
+        orm_mode = True
+
+
+class GetAttributeStatisticsCategoriesResponse(BaseModel):
+    Antivirus_detection: str
+    Artifacts_dropped: str
+    Attribution: str
+    External_analysis: str
+    Financial_fraud: str
+    Internal_reference: str
+    Network_activity: str
+    Other: str
+    Payload_delivery: str
+    Payload_installation: str
+    Payload_type: str
+    Persistence_mechanism: str
+    Person: str
+    Social_network: str
+    Support_Tool: str
+    Targeting_data: str
 
     class Config:
         orm_mode = True
