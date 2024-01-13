@@ -15,6 +15,7 @@ from .routers import (
     sharing_groups,
     authentication,
     users,
+    jobs,
 )
 
 description = """
@@ -38,3 +39,4 @@ app.include_router(tags.router)
 app.include_router(sharing_groups.router)
 app.include_router(users.router)
 app.include_router(authentication.router)
+app.include_router(jobs.router)
