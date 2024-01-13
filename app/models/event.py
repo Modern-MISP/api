@@ -1,6 +1,5 @@
-from sqlalchemy import Boolean, Column, String
+from sqlalchemy import Boolean, Column, Integer, String
 from sqlalchemy import ForeignKey
-from sqlalchemy.orm import relationship
 
 from ..database import Base
 
@@ -8,7 +7,7 @@ from ..database import Base
 class Event(Base):
     __tablename__ = "events"
 
-    id = Column(String, primary_key=True)
+    id = Column(Integer, primary_key=True)
     org_id = Column(String, ForeignKey("organisations.id"))  # owner org
     orgc_id = Column(String, ForeignKey("organisations.id"))  # creator org
     distribution = Column(String)
@@ -28,14 +27,13 @@ class Event(Base):
     extends_uuid = Column(String)
     event_creator_email = Column(String)
     protected = Column(Boolean)
-
-    cryptographicKey = relationship("CryptographicKey")
+    cryptographicKey = Column(String)  # must be serialized
 
 
 class EventReport(Base):
     __tablename__ = "event_report"
 
-    id = Column(String, primary_key=True)
+    id = Column(Integer, primary_key=True)
     uuid = Column(String)
     event_id = Column(String, ForeignKey("events.id"))
     name = Column(String)
@@ -44,9 +42,3 @@ class EventReport(Base):
     sharing_group_id = Column(String, ForeignKey("sharing_groups.id"))
     timestamp = Column(String)
     deleted = Column(Boolean)
-
-
-class CryptographicKey(Base):
-    __tablename__ = "cryptographic_keys"
-
-    name = Column(String)

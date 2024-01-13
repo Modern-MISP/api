@@ -1,5 +1,7 @@
 from pydantic import BaseModel
 
+from ...schemas.attributes.add_attribute_body import AddAttributeBody
+
 
 class AddEventBody(BaseModel):
     info: str  # mandatory
@@ -8,14 +10,13 @@ class AddEventBody(BaseModel):
     analysis: str
     distribution: str
     sharing_group_id: str
-    uuid: str
     published: bool
     timestamp: str
     date: str
-    Attribute: str
-    Object: str
-    Shadow_Attribute: str
-    EventTag: str
+    Attribute: list[AddAttributeBody]
+    Object: list[str]
+    Shadow_Attribute: list[str]
+    EventTag: list[str]
 
     class Config:
         orm_mode = True

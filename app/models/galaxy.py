@@ -1,5 +1,4 @@
-from sqlalchemy import Column, String
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, Integer, String
 
 from ..database import Base
 
@@ -7,7 +6,7 @@ from ..database import Base
 class Galaxy(Base):
     __tablename__ = "galaxies"
 
-    id = Column(String, primary_key=True)
+    id = Column(Integer, primary_key=True)
     uuid = Column(String)
     name = Column(String)
     type = Column(String)
@@ -15,10 +14,4 @@ class Galaxy(Base):
     version = Column(String)
     icon = Column(String)
     namespace = Column(String)
-    kill_chain_order = relationship("KillChainOrder")
-
-
-class KillChainOrder(Base):
-    __tablename__ = "kill_chain_order"
-
-    order = Column(String)
+    kill_chain_order = Column(String)  # must be serialized
