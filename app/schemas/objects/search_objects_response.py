@@ -8,7 +8,7 @@ class ObjectAttributesResponse(BaseModel):
     object_relation: str
     category: str
     type: str
-    value: str  # omitted
+    value: str  # deprecated
     value1: str  # new
     value2: str  # new
     to_ids: bool

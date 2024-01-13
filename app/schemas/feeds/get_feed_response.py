@@ -26,7 +26,7 @@ class FeedAttributesResponse(BaseModel):
     caching_enabled: bool
     force_to_ids: bool
     orgc_id: str
-    cache_timestamp: str  # omitted
+    cache_timestamp: str  # deprecated
     cached_elements: str  # new
     coverage_by_other_feeds: str  # new
 
