@@ -8,7 +8,7 @@ from ..schemas.objects.create_object_body import ObjectCreateBody
 from ..schemas.objects.delete_object_response import ObjectDeleteResponse
 from ..schemas.objects.get_added_object_response import ObjectGetAddedResponse
 from ..schemas.objects.get_object_response import (
-    ObjectResponse,
+    ObjectViewResponse,
     ObjectWithAttributesAndEventSearchResponse,
 )
 from ..schemas.objects.search_objects_body import ObjectSearchBody
@@ -87,10 +87,10 @@ async def add_object(
 )
 async def get_object_details(
     object_id: str, db: Session = Depends(get_db)
-) -> ObjectResponse:
+) -> ObjectViewResponse:
     # Logic to get object details goes here
 
-    return ObjectResponse(
+    return ObjectViewResponse(
         object=ObjectWithAttributesAndEventSearchResponse(
             id="",
             name="",
