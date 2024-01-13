@@ -1,4 +1,5 @@
 from .sharing_group import SharingGroup
+from ..organisations.organisation import Organisation
 from pydantic import BaseModel
 
 
@@ -33,6 +34,6 @@ class ViewSharingGroupLegacyResponseSharingGroupServerItem(BaseModel):
 
 class ViewSharingGroupLegacyResponse(BaseModel):
     SharingGroup: SharingGroup
-    Organisation: None  # TODO link to org resource
+    Organisation: Organisation
     SharingGroupOrg: list[ViewSharingGroupLegacyResponseSharingGroupOrgItem]
     SharingGroupServer: list[ViewSharingGroupLegacyResponseSharingGroupServerItem]
