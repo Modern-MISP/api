@@ -9,8 +9,8 @@ class Noticelist(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String)
     expanded_name = Column(String)
-    ref = Column(list[String])
-    geographical_area = Column(list[String])
+    ref = Column(String)  # data must be serialized
+    geographical_area = Column(String)  # data must be serialized
     version = Column(Integer)
     enabled = Column(Boolean)
     noticelist_entries = relationship("noticelistsEntries")
