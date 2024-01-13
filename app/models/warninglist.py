@@ -18,7 +18,7 @@ class Warninglist(Base):
 
 
 class WarninglistEntry(Base):
-    __tablename__ = "warninglistEntries"
+    __tablename__ = "warninglist_entries"
     id = Column(String, primary_key=True)
     value = Column(String)
     warninglist_id = Column(String, ForeignKey("warninglists.id"))

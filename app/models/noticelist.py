@@ -17,7 +17,7 @@ class Noticelist(Base):
 
 
 class NoticelistEntry(Base):
-    __tablename__ = "noticelistsEntries"
+    __tablename__ = "noticelists_entries"
     id = Column(Integer, primary_key=True)
     noticelist_id = Column(Integer, ForeignKey("noticelists.id"))
     data = Column(String)
