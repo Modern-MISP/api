@@ -43,11 +43,11 @@ async def view_tag(tag_id: str, db: Session = Depends(get_db)) -> TagAttributesR
         numerical_value="",
         is_galaxy=False,
         is_custom_galaxy=False,
-        inherited=0,  # omitted
-        attribute_count=0,  # new
-        count=0,  # new
-        favourite=False,  # new
-        local_only=False,  # new
+        inherited=0,
+        attribute_count=0,
+        count=0,
+        favourite=False,
+        local_only=False,
     )
 
 
@@ -68,7 +68,7 @@ async def add_tag(
     return TagGetResponse(tag=[])
 
 
-@router.delete(
+@router.post(
     "/delete/{tagId}",
     deprecated=True,
     summary="Delete tag (Deprecated)",

@@ -59,7 +59,7 @@ async def add_sighting(
     description="Add a new sighting for a specific attribute.",
 )
 async def add_sightings_at_index(
-    attribute_id: str, db: Session = Depends(get_db)
+    attribute_id: str, body: SightingCreateBody, db: Session = Depends(get_db)
 ) -> SightingGetResponse:
     # Logic to add a sighting for an attribute goes here
 
@@ -72,7 +72,7 @@ async def add_sightings_at_index(
     summary="Delete sighting (Deprecated)",
     description="Deprecated. Delete a specific sighting using the old route.",
 )
-@router.post(
+@router.delete(
     "/{sightingId}",
     summary="Delete sighting",
     description="Delete a specific sighting.",
