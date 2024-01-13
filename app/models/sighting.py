@@ -7,7 +7,7 @@ from ..database import Base
 class Sighting(Base):
     __tablename__ = "sightings"
 
-    id = Column(String, primary_key=True)
+    id = Column(Integer, primary_key=True)
     attribute_id = Column(String)
     event_id = Column(String)
     org_id = Column(String, ForeignKey("organisations.id"))
@@ -23,7 +23,7 @@ class Sighting(Base):
 class Organisation(Base):
     __tablename__ = "organisations"
 
-    id = Column(String, primary_key=True)
+    id = Column(Integer, primary_key=True)
     uuid = Column(String)
     name = Column(String)
 

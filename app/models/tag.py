@@ -7,7 +7,7 @@ from ..database import Base
 class Tag(Base):
     __tablename__ = "tags"
 
-    id = Column(String, primary_key=True)
+    id = Column(Integer, primary_key=True)
     name = Column(String)
     colour = Column(String)
     exportable = Column(Boolean)
@@ -26,7 +26,7 @@ class Tag(Base):
 class Taxonomy(Base):
     __tablename__ = "taxonomies"
 
-    id = Column(String, primary_key=True)
+    id = Column(Integer, primary_key=True)
     namespace = Column(String)
     description = Column(String)
     version = Column(String)
@@ -40,7 +40,7 @@ class Taxonomy(Base):
 class TaxonomyPredicate(Base):
     __tablename__ = "taxonomy_predicates"
 
-    id = Column(String, primary_key=True)
+    id = Column(Integer, primary_key=True)
     taxonomy_id = Column(String, ForeignKey("taxonomies.id"))
     value = Column(String)
     expanded = Column(String)

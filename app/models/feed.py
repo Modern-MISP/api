@@ -5,7 +5,7 @@ from ..database import Base
 class Feed(Base):
     __tablename__ = "feeds"
 
-    id = Column(String, primary_key=True)
+    id = Column(Integer, primary_key=True)
     name = Column(String)
     provider = Column(String)
     url = Column(String)

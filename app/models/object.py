@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, String, ForeignKey
+from sqlalchemy import Boolean, Column, String, ForeignKey, Integer
 from sqlalchemy.orm import relationship
 
 from ..database import Base
@@ -7,7 +7,7 @@ from ..database import Base
 class Object(Base):
     __tablename__ = "objects"
 
-    id = Column(String, primary_key=True)
+    id = Column(Integer, primary_key=True)
     name = Column(String)
     meta_category = Column(String)
     description = Column(String)
@@ -29,7 +29,7 @@ class Object(Base):
 class ObjectAttribute(Base):
     __tablename__ = "object_attributes"
 
-    id = Column(String, primary_key=True)
+    id = Column(Integer, primary_key=True)
     event_id = Column(String)
     object_id = Column(String, ForeignKey("objects.id"))
     object_relation = Column(String)
