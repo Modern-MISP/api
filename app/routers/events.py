@@ -6,11 +6,10 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 from ..schemas.events.delete_events_response import DeleteEventsResponse
 from ..schemas.events.get_all_events_response import GetAllEventsResponse
-from ..schemas.events.get_event_response import GetEventResponse
+from ..schemas.events.add_edit_get_event_response import AddEditGetEventResponse
 from ..schemas.events.search_events_body import SearchEventsBody
 from ..schemas.events.search_events_response import SearchEventsResponse
 from ..schemas.events.add_event_body import AddEventBody
-from ..schemas.events.add_edit_event_response import AddEditEventResponse
 from ..schemas.events.index_events_body import IndexEventsBody
 from ..schemas.events.index_events_response import IndexEventsResponse
 from ..schemas.events.publish_event_response import PublishEventResponse
@@ -57,8 +56,8 @@ async def events_get(db: Session = Depends(get_db)) -> GetAllEventsResponse:
 @router.get("/{event_id}")  # new
 async def events_getById(
     event_id: str, db: Session = Depends(get_db)
-) -> GetEventResponse:
-    return GetEventResponse(id="")
+) -> AddEditGetEventResponse:
+    return AddEditGetEventResponse(id="")
 
 
 # -- Post
@@ -75,8 +74,8 @@ async def events_restSearch(
 @router.post("/")  # new
 async def events_post(
     body: AddEventBody, db: Session = Depends(get_db)
-) -> AddEditEventResponse:
-    return AddEditEventResponse(Event="")
+) -> AddEditGetEventResponse:
+    return AddEditGetEventResponse(Event="")
 
 
 @router.post("/index")
@@ -146,5 +145,5 @@ async def events_freeTextImport(
 @router.put("/{event_id}")  # new
 async def events_put(
     event_id: str, body: EditEventBody, db: Session = Depends(get_db)
-) -> AddEditEventResponse:
-    return AddEditEventResponse(Event="")
+) -> AddEditGetEventResponse:
+    return AddEditGetEventResponse(Event="")
