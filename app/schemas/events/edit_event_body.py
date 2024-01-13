@@ -7,7 +7,6 @@ class EditEventBody(BaseModel):
     analysis: str
     distribution: str
     sharing_group_id: str
-    uuid: str
     published: bool
     timestamp: str
     date: str

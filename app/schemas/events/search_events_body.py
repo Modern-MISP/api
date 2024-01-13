@@ -19,7 +19,6 @@ class SearchEventsBody(BaseModel):
     eventid: str
     withAttachments: bool
     metadata: bool
-    uuid: str
     published: bool
     publish_timestamp: str
     timestamp: str

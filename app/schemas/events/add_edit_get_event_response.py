@@ -1,21 +1,21 @@
 from pydantic import BaseModel
 
 
-class GetEventOrg(BaseModel):
+class AddEditGetEventOrg(BaseModel):
     id: str
     name: str
     uuid: str
     local: bool
 
 
-class GetEventShadowAttribute(BaseModel):
+class AddEditGetEventShadowAttribute(BaseModel):
     value: str
     to_ids: bool
     type: str
     category: str
 
 
-class GetEventEventReport(BaseModel):
+class AddEditGetEventEventReport(BaseModel):
     id: str
     uuid: str
     event_id: str
@@ -27,35 +27,40 @@ class GetEventEventReport(BaseModel):
     deleted: bool
 
 
-class GetEventResponse(BaseModel):
+class AddEditGetEventAttributes(BaseModel):
     id: str
-    org_id: str  # owner org
-    distribution: str
-    info: str
-    orgc_id: str  # creator org
-    uuid: str
+    orgc_id: str
+    org_id: str
     date: str
+    threat_level_id: str
+    info: str
     published: bool
-    analysis: str
+    uuid: str
     attribute_count: str
+    analysis: str
     timestamp: str
-    sharing_group_id: str
+    distribution: str
     proposal_email_lock: bool
     locked: bool
-    threat_level_id: str
     publish_timestamp: str
-    sighting_timestamp: str
+    sharing_group_id: str
     disable_correlation: bool
     extends_uuid: str
+    protected: bool
     event_creator_email: str
-    protected: str
-    ShadowAttribute: list[GetEventShadowAttribute]
+    Org: AddEditGetEventOrg
+    Orgc: AddEditGetEventOrg
+    Attribute: list[str]
+    ShadowAttribute: list[AddEditGetEventShadowAttribute]
     RelatedEvent: list[str]
     Galaxy: list[str]
     Object: list[str]
-    EventResport: list[GetEventEventReport]
+    EventReport: list[AddEditGetEventEventReport]
     CryptographicKey: list[str]
-    Tag: list[str]
+
+
+class AddEditGetEventResponse(BaseModel):
+    Event: AddEditGetEventAttributes
 
     class Config:
         orm_mode = True

@@ -1,5 +1,9 @@
 from pydantic import BaseModel
-from .get_event_response import GetEventOrg, GetEventEventReport
+from .add_edit_get_event_response import (
+    AddEditGetEventOrg,
+    AddEditGetEventEventReport,
+    AddEditGetEventShadowAttribute,
+)
 
 
 class SearchEventsAttributes(BaseModel):
@@ -23,14 +27,14 @@ class SearchEventsAttributes(BaseModel):
     extends_uuid: str
     protected: bool
     event_creator_email: str
-    Org: GetEventOrg
-    Orgc: GetEventOrg
+    Org: AddEditGetEventOrg
+    Orgc: AddEditGetEventOrg
     Attribute: list[str]
-    ShadowAttribute: list[str]
+    ShadowAttribute: list[AddEditGetEventShadowAttribute]
     RelatedEvent: list[str]
     Galaxy: list[str]
     Object: list[str]
-    EventReport: list[GetEventEventReport]
+    EventReport: list[AddEditGetEventEventReport]
     CryptographicKey: list[str]
     Tag: list[str]
 

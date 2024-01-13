@@ -8,7 +8,7 @@ from ..database import Base
 class Attribute(Base):
     __tablename__ = "attributes"
 
-    id = Column(String, primary_key=True)
+    id = Column(Integer, primary_key=True)
     event_id = Column(String, ForeignKey("events.id"))
     object_id = Column(String, ForeignKey("objects.id"))
     object_relation = Column(String)
@@ -35,7 +35,7 @@ class Attribute(Base):
 class AttributeTag(Base):
     __talename__ = "attributeTags"
 
-    id = Column(String, primary_key=True)
+    id = Column(Integer, primary_key=True)
     name = Column(String)
     colour = Column(String)
     exportable = Column(String)
