@@ -1,5 +1,6 @@
 from sqlalchemy import Boolean, Column, String
 from sqlalchemy import ForeignKey
+from sqlalchemy.orm import relationship
 
 from ..database import Base
 
@@ -27,7 +28,8 @@ class Event(Base):
     extends_uuid = Column(String)
     event_creator_email = Column(String)
     protected = Column(Boolean)
-    cryprographicKey: Column(list[str])
+
+    cryptographicKey = relationship("CryptographicKey")
 
 
 class EventReport(Base):
@@ -42,3 +44,9 @@ class EventReport(Base):
     sharing_group_id = Column(String, ForeignKey("sharing_groups.id"))
     timestamp = Column(String)
     deleted = Column(Boolean)
+
+
+class CryptographicKey(Base):
+    __tablename__ = "cryptographic_keys"
+
+    name = Column(String)

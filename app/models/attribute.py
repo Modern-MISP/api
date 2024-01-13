@@ -1,5 +1,6 @@
-from sqlalchemy import Boolean, Column, String
+from sqlalchemy import Boolean, Column, Integer, String
 from sqlalchemy import ForeignKey
+from sqlalchemy.orm import relationship
 
 from ..database import Base
 
@@ -27,4 +28,20 @@ class Attribute(Base):
     first_seen = Column(String)
     last_seen = Column(String)
     event_uuid = Column(String, ForeignKey("events.uuid"))  # new
-    tags: Column(list[String], ForeignKey("tags.id"))  # new
+
+    tags = relationship("AttributeTag")
+
+
+class AttributeTag(Base):
+    __talename__ = "attributeTags"
+
+    id = Column(String, primary_key=True)
+    name = Column(String)
+    colour = Column(String)
+    exportable = Column(String)
+    user_id = Column(String)
+    hide_tag = Column(Boolean)
+    numerical_value = Column(Integer)
+    is_galaxy = Column(Boolean)
+    is_costum_galaxy = Column(Boolean)
+    local_only = Column(Boolean)

@@ -6,7 +6,7 @@ from ..schemas.attributes.delete_attribute_response import DeleteAttributeRespon
 from ..schemas.attributes.get_all_attributes_response import GetAllAttributesResponse
 from ..schemas.attributes.get_attribute_response import GetAttributeResponse
 from ..schemas.attributes.get_attribute_statistics_response import (
-    GetAttributeStatisticsResponse,
+    GetAttributeStatisticsTypesResponse,
 )
 from ..schemas.attributes.get_describe_types_response import GetDescribeTypesResponse
 from ..schemas.attributes.search_attributes_body import SearchAttributesBody
@@ -21,7 +21,7 @@ from ..schemas.attributes.delete_selected_attribute_response import (
 )
 from ..schemas.attributes.restore_attribute_reponse import RestoreAttributeResponse
 from ..schemas.attributes.add_remove_tag_attribute_response import (
-    AddRemoveTagToAttributeResponse,
+    AddRemoveTagAttributeResponse,
 )
 from ..schemas.attributes.edit_attribute_body import EditAttributeBody
 from ..schemas.attributes.edit_attributes_response import EditAttributeResponse
@@ -78,8 +78,8 @@ async def attributes_getById(
 )
 async def attributes_statistics(
     context: str, percentage: int, db: Session = Depends(get_db)
-) -> GetAttributeStatisticsResponse:
-    return GetAttributeStatisticsResponse()
+) -> GetAttributeStatisticsTypesResponse:
+    return GetAttributeStatisticsTypesResponse()
 
 
 @router.get("/describeTypes", summary="Get all available attribute types")
@@ -143,8 +143,8 @@ async def attributes_restore(
 )
 async def attributes_addTag(
     attribute_id: str, tag_id: str, local: int, db: Session = Depends(get_db)
-) -> AddRemoveTagToAttributeResponse:
-    return AddRemoveTagToAttributeResponse(
+) -> AddRemoveTagAttributeResponse:
+    return AddRemoveTagAttributeResponse(
         saved=True,
         success="Tag added",
         check_publish=True,
@@ -157,8 +157,8 @@ async def attributes_addTag(
 )
 async def attributes_removeTag(
     attribute_id: str, tag_id: str, db: Session = Depends(get_db)
-) -> AddRemoveTagToAttributeResponse:
-    return AddRemoveTagToAttributeResponse(
+) -> AddRemoveTagAttributeResponse:
+    return AddRemoveTagAttributeResponse(
         saved=True,
         success="Tag added",
         check_publish=True,

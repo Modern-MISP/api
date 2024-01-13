@@ -2,7 +2,7 @@ from pydantic import BaseModel
 
 
 class SearchAttributesBody(BaseModel):
-    return_Format: str  # mandatory
+    returnFormat: str  # mandatory
     # -- optional
     page: int
     limit: int
@@ -13,7 +13,7 @@ class SearchAttributesBody(BaseModel):
     tags: list[str]
     date: str
     last: str
-    eventid: str
+    event_id: str
     withAttachments: bool
     uuid: str
     publish_timestamp: str
