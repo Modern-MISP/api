@@ -1,4 +1,5 @@
-from sqlalchemy import Boolean, Column, String, ForeignKey, Integer
+from sqlalchemy import Column, String, ForeignKey, Integer
+from sqlalchemy.dialects.mysql import TINYINT
 from sqlalchemy.orm import relationship
 
 from ..database import Base
@@ -19,7 +20,7 @@ class Object(Base):
     distribution = Column(String)
     sharing_group_id = Column(String)
     comment = Column(String)
-    deleted = Column(Boolean)
+    deleted = Column(TINYINT)
     first_seen = Column(String)
     last_seen = Column(String)
 
@@ -38,13 +39,13 @@ class ObjectAttribute(Base):
     value1 = Column(String)
     value2 = Column(String)
     attribute_tag = Column(String)
-    to_ids = Column(Boolean)
+    to_ids = Column(TINYINT)
     uuid = Column(String)
     timestamp = Column(String)
     distribution = Column(String)
     sharing_group_id = Column(String)
     comment = Column(String)
-    deleted = Column(Boolean)
-    disable_correlation = Column(Boolean)
+    deleted = Column(TINYINT)
+    disable_correlation = Column(TINYINT)
     first_seen = Column(String)
     last_seen = Column(String)

@@ -1,4 +1,5 @@
-from sqlalchemy import Boolean, Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy.dialects.mysql import TINYINT
 from sqlalchemy.orm import relationship
 
 from ..database import Base
@@ -10,17 +11,17 @@ class Tag(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String)
     colour = Column(String)
-    exportable = Column(Boolean)
+    exportable = Column(TINYINT)
     org_id = Column(String)
     user_id = Column(String)
-    hide_tag = Column(Boolean)
+    hide_tag = Column(TINYINT)
     numerical_value = Column(String)
-    is_galaxy = Column(Boolean)
-    is_custom_galaxy = Column(Boolean)
+    is_galaxy = Column(TINYINT)
+    is_custom_galaxy = Column(TINYINT)
     attribute_count = Column(Integer)  # new
     count = Column(Integer)  # new
-    favourite = Column(Boolean)  # new
-    local_only = Column(Boolean)  # new
+    favourite = Column(TINYINT)  # new
+    local_only = Column(TINYINT)  # new
 
 
 class Taxonomy(Base):
@@ -30,9 +31,9 @@ class Taxonomy(Base):
     namespace = Column(String)
     description = Column(String)
     version = Column(String)
-    enabled = Column(Boolean)
-    exclusive = Column(Boolean)
-    required = Column(Boolean)
+    enabled = Column(TINYINT)
+    exclusive = Column(TINYINT)
+    required = Column(TINYINT)
 
     predicates = relationship("TaxonomyPredicate", backref="taxonomy")
 
@@ -46,5 +47,5 @@ class TaxonomyPredicate(Base):
     expanded = Column(String)
     colour = Column(String)
     description = Column(String)
-    exclusive = Column(Boolean)
+    exclusive = Column(TINYINT)
     numerical_value = Column(Integer)
