@@ -12,7 +12,7 @@ class TagAttributesResponse(BaseModel):
     numerical_value: str
     is_galaxy: bool
     is_custom_galaxy: bool
-    inherited: int  # omitted
+    inherited: int  # deprecated
     attribute_count: int  # new
     count: int  # new
     favourite: bool  # new

@@ -162,7 +162,7 @@ async def cache_feeds(
     return FeedCacheResponse(name="", message="", url="", saved=False, success=False)
 
 
-@router.get(
+@router.post(
     "/fetchFromFeed/{feedId}",
     deprecated=True,
     summary="Fetch from feed (Deprecated)",
@@ -181,7 +181,7 @@ async def fetch_from_feed(
     return FeedFetchResponse(result="")
 
 
-@router.get(
+@router.post(
     "/fetchFromAllFeeds",
     deprecated=True,
     summary="Fetch from all feeds (Deprecated)",
