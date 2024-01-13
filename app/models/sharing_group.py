@@ -6,11 +6,11 @@ from ..database import Base
 class SharingGroup(Base):
     __tablename__ = "sharing_groups"
 
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, unique=True, primary_key=True)
+    uuid = Column(String, unique=True)
     name = Column(String)
     releasability = Column(String)
     description = Column(String)
-    uuid = Column(String)
     organisation_uuid = Column(String)
     org_id = Column(Integer)
     sync_user_id = Column(Integer)

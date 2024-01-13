@@ -6,7 +6,7 @@ class Role(BaseModel):
     id: str
     name: str
     created: datetime
-    modified: str
+    modified: datetime
     perm_add: bool
     perm_modify: bool
     perm_modify_org: bool
