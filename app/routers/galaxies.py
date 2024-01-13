@@ -54,8 +54,8 @@ async def galaxies_getById(db: Session = Depends(get_db)) -> GetGalaxyResponse:
 @router.post("/")
 async def galaxies_post(
     body: SearchGalaxiesBody, db: Session = Depends(get_db)
-) -> GetAllSearchGalaxiesResponse:
-    return GetAllSearchGalaxiesResponse()
+) -> list[GetAllSearchGalaxiesResponse]:
+    return list[GetAllSearchGalaxiesResponse()]
 
 
 @router.post("/update")
@@ -67,7 +67,7 @@ async def galaxies_update(
 
 @router.post("/import")
 async def galaxies_import(
-    body: ImportGalaxyBody, db: Session = Depends(get_db)
+    body: list[ImportGalaxyBody], db: Session = Depends(get_db)
 ) -> DeleteForceUpdateImportGalaxyResponse:
     return DeleteForceUpdateImportGalaxyResponse()
 
