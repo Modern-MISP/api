@@ -31,7 +31,7 @@ class Event(Base):
 
 
 class EventReport(Base):
-    __tablename__ = "event_report"
+    __tablename__ = "event_reports"
 
     id = Column(Integer, primary_key=True)
     uuid = Column(String)
