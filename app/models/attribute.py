@@ -6,6 +6,7 @@ from ..database import Base
 
 class Attribute(Base):
     __tablename__ = "attributes"
+
     id = Column(String, primary_key=True)
     event_id = Column(String, ForeignKey("events.id"))
     object_id = Column(String, ForeignKey("objects.id"))
@@ -25,5 +26,5 @@ class Attribute(Base):
     disable_correlation = Column(Boolean)
     first_seen = Column(String)
     last_seen = Column(String)
-    event_uuid = Column(String)  # new
-    attributeTag: list[str]  # new
+    event_uuid = Column(String, ForeignKey("events.uuid"))  # new
+    tags: Column(list[String], ForeignKey("tags.id"))  # new

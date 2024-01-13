@@ -21,7 +21,7 @@ class AddAttributeResponse(BaseModel):
     disable_correlation: bool
     first_seen: str
     last_seen: str
-    attributeTag: list[str]  # new
+    AttributeTag: list[str]  # new
 
     class Config:
         orm_mode = True
