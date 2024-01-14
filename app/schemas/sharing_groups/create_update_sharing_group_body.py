@@ -9,4 +9,4 @@ class CreateUpdateSharingGroupBody(BaseModel):
     organisation_uuid: str | None = Field(default=None, max_length=36)
     active: bool | None = None
     roaming: bool | None = None
-    # local: bool  # why did I omit this in pflichtenheft?
+    local: bool | None = None
