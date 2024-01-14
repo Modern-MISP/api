@@ -20,14 +20,6 @@ class Sighting(Base):
     organisation = relationship("Organisation")
 
 
-class Organisation(Base):
-    __tablename__ = "organisations"
-
-    id = Column(Integer, primary_key=True)
-    uuid = Column(String)
-    name = Column(String)
-
-
 class SightingCoreConfig(Base):
     __tablename__ = "sighting_core_configs"
 
