@@ -19,7 +19,7 @@ class UserSettingsValue(Base):
 
 
 class UserSettingsPosition(Base):
-    x = Column(String)
-    y = Column(String)
-    width = Column(String)
-    height = Column(String)
+    x = Column(Integer)
+    y = Column(Integer)
+    width = Column(Integer)
+    height = Column(Integer)

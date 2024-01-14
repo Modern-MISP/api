@@ -1,12 +1,7 @@
 from pydantic import BaseModel
 
 
-class Count:
-    total_count: int = -1
-    current_count: int = -1
-
-
-class TaxonomyViewSchema(BaseModel):
+class TaxonomyView(BaseModel):
     id: str = ""
     namespace: str = ""
     description: str = ""
@@ -15,7 +10,12 @@ class TaxonomyViewSchema(BaseModel):
     exclusive: bool = False
     required: bool = False
     highlighted: bool = False
-    count: Count = Count()
+
+
+class TaxonomyViewSchema(BaseModel):
+    taxonomy: TaxonomyView
+    total_count: int = -1
+    current_count: int = -1
 
     class Config:
         orm_mode = True
