@@ -24,7 +24,7 @@ async def search_user_settings(user_setting_in: UserSettingSearchIn) -> list[Use
 
 
 # Get User Setting by Id
-@router.get("/view/{UserSettingsId", deprecated=True)  # Deprecated
+@router.get("/view/{UserSettingsId}", deprecated=True)  # Deprecated
 @router.get("/{UserSettingsId}")
 async def view_user_settings() -> UserSettingView:
     return UserSettingView()

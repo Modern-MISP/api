@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 
+
 class UserSettingDelete(BaseModel):
     saved: bool = False
     success: bool = False
