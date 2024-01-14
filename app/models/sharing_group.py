@@ -19,3 +19,21 @@ class SharingGroup(Base):
     modified = Column(DateTime)
     local = Column(TINYINT)
     roaming = Column(TINYINT)
+
+
+class SharingGroupOrg(Base):
+    __tablename__ = "sharing_group_orgs"
+
+    id = Column(Integer, primary_key=True)
+    sharing_group_id = Column(Integer)
+    org_id = Column(Integer)
+    extend = Column(TINYINT)
+
+
+class SharingGroupServer(Base):
+    __tablename__ = "sharing_group_servers"
+
+    id = Column(Integer, primary_key=True)
+    sharing_group_id = Column(Integer)
+    server_id = Column(Integer)
+    all_orgs = Column(TINYINT)

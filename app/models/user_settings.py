@@ -1,10 +1,12 @@
-from sqlalchemy import Column, String
+from sqlalchemy import Column, String, Integer
 from sqlalchemy.orm import relationship
 from ..database import Base
 
 
 class UserSettings(Base):
-    id = Column(String)
+    __tablename__ = "user_settings"
+
+    id = Column(Integer, primary_key=True)
     setting = Column(String)
     user_id = Column(String)
     timestamp = Column(String)
@@ -14,12 +16,19 @@ class UserSettings(Base):
 
 
 class UserSettingsValue(Base):
+    __tablename__ = "user_settings_values"
+
+    id = Column(Integer, primary_key=True)
     widget = Column(String)
     position = relationship("UserSettingsPosition", backref="UserSettingsValue")
 
 
 class UserSettingsPosition(Base):
-    x = Column(Integer)
-    y = Column(Integer)
-    width = Column(Integer)
-    height = Column(Integer)
+    __tablename__ = "user_settings_positions"
+
+    id = Column(Integer, primary_key=True)
+    x = Column(String)
+    y = Column(String)
+    width = Column(String)
+    height = Column(String)
+>>>>>>> main
