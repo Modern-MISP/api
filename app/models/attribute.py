@@ -38,7 +38,7 @@ class AttributeTag(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String)
     colour = Column(String)
-    exportable = Column(String)
+    exportable = Column(Boolean)
     user_id = Column(String)
     hide_tag = Column(Boolean)
     numerical_value = Column(Integer)
