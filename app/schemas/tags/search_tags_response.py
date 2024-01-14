@@ -24,14 +24,14 @@ class TaxonomyPredicateResponse(BaseModel):
     numerical_value: int
 
 
-class CombinedModel(BaseModel):
+class TagCombinedModel(BaseModel):
     Tag: TagAttributesResponse
     Taxonomy: TaxonomyResponse  # TODO: Import from schemas/taxonomie directly
     TaxonomyPredicate: TaxonomyPredicateResponse  # TODO: Import from schemas/taxonomie directly
 
 
 class TagSearchResponse(BaseModel):
-    root: list[CombinedModel]
+    root: list[TagCombinedModel]
 
     class Config:
         orm_mode = True

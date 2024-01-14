@@ -33,7 +33,7 @@ class Attribute(Base):
 
 
 class AttributeTag(Base):
-    __talename__ = "attributeTags"
+    __talename__ = "attribute_tags"
 
     id = Column(Integer, primary_key=True)
     name = Column(String)
