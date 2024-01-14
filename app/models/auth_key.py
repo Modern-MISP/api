@@ -1,9 +1,10 @@
-from sqlalchemy import Column, String, Boolean
+from sqlalchemy import Column, String, Boolean, Integer
 from sqlalchemy.orm import relationship
 from ..database import Base
 
+
 class AuthKey(Base):
-    id = Column(String, primary_key=True)
+    id = Column(Integer, primary_key=True)
     uuid = Column(String)
     read_only = Column(Boolean)
     user_id = Column(String)
@@ -19,5 +20,5 @@ class AuthKey(Base):
 
 
 class AuthKeyUser(Base):
-    id = Column(String)
+    id = Column(Integer, primary_key=True)
     org_id = Column(String)
