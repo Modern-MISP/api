@@ -1,9 +1,12 @@
-from sqlalchemy import Column, String, Boolean, Integer
+from sqlalchemy import Column, String, Boolean, Integer, ForeignKey
+from sqlalchemy.dialects.mysql import TINYINT
 from sqlalchemy.orm import relationship
 from ..database import Base
 
 
 class Taxonomy(Base):
+    __tablename__ = "taxonomies"
+
     id = Column(String)
     namespace = Column(String)
     description = Column(String)
@@ -22,43 +25,25 @@ class Taxonomy(Base):
 
 
 class TaxonomyPredicate(Base):
-    description = Column(String)
+    __tablename__ = "taxonomy_predicates"
+
+    id = Column(Integer, primary_key=True)
+    taxonomy_id = Column(String, ForeignKey("taxonomies.id"))
     value = Column(String)
     expanded = Column(String)
-
-
-class TaxonomyValue(Base):
-    predicate = Column(String)
-    entries = relationship("TaxonomyEntry", backref="TaxonomyValue")
-
-
-class TaxonomyEntry(Base):
-    value = Column(String)
-    expanded = Column(String)
+    colour = Column(String)
     description = Column(String)
+    exclusive = Column(TINYINT)
+    numerical_value = Column(Integer)
 
 
 class TaxonomyEntries(Base):
+    __tablename__ = "taxonomy_entries"
+
     tag = Column(String)
     expanded = Column(String)
     exclusive_predicate = Column(Boolean)
     description = Column(String)
-    existing_tag = Column(Boolean) |  relationship("TaxonomyTagSchema", backref="TaxonomyEntries")
-
-
-class TaxonomyTagSchema(Base):
-    id = Column(String)
-    name = Column(String)
-    colour = Column(String)
-    exportable = Column(Boolean)
-    org_id = Column(String)
-    user_id = Column(String)
-    hide_tag = Column(Boolean)
-    numerical_value = Column(String)
-    is_galaxy = Column(Boolean)
-    is_custom_galaxy = Column(Boolean)
-    inherited = Column(Integer)  # omitted
-    attribute_count = Column(Integer)  # new
-    count = Column(Integer)  # new
-    favourite = Column(Integer)# new
-    local_only = Column(Boolean)  # new
+    existing_tag = Column(Boolean) | relationship(
+        "TaxonomyTagSchema", backref="TaxonomyEntries"
+    )
