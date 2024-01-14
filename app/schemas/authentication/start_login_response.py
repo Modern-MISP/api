@@ -1,4 +1,10 @@
 from pydantic import BaseModel
+from enum import Enum
+
+
+class LoginType(Enum):
+    PASSWORD = "password"
+    IDENTITY_PROVIDER = "idp"
 
 
 class IdentityProviderInfo(BaseModel):
@@ -7,5 +13,5 @@ class IdentityProviderInfo(BaseModel):
 
 
 class StartLoginResponse(BaseModel):
-    loginType: str
-    identityProviders: list[IdentityProviderInfo]
+    loginType: LoginType
+    identityProviders: list[IdentityProviderInfo] = []

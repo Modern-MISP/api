@@ -2,6 +2,7 @@ from pydantic import Field
 from pydantic import BaseModel
 
 from .sharing_group import SharingGroup
+from .sharing_group_server import SharingGroupServer
 
 
 class CreateSharingGroupLegacyResponseOrganisationInfo(BaseModel):
@@ -10,15 +11,8 @@ class CreateSharingGroupLegacyResponseOrganisationInfo(BaseModel):
     uuid: str
 
 
-class CreateSharingGroupLegacyResponseSharingGroupServerItem(BaseModel):
-    id: str
-    server_id: str
-    all_orgs: bool
-    sharing_group_id: str
-
-
 class CreateSharingGroupLegacyResponse(BaseModel):
     SharingGroup: SharingGroup
     Organisation: CreateSharingGroupLegacyResponseOrganisationInfo
     SharingGroupOrg: list = Field(default=[])
-    SharingGroupServer: list[CreateSharingGroupLegacyResponseSharingGroupServerItem]
+    SharingGroupServer: list[SharingGroupServer]
