@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..schemas.events.delete_events_response import DeleteEventsResponse
+from ..schemas.events.delete_event_response import DeleteEventResponse
 from ..schemas.events.get_all_events_response import GetAllEventsResponse
 from ..schemas.events.add_edit_get_event_response import AddEditGetEventResponse
 from ..schemas.events.search_events_body import SearchEventsBody
@@ -33,8 +33,8 @@ router = APIRouter(prefix="/events", tags=["events"])
 @router.delete("/{event_id}")  # new
 async def events_delete(
     event_id: str, db: Session = Depends(get_db)
-) -> DeleteEventsResponse:
-    return DeleteEventsResponse(
+) -> DeleteEventResponse:
+    return DeleteEventResponse(
         saved=True,
         success=True,
         name="Event deleted.",
