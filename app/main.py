@@ -17,6 +17,8 @@ from .routers import (
     authentication,
     users,
     jobs,
+    warninglists,
+    noticelists,
 )
 
 description = """
@@ -41,6 +43,8 @@ app.include_router(sharing_groups.router)
 app.include_router(users.router)
 app.include_router(authentication.router)
 app.include_router(jobs.router)
+app.include_router(warninglists.router)
+app.include_router(noticelists.router)
 
 
 @app.get("/")
