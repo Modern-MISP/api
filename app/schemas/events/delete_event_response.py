@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 
-class DeleteEventsResponse(BaseModel):
+class DeleteEventResponse(BaseModel):
     saved: bool
     success: bool
     name: str
