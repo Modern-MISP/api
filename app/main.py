@@ -1,4 +1,5 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, status
+from fastapi.responses import RedirectResponse
 
 from .database import engine
 from .models.feed import Base
@@ -40,3 +41,8 @@ app.include_router(sharing_groups.router)
 app.include_router(users.router)
 app.include_router(authentication.router)
 app.include_router(jobs.router)
+
+
+@app.get("/")
+async def root() -> RedirectResponse:
+    return RedirectResponse(url="/docs", status_code=status.HTTP_307_TEMPORARY_REDIRECT)
