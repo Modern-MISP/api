@@ -1,6 +1,8 @@
 from fastapi import APIRouter
 
-from ..schemas.user_setting.get_get_id_user_setting_out import UserSettingGet, UserSettingsGet
+from ..schemas.user_setting.get_get_id_user_setting_out import (
+    UserSettingGet,
+)
 from ..schemas.user_setting.search_user_setting_out import UserSettingSearch
 from ..schemas.user_setting.search_user_setting_in import UserSettingSearchIn
 from ..schemas.user_setting.view_user_setting_out import UserSettingView
@@ -14,12 +16,14 @@ router = APIRouter(prefix="/user_settings", tags=["user_settings"])
 # Returns all User Settings
 @router.get("/")
 async def get_user_settings() -> list[UserSettingGet]:  # Request Body into brackets
-    return UserSettingsGet()  # return body in after return
+    return UserSettingGet()  # return body in after return
 
 
 # Search all User Settings
 @router.post("/")
-async def search_user_settings(user_setting_in: UserSettingSearchIn) -> list[UserSettingGet]:
+async def search_user_settings(
+    user_setting_in: UserSettingSearchIn,
+) -> list[UserSettingGet]:
     return UserSettingSearch()
 
 
