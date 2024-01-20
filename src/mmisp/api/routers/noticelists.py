@@ -1,15 +1,15 @@
 from fastapi import APIRouter
 
-from mmisp.api_schemas.noticelists.noticelist import (
+from ...api_schemas.noticelists.noticelist import (
     Noticelist,
 )
-from mmisp.api_schemas.noticelists.toggle_enable_noticelist import (
+from ...api_schemas.noticelists.toggle_enable_noticelist import (
     ToggleEnableNoticelist,
 )
-from mmisp.api_schemas.noticelists.update_noticelist import (
+from ...api_schemas.noticelists.update_noticelist import (
     UpdateNoticelist,
 )
-from mmisp.api_schemas.noticelists.get_all_noticelist_response import (
+from ...api_schemas.noticelists.get_all_noticelist_response import (
     GetAllNoticelist,
 )
 
