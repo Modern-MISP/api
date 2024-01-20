@@ -1,5 +1,5 @@
 install:
-	pip install ".[dev]"
+	pip install -e ".[dev]"
 
 prepare:
 	pre-commit install --install-hooks
@@ -7,13 +7,13 @@ prepare:
 setup:
 	pip install virtualenv; \
 	virtualenv venv; \
-	source ./venv/bin/activate; \
-	pip install ".[dev]"; \
+	source venv/bin/activate; \
+	pip install -e ".[dev]"; \
 	pre-commit install --install-hooks
 
 dev:
-	source ./venv/bin/activate; \
-	uvicorn app.main:app --reload --port 4000
+	source venv/bin/activate; \
+	uvicorn mmisp.api.main:app --reload --port 4000
 
 dev/native:
-	uvicorn app.main:app --reload --port 4000
+	uvicorn mmisp.api.main:app --reload --port 4000

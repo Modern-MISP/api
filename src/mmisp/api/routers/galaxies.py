@@ -1,20 +1,20 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from ..database import get_db
-from ..schemas.galaxies.delete_force_update_import_galaxy_response import (
+from mmisp.db.database import get_db
+from mmisp.api_schemas.galaxies.delete_force_update_import_galaxy_response import (
     DeleteForceUpdateImportGalaxyResponse,
 )
-from ..schemas.galaxies.get_all_search_galaxies_response import (
+from mmisp.api_schemas.galaxies.get_all_search_galaxies_response import (
     GetAllSearchGalaxiesResponse,
 )
-from ..schemas.galaxies.get_galaxy_response import GetGalaxyResponse
-from ..schemas.galaxies.search_galaxies_body import SearchGalaxiesBody
-from ..schemas.galaxies.import_galaxies_body import ImportGalaxyBody
-from ..schemas.galaxies.export_galaxies_body import ExportGalaxyBody
-from ..schemas.galaxies.export_galaxies_response import ExportGalaxyResponse
-from ..schemas.galaxies.attach_galaxy_cluster_body import AttachClusterGalaxyBody
-from ..schemas.galaxies.attach_galaxy_cluster_response import (
+from mmisp.api_schemas.galaxies.get_galaxy_response import GetGalaxyResponse
+from mmisp.api_schemas.galaxies.search_galaxies_body import SearchGalaxiesBody
+from mmisp.api_schemas.galaxies.import_galaxies_body import ImportGalaxyBody
+from mmisp.api_schemas.galaxies.export_galaxies_body import ExportGalaxyBody
+from mmisp.api_schemas.galaxies.export_galaxies_response import ExportGalaxyResponse
+from mmisp.api_schemas.galaxies.attach_galaxy_cluster_body import AttachClusterGalaxyBody
+from mmisp.api_schemas.galaxies.attach_galaxy_cluster_response import (
     AttachClusterGalaxyResponse,
 )
 
