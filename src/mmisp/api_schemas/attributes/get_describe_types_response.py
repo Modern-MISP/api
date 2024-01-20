@@ -32,8 +32,8 @@ class GetDescribeTypesSaneDefaults(BaseModel):
     FILENAME_SHA256: Annotated[
         GetDescribeTypesSaneDefaultsAttributes, Field(alias="filename|sha256")
     ]
-    IP_SRC: Annotated[GetDescribeTypesSaneDefaultsAttributes, Field(alias="ip_src")]
-    IP_DST: Annotated[GetDescribeTypesSaneDefaultsAttributes, Field(alias="ip_dst")]
+    IP_SRC: Annotated[GetDescribeTypesSaneDefaultsAttributes, Field(alias="ip-src")]
+    IP_DST: Annotated[GetDescribeTypesSaneDefaultsAttributes, Field(alias="ip-dst")]
     HOSTNAME: Annotated[GetDescribeTypesSaneDefaultsAttributes, Field(alias="hostname")]
     DOMAIN: Annotated[GetDescribeTypesSaneDefaultsAttributes, Field(alias="domain")]
     DOMAIN_IP: Annotated[
