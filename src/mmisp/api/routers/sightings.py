@@ -2,10 +2,10 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 # from ..models.sighting import Sighting
-from mmisp.db.database import get_db
-from mmisp.api_schemas.sightings.create_sighting_body import SightingCreateBody
-from mmisp.api_schemas.sightings.delete_sighting_response import SightingDeleteResponse
-from mmisp.api_schemas.sightings.get_sighting_response import SightingGetResponse
+from ...db.database import get_db
+from ...api_schemas.sightings.create_sighting_body import SightingCreateBody
+from ...api_schemas.sightings.delete_sighting_response import SightingDeleteResponse
+from ...api_schemas.sightings.get_sighting_response import SightingGetResponse
 
 router = APIRouter(prefix="/sightings", tags=["sightings"])
 
