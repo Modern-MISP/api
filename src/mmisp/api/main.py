@@ -1,10 +1,8 @@
 from fastapi import FastAPI, status
 from fastapi.responses import RedirectResponse
 
-from ..db.database import engine
-
-# from mmisp.db.database import engine
-from ..db.models.feed import Base
+from mmisp.db.database import engine
+from mmisp.db.models.feed import Base
 from .routers import (
     attributes,
     auth_key,

@@ -2,11 +2,11 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 # from ..models.tag import Tag
-from ...db.database import get_db
-from ...api_schemas.tags.create_update_tag_body import TagCreateAndUpdateBody
-from ...api_schemas.tags.delete_tag_response import TagDeleteResponse
-from ...api_schemas.tags.get_tag_response import TagAttributesResponse, TagGetResponse
-from ...api_schemas.tags.search_tags_response import TagSearchResponse
+from mmisp.db.database import get_db
+from mmisp.api_schemas.tags.create_update_tag_body import TagCreateAndUpdateBody
+from mmisp.api_schemas.tags.delete_tag_response import TagDeleteResponse
+from mmisp.api_schemas.tags.get_tag_response import TagAttributesResponse, TagGetResponse
+from mmisp.api_schemas.tags.search_tags_response import TagSearchResponse
 
 router = APIRouter(prefix="/tags", tags=["tags"])
 

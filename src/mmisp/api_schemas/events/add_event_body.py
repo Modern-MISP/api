@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from ...api_schemas.attributes.add_attribute_body import AddAttributeBody
+from mmisp.api_schemas.attributes.add_attribute_body import AddAttributeBody
 
 
 class AddEventBody(BaseModel):

@@ -1,36 +1,36 @@
 from fastapi import APIRouter
 
-from ...api_schemas.warninglists.check_value_warninglists_body import (
+from mmisp.api_schemas.warninglists.check_value_warninglists_body import (
     CheckValueWarninglistsBody,
 )
-from ...api_schemas.warninglists.check_value_warninglists_response import (
+from mmisp.api_schemas.warninglists.check_value_warninglists_response import (
     CheckValueWarninglistsResponse,
 )
-from ...api_schemas.warninglists.delete_warninglist_response import (
+from mmisp.api_schemas.warninglists.delete_warninglist_response import (
     DeleteWarninglistResponse,
 )
-from ...api_schemas.warninglists.get_selected_all_warninglists_response import (
+from mmisp.api_schemas.warninglists.get_selected_all_warninglists_response import (
     GetSelectedAllWarninglistsResponse,
 )
 
-from ...api_schemas.warninglists.get_selected_warninglists_body import (
+from mmisp.api_schemas.warninglists.get_selected_warninglists_body import (
     GetSelectedWarninglistsBody,
 )
 
-from ...api_schemas.warninglists.toggle_enable_warninglists_body import (
+from mmisp.api_schemas.warninglists.toggle_enable_warninglists_body import (
     ToggleEnableWarninglistsBody,
 )
 
-from ...api_schemas.warninglists.toggle_enable_warninglists_response import (
+from mmisp.api_schemas.warninglists.toggle_enable_warninglists_response import (
     ToggleEnableWarninglistsResponse,
 )
-from ...api_schemas.warninglists.update_all_warninglists_response import (
+from mmisp.api_schemas.warninglists.update_all_warninglists_response import (
     UpdateAllWarninglistsResponse,
 )
 
-from ...api_schemas.warninglists.warninglist import Warninglist
+from mmisp.api_schemas.warninglists.warninglist import Warninglist
 
-from ...api_schemas.warninglists.create_warninglist_body import (
+from mmisp.api_schemas.warninglists.create_warninglist_body import (
     CreateWarninglistBody,
 )
 
