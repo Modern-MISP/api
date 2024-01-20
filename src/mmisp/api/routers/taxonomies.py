@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Header
 
-from app.schemas.taxonomies.enable_disable_taxonomy_out import TaxonomyAbleSchema
-from app.schemas.taxonomies.export_taxonomies_out import TaxonomyExportSchema
-from app.schemas.taxonomies.get_taxonomy_by_id_out import TaxonomyTagSchema
-from app.schemas.taxonomies.get_taxonomy_out import TaxonomyViewSchema
-from app.schemas.taxonomies.update_taxonomy_out import TaxonomyUpdateSchema
+from mmisp.api_schemas.taxonomies.enable_disable_taxonomy_out import TaxonomyAbleSchema
+from mmisp.api_schemas.taxonomies.export_taxonomies_out import TaxonomyExportSchema
+from mmisp.api_schemas.taxonomies.get_taxonomy_by_id_out import TaxonomyTagSchema
+from mmisp.api_schemas.taxonomies.get_taxonomy_out import TaxonomyViewSchema
+from mmisp.api_schemas.taxonomies.update_taxonomy_out import TaxonomyUpdateSchema
 
 router = APIRouter(prefix="/taxonomies")
 
