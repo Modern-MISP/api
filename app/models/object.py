@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, ForeignKey, Integer
+from sqlalchemy import Column, String, ForeignKey, Integer, BigInteger
 from sqlalchemy.dialects.mysql import TINYINT
 from sqlalchemy.orm import relationship
 
@@ -9,20 +9,20 @@ class Object(Base):
     __tablename__ = "objects"
 
     id = Column(Integer, primary_key=True)
-    name = Column(String)
-    meta_category = Column(String)
+    name = Column(String, index=True)
+    meta_category = Column(String, index=True)
     description = Column(String)
-    template_uuid = Column(String)
-    template_version = Column(String)
-    event_id = Column(String)
-    uuid = Column(String)
-    timestamp = Column(String)
-    distribution = Column(String)
-    sharing_group_id = Column(String)
+    template_uuid = Column(String, index=True)
+    template_version = Column(Integer, index=True)
+    event_id = Column(Integer, index=True)
+    uuid = Column(String, unique=True)
+    timestamp = Column(Integer, index=True)
+    distribution = Column(TINYINT, index=True)
+    sharing_group_id = Column(Integer, index=True)
     comment = Column(String)
     deleted = Column(TINYINT)
-    first_seen = Column(String)
-    last_seen = Column(String)
+    first_seen = Column(BigInteger, index=True)
+    last_seen = Column(BigInteger, index=True)
 
     attributes = relationship("ObjectAttribute", backref="object")
 
@@ -31,8 +31,8 @@ class ObjectAttribute(Base):
     __tablename__ = "object_attributes"
 
     id = Column(Integer, primary_key=True)
-    event_id = Column(String)
-    object_id = Column(String, ForeignKey("objects.id"))
+    event_id = Column(Integer, index=True)
+    object_id = Column(Integer, ForeignKey("objects.id"), index=True)
     object_relation = Column(String)
     category = Column(String)
     type = Column(String)
@@ -40,12 +40,12 @@ class ObjectAttribute(Base):
     value2 = Column(String)
     attribute_tag = Column(String)
     to_ids = Column(TINYINT)
-    uuid = Column(String)
-    timestamp = Column(String)
-    distribution = Column(String)
-    sharing_group_id = Column(String)
+    uuid = Column(String, unique=True)
+    timestamp = Column(Integer)
+    distribution = Column(TINYINT)
+    sharing_group_id = Column(Integer, index=True)
     comment = Column(String)
     deleted = Column(TINYINT)
     disable_correlation = Column(TINYINT)
-    first_seen = Column(String)
-    last_seen = Column(String)
+    first_seen = Column(BigInteger, index=True)
+    last_seen = Column(BigInteger, index=True)

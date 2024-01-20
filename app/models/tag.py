@@ -8,13 +8,13 @@ class Tag(Base):
     __tablename__ = "tags"
 
     id = Column(Integer, primary_key=True)
-    name = Column(String)
+    name = Column(String, unique=True)
     colour = Column(String)
     exportable = Column(TINYINT)
-    org_id = Column(String)
-    user_id = Column(String)
+    org_id = Column(Integer, index=True)
+    user_id = Column(Integer, index=True)
     hide_tag = Column(TINYINT)
-    numerical_value = Column(String)
+    numerical_value = Column(Integer, index=True)
     is_galaxy = Column(TINYINT)
     is_custom_galaxy = Column(TINYINT)
     attribute_count = Column(Integer)  # new
