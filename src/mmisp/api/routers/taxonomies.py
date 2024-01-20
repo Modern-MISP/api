@@ -1,10 +1,10 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Header
 
-from ...api_schemas.taxonomies.enable_disable_taxonomy_out import TaxonomyAbleSchema
-from ...api_schemas.taxonomies.export_taxonomies_out import TaxonomyExportSchema
-from ...api_schemas.taxonomies.get_taxonomy_by_id_out import TaxonomyTagSchema
-from ...api_schemas.taxonomies.get_taxonomy_out import TaxonomyViewSchema
-from ...api_schemas.taxonomies.update_taxonomy_out import TaxonomyUpdateSchema
+from mmisp.api_schemas.taxonomies.enable_disable_taxonomy_out import TaxonomyAbleSchema
+from mmisp.api_schemas.taxonomies.export_taxonomies_out import TaxonomyExportSchema
+from mmisp.api_schemas.taxonomies.get_taxonomy_by_id_out import TaxonomyTagSchema
+from mmisp.api_schemas.taxonomies.get_taxonomy_out import TaxonomyViewSchema
+from mmisp.api_schemas.taxonomies.update_taxonomy_out import TaxonomyUpdateSchema
 
 router = APIRouter(prefix="/taxonomies")
 
@@ -35,9 +35,7 @@ async def disable_taxonomies() -> TaxonomyAbleSchema:
 
 
 # Update Taxonomies.
-@router.post(
-    "/taxonomies/update", deprecated=True
-)  # Deprecated Sollte wahrscheinlich nicht deprecated sein
+@router.post("/taxonomies/update", deprecated=True)  # Deprecated Sollte wahrscheinlich nicht deprecated sein
 @router.put("/taxonomies")
 async def update_taxonomies_depr() -> TaxonomyUpdateSchema:
     return TaxonomyUpdateSchema()

@@ -1,15 +1,15 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from ...db.database import get_db
+from mmisp.db.database import get_db
 
 # from ..models.feed import Feed
-from ...api_schemas.feeds.cache_feed_response import FeedCacheResponse
-from ...api_schemas.feeds.create_update_feed_body import FeedCreateAndUpdateBody
-from ...api_schemas.feeds.enable_disable_feed_response import FeedEnableDisableResponse
-from ...api_schemas.feeds.fetch_feeds_response import FeedFetchResponse
-from ...api_schemas.feeds.get_feed_response import FeedResponse
-from ...api_schemas.feeds.toggle_feed_body import FeedToggleBody
+from mmisp.api_schemas.feeds.cache_feed_response import FeedCacheResponse
+from mmisp.api_schemas.feeds.create_update_feed_body import FeedCreateAndUpdateBody
+from mmisp.api_schemas.feeds.enable_disable_feed_response import FeedEnableDisableResponse
+from mmisp.api_schemas.feeds.fetch_feeds_response import FeedFetchResponse
+from mmisp.api_schemas.feeds.get_feed_response import FeedResponse
+from mmisp.api_schemas.feeds.toggle_feed_body import FeedToggleBody
 
 router = APIRouter(prefix="/feeds", tags=["feeds"])
 

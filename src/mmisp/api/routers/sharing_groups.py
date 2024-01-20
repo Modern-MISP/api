@@ -1,45 +1,45 @@
 from fastapi import APIRouter
 
-from ...api_schemas.sharing_groups.create_sharing_group_legacy_body import (
+from mmisp.api_schemas.sharing_groups.create_sharing_group_legacy_body import (
     CreateSharingGroupLegacyBody,
 )
-from ...api_schemas.sharing_groups.create_sharing_group_legacy_response import (
+from mmisp.api_schemas.sharing_groups.create_sharing_group_legacy_response import (
     CreateSharingGroupLegacyResponse,
 )
-from ...api_schemas.sharing_groups.create_update_sharing_group_body import (
+from mmisp.api_schemas.sharing_groups.create_update_sharing_group_body import (
     CreateUpdateSharingGroupBody,
 )
-from ...api_schemas.sharing_groups.delete_sharing_group_legacy_response import (
+from mmisp.api_schemas.sharing_groups.delete_sharing_group_legacy_response import (
     DeleteSharingGroupLegacyResponse,
 )
-from ...api_schemas.sharing_groups.sharing_group import SharingGroup
-from ...api_schemas.sharing_groups.update_sharing_group_legacy_body import (
+from mmisp.api_schemas.sharing_groups.sharing_group import SharingGroup
+from mmisp.api_schemas.sharing_groups.update_sharing_group_legacy_body import (
     UpdateSharingGroupLegacyBody,
 )
-from ...api_schemas.sharing_groups.view_sharing_group_legacy_response import (
+from mmisp.api_schemas.sharing_groups.view_sharing_group_legacy_response import (
     ViewSharingGroupLegacyResponse,
 )
-from ...api_schemas.sharing_groups.get_all_sharing_groups_response import (
+from mmisp.api_schemas.sharing_groups.get_all_sharing_groups_response import (
     GetAllSharingGroupsResponse,
 )
-from ...api_schemas.sharing_groups.get_sharing_group_info_response import (
+from mmisp.api_schemas.sharing_groups.get_sharing_group_info_response import (
     GetSharingGroupInfoResponse,
 )
-from ...api_schemas.sharing_groups.add_org_to_sharing_group_legacy_body import (
+from mmisp.api_schemas.sharing_groups.add_org_to_sharing_group_legacy_body import (
     AddOrgToSharingGroupLegacyBody,
 )
-from ...api_schemas.sharing_groups.add_org_to_sharing_group_body import (
+from mmisp.api_schemas.sharing_groups.add_org_to_sharing_group_body import (
     AddOrgToSharingGroupBody,
 )
-from ...api_schemas.sharing_groups.sharing_group_org import SharingGroupOrg
-from ...api_schemas.standard_status_response import StandardStatusResponse
-from ...api_schemas.sharing_groups.add_server_to_sharing_group_legacy_body import (
+from mmisp.api_schemas.sharing_groups.sharing_group_org import SharingGroupOrg
+from mmisp.api_schemas.standard_status_response import StandardStatusResponse
+from mmisp.api_schemas.sharing_groups.add_server_to_sharing_group_legacy_body import (
     AddServerToSharingGroupLegacyBody,
 )
-from ...api_schemas.sharing_groups.add_server_to_sharing_group_body import (
+from mmisp.api_schemas.sharing_groups.add_server_to_sharing_group_body import (
     AddServerToSharingGroupBody,
 )
-from ...api_schemas.sharing_groups.sharing_group_server import SharingGroupServer
+from mmisp.api_schemas.sharing_groups.sharing_group_server import SharingGroupServer
 
 router = APIRouter(tags=["sharing_groups"])
 
