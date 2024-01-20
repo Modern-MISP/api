@@ -1,18 +1,18 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from ..database import get_db
+from mmisp.db.database import get_db
 
 # from ..models.object import Object
-from ..schemas.objects.create_object_body import ObjectCreateBody
-from ..schemas.objects.delete_object_response import ObjectDeleteResponse
-from ..schemas.objects.get_added_object_response import ObjectGetAddedResponse
-from ..schemas.objects.get_object_response import (
+from mmisp.api_schemas.objects.create_object_body import ObjectCreateBody
+from mmisp.api_schemas.objects.delete_object_response import ObjectDeleteResponse
+from mmisp.api_schemas.objects.get_added_object_response import ObjectGetAddedResponse
+from mmisp.api_schemas.objects.get_object_response import (
     ObjectViewResponse,
     ObjectWithAttributesAndEventSearchResponse,
 )
-from ..schemas.objects.search_objects_body import ObjectSearchBody
-from ..schemas.objects.search_objects_response import (
+from mmisp.api_schemas.objects.search_objects_body import ObjectSearchBody
+from mmisp.api_schemas.objects.search_objects_response import (
     ObjectSearchResponse,
     ObjectWithAttributesSearchResponse,
 )
