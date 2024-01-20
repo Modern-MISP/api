@@ -3,6 +3,7 @@ FROM python:3.11-bookworm AS builder
 WORKDIR /build
 
 COPY pyproject.toml .
+COPY src src
 
 RUN pip install --no-cache-dir .
 
@@ -13,8 +14,6 @@ WORKDIR /app
 COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 COPY --from=builder /usr/local/bin/uvicorn /usr/local/bin/
 
-COPY app app
-
 EXPOSE 4000
 
-ENTRYPOINT uvicorn app.main:app --port 4000
+ENTRYPOINT uvicorn mmisp.api.main:app --host 0.0.0.0 --port 4000

@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from app.schemas.tag_schema import TagSchema
+from mmisp.api_schemas.tag_schema import TagSchema
 
 
 class TaxonomyEntrySchema:

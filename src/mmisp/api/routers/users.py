@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.schemas.users.users_view_me_response import UsersViewMeResponse
+from mmisp.api_schemas.users.users_view_me_response import UsersViewMeResponse
 
 
 router = APIRouter(tags=["users"])

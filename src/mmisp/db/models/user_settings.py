@@ -31,4 +31,3 @@ class UserSettingsPosition(Base):
     y = Column(String)
     width = Column(String)
     height = Column(String)
->>>>>>> main
