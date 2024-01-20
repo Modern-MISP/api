@@ -13,7 +13,7 @@ setup:
 
 dev:
 	source venv/bin/activate; \
-	uvicorn mmisp.api.main:app --reload --port 4000
+	uvicorn src.mmisp.api.main:app --reload --port 4000
 
 dev/native:
-	uvicorn mmisp.api.main:app --reload --port 4000
+	uvicorn src.mmisp.api.main:app --reload --port 4000

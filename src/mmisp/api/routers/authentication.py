@@ -1,11 +1,13 @@
 from fastapi import APIRouter
 from fastapi.responses import RedirectResponse
 
-from mmisp.api_schemas.authentication.start_login_body import StartLoginBody
-from mmisp.api_schemas.authentication.start_login_response import StartLoginResponse
-from mmisp.api_schemas.authentication.password_login_body import PasswordLoginBody
-from mmisp.api_schemas.authentication.token_response import TokenResponse
-from mmisp.api_schemas.authentication.exchange_token_login_body import ExchangeTokenLoginBody
+from ...api_schemas.authentication.start_login_body import StartLoginBody
+from ...api_schemas.authentication.start_login_response import StartLoginResponse
+from ...api_schemas.authentication.password_login_body import PasswordLoginBody
+from ...api_schemas.authentication.token_response import TokenResponse
+from ...api_schemas.authentication.exchange_token_login_body import (
+    ExchangeTokenLoginBody,
+)
 
 
 router = APIRouter(tags=["authentication"])

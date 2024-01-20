@@ -3,15 +3,15 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from mmisp.api_schemas.auth_key.search_get_all_auth_keys_users_out import AuthKeyGetSchema
-from mmisp.api_schemas.auth_key.add_auth_key_out import AuthKey
-from mmisp.api_schemas.auth_key.view_auth_key_out import AuthKeyViewSchema
-from mmisp.api_schemas.auth_key.edit_auth_key_out import AuthKeyEditSchema
-from mmisp.api_schemas.auth_key.delete_auth_key_out import AuthKeyDeleteSchema
-from mmisp.api_schemas.auth_key.search_auth_keys_in import AuthKeySearch
-from mmisp.api_schemas.auth_key.add_auth_key_in import AuthKeyAdd
-from mmisp.api_schemas.auth_key.edit_auth_key_in import AuthKeyEdit
-from mmisp.db.database import get_db
+from ...api_schemas.auth_key.search_get_all_auth_keys_users_out import AuthKeyGetSchema
+from ...api_schemas.auth_key.add_auth_key_out import AuthKey
+from ...api_schemas.auth_key.view_auth_key_out import AuthKeyViewSchema
+from ...api_schemas.auth_key.edit_auth_key_out import AuthKeyEditSchema
+from ...api_schemas.auth_key.delete_auth_key_out import AuthKeyDeleteSchema
+from ...api_schemas.auth_key.search_auth_keys_in import AuthKeySearch
+from ...api_schemas.auth_key.add_auth_key_in import AuthKeyAdd
+from ...api_schemas.auth_key.edit_auth_key_in import AuthKeyEdit
+from ...db.database import get_db
 
 
 router = APIRouter(prefix="/auth_keys", tags=["auth_keys"])
