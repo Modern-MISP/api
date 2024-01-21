@@ -1,6 +1,7 @@
-from .sharing_group import SharingGroup
-from ..organisations.organisation import Organisation
 from pydantic import BaseModel
+
+from ..organisations.organisation import Organisation
+from .sharing_group import SharingGroup
 
 
 class ViewSharingGroupLegacyResponseOrganisationInfo(BaseModel):

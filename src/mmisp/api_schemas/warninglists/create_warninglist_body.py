@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 
-from .warninglist import Type, Category
+from .warninglist import Category, Type
 
 
 class CreateWarninglistBody(BaseModel):

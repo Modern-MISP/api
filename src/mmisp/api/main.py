@@ -3,22 +3,23 @@ from fastapi.responses import RedirectResponse
 
 from mmisp.db.database import engine
 from mmisp.db.models.feed import Base
+
 from .routers import (
     attributes,
     auth_key,
+    authentication,
     events,
     feeds,
     galaxies,
+    jobs,
+    noticelists,
     objects,
+    sharing_groups,
     sightings,
     tags,
     user_settings,
-    sharing_groups,
-    authentication,
     users,
-    jobs,
     warninglists,
-    noticelists,
 )
 
 description = """

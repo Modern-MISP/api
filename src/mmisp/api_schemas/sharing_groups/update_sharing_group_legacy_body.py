@@ -1,5 +1,6 @@
 from datetime import datetime
-from pydantic import Field, BaseModel
+
+from pydantic import BaseModel, Field
 
 
 class UpdateSharingGroupLegacyBody(BaseModel):
