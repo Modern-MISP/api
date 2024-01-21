@@ -1,30 +1,40 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from mmisp.db.database import get_db
-from mmisp.api_schemas.attributes.delete_attribute_response import DeleteAttributeResponse
-from mmisp.api_schemas.attributes.get_all_attributes_response import GetAllAttributesResponse
-from mmisp.api_schemas.attributes.get_attribute_response import GetAttributeResponse
-from mmisp.api_schemas.attributes.get_attribute_statistics_response import (
-    GetAttributeStatisticsTypesResponse,
-)
-from mmisp.api_schemas.attributes.get_describe_types_response import GetDescribeTypesResponse
-from mmisp.api_schemas.attributes.search_attributes_body import SearchAttributesBody
-from mmisp.api_schemas.attributes.search_attributes_response import SearchAttributesResponse
 from mmisp.api_schemas.attributes.add_attribute_body import AddAttributeBody
 from mmisp.api_schemas.attributes.add_attribute_response import AddAttributeResponse
+from mmisp.api_schemas.attributes.add_remove_tag_attribute_response import (
+    AddRemoveTagAttributeResponse,
+)
+from mmisp.api_schemas.attributes.delete_attribute_response import (
+    DeleteAttributeResponse,
+)
 from mmisp.api_schemas.attributes.delete_selected_attribute_body import (
     DeleteSelectedAttributeBody,
 )
 from mmisp.api_schemas.attributes.delete_selected_attribute_response import (
     DeleteSelectedAttributeResponse,
 )
-from mmisp.api_schemas.attributes.restore_attribute_reponse import RestoreAttributeResponse
-from mmisp.api_schemas.attributes.add_remove_tag_attribute_response import (
-    AddRemoveTagAttributeResponse,
-)
 from mmisp.api_schemas.attributes.edit_attribute_body import EditAttributeBody
 from mmisp.api_schemas.attributes.edit_attributes_response import EditAttributeResponse
+from mmisp.api_schemas.attributes.get_all_attributes_response import (
+    GetAllAttributesResponse,
+)
+from mmisp.api_schemas.attributes.get_attribute_response import GetAttributeResponse
+from mmisp.api_schemas.attributes.get_attribute_statistics_response import (
+    GetAttributeStatisticsTypesResponse,
+)
+from mmisp.api_schemas.attributes.get_describe_types_response import (
+    GetDescribeTypesResponse,
+)
+from mmisp.api_schemas.attributes.restore_attribute_reponse import (
+    RestoreAttributeResponse,
+)
+from mmisp.api_schemas.attributes.search_attributes_body import SearchAttributesBody
+from mmisp.api_schemas.attributes.search_attributes_response import (
+    SearchAttributesResponse,
+)
+from mmisp.db.database import get_db
 
 router = APIRouter(prefix="/attributes", tags=["attributes"])
 

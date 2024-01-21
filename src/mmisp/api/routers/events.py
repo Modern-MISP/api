@@ -3,25 +3,27 @@ from typing import List
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from mmisp.db.database import get_db
-from mmisp.api_schemas.events.delete_event_response import DeleteEventResponse
-from mmisp.api_schemas.events.get_all_events_response import GetAllEventsResponse
-from mmisp.api_schemas.events.add_edit_get_event_response import AddEditGetEventResponse
-from mmisp.api_schemas.events.search_events_body import SearchEventsBody
-from mmisp.api_schemas.events.search_events_response import SearchEventsResponse
-from mmisp.api_schemas.events.add_event_body import AddEventBody
-from mmisp.api_schemas.events.index_events_body import IndexEventsBody
-from mmisp.api_schemas.events.index_events_response import IndexEventsResponse
-from mmisp.api_schemas.events.publish_event_response import PublishEventResponse
-from mmisp.api_schemas.events.unpublish_event_response import UnpublishEventResponse
-from mmisp.api_schemas.events.add_remove_tag_events_response import AddRemoveTagEventsResponse
 from mmisp.api_schemas.events.add_attribute_via_free_text_import_event_body import (
     AddAttributeViaFreeTextImportEventBody,
 )
 from mmisp.api_schemas.events.add_attribute_via_free_text_import_event_response import (
     AddAttributeViaFreeTextImportEventResponse,
 )
+from mmisp.api_schemas.events.add_edit_get_event_response import AddEditGetEventResponse
+from mmisp.api_schemas.events.add_event_body import AddEventBody
+from mmisp.api_schemas.events.add_remove_tag_events_response import (
+    AddRemoveTagEventsResponse,
+)
+from mmisp.api_schemas.events.delete_event_response import DeleteEventResponse
 from mmisp.api_schemas.events.edit_event_body import EditEventBody
+from mmisp.api_schemas.events.get_all_events_response import GetAllEventsResponse
+from mmisp.api_schemas.events.index_events_body import IndexEventsBody
+from mmisp.api_schemas.events.index_events_response import IndexEventsResponse
+from mmisp.api_schemas.events.publish_event_response import PublishEventResponse
+from mmisp.api_schemas.events.search_events_body import SearchEventsBody
+from mmisp.api_schemas.events.search_events_response import SearchEventsResponse
+from mmisp.api_schemas.events.unpublish_event_response import UnpublishEventResponse
+from mmisp.db.database import get_db
 
 router = APIRouter(prefix="/events", tags=["events"])
 
