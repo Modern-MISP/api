@@ -1,7 +1,8 @@
 from pydantic import BaseModel
-from .user import User
-from ..roles.role import Role
+
 from ..organisations.organisation import Organisation
+from ..roles.role import Role
+from .user import User
 
 
 class UsersViewMeResponse(BaseModel):

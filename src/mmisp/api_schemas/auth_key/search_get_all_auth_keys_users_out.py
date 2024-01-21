@@ -2,6 +2,7 @@ from pydantic import BaseModel
 
 from ..user_schema import User
 
+
 class AuthKeyGetSchema(BaseModel):
     id: str = ""
     uuid: str = ""

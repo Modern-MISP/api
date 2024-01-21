@@ -6,33 +6,26 @@ from mmisp.api_schemas.warninglists.check_value_warninglists_body import (
 from mmisp.api_schemas.warninglists.check_value_warninglists_response import (
     CheckValueWarninglistsResponse,
 )
+from mmisp.api_schemas.warninglists.create_warninglist_body import CreateWarninglistBody
 from mmisp.api_schemas.warninglists.delete_warninglist_response import (
     DeleteWarninglistResponse,
 )
 from mmisp.api_schemas.warninglists.get_selected_all_warninglists_response import (
     GetSelectedAllWarninglistsResponse,
 )
-
 from mmisp.api_schemas.warninglists.get_selected_warninglists_body import (
     GetSelectedWarninglistsBody,
 )
-
 from mmisp.api_schemas.warninglists.toggle_enable_warninglists_body import (
     ToggleEnableWarninglistsBody,
 )
-
 from mmisp.api_schemas.warninglists.toggle_enable_warninglists_response import (
     ToggleEnableWarninglistsResponse,
 )
 from mmisp.api_schemas.warninglists.update_all_warninglists_response import (
     UpdateAllWarninglistsResponse,
 )
-
 from mmisp.api_schemas.warninglists.warninglist import Warninglist
-
-from mmisp.api_schemas.warninglists.create_warninglist_body import (
-    CreateWarninglistBody,
-)
 
 router = APIRouter(tags=["warninglists"])
 

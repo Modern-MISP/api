@@ -1,5 +1,6 @@
-from sqlalchemy import Column, String, Integer
+from sqlalchemy import Column, Integer, String
 from sqlalchemy.dialects.mysql import TINYINT
+
 from ..database import Base
 
 

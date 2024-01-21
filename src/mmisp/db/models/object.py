@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, ForeignKey, Integer, BigInteger
+from sqlalchemy import BigInteger, Column, ForeignKey, Integer, String
 from sqlalchemy.dialects.mysql import TINYINT
 from sqlalchemy.orm import relationship
 

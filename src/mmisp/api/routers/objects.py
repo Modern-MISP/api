@@ -1,8 +1,6 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from mmisp.db.database import get_db
-
 # from ..models.object import Object
 from mmisp.api_schemas.objects.create_object_body import ObjectCreateBody
 from mmisp.api_schemas.objects.delete_object_response import ObjectDeleteResponse
@@ -16,6 +14,7 @@ from mmisp.api_schemas.objects.search_objects_response import (
     ObjectSearchResponse,
     ObjectWithAttributesSearchResponse,
 )
+from mmisp.db.database import get_db
 
 router = APIRouter(prefix="/objects", tags=["objects"])
 

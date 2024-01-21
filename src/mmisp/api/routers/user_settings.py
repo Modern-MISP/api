@@ -1,12 +1,12 @@
 from fastapi import APIRouter
 
+from mmisp.api_schemas.user_setting.delete_user_setting_out import UserSettingDelete
 from mmisp.api_schemas.user_setting.get_get_id_user_setting_out import UserSettingGet
-from mmisp.api_schemas.user_setting.search_user_setting_out import UserSettingSearch
 from mmisp.api_schemas.user_setting.search_user_setting_in import UserSettingSearchIn
-from mmisp.api_schemas.user_setting.view_user_setting_out import UserSettingView
+from mmisp.api_schemas.user_setting.search_user_setting_out import UserSettingSearch
 from mmisp.api_schemas.user_setting.set_user_setting_in import UserSettingSetIn
 from mmisp.api_schemas.user_setting.set_user_setting_out import UserSettingSet
-from mmisp.api_schemas.user_setting.delete_user_setting_out import UserSettingDelete
+from mmisp.api_schemas.user_setting.view_user_setting_out import UserSettingView
 
 router = APIRouter(prefix="/user_settings", tags=["user_settings"])
 
