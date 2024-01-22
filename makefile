@@ -17,3 +17,6 @@ dev:
 
 dev/native:
 	uvicorn mmisp.api.main:app --reload --port 4000
+
+print-changes:
+	MYSQL_USER=misp MYSQL_PASSWORD=misp MYSQL_HOST=localhost MYSQL_DBNAME=misp python -m mmisp.db.print_changes
