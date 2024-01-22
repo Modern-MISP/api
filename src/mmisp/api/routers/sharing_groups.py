@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
 from mmisp.api_schemas.sharing_groups.add_org_to_sharing_group_body import (
     AddOrgToSharingGroupBody,
@@ -40,22 +40,49 @@ from mmisp.api_schemas.sharing_groups.view_sharing_group_legacy_response import 
     ViewSharingGroupLegacyResponse,
 )
 from mmisp.api_schemas.standard_status_response import StandardStatusResponse
+from typing import Annotated
+from sqlalchemy.orm import Session
+from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
+from mmisp.db.database import get_db
 
 router = APIRouter(tags=["sharing_groups"])
 
 
 @router.post("/sharing_groups", status_code=201)
-async def create_sharing_group(body: CreateUpdateSharingGroupBody) -> SharingGroup:
+async def create_sharing_group(
+    auth: Annotated[
+        Auth,
+        Depends(
+            authorize(AuthStrategy.ALL, [Permission.ADD, Permission.SHARING_GROUP])
+        ),
+    ],
+    db: Annotated[Session, Depends(get_db)],
+    body: CreateUpdateSharingGroupBody,
+) -> SharingGroup:
     return SharingGroup()
 
 
 @router.get("/sharing_groups/{id}")
-async def get_sharing_group(id: str) -> SharingGroup:
+async def get_sharing_group(
+    auth: Annotated[
+        Auth,
+        Depends(authorize(AuthStrategy.ALL, [Permission.SHARING_GROUP])),
+    ],
+    db: Annotated[Session, Depends(get_db)],
+    id: str,
+) -> SharingGroup:
     return SharingGroup()
 
 
 @router.put("/sharing_groups/{id}")
 async def update_sharing_group(
+    auth: Annotated[
+        Auth,
+        Depends(
+            authorize(AuthStrategy.ALL, [Permission.MODIFY, Permission.SHARING_GROUP])
+        ),
+    ],
+    db: Annotated[Session, Depends(get_db)],
     id: str,
     body: CreateUpdateSharingGroupBody,
 ) -> SharingGroup:
@@ -63,7 +90,16 @@ async def update_sharing_group(
 
 
 @router.delete("/sharing_groups/{id}")
-async def delete_sharing_group(id: str) -> SharingGroup:
+async def delete_sharing_group(
+    auth: Annotated[
+        Auth,
+        Depends(
+            authorize(AuthStrategy.ALL, [Permission.MODIFY, Permission.SHARING_GROUP])
+        ),
+    ],
+    db: Annotated[Session, Depends(get_db)],
+    id: str,
+) -> SharingGroup:
     return SharingGroup()
 
 
