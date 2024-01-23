@@ -1,8 +1,7 @@
 from fastapi import FastAPI, status
 from fastapi.responses import RedirectResponse
 
-from mmisp.db.database import engine
-from mmisp.db.models.feed import Base
+from mmisp.db.database import engine, Base
 
 from .routers import (
     attributes,
@@ -22,9 +21,26 @@ from .routers import (
     warninglists,
 )
 
-description = """
-MISP API lets you use MISP as an API
-"""
+# if you add a new model module, add it here too
+from mmisp.db.models import (  # noqa: F401
+    attribute,
+    auth_key as auth_key_model,
+    event,
+    feed,
+    galaxy,
+    noticelist,
+    object,
+    organisation,
+    role,
+    server,
+    sharing_group,
+    sighting,
+    tag,
+    taxonomy,
+    user_settings as user_settings_model,
+    user,
+    warninglist,
+)
 
 Base.metadata.create_all(bind=engine)
 

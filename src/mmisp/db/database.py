@@ -1,23 +1,23 @@
-import os
 from typing import Iterator
 
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.engine.url import make_url
 
-# DATABASE_URL = "sqlite:///./test.db"
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./test.db")
+from mmisp.config import config
 
-engine = create_engine(DATABASE_URL)
+url = make_url(config.DATABASE_URL).set(drivername="mysql+mysqlconnector")
+engine = create_engine(url)
 
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 Base = declarative_base()
 
 
 def get_db() -> Iterator[Session]:
-    db = SessionLocal()
+    db = session()
     try:
         yield db
     finally:

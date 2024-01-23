@@ -1,6 +1,7 @@
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
-from sqlalchemy.orm import relationship
-
+from .event import Event
+from .object import Object
+from .sharing_group import SharingGroup
 from ..database import Base
 
 
@@ -8,37 +9,37 @@ class Attribute(Base):
     __tablename__ = "attributes"
 
     id = Column(Integer, primary_key=True)
-    event_id = Column(String, ForeignKey("events.id"))
-    object_id = Column(String, ForeignKey("objects.id"))
-    object_relation = Column(String)
-    category = Column(String)
-    type = Column(String)
-    value = Column(String)
-    value1 = Column(String)
-    value2 = Column(String)
+    event_id = Column(Integer, ForeignKey(Event.id))
+    object_id = Column(Integer, ForeignKey(Object.id))
+    object_relation = Column(String(255))
+    category = Column(String(255))
+    type = Column(String(255))
+    value = Column(String(255))
+    value1 = Column(String(255))
+    value2 = Column(String(255))
     to_ids = Column(Boolean)
-    uuid = Column(String)
-    timestamp = Column(String)
-    distribution = Column(String)
-    sharing_group_id = Column(String, ForeignKey("sharing_groups.id"))
-    comment = Column(String)
+    uuid = Column(String(255))
+    timestamp = Column(String(255))
+    distribution = Column(String(255))
+    sharing_group_id = Column(Integer, ForeignKey(SharingGroup.id))
+    comment = Column(String(255))
     deleted = Column(Boolean)
     disable_correlation = Column(Boolean)
-    first_seen = Column(String)
-    last_seen = Column(String)
-    event_uuid = Column(String, ForeignKey("events.uuid"))  # new
+    first_seen = Column(String(255))
+    last_seen = Column(String(255))
+    event_uuid = Column(String(255), ForeignKey(Event.uuid))  # new
 
-    tags = relationship("AttributeTag")
+    # tags = relationship("AttributeTag")
 
 
 class AttributeTag(Base):
-    __talename__ = "attribute_tags"
+    __tablename__ = "attribute_tags"
 
     id = Column(Integer, primary_key=True)
-    name = Column(String)
-    colour = Column(String)
+    name = Column(String(255))
+    colour = Column(String(255))
     exportable = Column(Boolean)
-    user_id = Column(String)
+    user_id = Column(String(255))
     hide_tag = Column(Boolean)
     numerical_value = Column(Integer)
     is_galaxy = Column(Boolean)

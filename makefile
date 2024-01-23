@@ -11,6 +11,9 @@ setup:
 	pip install -e ".[dev]"; \
 	pre-commit install --install-hooks
 
+up:
+	docker-compose up -d
+
 dev:
 	source venv/bin/activate; \
 	uvicorn mmisp.api.main:app --reload --port 4000

@@ -8,8 +8,8 @@ class Tag(Base):
     __tablename__ = "tags"
 
     id = Column(Integer, primary_key=True)
-    name = Column(String, unique=True)
-    colour = Column(String)
+    name = Column(String(255), unique=True)
+    colour = Column(String(255))
     exportable = Column(TINYINT)
     org_id = Column(Integer, index=True)
     user_id = Column(Integer, index=True)
