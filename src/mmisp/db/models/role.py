@@ -8,7 +8,7 @@ class Role(Base):
     __tablename__ = "roles"
 
     id = Column(Integer, primary_key=True)
-    name = Column(String)
+    name = Column(String(255))
     created = Column(DateTime)
     modified = Column(DateTime)
     perm_add = Column(TINYINT)
@@ -30,8 +30,8 @@ class Role(Base):
     perm_sighting = Column(TINYINT)
     perm_object_template = Column(TINYINT)
     default_role = Column(TINYINT)
-    memory_limit = Column(String)
-    max_execution_time = Column(String)
+    memory_limit = Column(String(255))
+    max_execution_time = Column(String(255))
     restricted_to_site_admin = Column(TINYINT)
     perm_publish_zmq = Column(TINYINT)
     perm_publish_kafka = Column(TINYINT)

@@ -8,11 +8,11 @@ class SharingGroup(Base):
     __tablename__ = "sharing_groups"
 
     id = Column(Integer, primary_key=True)
-    uuid = Column(String, unique=True)
-    name = Column(String)
-    releasability = Column(String)
-    description = Column(String)
-    organisation_uuid = Column(String)
+    uuid = Column(String(255), unique=True)
+    name = Column(String(255))
+    releasability = Column(String(255))
+    description = Column(String(255))
+    organisation_uuid = Column(String(255))
     org_id = Column(Integer)
     sync_user_id = Column(Integer)
     active = Column(TINYINT)

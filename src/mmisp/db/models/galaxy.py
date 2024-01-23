@@ -7,11 +7,11 @@ class Galaxy(Base):
     __tablename__ = "galaxies"
 
     id = Column(Integer, primary_key=True)
-    uuid = Column(String)
-    name = Column(String)
-    type = Column(String)
-    description = Column(String)
-    version = Column(String)
-    icon = Column(String)
-    namespace = Column(String)
-    kill_chain_order = Column(String)  # must be serialized
+    uuid = Column(String(255))
+    name = Column(String(255))
+    type = Column(String(255))
+    description = Column(String(255))
+    version = Column(String(255))
+    icon = Column(String(255))
+    namespace = Column(String(255))
+    kill_chain_order = Column(String(255))  # must be serialized
