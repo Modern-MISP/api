@@ -2,6 +2,10 @@
 
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff) [![Conventional Commits](https://img.shields.io/badge/Conventional_Commits-1.0.0-orange.svg)](https://conventionalcommits.org)
 
+## Requirements
+
+- [Docker](https://www.docker.com) `latest-stable`
+
 ## Getting started
 
 Clone the project and install Python version `3.11.0`. It is recommended to install Python using [pyenv](https://github.com/pyenv/pyenv#installation). Then install all dependencies by typing `make setup` into your terminal, start your local database container using `make up`, and start the development server using `make dev`.
