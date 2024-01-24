@@ -11,9 +11,7 @@ from mmisp.db.database import get_db
 router = APIRouter(prefix="/sightings", tags=["sightings"])
 
 
-@router.get(
-    "/", summary="Get all sightings", description="Retrieve a list of all sightings."
-)
+@router.get("/", summary="Get all sightings", description="Retrieve a list of all sightings.")
 async def get_sightings(db: Session = Depends(get_db)) -> list[SightingGetResponse]:
     # Logic to get sightings goes here
 
@@ -25,9 +23,7 @@ async def get_sightings(db: Session = Depends(get_db)) -> list[SightingGetRespon
     summary="Get sightings for event",
     description="Retrieve all sightings associated with a specific event ID.",
 )
-async def get_sightings_at_index(
-    event_id: str, db: Session = Depends(get_db)
-) -> SightingGetResponse:
+async def get_sightings_at_index(event_id: str, db: Session = Depends(get_db)) -> SightingGetResponse:
     # Logic to get sightings for an event goes here
 
     return SightingGetResponse(root=[])
@@ -40,9 +36,7 @@ async def get_sightings_at_index(
     description="Deprecated. Add a new sighting using the old route.",
 )
 @router.post("/", summary="Add sighting", description="Add a new sighting.")
-async def add_sighting(
-    body: SightingCreateBody, db: Session = Depends(get_db)
-) -> SightingGetResponse:
+async def add_sighting(body: SightingCreateBody, db: Session = Depends(get_db)) -> SightingGetResponse:
     # Logic to add a new sighting goes here
 
     return SightingGetResponse(root=[])
@@ -55,9 +49,7 @@ async def add_sighting(
     description="Deprecated. Add a new sighting for a specific attribute using the old route.",
 )
 @router.post(
-    "/{attributeId}",
-    summary="Add sighting at index",
-    description="Add a new sighting for a specific attribute.",
+    "/{attributeId}", summary="Add sighting at index", description="Add a new sighting for a specific attribute."
 )
 async def add_sightings_at_index(
     attribute_id: str, body: SightingCreateBody, db: Session = Depends(get_db)
@@ -73,16 +65,8 @@ async def add_sightings_at_index(
     summary="Delete sighting (Deprecated)",
     description="Deprecated. Delete a specific sighting using the old route.",
 )
-@router.delete(
-    "/{sightingId}",
-    summary="Delete sighting",
-    description="Delete a specific sighting.",
-)
-async def delete_sighting(
-    sighting_id: str, db: Session = Depends(get_db)
-) -> SightingDeleteResponse:
+@router.delete("/{sightingId}", summary="Delete sighting", description="Delete a specific sighting.")
+async def delete_sighting(sighting_id: str, db: Session = Depends(get_db)) -> SightingDeleteResponse:
     # Logic to delete a sighting goes here
 
-    return SightingDeleteResponse(
-        saved=False, success=False, name="", message="", url=""
-    )
+    return SightingDeleteResponse(saved=False, success=False, name="", message="", url="")

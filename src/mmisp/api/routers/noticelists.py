@@ -2,19 +2,13 @@ from fastapi import APIRouter
 
 from mmisp.api_schemas.noticelists.get_all_noticelist_response import GetAllNoticelist
 from mmisp.api_schemas.noticelists.noticelist import Noticelist
-from mmisp.api_schemas.noticelists.toggle_enable_noticelist import (
-    ToggleEnableNoticelist,
-)
+from mmisp.api_schemas.noticelists.toggle_enable_noticelist import ToggleEnableNoticelist
 from mmisp.api_schemas.noticelists.update_noticelist import UpdateNoticelist
 
 router = APIRouter(tags=["noticelists"])
 
 
-@router.get(
-    "noticelists/",
-    summary="Get all noticelists",
-    description="Retrieve a list of all noticelists.",
-)
+@router.get("noticelists/", summary="Get all noticelists", description="Retrieve a list of all noticelists.")
 async def get_all_noticelist() -> GetAllNoticelist:
     return None
 
@@ -49,10 +43,6 @@ async def post_toggleEnable(id: int) -> ToggleEnableNoticelist:
     summary="Update noticelists (Deprecated)",
     description="Deprecated. Update all noticelists.",
 )
-@router.put(
-    "noticelists/",
-    summary="Update noticelists",
-    description="Update all noticelists.",
-)
+@router.put("noticelists/", summary="Update noticelists", description="Update all noticelists.")
 async def update_noticelists() -> UpdateNoticelist:
     return UpdateNoticelist()

@@ -5,28 +5,16 @@ from sqlalchemy.orm import Session
 from mmisp.api_schemas.objects.create_object_body import ObjectCreateBody
 from mmisp.api_schemas.objects.delete_object_response import ObjectDeleteResponse
 from mmisp.api_schemas.objects.get_added_object_response import ObjectGetAddedResponse
-from mmisp.api_schemas.objects.get_object_response import (
-    ObjectViewResponse,
-    ObjectWithAttributesAndEventSearchResponse,
-)
+from mmisp.api_schemas.objects.get_object_response import ObjectViewResponse, ObjectWithAttributesAndEventSearchResponse
 from mmisp.api_schemas.objects.search_objects_body import ObjectSearchBody
-from mmisp.api_schemas.objects.search_objects_response import (
-    ObjectSearchResponse,
-    ObjectWithAttributesSearchResponse,
-)
+from mmisp.api_schemas.objects.search_objects_response import ObjectSearchResponse, ObjectWithAttributesSearchResponse
 from mmisp.db.database import get_db
 
 router = APIRouter(prefix="/objects", tags=["objects"])
 
 
-@router.post(
-    "/restsearch",
-    summary="Search objects",
-    description="Search for objects based on various filters.",
-)
-async def restsearch(
-    body: ObjectSearchBody, db: Session = Depends(get_db)
-) -> ObjectSearchResponse:
+@router.post("/restsearch", summary="Search objects", description="Search for objects based on various filters.")
+async def restsearch(body: ObjectSearchBody, db: Session = Depends(get_db)) -> ObjectSearchResponse:
     # Logic to search objects goes here
 
     return ObjectSearchResponse(response=[])
@@ -44,10 +32,7 @@ async def restsearch(
     description="Add a new object to a specific event using a template.",
 )
 async def add_object(
-    event_id: str,
-    object_template_id: str,
-    body: ObjectCreateBody,
-    db: Session = Depends(get_db),
+    event_id: str, object_template_id: str, body: ObjectCreateBody, db: Session = Depends(get_db)
 ) -> ObjectGetAddedResponse:
     # Logic to add an object goes here
 
@@ -84,9 +69,7 @@ async def add_object(
     summary="View object details",
     description="View details of a specific object including its attributes and related event.",
 )
-async def get_object_details(
-    object_id: str, db: Session = Depends(get_db)
-) -> ObjectViewResponse:
+async def get_object_details(object_id: str, db: Session = Depends(get_db)) -> ObjectViewResponse:
     # Logic to get object details goes here
 
     return ObjectViewResponse(
@@ -123,9 +106,7 @@ async def get_object_details(
     summary="Delete object",
     description="Delete a specific object. The hardDelete parameter determines if it's a hard or soft delete.",
 )
-async def delete_object(
-    object_id: str, hard_delete: bool, db: Session = Depends(get_db)
-) -> ObjectDeleteResponse:
+async def delete_object(object_id: str, hard_delete: bool, db: Session = Depends(get_db)) -> ObjectDeleteResponse:
     # Logic to delete an object goes here
 
     return ObjectDeleteResponse(saved=False, success=False, name="", message="", url="")

@@ -9,9 +9,7 @@ from mmisp.api_schemas.auth_key.delete_auth_key_out import AuthKeyDeleteSchema
 from mmisp.api_schemas.auth_key.edit_auth_key_in import AuthKeyEdit
 from mmisp.api_schemas.auth_key.edit_auth_key_out import AuthKeyEditSchema
 from mmisp.api_schemas.auth_key.search_auth_keys_in import AuthKeySearch
-from mmisp.api_schemas.auth_key.search_get_all_auth_keys_users_out import (
-    AuthKeyGetSchema,
-)
+from mmisp.api_schemas.auth_key.search_get_all_auth_keys_users_out import AuthKeyGetSchema
 from mmisp.api_schemas.auth_key.view_auth_key_out import AuthKeyViewSchema
 from mmisp.db.database import get_db
 
@@ -20,15 +18,11 @@ router = APIRouter(prefix="/auth_keys", tags=["auth_keys"])
 
 # query and return a list of existing authkey objects and associated users
 @router.get("/", response_model=List[AuthKeyGetSchema])
-async def auth_keys_get(
-    db: Session = Depends(get_db),
-) -> List[AuthKeyGetSchema]:  # Request Body into brackets
+async def auth_keys_get(db: Session = Depends(get_db)) -> List[AuthKeyGetSchema]:  # Request Body into brackets
     try:
         auth_keys = db.query(AuthKeyGetSchema).all()
     except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=str(e)
-        )  # Return of User still missing. Will be implemented later.
+        raise HTTPException(status_code=500, detail=str(e))  # Return of User still missing. Will be implemented later.
     return {auth_keys}  # return body in after return
 
 

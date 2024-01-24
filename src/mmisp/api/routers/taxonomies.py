@@ -35,9 +35,7 @@ async def disable_taxonomies() -> TaxonomyAbleSchema:
 
 
 # Update Taxonomies.
-@router.post(
-    "/taxonomies/update", deprecated=True
-)  # Deprecated Sollte wahrscheinlich nicht deprecated sein
+@router.post("/taxonomies/update", deprecated=True)  # Deprecated Sollte wahrscheinlich nicht deprecated sein
 @router.put("/taxonomies")
 async def update_taxonomies_depr() -> TaxonomyUpdateSchema:
     return TaxonomyUpdateSchema()

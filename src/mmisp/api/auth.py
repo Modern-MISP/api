@@ -1,9 +1,11 @@
-from mmisp.db.models.user import User
 from enum import Enum
-from sqlalchemy.orm import Session
-from mmisp.db.database import get_db
+
 from fastapi import Depends, Header, HTTPException
+from sqlalchemy.orm import Session
+
 from mmisp.config import config
+from mmisp.db.database import get_db
+from mmisp.db.models.user import User
 
 
 class AuthStrategy(Enum):
@@ -62,10 +64,7 @@ def authorize(strategy: AuthStrategy, permissions: list[Permission] = []):
         if not authorization:
             raise HTTPException(401)
 
-        if (
-            strategy in [AuthStrategy.WORKER_KEY, AuthStrategy.ALL]
-            and authorization == config.WORKER_KEY
-        ):
+        if strategy in [AuthStrategy.WORKER_KEY, AuthStrategy.ALL] and authorization == config.WORKER_KEY:
             return Auth(is_worker=True)
 
         user: User | None = None
@@ -74,11 +73,7 @@ def authorize(strategy: AuthStrategy, permissions: list[Permission] = []):
             # TODO check jwt
             pass
 
-        if not user and strategy in [
-            AuthStrategy.API_KEY,
-            AuthStrategy.HYBRID,
-            AuthStrategy.ALL,
-        ]:
+        if not user and strategy in [AuthStrategy.API_KEY, AuthStrategy.HYBRID, AuthStrategy.ALL]:
             # TODO check apikey
             pass
 
