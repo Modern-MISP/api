@@ -12,9 +12,18 @@ from mmisp.db.database import get_db
 router = APIRouter(prefix="/tags", tags=["tags"])
 
 
-@router.get("/", summary="Get all tags", description="Retrieve a list of all tags.")
-async def get_tags(db: Session = Depends(get_db)) -> TagGetResponse:
-    # Logic to get tags goes here
+# Sorted according to CRUD
+
+
+@router.post(
+    "/add",
+    deprecated=True,
+    summary="Add new tag (Deprecated)",
+    description="Deprecated. Add a new tag using the old route.",
+)
+@router.post("/", summary="Add new tag", description="Add a new tag with given details.")
+async def add_tag(body: TagCreateAndUpdateBody, db: Session = Depends(get_db)) -> TagGetResponse:
+    # Logic to add a new tag goes here
 
     return TagGetResponse(tag=[])
 
@@ -48,15 +57,24 @@ async def view_tag(tag_id: str, db: Session = Depends(get_db)) -> TagAttributesR
     )
 
 
-@router.post(
-    "/add",
-    deprecated=True,
-    summary="Add new tag (Deprecated)",
-    description="Deprecated. Add a new tag using the old route.",
+@router.get(
+    "/search/{tagSearchTerm}", summary="Search tags", description="Search for tags using a specific search term."
 )
-@router.post("/", summary="Add new tag", description="Add a new tag with given details.")
-async def add_tag(body: TagCreateAndUpdateBody, db: Session = Depends(get_db)) -> TagGetResponse:
-    # Logic to add a new tag goes here
+async def search_tags(tagSearchTerm: str, db: Session = Depends(get_db)) -> TagSearchResponse:
+    # Logic to search tags goes here
+
+    return TagSearchResponse(root=[])
+
+
+@router.post(
+    "/edit/{tagId}",
+    deprecated=True,
+    summary="Edit tag (Deprecated)",
+    description="Deprecated. Edit a specific tag using the old route.",
+)
+@router.put("/{tagId}", summary="Edit tag", description="Edit details of a specific tag.")
+async def edit_tag(tag_id: str, body: TagCreateAndUpdateBody, db: Session = Depends(get_db)) -> TagGetResponse:
+    # Logic to edit a tag goes here
 
     return TagGetResponse(tag=[])
 
@@ -74,23 +92,8 @@ async def delete_tag(tag_id: str, db: Session = Depends(get_db)) -> TagDeleteRes
     return TagDeleteResponse(name="", message="", url="")
 
 
-@router.post(
-    "/edit/{tagId}",
-    deprecated=True,
-    summary="Edit tag (Deprecated)",
-    description="Deprecated. Edit a specific tag using the old route.",
-)
-@router.put("/{tagId}", summary="Edit tag", description="Edit details of a specific tag.")
-async def edit_tag(tag_id: str, body: TagCreateAndUpdateBody, db: Session = Depends(get_db)) -> TagGetResponse:
-    # Logic to edit a tag goes here
+@router.get("/", summary="Get all tags", description="Retrieve a list of all tags.")
+async def get_tags(db: Session = Depends(get_db)) -> TagGetResponse:
+    # Logic to get tags goes here
 
     return TagGetResponse(tag=[])
-
-
-@router.get(
-    "/search/{tagSearchTerm}", summary="Search tags", description="Search for tags using a specific search term."
-)
-async def search_tags(tagSearchTerm: str, db: Session = Depends(get_db)) -> TagSearchResponse:
-    # Logic to search tags goes here
-
-    return TagSearchResponse(root=[])
