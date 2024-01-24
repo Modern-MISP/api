@@ -13,6 +13,9 @@ from mmisp.db.database import get_db
 router = APIRouter(prefix="/objects", tags=["objects"])
 
 
+# Sorted according to CRUD
+
+
 @router.post("/restsearch", summary="Search objects", description="Search for objects based on various filters.")
 async def restsearch(body: ObjectSearchBody, db: Session = Depends(get_db)) -> ObjectSearchResponse:
     # Logic to search objects goes here
@@ -99,7 +102,9 @@ async def get_object_details(object_id: str, db: Session = Depends(get_db)) -> O
     "/delete/{objectId}/{hardDelete}",
     deprecated=True,
     summary="Delete object (Deprecated)",
-    description="Deprecated. Delete a specific object using the old route. The hardDelete parameter determines if it's a hard or soft delete.",
+    description="""
+    Deprecated. Delete a specific object using the old route.
+    The hardDelete parameter determines if it's a hard or soft delete.""",
 )
 @router.delete(
     "/{objectId}/{hardDelete}",

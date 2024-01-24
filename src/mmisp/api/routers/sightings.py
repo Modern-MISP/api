@@ -11,22 +11,7 @@ from mmisp.db.database import get_db
 router = APIRouter(prefix="/sightings", tags=["sightings"])
 
 
-@router.get("/", summary="Get all sightings", description="Retrieve a list of all sightings.")
-async def get_sightings(db: Session = Depends(get_db)) -> list[SightingGetResponse]:
-    # Logic to get sightings goes here
-
-    return []
-
-
-@router.get(
-    "/index/{eventId}",
-    summary="Get sightings for event",
-    description="Retrieve all sightings associated with a specific event ID.",
-)
-async def get_sightings_at_index(event_id: str, db: Session = Depends(get_db)) -> SightingGetResponse:
-    # Logic to get sightings for an event goes here
-
-    return SightingGetResponse(root=[])
+# Sorted according to CRUD
 
 
 @router.post(
@@ -70,3 +55,21 @@ async def delete_sighting(sighting_id: str, db: Session = Depends(get_db)) -> Si
     # Logic to delete a sighting goes here
 
     return SightingDeleteResponse(saved=False, success=False, name="", message="", url="")
+
+
+@router.get(
+    "/index/{eventId}",
+    summary="Get sightings for event",
+    description="Retrieve all sightings associated with a specific event ID.",
+)
+async def get_sightings_at_index(event_id: str, db: Session = Depends(get_db)) -> SightingGetResponse:
+    # Logic to get sightings for an event goes here
+
+    return SightingGetResponse(root=[])
+
+
+@router.get("/", summary="Get all sightings", description="Retrieve a list of all sightings.")
+async def get_sightings(db: Session = Depends(get_db)) -> list[SightingGetResponse]:
+    # Logic to get sightings goes here
+
+    return []
