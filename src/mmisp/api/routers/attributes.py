@@ -3,37 +3,19 @@ from sqlalchemy.orm import Session
 
 from mmisp.api_schemas.attributes.add_attribute_body import AddAttributeBody
 from mmisp.api_schemas.attributes.add_attribute_response import AddAttributeResponse
-from mmisp.api_schemas.attributes.add_remove_tag_attribute_response import (
-    AddRemoveTagAttributeResponse,
-)
-from mmisp.api_schemas.attributes.delete_attribute_response import (
-    DeleteAttributeResponse,
-)
-from mmisp.api_schemas.attributes.delete_selected_attribute_body import (
-    DeleteSelectedAttributeBody,
-)
-from mmisp.api_schemas.attributes.delete_selected_attribute_response import (
-    DeleteSelectedAttributeResponse,
-)
+from mmisp.api_schemas.attributes.add_remove_tag_attribute_response import AddRemoveTagAttributeResponse
+from mmisp.api_schemas.attributes.delete_attribute_response import DeleteAttributeResponse
+from mmisp.api_schemas.attributes.delete_selected_attribute_body import DeleteSelectedAttributeBody
+from mmisp.api_schemas.attributes.delete_selected_attribute_response import DeleteSelectedAttributeResponse
 from mmisp.api_schemas.attributes.edit_attribute_body import EditAttributeBody
 from mmisp.api_schemas.attributes.edit_attributes_response import EditAttributeResponse
-from mmisp.api_schemas.attributes.get_all_attributes_response import (
-    GetAllAttributesResponse,
-)
+from mmisp.api_schemas.attributes.get_all_attributes_response import GetAllAttributesResponse
 from mmisp.api_schemas.attributes.get_attribute_response import GetAttributeResponse
-from mmisp.api_schemas.attributes.get_attribute_statistics_response import (
-    GetAttributeStatisticsTypesResponse,
-)
-from mmisp.api_schemas.attributes.get_describe_types_response import (
-    GetDescribeTypesResponse,
-)
-from mmisp.api_schemas.attributes.restore_attribute_reponse import (
-    RestoreAttributeResponse,
-)
+from mmisp.api_schemas.attributes.get_attribute_statistics_response import GetAttributeStatisticsTypesResponse
+from mmisp.api_schemas.attributes.get_describe_types_response import GetDescribeTypesResponse
+from mmisp.api_schemas.attributes.restore_attribute_reponse import RestoreAttributeResponse
 from mmisp.api_schemas.attributes.search_attributes_body import SearchAttributesBody
-from mmisp.api_schemas.attributes.search_attributes_response import (
-    SearchAttributesResponse,
-)
+from mmisp.api_schemas.attributes.search_attributes_response import SearchAttributesResponse
 from mmisp.db.database import get_db
 
 router = APIRouter(prefix="/attributes", tags=["attributes"])
@@ -42,13 +24,9 @@ router = APIRouter(prefix="/attributes", tags=["attributes"])
 # -- Delete
 
 
-@router.delete(
-    "/delete/{attribute_id}", summary="Delete an Attribute", deprecated=True
-)  # deprecated
+@router.delete("/delete/{attribute_id}", summary="Delete an Attribute", deprecated=True)  # deprecated
 @router.delete("/{attributeID}", summary="Delete an Attribute")  # new
-async def attributes_delete(
-    attribute_id: str, db: Session = Depends(get_db)
-) -> DeleteAttributeResponse:
+async def attributes_delete(attribute_id: str, db: Session = Depends(get_db)) -> DeleteAttributeResponse:
     return DeleteAttributeResponse(message="Attribute deleted.")
 
 
@@ -65,14 +43,9 @@ async def attributes_get(db: Session = Depends(get_db)) -> GetAllAttributesRespo
     #     raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get(
-    "/view/{attribute_id}", summary="Get an Attribute by its ID", deprecated=True
-)  # deprecated
+@router.get("/view/{attribute_id}", summary="Get an Attribute by its ID", deprecated=True)  # deprecated
 @router.get("/{attribute_id}", summary="Get an Attribute by its ID")  # new
-async def attributes_getById(
-    attribute_id: str,
-    db: Session = Depends(get_db),
-) -> GetAttributeResponse:
+async def attributes_getById(attribute_id: str, db: Session = Depends(get_db)) -> GetAttributeResponse:
     return GetAttributeResponse(Tag=[])
     # attribute = (
     #     db.query(AttributeGetById).filter(AttributeGetById.id == attribute_id).first()
@@ -83,8 +56,7 @@ async def attributes_getById(
 
 
 @router.get(
-    "/attributeStatistics/{context}/{percentage}",
-    summary="Get the count/percentage of attributes per category/type",
+    "/attributeStatistics/{context}/{percentage}", summary="Get the count/percentage of attributes per category/type"
 )
 async def attributes_statistics(
     context: str, percentage: int, db: Session = Depends(get_db)
@@ -93,9 +65,7 @@ async def attributes_statistics(
 
 
 @router.get("/describeTypes", summary="Get all available attribute types")
-async def attributes_describeTypes(
-    db: Session = Depends(get_db),
-) -> GetDescribeTypesResponse:
+async def attributes_describeTypes(db: Session = Depends(get_db)) -> GetDescribeTypesResponse:
     return GetDescribeTypesResponse()
 
 
@@ -103,22 +73,13 @@ async def attributes_describeTypes(
 
 
 @router.post("/restSearch", summary="Get a filtered and paginated list of attributes")
-async def attributes_reastSearch(
-    body: SearchAttributesBody,
-    db: Session = Depends(get_db),
-) -> SearchAttributesResponse:
+async def attributes_reastSearch(body: SearchAttributesBody, db: Session = Depends(get_db)) -> SearchAttributesResponse:
     return SearchAttributesResponse(id="")
 
 
-@router.post(
-    "/add/{event_id}", summary="Add an attribute", deprecated=True
-)  # deprecated
+@router.post("/add/{event_id}", summary="Add an attribute", deprecated=True)  # deprecated
 @router.post("/{event_id}", summary="Add an attribute")  # new
-async def attributes_post(
-    event_id: str,
-    body: AddAttributeBody,
-    db: Session = Depends(get_db),
-) -> AddAttributeResponse:
+async def attributes_post(event_id: str, body: AddAttributeBody, db: Session = Depends(get_db)) -> AddAttributeResponse:
     return AddAttributeResponse(id="")
     # new_attribute = Attribute(**attribute_data.model_dump())
     # db.add(new_attribute)
@@ -136,56 +97,40 @@ async def attributes_deleteSelected(
         success=True,
         name="1 attribute deleted",
         message="1 attribute deleted",
-        url="/attributes/deleteSelected/{\event_id}",
-        id="{\event_id}",
+        url=r"/attributes/deleteSelected/{\event_id}",
+        id=r"{\event_id}",
     )
 
 
 @router.post("/restore/{attribute_id}", summary="Restore an attribute")
-async def attributes_restore(
-    attribute_id: str, db: Session = Depends(get_db)
-) -> RestoreAttributeResponse:
+async def attributes_restore(attribute_id: str, db: Session = Depends(get_db)) -> RestoreAttributeResponse:
     return RestoreAttributeResponse(id="")
 
 
-@router.post(
-    "/addTag/{attribute_id}/{tag_id}/local:{local}", summary="Add a tag to an attribute"
-)
+@router.post("/addTag/{attribute_id}/{tag_id}/local:{local}", summary="Add a tag to an attribute")
 async def attributes_addTag(
     attribute_id: str, tag_id: str, local: int, db: Session = Depends(get_db)
 ) -> AddRemoveTagAttributeResponse:
     return AddRemoveTagAttributeResponse(
-        saved=True,
-        success="Tag added",
-        check_publish=True,
-        errors="Tag could not be added.",
+        saved=True, success="Tag added", check_publish=True, errors="Tag could not be added."
     )
 
 
-@router.post(
-    "/removeTag/{attribute_id}/{tag_id}", summary="Remove a tag from an attribute"
-)
+@router.post("/removeTag/{attribute_id}/{tag_id}", summary="Remove a tag from an attribute")
 async def attributes_removeTag(
     attribute_id: str, tag_id: str, db: Session = Depends(get_db)
 ) -> AddRemoveTagAttributeResponse:
     return AddRemoveTagAttributeResponse(
-        saved=True,
-        success="Tag added",
-        check_publish=True,
-        errors="Tag could not be added.",
+        saved=True, success="Tag added", check_publish=True, errors="Tag could not be added."
     )
 
 
 # -- Put
 
 
-@router.put(
-    "/edit/{attribute_id}", summary="Edit an attribute", deprecated=True
-)  # deprecated
+@router.put("/edit/{attribute_id}", summary="Edit an attribute", deprecated=True)  # deprecated
 @router.put("/{attribute_id}", summary="Edit an attribute")  # new
 async def attributes_put(
-    attribute_id: str,
-    body: EditAttributeBody,
-    db: Session = Depends(get_db),
+    attribute_id: str, body: EditAttributeBody, db: Session = Depends(get_db)
 ) -> EditAttributeResponse:
     return EditAttributeResponse(id="")

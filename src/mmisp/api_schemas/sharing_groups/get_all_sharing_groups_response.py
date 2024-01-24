@@ -38,9 +38,7 @@ class GetAllSharingGroupsResponseResponseItem(BaseModel):
     SharingGroup: GetAllSharingGroupsResponseResponseItemSharingGroup
     Organisation: GetAllSharingGroupsResponseOrganisationInfo
     SharingGroupOrg: list[GetAllSharingGroupsResponseResponseItemSharingGroupOrgItem]
-    SharingGroupServer: list[
-        GetAllSharingGroupsResponseResponseItemSharingGroupServerItem
-    ]
+    SharingGroupServer: list[GetAllSharingGroupsResponseResponseItemSharingGroupServerItem]
     editable: bool
     deletable: bool
 

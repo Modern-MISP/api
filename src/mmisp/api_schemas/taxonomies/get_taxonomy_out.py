@@ -19,4 +19,3 @@ class TaxonomyViewSchema(BaseModel):
 
     class Config:
         orm_mode = True
-

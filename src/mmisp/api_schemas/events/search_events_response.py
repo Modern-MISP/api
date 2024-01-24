@@ -1,10 +1,6 @@
 from pydantic import BaseModel
 
-from .add_edit_get_event_response import (
-    AddEditGetEventEventReport,
-    AddEditGetEventOrg,
-    AddEditGetEventShadowAttribute,
-)
+from .add_edit_get_event_response import AddEditGetEventEventReport, AddEditGetEventOrg, AddEditGetEventShadowAttribute
 
 
 class SearchEventsAttributes(BaseModel):

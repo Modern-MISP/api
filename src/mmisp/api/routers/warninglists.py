@@ -1,40 +1,20 @@
 from fastapi import APIRouter
 
-from mmisp.api_schemas.warninglists.check_value_warninglists_body import (
-    CheckValueWarninglistsBody,
-)
-from mmisp.api_schemas.warninglists.check_value_warninglists_response import (
-    CheckValueWarninglistsResponse,
-)
+from mmisp.api_schemas.warninglists.check_value_warninglists_body import CheckValueWarninglistsBody
+from mmisp.api_schemas.warninglists.check_value_warninglists_response import CheckValueWarninglistsResponse
 from mmisp.api_schemas.warninglists.create_warninglist_body import CreateWarninglistBody
-from mmisp.api_schemas.warninglists.delete_warninglist_response import (
-    DeleteWarninglistResponse,
-)
-from mmisp.api_schemas.warninglists.get_selected_all_warninglists_response import (
-    GetSelectedAllWarninglistsResponse,
-)
-from mmisp.api_schemas.warninglists.get_selected_warninglists_body import (
-    GetSelectedWarninglistsBody,
-)
-from mmisp.api_schemas.warninglists.toggle_enable_warninglists_body import (
-    ToggleEnableWarninglistsBody,
-)
-from mmisp.api_schemas.warninglists.toggle_enable_warninglists_response import (
-    ToggleEnableWarninglistsResponse,
-)
-from mmisp.api_schemas.warninglists.update_all_warninglists_response import (
-    UpdateAllWarninglistsResponse,
-)
+from mmisp.api_schemas.warninglists.delete_warninglist_response import DeleteWarninglistResponse
+from mmisp.api_schemas.warninglists.get_selected_all_warninglists_response import GetSelectedAllWarninglistsResponse
+from mmisp.api_schemas.warninglists.get_selected_warninglists_body import GetSelectedWarninglistsBody
+from mmisp.api_schemas.warninglists.toggle_enable_warninglists_body import ToggleEnableWarninglistsBody
+from mmisp.api_schemas.warninglists.toggle_enable_warninglists_response import ToggleEnableWarninglistsResponse
+from mmisp.api_schemas.warninglists.update_all_warninglists_response import UpdateAllWarninglistsResponse
 from mmisp.api_schemas.warninglists.warninglist import Warninglist
 
 router = APIRouter(tags=["warninglists"])
 
 
-@router.get(
-    "/warninglists/",
-    summary="Get all warninglists",
-    description="Retrieve a list of all warninglists.",
-)
+@router.get("/warninglists/", summary="Get all warninglists", description="Retrieve a list of all warninglists.")
 async def get_all_warninglists() -> GetSelectedAllWarninglistsResponse:
     return None
 
@@ -45,9 +25,7 @@ async def get_all_warninglists() -> GetSelectedAllWarninglistsResponse:
     summary="Get selected warninglists (Deprecated)",
     description="Retrieve a list of warninglists, which match given search terms using the old route.",
 )
-async def search_warninglists(
-    body: GetSelectedWarninglistsBody,
-) -> GetSelectedAllWarninglistsResponse:
+async def search_warninglists(body: GetSelectedWarninglistsBody) -> GetSelectedAllWarninglistsResponse:
     return None
 
 
@@ -65,9 +43,7 @@ async def get_warninglists_by_param() -> GetSelectedAllWarninglistsResponse:
     summary="Disable/Enable warninglist",
     description="Disable/Enable a specific warninglist by its ID or name.",
 )
-async def post_toggleEnable(
-    body: ToggleEnableWarninglistsBody,
-) -> ToggleEnableWarninglistsResponse:
+async def post_toggleEnable(body: ToggleEnableWarninglistsBody) -> ToggleEnableWarninglistsResponse:
     return ToggleEnableWarninglistsBody()
 
 
@@ -91,9 +67,7 @@ async def view_warninglist(id: int) -> Warninglist:
     summary="Get a list of ID and name of warninglists",
     description="Retrieve a list of ID and name of warninglists, which match has the given search term as Entry.",
 )
-async def get_warninglists_by_value(
-    body: CheckValueWarninglistsBody,
-) -> CheckValueWarninglistsResponse:
+async def get_warninglists_by_value(body: CheckValueWarninglistsBody) -> CheckValueWarninglistsResponse:
     return CheckValueWarninglistsResponse()
 
 
@@ -103,28 +77,18 @@ async def get_warninglists_by_value(
     summary="Update warninglists (Deprecated)",
     description="Deprecated. Update all warninglists.",
 )
-@router.put(
-    "/warninglists",
-    summary="Update warninglists",
-    description="Update all warninglists.",
-)
+@router.put("/warninglists", summary="Update warninglists", description="Update all warninglists.")
 async def update_all_warninglists() -> UpdateAllWarninglistsResponse:
     return UpdateAllWarninglistsResponse()
 
 
 @router.post(
-    "warninglists/new",
-    summary="Add a new warninglist",
-    description="Add a new warninglist with given details.",
+    "warninglists/new", summary="Add a new warninglist", description="Add a new warninglist with given details."
 )
 async def create_new_warninglist(body: CreateWarninglistBody) -> Warninglist:
     return Warninglist()
 
 
-@router.delete(
-    "warninglists/{id}",
-    summary="Delete warninglist",
-    description="Delete a specific warninglist.",
-)
+@router.delete("warninglists/{id}", summary="Delete warninglist", description="Delete a specific warninglist.")
 async def delete_warninglist(id: int) -> DeleteWarninglistResponse:
     return DeleteWarninglistResponse()

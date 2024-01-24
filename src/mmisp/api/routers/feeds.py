@@ -4,9 +4,7 @@ from sqlalchemy.orm import Session
 # from ..models.feed import Feed
 from mmisp.api_schemas.feeds.cache_feed_response import FeedCacheResponse
 from mmisp.api_schemas.feeds.create_update_feed_body import FeedCreateAndUpdateBody
-from mmisp.api_schemas.feeds.enable_disable_feed_response import (
-    FeedEnableDisableResponse,
-)
+from mmisp.api_schemas.feeds.enable_disable_feed_response import FeedEnableDisableResponse
 from mmisp.api_schemas.feeds.fetch_feeds_response import FeedFetchResponse
 from mmisp.api_schemas.feeds.get_feed_response import FeedResponse
 from mmisp.api_schemas.feeds.toggle_feed_body import FeedToggleBody
@@ -34,11 +32,7 @@ async def get_feeds(db: Session = Depends(get_db)) -> list[FeedResponse]:
     summary="Get feed details (Deprecated)",
     description="Deprecated. Retrieve details of a specific feed by its ID using the old route.",
 )
-@router.get(
-    "/{feedId}",
-    summary="Get feed details",
-    description="Retrieve details of a specific feed by its ID.",
-)
+@router.get("/{feedId}", summary="Get feed details", description="Retrieve details of a specific feed by its ID.")
 async def get_feed_details(feed_id: str, db: Session = Depends(get_db)) -> FeedResponse:
     # Logic to get feed details goes here
 
@@ -56,12 +50,8 @@ async def get_feed_details(feed_id: str, db: Session = Depends(get_db)) -> FeedR
     summary="Add new feed (Deprecated)",
     description="Deprecated. Add a new feed with given details using the old route.",
 )
-@router.post(
-    "/", summary="Add new feed", description="Add a new feed with given details."
-)
-async def add_feed(
-    body: FeedCreateAndUpdateBody, db: Session = Depends(get_db)
-) -> FeedResponse:
+@router.post("/", summary="Add new feed", description="Add a new feed with given details.")
+async def add_feed(body: FeedCreateAndUpdateBody, db: Session = Depends(get_db)) -> FeedResponse:
     # Logic to add a new feed goes here
 
     # new_feed = Feed(**feed_data.dict())
@@ -79,12 +69,8 @@ async def add_feed(
     summary="Update feed (Deprecated)",
     description="Deprecated. Update an existing feed by its ID using the old route.",
 )
-@router.put(
-    "/{feedId}", summary="Update feed", description="Update an existing feed by its ID."
-)
-async def update_feed(
-    feed_id: str, body: FeedCreateAndUpdateBody, db: Session = Depends(get_db)
-) -> FeedResponse:
+@router.put("/{feedId}", summary="Update feed", description="Update an existing feed by its ID.")
+async def update_feed(feed_id: str, body: FeedCreateAndUpdateBody, db: Session = Depends(get_db)) -> FeedResponse:
     # Logic to update feed goes here
 
     # feed = db.query(Feed).filter(Feed.id == feed_id).first()
@@ -105,9 +91,7 @@ async def update_feed(
     summary="Enable feed (Deprecated)",
     description="Deprecated. Enable a specific feed by its ID using the old route.",
 )
-async def enable_feed(
-    feed_id: str, db: Session = Depends(get_db)
-) -> FeedEnableDisableResponse:
+async def enable_feed(feed_id: str, db: Session = Depends(get_db)) -> FeedEnableDisableResponse:
     # Logic to enable a feed goes here
 
     return FeedEnableDisableResponse(name="", message="", url="")
@@ -119,22 +103,16 @@ async def enable_feed(
     summary="Disable feed (Deprecated)",
     description="Deprecated. Disable a specific feed by its ID using the old route.",
 )
-async def disable_feed(
-    feed_id: str, db: Session = Depends(get_db)
-) -> FeedEnableDisableResponse:
+async def disable_feed(feed_id: str, db: Session = Depends(get_db)) -> FeedEnableDisableResponse:
     # Logic to disable a feed goes here
 
     return FeedEnableDisableResponse(name="", message="", url="")
 
 
 @router.patch(
-    "/{feedId}",
-    summary="Toggle feed status",
-    description="Toggle the status of a feed between enabled and disabled.",
+    "/{feedId}", summary="Toggle feed status", description="Toggle the status of a feed between enabled and disabled."
 )
-async def toggle_feed(
-    feed_id: str, body: FeedToggleBody, db: Session = Depends(get_db)
-) -> FeedEnableDisableResponse:
+async def toggle_feed(feed_id: str, body: FeedToggleBody, db: Session = Depends(get_db)) -> FeedEnableDisableResponse:
     # Logic to toggle feed status goes here
 
     # feed = db.query(Feed).filter(Feed.id == feed_id).first()
@@ -151,13 +129,9 @@ async def toggle_feed(
 
 
 @router.post(
-    "/cacheFeeds/{cacheFeedsScope}",
-    summary="Cache feeds",
-    description="Cache feeds based on a specific scope.",
+    "/cacheFeeds/{cacheFeedsScope}", summary="Cache feeds", description="Cache feeds based on a specific scope."
 )
-async def cache_feeds(
-    cache_feeds_scope: dict, db: Session = Depends(get_db)
-) -> FeedCacheResponse:
+async def cache_feeds(cache_feeds_scope: dict, db: Session = Depends(get_db)) -> FeedCacheResponse:
     # Logic to cache feeds goes here
 
     return FeedCacheResponse(name="", message="", url="", saved=False, success=False)
@@ -170,13 +144,9 @@ async def cache_feeds(
     description="Deprecated. Fetch data from a specific feed by its ID using the old route.",
 )
 @router.get(
-    "/fetchFromFeed/{feedId}",
-    summary="Fetch from feed",
-    description="Fetch data from a specific feed by its ID.",
+    "/fetchFromFeed/{feedId}", summary="Fetch from feed", description="Fetch data from a specific feed by its ID."
 )
-async def fetch_from_feed(
-    feed_id: str, db: Session = Depends(get_db)
-) -> FeedFetchResponse:
+async def fetch_from_feed(feed_id: str, db: Session = Depends(get_db)) -> FeedFetchResponse:
     # Logic to fetch from feed goes here
 
     return FeedFetchResponse(result="")
@@ -188,11 +158,7 @@ async def fetch_from_feed(
     summary="Fetch from all feeds (Deprecated)",
     description="Deprecated. Fetch data from all available feeds using the old route.",
 )
-@router.get(
-    "/fetchFromAllFeeds",
-    summary="Fetch from all feeds",
-    description="Fetch data from all available feeds.",
-)
+@router.get("/fetchFromAllFeeds", summary="Fetch from all feeds", description="Fetch data from all available feeds.")
 async def fetch_data_from_all_feeds(db: Session = Depends(get_db)) -> FeedFetchResponse:
     # Logic to fetch from all feeds goes here
 

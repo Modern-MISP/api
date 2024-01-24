@@ -276,9 +276,7 @@ class GetDescribeTypesCategoryTypeMappings(BaseModel):
         "mime-type",
         "anonymised",
     ]
-    PERSISTENCE_MECHANISM: Annotated[
-        list[str], Field(alias="Persistence mechanism")
-    ] = [
+    PERSISTENCE_MECHANISM: Annotated[list[str], Field(alias="Persistence mechanism")] = [
         "filename",
         "regkey",
         "regkey|value",
@@ -337,12 +335,7 @@ class GetDescribeTypesCategoryTypeMappings(BaseModel):
         "dkim-signature",
         "ssh-fingerprint",
     ]
-    PAYLOAD_TYPE: Annotated[list[str], Field(alias="Payload type")] = [
-        "comment",
-        "text",
-        "other",
-        "anonymised",
-    ]
+    PAYLOAD_TYPE: Annotated[list[str], Field(alias="Payload type")] = ["comment", "text", "other", "anonymised"]
     ATTRIBUTION: Annotated[list[str], Field(alias="Attribution")] = [
         "threat-actor",
         "campaign-name",
@@ -937,9 +930,7 @@ class GetDescribeTypesDescribeTypesAttributes(BaseModel):
         "Person",
         "Other",
     ]
-    CATEGORY_TYPE_MAPPINGS: Annotated[
-        GetDescribeTypesCategoryTypeMappings, Field(alias="category_type_mappings")
-    ]
+    CATEGORY_TYPE_MAPPINGS: Annotated[GetDescribeTypesCategoryTypeMappings, Field(alias="category_type_mappings")]
 
 
 class GetDescribeTypesResponse(BaseModel):

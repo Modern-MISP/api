@@ -19,9 +19,7 @@ async def get_user_settings() -> list[UserSettingGet]:  # Request Body into brac
 
 # Search all User Settings
 @router.post("/")
-async def search_user_settings(
-    user_setting_in: UserSettingSearchIn,
-) -> list[UserSettingGet]:
+async def search_user_settings(user_setting_in: UserSettingSearchIn) -> list[UserSettingGet]:
     return UserSettingSearch()
 
 
