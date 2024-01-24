@@ -44,13 +44,15 @@ class Permission(Enum):
 class Auth:
     def __init__(
         self,
-        userId: int | None = None,
-        orgId: int | None = None,
-        roleId: int | None = None,
+        user_id: int | None = None,
+        org_id: int | None = None,
+        role_id: int | None = None,
+        is_worker: bool | None = False,
     ):
-        self.userId = userId
-        self.orgId = orgId
-        self.roleId = roleId
+        self.user_id = user_id
+        self.org_id = org_id
+        self.role_id = role_id
+        self.is_worker = is_worker
 
 
 def authorize(strategy: AuthStrategy, permissions: list[Permission] = []):
@@ -64,7 +66,7 @@ def authorize(strategy: AuthStrategy, permissions: list[Permission] = []):
             strategy in [AuthStrategy.WORKER_KEY, AuthStrategy.ALL]
             and authorization == config.WORKER_KEY
         ):
-            return Auth()
+            return Auth(is_worker=True)
 
         user: User | None = None
 
