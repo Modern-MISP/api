@@ -17,3 +17,17 @@ You should now be able to access the api on `localhost:4000`.
 ## Setting up your IDE
 
 Be sure to use the newly created virtual env as your interpreter (`./venv/bin/python`). Also install the [Ruff](https://docs.astral.sh/ruff/integrations/) extension for your IDE and set `Ruff` as your default code formatter. It is recommended to activate formatting your code on every save.
+
+## Best practices
+
+### Endpoint ordering
+
+Try to order endpoints using CRUD so that the following order is achieved:
+
+- Creatte a {resource}
+- Read / Get a {resource}
+- Updating a {resource}
+- Deleting a {resource}
+- Get all {resource}s
+- More niche endpoints
+- Deprecated endpoints
