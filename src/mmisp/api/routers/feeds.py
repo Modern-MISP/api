@@ -13,35 +13,7 @@ from mmisp.db.database import get_db
 router = APIRouter(prefix="/feeds", tags=["feeds"])
 
 
-@router.get("/", summary="Get all feeds", description="Retrieve a list of all feeds.")
-async def get_feeds(db: Session = Depends(get_db)) -> list[FeedResponse]:
-    # Logic to fetch feeds goes here
-
-    # try:
-    #     feeds = db.query(Feed).all()
-    #     return feeds
-    # except Exception as e:
-    #     raise HTTPException(status_code=500, detail=str(e))
-
-    return []
-
-
-@router.get(
-    "/view/{feedId}",
-    deprecated=True,
-    summary="Get feed details (Deprecated)",
-    description="Deprecated. Retrieve details of a specific feed by its ID using the old route.",
-)
-@router.get("/{feedId}", summary="Get feed details", description="Retrieve details of a specific feed by its ID.")
-async def get_feed_details(feed_id: str, db: Session = Depends(get_db)) -> FeedResponse:
-    # Logic to get feed details goes here
-
-    # feed = db.query(Feed).filter(Feed.id == feed_id).first()
-    # if feed is None:
-    #     raise HTTPException(status_code=404, detail="Feed not found")
-    # return feed
-
-    return FeedResponse(feed=[])
+# Sorted according to CRUD
 
 
 @router.post(
@@ -59,28 +31,6 @@ async def add_feed(body: FeedCreateAndUpdateBody, db: Session = Depends(get_db))
     # db.commit()
     # db.refresh(new_feed)
     # return new_feed
-
-    return FeedResponse(feed=[])
-
-
-@router.put(
-    "/edit/{feedId}",
-    deprecated=True,
-    summary="Update feed (Deprecated)",
-    description="Deprecated. Update an existing feed by its ID using the old route.",
-)
-@router.put("/{feedId}", summary="Update feed", description="Update an existing feed by its ID.")
-async def update_feed(feed_id: str, body: FeedCreateAndUpdateBody, db: Session = Depends(get_db)) -> FeedResponse:
-    # Logic to update feed goes here
-
-    # feed = db.query(Feed).filter(Feed.id == feed_id).first()
-    # if feed is None:
-    #     raise HTTPException(status_code=404, detail="Feed not found")
-    # for key, value in feed_data.dict().items():
-    #     setattr(feed, key, value)
-    # db.commit()
-    # db.refresh(feed)
-    # return feed
 
     return FeedResponse(feed=[])
 
@@ -109,25 +59,6 @@ async def disable_feed(feed_id: str, db: Session = Depends(get_db)) -> FeedEnabl
     return FeedEnableDisableResponse(name="", message="", url="")
 
 
-@router.patch(
-    "/{feedId}", summary="Toggle feed status", description="Toggle the status of a feed between enabled and disabled."
-)
-async def toggle_feed(feed_id: str, body: FeedToggleBody, db: Session = Depends(get_db)) -> FeedEnableDisableResponse:
-    # Logic to toggle feed status goes here
-
-    # feed = db.query(Feed).filter(Feed.id == feed_id).first()
-    # if feed is None:
-    #     raise HTTPException(status_code=404, detail="Feed not found")
-    # setattr(feed, "enabled", enable)
-    # db.commit()
-    # return {
-    #     "message": f"Feed {'enabled' if enable else 'disabled'}",
-    #     "feed_id": feed_id,
-    # }
-
-    return FeedEnableDisableResponse(name="", message="", url="")
-
-
 @router.post(
     "/cacheFeeds/{cacheFeedsScope}", summary="Cache feeds", description="Cache feeds based on a specific scope."
 )
@@ -152,6 +83,65 @@ async def fetch_from_feed(feed_id: str, db: Session = Depends(get_db)) -> FeedFe
     return FeedFetchResponse(result="")
 
 
+@router.get(
+    "/view/{feedId}",
+    deprecated=True,
+    summary="Get feed details (Deprecated)",
+    description="Deprecated. Retrieve details of a specific feed by its ID using the old route.",
+)
+@router.get("/{feedId}", summary="Get feed details", description="Retrieve details of a specific feed by its ID.")
+async def get_feed_details(feed_id: str, db: Session = Depends(get_db)) -> FeedResponse:
+    # Logic to get feed details goes here
+
+    # feed = db.query(Feed).filter(Feed.id == feed_id).first()
+    # if feed is None:
+    #     raise HTTPException(status_code=404, detail="Feed not found")
+    # return feed
+
+    return FeedResponse(feed=[])
+
+
+@router.put(
+    "/edit/{feedId}",
+    deprecated=True,
+    summary="Update feed (Deprecated)",
+    description="Deprecated. Update an existing feed by its ID using the old route.",
+)
+@router.put("/{feedId}", summary="Update feed", description="Update an existing feed by its ID.")
+async def update_feed(feed_id: str, body: FeedCreateAndUpdateBody, db: Session = Depends(get_db)) -> FeedResponse:
+    # Logic to update feed goes here
+
+    # feed = db.query(Feed).filter(Feed.id == feed_id).first()
+    # if feed is None:
+    #     raise HTTPException(status_code=404, detail="Feed not found")
+    # for key, value in feed_data.dict().items():
+    #     setattr(feed, key, value)
+    # db.commit()
+    # db.refresh(feed)
+    # return feed
+
+    return FeedResponse(feed=[])
+
+
+@router.patch(
+    "/{feedId}", summary="Toggle feed status", description="Toggle the status of a feed between enabled and disabled."
+)
+async def toggle_feed(feed_id: str, body: FeedToggleBody, db: Session = Depends(get_db)) -> FeedEnableDisableResponse:
+    # Logic to toggle feed status goes here
+
+    # feed = db.query(Feed).filter(Feed.id == feed_id).first()
+    # if feed is None:
+    #     raise HTTPException(status_code=404, detail="Feed not found")
+    # setattr(feed, "enabled", enable)
+    # db.commit()
+    # return {
+    #     "message": f"Feed {'enabled' if enable else 'disabled'}",
+    #     "feed_id": feed_id,
+    # }
+
+    return FeedEnableDisableResponse(name="", message="", url="")
+
+
 @router.post(
     "/fetchFromAllFeeds",
     deprecated=True,
@@ -163,3 +153,16 @@ async def fetch_data_from_all_feeds(db: Session = Depends(get_db)) -> FeedFetchR
     # Logic to fetch from all feeds goes here
 
     return FeedFetchResponse(result="")
+
+
+@router.get("/", summary="Get all feeds", description="Retrieve a list of all feeds.")
+async def get_feeds(db: Session = Depends(get_db)) -> list[FeedResponse]:
+    # Logic to fetch feeds goes here
+
+    # try:
+    #     feeds = db.query(Feed).all()
+    #     return feeds
+    # except Exception as e:
+    #     raise HTTPException(status_code=500, detail=str(e))
+
+    return []
