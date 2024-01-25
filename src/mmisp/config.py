@@ -19,13 +19,13 @@ class ConfigType:
         self.DASHBOARD_URL = DASHBOARD_URL
 
 
-load_dotenv(".env")
+load_dotenv(getenv("ENV_FILE", ".env"))
 
 
 config: ConfigType = ConfigType(
-    DATABASE_URL=getenv("DATABASE_URL") or "",
-    HASH_SECRET=getenv("HASH_SECRET") or "",
-    WORKER_KEY=getenv("WORKER_KEY") or "",
-    WORKER_URL=getenv("WORKER_URL") or "",
+    DATABASE_URL=getenv("DATABASE_URL", ""),
+    HASH_SECRET=getenv("HASH_SECRET", ""),
+    WORKER_KEY=getenv("WORKER_KEY", ""),
+    WORKER_URL=getenv("WORKER_URL", ""),
     DASHBOARD_URL=getenv("DASHBOARD_URL"),
 )
