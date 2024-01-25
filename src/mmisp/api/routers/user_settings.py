@@ -8,43 +8,43 @@ from mmisp.api_schemas.user_setting.set_user_setting_in import UserSettingSetIn
 from mmisp.api_schemas.user_setting.set_user_setting_out import UserSettingSet
 from mmisp.api_schemas.user_setting.view_user_setting_out import UserSettingView
 
-router = APIRouter(prefix="/user_settings", tags=["user_settings"])
+router = APIRouter(tags=["user_settings"])
 
 
 # Returns all User Settings
-@router.get("/")
+@router.get("/user_settings")
 async def get_user_settings() -> list[UserSettingGet]:  # Request Body into brackets
     return UserSettingGet()  # return body in after return
 
 
 # Search all User Settings
-@router.post("/")
+@router.post("/user_settings")
 async def search_user_settings(user_setting_in: UserSettingSearchIn) -> list[UserSettingGet]:
     return UserSettingSearch()
 
 
 # Get User Setting by Id
-@router.get("/view/{UserSettingsId}", deprecated=True)  # Deprecated
-@router.get("/{UserSettingsId}")
+@router.get("/user_settings/view/{UserSettingsId}", deprecated=True)  # Deprecated
+@router.get("/user_settings/{UserSettingsId}")
 async def view_user_settings() -> UserSettingView:
     return UserSettingView()
 
 
 # Sets User Setting
-@router.post("/setSetting/{userId}/{userSettingName}")
+@router.post("/user_settings/setSetting/{userId}/{userSettingName}")
 async def set_user_settings(user_setting_in: UserSettingSetIn) -> UserSettingSet:
     return UserSettingSet()
 
 
 # Get User Setting by ID
-@router.get("/getSetting/{userId}/{userSettingName}")  # should be without getSetting
-@router.get("/{userid}/{userSettingName}")
+@router.get("/user_settings/getSetting/{userId}/{userSettingName}")  # should be without getSetting
+@router.get("/user_settings/{userid}/{userSettingName}")
 async def get_auth_key_by_id() -> UserSettingGet:
     return UserSettingGet()
 
 
 # Delete AuthKey by ID
-@router.delete("/{userSettingsId")
-@router.delete("/delete/{userSettingsId", deprecated=True)  # Deprecated
+@router.delete("/user_settings/{userSettingsId}")
+@router.delete("/user_settings/delete/{userSettingsId}", deprecated=True)  # Deprecated
 async def delete_user_settings() -> UserSettingDelete:
     return UserSettingDelete()

@@ -14,13 +14,13 @@ from mmisp.api_schemas.warninglists.warninglist import Warninglist
 router = APIRouter(tags=["warninglists"])
 
 
-@router.get("/warninglists/", summary="Get all warninglists", description="Retrieve a list of all warninglists.")
+@router.get("/warninglists", summary="Get all warninglists", description="Retrieve a list of all warninglists.")
 async def get_all_warninglists() -> GetSelectedAllWarninglistsResponse:
     return None
 
 
 @router.post(
-    "/warninglists/",
+    "/warninglists",
     deprecated=True,
     summary="Get selected warninglists (Deprecated)",
     description="Retrieve a list of warninglists, which match given search terms using the old route.",
@@ -30,11 +30,11 @@ async def search_warninglists(body: GetSelectedWarninglistsBody) -> GetSelectedA
 
 
 @router.get(
-    "/warninglists?value=String&enabled=boolean",
+    "/warninglists",
     summary="Get selected warninglists",
     description="Retrieve a list of warninglists, which match given search terms using the old route.",
 )
-async def get_warninglists_by_param() -> GetSelectedAllWarninglistsResponse:
+async def get_warninglists_by_param(value: str, enabled: bool) -> GetSelectedAllWarninglistsResponse:
     return None
 
 

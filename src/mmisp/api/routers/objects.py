@@ -10,13 +10,15 @@ from mmisp.api_schemas.objects.search_objects_body import ObjectSearchBody
 from mmisp.api_schemas.objects.search_objects_response import ObjectSearchResponse, ObjectWithAttributesSearchResponse
 from mmisp.db.database import get_db
 
-router = APIRouter(prefix="/objects", tags=["objects"])
+router = APIRouter(tags=["objects"])
 
 
 # Sorted according to CRUD
 
 
-@router.post("/restsearch", summary="Search objects", description="Search for objects based on various filters.")
+@router.post(
+    "/objects/restsearch", summary="Search objects", description="Search for objects based on various filters."
+)
 async def restsearch(body: ObjectSearchBody, db: Session = Depends(get_db)) -> ObjectSearchResponse:
     # Logic to search objects goes here
 
@@ -24,13 +26,13 @@ async def restsearch(body: ObjectSearchBody, db: Session = Depends(get_db)) -> O
 
 
 @router.post(
-    "/add/{eventId}/{objectTemplateId}",
+    "/objects/add/{eventId}/{objectTemplateId}",
     deprecated=True,
     summary="Add object to event (Deprecated)",
     description="Deprecated. Add an object to an event using the old route.",
 )
 @router.post(
-    "/{eventId}/{objectTemplateId}",
+    "/objects/{eventId}/{objectTemplateId}",
     summary="Add object to event",
     description="Add a new object to a specific event using a template.",
 )
@@ -62,13 +64,13 @@ async def add_object(
 
 
 @router.get(
-    "/view/{objectId}",
+    "/objects/view/{objectId}",
     deprecated=True,
     summary="View object details (Deprecated)",
     description="Deprecated. View details of a specific object using the old route.",
 )
 @router.get(
-    "/{objectId}",
+    "/objects/{objectId}",
     summary="View object details",
     description="View details of a specific object including its attributes and related event.",
 )
@@ -99,7 +101,7 @@ async def get_object_details(object_id: str, db: Session = Depends(get_db)) -> O
 
 
 @router.delete(
-    "/delete/{objectId}/{hardDelete}",
+    "/objects/delete/{objectId}/{hardDelete}",
     deprecated=True,
     summary="Delete object (Deprecated)",
     description="""
@@ -107,7 +109,7 @@ async def get_object_details(object_id: str, db: Session = Depends(get_db)) -> O
     The hardDelete parameter determines if it's a hard or soft delete.""",
 )
 @router.delete(
-    "/{objectId}/{hardDelete}",
+    "/objects/{objectId}/{hardDelete}",
     summary="Delete object",
     description="Delete a specific object. The hardDelete parameter determines if it's a hard or soft delete.",
 )

@@ -6,47 +6,47 @@ from mmisp.api_schemas.taxonomies.get_taxonomy_by_id_out import TaxonomyTagSchem
 from mmisp.api_schemas.taxonomies.get_taxonomy_out import TaxonomyViewSchema
 from mmisp.api_schemas.taxonomies.update_taxonomy_out import TaxonomyUpdateSchema
 
-router = APIRouter(prefix="/taxonomies")
+router = APIRouter(tags=["taxonomies"])
 
 
 # Returns all taxonomies
-@router.get("/")
+@router.get("/taxonomies")
 async def get_taxonomies() -> list[TaxonomyViewSchema]:
     return TaxonomyViewSchema()
 
 
 # Get Taxonomy by ID
-@router.get("/view/{taxonomy_id_parameter}", deprecated=True)  # deprecated
-@router.get("/{taxonomy_id_parameter}")
+@router.get("/taxonomies/view/{taxonomy_id_parameter}", deprecated=True)  # deprecated
+@router.get("/taxonomies/{taxonomy_id_parameter}")
 async def get_taxonomy_by_id_depr() -> TaxonomyTagSchema:
     return TaxonomyTagSchema()
 
 
 # Enable Taxonomy
-@router.post("/enable/{taxonomiesId}")
+@router.post("/taxonomies/enable/{taxonomiesId}")
 async def enable_taxonomies() -> TaxonomyAbleSchema:
     return TaxonomyAbleSchema()
 
 
 # Disable Taxonomies
-@router.post("/disable/{taxonomiesId}")
+@router.post("/taxonomies/disable/{taxonomiesId}")
 async def disable_taxonomies() -> TaxonomyAbleSchema:
     return TaxonomyAbleSchema()
 
 
 # Update Taxonomies.
-@router.post("/taxonomies/update", deprecated=True)  # Deprecated Sollte wahrscheinlich nicht deprecated sein
-@router.put("/taxonomies")
+@router.post("/taxonomies/taxonomies/update", deprecated=True)  # Deprecated Sollte wahrscheinlich nicht deprecated sein
+@router.put("/taxonomies/taxonomies")
 async def update_taxonomies_depr() -> TaxonomyUpdateSchema:
     return TaxonomyUpdateSchema()
 
 
 # Get a Taxonomy extended with Tags used in events and attributes
-@router.get("/taxonomy_tags/{taxonomyId}")
+@router.get("/taxonomies/taxonomy_tags/{taxonomyId}")
 async def get_taxonomy_extended() -> TaxonomyTagSchema:
     return TaxonomyTagSchema()
 
 
-@router.get("export/{taxonomyId}")
+@router.get("/taxonomies/export/{taxonomyId}")
 async def export_taxonomy():
     return TaxonomyExportSchema()

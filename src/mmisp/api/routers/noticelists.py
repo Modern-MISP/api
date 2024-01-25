@@ -8,19 +8,19 @@ from mmisp.api_schemas.noticelists.update_noticelist import UpdateNoticelist
 router = APIRouter(tags=["noticelists"])
 
 
-@router.get("noticelists/", summary="Get all noticelists", description="Retrieve a list of all noticelists.")
+@router.get("/noticelists", summary="Get all noticelists", description="Retrieve a list of all noticelists.")
 async def get_all_noticelist() -> GetAllNoticelist:
     return None
 
 
 @router.get(
-    "noticelists/view/{noticelistId}",
+    "/noticelists/view/{noticelistId}",
     deprecated=True,
     summary="Get noticelist details (Deprecated)",
     description="Deprecated. Retrieve details of a specific noticelist by its ID using the old route.",
 )
 @router.get(
-    "/{noticelistId}",
+    "/noticelists/{noticelistId}",
     summary="Get noticelist details",
     description="Retrieve details of a specific noticelist by its ID.",
 )
@@ -29,7 +29,7 @@ async def get_noticelist(id: int) -> Noticelist:
 
 
 @router.post(
-    "noticelists/toggleEnable/{noticelistId}",
+    "/noticelists/toggleEnable/{noticelistId}",
     summary="Disable/Enable noticelist",
     description="Disable/Enable a specific noticelist by its ID.",
 )
@@ -38,11 +38,11 @@ async def post_toggleEnable(id: int) -> ToggleEnableNoticelist:
 
 
 @router.post(
-    "noticelists/update",
+    "/noticelists/update",
     deprecated=True,
     summary="Update noticelists (Deprecated)",
     description="Deprecated. Update all noticelists.",
 )
-@router.put("noticelists/", summary="Update noticelists", description="Update all noticelists.")
+@router.put("/noticelists", summary="Update noticelists", description="Update all noticelists.")
 async def update_noticelists() -> UpdateNoticelist:
     return UpdateNoticelist()

@@ -12,14 +12,14 @@ from mmisp.api_schemas.galaxies.import_galaxies_body import ImportGalaxyBody
 from mmisp.api_schemas.galaxies.search_galaxies_body import SearchGalaxiesBody
 from mmisp.db.database import get_db
 
-router = APIRouter(prefix="/galaxies", tags=["galaxies"])
+router = APIRouter(tags=["galaxies"])
 
 
 # -- Delete
 
 
-@router.delete("/delete/{galaxy_id}", deprecated=True)  # deprecated
-@router.delete("/{galaxy_id}")  # new
+@router.delete("/galaxies/delete/{galaxy_id}", deprecated=True)  # deprecated
+@router.delete("/galaxies/{galaxy_id}")  # new
 async def galaxies_delete(galagxy_id: str, db: Session = Depends(get_db)) -> DeleteForceUpdateImportGalaxyResponse:
     return DeleteForceUpdateImportGalaxyResponse()
 
@@ -27,12 +27,12 @@ async def galaxies_delete(galagxy_id: str, db: Session = Depends(get_db)) -> Del
 # -- Get
 
 
-@router.get("/")
+@router.get("/galaxies")
 async def galaxies_get(db: Session = Depends(get_db)) -> list[GetAllSearchGalaxiesResponse]:
     return list[GetAllSearchGalaxiesResponse()]
 
 
-@router.get("/view/{galaxy_id}", deprecated=True)  # deprecated
+@router.get("/galaxies/view/{galaxy_id}", deprecated=True)  # deprecated
 @router.get("/{galaxy_id}")  # new
 async def galaxies_getById(db: Session = Depends(get_db)) -> GetGalaxyResponse:
     return GetGalaxyResponse()
@@ -41,31 +41,31 @@ async def galaxies_getById(db: Session = Depends(get_db)) -> GetGalaxyResponse:
 # -- Post
 
 
-@router.post("/")
+@router.post("/galaxies")
 async def galaxies_post(body: SearchGalaxiesBody, db: Session = Depends(get_db)) -> list[GetAllSearchGalaxiesResponse]:
     return list[GetAllSearchGalaxiesResponse()]
 
 
-@router.post("/update")
+@router.post("/galaxies/update")
 async def galaxies_update(db: Session = Depends(get_db)) -> DeleteForceUpdateImportGalaxyResponse:
     return DeleteForceUpdateImportGalaxyResponse
 
 
-@router.post("/import")
+@router.post("/galaxies/import")
 async def galaxies_import(
     body: list[ImportGalaxyBody], db: Session = Depends(get_db)
 ) -> DeleteForceUpdateImportGalaxyResponse:
     return DeleteForceUpdateImportGalaxyResponse()
 
 
-@router.post("/export/{galaxy_id}")
+@router.post("/galaxies/export/{galaxy_id}")
 async def galaxies_export(
     galagxy_id: str, body: ExportGalaxyBody, db: Session = Depends(get_db)
 ) -> ExportGalaxyResponse:
     return ExportGalaxyResponse()
 
 
-@router.post("/attachCluster/{attachTarget_id}/{attachTargetType}/local:{local}")
+@router.post("/galaxies/attachCluster/{attachTarget_id}/{attachTargetType}/local:{local}")
 async def galaxies_attachCluster(
     attachTarget_id: str,
     attachTargetType: str,
