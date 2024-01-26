@@ -1,8 +1,8 @@
 from sqlalchemy import BigInteger, Column, Float, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
-from .organisation import Organisation
 from ..database import Base
+from .organisation import Organisation
 
 
 class Sighting(Base):

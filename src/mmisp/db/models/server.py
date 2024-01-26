@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, VARBINARY
+from sqlalchemy import VARBINARY, Column, Integer, String
 from sqlalchemy.dialects.mysql import TINYINT
 
 from ..database import Base
