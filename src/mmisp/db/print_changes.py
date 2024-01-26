@@ -13,11 +13,13 @@ USAGE:
 
 
 import os
-
-from alembic.migration import MigrationContext
-from alembic.autogenerate import compare_metadata
-from sqlalchemy import create_engine, MetaData
 import pprint
+
+from alembic.autogenerate import compare_metadata
+from alembic.migration import MigrationContext
+from sqlalchemy import MetaData, create_engine
+
+from .database import Base
 
 # import all models, so Base is populated
 # the not imported modules have thrown errors
@@ -40,8 +42,6 @@ from .models import (  # noqa: F401
     user_settings,
     warninglist,
 )
-from .database import Base
-
 
 myuser = os.getenv("MYSQL_USER")
 password = os.getenv("MYSQL_PASSWORD")

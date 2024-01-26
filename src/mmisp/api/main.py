@@ -1,7 +1,26 @@
 from fastapi import FastAPI, status
 from fastapi.responses import RedirectResponse
 
-from mmisp.db.database import engine, Base
+from mmisp.db.database import Base, engine
+
+# if you add a new model module, add it here too
+from mmisp.db.models import (  # noqa: F401
+    attribute,
+    event,
+    feed,
+    galaxy,
+    noticelist,
+    object,
+    organisation,
+    role,
+    server,
+    sharing_group,
+    sighting,
+    tag,
+    taxonomy,
+    user,
+    warninglist,
+)
 
 from .routers import (
     attributes,
@@ -21,26 +40,12 @@ from .routers import (
     warninglists,
 )
 
-# if you add a new model module, add it here too
-from mmisp.db.models import (  # noqa: F401
-    attribute,
-    auth_key as auth_key_model,
-    event,
-    feed,
-    galaxy,
-    noticelist,
-    object,
-    organisation,
-    role,
-    server,
-    sharing_group,
-    sighting,
-    tag,
-    taxonomy,
-    user_settings as user_settings_model,
-    user,
-    warninglist,
-)
+# from mmisp.db.models import (
+#     auth_key as auth_key_model,
+# )
+# from mmisp.db.models import (
+#     user_settings as user_settings_model,
+# )
 
 Base.metadata.create_all(bind=engine)
 

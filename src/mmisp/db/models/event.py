@@ -1,7 +1,8 @@
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
+
+from ..database import Base
 from .organisation import Organisation
 from .sharing_group import SharingGroup
-from ..database import Base
 
 
 class Event(Base):
