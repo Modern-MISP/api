@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from mmisp.api_schemas.tag_schema import TagSchema
+from mmisp.api_schemas.tags.get_tag_response import TagGetResponse
 
 
 class TaxonomyEntrySchema:
@@ -8,7 +8,7 @@ class TaxonomyEntrySchema:
     expanded: str
     exclusive_predicate: bool
     description: str
-    existing_tag: bool | TagSchema  # Kann auch Tag Objekt sein, nicht zwingend bool laut Pflichtenheft. In Implementierung schauen
+    existing_tag: bool | TagGetResponse  # TODO: Kann auch Tag Objekt sein, nicht zwingend bool laut Pflichtenheft?
 
 
 class TaxonomyTagSchema(BaseModel):
