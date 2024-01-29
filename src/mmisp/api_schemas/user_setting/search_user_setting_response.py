@@ -1,9 +1,9 @@
 from pydantic import BaseModel
 
-from .get_get_id_user_setting_out import Value
+from .get_get_id_user_setting_response import Value
 
 
-class UserSettingSet(BaseModel):
+class UserSettingSearch(BaseModel):
     id: str
     setting: str
     value: Value

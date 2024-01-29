@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from .get_get_id_user_setting_out import Position
+from .get_get_id_user_setting_response import Position
 
 
 class UserSettingSetIn(BaseModel):
