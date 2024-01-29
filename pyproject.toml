@@ -31,5 +31,6 @@ dev = [
 fix = true
 line-length = 120
 required-version = "0.1.7"
-select = ["E", "F", "W", "I", "ICN"]
+select = ["E", "F", "W", "I", "ICN", "ANN"]
+ignore = ["ANN002", "ANN003", "ANN401"]
 src = ["src"]
