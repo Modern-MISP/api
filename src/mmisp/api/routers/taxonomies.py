@@ -9,17 +9,29 @@ from mmisp.api_schemas.taxonomies.update_taxonomy_out import TaxonomyUpdateSchem
 router = APIRouter(tags=["taxonomies"])
 
 
+# Get Taxonomy by ID
+@router.get("/taxonomies/view/{taxonomy_id_parameter}", deprecated=True)  # deprecated
+@router.get("/taxonomies/{taxonomy_id_parameter}")
+async def get_taxonomy_by_id_depr() -> TaxonomyTagSchema:
+    return TaxonomyTagSchema()
+
+
 # Returns all taxonomies
 @router.get("/taxonomies")
 async def get_taxonomies() -> list[TaxonomyViewSchema]:
     return TaxonomyViewSchema()
 
 
-# Get Taxonomy by ID
-@router.get("/taxonomies/view/{taxonomy_id_parameter}", deprecated=True)  # deprecated
-@router.get("/taxonomies/{taxonomy_id_parameter}")
-async def get_taxonomy_by_id_depr() -> TaxonomyTagSchema:
+# Get a Taxonomy extended with Tags used in events and attributes
+@router.get("/taxonomies/taxonomy_tags/{taxonomyId}")
+async def get_taxonomy_extended() -> TaxonomyTagSchema:
     return TaxonomyTagSchema()
+
+
+# Export Taxonomy
+@router.get("/taxonomies/export/{taxonomyId}")
+async def export_taxonomy():
+    return TaxonomyExportSchema()
 
 
 # Enable Taxonomy
@@ -35,18 +47,15 @@ async def disable_taxonomies() -> TaxonomyAbleSchema:
 
 
 # Update Taxonomies.
-@router.post("/taxonomies/taxonomies/update", deprecated=True)  # Deprecated Sollte wahrscheinlich nicht deprecated sein
-@router.put("/taxonomies/taxonomies")
+@router.post("/taxonomies/taxonomies/update")
 async def update_taxonomies_depr() -> TaxonomyUpdateSchema:
     return TaxonomyUpdateSchema()
 
 
-# Get a Taxonomy extended with Tags used in events and attributes
-@router.get("/taxonomies/taxonomy_tags/{taxonomyId}")
-async def get_taxonomy_extended() -> TaxonomyTagSchema:
+# --> Deprecated
+
+
+# Get Taxonomy by ID
+@router.get("/taxonomies/view/{taxonomy_id_parameter}", deprecated=True)  # deprecated
+async def get_taxonomy_by_id_depr() -> TaxonomyTagSchema:
     return TaxonomyTagSchema()
-
-
-@router.get("/taxonomies/export/{taxonomyId}")
-async def export_taxonomy():
-    return TaxonomyExportSchema()
