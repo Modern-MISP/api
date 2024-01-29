@@ -39,7 +39,7 @@ from .routers import (
 )
 
 # from mmisp.db.models import (
-#     auth_key as auth_key_model,
+#     auth_keys as auth_key_model,
 # )
 # from mmisp.db.models import (
 #     user_settings as user_settings_model,

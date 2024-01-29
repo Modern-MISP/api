@@ -25,7 +25,7 @@ from .database import Base
 # the not imported modules have thrown errors
 from .models import (  # noqa: F401
     #    attribute,
-    #    auth_key,
+    #    auth_keys,
     event,
     feed,
     galaxy,
