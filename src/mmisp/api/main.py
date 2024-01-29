@@ -1,6 +1,8 @@
 from fastapi import FastAPI, status
 from fastapi.responses import RedirectResponse
 
+from mmisp.db.database import Base, engine
+
 # if you add a new model module, add it here too
 from mmisp.db.models import (  # noqa: F401
     attribute,
@@ -18,6 +20,12 @@ from mmisp.db.models import (  # noqa: F401
     taxonomy,
     user,
     warninglist,
+)
+from mmisp.db.models import (  # noqa: F401
+    auth_key as auth_key_model,
+)
+from mmisp.db.models import (  # noqa: F401
+    user_settings as user_settings_model,
 )
 
 from .routers import (
@@ -38,12 +46,7 @@ from .routers import (
     warninglists,
 )
 
-# from mmisp.db.models import (
-#     auth_keys as auth_key_model,
-# )
-# from mmisp.db.models import (
-#     user_settings as user_settings_model,
-# )
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
