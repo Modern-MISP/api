@@ -44,4 +44,4 @@ class SightingModelOverrides(Base):
     threshold = Column(Float)
     default_base_score = Column(Integer)
 
-    core_config = relationship("SightingCoreConfig", uselist=False)
+    # core_config = relationship("SightingCoreConfig", uselist=False)

@@ -1,6 +1,5 @@
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
 from sqlalchemy.dialects.mysql import TINYINT
-from sqlalchemy.orm import relationship
 
 from ..database import Base
 
@@ -20,9 +19,9 @@ class Taxonomy(Base):
     highlighted = Column(Boolean)
     exclusive_predicate = Column(TINYINT)
     existing_tag = Column(String(255))
-    entries = relationship("TaxonomyEntries", backref="Taxonomy")
-    predicates = relationship("TaxonomyPredicate", backref="Taxonomy")
-    values = relationship("TaxonomyValue", backref="Taxonomy")
+    # entries = relationship("TaxonomyEntries", backref="Taxonomy")
+    # predicates = relationship("TaxonomyPredicate", backref="Taxonomy")
+    # values = relationship("TaxonomyValue", backref="Taxonomy")
 
 
 class TaxonomyPredicate(Base):

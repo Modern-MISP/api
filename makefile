@@ -21,5 +21,12 @@ dev:
 dev/native:
 	uvicorn mmisp.api.main:app --reload --port 4000
 
+test:
+	source venv/bin/activate; \
+	ENV_FILE=.env.test pytest tests
+
+test/plain:
+	pytest tests
+
 print-changes:
 	MYSQL_USER=misp MYSQL_PASSWORD=misp MYSQL_HOST=localhost MYSQL_DBNAME=misp python -m mmisp.db.print_changes
