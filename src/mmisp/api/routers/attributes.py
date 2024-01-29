@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from mmisp.api_schemas.attributes.add_attribute_body import AddAttributeBody
@@ -17,30 +17,59 @@ from mmisp.api_schemas.attributes.restore_attribute_reponse import RestoreAttrib
 from mmisp.api_schemas.attributes.search_attributes_body import SearchAttributesBody
 from mmisp.api_schemas.attributes.search_attributes_response import SearchAttributesResponse
 from mmisp.db.database import get_db
+from mmisp.db.models.attribute import Attribute
 
 router = APIRouter(tags=["attributes"])
 
+# Sorted according to CRUD
 
-# -- Delete
-
-
-@router.delete("/attributes/delete/{attribute_id}", summary="Delete an Attribute", deprecated=True)  # deprecated
-@router.delete("/attributes/{attributeID}", summary="Delete an Attribute")  # new
-async def attributes_delete(attribute_id: str, db: Session = Depends(get_db)) -> DeleteAttributeResponse:
-    return DeleteAttributeResponse(message="Attribute deleted.")
+# - Create a {resource}
 
 
-# -- Get
+@router.post("/attributes/add/{event_id}", summary="Add an attribute", deprecated=True)  # deprecated
+@router.post("/attributes/{event_id}", summary="Add an attribute")  # new
+async def attributes_post(event_id: str, body: AddAttributeBody, db: Session = Depends(get_db)) -> AddAttributeResponse:
+    new_attribute = Attribute(
+        value=body.value,
+        type=body.type,
+        category=body.category,
+        to_ids=body.to_ids,
+        distribution=body.distribution,
+        comment=body.comment,
+        disable_correlation=body.disable_correlation,
+    )
+    db.add(new_attribute)
+    try:
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    db.refresh(new_attribute)
+    return AddAttributeResponse(
+        id=str(new_attribute.id),
+        event_id=str(event_id),
+        object_id=str(new_attribute.object_id),
+        object_relation=str(new_attribute.object_relation),
+        category=str(new_attribute.category),
+        type=str(new_attribute.type),
+        value=str(new_attribute.value),
+        value1=str(new_attribute.value1),
+        value2=str(new_attribute.value2),
+        to_ids=bool(new_attribute.to_ids),
+        uuid=str(new_attribute.uuid),
+        timestamp=str(new_attribute.timestamp),
+        distribution=str(new_attribute.distribution),
+        sharing_group_id=str(new_attribute.sharing_group_id),
+        comment=str(new_attribute.comment),
+        deleted=bool(new_attribute.deleted),
+        disable_correlation=bool(new_attribute.disable_correlation),
+        first_seen=str(new_attribute.first_seen),
+        last_seen=str(new_attribute.last_seen),
+        AttributeTag=[],
+    )
 
 
-@router.get("/attributes", summary="Get all Attributes")
-async def attributes_get(db: Session = Depends(get_db)) -> GetAllAttributesResponse:
-    return GetAllAttributesResponse(attribute=[])
-    # try:
-    #     attributes = db.query(Attribute).all()
-    #     return attributes
-    # except Exception as e:
-    #     raise HTTPException(status_code=500, detail=str(e))
+# - Read / Get a {resource}
 
 
 @router.get("/attributes/view/{attribute_id}", summary="Get an Attribute by its ID", deprecated=True)  # deprecated
@@ -53,6 +82,61 @@ async def attributes_getById(attribute_id: str, db: Session = Depends(get_db)) -
     # if attribute is None:
     #     raise HTTPException(status_code=404, detail="Feed not found")
     # return attribute
+
+
+# - Updating a {resource}
+
+
+@router.put("/attributes/edit/{attribute_id}", summary="Edit an attribute", deprecated=True)  # deprecated
+@router.put("/attributes/{attribute_id}", summary="Edit an attribute")  # new
+async def attributes_put(
+    attribute_id: str, body: EditAttributeBody, db: Session = Depends(get_db)
+) -> EditAttributeResponse:
+    return EditAttributeResponse(id="")
+
+
+# - Deleting a {resource}
+
+
+@router.delete("/attributes/delete/{attribute_id}", summary="Delete an Attribute", deprecated=True)  # deprecated
+@router.delete("/attributes/{attributeID}", summary="Delete an Attribute")  # new
+async def attributes_delete(attribute_id: str, db: Session = Depends(get_db)) -> DeleteAttributeResponse:
+    return DeleteAttributeResponse(message="Attribute deleted.")
+
+
+# - Get all {resource}s
+
+
+@router.get("/attributes", summary="Get all Attributes")
+async def attributes_get(db: Session = Depends(get_db)) -> GetAllAttributesResponse:
+    return GetAllAttributesResponse(attribute=[])
+    # try:
+    #     attributes = db.query(Attribute).all()
+    #     return attributes
+    # except Exception as e:
+    #     raise HTTPException(status_code=500, detail=str(e))
+
+
+# - More niche endpoints
+
+
+@router.post("/attributes/deleteSelected/{event_id}", summary="Delete the selected attributes")
+async def attributes_deleteSelected(
+    event_id: str, body: DeleteSelectedAttributeBody, db: Session = Depends(get_db)
+) -> DeleteSelectedAttributeResponse:
+    return DeleteSelectedAttributeResponse(
+        saved=True,
+        success=True,
+        name="1 attribute deleted",
+        message="1 attribute deleted",
+        url="/attributes/deleteSelected/{event_id}",
+        id="{event_id}",
+    )
+
+
+@router.post("/attributes/restSearch", summary="Get a filtered and paginated list of attributes")
+async def attributes_reastSearch(body: SearchAttributesBody, db: Session = Depends(get_db)) -> SearchAttributesResponse:
+    return SearchAttributesResponse(id="")
 
 
 @router.get(
@@ -68,39 +152,6 @@ async def attributes_statistics(
 @router.get("/attributes/describeTypes", summary="Get all available attribute types")
 async def attributes_describeTypes(db: Session = Depends(get_db)) -> GetDescribeTypesResponse:
     return GetDescribeTypesResponse()
-
-
-# -- Post
-
-
-@router.post("/attributes/restSearch", summary="Get a filtered and paginated list of attributes")
-async def attributes_reastSearch(body: SearchAttributesBody, db: Session = Depends(get_db)) -> SearchAttributesResponse:
-    return SearchAttributesResponse(id="")
-
-
-@router.post("/attributes/add/{event_id}", summary="Add an attribute", deprecated=True)  # deprecated
-@router.post("/attributes/{event_id}", summary="Add an attribute")  # new
-async def attributes_post(event_id: str, body: AddAttributeBody, db: Session = Depends(get_db)) -> AddAttributeResponse:
-    return AddAttributeResponse(id="")
-    # new_attribute = Attribute(**attribute_data.model_dump())
-    # db.add(new_attribute)
-    # db.commit()
-    # db.refresh(new_attribute)
-    # return new_attribute
-
-
-@router.post("/attributes/deleteSelected/{event_id}", summary="Delete the selected attributes")
-async def attributes_deleteSelected(
-    event_id: str, body: DeleteSelectedAttributeBody, db: Session = Depends(get_db)
-) -> DeleteSelectedAttributeResponse:
-    return DeleteSelectedAttributeResponse(
-        saved=True,
-        success=True,
-        name="1 attribute deleted",
-        message="1 attribute deleted",
-        url="/attributes/deleteSelected/{event_id}",
-        id="{event_id}",
-    )
 
 
 @router.post("/attributes/restore/{attribute_id}", summary="Restore an attribute")
@@ -124,14 +175,3 @@ async def attributes_removeTag(
     return AddRemoveTagAttributeResponse(
         saved=True, success="Tag added", check_publish=True, errors="Tag could not be added."
     )
-
-
-# -- Put
-
-
-@router.put("/attributes/edit/{attribute_id}", summary="Edit an attribute", deprecated=True)  # deprecated
-@router.put("/attributes/{attribute_id}", summary="Edit an attribute")  # new
-async def attributes_put(
-    attribute_id: str, body: EditAttributeBody, db: Session = Depends(get_db)
-) -> EditAttributeResponse:
-    return EditAttributeResponse(id="")

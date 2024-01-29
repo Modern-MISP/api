@@ -14,22 +14,19 @@ from mmisp.db.database import get_db
 
 router = APIRouter(tags=["galaxies"])
 
+# Sorted according to CRUD
 
-# -- Delete
+# - Creatte a {resource}
 
 
-@router.delete("/galaxies/delete/{galaxy_id}", deprecated=True)  # deprecated
-@router.delete("/galaxies/{galaxy_id}")  # new
-async def galaxies_delete(galagxy_id: str, db: Session = Depends(get_db)) -> DeleteForceUpdateImportGalaxyResponse:
+@router.post("/galaxies/import")
+async def galaxies_import(
+    body: list[ImportGalaxyBody], db: Session = Depends(get_db)
+) -> DeleteForceUpdateImportGalaxyResponse:
     return DeleteForceUpdateImportGalaxyResponse()
 
 
-# -- Get
-
-
-@router.get("/galaxies")
-async def galaxies_get(db: Session = Depends(get_db)) -> list[GetAllSearchGalaxiesResponse]:
-    return list[GetAllSearchGalaxiesResponse()]
+# - Read / Get a {resource}
 
 
 @router.get("/galaxies/view/{galaxy_id}", deprecated=True)  # deprecated
@@ -38,12 +35,7 @@ async def galaxies_getById(db: Session = Depends(get_db)) -> GetGalaxyResponse:
     return GetGalaxyResponse()
 
 
-# -- Post
-
-
-@router.post("/galaxies")
-async def galaxies_post(body: SearchGalaxiesBody, db: Session = Depends(get_db)) -> list[GetAllSearchGalaxiesResponse]:
-    return list[GetAllSearchGalaxiesResponse()]
+# - Updating a {resource}
 
 
 @router.post("/galaxies/update")
@@ -51,11 +43,29 @@ async def galaxies_update(db: Session = Depends(get_db)) -> DeleteForceUpdateImp
     return DeleteForceUpdateImportGalaxyResponse
 
 
-@router.post("/galaxies/import")
-async def galaxies_import(
-    body: list[ImportGalaxyBody], db: Session = Depends(get_db)
-) -> DeleteForceUpdateImportGalaxyResponse:
+# - Deleting a {resource}
+
+
+@router.delete("/galaxies/delete/{galaxy_id}", deprecated=True)  # deprecated
+@router.delete("/galaxies/{galaxy_id}")  # new
+async def galaxies_delete(galagxy_id: str, db: Session = Depends(get_db)) -> DeleteForceUpdateImportGalaxyResponse:
     return DeleteForceUpdateImportGalaxyResponse()
+
+
+# - Get all {resource}s
+
+
+@router.get("/galaxies")
+async def galaxies_get(db: Session = Depends(get_db)) -> list[GetAllSearchGalaxiesResponse]:
+    return list[GetAllSearchGalaxiesResponse()]
+
+
+# - More niche endpoints
+
+
+@router.post("/galaxies")
+async def galaxies_post(body: SearchGalaxiesBody, db: Session = Depends(get_db)) -> list[GetAllSearchGalaxiesResponse]:
+    return list[GetAllSearchGalaxiesResponse()]
 
 
 @router.post("/galaxies/export/{galaxy_id}")
