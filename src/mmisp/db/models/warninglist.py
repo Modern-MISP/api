@@ -1,6 +1,5 @@
 from sqlalchemy import Column, ForeignKey, Integer, String
 from sqlalchemy.dialects.mysql import TINYINT
-from sqlalchemy.orm import relationship
 
 from ..database import Base
 
@@ -15,7 +14,7 @@ class Warninglist(Base):
     enabled = Column(TINYINT)
     category = Column(String(255))
     warninglist_entry_count = Column(Integer)
-    warninglistEntry = relationship("WarninglistEntries")
+    # warninglistEntry = relationship("WarninglistEntries")
 
 
 class WarninglistEntry(Base):

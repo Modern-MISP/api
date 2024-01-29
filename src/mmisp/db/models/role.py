@@ -20,6 +20,7 @@ class Role(Base):
     perm_admin = Column(TINYINT)
     perm_audit = Column(TINYINT)
     perm_full = Column(TINYINT)
+    """deprecated"""
     perm_auth = Column(TINYINT)
     perm_site_admin = Column(TINYINT)
     perm_regexp_access = Column(TINYINT)

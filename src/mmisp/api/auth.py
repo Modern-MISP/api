@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Callable
 
 from fastapi import Depends, Header, HTTPException
 from sqlalchemy.orm import Session
@@ -50,15 +51,15 @@ class Auth:
         org_id: int | None = None,
         role_id: int | None = None,
         is_worker: bool | None = False,
-    ):
+    ) -> None:
         self.user_id = user_id
         self.org_id = org_id
         self.role_id = role_id
         self.is_worker = is_worker
 
 
-def authorize(strategy: AuthStrategy, permissions: list[Permission] = []):
-    def authorizer(db: Session = Depends(get_db), authorization: str = Header("")):
+def authorize(strategy: AuthStrategy, permissions: list[Permission] = []) -> Callable[[Session, str], Auth]:
+    def authorizer(db: Session = Depends(get_db), authorization: str = Header("")) -> Auth:
         authorization = authorization.replace("Bearer ", "")
 
         if not authorization:
@@ -77,8 +78,14 @@ def authorize(strategy: AuthStrategy, permissions: list[Permission] = []):
             # TODO check apikey
             pass
 
+        # if not user:
+        #     raise HTTPException(401)
+
         # TODO check permissions
 
-        return Auth(0, 0, 0)
+        # temp dummy user
+        user = db.get(User, 1)
+
+        return Auth(user.id, user.org_id, user.role_id)
 
     return authorizer

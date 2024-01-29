@@ -1,5 +1,4 @@
 from sqlalchemy import Column, Integer, String
-from sqlalchemy.orm import relationship
 
 from ..database import Base
 
@@ -12,8 +11,8 @@ class UserSettings(Base):
     user_id = Column(String(255))
     timestamp = Column(String(255))
     widget = Column(String(255))
-    position = relationship("UserSettingsPosition", backref="UserSettings")
-    value = relationship("UserSettingsPosition", backref="UserSettings")
+    # position = relationship("UserSettingsPosition", backref="UserSettings")
+    # value = relationship("UserSettingsPosition", backref="UserSettings")
 
 
 class UserSettingsValue(Base):
@@ -21,7 +20,7 @@ class UserSettingsValue(Base):
 
     id = Column(Integer, primary_key=True)
     widget = Column(String(255))
-    position = relationship("UserSettingsPosition", backref="UserSettingsValue")
+    # position = relationship("UserSettingsPosition", backref="UserSettingsValue")
 
 
 class UserSettingsPosition(Base):
