@@ -1,5 +1,7 @@
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
 
+from mmisp.util.uuid import uuid
+
 from ..database import Base
 from .organisation import Organisation
 from .sharing_group import SharingGroup
@@ -9,10 +11,10 @@ class Event(Base):
     __tablename__ = "events"
 
     id = Column(Integer, primary_key=True)
+    uuid = Column(String(255), unique=True, default=uuid)
     org_id = Column(Integer, ForeignKey(Organisation.id))  # owner org
     orgc_id = Column(Integer, ForeignKey(Organisation.id))  # creator org
     distribution = Column(String(255))
-    uuid = Column(String(255), unique=True)
     date = Column(String(255))
     published = Column(Boolean)
     analysis = Column(String(255))
@@ -35,7 +37,7 @@ class EventReport(Base):
     __tablename__ = "event_reports"
 
     id = Column(Integer, primary_key=True)
-    uuid = Column(String(255))
+    uuid = Column(String(255), unique=True, default=uuid)
     event_id = Column(Integer, ForeignKey(Event.id))
     name = Column(String(255))
     content = Column(String(255))

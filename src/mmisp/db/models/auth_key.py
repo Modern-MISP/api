@@ -1,5 +1,7 @@
 from sqlalchemy import Boolean, Column, Integer, String
 
+from mmisp.util.uuid import uuid
+
 from ..database import Base
 
 
@@ -7,7 +9,7 @@ class AuthKey(Base):
     __tablename__ = "auth_keys"
 
     id = Column(Integer, primary_key=True)
-    uuid = Column(String(255))
+    uuid = Column(String(255), unique=True, default=uuid)
     read_only = Column(Boolean)
     user_id = Column(String(255))
     comment = Column(String(255))
