@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 
-class TaxonomyUpdateSchema(BaseModel):
+class UpdateTaxonomyResponse(BaseModel):
     saved: bool
     success: bool
     name: str

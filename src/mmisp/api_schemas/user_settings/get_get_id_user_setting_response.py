@@ -13,7 +13,7 @@ class Value(BaseModel):
     position: Position
 
 
-class UserSettingGet(BaseModel):
+class GetUserSettingResponse(BaseModel):
     id: str
     setting: str
     value: Value

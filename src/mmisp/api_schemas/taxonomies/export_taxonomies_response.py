@@ -18,7 +18,7 @@ class TaxonomyValueSchema:
     entries: list[Entry]
 
 
-class TaxonomyExportSchema(BaseModel):
+class ExportTaxonomyResponse(BaseModel):
     namespace: str
     description: str
     version: int

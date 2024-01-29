@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 
-class AuthKeySearch(BaseModel):
+class SearchAuthKeyBody(BaseModel):
     page: int
     limit: int
     id: str

@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from ..user_schema import User
 
 
-class AuthKeyGetSchema(BaseModel):
+class SearchGetAuthKeysReponse(BaseModel):
     id: str
     uuid: str
     authkey_start: str

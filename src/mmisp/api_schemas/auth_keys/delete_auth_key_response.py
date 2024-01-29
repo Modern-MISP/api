@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 
-class AuthKeyDeleteSchema(BaseModel):
+class DeleteAuthKeyResponse(BaseModel):
     saved: bool
     success: bool
     name: str

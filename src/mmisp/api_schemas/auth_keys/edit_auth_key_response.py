@@ -6,8 +6,8 @@ class UserOrgId(BaseModel):
     org_id: str
 
 
-class AuthKeyEditSchema(BaseModel):
-    id: int  # TODO: Schemas = String? (db = Integer)
+class EditAuthKeyResponse(BaseModel):
+    id: str  # TODO: Schemas = String? (db = Integer)
     uuid: str
     authkey_start: str
     authkey_end: str

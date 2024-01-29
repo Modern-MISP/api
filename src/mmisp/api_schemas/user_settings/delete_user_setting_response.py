@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 
-class UserSettingDelete(BaseModel):
+class DeleteUserSettingResponse(BaseModel):
     saved: bool
     success: bool
     name: str

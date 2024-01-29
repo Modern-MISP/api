@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 
-class AuthKeyAdd(BaseModel):
+class AddAuthKeyBody(BaseModel):
     uuid: str
     read_only: bool
     user_id: str

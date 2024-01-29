@@ -11,7 +11,7 @@ class TaxonomyEntrySchema:
     existing_tag: bool | TagGetResponse  # TODO: Kann auch Tag Objekt sein, nicht zwingend bool laut Pflichtenheft?
 
 
-class TaxonomyTagSchema(BaseModel):
+class GetIdTaxonomyResponse(BaseModel):
     id: str
     namespace: str
     description: str

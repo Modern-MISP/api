@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 
-class TaxonomyAbleSchema(BaseModel):
+class EnDisableTaxonomyResponse(BaseModel):
     id: str
     saved: bool
     success: bool

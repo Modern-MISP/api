@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from .get_get_id_user_setting_response import Value
 
 
-class UserSettingView(BaseModel):
+class ViewUserSettingResponse(BaseModel):
     id: str
     setting: str
     value: Value

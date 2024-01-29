@@ -12,7 +12,7 @@ class TaxonomyView(BaseModel):
     highlighted: bool
 
 
-class TaxonomyViewSchema(BaseModel):
+class ViewTaxonomyResponse(BaseModel):
     taxonomy: TaxonomyView
     total_count: int
     current_count: int

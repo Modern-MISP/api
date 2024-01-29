@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 
-class AuthKey(BaseModel):
+class AddAuthKeyResponse(BaseModel):
     id: str
     uuid: str
     authkey_start: str
