@@ -1,6 +1,8 @@
 from sqlalchemy import VARBINARY, Column, Integer, String
 from sqlalchemy.dialects.mysql import TINYINT
 
+from mmisp.util.uuid import uuid
+
 from ..database import Base
 
 
@@ -8,7 +10,7 @@ class Server(Base):
     __tablename__ = "servers"
 
     id = Column(Integer, primary_key=True)
-    uuid = Column(String(255), unique=True)
+    uuid = Column(String(255), unique=True, default=uuid)
     name = Column(String(255))
     url = Column(String(255))
     authkey = Column(VARBINARY(255))

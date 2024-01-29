@@ -1,5 +1,7 @@
 from sqlalchemy import Column, Integer, String
 
+from mmisp.util.uuid import uuid
+
 from ..database import Base
 
 
@@ -7,7 +9,7 @@ class Galaxy(Base):
     __tablename__ = "galaxies"
 
     id = Column(Integer, primary_key=True)
-    uuid = Column(String(255))
+    uuid = Column(String(255), unique=True, default=uuid)
     name = Column(String(255))
     type = Column(String(255))
     description = Column(String(255))

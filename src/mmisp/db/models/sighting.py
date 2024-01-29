@@ -1,6 +1,8 @@
 from sqlalchemy import BigInteger, Column, Float, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
+from mmisp.util.uuid import uuid
+
 from ..database import Base
 from .organisation import Organisation
 
@@ -9,11 +11,11 @@ class Sighting(Base):
     __tablename__ = "sightings"
 
     id = Column(Integer, primary_key=True)
+    uuid = Column(String(255), unique=True, default=uuid)
     attribute_id = Column(Integer, index=True)
     event_id = Column(Integer, index=True)
     org_id = Column(Integer, ForeignKey(Organisation.id), index=True)
     date_sighting = Column(BigInteger)
-    uuid = Column(String(255), unique=True)
     source = Column(String(255), index=True)
     type = Column(Integer, index=True)
     attribute_uuid = Column(String(255))

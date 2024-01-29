@@ -1,6 +1,8 @@
 from sqlalchemy import Column, DateTime, Integer, String
 from sqlalchemy.dialects.mysql import TINYINT
 
+from mmisp.util.uuid import uuid
+
 from ..database import Base
 
 
@@ -8,7 +10,7 @@ class Organisation(Base):
     __tablename__ = "organisations"
 
     id = Column(Integer, primary_key=True)
-    uuid = Column(String(255), unique=True)
+    uuid = Column(String(255), unique=True, default=uuid)
     name = Column(String(255))
     date_created = Column(DateTime)
     date_modified = Column(DateTime)
