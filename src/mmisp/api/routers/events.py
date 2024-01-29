@@ -25,8 +25,36 @@ from mmisp.db.database import get_db
 
 router = APIRouter(tags=["events"])
 
+# Sorted according to CRUD
 
-# -- Delete
+# - Creatte a {resource}
+
+
+@router.post("/events/add", deprecated=True)  # deprecated
+@router.post("/events")  # new
+async def events_post(body: AddEventBody, db: Session = Depends(get_db)) -> AddEditGetEventResponse:
+    return AddEditGetEventResponse(Event="")
+
+
+# - Read / Get a {resource}
+
+
+@router.get("/events/view/{event_id}", deprecated=True)  # deprecated
+@router.get("/events/{event_id}")  # new
+async def events_getById(event_id: str, db: Session = Depends(get_db)) -> AddEditGetEventResponse:
+    return AddEditGetEventResponse(id="")
+
+
+# - Updating a {resource}
+
+
+@router.put("/events/edit/{event_id}", deprecated=True)  # deprecated
+@router.put("/events/{event_id}")  # new
+async def events_put(event_id: str, body: EditEventBody, db: Session = Depends(get_db)) -> AddEditGetEventResponse:
+    return AddEditGetEventResponse(Event="")
+
+
+# - Deleting a {resource}
 
 
 @router.delete("/events/delete/{event_id}", deprecated=True)  # deprecated
@@ -37,12 +65,12 @@ async def events_delete(event_id: str, db: Session = Depends(get_db)) -> DeleteE
         success=True,
         name="Event deleted.",
         message="Event deleted.",
-        url=r"/events/delete/{\event_id}",
+        url=r"/events/delete/{event_id}",
         errors="Event was not deleted.",
     )
 
 
-# -- Get
+# - Get all {resource}s
 
 
 @router.get("/events")
@@ -50,24 +78,12 @@ async def events_get(db: Session = Depends(get_db)) -> GetAllEventsResponse:
     return GetAllEventsResponse(events=[])
 
 
-@router.get("/events/view/{event_id}", deprecated=True)  # deprecated
-@router.get("/events/{event_id}")  # new
-async def events_getById(event_id: str, db: Session = Depends(get_db)) -> AddEditGetEventResponse:
-    return AddEditGetEventResponse(id="")
-
-
-# -- Post
+# - More niche endpoints
 
 
 @router.post("/events/restSearch")
 async def events_restSearch(body: SearchEventsBody, db: Session = Depends(get_db)) -> List[SearchEventsResponse]:
     return SearchEventsResponse(response=[])
-
-
-@router.post("/events/add", deprecated=True)  # deprecated
-@router.post("/events")  # new
-async def events_post(body: AddEventBody, db: Session = Depends(get_db)) -> AddEditGetEventResponse:
-    return AddEditGetEventResponse(Event="")
 
 
 @router.post("/events/index")
@@ -87,7 +103,7 @@ async def events_unpublish(event_id: str, db: Session = Depends(get_db)) -> Unpu
         success=True,
         name="Event unpublished.",
         message="Event unpublished.",
-        url=r"/events/unpublish/{\event_id}",
+        url=r"/events/unpublish/{event_id}",
     )
 
 
@@ -112,12 +128,3 @@ async def events_freeTextImport(
     event_id: str, body: AddAttributeViaFreeTextImportEventBody, db: Session = Depends(get_db)
 ) -> AddAttributeViaFreeTextImportEventResponse:
     return AddAttributeViaFreeTextImportEventResponse(comment="")
-
-
-# -- Put
-
-
-@router.put("/events/edit/{event_id}", deprecated=True)  # deprecated
-@router.put("/events/{event_id}")  # new
-async def events_put(event_id: str, body: EditEventBody, db: Session = Depends(get_db)) -> AddEditGetEventResponse:
-    return AddEditGetEventResponse(Event="")
