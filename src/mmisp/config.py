@@ -5,13 +5,13 @@ from dotenv import load_dotenv
 
 class ConfigType:
     def __init__(
-        self,
+        self: "ConfigType",
         DATABASE_URL: str,
         HASH_SECRET: str,
         WORKER_KEY: str,
         WORKER_URL: str,
         DASHBOARD_URL: str | None = None,
-    ):
+    ) -> None:
         self.DATABASE_URL = DATABASE_URL
         self.HASH_SECRET = HASH_SECRET
         self.WORKER_KEY = WORKER_KEY
