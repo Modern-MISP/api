@@ -1,5 +1,4 @@
-from sqlalchemy import Column, DateTime, Integer, String
-from sqlalchemy.dialects.mysql import TINYINT
+from sqlalchemy import Boolean, Column, DateTime, Integer, String
 
 from mmisp.util.uuid import uuid
 
@@ -20,6 +19,6 @@ class Organisation(Base):
     sector = Column(String(255))
     created_by = Column(Integer)
     contacts = Column(String(255))
-    local = Column(TINYINT)
+    local = Column(Boolean)
     restricted_to_domain = Column(String(255))
     landingpage = Column(String(255))
