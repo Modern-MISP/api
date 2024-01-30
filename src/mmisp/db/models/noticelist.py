@@ -1,5 +1,4 @@
-from sqlalchemy import Column, ForeignKey, Integer, String
-from sqlalchemy.dialects.mysql import TINYINT
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
 
 from ..database import Base
 
@@ -12,7 +11,7 @@ class Noticelist(Base):
     ref = Column(String(255))  # data must be serialized
     geographical_area = Column(String(255))  # data must be serialized
     version = Column(Integer)
-    enabled = Column(TINYINT)
+    enabled = Column(Boolean)
     # noticelist_entries = relationship("noticelistsEntries")
 
 

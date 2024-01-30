@@ -1,5 +1,4 @@
-from sqlalchemy import VARBINARY, Column, Integer, String
-from sqlalchemy.dialects.mysql import TINYINT
+from sqlalchemy import VARBINARY, Boolean, Column, Integer, String
 
 from mmisp.util.uuid import uuid
 
@@ -15,24 +14,24 @@ class Server(Base):
     url = Column(String(255))
     authkey = Column(VARBINARY(255))
     org_id = Column(Integer)
-    push = Column(TINYINT)
-    pull = Column(TINYINT)
-    push_sightings = Column(TINYINT)
-    push_galaxy_clusters = Column(TINYINT)
-    pull_galaxy_clusters = Column(TINYINT)
+    push = Column(Boolean)
+    pull = Column(Boolean)
+    push_sightings = Column(Boolean)
+    push_galaxy_clusters = Column(Boolean)
+    pull_galaxy_clusters = Column(Boolean)
     lastpulledid = Column(Integer)
     lastpushedid = Column(Integer)
     organization = Column(String(255))
     remote_org_id = Column(Integer)
-    publish_without_email = Column(TINYINT)
-    unpublish_event = Column(TINYINT)
-    self_signed = Column(TINYINT)
+    publish_without_email = Column(Boolean)
+    unpublish_event = Column(Boolean)
+    self_signed = Column(Boolean)
     pull_rules = Column(String(255))
     push_rules = Column(String(255))
     cert_file = Column(String(255))
     client_cert_file = Column(String(255))
-    internal = Column(TINYINT)
-    skip_proxy = Column(TINYINT)
-    remove_missing_tags = Column(TINYINT)
-    caching_enabled = Column(TINYINT)
+    internal = Column(Boolean)
+    skip_proxy = Column(Boolean)
+    remove_missing_tags = Column(Boolean)
+    caching_enabled = Column(Boolean)
     priority = Column(Integer)

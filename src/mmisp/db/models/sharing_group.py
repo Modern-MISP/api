@@ -1,5 +1,4 @@
-from sqlalchemy import Column, DateTime, Integer, String
-from sqlalchemy.dialects.mysql import TINYINT
+from sqlalchemy import Boolean, Column, DateTime, Integer, String
 
 from mmisp.util.uuid import uuid
 
@@ -17,11 +16,11 @@ class SharingGroup(Base):
     organisation_uuid = Column(String(255))
     org_id = Column(Integer)
     sync_user_id = Column(Integer)
-    active = Column(TINYINT)
+    active = Column(Boolean)
     created = Column(DateTime)
     modified = Column(DateTime)
-    local = Column(TINYINT)
-    roaming = Column(TINYINT)
+    local = Column(Boolean)
+    roaming = Column(Boolean)
 
 
 class SharingGroupOrg(Base):
@@ -30,7 +29,7 @@ class SharingGroupOrg(Base):
     id = Column(Integer, primary_key=True)
     sharing_group_id = Column(Integer)
     org_id = Column(Integer)
-    extend = Column(TINYINT)
+    extend = Column(Boolean)
 
 
 class SharingGroupServer(Base):
@@ -39,4 +38,4 @@ class SharingGroupServer(Base):
     id = Column(Integer, primary_key=True)
     sharing_group_id = Column(Integer)
     server_id = Column(Integer)
-    all_orgs = Column(TINYINT)
+    all_orgs = Column(Boolean)
