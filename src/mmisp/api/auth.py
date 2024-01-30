@@ -46,7 +46,7 @@ class Permission(Enum):
 
 class Auth:
     def __init__(
-        self,
+        self: "Auth",
         user_id: int | None = None,
         org_id: int | None = None,
         role_id: int | None = None,
