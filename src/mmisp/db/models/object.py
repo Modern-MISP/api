@@ -1,4 +1,4 @@
-from sqlalchemy import BigInteger, Column, ForeignKey, Integer, String
+from sqlalchemy import BigInteger, Boolean, Column, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
 from mmisp.util.uuid import uuid
@@ -21,7 +21,7 @@ class Object(Base):
     distribution = Column(Integer, index=True)
     sharing_group_id = Column(Integer, index=True)
     comment = Column(String(255))
-    deleted = Column(Integer)
+    deleted = Column(Boolean)
     first_seen = Column(BigInteger, index=True)
     last_seen = Column(BigInteger, index=True)
 
@@ -46,7 +46,7 @@ class ObjectAttribute(Base):
     distribution = Column(Integer)
     sharing_group_id = Column(Integer, index=True)
     comment = Column(String(255))
-    deleted = Column(Integer)
-    disable_correlation = Column(Integer)
+    deleted = Column(Boolean)
+    disable_correlation = Column(Boolean)
     first_seen = Column(BigInteger, index=True)
     last_seen = Column(BigInteger, index=True)
