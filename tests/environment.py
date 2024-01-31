@@ -38,13 +38,13 @@ db.commit()
 
 class EnvironmentType:
     def __init__(
-        self,
+        self: "EnvironmentType",
         instance_owner_org: Organisation,
         instance_server: Server,
         site_admin_role: Role,
         site_admin_user: User,
         site_admin_user_token: str,
-    ):
+    ) -> None:
         self.instance_owner_org = instance_owner_org
         self.instance_server = instance_server
         self.site_admin_role = site_admin_role
