@@ -1,6 +1,8 @@
+from datetime import datetime, timedelta
 from enum import Enum
 from typing import Callable
 
+import jwt
 from fastapi import Depends, Header, HTTPException
 from sqlalchemy.orm import Session
 
@@ -68,24 +70,56 @@ def authorize(strategy: AuthStrategy, permissions: list[Permission] = []) -> Cal
         if strategy in [AuthStrategy.WORKER_KEY, AuthStrategy.ALL] and authorization == config.WORKER_KEY:
             return Auth(is_worker=True)
 
-        user: User | None = None
+        user_id: str | None = None
 
         if strategy in [AuthStrategy.JWT, AuthStrategy.HYBRID, AuthStrategy.ALL]:
-            # TODO check jwt
-            pass
+            user_id = _decode_token(authorization)
 
-        if not user and strategy in [AuthStrategy.API_KEY, AuthStrategy.HYBRID, AuthStrategy.ALL]:
-            # TODO check apikey
-            pass
+        if not user_id and strategy in [AuthStrategy.API_KEY, AuthStrategy.HYBRID, AuthStrategy.ALL]:
+            user_id = _check_api_key(authorization)
 
-        # if not user:
-        #     raise HTTPException(401)
+            if user_id:
+                permissions.append(Permission.AUTH)  # only users with this permission are allowed to use api keys
 
-        # TODO check permissions
+        if not user_id:
+            raise HTTPException(401)
 
-        # temp dummy user
-        user = db.get(User, 1)
+        # check_permissions(userId, permissions)
+
+        user: User = db.get(User, user_id)
 
         return Auth(user.id, user.org_id, user.role_id)
 
     return authorizer
+
+
+def check_permissions(userId: str, permissions: list[Permission] = []) -> bool:
+    return True
+
+
+def encode_token(user_id: str) -> str:
+    payload = {
+        "user_id": user_id,
+        "exp": datetime.utcnow() + timedelta(days=7),
+        "iat": datetime.utcnow(),
+    }
+
+    return jwt.encode(payload, config.HASH_SECRET, "HS256")
+
+
+def _decode_token(authorization: str) -> str | None:
+    payload: dict
+
+    try:
+        payload = jwt.decode(authorization, config.HASH_SECRET, ["HS256"])
+    except jwt.DecodeError:
+        return None
+
+    if not payload:
+        return None
+
+    return payload.get("user_id", None)
+
+
+def _check_api_key(authorization: str) -> str | None:
+    pass
