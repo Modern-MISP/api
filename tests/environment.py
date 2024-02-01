@@ -1,6 +1,7 @@
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
+from mmisp.api.auth import encode_token
 from mmisp.api.main import app
 from mmisp.db.database import get_db
 from mmisp.db.models.organisation import Organisation
@@ -57,7 +58,7 @@ environment: EnvironmentType = EnvironmentType(
     instance_server=instance_server,
     site_admin_role=site_admin_role,
     site_admin_user=site_admin_user,
-    site_admin_user_token="test",
+    site_admin_user_token=encode_token(site_admin_user.id),
 )
 
 client = TestClient(app)
