@@ -110,17 +110,17 @@ async def events_post(
 # - Read / Get a {resource}
 
 
-@router.get("/events/view/{event_id}", deprecated=True)  # deprecated
-@router.get("/events/{event_id}")  # new
-async def events_getById(event_id: str, db: Session = Depends(get_db)) -> AddEditGetEventResponse:
+@router.get("/events/view/{eventId}", deprecated=True)  # deprecated
+@router.get("/events/{eventId}")  # new
+async def events_getBy_id(event_id: str, db: Session = Depends(get_db)) -> AddEditGetEventResponse:
     return AddEditGetEventResponse(id="")
 
 
 # - Updating a {resource}
 
 
-@router.put("/events/edit/{event_id}", deprecated=True)  # deprecated
-@router.put("/events/{event_id}")  # new
+@router.put("/events/edit/{eventId}", deprecated=True)  # deprecated
+@router.put("/events/{eventId}")  # new
 async def events_put(event_id: str, body: EditEventBody, db: Session = Depends(get_db)) -> AddEditGetEventResponse:
     return AddEditGetEventResponse(Event="")
 
@@ -128,8 +128,8 @@ async def events_put(event_id: str, body: EditEventBody, db: Session = Depends(g
 # - Deleting a {resource}
 
 
-@router.delete("/events/delete/{event_id}", deprecated=True)  # deprecated
-@router.delete("/events/{event_id}")  # new
+@router.delete("/events/delete/{eventId}", deprecated=True)  # deprecated
+@router.delete("/events/{eventId}")  # new
 async def events_delete(event_id: str, db: Session = Depends(get_db)) -> DeleteEventResponse:
     return DeleteEventResponse(
         saved=True,
@@ -162,12 +162,12 @@ async def events_index(body: IndexEventsBody, db: Session = Depends(get_db)) -> 
     return IndexEventsResponse(events=[])
 
 
-@router.post("/events/publish/{event_id}")
+@router.post("/events/publish/{eventId}")
 async def events_publish(event_id: str, db: Session = Depends(get_db)) -> PublishEventResponse:
     return PublishEventResponse(name="Publish", message="Job queued", url="", id="")
 
 
-@router.post("/events/unpublish/{event_id}")
+@router.post("/events/unpublish/{eventId}")
 async def events_unpublish(event_id: str, db: Session = Depends(get_db)) -> UnpublishEventResponse:
     return UnpublishEventResponse(
         saved=True,
@@ -178,7 +178,7 @@ async def events_unpublish(event_id: str, db: Session = Depends(get_db)) -> Unpu
     )
 
 
-@router.post("/events/addTag/{event_id}/{tag_id}/local:{local}")
+@router.post("/events/addTag/{eventId}/{tagId}/local:{local}")
 async def events_addTag(
     event_id: str, tag_id: str, local: int, db: Session = Depends(get_db)
 ) -> AddRemoveTagEventsResponse:
@@ -187,14 +187,14 @@ async def events_addTag(
     )
 
 
-@router.post("/events/removeTag/{event_id}/{tag_id}")
+@router.post("/events/removeTag/{eventId}/{tagId}")
 async def events_removeTag(event_id: str, tag_id: str, db: Session = Depends(get_db)) -> AddRemoveTagEventsResponse:
     return AddRemoveTagEventsResponse(
         saved=True, success="Tag added", check_publish=True, errors="Tag could not be added."
     )
 
 
-@router.post("/events/freeTextImport/{event_id}")
+@router.post("/events/freeTextImport/{eventId}")
 async def events_freeTextImport(
     event_id: str, body: AddAttributeViaFreeTextImportEventBody, db: Session = Depends(get_db)
 ) -> AddAttributeViaFreeTextImportEventResponse:
