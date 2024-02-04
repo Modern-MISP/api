@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 
-class GetAllAttributesAttributes(BaseModel):
+class GetAllAttributesResponse(BaseModel):
     id: str
     event_id: str
     object_id: str
@@ -21,10 +21,6 @@ class GetAllAttributesAttributes(BaseModel):
     disable_correlation: bool
     first_seen: str
     last_seen: str
-
-
-class GetAllAttributesResponse(BaseModel):
-    attribute: list[GetAllAttributesAttributes]
 
     class Config:
         orm_mode = True

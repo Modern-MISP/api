@@ -2,15 +2,13 @@ from pydantic import BaseModel
 
 
 class AddAttributeBody(BaseModel):
-    # -- mandatory
     value: str
     type: str
-    # -- optional
-    category: str
-    to_ids: bool
-    distribution: str
-    comment: str
-    disable_correlation: bool
+    category: str | None = None
+    to_ids: bool | None = None
+    distribution: str | None = None
+    comment: str | None = None
+    disable_correlation: bool | None = None
 
     class Config:
         orm_mode = True

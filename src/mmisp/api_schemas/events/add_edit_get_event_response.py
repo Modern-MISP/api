@@ -27,6 +27,21 @@ class AddEditGetEventEventReport(BaseModel):
     deleted: bool
 
 
+class AddEditGetEventTag(BaseModel):
+    id: str
+    name: str
+    colour: str
+    exportable: str
+    user_id: str
+    hide_tag: bool
+    numerical_value: int
+    is_galaxy: bool
+    is_costum_galaxy: bool
+    local_only: bool
+    local: int
+    relationship_type: str
+
+
 class AddEditGetEventAttributes(BaseModel):
     id: str
     orgc_id: str
@@ -57,6 +72,7 @@ class AddEditGetEventAttributes(BaseModel):
     Object: list[str]
     EventReport: list[AddEditGetEventEventReport]
     CryptographicKey: list[str]
+    Tag: list[AddEditGetEventTag]
 
 
 class AddEditGetEventResponse(BaseModel):

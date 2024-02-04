@@ -14,7 +14,7 @@ class EditAttributeTag(BaseModel):
     local_only: bool
 
 
-class EditAttributeResponse(BaseModel):
+class EditAttributeAttributes(BaseModel):
     id: str
     event_id: str
     object_id: str
@@ -33,6 +33,10 @@ class EditAttributeResponse(BaseModel):
     first_seen: str
     last_seen: str
     Tag: list[EditAttributeTag]  # new
+
+
+class EditAttributeResponse(BaseModel):
+    Attribute: EditAttributeAttributes
 
     class Config:
         orm_mode = True

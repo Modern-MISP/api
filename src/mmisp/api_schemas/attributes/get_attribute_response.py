@@ -10,7 +10,7 @@ class GetAttributeTag(BaseModel):
     local: bool
 
 
-class GetAttributeResponse(BaseModel):
+class GetAttributeAttributes(BaseModel):
     id: str
     event_id: str
     object_id: str
@@ -30,6 +30,10 @@ class GetAttributeResponse(BaseModel):
     last_seen: str
     event_uuid: str  # new
     Tag: list[GetAttributeTag]  # new
+
+
+class GetAttributeResponse(BaseModel):
+    Attribute: GetAttributeAttributes
 
     class Config:
         orm_mode = True
