@@ -75,7 +75,7 @@ async def attributes_post(event_id: str, body: AddAttributeBody, db: Session = D
 @router.get("/attributes/view/{attribute_id}", summary="Get an Attribute by its ID", deprecated=True)  # deprecated
 @router.get("/attributes/{attribute_id}", summary="Get an Attribute by its ID")  # new
 async def attributes_getById(attribute_id: str, db: Session = Depends(get_db)) -> GetAttributeResponse:
-    return GetAttributeResponse(Tag=[])
+    return GetAttributeResponse()
     # attribute = (
     #     db.query(AttributeGetById).filter(AttributeGetById.id == attribute_id).first()
     # )
@@ -92,7 +92,7 @@ async def attributes_getById(attribute_id: str, db: Session = Depends(get_db)) -
 async def attributes_put(
     attribute_id: str, body: EditAttributeBody, db: Session = Depends(get_db)
 ) -> EditAttributeResponse:
-    return EditAttributeResponse(id="")
+    return EditAttributeResponse()
 
 
 # - Deleting a {resource}
@@ -108,8 +108,8 @@ async def attributes_delete(attribute_id: str, db: Session = Depends(get_db)) ->
 
 
 @router.get("/attributes", summary="Get all Attributes")
-async def attributes_get(db: Session = Depends(get_db)) -> GetAllAttributesResponse:
-    return GetAllAttributesResponse(attribute=[])
+async def attributes_get(db: Session = Depends(get_db)) -> list[GetAllAttributesResponse]:
+    return list[GetAllAttributesResponse()]
     # try:
     #     attributes = db.query(Attribute).all()
     #     return attributes
@@ -136,7 +136,7 @@ async def attributes_deleteSelected(
 
 @router.post("/attributes/restSearch", summary="Get a filtered and paginated list of attributes")
 async def attributes_reastSearch(body: SearchAttributesBody, db: Session = Depends(get_db)) -> SearchAttributesResponse:
-    return SearchAttributesResponse(id="")
+    return {"response": {"Attribute": list[SearchAttributesResponse()]}}
 
 
 @router.get(
