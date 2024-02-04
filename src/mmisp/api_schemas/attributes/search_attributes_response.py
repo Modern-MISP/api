@@ -1,4 +1,6 @@
-from pydantic import BaseModel
+from typing import Annotated
+
+from pydantic import BaseModel, Field
 
 from .get_attribute_response import GetAttributeTag
 
@@ -51,7 +53,7 @@ class SearchAttributesObject(BaseModel):
     last_seen: str
 
 
-class SearchAttributesResponse(BaseModel):
+class SearchAttributesAttributesDetails(BaseModel):
     id: str
     event_id: str
     object_id: str
@@ -72,6 +74,14 @@ class SearchAttributesResponse(BaseModel):
     Event: SearchAttributesEvent
     Object: SearchAttributesObject
     Tag: list[GetAttributeTag]
+
+
+class SearchAttributesAttributes(BaseModel):
+    attributes: Annotated[SearchAttributesAttributesDetails, Field(alias="Attribute")]
+
+
+class SearchAttributesResponse:
+    response: list[SearchAttributesAttributes]
 
     class Config:
         orm_mode = True

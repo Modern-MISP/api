@@ -15,6 +15,32 @@ class AddEditGetEventShadowAttribute(BaseModel):
     category: str
 
 
+class AddEditGetEventRelatedEventAttributesOrg(BaseModel):
+    id: str
+    name: str
+    uuid: str
+
+
+class AddEditGetEventRelatedEventAttributes(BaseModel):
+    id: str
+    date: str
+    threat_level_id: str
+    info: str
+    published: str
+    uuid: str
+    analysis: str
+    timestamp: str
+    distribution: str
+    org_id: str
+    orgc_id: str
+    Org: AddEditGetEventRelatedEventAttributesOrg
+    Orgc: AddEditGetEventRelatedEventAttributesOrg
+
+
+class AddEditGetEventRelatedEvent(BaseModel):
+    Event: AddEditGetEventRelatedEventAttributes
+
+
 class AddEditGetEventEventReport(BaseModel):
     id: str
     uuid: str
@@ -67,7 +93,7 @@ class AddEditGetEventAttributes(BaseModel):
     Orgc: AddEditGetEventOrg
     Attribute: list[str]
     ShadowAttribute: list[AddEditGetEventShadowAttribute]
-    RelatedEvent: list[str]
+    RelatedEvent: list[AddEditGetEventEventReport]
     Galaxy: list[str]
     Object: list[str]
     EventReport: list[AddEditGetEventEventReport]

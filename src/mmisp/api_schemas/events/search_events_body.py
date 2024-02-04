@@ -25,7 +25,7 @@ class SearchEventsBody(BaseModel):
     published: bool | None = None
     enforceWarninglist: bool | None = None
     sgReferenceOnly: bool | None = None
-    requested_attributes: [str] | None = None
+    requested_attributes: list[str] | None = None
     includeContext: bool | None = None
     headerless: bool | None = None
     includeWarninglistHits: bool | None = None
