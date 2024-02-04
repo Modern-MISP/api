@@ -2,9 +2,8 @@ from pydantic import BaseModel
 
 
 class DeleteSelectedAttributeBody(BaseModel):
-    id: str  # mandatory (id = "all" deletes all attributes in the event)
-    event_id: str  # mandatory
-    allow_hard_delete: bool  # optional
+    id: str  # id = "all" deletes all attributes in the event
+    allow_hard_delete: bool | None = None
 
     class Config:
         orm_mode = True
