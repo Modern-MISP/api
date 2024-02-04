@@ -13,19 +13,19 @@ from mmisp.api_schemas.feeds.toggle_feed_body import FeedToggleBody
 from mmisp.db.database import get_db
 from mmisp.db.models.feed import Feed
 
-router = APIRouter(prefix="/feeds", tags=["feeds"])
+router = APIRouter(tags=["feeds"])
 
 
 # Sorted according to CRUD
 
 
 @router.post(
-    "/add",
+    "/feeds/add",
     deprecated=True,
     summary="Add new feed (Deprecated)",
     description="Deprecated. Add a new feed with given details using the old route.",
 )
-@router.post("/", summary="Add new feed", description="Add a new feed with given details.")
+@router.post("/feeds/", summary="Add new feed", description="Add a new feed with given details.")
 async def add_feed(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.ADD]))],
     body: FeedCreateAndUpdateBody,
@@ -98,7 +98,7 @@ async def add_feed(
 
 
 @router.post(
-    "/enable/{feedId}",
+    "/feeds/enable/{feedId}",
     deprecated=True,
     summary="Enable feed (Deprecated)",
     description="Deprecated. Enable a specific feed by its ID using the old route.",
@@ -124,7 +124,7 @@ async def enable_feed(
 
 
 @router.post(
-    "/disable/{feedId}",
+    "/feeds/disable/{feedId}",
     deprecated=True,
     summary="Disable feed (Deprecated)",
     description="Deprecated. Disable a specific feed by its ID using the old route.",
@@ -150,7 +150,7 @@ async def disable_feed(
 
 
 @router.post(  # TODO @worker
-    "/cacheFeeds/{cacheFeedsScope}", summary="Cache feeds", description="Cache feeds based on a specific scope."
+    "/feeds/cacheFeeds/{cacheFeedsScope}", summary="Cache feeds", description="Cache feeds based on a specific scope."
 )
 async def cache_feeds(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.ADD]))],
@@ -177,13 +177,13 @@ async def cache_feeds(
 
 
 @router.post(  # TODO @worker
-    "/fetchFromFeed/{feedId}",
+    "/feeds/fetchFromFeed/{feedId}",
     deprecated=True,
     summary="Fetch from feed (Deprecated)",
     description="Deprecated. Fetch data from a specific feed by its ID using the old route.",
 )
 @router.get(
-    "/fetchFromFeed/{feedId}", summary="Fetch from feed", description="Fetch data from a specific feed by its ID."
+    "/feeds/fetchFromFeed/{feedId}", summary="Fetch from feed", description="Fetch data from a specific feed by its ID."
 )
 async def fetch_from_feed(
     db: Session = Depends(get_db),
@@ -199,12 +199,12 @@ async def fetch_from_feed(
 
 
 @router.get(
-    "/view/{feedId}",
+    "/feeds/view/{feedId}",
     deprecated=True,
     summary="Get feed details (Deprecated)",
     description="Deprecated. Retrieve details of a specific feed by its ID using the old route.",
 )
-@router.get("/{feedId}", summary="Get feed details", description="Retrieve details of a specific feed by its ID.")
+@router.get("/feeds/{feedId}", summary="Get feed details", description="Retrieve details of a specific feed by its ID.")
 async def get_feed_details(
     db: Session = Depends(get_db),
     feed_id: str = Path(..., alias="feedId"),
@@ -248,12 +248,12 @@ async def get_feed_details(
 
 
 @router.put(
-    "/edit/{feedId}",
+    "/feeds/edit/{feedId}",
     deprecated=True,
     summary="Update feed (Deprecated)",
     description="Deprecated. Update an existing feed by its ID using the old route.",
 )
-@router.put("/{feedId}", summary="Update feed", description="Update an existing feed by its ID.")
+@router.put("/feeds/{feedId}", summary="Update feed", description="Update an existing feed by its ID.")
 async def update_feed(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
     body: FeedCreateAndUpdateBody,
@@ -330,7 +330,9 @@ async def update_feed(
 
 
 @router.patch(
-    "/{feedId}", summary="Toggle feed status", description="Toggle the status of a feed between enabled and disabled."
+    "/feeds/{feedId}",
+    summary="Toggle feed status",
+    description="Toggle the status of a feed between enabled and disabled.",
 )
 async def toggle_feed(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
@@ -362,12 +364,14 @@ async def toggle_feed(
 
 
 @router.post(  # TODO
-    "/fetchFromAllFeeds",
+    "/feeds/fetchFromAllFeeds",
     deprecated=True,
     summary="Fetch from all feeds (Deprecated)",
     description="Deprecated. Fetch data from all available feeds using the old route.",
 )
-@router.get("/fetchFromAllFeeds", summary="Fetch from all feeds", description="Fetch data from all available feeds.")
+@router.get(
+    "/feeds/fetchFromAllFeeds", summary="Fetch from all feeds", description="Fetch data from all available feeds."
+)
 async def fetch_data_from_all_feeds(db: Session = Depends(get_db)) -> FeedFetchResponse:
     feeds = db.query(Feed).all()  # noqa: F841
 
@@ -378,7 +382,7 @@ async def fetch_data_from_all_feeds(db: Session = Depends(get_db)) -> FeedFetchR
     return FeedFetchResponse(result=fetched_data)
 
 
-@router.get("/", summary="Get all feeds", description="Retrieve a list of all feeds.")
+@router.get("/feeds/", summary="Get all feeds", description="Retrieve a list of all feeds.")
 async def get_feeds(db: Session = Depends(get_db)) -> list[FeedResponse]:
     feeds = db.query(Feed).all()
 

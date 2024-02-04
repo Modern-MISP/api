@@ -1,4 +1,4 @@
-from sqlalchemy import BigInteger, Boolean, Column, ForeignKey, Integer, String
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
 from mmisp.util.uuid import uuid
@@ -12,41 +12,26 @@ class Object(Base):
     id = Column(Integer, primary_key=True)
     uuid = Column(String(255), unique=True, default=uuid)
     name = Column(String(255), index=True)
-    meta_category = Column(String(255), index=True)
     description = Column(String(255))
-    template_uuid = Column(String(255), index=True)
-    template_version = Column(Integer, index=True)
-    event_id = Column(Integer, index=True)
-    timestamp = Column(Integer, index=True)
+    template_id = Column(Integer, ForeignKey("object_templates.id"))
+    event_id = Column(Integer, ForeignKey("events.id"))
+    meta_category = Column(String(255), index=True)
     distribution = Column(Integer, index=True)
+    deleted = Column(Boolean)
     sharing_group_id = Column(Integer, index=True)
     comment = Column(String(255))
-    deleted = Column(Boolean)
-    first_seen = Column(BigInteger, index=True)
-    last_seen = Column(BigInteger, index=True)
+    first_seen = Column(String(255), index=True)
+    last_seen = Column(String(255), index=True)
 
-    attributes = relationship("ObjectAttribute", backref="object")
+    attributes = relationship("Attribute", backref="attribute")
 
 
-class ObjectAttribute(Base):
-    __tablename__ = "object_attributes"
+class ObjectTemplate(Base):
+    __tablename__ = "object_templates"
 
     id = Column(Integer, primary_key=True)
     uuid = Column(String(255), unique=True, default=uuid)
-    event_id = Column(Integer, index=True)
-    object_id = Column(Integer, ForeignKey(Object.id), index=True)
-    object_relation = Column(String(255))
-    category = Column(String(255))
-    type = Column(String(255))
-    value1 = Column(String(255))
-    value2 = Column(String(255))
-    attribute_tag = Column(String(255))
-    to_ids = Column(Integer)
-    timestamp = Column(Integer)
-    distribution = Column(Integer)
-    sharing_group_id = Column(Integer, index=True)
-    comment = Column(String(255))
-    deleted = Column(Boolean)
-    disable_correlation = Column(Boolean)
-    first_seen = Column(BigInteger, index=True)
-    last_seen = Column(BigInteger, index=True)
+    name = Column(String(255))
+    version = Column(String(255))
+    description = Column(String(255))
+    meta_category = Column(String(255))

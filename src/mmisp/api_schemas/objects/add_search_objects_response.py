@@ -1,16 +1,15 @@
 from pydantic import BaseModel
 
 from mmisp.api_schemas.attributes.get_all_attributes_response import GetAllAttributesResponse
-from mmisp.api_schemas.events.get_event_response import ObjectEventResponse
 
 
-class ObjectWithAttributesAndEventResponse(BaseModel):
+class ObjectWithAttributesSearchResponse(BaseModel):
     id: str
-    name: str
     description: str
+    name: str
     meta_category: str
-    event_id: str
     distribution: str
+    event_id: str | None = None
     template_uuid: str | None = None
     template_version: str | None = None
     uuid: str | None = None
@@ -21,11 +20,17 @@ class ObjectWithAttributesAndEventResponse(BaseModel):
     first_seen: str | None = None
     last_seen: str | None = None
     attributes: list[GetAllAttributesResponse] | None = None
-    event: ObjectEventResponse | None = None
 
 
-class ObjectViewResponse(BaseModel):
-    object: ObjectWithAttributesAndEventResponse
+class ObjectResponse(BaseModel):
+    object: ObjectWithAttributesSearchResponse
+
+    class Config:
+        orm_mode = True
+
+
+class ObjectSearchResponse(BaseModel):
+    response: list[ObjectResponse]
 
     class Config:
         orm_mode = True
