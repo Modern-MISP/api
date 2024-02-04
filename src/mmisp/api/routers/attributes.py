@@ -135,7 +135,7 @@ async def attributes_deleteSelected(
 
 
 @router.post("/attributes/restSearch", summary="Get a filtered and paginated list of attributes")
-async def attributes_reastSearch(body: SearchAttributesBody, db: Session = Depends(get_db)) -> SearchAttributesResponse:
+async def attributes_reastSearch(body: SearchAttributesBody, db: Session = Depends(get_db)) -> dict:
     return {"response": {"Attribute": list[SearchAttributesResponse()]}}
 
 
