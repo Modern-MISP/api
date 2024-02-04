@@ -24,51 +24,51 @@ class SearchAttributesModelOverrides(BaseModel):
 
 class SearchAttributesBody(BaseModel):
     returnFormat: str
-    page: int
-    limit: int
-    value: str
-    value1: str
-    value2: str
-    type: str
-    category: str
-    org: str
-    tags: list[str]
-    from_: str
-    to: str
-    last: int
-    eventid: str
-    withAttachments: bool
-    uuid: str
-    publish_timestamp: str
-    published: bool
-    timestamp: str
-    attribute_timestamp: str
-    enforceWarninglist: bool
-    to_ids: bool
-    deleted: bool
-    event_timestamp: str
-    threat_level_id: str
-    eventinfo: str
-    sharinggroup: list[str]
-    decayingModel: str
-    score: str
-    first_seen: str
-    last_seen: str
-    includeEventUuid: bool
-    includeEventTags: bool
-    includeProposals: bool
-    requested_attributes: list[str]
-    includeContext: bool
-    headerless: bool
-    includeWarninglistHits: bool
-    attackGalaxy: str
-    object_relation: str
-    includeSightings: bool
-    includeCorrelations: bool
-    modelOverrides: SearchAttributesModelOverrides
-    includeDecayScore: bool
-    includeFullModel: bool
-    excludeDecayed: bool
+    page: int | None = None
+    limit: int | None = None
+    value: str | None = None
+    value1: str | None = None
+    value2: str | None = None
+    type: str | None = None
+    category: str | None = None
+    org: str | None = None
+    tags: list[str] | None = None
+    from_: str | None = None
+    to: str | None = None
+    last: int | None = None
+    eventid: str | None = None
+    withAttachments: bool | None = None
+    uuid: str | None = None
+    publish_timestamp: str | None = None
+    published: bool | None = None
+    timestamp: str | None = None
+    attribute_timestamp: str | None = None
+    enforceWarninglist: bool | None = None
+    to_ids: bool | None = None
+    deleted: bool | None = None
+    event_timestamp: str | None = None
+    threat_level_id: str | None = None
+    eventinfo: str | None = None
+    sharinggroup: list[str] | None = None
+    decayingModel: str | None = None
+    score: str | None = None
+    first_seen: str | None = None
+    last_seen: str | None = None
+    includeEventUuid: bool | None = None
+    includeEventTags: bool | None = None
+    includeProposals: bool | None = None
+    requested_attributes: list[str] | None = None
+    includeContext: bool | None = None
+    headerless: bool | None = None
+    includeWarninglistHits: bool | None = None
+    attackGalaxy: str | None = None
+    object_relation: str | None = None
+    includeSightings: bool | None = None
+    includeCorrelations: bool | None = None
+    modelOverrides: SearchAttributesModelOverrides | None = None
+    includeDecayScore: bool | None = None
+    includeFullModel: bool | None = None
+    excludeDecayed: bool | None = None
 
     class Config:
         orm_mode = True

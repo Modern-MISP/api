@@ -1,10 +1,12 @@
-from pydantic import BaseModel
+from typing import Any, Dict, Optional
+
+from pydantic import BaseModel, root_validator
 
 
 class AddAttributeBody(BaseModel):
     type: str
-    value: str
-    value1: str | None = None
+    value: Optional[str]
+    value1: Optional[str]
     value2: str | None = None
     event_id: str | None = None
     object_id: str | None = None
@@ -21,6 +23,13 @@ class AddAttributeBody(BaseModel):
     first_seen: str | None = None
     last_seen: str | None = None
     event_uuid: str | None = None
+
+    @root_validator
+    def ensure_value_or_value1_is_set(cls, data: Dict[str, Any]) -> None:  # noqa: ANN101
+        required_values: list[str] = [data.get("value"), data.get("value1")]
+        if all(item is None for item in required_values):
+            raise ValueError("value or value1 has to be set")
+        return data
 
     class Config:
         orm_mode = True
