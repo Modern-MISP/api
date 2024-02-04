@@ -1,5 +1,3 @@
-import random
-import string
 from typing import Any, Dict, Generator
 
 import pytest
@@ -29,14 +27,10 @@ def feed_data(request: Any) -> Dict[str, Any]:
     return request.param
 
 
-def random_string(length: int = 10) -> str:
-    return "".join(random.choices(string.ascii_letters + string.digits, k=length))
-
-
 # --- Test cases ---
 
 
-# Test adding a feed
+# Test add a feed
 def test_add_feed(feed_data: Dict[str, Any]) -> None:
     headers = {"authorization": environment.site_admin_user_token}
     response = client.post("/feeds/", json=feed_data, headers=headers)
@@ -251,7 +245,7 @@ def test_update_feed_authorization(feed_test_ids: Dict[str, Any], feed_data: Dic
     assert response.status_code == 401
 
 
-# Test toggel feed
+# Test toggle feed
 def test_toggle_existing_feed(feed_test_ids: Dict[str, Any]) -> None:
     toggle_data = {"enable": True}
     headers = {"authorization": environment.site_admin_user_token}
@@ -280,7 +274,7 @@ def test_toggle_feed_response_format(feed_test_ids: Dict[str, Any]) -> None:
 def test_toggle_feed_scenarios(feed_test_ids: Dict[str, Any]) -> None:
     headers = {"authorization": environment.site_admin_user_token}
 
-    # Activating the feed
+    # Activate the feed
     response = client.patch(f"/feeds/{feed_test_ids['valid_feed_id']}", json={"enable": True}, headers=headers)
     assert response.status_code == 200
     assert response.json()["message"] in ["Feed enabled successfully", "Feed already enabled"]
@@ -290,7 +284,7 @@ def test_toggle_feed_scenarios(feed_test_ids: Dict[str, Any]) -> None:
     assert response.status_code == 200
     assert response.json()["message"] == "Feed already enabled"
 
-    # Deactivating the feed
+    # Deactivate the feed
     response = client.patch(f"/feeds/{feed_test_ids['valid_feed_id']}", json={"enable": False}, headers=headers)
     assert response.status_code == 200
     assert response.json()["message"] in ["Feed disabled successfully", "Feed already disabled"]
