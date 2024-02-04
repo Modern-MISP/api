@@ -1,40 +1,74 @@
-from pydantic import BaseModel
+from typing import Annotated
+
+from pydantic import BaseModel, Field
+
+
+class SearchAttributesModelOverridesBaseScoreConfig(BaseModel):
+    estimative_language_confidence_in_analytic_judgment: Annotated[
+        int, Field(alias="estimative-language:confidence-in-analytic-judgment")
+    ]
+    estimative_language_likelihood_probability: Annotated[
+        int, Field(alias="estimative-language:likelihood-probability")
+    ]
+    phishing_psychological_acceptability: Annotated[int, Field(alias="phishing:psychological-acceptability")]
+    phishing_state: Annotated[int, Field(alias="phishing:state")]
+
+
+class SearchAttributesModelOverrides(BaseModel):
+    lifetime: int
+    decay_speed: int
+    threshold: int
+    default_base_score: int
+    base_score_config: SearchAttributesModelOverridesBaseScoreConfig
 
 
 class SearchAttributesBody(BaseModel):
     returnFormat: str
-    page: int | None = None
-    limit: int | None = None
-    value: str | None = None
-    type: str | None = None
-    category: str | None = None
-    org: str | None = None
-    tags: list[str] | None = None
-    date: str | None = None
-    last: str | None = None
-    event_id: str | None = None
-    withAttachments: bool | None = None
-    uuid: str | None = None
-    publish_timestamp: str | None = None
-    timestamp: str | None = None
-    attribute_timestamp: str | None = None
-    enforceWarninglist: bool | None = None
-    to_ids: bool | None = None
-    deleted: bool | None = None
-    includeEventUuid: bool | None = None
-    includeEventTags: bool | None = None
-    event_timestamp: str | None = None
-    threat_level_id: str | None = None
-    eventinfo: str | None = None
-    sharinggroup: str | None = None
-    includeProposals: bool | None = None
-    includeDecayScore: bool | None = None
-    includeFullModel: bool | None = None
-    decayingModel: str | None = None
-    excludeDecayed: bool | None = None
-    score: str | None = None
-    first_seen: str | None = None
-    last_seen: str | None = None
+    page: int
+    limit: int
+    value: str
+    value1: str
+    value2: str
+    type: str
+    category: str
+    org: str
+    tags: list[str]
+    from_: str
+    to: str
+    last: int
+    eventid: str
+    withAttachments: bool
+    uuid: str
+    publish_timestamp: str
+    published: bool
+    timestamp: str
+    attribute_timestamp: str
+    enforceWarninglist: bool
+    to_ids: bool
+    deleted: bool
+    event_timestamp: str
+    threat_level_id: str
+    eventinfo: str
+    sharinggroup: list[str]
+    decayingModel: str
+    score: str
+    first_seen: str
+    last_seen: str
+    includeEventUuid: bool
+    includeEventTags: bool
+    includeProposals: bool
+    requested_attributes: list[str]
+    includeContext: bool
+    headerless: bool
+    includeWarninglistHits: bool
+    attackGalaxy: str
+    object_relation: str
+    includeSightings: bool
+    includeCorrelations: bool
+    modelOverrides: SearchAttributesModelOverrides
+    includeDecayScore: bool
+    includeFullModel: bool
+    excludeDecayed: bool
 
     class Config:
         orm_mode = True

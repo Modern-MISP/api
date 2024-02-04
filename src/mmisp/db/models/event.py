@@ -14,6 +14,7 @@ class Event(Base):
     uuid = Column(String(255), unique=True, default=uuid)
     org_id = Column(Integer, ForeignKey(Organisation.id))  # owner org
     orgc_id = Column(Integer, ForeignKey(Organisation.id))  # creator org
+    info = Column(String(255))
     distribution = Column(String(255))
     date = Column(String(255))
     published = Column(Boolean)
@@ -30,7 +31,7 @@ class Event(Base):
     extends_uuid = Column(String(255))
     event_creator_email = Column(String(255))
     protected = Column(Boolean)
-    cryptographicKey = Column(String(255))  # must be serialized
+    cryptographic_key = Column(String(255))  # must be serialized
 
 
 class EventReport(Base):
