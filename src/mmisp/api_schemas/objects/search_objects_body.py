@@ -2,69 +2,69 @@ from pydantic import BaseModel
 
 
 class ObjectModelSearchOverridesBody(BaseModel):
-    lifetime: int
-    decay_speed: float
-    threshold: int
-    default_base_score: int
-    base_score_config: dict[str, float]
+    lifetime: int | None = None
+    decay_speed: float | None = None
+    threshold: int | None = None
+    default_base_score: int | None = None
+    base_score_config: dict[str, float] | None = None
 
 
 class ObjectSearchBody(BaseModel):
-    page: int
-    limit: int
-    quickFilter: str
-    searchall: str
-    timestamp: str
-    object_name: str
-    object_template_uuid: str
-    object_template_version: str
-    eventid: str
-    eventinfo: str
-    ignore: bool
-    from_: str  # 'from' is a reserved word in Python, so an underscore is added
-    to: str
-    date: str
-    tags: list[str]
-    last: int
-    event_timestamp: str
-    publish_timestamp: str
-    org: str
-    uuid: str
-    value: str  # omitted
-    value1: str  # new
-    value2: str  # new
-    type: str
-    category: str
-    object_relation: str
-    attribute_timestamp: str
-    first_seen: str
-    last_seen: str
-    comment: str
-    to_ids: bool
-    published: bool
-    deleted: bool
-    withAttachments: bool
-    enforceWarninglist: bool
-    includeAllTags: bool
-    includeEventUuid: bool
-    include_event_uuid: bool
-    includeEventTags: bool
-    includeProposals: bool
-    includeWarninglistHits: bool
-    includeContext: bool
-    includeSightings: bool
-    includeSightingdb: bool
-    includeCorrelations: bool
-    includeDecayScore: bool
-    includeFullModel: bool
-    allow_proposal_blocking: bool
-    metadata: bool
-    attackGalaxy: str
-    excludeDecayed: bool
-    decayingModel: str
-    modelOverrides: ObjectModelSearchOverridesBody
-    score: str
-    returnFormat: str
+    page: int | None = None
+    limit: int | None = None
+    quickFilter: str | None = None
+    searchall: str | None = None
+    timestamp: str | None = None
+    object_name: str | None = None
+    object_template_uuid: str | None = None
+    object_template_version: str | None = None
+    eventid: str | None = None
+    eventinfo: str | None = None
+    ignore: bool | None = None
+    from_: str | None = None  # ? 'from' is a reserved word in Python, so an underscore is added
+    to: str | None = None
+    date: str | None = None
+    tags: list[str] | None = None
+    last: int | None = None
+    event_timestamp: str | None = None
+    publish_timestamp: str | None = None
+    org: str | None = None
+    uuid: str | None = None
+    value: str | None = None  # depricated
+    value1: str | None = None  # new
+    value2: str | None = None  # new
+    type: str | None = None
+    category: str | None = None
+    object_relation: str | None = None
+    attribute_timestamp: str | None = None
+    first_seen: str | None = None
+    last_seen: str | None = None
+    comment: str | None = None
+    to_ids: bool | None = None
+    published: bool | None = None
+    deleted: bool | None = None
+    withAttachments: bool | None = None
+    enforceWarninglist: bool | None = None
+    includeAllTags: bool | None = None
+    includeEventUuid: bool | None = None
+    include_event_uuid: bool | None = None
+    includeEventTags: bool | None = None
+    includeProposals: bool | None = None
+    includeWarninglistHits: bool | None = None
+    includeContext: bool | None = None
+    includeSightings: bool | None = None
+    includeSightingdb: bool | None = None
+    includeCorrelations: bool | None = None
+    includeDecayScore: bool | None = None
+    includeFullModel: bool | None = None
+    allow_proposal_blocking: bool | None = None
+    metadata: bool | None = None
+    attackGalaxy: str | None = None
+    excludeDecayed: bool | None = None
+    decayingModel: str | None = None
+    modelOverrides: ObjectModelSearchOverridesBody | None = None
+    score: str | None = None
+    returnFormat: str | None = "json"
 
     class Config:
         orm_mode = True
