@@ -29,9 +29,9 @@ async def galaxies_import(
 # - Read / Get a {resource}
 
 
-@router.get("/galaxies/view/{galaxy_id}", deprecated=True)  # deprecated
-@router.get("/{galaxy_id}")  # new
-async def galaxies_getById(db: Session = Depends(get_db)) -> GetGalaxyResponse:
+@router.get("/galaxies/view/{galaxyId}", deprecated=True)  # deprecated
+@router.get("/{galaxyId}")  # new
+async def galaxies_getBy_id(db: Session = Depends(get_db)) -> GetGalaxyResponse:
     return GetGalaxyResponse()
 
 
@@ -46,8 +46,8 @@ async def galaxies_update(db: Session = Depends(get_db)) -> DeleteForceUpdateImp
 # - Deleting a {resource}
 
 
-@router.delete("/galaxies/delete/{galaxy_id}", deprecated=True)  # deprecated
-@router.delete("/galaxies/{galaxy_id}")  # new
+@router.delete("/galaxies/delete/{galaxyId}", deprecated=True)  # deprecated
+@router.delete("/galaxies/{galaxyId}")  # new
 async def galaxies_delete(galagxy_id: str, db: Session = Depends(get_db)) -> DeleteForceUpdateImportGalaxyResponse:
     return DeleteForceUpdateImportGalaxyResponse()
 
@@ -68,14 +68,14 @@ async def galaxies_post(body: SearchGalaxiesBody, db: Session = Depends(get_db))
     return list[GetAllSearchGalaxiesResponse()]
 
 
-@router.post("/galaxies/export/{galaxy_id}")
+@router.post("/galaxies/export/{galaxyId}")
 async def galaxies_export(
     galagxy_id: str, body: ExportGalaxyBody, db: Session = Depends(get_db)
 ) -> ExportGalaxyResponse:
     return ExportGalaxyResponse()
 
 
-@router.post("/galaxies/attachCluster/{attachTarget_id}/{attachTargetType}/local:{local}")
+@router.post("/galaxies/attachCluster/{attachTargetId}/{attachTargetType}/local:{local}")
 async def galaxies_attachCluster(
     attachTarget_id: str,
     attachTargetType: str,
