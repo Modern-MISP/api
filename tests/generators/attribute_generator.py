@@ -1,3 +1,5 @@
+from typing import Any, Dict
+
 from mmisp.api_schemas.attributes.add_attribute_body import AddAttributeBody
 from mmisp.api_schemas.attributes.delete_selected_attribute_body import DeleteSelectedAttributeBody
 from mmisp.api_schemas.attributes.edit_attribute_body import EditAttributeBody
@@ -16,8 +18,8 @@ def generate_valid_add_attribute_data() -> AddAttributeBody:
     )
 
 
-def generate_missing_required_field_add_attribute_data() -> AddAttributeBody:
-    return AddAttributeBody(value="1.2.3.4")
+# def generate_missing_required_field_add_attribute_data() -> AddAttributeBody:
+#     return AddAttributeBody(value="1.2.3.4")
 
 
 def generate_invalid_required_field_add_attribute_data() -> AddAttributeBody:
@@ -63,5 +65,13 @@ def generate_invalid_search_attributes_data() -> SearchAttributesBody:
     return SearchAttributesBody(returnFormat="invalid format")
 
 
-def generate_missing_required_field_search_attribute_data() -> SearchAttributesBody:
-    return SearchAttributesBody(limit=5)
+# def generate_missing_required_field_search_attribute_data() -> SearchAttributesBody:
+#     return SearchAttributesBody(limit=5)
+
+
+def generate_valid_context_and_percentage_attribute_statistics() -> Dict[str, Any]:
+    return {"context": "category", "percentage": 1}
+
+
+def generate_invalid_context_and_percentage_attribute_statistics() -> Dict[str, Any]:
+    return {"context": "invalid context", "percentage": 2}
