@@ -23,7 +23,7 @@ class SearchAttributesModelOverrides(BaseModel):
 
 
 class SearchAttributesBody(BaseModel):
-    returnFormat: str
+    return_format: Annotated[str, Field(alias="returnFormat")]
     page: int | None = None
     limit: int | None = None
     value: str | None = None
@@ -37,38 +37,38 @@ class SearchAttributesBody(BaseModel):
     to: str | None = None
     last: int | None = None
     eventid: str | None = None
-    withAttachments: bool | None = None
+    with_attachments: Annotated[bool | None, Field(alias="withAttachments")] = None
     uuid: str | None = None
     publish_timestamp: str | None = None
     published: bool | None = None
     timestamp: str | None = None
     attribute_timestamp: str | None = None
-    enforceWarninglist: bool | None = None
+    enforce_warninglist: Annotated[bool | None, Field(alias="enforceWarninglist")]
     to_ids: bool | None = None
     deleted: bool | None = None
     event_timestamp: str | None = None
     threat_level_id: str | None = None
     eventinfo: str | None = None
     sharinggroup: list[str] | None = None
-    decayingModel: str | None = None
+    decaying_model: Annotated[str | None, Field(alias="decayingModel")] = None
     score: str | None = None
     first_seen: str | None = None
     last_seen: str | None = None
-    includeEventUuid: bool | None = None
-    includeEventTags: bool | None = None
-    includeProposals: bool | None = None
+    include_event_uuid: Annotated[bool | None, Field(alias="includeEventUuid")] = None
+    include_event_tags: Annotated[bool | None, Field(alias="includeEventTags")] = None
+    include_proposals: Annotated[bool | None, Field(alias="includeProposals")] = None
     requested_attributes: list[str] | None = None
-    includeContext: bool | None = None
+    include_context: Annotated[bool | None, Field(alias="includeContext")] = None
     headerless: bool | None = None
-    includeWarninglistHits: bool | None = None
-    attackGalaxy: str | None = None
+    include_warninglist_hits: Annotated[bool | None, Field(alias="includeWarninglistHits")] = None
+    attack_galaxy: Annotated[str | None, Field(alias="attackGalaxy")] = None
     object_relation: str | None = None
-    includeSightings: bool | None = None
-    includeCorrelations: bool | None = None
-    modelOverrides: SearchAttributesModelOverrides | None = None
-    includeDecayScore: bool | None = None
-    includeFullModel: bool | None = None
-    excludeDecayed: bool | None = None
+    include_sightings: Annotated[bool | None, Field(alias="includeSightings")] = None
+    include_correlations: Annotated[bool | None, Field(alias="includeCorrelations")] = None
+    model_overrides: Annotated[SearchAttributesModelOverrides | None, Field(alias="modelOverrides")] = None
+    include_decay_score: Annotated[bool | None, Field(alias="includeDecayScore")] = None
+    include_full_model: Annotated[bool | None, Field(alias="includeFullModel")] = None
+    exclude_decayed: Annotated[bool | None, Field(alias="excludeDecayed")] = None
 
     class Config:
         orm_mode = True

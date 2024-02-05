@@ -1,4 +1,6 @@
-from pydantic import BaseModel
+from typing import Annotated
+
+from pydantic import BaseModel, Field
 
 
 class EditAttributeTag(BaseModel):
@@ -32,11 +34,11 @@ class EditAttributeAttributes(BaseModel):
     disable_correlation: bool
     first_seen: str
     last_seen: str
-    Tag: list[EditAttributeTag]  # new
+    tag: Annotated[list[EditAttributeTag], Field(alias="Tag")]  # new
 
 
 class EditAttributeResponse(BaseModel):
-    Attribute: EditAttributeAttributes
+    attribute: Annotated[EditAttributeAttributes, Field(alias="Attribute")]
 
     class Config:
         orm_mode = True

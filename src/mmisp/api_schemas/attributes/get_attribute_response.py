@@ -1,4 +1,6 @@
-from pydantic import BaseModel
+from typing import Annotated
+
+from pydantic import BaseModel, Field
 
 
 class GetAttributeTag(BaseModel):
@@ -29,7 +31,7 @@ class GetAttributeAttributes(BaseModel):
     first_seen: str
     last_seen: str
     event_uuid: str  # new
-    Tag: list[GetAttributeTag]  # new
+    tag: Annotated[list[GetAttributeTag], Field(alias="Tag")]  # new
 
 
 class GetAttributeResponse(BaseModel):

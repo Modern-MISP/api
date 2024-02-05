@@ -1,4 +1,6 @@
-from pydantic import BaseModel
+from typing import Annotated
+
+from pydantic import BaseModel, Field
 
 
 class AddAttributeResponse(BaseModel):
@@ -21,7 +23,7 @@ class AddAttributeResponse(BaseModel):
     disable_correlation: bool
     first_seen: str
     last_seen: str
-    AttributeTag: list[str]  # new
+    attribute_tag: Annotated[list[str], Field(alias="AttributeTag")]  # new
 
     class Config:
         orm_mode = True
