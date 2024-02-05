@@ -23,23 +23,19 @@ from mmisp.db.database import get_db
 from mmisp.db.models.attribute import Attribute
 from mmisp.db.models.event import Event
 from mmisp.db.models.object import Object, ObjectTemplate
+from mmisp.util.partial import partial
 
 router = APIRouter(tags=["objects"])
 
 
-# Sorted according to CRUD
+# sorted according to CRUD
 
 
-@router.post(
-    "/objects/add/{eventId}/{objectTemplateId}",
-    deprecated=True,
-    summary="Add object to event (Deprecated)",
-    description="Deprecated. Add an object to an event using the old route.",
-)
 @router.post(
     "/objects/{eventId}/{objectTemplateId}",
     summary="Add object to event",
     description="Add a new object to a specific event using a template.",
+    response_model=partial(ObjectResponse),
 )
 async def add_object(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.ADD]))],
@@ -47,7 +43,128 @@ async def add_object(
     db: Session = Depends(get_db),
     event_id: str = Path(..., alias="eventId"),
     object_template_id: str = Path(..., alias="objectTemplateId"),
-) -> ObjectResponse:
+) -> dict:
+    return await _add_object_internal(body, db, event_id, object_template_id)
+
+
+def apply_search_filter(query: Any, model: Any, search_body: dict[str, Any]) -> Any:
+    for field, value in search_body.items():
+        if value is not None and hasattr(model, field):
+            if isinstance(value, list):
+                query = query.filter(getattr(model, field).in_(value))
+            else:
+                query = query.filter(getattr(model, field) == value)
+
+    return query
+
+
+def build_query(db: Session, search_body: ObjectSearchBody) -> Any:
+    query = db.query(Object)
+    search_criteria = search_body.dict(exclude_none=True)
+    query = apply_search_filter(query, Object, search_criteria)
+
+    return query.all()
+
+
+@router.post(
+    "/objects/restsearch",
+    summary="Search objects",
+    description="Search for objects based on various filters.",
+    # response_model=partial(ObjectSearchResponse),  # todo: partial method does not work yet for this case
+)
+async def restsearch(body: ObjectSearchBody, db: Session = Depends(get_db)) -> dict:
+    return await _restsearch_internal(body, db)
+
+
+@router.get(
+    "/objects/{objectId}",
+    summary="View object details",
+    description="View details of a specific object including its attributes and related event.",
+    response_model=partial(ObjectViewResponse),
+)
+async def get_object_details(
+    db: Session = Depends(get_db),
+    object_id: str = Path(..., alias="objectId"),
+) -> dict:
+    return await _get_object_details_internal(db, object_id)
+
+
+@router.delete(
+    "/objects/{objectId}/{hardDelete}",
+    summary="Delete object",
+    description="Delete a specific object. The hardDelete parameter determines if it's a hard or soft delete.",
+    response_model=partial(ObjectDeleteResponse),
+)
+async def delete_object(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
+    db: Session = Depends(get_db),
+    object_id: str = Path(..., alias="objectId"),
+    hard_delete: str = Path(..., alias="hardDelete"),
+) -> dict:
+    return await _delete_object_internal(db, object_id, hard_delete)
+
+
+# --- depricated ---
+
+
+@router.post(
+    "/objects/add/{eventId}/{objectTemplateId}",
+    deprecated=True,
+    summary="Add object to event (Deprecated)",
+    description="Deprecated. Add an object to an event using the old route.",
+    # response_model=partial(ObjectResponse),  # todo: partial method does not work yet for this case
+)
+async def add_object_depr(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.ADD]))],
+    body: ObjectCreateBody,
+    db: Session = Depends(get_db),
+    event_id: str = Path(..., alias="eventId"),
+    object_template_id: str = Path(..., alias="objectTemplateId"),
+) -> dict:
+    return await _add_object_internal(body, db, event_id, object_template_id)
+
+
+@router.get(
+    "/objects/view/{objectId}",
+    deprecated=True,
+    summary="View object details (Deprecated)",
+    description="Deprecated. View details of a specific object using the old route.",
+    # response_model=partial(ObjectViewResponse),  # todo: partial method does not work yet for this case
+)
+async def get_object_details_depr(
+    db: Session = Depends(get_db),
+    object_id: str = Path(..., alias="objectId"),
+) -> dict:
+    return await _get_object_details_internal(db, object_id)
+
+
+@router.delete(
+    "/objects/delete/{objectId}/{hardDelete}",
+    deprecated=True,
+    summary="Delete object (Deprecated)",
+    description="""
+    Deprecated. Delete a specific object using the old route.
+    The hardDelete parameter determines if it's a hard or soft delete.""",
+    # response_model=partial(ObjectDeleteResponse),  # todo: partial method does not work yet for this case
+)
+async def delete_object_depr(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
+    db: Session = Depends(get_db),
+    object_id: str = Path(..., alias="objectId"),
+    hard_delete: str = Path(..., alias="hardDelete"),
+) -> dict:
+    return await _delete_object_internal(db, object_id, hard_delete)
+
+
+# --- endpoint logic ---
+
+
+async def _add_object_internal(
+    body: ObjectCreateBody,
+    db: Session,
+    event_id: str,
+    object_template_id: str,
+) -> dict:
     template = db.query(ObjectTemplate).filter(ObjectTemplate.id == object_template_id).first()
     if not template:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Object template not found")
@@ -150,29 +267,7 @@ async def add_object(
     return ObjectResponse(object=object_data)
 
 
-def apply_search_filter(query: Any, model: Any, search_body: dict[str, Any]) -> Any:
-    for field, value in search_body.items():
-        if value is not None and hasattr(model, field):
-            if isinstance(value, list):
-                query = query.filter(getattr(model, field).in_(value))
-            else:
-                query = query.filter(getattr(model, field) == value)
-
-    return query
-
-
-def build_query(db: Session, search_body: ObjectSearchBody) -> Any:
-    query = db.query(Object)
-    search_criteria = search_body.dict(exclude_none=True)
-    query = apply_search_filter(query, Object, search_criteria)
-
-    return query.all()
-
-
-@router.post(
-    "/objects/restsearch", summary="Search objects", description="Search for objects based on various filters."
-)
-async def restsearch(body: ObjectSearchBody, db: Session = Depends(get_db)) -> ObjectSearchResponse:
+async def _restsearch_internal(body: ObjectSearchBody, db: Session) -> dict:
     objects = build_query(db, body)
 
     response_objects = []
@@ -225,21 +320,10 @@ async def restsearch(body: ObjectSearchBody, db: Session = Depends(get_db)) -> O
     return ObjectSearchResponse(response=[{"object": res_obj} for res_obj in response_objects])
 
 
-@router.get(
-    "/objects/view/{objectId}",
-    deprecated=True,
-    summary="View object details (Deprecated)",
-    description="Deprecated. View details of a specific object using the old route.",
-)
-@router.get(
-    "/objects/{objectId}",
-    summary="View object details",
-    description="View details of a specific object including its attributes and related event.",
-)
-async def get_object_details(
-    db: Session = Depends(get_db),
-    object_id: str = Path(..., alias="objectId"),
-) -> ObjectViewResponse:
+async def _get_object_details_internal(
+    db: Session,
+    object_id: str,
+) -> dict:
     db_object = db.query(Object).filter(Object.id == object_id).first()
     if not db_object:
         raise HTTPException(status_code=404, detail="Object not found")
@@ -307,25 +391,11 @@ async def get_object_details(
     return ObjectViewResponse(object=response_object)
 
 
-@router.delete(
-    "/objects/delete/{objectId}/{hardDelete}",
-    deprecated=True,
-    summary="Delete object (Deprecated)",
-    description="""
-    Deprecated. Delete a specific object using the old route.
-    The hardDelete parameter determines if it's a hard or soft delete.""",
-)
-@router.delete(
-    "/objects/{objectId}/{hardDelete}",
-    summary="Delete object",
-    description="Delete a specific object. The hardDelete parameter determines if it's a hard or soft delete.",
-)
-async def delete_object(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
-    db: Session = Depends(get_db),
-    object_id: str = Path(..., alias="objectId"),
-    hard_delete: str = Path(..., alias="hardDelete"),
-) -> ObjectDeleteResponse:
+async def _delete_object_internal(
+    db: Session,
+    object_id: str,
+    hard_delete: str,
+) -> dict:
     db_object = db.query(Object).filter(Object.id == object_id).first()
     if not db_object:
         raise HTTPException(status_code=404, detail="Object not found")
