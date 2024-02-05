@@ -24,10 +24,10 @@ Be sure to use the newly created virtual env as your interpreter (`./venv/bin/py
 
 Try to order endpoints using CRUD so that the following order is achieved:
 
-- Creatte a {resource}
+- Create a {resource}
 - Read / Get a {resource}
-- Updating a {resource}
-- Deleting a {resource}
+- Update a {resource}
+- Delete a {resource}
 - Get all {resource}s
 - More niche endpoints
 - Deprecated endpoints
