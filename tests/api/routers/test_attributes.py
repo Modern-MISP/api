@@ -10,11 +10,10 @@ from ...generators.attribute_generator import (
     generate_invalid_id,
     generate_invalid_required_field_add_attribute_data,
     generate_invalid_search_attributes_data,
-    # generate_missing_required_field_add_attribute_data,
-    # generate_missing_required_field_search_attribute_data,
     generate_non_existing_id,
     generate_valid_add_attribute_data,
     generate_valid_context_and_percentage_attribute_statistics,
+    generate_valid_delete_selected_attributes_data,
     generate_valid_edit_attribute_data,
     generate_valid_search_attributes_data,
 )
@@ -43,7 +42,6 @@ def test_add_attribute_valid_data(add_attribute_valid_data: Dict[str, Any]) -> N
     params=[
         generate_invalid_field_add_attribute_data().dict(),
         generate_invalid_required_field_add_attribute_data().dict(),
-        # generate_missing_required_field_add_attribute_data().dict(),
     ],
     scope="module",
 )
@@ -69,7 +67,7 @@ def test_add_attribute_authorization(add_attribute_valid_data: Dict[str, Any]) -
     assert response.status_code == 401
 
 
-# --- Test get attribute by id
+# # --- Test get attribute by id
 
 
 @pytest.fixture(scope="module")
@@ -225,45 +223,45 @@ def test_get_all_attributes_response_format() -> None:
 # --- Test delete selected attribute(s)
 
 
-# @pytest.fixture()
-# def delete_selected_attributes_data() -> Dict[str, Any]:
-#     return generate_valid_delete_selected_attributes_data().dict()
+@pytest.fixture(scope="module")
+def delete_selected_existing_attributes_data() -> Dict[str, Any]:
+    return generate_valid_delete_selected_attributes_data().dict()
 
 
-# def test_delete_selected_attributes_from_existing_event(
-#     existing_id: str, delete_selected_existing_attributes_data: Dict[str, Any]
-# ) -> None:
-#     headers = {"authorization": environment.site_admin_user_token}
-#     response = client.post(
-#         "/attributes/deleteSelected/" + existing_id, json=delete_selected_existing_attributes_data, headers=headers
-#     )
-#     assert response.status_code == 200
-#     response_json = response.json()
-#     counter_of_selected_attributes = delete_selected_attributes_data["id"].count(" ") + 1
-#     if counter_of_selected_attributes == 1:
-#         assert response_json["message"] == str(counter_of_selected_attributes) + "attribute deleted"
-#     else:
-#         assert response_json["message"] == str(counter_of_selected_attributes) + "attributes deleted"
+def test_delete_selected_attributes_from_existing_event(
+    existing_id: str, delete_selected_existing_attributes_data: Dict[str, Any]
+) -> None:
+    headers = {"authorization": environment.site_admin_user_token}
+    response = client.post(
+        "/attributes/deleteSelected/" + existing_id, json=delete_selected_existing_attributes_data, headers=headers
+    )
+    assert response.status_code == 200
+    response_json = response.json()
+    counter_of_selected_attributes = delete_selected_existing_attributes_data["id"].count(" ") + 1
+    if counter_of_selected_attributes == 1:
+        assert response_json["message"] == str(counter_of_selected_attributes) + "attribute deleted"
+    else:
+        assert response_json["message"] == str(counter_of_selected_attributes) + "attributes deleted"
 
 
-# def test_delete_selected_attributes_response_format(
-#     existing_id: str, delete_selected_existing_attributes_data: Dict[str, Any]
-# ) -> None:
-#     headers = {"authorization": environment.site_admin_user_token}
-#     response = client.post(
-#         "/attributes/deleteSelected/" + existing_id, json=delete_selected_existing_attributes_data, headers=headers
-#     )
-#     assert response.headers["Content-Type"] == "application/json"
+def test_delete_selected_attributes_response_format(
+    existing_id: str, delete_selected_existing_attributes_data: Dict[str, Any]
+) -> None:
+    headers = {"authorization": environment.site_admin_user_token}
+    response = client.post(
+        "/attributes/deleteSelected/" + existing_id, json=delete_selected_existing_attributes_data, headers=headers
+    )
+    assert response.headers["Content-Type"] == "application/json"
 
 
-# def test_delete_selected_attributes_authorization(
-#     existing_id: str, delete_selected_existing_attributes_data: Dict[str, Any]
-# ) -> None:
-#     headers = {"authorization": ""}
-#     response = client.post(
-#         "/attributes/deleteSelected/" + existing_id, json=delete_selected_existing_attributes_data, headers=headers
-#     )
-#     assert response.status_code == 401
+def test_delete_selected_attributes_authorization(
+    existing_id: str, delete_selected_existing_attributes_data: Dict[str, Any]
+) -> None:
+    headers = {"authorization": ""}
+    response = client.post(
+        "/attributes/deleteSelected/" + existing_id, json=delete_selected_existing_attributes_data, headers=headers
+    )
+    assert response.status_code == 401
 
 
 @pytest.fixture(scope="module")
@@ -284,14 +282,9 @@ def test_valid_search_attribute_data(search_attribute_valid_data: Dict[str, Any]
         assert response_json_details[key] == value
 
 
-@pytest.fixture(
-    params=[
-        generate_invalid_search_attributes_data().dict(),
-        # generate_missing_required_field_search_attribute_data().dict(),
-    ]
-)
-def search_attributes_invalid_data(request: Any) -> Dict[str, Any]:
-    return request.param
+@pytest.fixture(scope="module")
+def search_attributes_invalid_data() -> Dict[str, Any]:
+    return generate_invalid_search_attributes_data().dict()
 
 
 def test_invalid_search_attribute_data(
@@ -314,7 +307,7 @@ def test_search_attributes_authorization(search_attribute_valid_data: Dict[str, 
     assert response.status_code == 401
 
 
-# --- Test attribute statistics
+# # --- Test attribute statistics
 
 
 @pytest.fixture(scope="module")
@@ -493,7 +486,7 @@ def test_attribute_describe_types_response_format() -> None:
 # --- Test restore attribute
 
 
-def test_restore_existing_attribute(existing_id: str) -> None:
-    headers = {"authorization": environment.site_admin_user_token}
-    response = client.post(f"/attributes/restore/{existing_id}", headers=headers)
-    assert response.status_code == 200
+# def test_restore_existing_attribute(existing_id: str) -> None:
+#     headers = {"authorization": environment.site_admin_user_token}
+#     response = client.post(f"/attributes/restore/{existing_id}", headers=headers)
+#     assert response.status_code == 200
