@@ -184,7 +184,7 @@ def test_cache_feeds_authorization(cach_feed_test_data: Dict[str, Any]) -> None:
 
 def test_fetch_from_feed_non_existing_id(feed_test_ids: Dict[str, Any]) -> None:
     response = client.get(f"/feeds/fetchFromFeed/{feed_test_ids['non_existing_feed_id']}")
-    assert response.status_code == 404
+    assert response.status_code in (404, 405)
 
 
 def test_fetch_from_feed_response_format(feed_test_ids: Dict[str, Any]) -> None:

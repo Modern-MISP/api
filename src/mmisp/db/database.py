@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session, declarative_base, sessionmaker
 from mmisp.config import config
 
 url = make_url(config.DATABASE_URL).set(drivername="mysql+mysqlconnector")
-engine = create_engine(url)
+engine = create_engine(url, pool_size=10, max_overflow=20)
 
 session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()

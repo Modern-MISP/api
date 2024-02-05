@@ -12,11 +12,119 @@ from mmisp.api_schemas.feeds.get_feed_response import FeedAttributesResponse, Fe
 from mmisp.api_schemas.feeds.toggle_feed_body import FeedToggleBody
 from mmisp.db.database import get_db
 from mmisp.db.models.feed import Feed
+from mmisp.util.partial import partial
 
 router = APIRouter(tags=["feeds"])
 
 
-# Sorted according to CRUD
+# sorted according to CRUD
+
+
+@router.post(
+    "/feeds/",
+    summary="Add new feed",
+    description="Add a new feed with given details.",
+    response_model=partial(FeedResponse),
+)
+async def add_feed(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.ADD]))],
+    body: FeedCreateAndUpdateBody,
+    db: Session = Depends(get_db),
+) -> dict:
+    return await _add_feed_internal(body, db)
+
+
+@router.post(  # TODO @worker
+    "/feeds/cache_feeds/{cacheFeedsScope}",
+    summary="Cache feeds",
+    description="Cache feeds based on a specific scope.",
+    response_model=partial(FeedCacheResponse),
+)
+async def cache_feeds(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.ADD]))],
+    db: Session = Depends(get_db),
+    cache_feeds_scope: str = Path(..., alias="cacheFeedsScope"),
+) -> dict:
+    return await _cache_feeds_internal(db, cache_feeds_scope)
+
+
+@router.get(  # TODO @worker
+    "/feeds/fetch_from_feed/{feedId}",
+    summary="Fetch from feed",
+    description="Fetch data from a specific feed by its ID.",
+    response_model=partial(FeedFetchResponse),
+)
+async def fetch_from_feed(
+    db: Session = Depends(get_db),
+    feed_id: str = Path(..., alias="feedId"),
+) -> dict:
+    return await _fetch_from_feed_internal(db, feed_id)
+
+
+@router.get(
+    "/feeds/{feedId}",
+    summary="Get feed details",
+    description="Retrieve details of a specific feed by its ID.",
+    # response_model=partial(FeedResponse),  # todo: partial method does not work yet for this case
+)
+async def get_feed_details(
+    db: Session = Depends(get_db),
+    feed_id: str = Path(..., alias="feedId"),
+) -> dict:
+    return await _get_feed_details_internal(db, feed_id)
+
+
+@router.put(
+    "/feeds/{feedId}",
+    summary="Update feed",
+    description="Update an existing feed by its ID.",
+    # response_model=partial(FeedResponse),  # todo: partial method does not work yet for this case
+)
+async def update_feed(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
+    body: FeedCreateAndUpdateBody,
+    db: Session = Depends(get_db),
+    feed_id: str = Path(..., alias="feedId"),
+) -> dict:
+    return await _update_feed_internal(body, db, feed_id)
+
+
+@router.patch(
+    "/feeds/{feedId}",
+    summary="Toggle feed status",
+    description="Toggle the status of a feed between enabled and disabled.",
+    response_model=partial(FeedEnableDisableResponse),
+)
+async def toggle_feed(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
+    body: FeedToggleBody,
+    db: Session = Depends(get_db),
+    feed_id: str = Path(..., alias="feedId"),
+) -> dict:
+    return await _toggle_feed_internal(body, db, feed_id)
+
+
+@router.get(  # TODO @ worker
+    "/feeds/fetch_from_all_feeds",
+    summary="Fetch from all feeds",
+    description="Fetch data from all available feeds.",
+    # response_model=partial(FeedFetchResponse),  # todo: partial method does not work yet for this case
+)
+async def fetch_data_from_all_feeds(db: Session = Depends(get_db)) -> dict:
+    return await _fetch_data_from_all_feeds_internal(db)
+
+
+@router.get(
+    "/feeds/",
+    summary="Get all feeds",
+    description="Retrieve a list of all feeds.",
+    # response_model=list[partial(FeedResponse)],  # type: ignore
+)
+async def get_feeds(db: Session = Depends(get_db)) -> list[FeedResponse]:
+    return await _get_feeds_internal(db)
+
+
+# # --- depricated ---
 
 
 @router.post(
@@ -24,13 +132,123 @@ router = APIRouter(tags=["feeds"])
     deprecated=True,
     summary="Add new feed (Deprecated)",
     description="Deprecated. Add a new feed with given details using the old route.",
+    # response_model=partial(FeedResponse),  # todo: partial method does not work yet for this case
 )
-@router.post("/feeds/", summary="Add new feed", description="Add a new feed with given details.")
-async def add_feed(
+async def add_feed_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.ADD]))],
     body: FeedCreateAndUpdateBody,
     db: Session = Depends(get_db),
-) -> FeedResponse:
+) -> dict:
+    return await _add_feed_internal(body, db)
+
+
+@router.post(
+    "/feeds/enable/{feedId}",
+    deprecated=True,
+    summary="Enable feed (Deprecated)",
+    description="Deprecated. Enable a specific feed by its ID using the old route.",
+    # response_model=partial(FeedEnableDisableResponse),  # todo: partial method does not work yet for this case
+)
+async def enable_feed(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
+    db: Session = Depends(get_db),
+    feed_id: str = Path(..., alias="feedId"),
+) -> dict:
+    return await _enable_feed_internal(db, feed_id)
+
+
+@router.post(
+    "/feeds/disable/{feedId}",
+    deprecated=True,
+    summary="Disable feed (Deprecated)",
+    description="Deprecated. Disable a specific feed by its ID using the old route.",
+    # response_model=partial(FeedEnableDisableResponse),  # todo: partial method does not work yet for this case
+)
+async def disable_feed(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
+    db: Session = Depends(get_db),
+    feed_id: str = Path(..., alias="feedId"),
+) -> dict:
+    return await _disable_feed_internal(db, feed_id)
+
+
+@router.post(  # TODO @worker
+    "/feeds/cacheFeeds/{cacheFeedsScope}",
+    deprecated=True,
+    summary="Cache feeds",
+    description="Cache feeds based on a specific scope.",
+    # response_model=partial(FeedCacheResponse),  # todo: partial method does not work yet for this case
+)
+async def cache_feeds_depr(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.ADD]))],
+    db: Session = Depends(get_db),
+    cache_feeds_scope: str = Path(..., alias="cacheFeedsScope"),
+) -> dict:
+    return await _cache_feeds_internal(db, cache_feeds_scope)
+
+
+@router.post(  # TODO @worker
+    "/feeds/fetchFromFeed/{feedId}",
+    deprecated=True,
+    summary="Fetch from feed (Deprecated)",
+    description="Deprecated. Fetch data from a specific feed by its ID using the old route.",
+    # response_model=partial(FeedFetchResponse),  # todo: partial method does not work yet for this case
+)
+async def fetch_from_feed_depr(
+    db: Session = Depends(get_db),
+    feed_id: str = Path(..., alias="feedId"),
+) -> dict:
+    return await _fetch_from_feed_internal(db, feed_id)
+
+
+@router.post(  # TODO
+    "/feeds/fetchFromAllFeeds",
+    deprecated=True,
+    summary="Fetch from all feeds (Deprecated)",
+    description="Deprecated. Fetch data from all available feeds using the old route.",
+    # response_model=partial(FeedFetchResponse),  # todo: partial method does not work yet for this case
+)
+async def fetch_data_from_all_feeds_depr(db: Session = Depends(get_db)) -> dict:
+    return await _fetch_data_from_all_feeds_internal(db)
+
+
+@router.get(
+    "/feeds/view/{feedId}",
+    deprecated=True,
+    summary="Get feed details (Deprecated)",
+    description="Deprecated. Retrieve details of a specific feed by its ID using the old route.",
+    # response_model=partial(FeedResponse),  # todo: partial method does not work yet for this case
+)
+async def get_feed_details_depr(
+    db: Session = Depends(get_db),
+    feed_id: str = Path(..., alias="feedId"),
+) -> dict:
+    return await _get_feed_details_internal(db, feed_id)
+
+
+@router.put(
+    "/feeds/edit/{feedId}",
+    deprecated=True,
+    summary="Update feed (Deprecated)",
+    description="Deprecated. Update an existing feed by its ID using the old route.",
+    # response_model=partial(FeedResponse),  # todo: partial method does not work yet for this case
+)
+async def update_feed_depr(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
+    body: FeedCreateAndUpdateBody,
+    db: Session = Depends(get_db),
+    feed_id: str = Path(..., alias="feedId"),
+) -> dict:
+    return await _update_feed_internal(body, db, feed_id)
+
+
+# --- endpoint logic ---
+
+
+async def _add_feed_internal(
+    body: FeedCreateAndUpdateBody,
+    db: Session,
+) -> dict:
     new_feed = Feed(
         name=body.name,
         provider=body.provider,
@@ -97,66 +315,10 @@ async def add_feed(
     return FeedResponse(feed=[feed_data])
 
 
-@router.post(
-    "/feeds/enable/{feedId}",
-    deprecated=True,
-    summary="Enable feed (Deprecated)",
-    description="Deprecated. Enable a specific feed by its ID using the old route.",
-)
-async def enable_feed(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
-    db: Session = Depends(get_db),
-    feed_id: str = Path(..., alias="feedId"),
-) -> FeedEnableDisableResponse:
-    try:
-        int(feed_id)
-    except ValueError:
-        raise HTTPException(status_code=422, detail="Invalid feed ID")
-
-    feed = db.query(Feed).filter(Feed.id == feed_id).first()
-    if not feed:
-        raise HTTPException(status_code=404, detail="Feed not found")
-
-    feed.enabled = True  # type: ignore
-    db.commit()
-
-    return FeedEnableDisableResponse(name=str(feed.name), message="Feed successfully enabled", url=str(feed.url))
-
-
-@router.post(
-    "/feeds/disable/{feedId}",
-    deprecated=True,
-    summary="Disable feed (Deprecated)",
-    description="Deprecated. Disable a specific feed by its ID using the old route.",
-)
-async def disable_feed(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
-    db: Session = Depends(get_db),
-    feed_id: str = Path(..., alias="feedId"),
-) -> FeedEnableDisableResponse:
-    try:
-        int(feed_id)
-    except ValueError:
-        raise HTTPException(status_code=422, detail="Invalid feed ID")
-
-    feed = db.query(Feed).filter(Feed.id == feed_id).first()
-    if not feed:
-        raise HTTPException(status_code=404, detail="Feed not found")
-
-    feed.enabled = False  # type: ignore
-    db.commit()
-
-    return FeedEnableDisableResponse(name=str(feed.name), message="Feed successfully disabled", url=str(feed.url))
-
-
-@router.post(  # TODO @worker
-    "/feeds/cacheFeeds/{cacheFeedsScope}", summary="Cache feeds", description="Cache feeds based on a specific scope."
-)
-async def cache_feeds(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.ADD]))],
-    db: Session = Depends(get_db),
-    cache_feeds_scope: str = Path(..., alias="cacheFeedsScope"),
-) -> FeedCacheResponse:
+async def _cache_feeds_internal(
+    db: Session,
+    cache_feeds_scope: str,
+) -> dict:
     try:
         feeds_to_cache = db.query(Feed).filter(Feed.scope == cache_feeds_scope).all()  # noqa: F841
 
@@ -176,19 +338,10 @@ async def cache_feeds(
         raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
 
 
-@router.post(  # TODO @worker
-    "/feeds/fetchFromFeed/{feedId}",
-    deprecated=True,
-    summary="Fetch from feed (Deprecated)",
-    description="Deprecated. Fetch data from a specific feed by its ID using the old route.",
-)
-@router.get(
-    "/feeds/fetchFromFeed/{feedId}", summary="Fetch from feed", description="Fetch data from a specific feed by its ID."
-)
-async def fetch_from_feed(
-    db: Session = Depends(get_db),
-    feed_id: str = Path(..., alias="feedId"),
-) -> FeedFetchResponse:
+async def _fetch_from_feed_internal(
+    db: Session,
+    feed_id: str,
+) -> dict:
     feed = db.query(Feed).filter(Feed.id == feed_id).first()
     if not feed:
         raise HTTPException(status_code=404, detail="Feed not found")
@@ -198,17 +351,10 @@ async def fetch_from_feed(
     return FeedFetchResponse(result="Pull queued for background execution.")
 
 
-@router.get(
-    "/feeds/view/{feedId}",
-    deprecated=True,
-    summary="Get feed details (Deprecated)",
-    description="Deprecated. Retrieve details of a specific feed by its ID using the old route.",
-)
-@router.get("/feeds/{feedId}", summary="Get feed details", description="Retrieve details of a specific feed by its ID.")
-async def get_feed_details(
-    db: Session = Depends(get_db),
-    feed_id: str = Path(..., alias="feedId"),
-) -> FeedResponse:
+async def _get_feed_details_internal(
+    db: Session,
+    feed_id: str,
+) -> dict:
     feed = db.query(Feed).filter(Feed.id == feed_id).first()
 
     if not feed:
@@ -247,19 +393,11 @@ async def get_feed_details(
     return FeedResponse(feed=[feed_data])
 
 
-@router.put(
-    "/feeds/edit/{feedId}",
-    deprecated=True,
-    summary="Update feed (Deprecated)",
-    description="Deprecated. Update an existing feed by its ID using the old route.",
-)
-@router.put("/feeds/{feedId}", summary="Update feed", description="Update an existing feed by its ID.")
-async def update_feed(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
+async def _update_feed_internal(
     body: FeedCreateAndUpdateBody,
-    db: Session = Depends(get_db),
-    feed_id: str = Path(..., alias="feedId"),
-) -> FeedResponse:
+    db: Session,
+    feed_id: str,
+) -> dict:
     feed = db.query(Feed).filter(Feed.id == feed_id).first()
 
     if not feed:
@@ -329,17 +467,11 @@ async def update_feed(
     return FeedResponse(feed=[feed_data])
 
 
-@router.patch(
-    "/feeds/{feedId}",
-    summary="Toggle feed status",
-    description="Toggle the status of a feed between enabled and disabled.",
-)
-async def toggle_feed(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
+async def _toggle_feed_internal(
     body: FeedToggleBody,
-    db: Session = Depends(get_db),
-    feed_id: str = Path(..., alias="feedId"),
-) -> FeedEnableDisableResponse:
+    db: Session,
+    feed_id: str,
+) -> dict:
     feed = db.query(Feed).filter(Feed.id == feed_id).first()
 
     if not feed:
@@ -363,16 +495,7 @@ async def toggle_feed(
     return FeedEnableDisableResponse(name=feed.name, message=message, url=feed.url)
 
 
-@router.post(  # TODO
-    "/feeds/fetchFromAllFeeds",
-    deprecated=True,
-    summary="Fetch from all feeds (Deprecated)",
-    description="Deprecated. Fetch data from all available feeds using the old route.",
-)
-@router.get(
-    "/feeds/fetchFromAllFeeds", summary="Fetch from all feeds", description="Fetch data from all available feeds."
-)
-async def fetch_data_from_all_feeds(db: Session = Depends(get_db)) -> FeedFetchResponse:
+async def _fetch_data_from_all_feeds_internal(db: Session) -> dict:
     feeds = db.query(Feed).all()  # noqa: F841
 
     # todo: logic to start the pull process
@@ -382,8 +505,7 @@ async def fetch_data_from_all_feeds(db: Session = Depends(get_db)) -> FeedFetchR
     return FeedFetchResponse(result=fetched_data)
 
 
-@router.get("/feeds/", summary="Get all feeds", description="Retrieve a list of all feeds.")
-async def get_feeds(db: Session = Depends(get_db)) -> list[FeedResponse]:
+async def _get_feeds_internal(db: Session) -> list[dict]:
     feeds = db.query(Feed).all()
 
     feed_responses = [
@@ -420,3 +542,41 @@ async def get_feeds(db: Session = Depends(get_db)) -> list[FeedResponse]:
     ]
 
     return [FeedResponse(feed=feed_responses)]
+
+
+async def _enable_feed_internal(
+    db: Session,
+    feed_id: str,
+) -> dict:
+    try:
+        int(feed_id)
+    except ValueError:
+        raise HTTPException(status_code=422, detail="Invalid feed ID")
+
+    feed = db.query(Feed).filter(Feed.id == feed_id).first()
+    if not feed:
+        raise HTTPException(status_code=404, detail="Feed not found")
+
+    feed.enabled = True  # type: ignore
+    db.commit()
+
+    return FeedEnableDisableResponse(name=str(feed.name), message="Feed successfully enabled", url=str(feed.url))
+
+
+async def _disable_feed_internal(
+    db: Session,
+    feed_id: str,
+) -> dict:
+    try:
+        int(feed_id)
+    except ValueError:
+        raise HTTPException(status_code=422, detail="Invalid feed ID")
+
+    feed = db.query(Feed).filter(Feed.id == feed_id).first()
+    if not feed:
+        raise HTTPException(status_code=404, detail="Feed not found")
+
+    feed.enabled = False  # type: ignore
+    db.commit()
+
+    return FeedEnableDisableResponse(name=str(feed.name), message="Feed successfully disabled", url=str(feed.url))
