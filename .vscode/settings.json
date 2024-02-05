@@ -1,5 +1,7 @@
 {
   "editor.defaultFormatter": "charliermarsh.ruff",
   // "python.formatting.provider": "ruff",
-  "editor.formatOnSave": true
+  "editor.formatOnSave": true,
+  "editor.tabSize": 4,
+  "editor.detectIndentation": false
 }
