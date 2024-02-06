@@ -51,11 +51,13 @@ class Auth:
         self: "Auth",
         user_id: int | None = None,
         org_id: int | None = None,
+        server_id: int | None = None,
         role_id: int | None = None,
         is_worker: bool | None = False,
     ) -> None:
         self.user_id = user_id
         self.org_id = org_id
+        self.server_id = server_id
         self.role_id = role_id
         self.is_worker = is_worker
 
@@ -88,7 +90,7 @@ def authorize(strategy: AuthStrategy, permissions: list[Permission] = []) -> Cal
 
         user: User = db.get(User, user_id)
 
-        return Auth(user.id, user.org_id, user.role_id)
+        return Auth(user.id, user.org_id, 0, user.role_id)
 
     return authorizer
 
