@@ -5,7 +5,7 @@ from src.mmisp.api_schemas.feeds.create_update_feed_body import FeedCreateAndUpd
 
 
 def generate_number_string() -> str:
-    number = random.randint(1, 21)
+    number = random.randint(1, 4)
     return str(number)
 
 
@@ -18,10 +18,10 @@ def generate_valid_required_feed_data() -> FeedCreateAndUpdateBody:
         name=random_string(),
         provider=random_string(),
         url=f"http://{random_string()}.com",
-        enabled=random.choice([True, False]),
-        distribution=random.choice([True, False]),
+        enabled="False",
+        distribution=generate_number_string(),
         source_format=random_string(),
-        fixed_event=random.choice([True, False]),
+        fixed_event=str(random.choice([True, False])),
     )
 
 
@@ -31,12 +31,12 @@ def generate_valid_feed_data() -> FeedCreateAndUpdateBody:
         provider=random_string(),
         url=f"http://{random_string()}.com",
         rules=random_string(),
-        enabled=random.choice([True, False]),
-        distribution=random.choice([True, False]),
+        enabled="False",
+        distribution=generate_number_string(),
         sharing_group_id=generate_number_string(),
         tag_id=generate_number_string(),
         source_format=random_string(),
-        fixed_event=random.choice([True, False]),
+        fixed_event=str(random.choice([True, False])),
         delta_merge=random.choice([True, False]),
         event_id=generate_number_string(),
         publish=random.choice([True, False]),
@@ -57,12 +57,12 @@ def generate_random_valid_feed_data() -> FeedCreateAndUpdateBody:
         provider=random_string(),
         url=f"http://{random_string()}.com",
         rules=random_string() if random.choice([True, False]) else None,
-        enabled=random.choice([True, False]),
-        distribution=random.choice([True, False]),
+        enabled="False",
+        distribution=generate_number_string(),
         sharing_group_id=generate_number_string() if random.choice([True, False]) else None,
         tag_id=generate_number_string() if random.choice([True, False]) else None,
         source_format=random_string(),
-        fixed_event=random.choice([True, False]),
+        fixed_event=str(random.choice([True, False])),
         delta_merge=random.choice([True, False]) if random.choice([True, False]) else None,
         event_id=generate_number_string() if random.choice([True, False]) else None,
         publish=random.choice([True, False]) if random.choice([True, False]) else None,

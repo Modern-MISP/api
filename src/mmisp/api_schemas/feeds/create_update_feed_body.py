@@ -6,12 +6,12 @@ class FeedCreateAndUpdateBody(BaseModel):
     provider: str
     url: str
     rules: str | None = None
-    enabled: bool
-    distribution: bool
+    enabled: str
+    distribution: str
     sharing_group_id: str | None = None
     tag_id: str | None = None
     source_format: str
-    fixed_event: bool
+    fixed_event: str
     delta_merge: bool | None = None
     event_id: str | None = None
     publish: bool | None = None
