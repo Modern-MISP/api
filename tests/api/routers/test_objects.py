@@ -65,7 +65,7 @@ def test_add_object_to_event(db: Session, object_data: Dict[str, Any]) -> None:
 
     headers = {"authorization": environment.site_admin_user_token}
     response = client.post(f"/objects/{event_id}/{object_template_id}", json=object_data, headers=headers)
-    assert response.status_code == 200
+    assert response.status_code == 201
 
     response_data = response.json()
     assert "object" in response_data
@@ -171,7 +171,7 @@ def test_get_object_details_valid_id(db: Session, object_data: Dict[str, Any]) -
 
     headers = {"authorization": environment.site_admin_user_token}
     response = client.post(f"/objects/{event_id}/{object_template_id}", json=object_data, headers=headers)
-    assert response.status_code == 200
+    assert response.status_code == 201
 
     response_data = response.json()
     object_id = response_data["object"]["id"]
@@ -210,7 +210,7 @@ def test_get_object_details_response_format(db: Session, object_data: Dict[str, 
 
     headers = {"authorization": environment.site_admin_user_token}
     response = client.post(f"/objects/{event_id}/{object_template_id}", json=object_data, headers=headers)
-    assert response.status_code == 200
+    assert response.status_code == 201
 
     response_data = response.json()
     object_id = response_data["object"]["id"]
@@ -251,7 +251,7 @@ def test_get_object_details_data_integrity(db: Session, object_data: Dict[str, A
 
     headers = {"authorization": environment.site_admin_user_token}
     response = client.post(f"/objects/{event_id}/{object_template_id}", json=object_data, headers=headers)
-    assert response.status_code == 200
+    assert response.status_code == 201
 
     response_data = response.json()
     object_id = response_data["object"]["id"]
@@ -287,7 +287,7 @@ def test_delete_object_hard_delete(db: Session, object_data: Dict[str, Any]) -> 
 
     headers = {"authorization": environment.site_admin_user_token}
     response = client.post(f"/objects/{event_id}/{object_template_id}", json=object_data, headers=headers)
-    assert response.status_code == 200
+    assert response.status_code == 201
 
     response_data = response.json()
     object_id = response_data["object"]["id"]
@@ -325,7 +325,7 @@ def test_delete_object_soft_delete(db: Session, object_data: Dict[str, Any]) -> 
 
     headers = {"authorization": environment.site_admin_user_token}
     response = client.post(f"/objects/{event_id}/{object_template_id}", json=object_data, headers=headers)
-    assert response.status_code == 200
+    assert response.status_code == 201
 
     response_data = response.json()
     object_id = response_data["object"]["id"]
@@ -370,7 +370,7 @@ def test_delete_object_invalid_hard_delete(db: Session, object_data: Dict[str, A
 
     headers = {"authorization": environment.site_admin_user_token}
     response = client.post(f"/objects/{event_id}/{object_template_id}", json=object_data, headers=headers)
-    assert response.status_code == 200
+    assert response.status_code == 201
 
     response_data = response.json()
     object_id = response_data["object"]["id"]
@@ -403,7 +403,7 @@ def test_delete_object_no_authorization(db: Session, object_data: Dict[str, Any]
 
     headers = {"authorization": environment.site_admin_user_token}
     response = client.post(f"/objects/{event_id}/{object_template_id}", json=object_data, headers=headers)
-    assert response.status_code == 200
+    assert response.status_code == 201
 
     response_data = response.json()
     object_id = response_data["object"]["id"]
