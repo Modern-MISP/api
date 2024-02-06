@@ -19,8 +19,7 @@ router = APIRouter(tags=["feeds"])
 
 logging.basicConfig(
     level=logging.INFO  # todo: remove comment
-)  # 'logger.error' for errors on the part of the user, 'logger.exception' for errors on the part of the server
-logger = logging.getLogger(__name__)
+)  # 'logger.error' for errors on part of the user, 'logger.exception' for errors on part of the server
 
 info_format = "%(asctime)s - %(message)s"
 error_format = "%(asctime)s - %(filename)s:%(lineno)d - %(message)s"
