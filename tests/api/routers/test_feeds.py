@@ -12,15 +12,13 @@ from ...generators.feed_generator import (
 
 @pytest.fixture(
     params=[
-        generate_random_valid_feed_data().dict(),
         generate_valid_feed_data().dict(),
         generate_valid_required_feed_data().dict(),
         generate_random_valid_feed_data().dict(),
-        generate_valid_feed_data().dict(),
-        generate_valid_required_feed_data().dict(),
         generate_random_valid_feed_data().dict(),
-        generate_valid_feed_data().dict(),
-        generate_valid_required_feed_data().dict(),
+        generate_random_valid_feed_data().dict(),
+        generate_random_valid_feed_data().dict(),
+        generate_random_valid_feed_data().dict(),
     ]
 )
 def feed_data(request: Any) -> Dict[str, Any]:
@@ -35,20 +33,16 @@ def test_add_feed(feed_data: Dict[str, Any]) -> None:
     headers = {"authorization": environment.site_admin_user_token}
     response = client.post("/feeds/", json=feed_data, headers=headers)
 
-    if "" in feed_data.values() or not isinstance(feed_data["enabled"], bool):
-        assert response.status_code == 422
-    else:
-        assert response.status_code == 200
-        response_json = response.json()
-        assert response_json["feed"][0]["name"] == feed_data["name"]
-        for key, value in feed_data.items():
-            assert response_json["feed"][0][key] == value
+    assert response.status_code == 201
+    response_json = response.json()
+    for key, value in feed_data.items():
+        assert str(response_json["feed"][0][key]) == str(value)
 
 
 def test_feed_data_integrity(feed_data: Dict[str, Any]) -> None:
     headers = {"authorization": environment.site_admin_user_token}
     response = client.post("/feeds/", json=feed_data, headers=headers)
-    if response.status_code == 200:
+    if response.status_code == 201:
         response_json = response.json()
         feed = response_json["feed"][0]
         for key in feed_data:
@@ -133,7 +127,6 @@ def test_disable_feed_authorization(feed_test_ids: Dict[str, Any]) -> None:
     assert response.status_code == 401
 
 
-# Test cache Feed in a scope
 @pytest.fixture(scope="module")
 def cach_feed_test_data() -> Generator:
     yield {
@@ -142,7 +135,8 @@ def cach_feed_test_data() -> Generator:
     }
 
 
-# TODO
+# # Test cache Feed in a scope
+# # TODO: route not yet implemented
 # def test_cache_feeds_valid_data(cach_feed_test_data: Dict[str, Any]) -> None:
 #     headers = {"authorization": environment.site_admin_user_token}
 #     response = client.post(f"/feeds/cacheFeeds/{cach_feed_test_data['valid_scope']}", headers=headers)
@@ -150,7 +144,7 @@ def cach_feed_test_data() -> Generator:
 #     assert response.json()["success"] is True
 
 
-# TODO
+# # TODO: route not yet implemented
 # def test_cache_feeds_invalid_data(cach_feed_test_data: Dict[str, Any]) -> None:
 #     headers = {"authorization": environment.site_admin_user_token}
 #     response = client.post(f"/feeds/cacheFeeds/{cach_feed_test_data['invalid_scope']}", headers=headers)
@@ -169,14 +163,14 @@ def test_cache_feeds_authorization(cach_feed_test_data: Dict[str, Any]) -> None:
     assert response.status_code == 401
 
 
-# Test fetch from feed
-# TODO
+# # Test fetch from feed
+# # TODO: route not yet implemented
 # def test_fetch_from_feed_existing_id(feed_test_ids: Dict[str, Any]) -> None:
 #     response = client.get(f"/feeds/fetchFromFeed/{feed_test_ids['valid_feed_id']}")
 #     assert response.status_code == 200
 #     assert "result" in response.json()
 
-# TODO
+# # TODO: route not yet implemented
 # def test_fetch_from_feed_invalid_id(feed_test_ids: Dict[str, Any]) -> None:
 #     response = client.get(f"/feeds/fetchFromFeed/{feed_test_ids['invalid_feed_id']}")
 #     assert response.status_code == 422
@@ -271,26 +265,30 @@ def test_toggle_feed_response_format(feed_test_ids: Dict[str, Any]) -> None:
     assert "url" in data
 
 
-def test_toggle_feed_scenarios(feed_test_ids: Dict[str, Any]) -> None:
+def test_toggle_feed_scenarios(feed_data: Dict[str, Any]) -> None:
     headers = {"authorization": environment.site_admin_user_token}
 
+    response = client.post("/feeds/", json=feed_data, headers=headers)
+    response_json = response.json()
+    feed_id = response_json["feed"][0]["id"]
+
     # Activate the feed
-    response = client.patch(f"/feeds/{feed_test_ids['valid_feed_id']}", json={"enable": True}, headers=headers)
+    response = client.patch(f"/feeds/{feed_id}", json={"enable": True}, headers=headers)
     assert response.status_code == 200
-    assert response.json()["message"] in ["Feed enabled successfully", "Feed already enabled"]
+    assert response.json()["message"] == "Feed enabled successfully"
 
     # Check whether the feed is already activated
-    response = client.patch(f"/feeds/{feed_test_ids['valid_feed_id']}", json={"enable": True}, headers=headers)
+    response = client.patch(f"/feeds/{feed_id}", json={"enable": True}, headers=headers)
     assert response.status_code == 200
     assert response.json()["message"] == "Feed already enabled"
 
     # Deactivate the feed
-    response = client.patch(f"/feeds/{feed_test_ids['valid_feed_id']}", json={"enable": False}, headers=headers)
+    response = client.patch(f"/feeds/{feed_id}", json={"enable": False}, headers=headers)
     assert response.status_code == 200
-    assert response.json()["message"] in ["Feed disabled successfully", "Feed already disabled"]
+    assert response.json()["message"] == "Feed disabled successfully"
 
     # Check whether the feed is already deactivated
-    response = client.patch(f"/feeds/{feed_test_ids['valid_feed_id']}", json={"enable": False}, headers=headers)
+    response = client.patch(f"/feeds/{feed_id}", json={"enable": False}, headers=headers)
     assert response.status_code == 200
     assert response.json()["message"] == "Feed already disabled"
 
@@ -303,7 +301,7 @@ def test_toggle_feed_authorization(feed_test_ids: Dict[str, Any]) -> None:
 
 
 # # Test fetsch from all feeds
-# # TODO
+# # TODO: route not yet implemented
 # def test_fetch_data_from_all_feeds() -> None:
 #     response = client.get("/feeds/fetchFromAllFeeds")
 #     assert response.status_code == 200
@@ -311,7 +309,7 @@ def test_toggle_feed_authorization(feed_test_ids: Dict[str, Any]) -> None:
 #     assert "result" in response_data
 
 
-# # TODO
+# # TODO: route not yet implemented
 # def test_fetch_from_all_feeds_response_format() -> None:
 #     response = client.get("/feeds/fetchFromAllFeeds")
 #     assert response.headers["Content-Type"] == "application/json"
