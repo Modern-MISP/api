@@ -16,10 +16,7 @@ from mmisp.db.models.feed import Feed
 from mmisp.util.partial import partial
 
 router = APIRouter(tags=["feeds"])
-
-logging.basicConfig(
-    level=logging.INFO  # todo: remove comment
-)  # 'logger.error' for errors on part of the user, 'logger.exception' for errors on part of the server
+logging.basicConfig(level=logging.INFO)
 
 info_format = "%(asctime)s - %(message)s"
 error_format = "%(asctime)s - %(filename)s:%(lineno)d - %(message)s"
@@ -43,113 +40,113 @@ logger.addHandler(error_handler)
 
 @router.post(
     "/feeds/",
+    status_code=status.HTTP_201_CREATED,
+    response_model=partial(FeedResponse),
     summary="Add new feed",
     description="Add a new feed with given details.",
-    response_model=partial(FeedResponse),
-    status_code=status.HTTP_201_CREATED,
 )
 async def add_feed(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.ADD]))],
+    db: Annotated[Session, Depends(get_db)],
     body: FeedCreateAndUpdateBody,
-    db: Session = Depends(get_db),
 ) -> dict:
-    return await _add_feed(body, db)
+    return await _add_feed(db, body)
 
 
-@router.post(  #! @worker: also change 'description' and 'status_code'
+@router.post(  #! @worker: also change 'status_code' and 'description'
     "/feeds/cache_feeds/{cacheFeedsScope}",
+    status_code=status.HTTP_501_NOT_IMPLEMENTED,
+    response_model=partial(FeedCacheResponse),
     summary="Cache feeds",
     description="Cache feeds based on a specific scope. NOT YET AVAILABLE!",
-    response_model=partial(FeedCacheResponse),
-    status_code=status.HTTP_501_NOT_IMPLEMENTED,
 )
 async def cache_feeds(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.ADD]))],
-    db: Session = Depends(get_db),
-    cache_feeds_scope: str = Path(..., alias="cacheFeedsScope"),
+    db: Annotated[Session, Depends(get_db)],
+    cache_feeds_scope: Annotated[str, Path(..., alias="cacheFeedsScope")],
 ) -> dict:
     return await _cache_feeds(db, cache_feeds_scope)
 
 
-@router.get(  #! @worker: also change 'description' and 'status_code'
+@router.get(  #! @worker: also change 'status_code' and 'description'
     "/feeds/fetch_from_feed/{feedId}",
+    status_code=status.HTTP_501_NOT_IMPLEMENTED,
+    response_model=partial(FeedFetchResponse),
     summary="Fetch from feed",
     description="Fetch data from a specific feed by its ID. NOT YET AVAILABLE!",
-    response_model=partial(FeedFetchResponse),
-    status_code=status.HTTP_501_NOT_IMPLEMENTED,
 )
 async def fetch_from_feed(
-    db: Session = Depends(get_db),
-    feed_id: str = Path(..., alias="feedId"),
+    db: Annotated[Session, Depends(get_db)],
+    feed_id: Annotated[str, Path(..., alias="feedId")],
 ) -> dict:
     return await _fetch_from_feed(db, feed_id)
 
 
 @router.get(
     "/feeds/{feedId}",
+    status_code=status.HTTP_200_OK,
+    response_model=partial(FeedResponse),
     summary="Get feed details",
     description="Retrieve details of a specific feed by its ID.",
-    # response_model=partial(FeedResponse),  # todo: partial method does not work yet for this case
-    status_code=status.HTTP_200_OK,
 )
 async def get_feed_details(
-    db: Session = Depends(get_db),
-    feed_id: str = Path(..., alias="feedId"),
+    db: Annotated[Session, Depends(get_db)],
+    feed_id: Annotated[str, Path(..., alias="feedId")],
 ) -> dict:
     return await _get_feed_details(db, feed_id)
 
 
 @router.put(
     "/feeds/{feedId}",
+    status_code=status.HTTP_200_OK,
+    response_model=partial(FeedResponse),
     summary="Update feed",
     description="Update an existing feed by its ID.",
-    # response_model=partial(FeedResponse),  # todo: partial method does not work yet for this case
-    status_code=status.HTTP_200_OK,
 )
 async def update_feed(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
+    db: Annotated[Session, Depends(get_db)],
+    feed_id: Annotated[str, Path(..., alias="feedId")],
     body: FeedCreateAndUpdateBody,
-    db: Session = Depends(get_db),
-    feed_id: str = Path(..., alias="feedId"),
 ) -> dict:
-    return await _update_feed(body, db, feed_id)
+    return await _update_feed(db, feed_id, body)
 
 
 @router.patch(
     "/feeds/{feedId}",
+    status_code=status.HTTP_200_OK,
+    response_model=partial(FeedEnableDisableResponse),
     summary="Toggle feed status",
     description="Toggle the status of a feed between enabled and disabled.",
-    response_model=partial(FeedEnableDisableResponse),
-    status_code=status.HTTP_200_OK,
 )
 async def toggle_feed(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
+    db: Annotated[Session, Depends(get_db)],
+    feed_id: Annotated[str, Path(..., alias="feedId")],
     body: FeedToggleBody,
-    db: Session = Depends(get_db),
-    feed_id: str = Path(..., alias="feedId"),
 ) -> dict:
-    return await _toggle_feed(body, db, feed_id)
+    return await _toggle_feed(db, feed_id, body)
 
 
-@router.get(  #! @worker: also change 'description' and 'status_code'
+@router.get(  #! @worker: also change 'status_code' and 'description'
     "/feeds/fetch_from_all_feeds",
+    status_code=status.HTTP_501_NOT_IMPLEMENTED,
+    response_model=partial(FeedFetchResponse),
     summary="Fetch from all feeds",
     description="Fetch data from all available feeds. NOT YET AVAILABLE!",
-    # response_model=partial(FeedFetchResponse),  # todo: partial method does not work yet for this case
-    status_code=status.HTTP_501_NOT_IMPLEMENTED,
 )
-async def fetch_data_from_all_feeds(db: Session = Depends(get_db)) -> dict:
+async def fetch_data_from_all_feeds(db: Annotated[Session, Depends(get_db)]) -> dict:
     return await _fetch_data_from_all_feeds(db)
 
 
 @router.get(
     "/feeds/",
+    status_code=status.HTTP_200_OK,
+    response_model=list[partial(FeedResponse)],  # type: ignore
     summary="Get all feeds",
     description="Retrieve a list of all feeds.",
-    # response_model=list[partial(FeedResponse)],  # type: ignore # todo: partial method does not work yet for this case
-    status_code=status.HTTP_200_OK,
 )
-async def get_feeds(db: Session = Depends(get_db)) -> list[FeedResponse]:
+async def get_feeds(db: Annotated[Session, Depends(get_db)]) -> list[dict]:
     return await _get_feeds(db)
 
 
@@ -159,31 +156,31 @@ async def get_feeds(db: Session = Depends(get_db)) -> list[FeedResponse]:
 @router.post(
     "/feeds/add",
     deprecated=True,
+    status_code=status.HTTP_201_CREATED,
+    response_model=partial(FeedResponse),
     summary="Add new feed (Deprecated)",
     description="Deprecated. Add a new feed with given details using the old route.",
-    # response_model=partial(FeedResponse),  # todo: partial method does not work yet for this case
-    status_code=status.HTTP_201_CREATED,
 )
 async def add_feed_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.ADD]))],
+    db: Annotated[Session, Depends(get_db)],
     body: FeedCreateAndUpdateBody,
-    db: Session = Depends(get_db),
 ) -> dict:
-    return await _add_feed(body, db)
+    return await _add_feed(db, body)
 
 
 @router.post(
     "/feeds/enable/{feedId}",
     deprecated=True,
+    status_code=status.HTTP_200_OK,
+    response_model=partial(FeedEnableDisableResponse),
     summary="Enable feed (Deprecated)",
     description="Deprecated. Enable a specific feed by its ID using the old route.",
-    # response_model=partial(FeedEnableDisableResponse),  # todo: partial method does not work yet for this case
-    status_code=status.HTTP_200_OK,
 )
 async def enable_feed(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
-    db: Session = Depends(get_db),
-    feed_id: str = Path(..., alias="feedId"),
+    db: Annotated[Session, Depends(get_db)],
+    feed_id: Annotated[str, Path(..., alias="feedId")],
 ) -> dict:
     return await _enable_feed(db, feed_id)
 
@@ -191,73 +188,73 @@ async def enable_feed(
 @router.post(
     "/feeds/disable/{feedId}",
     deprecated=True,
+    status_code=status.HTTP_200_OK,
+    response_model=partial(FeedEnableDisableResponse),
     summary="Disable feed (Deprecated)",
     description="Deprecated. Disable a specific feed by its ID using the old route.",
-    # response_model=partial(FeedEnableDisableResponse),  # todo: partial method does not work yet for this case
-    status_code=status.HTTP_200_OK,
 )
 async def disable_feed(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
-    db: Session = Depends(get_db),
-    feed_id: str = Path(..., alias="feedId"),
+    db: Annotated[Session, Depends(get_db)],
+    feed_id: Annotated[str, Path(..., alias="feedId")],
 ) -> dict:
     return await _disable_feed(db, feed_id)
 
 
-@router.post(  #! @worker
+@router.post(  #! @worker: also change 'status_code' and 'description'
     "/feeds/cacheFeeds/{cacheFeedsScope}",
     deprecated=True,
+    status_code=status.HTTP_501_NOT_IMPLEMENTED,
+    response_model=partial(FeedCacheResponse),
     summary="Cache feeds",
     description="Cache feeds based on a specific scope.",
-    # response_model=partial(FeedCacheResponse),  # todo: partial method does not work yet for this case
-    status_code=status.HTTP_501_NOT_IMPLEMENTED,
 )
 async def cache_feeds_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.ADD]))],
-    db: Session = Depends(get_db),
-    cache_feeds_scope: str = Path(..., alias="cacheFeedsScope"),
+    db: Annotated[Session, Depends(get_db)],
+    cache_feeds_scope: Annotated[str, Path(..., alias="cacheFeedsScope")],
 ) -> dict:
     return await _cache_feeds(db, cache_feeds_scope)
 
 
-@router.post(  #! @worker
+@router.post(  #! @worker: also change 'status_code' and 'description'
     "/feeds/fetchFromFeed/{feedId}",
     deprecated=True,
+    status_code=status.HTTP_501_NOT_IMPLEMENTED,
+    response_model=partial(FeedFetchResponse),
     summary="Fetch from feed (Deprecated)",
     description="Deprecated. Fetch data from a specific feed by its ID using the old route.",
-    # response_model=partial(FeedFetchResponse),  # todo: partial method does not work yet for this case
-    status_code=status.HTTP_501_NOT_IMPLEMENTED,
 )
 async def fetch_from_feed_depr(
-    db: Session = Depends(get_db),
-    feed_id: str = Path(..., alias="feedId"),
+    db: Annotated[Session, Depends(get_db)],
+    feed_id: Annotated[str, Path(..., alias="feedId")],
 ) -> dict:
     return await _fetch_from_feed(db, feed_id)
 
 
-@router.post(  #! @worker
+@router.post(  #! @worker: also change 'status_code' and 'description'
     "/feeds/fetchFromAllFeeds",
     deprecated=True,
+    status_code=status.HTTP_501_NOT_IMPLEMENTED,
+    response_model=partial(FeedFetchResponse),
     summary="Fetch from all feeds (Deprecated)",
     description="Deprecated. Fetch data from all available feeds using the old route.",
-    # response_model=partial(FeedFetchResponse),  # todo: partial method does not work yet for this case
-    status_code=status.HTTP_501_NOT_IMPLEMENTED,
 )
-async def fetch_data_from_all_feeds_depr(db: Session = Depends(get_db)) -> dict:
+async def fetch_data_from_all_feeds_depr(db: Annotated[Session, Depends(get_db)]) -> dict:
     return await _fetch_data_from_all_feeds(db)
 
 
 @router.get(
     "/feeds/view/{feedId}",
     deprecated=True,
+    status_code=status.HTTP_200_OK,
+    response_model=partial(FeedResponse),
     summary="Get feed details (Deprecated)",
     description="Deprecated. Retrieve details of a specific feed by its ID using the old route.",
-    # response_model=partial(FeedResponse),  # todo: partial method does not work yet for this case
-    status_code=status.HTTP_200_OK,
 )
 async def get_feed_details_depr(
-    db: Session = Depends(get_db),
-    feed_id: str = Path(..., alias="feedId"),
+    db: Annotated[Session, Depends(get_db)],
+    feed_id: Annotated[str, Path(..., alias="feedId")],
 ) -> dict:
     return await _get_feed_details(db, feed_id)
 
@@ -265,27 +262,24 @@ async def get_feed_details_depr(
 @router.put(
     "/feeds/edit/{feedId}",
     deprecated=True,
+    status_code=status.HTTP_200_OK,
+    response_model=partial(FeedResponse),
     summary="Update feed (Deprecated)",
     description="Deprecated. Update an existing feed by its ID using the old route.",
-    # response_model=partial(FeedResponse),  # todo: partial method does not work yet for this case
-    status_code=status.HTTP_200_OK,
 )
 async def update_feed_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
+    db: Annotated[Session, Depends(get_db)],
+    feed_id: Annotated[str, Path(..., alias="feedId")],
     body: FeedCreateAndUpdateBody,
-    db: Session = Depends(get_db),
-    feed_id: str = Path(..., alias="feedId"),
 ) -> dict:
-    return await _update_feed(body, db, feed_id)
+    return await _update_feed(db, feed_id, body)
 
 
 # --- endpoint logic ---
 
 
-async def _add_feed(
-    body: FeedCreateAndUpdateBody,
-    db: Session,
-) -> dict:
+async def _add_feed(db: Session, body: FeedCreateAndUpdateBody) -> dict:
     if not body.name:
         logger.error("Feed creation failed: field 'name' is required.")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="'name' is required.")
@@ -295,41 +289,15 @@ async def _add_feed(
     if not body.url:
         logger.error("Feed creation failed: field 'url' is required.")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="'url' is required.")
-    if not body.enabled:
-        logger.error("Feed creation failed: field 'enabled' is required.")
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="'enabled' is required.")
-    if not body.distribution:
-        logger.error("Feed creation failed: field 'distribution' is required.")
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="'distribution' is required.")
-    if not body.source_format:
-        logger.error("Feed creation failed: field 'source_format' is required.")
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="'source_format' is required.")
-    if not body.fixed_event:
-        logger.error("Feed creation failed: field 'fixed_event' is required.")
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="'fixed_event' is required.")
 
     new_feed = Feed(
-        name=body.name,
-        provider=body.provider,
-        url=body.url,
-        rules=body.rules,
-        enabled=body.enabled,
-        distribution=body.distribution,
-        sharing_group_id=body.sharing_group_id,
-        tag_id=body.tag_id,
-        source_format=body.source_format,
-        fixed_event=body.fixed_event,
-        delta_merge=body.delta_merge,
-        event_id=body.event_id,
-        publish=body.publish,
-        override_ids=body.override_ids,
-        input_source=body.input_source,
-        delete_local_file=body.delete_local_file,
-        lookup_visible=body.lookup_visible,
-        headers=body.headers,
-        caching_enabled=body.caching_enabled,
-        force_to_ids=body.force_to_ids,
-        orgc_id=body.orgc_id,
+        **{
+            **body.dict(),
+            "sharing_group_id": int(body.sharing_group_id) if body.sharing_group_id is not None else None,
+            "tag_id": int(body.tag_id) if body.tag_id is not None else None,
+            "event_id": int(body.event_id) if body.event_id is not None else None,
+            "orgc_id": int(body.orgc_id) if body.orgc_id is not None else None,
+        }
     )
 
     try:
@@ -345,43 +313,12 @@ async def _add_feed(
     db.refresh(new_feed)
     logger.info(f"New feed added: {new_feed.id}")
 
-    feed_data = FeedAttributesResponse(
-        id=str(new_feed.id),
-        name=new_feed.name,
-        provider=new_feed.provider,
-        url=new_feed.url,
-        rules=new_feed.rules,
-        enabled=new_feed.enabled,
-        distribution=new_feed.distribution,
-        sharing_group_id=str(new_feed.sharing_group_id) if new_feed.sharing_group_id is not None else None,
-        tag_id=str(new_feed.tag_id) if new_feed.tag_id is not None else None,
-        default=new_feed.default,
-        source_format=new_feed.source_format,
-        fixed_event=new_feed.fixed_event,
-        delta_merge=new_feed.delta_merge,
-        event_id=str(new_feed.event_id) if new_feed.event_id is not None else None,
-        publish=new_feed.publish,
-        override_ids=new_feed.override_ids,
-        settings=new_feed.settings,
-        input_source=new_feed.input_source,
-        delete_local_file=new_feed.delete_local_file,
-        lookup_visible=new_feed.lookup_visible,
-        headers=new_feed.headers,
-        caching_enabled=new_feed.caching_enabled,
-        force_to_ids=new_feed.force_to_ids,
-        orgc_id=str(new_feed.orgc_id) if new_feed.orgc_id is not None else None,
-        cache_timestamp=new_feed.cache_timestamp,
-        cached_elements=str(new_feed.cached_elements) if new_feed.cached_elements is not None else None,
-        coverage_by_other_feeds=new_feed.coverage_by_other_feeds,
-    )
+    feed_data = _prepare_response(new_feed)
 
     return FeedResponse(feed=[feed_data])
 
 
-async def _cache_feeds(
-    db: Session,
-    cache_feeds_scope: str,
-) -> dict:
+async def _cache_feeds(db: Session, cache_feeds_scope: str) -> dict:
     raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="ENDPOINT NOT YET SUPPORTED")
 
     # try:
@@ -394,22 +331,19 @@ async def _cache_feeds(
     #     success = False
     #     saved = False
 
-    #     return FeedCacheResponse(  # ? make dynamic, according to the response from workers
+    #     return FeedCacheResponse(  # ? make dynamic, according to the response
     #         name="Caching Operation",
     #         message=message,
     #         url="",
     #         saved=saved,
     #         success=success,
     #     )
-    # except Exception as e:  # if cach scope is invalid
+    # except Exception as e:
     #     logger.exception(f"Failed to cache feed: {e}")
     #     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred."
 
 
-async def _fetch_from_feed(
-    db: Session,
-    feed_id: str,
-) -> dict:
+async def _fetch_from_feed(db: Session, feed_id: str) -> dict:
     raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="ENDPOINT NOT YET SUPPORTED")
 
     # feed = db.get(Feed, feed_id)
@@ -417,59 +351,24 @@ async def _fetch_from_feed(
     #     logger.error(f"Feed with id '{feed_id}' not found.")
     #     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Feed not found")
 
-    #! logic to start the pull process (worker)
+    # #! logic to start the pull process (worker)
 
     # return FeedFetchResponse(result="Pull queued for background execution.")
 
 
-async def _get_feed_details(
-    db: Session,
-    feed_id: str,
-) -> dict:
+async def _get_feed_details(db: Session, feed_id: str) -> dict:
     feed = db.get(Feed, feed_id)
 
     if not feed:
         logger.error(f"Feed with id '{feed_id}' not found.")
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Feed not found")
 
-    feed_data = FeedAttributesResponse(
-        id=str(feed.id),
-        name=feed.name,
-        provider=feed.provider,
-        url=feed.url,
-        rules=feed.rules,
-        enabled=feed.enabled,
-        distribution=feed.distribution,
-        sharing_group_id=str(feed.sharing_group_id),
-        tag_id=str(feed.tag_id),
-        default=feed.default,
-        source_format=feed.source_format,
-        fixed_event=feed.fixed_event,
-        delta_merge=feed.delta_merge,
-        event_id=str(feed.event_id),
-        publish=feed.publish,
-        override_ids=feed.override_ids,
-        settings=feed.settings,
-        input_source=feed.input_source,
-        delete_local_file=feed.delete_local_file,
-        lookup_visible=feed.lookup_visible,
-        headers=feed.headers,
-        caching_enabled=feed.caching_enabled,
-        force_to_ids=feed.force_to_ids,
-        orgc_id=str(feed.orgc_id),
-        cache_timestamp=feed.cache_timestamp,
-        cached_elements=str(feed.cached_elements),
-        coverage_by_other_feeds=feed.coverage_by_other_feeds,
-    )
+    feed_data = _prepare_response(feed)
 
     return FeedResponse(feed=[feed_data])
 
 
-async def _update_feed(
-    body: FeedCreateAndUpdateBody,
-    db: Session,
-    feed_id: str,
-) -> dict:
+async def _update_feed(db: Session, feed_id: str, body: FeedCreateAndUpdateBody) -> dict:
     feed = db.get(Feed, feed_id)
 
     if not feed:
@@ -485,41 +384,15 @@ async def _update_feed(
     if not body.url:
         logger.error("Updating feed failed: field 'url' is required.")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="'url' is required.")
-    if not body.enabled:
-        logger.error("Updating feed failed: field 'enabled' is required.")
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="'enabled' is required.")
-    if not body.distribution:
-        logger.error("Updating feed failed: field 'distribution' is required.")
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="'distribution' is required.")
-    if not body.source_format:
-        logger.error("Updating feed failed: field 'source_format' is required.")
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="'source_format' is required.")
-    if not body.fixed_event:
-        logger.error("Updating feed failed: field 'fixed_event' is required.")
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="'fixed_event' is required.")
 
     updated_feed = Feed(
-        name=body.name,
-        provider=body.provider,
-        url=body.url,
-        rules=body.rules,
-        enabled=body.enabled,
-        distribution=body.distribution,
-        sharing_group_id=body.sharing_group_id,
-        tag_id=body.tag_id,
-        source_format=body.source_format,
-        fixed_event=body.fixed_event,
-        delta_merge=body.delta_merge,
-        event_id=body.event_id,
-        publish=body.publish,
-        override_ids=body.override_ids,
-        input_source=body.input_source,
-        delete_local_file=body.delete_local_file,
-        lookup_visible=body.lookup_visible,
-        headers=body.headers,
-        caching_enabled=body.caching_enabled,
-        force_to_ids=body.force_to_ids,
-        orgc_id=body.orgc_id,
+        **{
+            **body.dict(),
+            "sharing_group_id": int(body.sharing_group_id) if body.sharing_group_id is not None else None,
+            "tag_id": int(body.tag_id) if body.tag_id is not None else None,
+            "event_id": int(body.event_id) if body.event_id is not None else None,
+            "orgc_id": int(body.orgc_id) if body.orgc_id is not None else None,
+        }
     )
 
     try:
@@ -535,66 +408,34 @@ async def _update_feed(
     db.refresh(updated_feed)
     logger.info(f"Feed with id '{updated_feed.id}' updated.")
 
-    feed_data = FeedAttributesResponse(
-        id=str(updated_feed.id),
-        name=str(updated_feed.name),
-        provider=str(updated_feed.provider),
-        url=str(updated_feed.url),
-        rules=str(updated_feed.rules),
-        enabled=bool(updated_feed.enabled),
-        distribution=bool(updated_feed.distribution),
-        sharing_group_id=str(updated_feed.sharing_group_id),
-        tag_id=str(updated_feed.tag_id),
-        default=bool(updated_feed.default),
-        source_format=str(updated_feed.source_format),
-        fixed_event=bool(updated_feed.fixed_event),
-        delta_merge=bool(updated_feed.delta_merge),
-        event_id=str(updated_feed.event_id),
-        publish=bool(updated_feed.publish),
-        override_ids=bool(updated_feed.override_ids),
-        settings=str(updated_feed.settings),
-        input_source=str(updated_feed.input_source),
-        delete_local_file=bool(updated_feed.delete_local_file),
-        lookup_visible=bool(updated_feed.lookup_visible),
-        headers=str(updated_feed.headers),
-        caching_enabled=bool(updated_feed.caching_enabled),
-        force_to_ids=bool(updated_feed.force_to_ids),
-        orgc_id=str(updated_feed.orgc_id),
-        cache_timestamp=str(updated_feed.cache_timestamp),
-        cached_elements=str(updated_feed.cached_elements),
-        coverage_by_other_feeds=str(updated_feed.coverage_by_other_feeds),
-    )
+    feed_data = _prepare_response(updated_feed)
 
     return FeedResponse(feed=[feed_data])
 
 
-async def _toggle_feed(
-    body: FeedToggleBody,
-    db: Session,
-    feed_id: str,
-) -> dict:
+async def _toggle_feed(db: Session, feed_id: str, body: FeedToggleBody) -> dict:
     feed = db.get(Feed, feed_id)
 
     if not feed:
         logger.error(f"Feed with id '{feed_id}' not found.")
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Feed not found")
 
-    if not body.enable:
+    if not str(body.enable):
         logger.error("Toggle feed failed: field 'enable' is required.")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="'enable' is required.")
 
     message = ""
 
-    if body.enable == "True" and feed.enabled == "False":
-        feed.enabled = "True"
+    if int(body.enable) and not feed.enabled:
+        feed.enabled = True
         message = "Feed enabled successfully"
-    elif body.enable == "False" and feed.enabled == "True":
-        feed.enabled = "False"
+    elif not int(body.enable) and feed.enabled:
+        feed.enabled = False
         message = "Feed disabled successfully"
-    elif body.enable == "True" and feed.enabled == "True":
-        message = "Feed already enabled"
-    elif body.enable == "False" and feed.enabled == "False":
+    elif not int(body.enable) and not feed.enabled:
         message = "Feed already disabled"
+    elif int(body.enable) and feed.enabled:
+        message = "Feed already enabled"
 
     try:
         db.commit()
@@ -624,46 +465,12 @@ async def _fetch_data_from_all_feeds(db: Session) -> dict:
 async def _get_feeds(db: Session) -> list[dict]:
     feeds = db.query(Feed).all()
 
-    feed_responses = [
-        FeedAttributesResponse(
-            id=str(feed.id),
-            name=feed.name,
-            provider=feed.provider,
-            url=feed.url,
-            rules=feed.rules,
-            enabled=feed.enabled,
-            distribution=feed.distribution,
-            sharing_group_id=str(feed.sharing_group_id),
-            tag_id=str(feed.tag_id),
-            default=feed.default,
-            source_format=feed.source_format,
-            fixed_event=feed.fixed_event,
-            delta_merge=feed.delta_merge,
-            event_id=str(feed.event_id),
-            publish=feed.publish,
-            override_ids=feed.override_ids,
-            settings=feed.settings,
-            input_source=feed.input_source,
-            delete_local_file=feed.delete_local_file,
-            lookup_visible=feed.lookup_visible,
-            headers=feed.headers,
-            caching_enabled=feed.caching_enabled,
-            force_to_ids=feed.force_to_ids,
-            orgc_id=str(feed.orgc_id),
-            cache_timestamp=feed.cache_timestamp,
-            cached_elements=str(feed.cached_elements),
-            coverage_by_other_feeds=feed.coverage_by_other_feeds,
-        )
-        for feed in feeds
-    ]
+    feed_responses = [_prepare_response(feed) for feed in feeds]
 
     return [FeedResponse(feed=feed_responses)]
 
 
-async def _enable_feed(
-    db: Session,
-    feed_id: str,
-) -> dict:
+async def _enable_feed(db: Session, feed_id: str) -> dict:
     try:
         int(feed_id)
     except ValueError:
@@ -689,10 +496,7 @@ async def _enable_feed(
     return FeedEnableDisableResponse(name=str(feed.name), message="Feed successfully enabled", url=str(feed.url))
 
 
-async def _disable_feed(
-    db: Session,
-    feed_id: str,
-) -> dict:
+async def _disable_feed(db: Session, feed_id: str) -> dict:
     try:
         int(feed_id)
     except ValueError:
@@ -716,3 +520,14 @@ async def _disable_feed(
         )
 
     return FeedEnableDisableResponse(name=str(feed.name), message="Feed successfully disabled", url=str(feed.url))
+
+
+def _prepare_response(feed: Feed) -> FeedAttributesResponse:
+    feed_dict = feed.__dict__.copy()
+
+    fields_to_convert = ["sharing_group_id", "tag_id", "event_id", "orgc_id"]
+    for field in fields_to_convert:
+        if feed_dict.get(field) is not None:
+            feed_dict[field] = str(feed_dict[field])
+
+    return FeedAttributesResponse(**feed_dict)
