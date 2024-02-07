@@ -80,7 +80,7 @@ class SearchAttributesAttributes(BaseModel):
     attributes: Annotated[SearchAttributesAttributesDetails, Field(alias="Attribute")]
 
 
-class SearchAttributesResponse:
+class SearchAttributesResponse(BaseModel):
     response: list[SearchAttributesAttributes]
 
     class Config:

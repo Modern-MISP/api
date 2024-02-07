@@ -11,7 +11,7 @@ from mmisp.api_schemas.attributes.edit_attribute_body import EditAttributeBody
 from mmisp.api_schemas.attributes.edit_attributes_response import EditAttributeResponse
 from mmisp.api_schemas.attributes.get_all_attributes_response import GetAllAttributesResponse
 from mmisp.api_schemas.attributes.get_attribute_response import GetAttributeResponse
-from mmisp.api_schemas.attributes.get_attribute_statistics_response import GetAttributeStatisticsTypesResponse
+from mmisp.api_schemas.attributes.get_attribute_statistics_response import GetAttributeStatisticsCategoriesResponse
 from mmisp.api_schemas.attributes.get_describe_types_response import GetDescribeTypesResponse
 from mmisp.api_schemas.attributes.restore_attribute_reponse import RestoreAttributeResponse
 from mmisp.api_schemas.attributes.search_attributes_body import SearchAttributesBody
@@ -20,6 +20,7 @@ from mmisp.db.database import get_db
 from mmisp.db.models.attribute import Attribute
 
 router = APIRouter(tags=["attributes"])
+
 
 # Sorted according to CRUD
 
@@ -135,8 +136,8 @@ async def attributes_deleteSelected(
 
 
 @router.post("/attributes/restSearch", summary="Get a filtered and paginated list of attributes")
-async def attributes_reastSearch(body: SearchAttributesBody, db: Session = Depends(get_db)) -> dict:
-    return {"response": {"Attribute": list[SearchAttributesResponse()]}}
+async def attributes_reastSearch(body: SearchAttributesBody, db: Session = Depends(get_db)) -> SearchAttributesResponse:
+    return SearchAttributesResponse()
 
 
 @router.get(
@@ -145,8 +146,12 @@ async def attributes_reastSearch(body: SearchAttributesBody, db: Session = Depen
 )
 async def attributes_statistics(
     context: str, percentage: int, db: Session = Depends(get_db)
-) -> GetAttributeStatisticsTypesResponse:
-    return GetAttributeStatisticsTypesResponse()
+) -> GetAttributeStatisticsCategoriesResponse:
+    return GetAttributeStatisticsCategoriesResponse()
+    # response = {}
+    # for type in GetDescribeTypesAttributes().types:
+    #     response.update({type: str(percentage)})
+    # return response
 
 
 @router.get("/attributes/describeTypes", summary="Get all available attribute types")
@@ -173,5 +178,5 @@ async def attributes_removeTag(
     attribute_id: str, tag_id: str, db: Session = Depends(get_db)
 ) -> AddRemoveTagAttributeResponse:
     return AddRemoveTagAttributeResponse(
-        saved=True, success="Tag added", check_publish=True, errors="Tag could not be added."
+        saved=True, success="Tag removed", check_publish=True, errors="Tag could not be removed."
     )

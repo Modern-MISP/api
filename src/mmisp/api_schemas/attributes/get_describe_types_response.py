@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from mmisp.db.models.attribute import Attribute
 
 
-class GetDescribeTypesDescribeTypesAttributes(BaseModel):
+class GetDescribeTypesAttributes(BaseModel):
     __attribute_types__: list[type[Attribute]] = Attribute.__subclasses__()
     sane_defaults: dict = {}
     for cls in Attribute.__subclasses__():
@@ -41,7 +41,7 @@ class GetDescribeTypesDescribeTypesAttributes(BaseModel):
 
 
 class GetDescribeTypesResponse(BaseModel):
-    result: GetDescribeTypesDescribeTypesAttributes
+    result: GetDescribeTypesAttributes
 
     class Config:
         orm_mode = True
