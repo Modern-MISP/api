@@ -3,6 +3,8 @@ from typing import Type, get_args, get_origin, get_type_hints
 
 from pydantic import BaseModel, Field, create_model
 
+partial_model_registry: dict[str, Type[BaseModel]] = {}
+
 
 def _is_pydantic_base_model(type_: Type) -> bool:
     """Check if the type is a subclass of BaseModel."""
@@ -31,6 +33,11 @@ def _make_optional(type_: Type) -> Type:
 
 def partial(model: Type[BaseModel]) -> Type[BaseModel]:
     """Takes a Pydantic model and returns a modified version with every field as optional."""
+    new_name = "Partial" + model.__name__
+
+    if partial_model_registry.get(new_name):
+        return partial_model_registry[new_name]
+
     fields = {}
 
     for field_name, model_field in model.__fields__.items():
@@ -47,7 +54,8 @@ def partial(model: Type[BaseModel]) -> Type[BaseModel]:
 
         fields[field_name] = (optional_field_type, default_value)
 
-    return create_model("Partial" + model.__name__, **fields)
+    partial_model_registry[new_name] = create_model(new_name, **fields)
+    return partial_model_registry[new_name]
 
 
 def _print_model_attributes(model_cls: Type[BaseModel], indent: int = 0) -> None:
