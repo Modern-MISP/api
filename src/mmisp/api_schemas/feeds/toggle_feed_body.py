@@ -2,7 +2,7 @@ from pydantic import BaseModel
 
 
 class FeedToggleBody(BaseModel):
-    enable: str
+    enable: bool
 
     class Config:
         orm_mode = True
