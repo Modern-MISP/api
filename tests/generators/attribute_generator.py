@@ -1,3 +1,4 @@
+from random import randint
 from typing import Any, Dict
 
 from mmisp.api_schemas.attributes.add_attribute_body import AddAttributeBody
@@ -26,12 +27,12 @@ def generate_invalid_field_add_attribute_data() -> AddAttributeBody:
     return AddAttributeBody(value="1.2.3.4", type="ip-src", category=1)
 
 
-def generate_existing_id() -> str:
-    return "1"
+def generate_existing_id() -> int:
+    return 1
 
 
 def generate_non_existing_id() -> str:
-    return "0"
+    return 0
 
 
 def generate_invalid_id() -> str:
@@ -62,8 +63,12 @@ def generate_invalid_search_attributes_data() -> SearchAttributesBody:
 
 
 def generate_valid_context_and_percentage_attribute_statistics() -> Dict[str, Any]:
-    return {"context": "category", "percentage": 1}
+    return {"context": "type", "percentage": 1}
 
 
 def generate_invalid_context_and_percentage_attribute_statistics() -> Dict[str, Any]:
     return {"context": "invalid context", "percentage": 2}
+
+
+def generate_valid_local_add_tag_to_attribute() -> int:
+    return randint(0, 1)

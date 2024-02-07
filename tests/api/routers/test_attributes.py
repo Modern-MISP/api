@@ -2,6 +2,8 @@ from typing import Any, Dict
 
 import pytest
 
+from mmisp.api_schemas.attributes.get_describe_types_response import GetDescribeTypesAttributes
+
 from ...environment import client, environment
 from ...generators.attribute_generator import (
     generate_existing_id,
@@ -15,6 +17,7 @@ from ...generators.attribute_generator import (
     generate_valid_context_and_percentage_attribute_statistics,
     generate_valid_delete_selected_attributes_data,
     generate_valid_edit_attribute_data,
+    generate_valid_local_add_tag_to_attribute,
     generate_valid_search_attributes_data,
 )
 
@@ -67,15 +70,15 @@ def test_add_attribute_authorization(add_attribute_valid_data: Dict[str, Any]) -
     assert response.status_code == 401
 
 
-# # --- Test get attribute by id
+# --- Test get attribute by id
 
 
 @pytest.fixture(scope="module")
-def existing_id() -> str:
+def existing_id() -> int:
     return generate_existing_id()
 
 
-def test_get_existing_attribute(existing_id: str) -> None:
+def test_get_existing_attribute(existing_id: int) -> None:
     response = client.get("/attributes/" + existing_id)
     assert response.status_code == 200
     response_json = response.json()
@@ -104,16 +107,16 @@ def test_get_existing_attribute(existing_id: str) -> None:
 
 
 @pytest.fixture(params=[generate_non_existing_id, generate_invalid_id], scope="module")
-def invalid_or_non_existing_ids(request: Any) -> str:
+def invalid_or_non_existing_ids(request: Any) -> Any:
     request.param
 
 
-def test_get_invalid_or_non_existing_attribute(invalid_or_non_existing_ids: str) -> None:
+def test_get_invalid_or_non_existing_attribute(invalid_or_non_existing_ids: Any) -> None:
     response = client.get("/attributes/" + invalid_or_non_existing_ids)
     assert response.status_code == 404
 
 
-def test_get_attribute_response_format(existing_id: str) -> None:
+def test_get_attribute_response_format(existing_id: int) -> None:
     response = client.get("/attributes/" + existing_id)
     assert response.headers["Content-Type"] == "application/json"
 
@@ -126,7 +129,7 @@ def edit_attribute_valid_data() -> Dict[str, Any]:
     return generate_valid_edit_attribute_data().dict()
 
 
-def test_edit_existing_attribute(existing_id: str, edit_attribute_valid_data: Dict[str, Any]) -> None:
+def test_edit_existing_attribute(existing_id: int, edit_attribute_valid_data: Dict[str, Any]) -> None:
     headers = {"authorization": environment.site_admin_user_token}
     response = client.put("/attributes/" + existing_id, json=edit_attribute_valid_data, headers=headers)
     assert response.status_code == 200
@@ -139,20 +142,20 @@ def test_edit_existing_attribute(existing_id: str, edit_attribute_valid_data: Di
 
 
 def test_edit_non_existing_attribute(
-    invalid_or_non_existing_ids: str, edit_attribute_valid_data: Dict[str, Any]
+    invalid_or_non_existing_ids: Any, edit_attribute_valid_data: Dict[str, Any]
 ) -> None:
     headers = {"authorization": environment.site_admin_user_token}
     response = client.put("/attributes/" + invalid_or_non_existing_ids, json=edit_attribute_valid_data, headers=headers)
     assert response.status_code == 404
 
 
-def test_edit_attribute_response_format(existing_id: str, edit_attribute_valid_data: Dict[str, Any]) -> None:
+def test_edit_attribute_response_format(existing_id: int, edit_attribute_valid_data: Dict[str, Any]) -> None:
     headers = {"authorization": environment.site_admin_user_token}
     response = client.put("/attributes/" + existing_id, json=edit_attribute_valid_data, headers=headers)
     assert response.headers["Content-Type"] == "application/json"
 
 
-def test_edit_attribute_authorization(existing_id: str, edit_attribute_valid_data: Dict[str, Any]) -> None:
+def test_edit_attribute_authorization(existing_id: int, edit_attribute_valid_data: Dict[str, Any]) -> None:
     headers = {"authorization": ""}
     response = client.put("/attributes/" + existing_id, json=edit_attribute_valid_data, headers=headers)
     assert response.status_code == 401
@@ -161,25 +164,25 @@ def test_edit_attribute_authorization(existing_id: str, edit_attribute_valid_dat
 # --- Test delete attribute by id
 
 
-def test_delete_existing_attribute(existing_id: str) -> None:
+def test_delete_existing_attribute(existing_id: int) -> None:
     headers = {"authorization": environment.site_admin_user_token}
     response = client.delete("/attributes/" + existing_id, headers=headers)
     assert response.status_code == 200
 
 
-def test_delete_invalid_or_non_existing_attribute(invalid_or_non_existing_ids: str) -> None:
+def test_delete_invalid_or_non_existing_attribute(invalid_or_non_existing_ids: Any) -> None:
     headers = {"authorization": environment.site_admin_user_token}
     response = client.delete("/attributes/" + invalid_or_non_existing_ids, headers=headers)
     assert response.status_code == 404
 
 
-def test_delete_attribute_response_format(existing_id: str) -> None:
+def test_delete_attribute_response_format(existing_id: int) -> None:
     headers = {"authorization": environment.site_admin_user_token}
     response = client.delete("/attributes/" + existing_id, headers=headers)
     assert response.headers["Content-Type"] == "application/json"
 
 
-def test_delete_attribute_authorization(existing_id: str) -> None:
+def test_delete_attribute_authorization(existing_id: int) -> None:
     headers = {"authorization": ""}
     response = client.delete("/attributes/" + existing_id, headers=headers)
     assert response.status_code == 401
@@ -229,7 +232,7 @@ def delete_selected_existing_attributes_data() -> Dict[str, Any]:
 
 
 def test_delete_selected_attributes_from_existing_event(
-    existing_id: str, delete_selected_existing_attributes_data: Dict[str, Any]
+    existing_id: int, delete_selected_existing_attributes_data: Dict[str, Any]
 ) -> None:
     headers = {"authorization": environment.site_admin_user_token}
     response = client.post(
@@ -245,7 +248,7 @@ def test_delete_selected_attributes_from_existing_event(
 
 
 def test_delete_selected_attributes_response_format(
-    existing_id: str, delete_selected_existing_attributes_data: Dict[str, Any]
+    existing_id: int, delete_selected_existing_attributes_data: Dict[str, Any]
 ) -> None:
     headers = {"authorization": environment.site_admin_user_token}
     response = client.post(
@@ -255,7 +258,7 @@ def test_delete_selected_attributes_response_format(
 
 
 def test_delete_selected_attributes_authorization(
-    existing_id: str, delete_selected_existing_attributes_data: Dict[str, Any]
+    existing_id: int, delete_selected_existing_attributes_data: Dict[str, Any]
 ) -> None:
     headers = {"authorization": ""}
     response = client.post(
@@ -307,7 +310,7 @@ def test_search_attributes_authorization(search_attribute_valid_data: Dict[str, 
     assert response.status_code == 401
 
 
-# # --- Test attribute statistics
+# --- Test attribute statistics
 
 
 @pytest.fixture(scope="module")
@@ -322,133 +325,14 @@ def test_valid_parameters_attribute_statistics(valid_parameters_attribute_statis
     assert response.status_code == 200
     response_json = response.json()
     if "category" in context:
-        for category in response_json:
-            assert "Antivirus_detection" in category
-            assert "Artifacts_dropped" in category
-            assert "Attribution" in category
-            assert "External_analysis" in category
-            assert "Financial_fraud" in category
-            assert "Internal_reference" in category
-            assert "Network_activity" in category
-            assert "Other" in category
-            assert "Payload_delivery" in category
-            assert "Payload_installation" in category
-            assert "Payload_type" in category
-            assert "Persistence_mechanism" in category
-            assert "Person" in category
-            assert "Social_network" in category
-            assert "Support_Tool" in category
-            assert "Targeting_data" in category
+        for category in GetDescribeTypesAttributes().categories:
+            assert category in response_json
     else:
-        for type in response_json:
-            assert "AS" in type
-            assert "attachment" in type
-            assert "authentihash" in type
-            assert "boolean" in type
-            assert "btc" in type
-            assert "campaign_id" in type
-            assert "campaign_name" in type
-            assert "comment" in type
-            assert "cookie" in type
-            assert "counter" in type
-            assert "cpe" in type
-            assert "date_of_birth" in type
-            assert "datetime" in type
-            assert "dns_soa_email" in type
-            assert "domain" in type
-            assert "domain_ip" in type
-            assert "email" in type
-            assert "email_attachment" in type
-            assert "email_body" in type
-            assert "email_dst" in type
-            assert "email_message_id" in type
-            assert "email_mime_boundary" in type
-            assert "email_reply_to" in type
-            assert "email_src" in type
-            assert "email_src_display_name" in type
-            assert "email_subject" in type
-            assert "email_x_mailer" in type
-            assert "filename" in type
-            assert "filename_pattern" in type
-            assert "filename_md5" in type
-            assert "filename_sha1" in type
-            assert "filename_sha256" in type
-            assert "first_name" in type
-            assert "float" in type
-            assert "full_name" in type
-            assert "gender" in type
-            assert "github_repository" in type
-            assert "github_username" in type
-            assert "hex" in type
-            assert "hostname" in type
-            assert "http_method" in type
-            assert "imphash" in type
-            assert "ip_dst" in type
-            assert "ip_dst_port" in type
-            assert "ip_src" in type
-            assert "ip_src_port" in type
-            assert "ja3_fingerprstr_md5" in type
-            assert "jabber_id" in type
-            assert "jarm_fingerprstr" in type
-            assert "last_name" in type
-            assert "link" in type
-            assert "malware_sample" in type
-            assert "md5" in type
-            assert "mime_type" in type
-            assert "mobile_application_id" in type
-            assert "mutex" in type
-            assert "named_pipe" in type
-            assert "nationality" in type
-            assert "other" in type
-            assert "passport_country" in type
-            assert "passport_expiration" in type
-            assert "passport_number" in type
-            assert "pattern_in_file" in type
-            assert "pattern_in_memory" in type
-            assert "pattern_in_traffic" in type
-            assert "pdb" in type
-            assert "pehash" in type
-            assert "phone_number" in type
-            assert "place_of_birth" in type
-            assert "port" in type
-            assert "regkey" in type
-            assert "regkey_value" in type
-            assert "sha1" in type
-            assert "sha224" in type
-            assert "sha256" in type
-            assert "sha384" in type
-            assert "sha512" in type
-            assert "sigma" in type
-            assert "size_in_bytes" in type
-            assert "snort" in type
-            assert "ssdeep" in type
-            assert "stix2_pattern" in type
-            assert "target_external" in type
-            assert "target_location" in type
-            assert "target_machine" in type
-            assert "target_org" in type
-            assert "target_user" in type
-            assert "text" in type
-            assert "threat_actor" in type
-            assert "tlsh" in type
-            assert "uri" in type
-            assert "url" in type
-            assert "user_agent" in type
-            assert "vhash" in type
-            assert "vulnerability" in type
-            assert "weakness" in type
-            assert "whois_creation_date" in type
-            assert "whois_registrant_email" in type
-            assert "whois_registrant_name" in type
-            assert "whois_registrant_org" in type
-            assert "whois_registrant_phone" in type
-            assert "whois_registrar" in type
-            assert "windows_scheduled_task" in type
-            assert "windows_service_name" in type
-            assert "x509_fingerprstr_md5" in type
-            assert "x509_fingerprstr_sha1" in type
-            assert "x509_fingerprstr_sha256" in type
-            assert "yara" in type
+        for type in GetDescribeTypesAttributes().types:
+            assert type in response_json
+    if percentage == 1:
+        for item in response_json:
+            assert "%" in item
 
 
 @pytest.fixture(scope="module")
@@ -486,7 +370,99 @@ def test_attribute_describe_types_response_format() -> None:
 # --- Test restore attribute
 
 
-# def test_restore_existing_attribute(existing_id: str) -> None:
-#     headers = {"authorization": environment.site_admin_user_token}
-#     response = client.post(f"/attributes/restore/{existing_id}", headers=headers)
-#     assert response.status_code == 200
+def test_restore_existing_attribute(existing_id: int) -> None:
+    headers = {"authorization": environment.site_admin_user_token}
+    response = client.post(f"/attributes/restore/{existing_id}", headers=headers)
+    assert response.status_code == 200
+
+
+def test_restore_invalid_attribute(invalid_or_non_existing_ids: Any) -> None:
+    headers = {"authorization": environment.site_admin_user_token}
+    response = client.post(f"/attributes/restore/{invalid_or_non_existing_ids}", headers=headers)
+    assert response.status_code == 404
+
+
+def test_restore_attribute_response_format(existing_id: int) -> None:
+    headers = {"authorization": environment.site_admin_user_token}
+    response = client.post(f"/attributes/restore/{existing_id}", headers=headers)
+    assert response.headers["Content-Type"] == "application/json"
+
+
+def test_restore_attribute_authorization(existing_id: int) -> None:
+    headers = {"authorization": ""}
+    response = client.post(f"/attributes/restore/{existing_id}", headers=headers)
+    assert response.status_code == 401
+
+
+@pytest.fixture(scope="module")
+def valid_local_add_tag_to_attribute() -> int:
+    return generate_valid_local_add_tag_to_attribute()
+
+
+def test_add_existing_tag_to_attribute(existing_id: int, valid_local_add_tag_to_attribute: int) -> None:
+    headers = {"authorization": environment.site_admin_user_token}
+    response = client.post(
+        f"/attributes/addTag/{existing_id}/{existing_id}/valid_local_add_tag_to_attribute:{valid_local_add_tag_to_attribute}",
+        headers=headers,
+    )
+    assert response.status_code == 200
+    response_json = response.json()
+    assert response_json["saved"] is True
+    assert response_json["success"] == "Tag added"
+    assert response_json["check_publish"] is True
+
+
+def test_add_invalid_or_non_existing_tag_to_attribute(
+    existing_id: int, invalid_or_non_existing_ids: Any, valid_local_add_tag_to_attribute: int
+) -> None:
+    headers = {"authorization": environment.site_admin_user_token}
+    response = client.post(
+        f"/attributes/addTag/{invalid_or_non_existing_ids}/{invalid_or_non_existing_ids}/valid_local_add_tag_to_attribute:{valid_local_add_tag_to_attribute}",
+        headers=headers,
+    )
+    assert response.status_code == 200
+    response_json = response.json()
+    assert response_json["saved"] is False
+    if isinstance(invalid_or_non_existing_ids, str):
+        assert response_json["errors"] == "Invalid Tag."
+    else:
+        assert response_json["errors"] == "Tag could not be added."
+
+
+def test_add_tag_to_attribute_response_format(existing_id: int, valid_local_add_tag_to_attribute: int) -> None:
+    headers = {"authorization": environment.site_admin_user_token}
+    response = client.post(
+        f"/attributes/addTag/{existing_id}/{existing_id}/valid_local_add_tag_to_attribute:{valid_local_add_tag_to_attribute}",
+        headers=headers,
+    )
+    assert response.headers["Content-Type"] == "application/json"
+
+
+def test_add_tag_to_attribute_authorization(existing_id: int, valid_local_add_tag_to_attribute: int) -> None:
+    headers = {"authorization": ""}
+    response = client.post(
+        f"/attributes/addTag/{existing_id}/{existing_id}/valid_local_add_tag_to_attribute:{valid_local_add_tag_to_attribute}",
+        headers=headers,
+    )
+    assert response.status_code == 401
+
+
+def test_remove_existing_tag_from_attribute(existing_id: int) -> None:
+    headers = {"authorization": environment.site_admin_user_token}
+    response = client.post(f"/attributes/removeTag/{existing_id}/{existing_id}", headers=headers)
+    assert response.status_code == 200
+    response_json = response.json()
+    assert response_json["saved"] is True
+    assert response_json["success"] == "Tag removed"
+
+
+def test_remove_tag_from_attribute_response_format(existing_id: int) -> None:
+    headers = {"authorization": environment.site_admin_user_token}
+    response = client.post(f"/attributes/removeTag/{existing_id}/{existing_id}", headers=headers)
+    assert response.headers["Content-Type"] == "application/json"
+
+
+def test_remove_tag_from_attribute(existing_id: int) -> None:
+    headers = {"authorization": ""}
+    response = client.post(f"/attributes/removeTag/{existing_id}/{existing_id}", headers=headers)
+    assert response.status_code == 401
