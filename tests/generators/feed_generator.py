@@ -4,9 +4,9 @@ import string
 from src.mmisp.api_schemas.feeds.create_update_feed_body import FeedCreateAndUpdateBody
 
 
-def generate_number() -> int:
+def generate_number_as_str() -> str:
     number = random.randint(1, 4)
-    return number
+    return str(number)
 
 
 def generate_ids_as_str() -> str:
@@ -33,7 +33,7 @@ def generate_valid_feed_data() -> FeedCreateAndUpdateBody:
         url=f"http://{random_string()}.com",
         rules=random_string(),
         enabled=False,
-        distribution=generate_number(),
+        distribution=generate_number_as_str(),
         sharing_group_id=generate_ids_as_str(),
         tag_id=generate_ids_as_str(),
         default=random.choice([True, False]),
@@ -61,7 +61,7 @@ def generate_random_valid_feed_data() -> FeedCreateAndUpdateBody:
         url=f"http://{random_string()}.com",
         rules=random_string() if random.choice([True, False]) else None,
         enabled=None,
-        distribution=generate_number() if random.choice([True, False]) else None,
+        distribution=generate_number_as_str() if random.choice([True, False]) else None,
         sharing_group_id=generate_ids_as_str() if random.choice([True, False]) else None,
         tag_id=generate_ids_as_str() if random.choice([True, False]) else None,
         default=random.choice([True, False]) if random.choice([True, False]) else None,

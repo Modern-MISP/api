@@ -301,6 +301,7 @@ async def _add_feed(db: Session, body: FeedCreateAndUpdateBody) -> dict:
     new_feed: Feed = Feed(
         **{
             **body.dict(),
+            "distribution": int(body.distribution) if body.distribution is not None else None,
             "sharing_group_id": int(body.sharing_group_id) if body.sharing_group_id is not None else None,
             "tag_id": int(body.tag_id) if body.tag_id is not None else None,
             "event_id": int(body.event_id) if body.event_id is not None else None,
@@ -391,6 +392,7 @@ async def _update_feed(db: Session, feed_id: str, body: FeedCreateAndUpdateBody)
     updated_feed: Feed = Feed(
         **{
             **body.dict(),
+            "distribution": int(body.distribution) if body.distribution is not None else None,
             "sharing_group_id": int(body.sharing_group_id) if body.sharing_group_id is not None else None,
             "tag_id": int(body.tag_id) if body.tag_id is not None else None,
             "event_id": int(body.event_id) if body.event_id is not None else None,
@@ -543,7 +545,7 @@ async def _disable_feed(db: Session, feed_id: str) -> dict:
 def _prepare_response(feed: Feed) -> FeedAttributesResponse:
     feed_dict: dict[str, Any] = feed.__dict__.copy()
 
-    fields_to_convert = ["sharing_group_id", "tag_id", "event_id", "orgc_id"]
+    fields_to_convert = ["distribution", "sharing_group_id", "tag_id", "event_id", "orgc_id"]
     for field in fields_to_convert:
         if feed_dict.get(field) is not None:
             feed_dict[field] = str(feed_dict[field])
