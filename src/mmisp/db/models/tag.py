@@ -1,5 +1,7 @@
 from sqlalchemy import Boolean, Column, Integer, String
 
+from mmisp.util.uuid import uuid
+
 from ..database import Base
 
 
@@ -7,6 +9,7 @@ class Tag(Base):
     __tablename__ = "tags"
 
     id = Column(Integer, primary_key=True)
+    uuid = Column(String(255), unique=True, default=uuid)
     name = Column(String(255), unique=True)
     colour = Column(String(255))
     exportable = Column(Boolean)
