@@ -11,7 +11,6 @@ class FeedAttributesResponse(BaseModel):
     distribution: int
     sharing_group_id: str
     tag_id: str
-
     default: bool | None = None
     source_format: str | None = None
     fixed_event: bool
@@ -20,7 +19,6 @@ class FeedAttributesResponse(BaseModel):
     publish: bool
     override_ids: bool
     settings: str | None = None
-
     input_source: str
     delete_local_file: bool | None = None
     lookup_visible: bool | None = None
@@ -28,7 +26,6 @@ class FeedAttributesResponse(BaseModel):
     caching_enabled: bool
     force_to_ids: bool
     orgc_id: str
-
     cache_timestamp: str | None = None
     cached_elements: str | None = None  # new
     coverage_by_other_feeds: str | None = None  # new
