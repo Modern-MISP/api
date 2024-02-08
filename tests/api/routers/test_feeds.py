@@ -153,13 +153,15 @@ def test_cache_feeds_authorization(cach_feed_test_data: Dict[str, Any]) -> None:
 # # Test fetch from feed
 # # TODO: route not yet implemented
 # def test_fetch_from_feed_existing_id(feed_test_ids: Dict[str, Any]) -> None:
-#     response = client.get(f"/feeds/fetchFromFeed/{feed_test_ids['valid_feed_id']}")
+#     headers = {"authorization": environment.site_admin_user_token}
+#     response = client.get(f"/feeds/fetchFromFeed/{feed_test_ids['valid_feed_id']}", headers=headers)
 #     assert response.status_code == 200
 #     assert "result" in response.json()
 
 # # TODO: route not yet implemented
+#     headers = {"authorization": environment.site_admin_user_token}
 # def test_fetch_from_feed_invalid_id(feed_test_ids: Dict[str, Any]) -> None:
-#     response = client.get(f"/feeds/fetchFromFeed/{feed_test_ids['invalid_feed_id']}")
+#     response = client.get(f"/feeds/fetchFromFeed/{feed_test_ids['invalid_feed_id']}", headers=headers)
 #     assert response.status_code == 422
 
 
@@ -262,22 +264,22 @@ def test_toggle_feed_scenarios(feed_data: Dict[str, Any]) -> None:
     # Activate the feed
     response = client.patch(f"/feeds/{feed_id}", json={"enable": 1}, headers=headers)
     assert response.status_code == 200
-    assert response.json()["message"] == "Feed enabled successfully"
+    assert response.json()["message"] == "Feed enabled successfully."
 
     # Check whether the feed is already activated
     response = client.patch(f"/feeds/{feed_id}", json={"enable": 1}, headers=headers)
     assert response.status_code == 200
-    assert response.json()["message"] == "Feed already enabled"
+    assert response.json()["message"] == "Feed already enabled."
 
     # Deactivate the feed
     response = client.patch(f"/feeds/{feed_id}", json={"enable": 0}, headers=headers)
     assert response.status_code == 200
-    assert response.json()["message"] == "Feed disabled successfully"
+    assert response.json()["message"] == "Feed disabled successfully."
 
     # Check whether the feed is already deactivated
     response = client.patch(f"/feeds/{feed_id}", json={"enable": 0}, headers=headers)
     assert response.status_code == 200
-    assert response.json()["message"] == "Feed already disabled"
+    assert response.json()["message"] == "Feed already disabled."
 
 
 def test_toggle_feed_authorization(feed_test_ids: Dict[str, Any]) -> None:
@@ -290,7 +292,8 @@ def test_toggle_feed_authorization(feed_test_ids: Dict[str, Any]) -> None:
 # # Test fetsch from all feeds
 # # TODO: route not yet implemented
 # def test_fetch_data_from_all_feeds() -> None:
-#     response = client.get("/feeds/fetchFromAllFeeds")
+#     headers = {"authorization": environment.site_admin_user_token}
+#     response = client.get("/feeds/fetchFromAllFeeds", headers=headers)
 #     assert response.status_code == 200
 #     response_data = response.json()
 #     assert "result" in response_data
@@ -298,7 +301,8 @@ def test_toggle_feed_authorization(feed_test_ids: Dict[str, Any]) -> None:
 
 # # TODO: route not yet implemented
 # def test_fetch_from_all_feeds_response_format() -> None:
-#     response = client.get("/feeds/fetchFromAllFeeds")
+#     headers = {"authorization": environment.site_admin_user_token}
+#     response = client.get("/feeds/fetchFromAllFeeds", headers=headers)
 #     assert response.headers["Content-Type"] == "application/json"
 #     assert "result" in response.json()
 
