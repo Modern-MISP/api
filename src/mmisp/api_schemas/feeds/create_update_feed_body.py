@@ -7,7 +7,7 @@ class FeedCreateAndUpdateBody(BaseModel):
     url: str
     rules: str | None = None
     enabled: bool | None = None
-    distribution: int | None = None
+    distribution: str | None = None
     sharing_group_id: str | None = None
     tag_id: str | None = None
     default: bool | None = None

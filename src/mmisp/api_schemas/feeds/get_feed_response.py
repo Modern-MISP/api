@@ -8,7 +8,7 @@ class FeedAttributesResponse(BaseModel):
     url: str
     rules: str | None = None
     enabled: bool | None = None
-    distribution: int
+    distribution: str
     sharing_group_id: str
     tag_id: str
     default: bool | None = None
