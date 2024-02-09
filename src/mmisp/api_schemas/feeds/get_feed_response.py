@@ -1,4 +1,6 @@
-from pydantic import BaseModel
+from typing import Any, Dict, Optional
+
+from pydantic import BaseModel, validator
 
 
 class FeedAttributesResponse(BaseModel):
@@ -29,6 +31,16 @@ class FeedAttributesResponse(BaseModel):
     cache_timestamp: str | None = None
     cached_elements: str | None = None  # new
     coverage_by_other_feeds: str | None = None  # new
+
+    @validator("sharing_group_id", always=True)
+    def check_sharing_group_id(cls, value: Any, values: Dict[str, Any]) -> Optional[int]:  # noqa: ANN101
+        """
+        If distribution equals 4, sharing_group_id will be shown.
+        """
+        distribution = values.get("distribution", None)
+        if distribution == "4" and value is not None:
+            return value
+        return None
 
 
 class FeedResponse(BaseModel):
