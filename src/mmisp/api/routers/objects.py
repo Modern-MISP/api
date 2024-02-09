@@ -1,23 +1,20 @@
 import logging
-from datetime import datetime
-from typing import Annotated  # , Any
+import time
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Path, status
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
 from mmisp.api_schemas.attributes.get_all_attributes_response import GetAllAttributesResponse
 from mmisp.api_schemas.events.get_event_response import ObjectEventResponse
-from mmisp.api_schemas.objects.add_search_objects_response import (
-    ObjectResponse,
-    ObjectSearchResponse,
-    ObjectWithAttributesSearchResponse,
-)
 from mmisp.api_schemas.objects.create_object_body import ObjectCreateBody
 from mmisp.api_schemas.objects.delete_object_response import ObjectDeleteResponse
 from mmisp.api_schemas.objects.get_object_response import (
-    ObjectViewResponse,
-    ObjectWithAttributesAndEventResponse,
+    ObjectResponse,
+    ObjectSearchResponse,
+    ObjectWithAttributesResponse,
 )
 from mmisp.api_schemas.objects.search_objects_body import ObjectSearchBody
 from mmisp.db.database import get_db
@@ -25,12 +22,10 @@ from mmisp.db.models.attribute import Attribute
 from mmisp.db.models.event import Event
 from mmisp.db.models.object import Object, ObjectTemplate
 from mmisp.util.partial import partial
+from mmisp.util.request_validations import check_existence_and_raise, check_required_fields
 
 router = APIRouter(tags=["objects"])
-
-logging.basicConfig(
-    level=logging.INFO  # todo: remove comment
-)  # 'logger.error' for errors on part of the user, 'logger.exception' for errors on part of the server
+logging.basicConfig(level=logging.INFO)
 
 info_format = "%(asctime)s - %(message)s"
 error_format = "%(asctime)s - %(filename)s:%(lineno)d - %(message)s"
@@ -54,58 +49,58 @@ logger.addHandler(error_handler)
 
 @router.post(
     "/objects/{eventId}/{objectTemplateId}",
+    status_code=status.HTTP_201_CREATED,
+    response_model=partial(ObjectResponse),
     summary="Add object to event",
     description="Add a new object to a specific event using a template.",
-    response_model=partial(ObjectResponse),
-    status_code=status.HTTP_201_CREATED,
 )
 async def add_object(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.ADD]))],
+    db: Annotated[Session, Depends(get_db)],
+    event_id: Annotated[str, Path(..., alias="eventId")],
+    object_template_id: Annotated[str, Path(..., alias="objectTemplateId")],
     body: ObjectCreateBody,
-    db: Session = Depends(get_db),
-    event_id: str = Path(..., alias="eventId"),
-    object_template_id: str = Path(..., alias="objectTemplateId"),
 ) -> dict:
-    return await _add_object(body, db, event_id, object_template_id)
+    return await _add_object(db, event_id, object_template_id, body)
 
 
 @router.post(
     "/objects/restsearch",
+    status_code=status.HTTP_200_OK,
+    response_model=partial(ObjectSearchResponse),
     summary="Search objects",
     description="Search for objects based on various filters.",
-    # response_model=partial(ObjectSearchResponse),  # todo: partial method does not work yet for this case
-    status_code=status.HTTP_200_OK,
 )
-async def restsearch(body: ObjectSearchBody, db: Session = Depends(get_db)) -> dict:
-    return await _restsearch(body, db)
+async def restsearch(db: Annotated[Session, Depends(get_db)], body: ObjectSearchBody) -> dict:
+    return await _restsearch(db, body)
 
 
 @router.get(
     "/objects/{objectId}",
+    status_code=status.HTTP_200_OK,
+    response_model=partial(ObjectResponse),
     summary="View object details",
     description="View details of a specific object including its attributes and related event.",
-    response_model=partial(ObjectViewResponse),
-    status_code=status.HTTP_200_OK,
 )
 async def get_object_details(
-    db: Session = Depends(get_db),
-    object_id: str = Path(..., alias="objectId"),
+    db: Annotated[Session, Depends(get_db)],
+    object_id: Annotated[str, Path(..., alias="objectId")],
 ) -> dict:
     return await _get_object_details(db, object_id)
 
 
 @router.delete(
     "/objects/{objectId}/{hardDelete}",
+    status_code=status.HTTP_200_OK,
+    response_model=partial(ObjectDeleteResponse),
     summary="Delete object",
     description="Delete a specific object. The hardDelete parameter determines if it's a hard or soft delete.",
-    response_model=partial(ObjectDeleteResponse),
-    status_code=status.HTTP_200_OK,
 )
 async def delete_object(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
-    db: Session = Depends(get_db),
-    object_id: str = Path(..., alias="objectId"),
-    hard_delete: str = Path(..., alias="hardDelete"),
+    db: Annotated[Session, Depends(get_db)],
+    object_id: Annotated[str, Path(..., alias="objectId")],
+    hard_delete: Annotated[str, Path(..., alias="hardDelete")],
 ) -> dict:
     return await _delete_object(db, object_id, hard_delete)
 
@@ -116,32 +111,32 @@ async def delete_object(
 @router.post(
     "/objects/add/{eventId}/{objectTemplateId}",
     deprecated=True,
+    status_code=status.HTTP_201_CREATED,
+    response_model=partial(ObjectResponse),
     summary="Add object to event (Deprecated)",
     description="Deprecated. Add an object to an event using the old route.",
-    # response_model=partial(ObjectResponse),  # todo: partial method does not work yet for this case
-    status_code=status.HTTP_201_CREATED,
 )
 async def add_object_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.ADD]))],
+    db: Annotated[Session, Depends(get_db)],
+    event_id: Annotated[str, Path(..., alias="eventId")],
+    object_template_id: Annotated[str, Path(..., alias="objectTemplateId")],
     body: ObjectCreateBody,
-    db: Session = Depends(get_db),
-    event_id: str = Path(..., alias="eventId"),
-    object_template_id: str = Path(..., alias="objectTemplateId"),
 ) -> dict:
-    return await _add_object(body, db, event_id, object_template_id)
+    return await _add_object(db, event_id, object_template_id, body)
 
 
 @router.get(
     "/objects/view/{objectId}",
     deprecated=True,
+    status_code=status.HTTP_200_OK,
+    response_model=partial(ObjectResponse),
     summary="View object details (Deprecated)",
     description="Deprecated. View details of a specific object using the old route.",
-    # response_model=partial(ObjectViewResponse),  # todo: partial method does not work yet for this case
-    status_code=status.HTTP_200_OK,
 )
 async def get_object_details_depr(
-    db: Session = Depends(get_db),
-    object_id: str = Path(..., alias="objectId"),
+    db: Annotated[Session, Depends(get_db)],
+    object_id: Annotated[str, Path(..., alias="objectId")],
 ) -> dict:
     return await _get_object_details(db, object_id)
 
@@ -149,18 +144,18 @@ async def get_object_details_depr(
 @router.delete(
     "/objects/delete/{objectId}/{hardDelete}",
     deprecated=True,
+    status_code=status.HTTP_200_OK,
+    response_model=partial(ObjectDeleteResponse),
     summary="Delete object (Deprecated)",
     description="""
     Deprecated. Delete a specific object using the old route.
     The hardDelete parameter determines if it's a hard or soft delete.""",
-    # response_model=partial(ObjectDeleteResponse),  # todo: partial method does not work yet for this case
-    status_code=status.HTTP_200_OK,
 )
 async def delete_object_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
-    db: Session = Depends(get_db),
-    object_id: str = Path(..., alias="objectId"),
-    hard_delete: str = Path(..., alias="hardDelete"),
+    db: Annotated[Session, Depends(get_db)],
+    object_id: Annotated[str, Path(..., alias="objectId")],
+    hard_delete: Annotated[str, Path(..., alias="hardDelete")],
 ) -> dict:
     return await _delete_object(db, object_id, hard_delete)
 
@@ -168,51 +163,28 @@ async def delete_object_depr(
 # --- endpoint logic ---
 
 
-async def _add_object(
-    body: ObjectCreateBody,
-    db: Session,
-    event_id: str,
-    object_template_id: str,
-) -> dict:
-    template = db.get(ObjectTemplate, object_template_id)
-    if not template:
-        logger.error(f"Object template with id '{object_template_id}' not found.")
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Object template not found")
+async def _add_object(db: Session, event_id: str, object_template_id: str, body: ObjectCreateBody) -> dict:
+    template: ObjectTemplate | None = db.get(ObjectTemplate, object_template_id)
+    check_existence_and_raise(db, ObjectTemplate, object_template_id, "object_template_id", "Object template not found")
+    check_existence_and_raise(db, Event, event_id, "event_id", "Event not found")
+    check_required_fields(body, ["name", "sharing_group_id", "comment"])
 
-    if not body.name:
-        logger.error("Object creation failed: field 'name' is required.")
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="'name' is required.")
-    if not body.description:
-        logger.error("Object creation failed: field 'description' is required.")
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="'description' is required.")
-    if not body.meta_category:
-        logger.error("Object creation failed: field 'meta_category' is required.")
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="'meta_category' is required.")
-    if not body.distribution:
-        logger.error("Object creation failed: field 'distribution' is required.")
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="'distribution' is required.")
-
-    template_uuid = template.uuid
-    template_version = template.version
-
-    new_object = Object(
-        name=body.name,
-        description=body.description,
-        template_id=object_template_id,
-        event_id=event_id,
-        meta_category=body.meta_category,
-        distribution=body.distribution,
-        deleted=False,
-        sharing_group_id=body.sharing_group_id,
-        comment=body.comment,
-        first_seen=body.first_seen,
-        last_seen=body.last_seen,
-    )
+    new_object_data = {
+        **body.dict(exclude={"attributes"}),
+        "template_id": int(object_template_id) if object_template_id is not None else None,
+        "template_name": template.name if template is not None else None,
+        "template_uuid": template.uuid if template is not None else None,
+        "template_version": template.version if template is not None else None,
+        "template_description": template.description if template is not None else None,
+        "event_id": int(event_id) if event_id is not None else None,
+        "timestamp": _create_timestamp(),
+    }
+    new_object = Object(**new_object_data)
 
     try:
         db.add(new_object)
         db.commit()
-    except Exception as e:
+    except SQLAlchemyError as e:
         db.rollback()
         logger.exception(f"Failed to add new object: {e}")
         raise HTTPException(
@@ -222,233 +194,61 @@ async def _add_object(
     db.refresh(new_object)
     logger.info(f"New object added: {new_object.id}")
 
-    for attr in body.attributes:
-        new_attr = Attribute(
-            object_id=new_object.id,
-            type=attr.type,
-            category=attr.category,
-            value=attr.value,
-            value1=attr.value1,
-            value2=attr.value2,
-            to_ids=attr.to_ids,
-            disable_correlation=attr.disable_correlation,
-            distribution=attr.distribution,
-            comment=attr.comment,
-        )
-        try:
-            db.add(new_attr)
-        except Exception as e:
-            db.rollback()
-            logger.exception(f"Failed to add new object: {e}")
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred."
-            )
-
     try:
+        attributes_data = [
+            {**attr.dict(), "object_id": new_object.id, "timestamp": _create_timestamp()} for attr in body.attributes
+        ]
+        db.bulk_insert_mappings(Attribute, attributes_data)
         db.commit()
         logger.info(f"Attributes added to new object: {new_object.id}")
-    except Exception as e:
+    except SQLAlchemyError as e:
         db.rollback()
-        logger.exception(f"Failed to add attributes to object: {e}")
+        logger.exception(f"Failed to add attributes: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred."
         )
 
-    attrs = db.query(Attribute).filter(Attribute.object_id == new_object.id).all()
-    attributes_list = []
+    db_attributes: list[Attribute] = db.query(Attribute).filter(Attribute.object_id == new_object.id).all()
 
-    for attr in attrs:
-        object_attr = GetAllAttributesResponse(
-            id=str(attr.id),
-            uuid=attr.uuid,
-            event_id=str(attr.event_id),
-            object_id=str(attr.object_id),
-            object_relation=attr.object_relation,
-            category=attr.category,
-            type=attr.type,
-            value=attr.value,
-            value1=attr.value1,
-            value2=attr.value2,
-            to_ids=attr.to_ids,
-            timestamp=attr.timestamp,
-            distribution=attr.distribution,
-            sharing_group_id=str(attr.sharing_group_id),
-            comment=attr.comment,
-            deleted=attr.deleted,
-            disable_correlation=attr.disable_correlation,
-            first_seen=attr.first_seen,
-            last_seen=attr.last_seen,
-            event_uuid=attr.event_uuid,
-        )
-        attributes_list.append(object_attr)
-
-    object_data = ObjectWithAttributesSearchResponse(
-        id=str(new_object.id),
-        name=new_object.name,
-        meta_category=new_object.meta_category,
-        description=new_object.description,
-        template_uuid=template_uuid,
-        template_version=template_version,
-        event_id=str(event_id),
-        uuid=new_object.uuid,
-        timestamp=str(datetime.utcnow),
-        distribution=new_object.distribution,
-        sharing_group_id=str(new_object.sharing_group_id) if new_object.sharing_group_id is not None else None,
-        comment=new_object.comment,
-        deleted=new_object.deleted,
-        first_seen=new_object.first_seen,
-        last_seen=new_object.last_seen,
-        attributes=attributes_list,
-    )
-
-    return ObjectResponse(object=object_data)
+    return ObjectResponse(object=_prepare_object_response(new_object, db_attributes, event_response=None))
 
 
-async def _restsearch(body: ObjectSearchBody, db: Session) -> dict:
+async def _restsearch(db: Session, body: ObjectSearchBody) -> dict:
     for field, value in body.dict().items():
-        db_object = db.query(Object).filter(getattr(Object, field) == value).all()
+        db_objects: list[Object] = db.query(Object).filter(getattr(Object, field) == value).all()
 
         # todo: not all fields in 'ObjectSearchBody' are taken into account yet
 
-    response_objects = []
-
-    for obj in db_object:
-        attributes_list = []
-        for attr in obj.attributes:
-            object_attr = GetAllAttributesResponse(
-                id=str(attr.id),
-                uuid=attr.uuid,
-                event_id=str(attr.event_id),
-                object_id=str(attr.object_id),
-                object_relation=attr.object_relation,
-                category=attr.category,
-                type=attr.type,
-                value=attr.value,
-                value1=attr.value1,
-                value2=attr.value2,
-                to_ids=attr.to_ids,
-                timestamp=attr.timestamp,
-                distribution=attr.distribution,
-                sharing_group_id=str(attr.sharing_group_id) if attr.sharing_group_id is not None else None,
-                comment=attr.comment,
-                deleted=attr.deleted,
-                disable_correlation=attr.disable_correlation,
-                first_seen=attr.first_seen,
-                last_seen=attr.last_seen,
-                event_uuid=attr.event_uuid,
-            )
-            attributes_list.append(object_attr)
-
-        response_object = ObjectWithAttributesSearchResponse(
-            id=str(obj.id),
-            description=obj.description,
-            name=obj.name,
-            meta_category=obj.meta_category,
-            distribution=str(obj.distribution),
-            template_uuid=str(obj.template_id),
-            event_id=str(obj.event_id),
-            uuid=obj.uuid,
-            timestamp=str(datetime.utcnow),
-            sharing_group_id=str(obj.sharing_group_id) if obj.sharing_group_id is not None else None,
-            comment=obj.comment,
-            first_seen=obj.first_seen,
-            last_seen=obj.last_seen,
-            attributes=attributes_list,
-        )
-        response_objects.append(response_object)
+    response_objects = [_prepare_object_response(obj, obj.attributes, event_response=None) for obj in db_objects]
 
     return ObjectSearchResponse(response=[{"object": res_obj} for res_obj in response_objects])
 
 
-async def _get_object_details(
-    db: Session,
-    object_id: str,
-) -> dict:
-    db_object = db.get(Object, object_id)
-    if not db_object:
-        logger.error(f"Object with id '{object_id}' not found.")
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Object not found")
+async def _get_object_details(db: Session, object_id: str) -> dict:
+    db_object: Object | None = db.get(Object, object_id)
+    check_existence_and_raise(db, Object, object_id, "object_id", "Object not found")
 
-    db_attributes = db.query(Attribute).filter(Attribute.object_id == db_object.id).all()
+    db_attributes: list[Attribute] = db.query(Attribute).filter(Attribute.object_id == db_object.id).all()  # type: ignore
+    db_event: Event = db.query(Event).join(Object, Event.id == Object.event_id).filter(Object.id == object_id).first()
 
-    object_attributes = [
-        GetAllAttributesResponse(
-            id=str(attr.id),
-            uuid=attr.uuid,
-            event_id=str(attr.event_id),
-            object_id=str(attr.object_id),
-            object_relation=attr.object_relation,
-            category=attr.category,
-            type=attr.type,
-            value=attr.value,
-            value1=attr.value1,
-            value2=attr.value2,
-            to_ids=attr.to_ids,
-            timestamp=attr.timestamp,
-            distribution=attr.distribution,
-            sharing_group_id=str(attr.sharing_group_id) if attr.sharing_group_id is not None else None,
-            comment=attr.comment,
-            deleted=attr.deleted,
-            disable_correlation=attr.disable_correlation,
-            first_seen=attr.first_seen,
-            last_seen=attr.last_seen,
-            event_uuid=attr.event_uuid,
-        )
-        for attr in db_attributes
-    ]
-
-    db_event = db.query(Event).join(Object, Event.id == Object.event_id).filter(Object.id == object_id).first()
-    event_response = ObjectEventResponse(
+    event_response: ObjectEventResponse = ObjectEventResponse(
         id=str(db_event.id), info=db_event.info, org_id=str(db_event.org_id), orgc_id=str(db_event.orgc_id)
     )
 
-    template = db.get(ObjectTemplate, db_object.template_id)
-    if not template:
-        logger.error(f"Object template with id '{db_object.template_id}' not found.")
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Object template not found")
-
-    template_uuid = template.uuid
-    template_version = template.version
-
-    response_object = ObjectWithAttributesAndEventResponse(
-        id=str(db_object.id),
-        name=db_object.name,
-        description=db_object.description,
-        meta_category=db_object.meta_category,
-        event_id=str(db_object.event_id),
-        distribution=str(db_object.distribution),
-        template_uuid=template_uuid,
-        template_version=template_version,
-        uuid=db_object.uuid,
-        timestamp=str(datetime.utcnow),
-        sharing_group_id=str(db_object.sharing_group_id) if db_object.sharing_group_id is not None else None,
-        comment=db_object.comment,
-        deleted=db_object.deleted,
-        first_seen=db_object.first_seen,
-        last_seen=db_object.last_seen,
-        attributes=object_attributes,
-        event=event_response,
-    )
-
-    return ObjectViewResponse(object=response_object)
+    return ObjectResponse(object=_prepare_object_response(db_object, db_attributes, event_response))
 
 
-async def _delete_object(
-    db: Session,
-    object_id: str,
-    hard_delete: str,
-) -> dict:
-    db_object = db.get(Object, object_id)
-    if not db_object:
-        logger.error(f"Object with id '{object_id}' not found.")
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Object not found")
+async def _delete_object(db: Session, object_id: str, hard_delete: str) -> dict:
+    db_object: Object | None = db.get(Object, object_id)
+    check_existence_and_raise(db, Object, object_id, "object_id", "Object not found")
 
     if hard_delete.lower() == "true":
+        db.query(Attribute).filter(Attribute.object_id == object_id).delete(synchronize_session=False)
         db.delete(db_object)
         try:
             db.commit()
             logger.info(f"Hard deleted object with id '{object_id}'.")
-        except Exception as e:
+        except SQLAlchemyError as e:
             db.rollback()
             logger.exception(f"Failed to hard delete object with id '{object_id}': {e}")
             raise HTTPException(
@@ -456,11 +256,11 @@ async def _delete_object(
             )
         message = "Object has been permanently deleted."
     elif hard_delete.lower() == "false":
-        db_object.deleted = True
+        db_object.deleted = True  # type: ignore
         try:
             db.commit()
             logger.info(f"Soft deleted object with id '{object_id}'.")
-        except Exception as e:
+        except SQLAlchemyError as e:
             db.rollback()
             logger.exception(f"Failed to soft delete object with id '{object_id}': {e}")
             raise HTTPException(
@@ -468,11 +268,73 @@ async def _delete_object(
             )
         message = "Object has been soft deleted."
     else:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid hardDelete parameter.")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid 'hardDelete' parameter.")
 
     return ObjectDeleteResponse(
-        saved=True, success=True, name=db_object.name, message=message, url=f"/objects/{object_id}"
+        saved=True,
+        success=True,
+        name=db_object.name,  # type: ignore
+        message=message,
+        url=f"/objects/{object_id}",  # type: ignore
     )
+
+
+def _prepare_attributes_response(attributes: list[Attribute]) -> list[GetAllAttributesResponse]:
+    return [
+        GetAllAttributesResponse(
+            id=str(attr.id),
+            uuid=attr.uuid,
+            event_id=str(attr.event_id) if attr.event_id is not None else None,
+            object_id=str(attr.object_id) if attr.object_id is not None else None,
+            object_relation=attr.object_relation,
+            category=attr.category,
+            type=attr.type,
+            value=attr.value,
+            value1=attr.value1,
+            value2=attr.value2,
+            to_ids=attr.to_ids,
+            timestamp=str(attr.timestamp) if attr.timestamp is not None else None,
+            distribution=str(attr.distribution) if attr.distribution is not None else None,
+            sharing_group_id=str(attr.sharing_group_id) if attr.sharing_group_id is not None else None,
+            comment=attr.comment,
+            deleted=attr.deleted,
+            disable_correlation=attr.disable_correlation,
+            first_seen=str(attr.first_seen) if attr.first_seen is not None else None,
+            last_seen=str(attr.last_seen) if attr.last_seen is not None else None,
+        )
+        for attr in attributes
+    ]
+
+
+def _prepare_object_response(
+    object: Object, attributes: list[Attribute], event_response: ObjectEventResponse
+) -> ObjectWithAttributesResponse:
+    attributes_response = _prepare_attributes_response(attributes)
+    object_data = ObjectWithAttributesResponse(
+        id=str(object.id),
+        uuid=object.uuid,
+        name=object.name,
+        meta_category=object.meta_category,
+        description=object.description,
+        template_id=str(object.template_id) if object.template_id is not None else None,
+        template_uuid=object.template_uuid,
+        template_version=str(object.template_version) if object.template_version is not None else None,
+        event_id=str(object.event_id) if object.event_id is not None else None,
+        timestamp=str(object.timestamp) if object.timestamp is not None else None,
+        distribution=str(object.distribution) if object.distribution is not None else None,
+        sharing_group_id=str(object.sharing_group_id) if object.sharing_group_id is not None else None,
+        comment=object.comment if object.comment is not None else None,
+        deleted=object.deleted,
+        first_seen=str(object.first_seen) if object.first_seen is not None else None,
+        last_seen=str(object.last_seen) if object.last_seen is not None else None,
+        attributes=attributes_response,
+        event=event_response,
+    )
+    return object_data
+
+
+def _create_timestamp() -> int:
+    return int(time.time())
 
 
 #####################################################################
