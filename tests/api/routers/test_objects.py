@@ -43,9 +43,7 @@ def object_data(request: Any) -> Dict[str, Any]:
 
 # Test add an object
 def test_add_object_to_event(db: Session, object_data: Dict[str, Any]) -> None:
-    object_template = ObjectTemplate(
-        name="test_template", version="0.0.000", description="This is a test-template", meta_category="test"
-    )
+    object_template = ObjectTemplate(name="test_template", user_id=1, org_id=1, version=100)
     db.add(object_template)
 
     db.commit()
@@ -73,9 +71,7 @@ def test_add_object_to_event(db: Session, object_data: Dict[str, Any]) -> None:
 
 
 def test_add_object_response_format(db: Session, object_data: Dict[str, Any]) -> None:
-    object_template = ObjectTemplate(
-        name="test_template", version="0.0.000", description="This is a test-template", meta_category="test"
-    )
+    object_template = ObjectTemplate(name="test_template", user_id=1, org_id=1, version=100)
     db.add(object_template)
 
     db.commit()
@@ -149,9 +145,7 @@ def test_search_objects_data_integrity(search_data: Dict[str, Any]) -> None:
 
 # Test get object details
 def test_get_object_details_valid_id(db: Session, object_data: Dict[str, Any]) -> None:
-    object_template = ObjectTemplate(
-        name="test_template", version="0.0.000", description="This is a test-template", meta_category="test"
-    )
+    object_template = ObjectTemplate(name="test_template", user_id=1, org_id=1, version=100)
     db.add(object_template)
 
     db.commit()
@@ -188,9 +182,7 @@ def test_get_object_details_valid_id(db: Session, object_data: Dict[str, Any]) -
 
 
 def test_get_object_details_response_format(db: Session, object_data: Dict[str, Any]) -> None:
-    object_template = ObjectTemplate(
-        name="test_template", version="0.0.000", description="This is a test-template", meta_category="test"
-    )
+    object_template = ObjectTemplate(name="test_template", user_id=1, org_id=1, version=100)
     db.add(object_template)
 
     db.commit()
@@ -229,9 +221,7 @@ def test_get_object_details_invalid_id() -> None:
 
 
 def test_get_object_details_data_integrity(db: Session, object_data: Dict[str, Any]) -> None:
-    object_template = ObjectTemplate(
-        name="test_template", version="0.0.000", description="This is a test-template", meta_category="test"
-    )
+    object_template = ObjectTemplate(name="test_template", user_id=1, org_id=1, version=100)
     db.add(object_template)
 
     db.commit()
@@ -265,9 +255,7 @@ def test_get_object_details_data_integrity(db: Session, object_data: Dict[str, A
 
 # Test delete object with hard delete
 def test_delete_object_hard_delete(db: Session, object_data: Dict[str, Any]) -> None:
-    object_template = ObjectTemplate(
-        name="test_template", version="0.0.000", description="This is a test-template", meta_category="test"
-    )
+    object_template = ObjectTemplate(name="test_template", user_id=1, org_id=1, version=100)
     db.add(object_template)
 
     db.commit()
@@ -303,9 +291,7 @@ def test_delete_object_hard_delete(db: Session, object_data: Dict[str, Any]) -> 
 
 # Test delete object with soft delete
 def test_delete_object_soft_delete(db: Session, object_data: Dict[str, Any]) -> None:
-    object_template = ObjectTemplate(
-        name="test_template", version="0.0.000", description="This is a test-template", meta_category="test"
-    )
+    object_template = ObjectTemplate(name="test_template", user_id=1, org_id=1, version=100)
     db.add(object_template)
 
     db.commit()
@@ -348,9 +334,7 @@ def test_delete_object_invalid_id() -> None:
 
 
 def test_delete_object_invalid_hard_delete(db: Session, object_data: Dict[str, Any]) -> None:
-    object_template = ObjectTemplate(
-        name="test_template", version="0.0.000", description="This is a test-template", meta_category="test"
-    )
+    object_template = ObjectTemplate(name="test_template", user_id=1, org_id=1, version=100)
     db.add(object_template)
 
     db.commit()
@@ -381,9 +365,7 @@ def test_delete_object_invalid_hard_delete(db: Session, object_data: Dict[str, A
 
 
 def test_delete_object_no_authorization(db: Session, object_data: Dict[str, Any]) -> None:
-    object_template = ObjectTemplate(
-        name="test_template", version="0.0.000", description="This is a test-template", meta_category="test"
-    )
+    object_template = ObjectTemplate(name="test_template", user_id=1, org_id=1, version=100)
     db.add(object_template)
 
     db.commit()
