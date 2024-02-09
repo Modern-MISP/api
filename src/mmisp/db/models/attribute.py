@@ -6,6 +6,7 @@ from ..database import Base
 from .event import Event
 from .object import Object
 from .sharing_group import SharingGroup
+from .tag import Tag
 
 
 class Attribute(Base):
@@ -13,23 +14,23 @@ class Attribute(Base):
 
     id = Column(Integer, primary_key=True)
     uuid = Column(String(255), unique=True, default=uuid)
-    event_id = Column(Integer, ForeignKey(Event.id))
-    object_id = Column(Integer, ForeignKey(Object.id))
-    object_relation = Column(String(255))
-    category = Column(String(255))
-    type = Column(String(255))
-    value = Column(String(255))
-    value1 = Column(String(255))
-    value2 = Column(String(255))
-    to_ids = Column(Boolean)
-    timestamp = Column(String(255))
-    distribution = Column(String(255))
-    sharing_group_id = Column(Integer, ForeignKey(SharingGroup.id))
+    event_id = Column(Integer, ForeignKey(Event.id), index=True, nullable=False)
+    object_id = Column(Integer, ForeignKey(Object.id), index=True, nullable=False, default=0)
+    object_relation = Column(String(255), index=True)
+    category = Column(String(255), index=True, nullable=False)
+    type = Column(String(255), index=True, nullable=False)
+    value = Column(String(255), index=True, nullable=False, default=None)
+    value1 = Column(String(255), index=True, nullable=False, default=None)
+    value2 = Column(String(255), index=True, nullable=False, default=None)
+    to_ids = Column(Boolean, nullable=False, default=True)
+    timestamp = Column(Integer, nullable=False, default=0)
+    distribution = Column(Integer, nullable=False, default=0)
+    sharing_group_id = Column(Integer, ForeignKey(SharingGroup.id), index=True, nullable=False)
     comment = Column(String(255))
-    deleted = Column(Boolean)
-    disable_correlation = Column(Boolean)
-    first_seen = Column(String(255))
-    last_seen = Column(String(255))
+    deleted = Column(Boolean, nullable=False, default=False)
+    disable_correlation = Column(Boolean, nullable=False, default=False)
+    first_seen = Column(Integer, index=True, nullable=True)
+    last_seen = Column(Integer, index=True, nullable=True)
     event_uuid = Column(String(255), ForeignKey(Event.uuid))  # new
 
     # tags = relationship("AttributeTag")
@@ -38,16 +39,24 @@ class Attribute(Base):
 class AttributeTag(Base):
     __tablename__ = "attribute_tags"
 
-    id = Column(Integer, primary_key=True)
-    name = Column(String(255))
-    colour = Column(String(255))
-    exportable = Column(Boolean)
-    user_id = Column(String(255))
-    hide_tag = Column(Boolean)
-    numerical_value = Column(Integer)
-    is_galaxy = Column(Boolean)
-    is_costum_galaxy = Column(Boolean)
-    local_only = Column(Boolean)
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    uuid = Column(String(255), unique=True, default=uuid)
+    attribute_id = Column(Integer, ForeignKey(Attribute.id), nullable=False, index=True)
+    object_id = Column(Integer, ForeignKey(Object.id), index=True, nullable=False, default=0)
+    tag_id = Column(Integer, ForeignKey(Tag.id), nullable=False, index=True)
+    local = Column(Boolean, nullable=False, default=False)
+
+    # todo: are the following entries actually needed?
+    # id = Column(Integer, primary_key=True)
+    # name = Column(String(255))
+    # colour = Column(String(255))
+    # exportable = Column(Boolean)
+    # user_id = Column(String(255))
+    # hide_tag = Column(Boolean)
+    # numerical_value = Column(Integer)
+    # is_galaxy = Column(Boolean)
+    # is_costum_galaxy = Column(Boolean)
+    # local_only = Column(Boolean)
 
 
 class AttributeMD5(Attribute):
