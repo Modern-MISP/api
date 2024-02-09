@@ -4,6 +4,7 @@ from typing import Callable
 
 import jwt
 from fastapi import Depends, Header, HTTPException
+from mmisp.db.models.role import Role
 from sqlalchemy.orm import Session
 
 from mmisp.config import config
@@ -84,7 +85,8 @@ def authorize(strategy: AuthStrategy, permissions: list[Permission] = []) -> Cal
         if not user_id:
             raise HTTPException(401)
 
-        # check_permissions(userId, permissions)
+        if not check_permissions(user_id, permissions):
+            raise HTTPException(401)
 
         user: User = db.get(User, user_id)
 
@@ -93,7 +95,46 @@ def authorize(strategy: AuthStrategy, permissions: list[Permission] = []) -> Cal
     return authorizer
 
 
-def check_permissions(userId: str, permissions: list[Permission] = []) -> bool:
+def check_permissions(user_id: str, permissions: list[Permission] = []) -> bool:
+    db = get_db()
+
+    role: Role | None = db.query(Role).join(User, Role.id == User.role_id).filter(User.id == user_id).first()
+
+    if not role:
+        return False
+
+    if role.perm_site_admin:
+        return True
+
+    for permission in permissions:
+        if (
+            (permission == Permission.ADD and (not role.perm_add or not role.perm_admin))
+            or (permission == Permission.MODIFY and (not role.perm_modify or not role.perm_admin))
+            or (permission == Permission.MODIFY_ORG and (not role.perm_modify_org or not role.perm_admin))
+            or (permission == Permission.PUBLISH and (not role.perm_publish or not role.perm_admin))
+            or (permission == Permission.DELEGATE and not role.perm_delegate)
+            or (permission == Permission.SYNC and not role.perm_sync)
+            or (permission == Permission.ADMIN and not role.perm_admin)
+            or (permission == Permission.AUDIT and not role.perm_audit)
+            or (permission == Permission.FULL and not role.perm_full)
+            or (permission == Permission.AUTH and not role.perm_auth)
+            or (permission == Permission.SITE_ADMIN and not role.perm_site_admin)
+            or (permission == Permission.REGEXP_ACCESS and not role.perm_regexp_access)
+            or (permission == Permission.TAGGER and not role.perm_tagger)
+            or (permission == Permission.TEMPLATE and not role.perm_template)
+            or (permission == Permission.SHARING_GROUP and not role.perm_sharing_group)
+            or (permission == Permission.TAG_EDITOR and not role.perm_tag_editor)
+            or (permission == Permission.SIGHTING and not role.perm_sighting)
+            or (permission == Permission.OBJECT_TEMPLATE and not role.perm_object_template)
+            or (permission == Permission.PUBLISH_ZMQ and not role.perm_publish_zmq)
+            or (permission == Permission.PUBLISH_KAFKA and not role.perm_publish_kafka)
+            or (permission == Permission.DECAYING and not role.perm_decaying)
+            or (permission == Permission.GALAXY_EDITOR and not role.perm_galaxy_editor)
+            or (permission == Permission.WARNINGLIST and not role.perm_warninglist)
+            or (permission == Permission.VIEW_FEED_CORRELATIONS and not role.perm_view_feed_correlations)
+        ):
+            return False
+
     return True
 
 
