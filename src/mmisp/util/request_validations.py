@@ -1,10 +1,10 @@
 import logging
-from typing import List, Optional, Type, TypeVar
+from typing import Optional, Type, TypeVar
 
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
-T = TypeVar("T")  # Generic type for database models
+T = TypeVar("T")
 
 
 def check_existence_and_raise(
@@ -14,7 +14,7 @@ def check_existence_and_raise(
     identifier_name: str = "id",
     error_detail: str = "Not found error",
     log_error: Optional[str] = None,
-) -> None:
+) -> T:
     """
     Checks if an object exists in the database based on the given model and identifier.
     Throws an HTTPException if the object is not found.
@@ -36,18 +36,3 @@ def check_existence_and_raise(
         logging.error(log_msg)
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error_detail)
     return obj
-
-
-def check_required_fields(body: object, required_fields: List[str]) -> None:
-    """
-    Checks if required fields are present and not empty in the body.
-    Throws an HTTPException if a required field is missing.
-
-    Args:
-    - body: Body object with data
-    - required_fields: List of required field names
-    """
-    for field in required_fields:
-        if not str(getattr(body, field, None)):
-            logging.error(f"Object creation failed: field '{field}' is required.")
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"'{field}' is required.")

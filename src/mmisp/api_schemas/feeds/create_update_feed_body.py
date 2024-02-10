@@ -1,10 +1,10 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class FeedCreateAndUpdateBody(BaseModel):
-    name: str
-    provider: str
-    url: str
+    name: str = Field(min_length=1)
+    provider: str = Field(min_length=1)
+    url: str = Field(min_length=1)
     rules: str | None = None
     enabled: bool | None = None
     distribution: str | None = None

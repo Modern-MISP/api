@@ -1,14 +1,10 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from mmisp.api_schemas.attributes.add_attribute_body import AddAttributeBody
 
-# class ObjectCreateRequirementBody(BaseModel):
-#     requirement: list[str] | None = None
-#     requirement_type: list[str] | None = None
-
 
 class ObjectCreateBody(BaseModel):
-    name: str
+    name: str = Field(min_length=1)
     meta_category: str | None = None
     description: str | None = None
     action: str | None = None
@@ -20,8 +16,8 @@ class ObjectCreateBody(BaseModel):
     update_template_available: bool | None = None
     event_id: str | None = None
     distribution: str | None = None
-    sharing_group_id: str
-    comment: str
+    sharing_group_id: str = Field(min_length=1)
+    comment: str = Field(min_length=1)
     deleted: bool | None = None
     first_seen: str | None = None
     last_seen: str | None = None
