@@ -6,8 +6,6 @@ from .sharing_group import SharingGroup
 
 class GetSharingGroupInfoResponseSharingGroupInfo(SharingGroup):
     org_count: int
-    user_count: int
-    created_by_email: str
 
 
 class GetSharingGroupInfoResponseOrganisationInfo(BaseModel):

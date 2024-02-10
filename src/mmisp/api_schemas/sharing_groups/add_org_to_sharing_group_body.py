@@ -2,5 +2,5 @@ from pydantic import BaseModel
 
 
 class AddOrgToSharingGroupBody(BaseModel):
-    organizationId: str
+    organisationId: str
     extend: bool | None = None
