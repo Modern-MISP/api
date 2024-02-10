@@ -27,11 +27,17 @@ class GetAllSharingGroupsResponseResponseItemSharingGroupOrgItem(BaseModel):
     Organisation: GetAllSharingGroupsResponseOrganisationInfo
 
 
+class GetAllSharingGroupsResponseResponseItemSharingGroupServerItemServer(BaseModel):
+    id: str
+    name: str
+    url: str
+
+
 class GetAllSharingGroupsResponseResponseItemSharingGroupServerItem(BaseModel):
     server_id: str
     sharing_group_id: str
     all_orgs: bool
-    Server: list = []
+    Server: GetAllSharingGroupsResponseResponseItemSharingGroupServerItemServer
 
 
 class GetAllSharingGroupsResponseResponseItem(BaseModel):

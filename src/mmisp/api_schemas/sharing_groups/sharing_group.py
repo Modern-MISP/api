@@ -8,8 +8,8 @@ class SharingGroup(BaseModel):
     name: str = Field(max_length=255)
     releasability: str | None = Field(default=None, max_length=65535)
     description: str | None = Field(default=None, max_length=65535)
-    uuid: str = Field(max_length=36)
-    organisation_uuid: str | None = Field(default=None, max_length=36)
+    uuid: str
+    organisation_uuid: str
     org_id: str = Field(max_length=10)
     sync_user_id: str | None = Field(default=None, max_length=10)
     active: bool
