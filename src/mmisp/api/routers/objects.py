@@ -22,7 +22,7 @@ from mmisp.db.models.attribute import Attribute
 from mmisp.db.models.event import Event
 from mmisp.db.models.object import Object, ObjectTemplate
 from mmisp.util.partial import partial
-from mmisp.util.request_validations import check_existence_and_raise, check_required_fields
+from mmisp.util.request_validations import check_existence_and_raise
 
 router = APIRouter(tags=["objects"])
 logging.basicConfig(level=logging.INFO)
@@ -164,10 +164,10 @@ async def delete_object_depr(
 
 
 async def _add_object(db: Session, event_id: str, object_template_id: str, body: ObjectCreateBody) -> dict:
-    template: ObjectTemplate | None = db.get(ObjectTemplate, object_template_id)
-    check_existence_and_raise(db, ObjectTemplate, object_template_id, "object_template_id", "Object template not found")
+    template: ObjectTemplate = check_existence_and_raise(
+        db, ObjectTemplate, object_template_id, "object_template_id", "Object template not found"
+    )
     check_existence_and_raise(db, Event, event_id, "event_id", "Event not found")
-    check_required_fields(body, ["name", "sharing_group_id", "comment"])
 
     new_object_data = {
         **body.dict(exclude={"attributes"}),
@@ -225,10 +225,9 @@ async def _restsearch(db: Session, body: ObjectSearchBody) -> dict:
 
 
 async def _get_object_details(db: Session, object_id: str) -> dict:
-    db_object: Object | None = db.get(Object, object_id)
-    check_existence_and_raise(db, Object, object_id, "object_id", "Object not found")
+    db_object: Object = check_existence_and_raise(db, Object, object_id, "object_id", "Object not found")
 
-    db_attributes: list[Attribute] = db.query(Attribute).filter(Attribute.object_id == db_object.id).all()  # type: ignore
+    db_attributes: list[Attribute] = db.query(Attribute).filter(Attribute.object_id == db_object.id).all()
     db_event: Event = db.query(Event).join(Object, Event.id == Object.event_id).filter(Object.id == object_id).first()
 
     event_response: ObjectEventResponse = ObjectEventResponse(
@@ -239,8 +238,7 @@ async def _get_object_details(db: Session, object_id: str) -> dict:
 
 
 async def _delete_object(db: Session, object_id: str, hard_delete: str) -> dict:
-    db_object: Object | None = db.get(Object, object_id)
-    check_existence_and_raise(db, Object, object_id, "object_id", "Object not found")
+    db_object: Object = check_existence_and_raise(db, Object, object_id, "object_id", "Object not found")
 
     if hard_delete.lower() == "true":
         db.query(Attribute).filter(Attribute.object_id == object_id).delete(synchronize_session=False)
@@ -256,7 +254,7 @@ async def _delete_object(db: Session, object_id: str, hard_delete: str) -> dict:
             )
         message = "Object has been permanently deleted."
     elif hard_delete.lower() == "false":
-        db_object.deleted = True  # type: ignore
+        db_object.deleted = True
         try:
             db.commit()
             logger.info(f"Soft deleted object with id '{object_id}'.")
@@ -273,9 +271,9 @@ async def _delete_object(db: Session, object_id: str, hard_delete: str) -> dict:
     return ObjectDeleteResponse(
         saved=True,
         success=True,
-        name=db_object.name,  # type: ignore
+        name=db_object.name,
         message=message,
-        url=f"/objects/{object_id}",  # type: ignore
+        url=f"/objects/{object_id}",
     )
 
 

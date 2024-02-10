@@ -15,7 +15,7 @@ from mmisp.api_schemas.feeds.toggle_feed_body import FeedToggleBody
 from mmisp.db.database import get_db
 from mmisp.db.models.feed import Feed
 from mmisp.util.partial import partial
-from mmisp.util.request_validations import check_existence_and_raise, check_required_fields
+from mmisp.util.request_validations import check_existence_and_raise
 
 router = APIRouter(tags=["feeds"])
 logging.basicConfig(level=logging.INFO)
@@ -290,8 +290,6 @@ async def update_feed_depr(
 
 
 async def _add_feed(db: Session, body: FeedCreateAndUpdateBody) -> dict:
-    check_required_fields(body, ["name", "provider", "url"])
-
     new_feed: Feed = Feed(
         **{
             **body.dict(),
@@ -355,8 +353,7 @@ async def _fetch_from_feed(db: Session, feed_id: str) -> dict:
 
 
 async def _get_feed_details(db: Session, feed_id: str) -> dict:
-    feed: Feed | None = db.get(Feed, feed_id)
-    check_existence_and_raise(db, Feed, feed_id, "feed_id", "Feed not found.")
+    feed: Feed = check_existence_and_raise(db, Feed, feed_id, "feed_id", "Feed not found.")
 
     feed_data: FeedAttributesResponse = _prepare_response(feed)
 
@@ -365,7 +362,6 @@ async def _get_feed_details(db: Session, feed_id: str) -> dict:
 
 async def _update_feed(db: Session, feed_id: str, body: FeedCreateAndUpdateBody) -> dict:
     check_existence_and_raise(db, Feed, feed_id, "feed_id", "Feed not found.")
-    check_required_fields(body, ["name", "provider", "url"])
 
     updated_feed: Feed = Feed(
         **{
@@ -398,19 +394,17 @@ async def _update_feed(db: Session, feed_id: str, body: FeedCreateAndUpdateBody)
 
 async def _toggle_feed(db: Session, feed_id: str, body: FeedToggleBody) -> dict:
     message: str = ""
-    feed: Feed | None = db.get(Feed, feed_id)
-    check_existence_and_raise(db, Feed, feed_id, "feed_id", "Feed not found.")
-    check_required_fields(body, ["enable"])
+    feed: Feed = check_existence_and_raise(db, Feed, feed_id, "feed_id", "Feed not found.")
 
-    if int(body.enable) and not feed.enabled:  # type: ignore
-        feed.enabled = True  # type: ignore
+    if int(body.enable) and not feed.enabled:
+        feed.enabled = True
         message = "Feed enabled successfully."
-    elif not int(body.enable) and feed.enabled:  # type: ignore
-        feed.enabled = False  # type: ignore
+    elif not int(body.enable) and feed.enabled:
+        feed.enabled = False
         message = "Feed disabled successfully."
-    elif int(body.enable) and feed.enabled:  # type: ignore
+    elif int(body.enable) and feed.enabled:
         message = "Feed already enabled."
-    elif not int(body.enable) and not feed.enabled:  # type: ignore
+    elif not int(body.enable) and not feed.enabled:
         message = "Feed already disabled."
 
     try:
@@ -423,7 +417,7 @@ async def _toggle_feed(db: Session, feed_id: str, body: FeedToggleBody) -> dict:
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred."
         )
 
-    return FeedEnableDisableResponse(name=feed.name, message=message, url=feed.url)  # type: ignore
+    return FeedEnableDisableResponse(name=feed.name, message=message, url=feed.url)
 
 
 async def _fetch_data_from_all_feeds(db: Session) -> dict:
@@ -450,16 +444,15 @@ async def _get_feeds(db: Session) -> list[dict]:
 async def _enable_feed(db: Session, feed_id: str) -> dict:
     message: str = ""
     _check_type_int(feed_id)
-    feed: Feed | None = db.get(Feed, feed_id)
-    check_existence_and_raise(db, Feed, feed_id, "feed_id", "Feed not found.")
+    feed: Feed = check_existence_and_raise(db, Feed, feed_id, "feed_id", "Feed not found.")
 
-    if not feed.enabled:  # type: ignore
-        feed.enabled = True  # type: ignore
+    if not feed.enabled:
+        feed.enabled = True
         message = "Feed enabled successfully."
-    elif feed.enabled:  # type: ignore
+    elif feed.enabled:
         message = "Feed already enabled."
 
-    feed.enabled = True  # type: ignore
+    feed.enabled = True
 
     try:
         db.commit()
@@ -471,19 +464,18 @@ async def _enable_feed(db: Session, feed_id: str) -> dict:
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred."
         )
 
-    return FeedEnableDisableResponse(name=feed.name, message=message, url=feed.url)  # type: ignore
+    return FeedEnableDisableResponse(name=feed.name, message=message, url=feed.url)
 
 
 async def _disable_feed(db: Session, feed_id: str) -> dict:
     message: str = ""
     _check_type_int(feed_id)
-    feed: Feed | None = db.get(Feed, feed_id)
-    check_existence_and_raise(db, Feed, feed_id, "feed_id", "Feed not found.")
+    feed: Feed = check_existence_and_raise(db, Feed, feed_id, "feed_id", "Feed not found.")
 
-    if feed.enabled:  # type: ignore
-        feed.enabled = False  # type: ignore
+    if feed.enabled:
+        feed.enabled = False
         message = "Feed disabled successfully."
-    elif not feed.enabled:  # type: ignore
+    elif not feed.enabled:
         message = "Feed already disabled."
 
     try:
@@ -496,7 +488,7 @@ async def _disable_feed(db: Session, feed_id: str) -> dict:
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred."
         )
 
-    return FeedEnableDisableResponse(name=str(feed.name), message=message, url=str(feed.url))  # type: ignore
+    return FeedEnableDisableResponse(name=str(feed.name), message=message, url=str(feed.url))
 
 
 def _prepare_response(feed: Feed) -> FeedAttributesResponse:
