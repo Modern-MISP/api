@@ -1,5 +1,6 @@
 import logging
-from typing import Annotated, Any
+from enum import Enum
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Path, status
 from sqlalchemy.exc import SQLAlchemyError
@@ -10,7 +11,7 @@ from mmisp.api_schemas.feeds.cache_feed_response import FeedCacheResponse
 from mmisp.api_schemas.feeds.create_update_feed_body import FeedCreateAndUpdateBody
 from mmisp.api_schemas.feeds.enable_disable_feed_response import FeedEnableDisableResponse
 from mmisp.api_schemas.feeds.fetch_feeds_response import FeedFetchResponse
-from mmisp.api_schemas.feeds.get_feed_response import FeedAttributesResponse, FeedResponse
+from mmisp.api_schemas.feeds.get_feed_response import FeedAttributesResponse, FeedResponse, FeedsResponse
 from mmisp.api_schemas.feeds.toggle_feed_body import FeedToggleBody
 from mmisp.db.database import get_db
 from mmisp.db.models.feed import Feed
@@ -41,7 +42,7 @@ logger.addHandler(error_handler)
 
 
 @router.post(
-    "/feeds/",
+    "/feeds",
     status_code=status.HTTP_201_CREATED,
     response_model=partial(FeedResponse),
     summary="Add new feed",
@@ -146,9 +147,9 @@ async def fetch_data_from_all_feeds(
 
 
 @router.get(
-    "/feeds/",
+    "/feeds",
     status_code=status.HTTP_200_OK,
-    response_model=list[partial(FeedResponse)],  # type: ignore
+    response_model=partial(FeedsResponse),  # type: ignore
     summary="Get all feeds",
     description="Retrieve a list of all feeds.",
 )
@@ -290,7 +291,7 @@ async def update_feed_depr(
 
 
 async def _add_feed(db: Session, body: FeedCreateAndUpdateBody) -> dict:
-    new_feed: Feed = Feed(
+    feed: Feed = Feed(
         **{
             **body.dict(),
             "distribution": int(body.distribution) if body.distribution is not None else None,
@@ -302,7 +303,7 @@ async def _add_feed(db: Session, body: FeedCreateAndUpdateBody) -> dict:
     )
 
     try:
-        db.add(new_feed)
+        db.add(feed)
         db.commit()
     except SQLAlchemyError as e:
         db.rollback()
@@ -311,22 +312,18 @@ async def _add_feed(db: Session, body: FeedCreateAndUpdateBody) -> dict:
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred."
         )
 
-    db.refresh(new_feed)
-    logger.info(f"New feed added: {new_feed.id}")
+    logger.info(f"New feed added: {feed.id}")
 
-    feed_data: FeedAttributesResponse = _prepare_response(new_feed)
-
-    return FeedResponse(feed=[feed_data])
+    return FeedResponse(feed={**feed.__dict__})
 
 
 async def _cache_feeds(db: Session, cache_feeds_scope: str) -> dict:
-    raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="ENDPOINT NOT YET SUPPORTED!")
+    raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Endpoint not yet supported.")
 
     # try:
     #     feeds_to_cache = db.query(Feed).filter(Feed.scope == cache_feeds_scope).all()  # noqa: F841
     #     #! logic to save 'feeds_to_cache' in cache (worker)
-    #     # message = "Feeds successfully cached" if success else "Caching failed"
-    #     message = "ENDPOINT NOT YET SUPPORTED"
+    #     message = "Feeds successfully cached" if success else "Caching failed"
     #     success = False
     #     saved = False
     #     return FeedCacheResponse(  # ? make dynamic, according to the response
@@ -342,7 +339,7 @@ async def _cache_feeds(db: Session, cache_feeds_scope: str) -> dict:
 
 
 async def _fetch_from_feed(db: Session, feed_id: str) -> dict:
-    raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="ENDPOINT NOT YET SUPPORTED!")
+    raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Endpoint not yet supported")
 
     # feed = db.get(Feed, feed_id)
     # if not feed:
@@ -355,27 +352,18 @@ async def _fetch_from_feed(db: Session, feed_id: str) -> dict:
 async def _get_feed_details(db: Session, feed_id: str) -> dict:
     feed: Feed = check_existence_and_raise(db, Feed, feed_id, "feed_id", "Feed not found.")
 
-    feed_data: FeedAttributesResponse = _prepare_response(feed)
-
-    return FeedResponse(feed=[feed_data])
+    return FeedResponse(feed={**feed.__dict__})
 
 
 async def _update_feed(db: Session, feed_id: str, body: FeedCreateAndUpdateBody) -> dict:
-    check_existence_and_raise(db, Feed, feed_id, "feed_id", "Feed not found.")
+    feed = check_existence_and_raise(db, Feed, feed_id, "feed_id", "Feed not found.")
 
-    updated_feed: Feed = Feed(
-        **{
-            **body.dict(),
-            "distribution": int(body.distribution) if body.distribution is not None else None,
-            "sharing_group_id": int(body.sharing_group_id) if body.sharing_group_id is not None else None,
-            "tag_id": int(body.tag_id) if body.tag_id is not None else None,
-            "event_id": int(body.event_id) if body.event_id is not None else None,
-            "orgc_id": int(body.orgc_id) if body.orgc_id is not None else None,
-        }
-    )
+    update_data = body.dict(exclude_unset=True)
+    for key, value in update_data.items():
+        if value is not None:
+            setattr(feed, key, value if not isinstance(value, Enum) else value.value)
 
     try:
-        db.add(updated_feed)
         db.commit()
     except SQLAlchemyError as e:
         db.rollback()
@@ -384,28 +372,21 @@ async def _update_feed(db: Session, feed_id: str, body: FeedCreateAndUpdateBody)
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred."
         )
 
-    db.refresh(updated_feed)
-    logger.info(f"Feed with id '{updated_feed.id}' updated.")
+    logger.info(f"Feed with id '{feed.id}' updated.")
+    feed_data: FeedAttributesResponse = {**feed.__dict__}
 
-    feed_data: FeedAttributesResponse = _prepare_response(updated_feed)
-
-    return FeedResponse(feed=[feed_data])
+    return FeedResponse(feed=feed_data)
 
 
 async def _toggle_feed(db: Session, feed_id: str, body: FeedToggleBody) -> dict:
-    message: str = ""
     feed: Feed = check_existence_and_raise(db, Feed, feed_id, "feed_id", "Feed not found.")
+    enable_status = body.enable
 
-    if int(body.enable) and not feed.enabled:
-        feed.enabled = True
-        message = "Feed enabled successfully."
-    elif not int(body.enable) and feed.enabled:
-        feed.enabled = False
-        message = "Feed disabled successfully."
-    elif int(body.enable) and feed.enabled:
-        message = "Feed already enabled."
-    elif not int(body.enable) and not feed.enabled:
-        message = "Feed already disabled."
+    if enable_status == feed.enabled:
+        message = "Feed already " + ("enabled." if feed.enabled else "disabled.")
+    else:
+        feed.enabled = enable_status
+        message = "Feed " + ("enabled" if enable_status else "disabled") + " successfully."
 
     try:
         db.commit()
@@ -421,7 +402,7 @@ async def _toggle_feed(db: Session, feed_id: str, body: FeedToggleBody) -> dict:
 
 
 async def _fetch_data_from_all_feeds(db: Session) -> dict:
-    raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="ENDPOINT NOT YET SUPPORTED!")
+    raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Endpoint not yet supported")
 
     # feeds = db.query(Feed).all()  # noqa: F841
     # #! logic to start the pull process
@@ -430,80 +411,38 @@ async def _fetch_data_from_all_feeds(db: Session) -> dict:
 
 
 async def _get_feeds(db: Session) -> list[dict]:
-    feeds: list[Feed] | None = db.query(Feed).all()
+    feeds: list[Feed] = db.query(Feed).all()
 
     if not feeds:
-        logger.error("No feeds found.")
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No feeds found.")
+        logger.info("No feeds found.")
+        return FeedsResponse(feeds=[])
 
-    feed_responses: list[FeedAttributesResponse] = [_prepare_response(feed) for feed in feeds]
-
-    return [FeedResponse(feed=feed_responses)]
+    return FeedsResponse(feeds=[{**feed.__dict__} for feed in feeds])
 
 
 async def _enable_feed(db: Session, feed_id: str) -> dict:
-    message: str = ""
-    _check_type_int(feed_id)
     feed: Feed = check_existence_and_raise(db, Feed, feed_id, "feed_id", "Feed not found.")
 
-    if not feed.enabled:
-        feed.enabled = True
-        message = "Feed enabled successfully."
-    elif feed.enabled:
+    if feed.enabled:
         message = "Feed already enabled."
-
-    feed.enabled = True
-
-    try:
+    else:
+        feed.enabled = True
         db.commit()
+        message = "Feed enabled successfully."
         logger.info(f"Feed with id '{feed_id}' enabled.")
-    except SQLAlchemyError as e:
-        db.rollback()
-        logger.exception(f"Failed to enable feed: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred."
-        )
 
     return FeedEnableDisableResponse(name=feed.name, message=message, url=feed.url)
 
 
 async def _disable_feed(db: Session, feed_id: str) -> dict:
-    message: str = ""
-    _check_type_int(feed_id)
     feed: Feed = check_existence_and_raise(db, Feed, feed_id, "feed_id", "Feed not found.")
 
-    if feed.enabled:
-        feed.enabled = False
-        message = "Feed disabled successfully."
-    elif not feed.enabled:
+    if not feed.enabled:
         message = "Feed already disabled."
-
-    try:
+    else:
+        feed.enabled = False
         db.commit()
+        message = "Feed disabled successfully."
         logger.info(f"Feed with id '{feed_id}' disabled.")
-    except SQLAlchemyError as e:
-        db.rollback()
-        logger.exception(f"Failed to disable feed: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred."
-        )
 
-    return FeedEnableDisableResponse(name=str(feed.name), message=message, url=str(feed.url))
-
-
-def _prepare_response(feed: Feed) -> FeedAttributesResponse:
-    feed_dict: dict[str, Any] = feed.__dict__.copy()
-
-    fields_to_convert = ["distribution", "sharing_group_id", "tag_id", "event_id", "orgc_id"]
-    for field in fields_to_convert:
-        if feed_dict.get(field) is not None:
-            feed_dict[field] = str(feed_dict[field])
-
-    return FeedAttributesResponse(**feed_dict)
-
-
-def _check_type_int(number: Any) -> None:
-    try:
-        int(number)
-    except ValueError:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Invalid feed ID.")
+    return FeedEnableDisableResponse(name=feed.name, message=message, url=feed.url)
