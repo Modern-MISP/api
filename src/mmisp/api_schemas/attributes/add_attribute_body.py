@@ -22,7 +22,6 @@ class AddAttributeBody(BaseModel):
     disable_correlation: bool | None = None
     first_seen: str | None = None
     last_seen: str | None = None
-    event_uuid: str | None = None
 
     @root_validator
     def ensure_value_or_value1_is_set(cls, data: dict[str, Any]) -> Optional[dict[str, Any]]:  # noqa: ANN101

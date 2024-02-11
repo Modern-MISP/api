@@ -1,4 +1,5 @@
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
+from sqlalchemy.orm import relationship
 
 from mmisp.util.uuid import uuid
 
@@ -32,6 +33,7 @@ class Event(Base):
     event_creator_email = Column(String(255))
     protected = Column(Boolean)
     cryptographic_key = Column(String(255))  # must be serialized
+    attributes = relationship("Attribute", back_populates="event")
 
 
 class EventReport(Base):

@@ -1,13 +1,13 @@
-from typing import Annotated
+from typing import Optional
 
 from pydantic import BaseModel, Field
 
 
-class AddAttributeResponse(BaseModel):
+class AddAttributeAttributes(BaseModel):
     id: str
     event_id: str
     object_id: str
-    object_relation: str
+    object_relation: Optional[str] = Field(..., nullable=True)
     category: str
     type: str
     value: str
@@ -21,9 +21,13 @@ class AddAttributeResponse(BaseModel):
     comment: str
     deleted: bool
     disable_correlation: bool
-    first_seen: str
-    last_seen: str
-    attribute_tag: Annotated[list[str], Field(alias="AttributeTag")]  # new
+    first_seen: Optional[str] = Field(..., nullable=True)
+    last_seen: Optional[str] = Field(..., nullable=True)
+    attribute_tag: list[str] = Field([], alias="AttributeTag")  # new
+
+
+class AddAttributeResponse(BaseModel):
+    Attribute: AddAttributeAttributes
 
     class Config:
         orm_mode = True

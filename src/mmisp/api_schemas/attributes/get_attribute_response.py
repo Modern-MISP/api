@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -16,7 +16,7 @@ class GetAttributeAttributes(BaseModel):
     id: str
     event_id: str
     object_id: str
-    object_relation: str
+    object_relation: Optional[str] = Field(..., nullable=True)
     category: str
     type: str
     value: str
@@ -28,14 +28,14 @@ class GetAttributeAttributes(BaseModel):
     comment: str
     deleted: bool
     disable_correlation: bool
-    first_seen: str
-    last_seen: str
+    first_seen: Optional[str] = Field(..., nullable=True)
+    last_seen: Optional[str] = Field(..., nullable=True)
     event_uuid: str  # new
-    tag: Annotated[list[GetAttributeTag], Field(alias="Tag")]  # new
+    tag: list[GetAttributeTag] | None = None  # = Field(alias="Tag") # new
 
 
 class GetAttributeResponse(BaseModel):
-    Attribute: GetAttributeAttributes
+    Attribute: GetAttributeAttributes  # = Field(alias="Attribute")
 
     class Config:
         orm_mode = True

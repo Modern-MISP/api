@@ -1,12 +1,12 @@
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
+from sqlalchemy.orm import relationship
 
 from mmisp.util.uuid import uuid
 
 from ..database import Base
 from .event import Event
 from .object import Object
-
-# from .sharing_group import SharingGroup
+from .sharing_group import SharingGroup
 from .tag import Tag
 
 
@@ -14,56 +14,40 @@ class Attribute(Base):
     __tablename__ = "attributes"
 
     id = Column(Integer, primary_key=True)
-    uuid = Column(String(255), unique=True, default=uuid)
+    uuid = Column(String(255), unique=True, default=uuid, index=True)
+    event_id = Column(Integer, ForeignKey(Event.id), index=True)
+    object_id = Column(Integer, ForeignKey(Object.id), index=True, nullable=True, default=None)
+    object_relation = Column(String(255), nullable=True, index=True)
+    category = Column(String(255), nullable=False, index=True)
+    type = Column(String(255), nullable=False, index=True)
+    value = Column(String(255), nullable=False, index=True)
+    value1 = Column(String(255), nullable=False, index=True, default=value)
+    value2 = Column(String(255), nullable=False, index=True, default="")
+    to_ids = Column(Boolean, default=True)
+    timestamp = Column(String(255), default="0")
+    distribution = Column(String(255), default="0")
+    sharing_group_id = Column(Integer, ForeignKey(SharingGroup.id), index=True, nullable=True, default=None)
+    comment = Column(String(255), default="")
+    deleted = Column(Boolean, default=False)
+    disable_correlation = Column(Boolean, default=False)
+    first_seen = Column(String(255), nullable=True, index=True)
+    last_seen = Column(String(255), nullable=True, index=True)
+    event = relationship("Event", back_populates="attributes")
 
-    # event_id = Column(Integer, ForeignKey(Event.id), index=True, nullable=False)
-    event_id = Column(Integer, index=True, nullable=False)
-
-    object_id = Column(Integer, ForeignKey(Object.id), index=True, nullable=False, default=0)
-    object_relation = Column(String(255), index=True)
-    category = Column(String(255), index=True, nullable=False)
-    type = Column(String(255), index=True, nullable=False)
-    value = Column(String(255), index=True, nullable=False, default=None)
-    value1 = Column(String(255), index=True, nullable=False, default=None)
-    value2 = Column(String(255), index=True, nullable=False, default=None)
-    to_ids = Column(Boolean, nullable=False, default=True)
-    timestamp = Column(Integer, nullable=False, default=0)
-    distribution = Column(Integer, nullable=False, default=0)
-
-    # sharing_group_id = Column(Integer, ForeignKey(SharingGroup.id), index=True, nullable=False)
-    sharing_group_id = Column(Integer, index=True, nullable=False)
-
-    comment = Column(String(255))
-    deleted = Column(Boolean, nullable=False, default=False)
-    disable_correlation = Column(Boolean, nullable=False, default=False)
-    first_seen = Column(Integer, index=True, nullable=True)
-    last_seen = Column(Integer, index=True, nullable=True)
-    event_uuid = Column(String(255), ForeignKey(Event.uuid))  # new
-
-    # tags = relationship("AttributeTag")
+    @property
+    def event_uuid(self) -> str:  # noqa: ANN101
+        return self.event.uuid
 
 
 class AttributeTag(Base):
     __tablename__ = "attribute_tags"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    id = Column(Integer, primary_key=True)
     uuid = Column(String(255), unique=True, default=uuid)
-    attribute_id = Column(Integer, ForeignKey(Attribute.id), nullable=False, index=True)
-    object_id = Column(Integer, ForeignKey(Object.id), index=True, nullable=False, default=0)
-    tag_id = Column(Integer, ForeignKey(Tag.id), nullable=False, index=True)
-    local = Column(Boolean, nullable=False, default=False)
-
-    # todo: are the following entries actually needed?
-    # id = Column(Integer, primary_key=True)
-    # name = Column(String(255))
-    # colour = Column(String(255))
-    # exportable = Column(Boolean)
-    # user_id = Column(String(255))
-    # hide_tag = Column(Boolean)
-    # numerical_value = Column(Integer)
-    # is_galaxy = Column(Boolean)
-    # is_costum_galaxy = Column(Boolean)
-    # local_only = Column(Boolean)
+    attribute_id = Column(Integer, ForeignKey(Attribute.id), index=True)
+    event_id = Column(Integer, ForeignKey(Event.id), index=True)
+    tag_id = Column(Integer, ForeignKey(Tag.id), index=True)
+    local = Column(Boolean, default=False)
 
 
 class AttributeMD5(Attribute):

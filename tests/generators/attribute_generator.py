@@ -28,11 +28,11 @@ def generate_invalid_field_add_attribute_data() -> AddAttributeBody:
 
 
 def generate_existing_id() -> int:
-    return 1
+    return "1"
 
 
 def generate_non_existing_id() -> str:
-    return 0
+    return "0"
 
 
 def generate_invalid_id() -> str:
