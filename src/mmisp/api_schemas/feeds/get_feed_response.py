@@ -42,9 +42,20 @@ class FeedAttributesResponse(BaseModel):
             return value
         return None
 
+    @validator("distribution", "sharing_group_id", "tag_id", "event_id", "orgc_id", pre=True, allow_reuse=True)
+    def convert_to_string(cls, value: Optional[str]) -> Optional[str]:  # noqa: ANN101
+        return str(value) if value is not None else None
+
 
 class FeedResponse(BaseModel):
-    feed: list[FeedAttributesResponse]
+    feed: FeedAttributesResponse
+
+    class Config:
+        orm_mode = True
+
+
+class FeedsResponse(BaseModel):
+    feeds: list[FeedAttributesResponse]
 
     class Config:
         orm_mode = True

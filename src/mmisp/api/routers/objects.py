@@ -1,6 +1,6 @@
 import logging
 import time
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Path, status
 from sqlalchemy.exc import SQLAlchemyError
@@ -169,7 +169,7 @@ async def _add_object(db: Session, event_id: str, object_template_id: str, body:
     )
     check_existence_and_raise(db, Event, event_id, "event_id", "Event not found")
 
-    new_object_data = {
+    object_data: dict[str, Any] = {
         **body.dict(exclude={"attributes"}),
         "template_id": int(object_template_id) if object_template_id is not None else None,
         "template_name": template.name if template is not None else None,
@@ -179,73 +179,82 @@ async def _add_object(db: Session, event_id: str, object_template_id: str, body:
         "event_id": int(event_id) if event_id is not None else None,
         "timestamp": _create_timestamp(),
     }
-    new_object = Object(**new_object_data)
-
-    try:
-        db.add(new_object)
-        db.commit()
-    except SQLAlchemyError as e:
-        db.rollback()
-        logger.exception(f"Failed to add new object: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred."
-        )
-
+    new_object = Object(**object_data)
+    db.add(new_object)
+    db.flush()
     db.refresh(new_object)
-    logger.info(f"New object added: {new_object.id}")
+
+    attributes_data = [
+        {**attr.dict(), "object_id": new_object.id, "timestamp": _create_timestamp()} for attr in body.attributes
+    ]
 
     try:
-        attributes_data = [
-            {**attr.dict(), "object_id": new_object.id, "timestamp": _create_timestamp()} for attr in body.attributes
-        ]
         db.bulk_insert_mappings(Attribute, attributes_data)
         db.commit()
-        logger.info(f"Attributes added to new object: {new_object.id}")
+        logger.info(f"New object with attributes added: {new_object.id}")
     except SQLAlchemyError as e:
         db.rollback()
-        logger.exception(f"Failed to add attributes: {e}")
+        logger.exception(f"Failed to add new object with attributes: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred."
         )
 
-    db_attributes: list[Attribute] = db.query(Attribute).filter(Attribute.object_id == new_object.id).all()
+    attributes = db.query(Attribute).filter(Attribute.object_id == new_object.id).all()
+    attributes_response = [GetAllAttributesResponse(**attribute.__dict__) for attribute in attributes]
 
-    return ObjectResponse(object=_prepare_object_response(new_object, db_attributes, event_response=None))
+    object_response = ObjectWithAttributesResponse(
+        **new_object.__dict__,
+        attributes=attributes_response,
+        event=None,
+    )
+
+    return ObjectResponse(object=object_response)
 
 
 async def _restsearch(db: Session, body: ObjectSearchBody) -> dict:
     for field, value in body.dict().items():
-        db_objects: list[Object] = db.query(Object).filter(getattr(Object, field) == value).all()
+        objects: list[Object] = db.query(Object).filter(getattr(Object, field) == value).all()
 
         # todo: not all fields in 'ObjectSearchBody' are taken into account yet
 
-    response_objects = [_prepare_object_response(obj, obj.attributes, event_response=None) for obj in db_objects]
-
-    return ObjectSearchResponse(response=[{"object": res_obj} for res_obj in response_objects])
+    objects_data: list[ObjectWithAttributesResponse] = [
+        ObjectWithAttributesResponse(**{**object.__dict__, "attributes": object.attributes, "event": None})
+        for object in objects
+    ]
+    return ObjectSearchResponse(response=[{"object": object_data} for object_data in objects_data])
 
 
 async def _get_object_details(db: Session, object_id: str) -> dict:
-    db_object: Object = check_existence_and_raise(db, Object, object_id, "object_id", "Object not found")
-
-    db_attributes: list[Attribute] = db.query(Attribute).filter(Attribute.object_id == db_object.id).all()
-    db_event: Event = db.query(Event).join(Object, Event.id == Object.event_id).filter(Object.id == object_id).first()
-
+    object: Object = check_existence_and_raise(db, Object, object_id, "object_id", "Object not found")
+    attributes: list[Attribute] = db.query(Attribute).filter(Attribute.object_id == object.id).all()
+    event: Event = db.query(Event).join(Object, Event.id == Object.event_id).filter(Object.id == object_id).first()
     event_response: ObjectEventResponse = ObjectEventResponse(
-        id=str(db_event.id), info=db_event.info, org_id=str(db_event.org_id), orgc_id=str(db_event.orgc_id)
+        id=str(event.id), info=event.info, org_id=str(event.org_id), orgc_id=str(event.orgc_id)
     )
 
-    return ObjectResponse(object=_prepare_object_response(db_object, db_attributes, event_response))
+    attributes_response: list[GetAllAttributesResponse] = [
+        GetAllAttributesResponse(**attribute.__dict__) for attribute in attributes
+    ]
+    object_data: ObjectWithAttributesResponse = ObjectWithAttributesResponse(
+        **{**object.__dict__, "attributes": attributes_response, "event": event_response}
+    )
+
+    return ObjectResponse(object=object_data)
 
 
 async def _delete_object(db: Session, object_id: str, hard_delete: str) -> dict:
-    db_object: Object = check_existence_and_raise(db, Object, object_id, "object_id", "Object not found")
+    object: Object = check_existence_and_raise(db, Object, object_id, "object_id", "Object not found")
+    saved = False
+    success = False
 
-    if hard_delete.lower() == "true":
-        db.query(Attribute).filter(Attribute.object_id == object_id).delete(synchronize_session=False)
-        db.delete(db_object)
+    if hard_delete.lower() == "true" or hard_delete == "1":
+        db.query(Attribute).filter(Attribute.object_id == object_id).delete(synchronize_session="fetch")
+        db.delete(object)
         try:
             db.commit()
             logger.info(f"Hard deleted object with id '{object_id}'.")
+            saved = True
+            success = True
         except SQLAlchemyError as e:
             db.rollback()
             logger.exception(f"Failed to hard delete object with id '{object_id}': {e}")
@@ -253,11 +262,13 @@ async def _delete_object(db: Session, object_id: str, hard_delete: str) -> dict:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred."
             )
         message = "Object has been permanently deleted."
-    elif hard_delete.lower() == "false":
-        db_object.deleted = True
+    elif hard_delete.lower() == "false" or hard_delete == "0":
+        object.deleted = True
         try:
             db.commit()
             logger.info(f"Soft deleted object with id '{object_id}'.")
+            saved = True
+            success = True
         except SQLAlchemyError as e:
             db.rollback()
             logger.exception(f"Failed to soft delete object with id '{object_id}': {e}")
@@ -269,66 +280,12 @@ async def _delete_object(db: Session, object_id: str, hard_delete: str) -> dict:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid 'hardDelete' parameter.")
 
     return ObjectDeleteResponse(
-        saved=True,
-        success=True,
-        name=db_object.name,
+        saved=saved,
+        success=success,
+        name=object.name,
         message=message,
         url=f"/objects/{object_id}",
     )
-
-
-def _prepare_attributes_response(attributes: list[Attribute]) -> list[GetAllAttributesResponse]:
-    return [
-        GetAllAttributesResponse(
-            id=str(attr.id),
-            uuid=attr.uuid,
-            event_id=str(attr.event_id) if attr.event_id is not None else None,
-            object_id=str(attr.object_id) if attr.object_id is not None else None,
-            object_relation=attr.object_relation,
-            category=attr.category,
-            type=attr.type,
-            value=attr.value,
-            value1=attr.value1,
-            value2=attr.value2,
-            to_ids=attr.to_ids,
-            timestamp=str(attr.timestamp) if attr.timestamp is not None else None,
-            distribution=str(attr.distribution) if attr.distribution is not None else None,
-            sharing_group_id=str(attr.sharing_group_id) if attr.sharing_group_id is not None else None,
-            comment=attr.comment,
-            deleted=attr.deleted,
-            disable_correlation=attr.disable_correlation,
-            first_seen=str(attr.first_seen) if attr.first_seen is not None else None,
-            last_seen=str(attr.last_seen) if attr.last_seen is not None else None,
-        )
-        for attr in attributes
-    ]
-
-
-def _prepare_object_response(
-    object: Object, attributes: list[Attribute], event_response: ObjectEventResponse
-) -> ObjectWithAttributesResponse:
-    attributes_response = _prepare_attributes_response(attributes)
-    object_data = ObjectWithAttributesResponse(
-        id=str(object.id),
-        uuid=object.uuid,
-        name=object.name,
-        meta_category=object.meta_category,
-        description=object.description,
-        template_id=str(object.template_id) if object.template_id is not None else None,
-        template_uuid=object.template_uuid,
-        template_version=str(object.template_version) if object.template_version is not None else None,
-        event_id=str(object.event_id) if object.event_id is not None else None,
-        timestamp=str(object.timestamp) if object.timestamp is not None else None,
-        distribution=str(object.distribution) if object.distribution is not None else None,
-        sharing_group_id=str(object.sharing_group_id) if object.sharing_group_id is not None else None,
-        comment=object.comment if object.comment is not None else None,
-        deleted=object.deleted,
-        first_seen=str(object.first_seen) if object.first_seen is not None else None,
-        last_seen=str(object.last_seen) if object.last_seen is not None else None,
-        attributes=attributes_response,
-        event=event_response,
-    )
-    return object_data
 
 
 def _create_timestamp() -> int:
@@ -344,7 +301,7 @@ def _create_timestamp() -> int:
 #####################################################################
 
 
-# def build_query(db: Session, search_body: ObjectSearchBody) -> list[Object]:
+# def _build_query(db: Session, search_body: ObjectSearchBody) -> list[Object]:
 #     query = db.query(Object)
 
 #     if search_body.object_name:
