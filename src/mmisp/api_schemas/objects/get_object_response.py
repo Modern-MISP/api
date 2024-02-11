@@ -36,6 +36,23 @@ class ObjectWithAttributesResponse(BaseModel):
             return value
         return None
 
+    @validator(
+        "template_id",
+        "template_version",
+        "event_id",
+        "timestamp",
+        "sharing_group_id",
+        "distribution",
+        "sharing_group_id",
+        "comment",
+        "first_seen",
+        "last_seen",
+        pre=True,
+        allow_reuse=True,
+    )
+    def convert_to_string(cls, value: Optional[str]) -> Optional[str]:  # noqa: ANN101
+        return str(value) if value is not None else None
+
 
 class ObjectResponse(BaseModel):
     object: ObjectWithAttributesResponse
