@@ -4,6 +4,7 @@ from typing import Any, Dict
 import pytest
 from sqlalchemy.orm import Session
 
+from mmisp.api_schemas.attributes.get_describe_types_response import GetDescribeTypesAttributes
 from mmisp.db.models.attribute import Attribute, AttributeTag
 from mmisp.db.models.event import Event
 from mmisp.db.models.tag import Tag
@@ -110,8 +111,10 @@ def test_add_attribute_valid_data(db: Session, add_attribute_valid_data: Dict[st
     db.refresh(add_event_body)
 
     event_id = str(add_event_body.id)
+
     headers = {"authorization": environment.site_admin_user_token}
     response = client.post(f"/attributes/{event_id}", json=add_attribute_valid_data, headers=headers)
+
     assert response.status_code == 200
     response_json = response.json()
     assert response_json["Attribute"]["value"] == add_attribute_valid_data["value"]
@@ -132,7 +135,7 @@ def test_add_attribute_invalid_event_id(
         json=add_attribute_valid_data,
         headers=headers,
     )
-    assert response.status_code == 422
+    assert response.status_code == 404
 
 
 def test_add_attribute_invalid_data(existing_id: str, add_attribute_invalid_data: Dict[str, Any]) -> None:
@@ -202,6 +205,7 @@ def test_get_existing_attribute(db: Session) -> None:
     db.refresh(add_attribute_tag_body)
 
     response = client.get(f"/attributes/{attribute_id}")
+
     assert response.status_code == 200
     response_json = response.json()
     assert response_json["Attribute"]["id"] == str(attribute_id)
@@ -239,141 +243,255 @@ def test_get_attribute_response_format(existing_id: str) -> None:
     assert response.headers["Content-Type"] == "application/json"
 
 
-# # --- Test edit attribute
-#
-#
-# def test_edit_existing_attribute(existing_id: str, edit_attribute_valid_data: Dict[str, Any]) -> None:
-#     headers = {"authorization": environment.site_admin_user_token}
-#     response = client.put("/attributes/" + existing_id, json=edit_attribute_valid_data, headers=headers)
-#     assert response.status_code == 200
-#     response_json = response.json()
-#     assert response_json[0] == "Attribute"
-#     attribute = response_json["Attribute"][0]
-#     assert attribute["id"] == existing_id
-#     for key, value in edit_attribute_valid_data.items():
-#         assert attribute[key] == value
-#
-#
-# def test_edit_non_existing_attribute(
-#         invalid_or_non_existing_ids: Any, edit_attribute_valid_data: Dict[str, Any]
-# ) -> None:
-#     headers = {"authorization": environment.site_admin_user_token}
-#     response = client.put("/attributes/" + invalid_or_non_existing_ids, json=edit_attribute_valid_data,
-#     headers=headers)
-#     assert response.status_code == 404
-#
-#
-# def test_edit_attribute_response_format(existing_id: str, edit_attribute_valid_data: Dict[str, Any]) -> None:
-#     headers = {"authorization": environment.site_admin_user_token}
-#     response = client.put("/attributes/" + existing_id, json=edit_attribute_valid_data, headers=headers)
-#     assert response.headers["Content-Type"] == "application/json"
-#
-#
-# def test_edit_attribute_authorization(existing_id: str, edit_attribute_valid_data: Dict[str, Any]) -> None:
-#     headers = {"authorization": ""}
-#     response = client.put("/attributes/" + existing_id, json=edit_attribute_valid_data, headers=headers)
-#     assert response.status_code == 401
-#
-#
-# # --- Test delete attribute by id
-#
-#
-# def test_delete_existing_attribute(existing_id: str) -> None:
-#     headers = {"authorization": environment.site_admin_user_token}
-#     response = client.delete("/attributes/" + existing_id, headers=headers)
-#     assert response.status_code == 200
-#
-#
-# def test_delete_invalid_or_non_existing_attribute(invalid_or_non_existing_ids: Any) -> None:
-#     headers = {"authorization": environment.site_admin_user_token}
-#     response = client.delete("/attributes/" + invalid_or_non_existing_ids, headers=headers)
-#     assert response.status_code == 404
-#
-#
-# def test_delete_attribute_response_format(existing_id: str) -> None:
-#     headers = {"authorization": environment.site_admin_user_token}
-#     response = client.delete("/attributes/" + existing_id, headers=headers)
-#     assert response.headers["Content-Type"] == "application/json"
-#
-#
-# def test_delete_attribute_authorization(existing_id: str) -> None:
-#     headers = {"authorization": ""}
-#     response = client.delete("/attributes/" + existing_id, headers=headers)
-#     assert response.status_code == 401
-#
-#
-# # --- Test get all attributes
-#
-#
-# def test_get_all_attributes() -> None:
-#     response = client.get("/attributes/")
-#     assert response.status_code == 200
-#     response_json = response.json()
-#     assert isinstance(response_json, list)
-#     for attribute in response_json:
-#         assert "id" in attribute
-#         assert "event_id" in attribute
-#         assert "object_id" in attribute
-#         assert "object_relation" in attribute
-#         assert "category" in attribute
-#         assert "type" in attribute
-#         assert "value" in attribute
-#         assert "value1" in attribute
-#         assert "value2" in attribute
-#         assert "to_ids" in attribute
-#         assert "uuid" in attribute
-#         assert "timestamp" in attribute
-#         assert "distribution" in attribute
-#         assert "sharing_group_id" in attribute
-#         assert "comment" in attribute
-#         assert "deleted" in attribute
-#         assert "disable_correlation" in attribute
-#         assert "first_seen" in attribute
-#         assert "last_seen" in attribute
-#
-#
-# def test_get_all_attributes_response_format() -> None:
-#     response = client.get("/attributes/")
-#     assert response.headers["Content-Type"] == "application/json"
-#
-#
-# # --- Test delete selected attribute(s)
-#
-#
-# def test_delete_selected_attributes_from_existing_event(
-#         existing_id: str, delete_selected_existing_attributes_data: Dict[str, Any]
-# ) -> None:
-#     headers = {"authorization": environment.site_admin_user_token}
-#     response = client.post(
-#         "/attributes/deleteSelected/" + existing_id, json=delete_selected_existing_attributes_data, headers=headers
-#     )
-#     assert response.status_code == 200
-#     response_json = response.json()
-#     counter_of_selected_attributes = delete_selected_existing_attributes_data["id"].count(" ") + 1
-#     if counter_of_selected_attributes == 1:
-#         assert response_json["message"] == str(counter_of_selected_attributes) + "attribute deleted"
-#     else:
-#         assert response_json["message"] == str(counter_of_selected_attributes) + "attributes deleted"
-#
-#
-# def test_delete_selected_attributes_response_format(
-#         existing_id: str, delete_selected_existing_attributes_data: Dict[str, Any]
-# ) -> None:
-#     headers = {"authorization": environment.site_admin_user_token}
-#     response = client.post(
-#         "/attributes/deleteSelected/" + existing_id, json=delete_selected_existing_attributes_data, headers=headers
-#     )
-#     assert response.headers["Content-Type"] == "application/json"
-#
-#
-# def test_delete_selected_attributes_authorization(
-#         existing_id: str, delete_selected_existing_attributes_data: Dict[str, Any]
-# ) -> None:
-#     headers = {"authorization": ""}
-#     response = client.post(
-#         "/attributes/deleteSelected/" + existing_id, json=delete_selected_existing_attributes_data, headers=headers
-#     )
-#     assert response.status_code == 401
+# --- Test edit attribute
+
+
+def test_edit_existing_attribute(db: Session, existing_id: str, edit_attribute_valid_data: Dict[str, Any]) -> None:
+    add_event_body = Event(info="test")
+
+    db.add(add_event_body)
+    db.commit()
+    db.refresh(add_event_body)
+
+    event_id = str(add_event_body.id)
+
+    add_attribute_body = Attribute(
+        value="1.2.3.4", value1="1.2.3.4", type="ip-src", category="Network Activity", event_id=event_id
+    )
+
+    db.add(add_attribute_body)
+    db.commit()
+    db.refresh(add_attribute_body)
+
+    attribute_id = add_attribute_body.id
+
+    headers = {"authorization": environment.site_admin_user_token}
+    response = client.put(f"/attributes/{attribute_id}", json=edit_attribute_valid_data, headers=headers)
+
+    assert response.status_code == 200
+    response_json = response.json()
+
+    assert response_json["Attribute"]["id"] == str(attribute_id)
+    assert response_json["Attribute"]["event_id"] == str(event_id)
+    assert "id" in response_json["Attribute"]
+    assert "event_id" in response_json["Attribute"]
+    assert "object_id" in response_json["Attribute"]
+    assert "object_relation" in response_json["Attribute"]
+    assert "category" in response_json["Attribute"]
+    assert "type" in response_json["Attribute"]
+    assert "value" in response_json["Attribute"]
+    assert "to_ids" in response_json["Attribute"]
+    assert "uuid" in response_json["Attribute"]
+    assert "timestamp" in response_json["Attribute"]
+    assert "distribution" in response_json["Attribute"]
+    assert "sharing_group_id" in response_json["Attribute"]
+    assert "comment" in response_json["Attribute"]
+    assert "deleted" in response_json["Attribute"]
+    assert "disable_correlation" in response_json["Attribute"]
+    assert "first_seen" in response_json["Attribute"]
+    assert "last_seen" in response_json["Attribute"]
+    assert "tag" in response_json["Attribute"]
+
+
+def test_edit_non_existing_attribute(
+    invalid_or_non_existing_ids: Any, edit_attribute_valid_data: Dict[str, Any]
+) -> None:
+    headers = {"authorization": environment.site_admin_user_token}
+    response = client.put(f"/attributes/{invalid_or_non_existing_ids}", json=edit_attribute_valid_data, headers=headers)
+    assert response.status_code == 404
+
+
+def test_edit_attribute_response_format(existing_id: str, edit_attribute_valid_data: Dict[str, Any]) -> None:
+    headers = {"authorization": environment.site_admin_user_token}
+    response = client.put(f"/attributes/{existing_id}", json=edit_attribute_valid_data, headers=headers)
+    assert response.headers["Content-Type"] == "application/json"
+
+
+def test_edit_attribute_authorization(existing_id: str, edit_attribute_valid_data: Dict[str, Any]) -> None:
+    headers = {"authorization": ""}
+    response = client.put(f"/attributes/{existing_id}", json=edit_attribute_valid_data, headers=headers)
+    assert response.status_code == 401
+
+
+# --- Test delete attribute by id
+
+
+def test_delete_existing_attribute(db: Session) -> None:
+    add_event_body = Event(info="test")
+
+    db.add(add_event_body)
+    db.commit()
+    db.refresh(add_event_body)
+
+    event_id = str(add_event_body.id)
+
+    add_attribute_body = Attribute(
+        value="1.2.3.4", value1="1.2.3.4", type="ip-src", category="Network Activity", event_id=event_id
+    )
+
+    db.add(add_attribute_body)
+    db.commit()
+    db.refresh(add_attribute_body)
+
+    attribute_id = add_attribute_body.id
+
+    headers = {"authorization": environment.site_admin_user_token}
+    response = client.delete(f"/attributes/{attribute_id}", headers=headers)
+
+    assert response.status_code == 200
+
+
+def test_delete_invalid_or_non_existing_attribute(invalid_or_non_existing_ids: Any) -> None:
+    headers = {"authorization": environment.site_admin_user_token}
+    response = client.delete(f"/attributes/{invalid_or_non_existing_ids}", headers=headers)
+    assert response.status_code == 404
+
+
+def test_delete_attribute_response_format(existing_id: str) -> None:
+    headers = {"authorization": environment.site_admin_user_token}
+    response = client.delete(f"/attributes/{existing_id}", headers=headers)
+    assert response.headers["Content-Type"] == "application/json"
+
+
+def test_delete_attribute_authorization(existing_id: str) -> None:
+    headers = {"authorization": ""}
+    response = client.delete(f"/attributes/{existing_id}", headers=headers)
+    assert response.status_code == 401
+
+
+# --- Test get all attributes
+
+
+def test_get_all_attributes(db: Session) -> None:
+    add_event_body = Event(info="test")
+
+    db.add(add_event_body)
+    db.commit()
+    db.refresh(add_event_body)
+
+    event_id = str(add_event_body.id)
+
+    add_attribute_body1 = Attribute(
+        value="test", value1="test", type="text", category="Network Activity", event_id=event_id
+    )
+
+    db.add(add_attribute_body1)
+    db.commit()
+    db.refresh(add_attribute_body1)
+
+    add_attribute_body2 = Attribute(
+        value="1.2.3.4", value1="1.2.3.4", type="ip-src", category="Network Activity", event_id=event_id
+    )
+
+    db.add(add_attribute_body2)
+    db.commit()
+    db.refresh(add_attribute_body2)
+
+    response = client.get("/attributes")
+
+    assert response.status_code == 200
+    response_json = response.json()
+    for attribute in response_json:
+        assert isinstance(response_json, list)
+        assert "id" in attribute
+        assert "event_id" in attribute
+        assert "object_id" in attribute
+        assert "object_relation" in attribute
+        assert "category" in attribute
+        assert "type" in attribute
+        assert "value" in attribute
+        assert "value1" in attribute
+        assert "value2" in attribute
+        assert "to_ids" in attribute
+        assert "uuid" in attribute
+        assert "timestamp" in attribute
+        assert "distribution" in attribute
+        assert "sharing_group_id" in attribute
+        assert "comment" in attribute
+        assert "deleted" in attribute
+        assert "disable_correlation" in attribute
+        assert "first_seen" in attribute
+        assert "last_seen" in attribute
+
+
+def test_get_all_attributes_response_format() -> None:
+    response = client.get("/attributes")
+    assert response.headers["Content-Type"] == "application/json"
+
+
+# --- Test delete selected attribute(s)
+
+
+def test_delete_selected_attributes_from_existing_event(
+    db: Session, delete_selected_existing_attributes_data: Dict[str, Any]
+) -> None:
+    add_event_body = Event(info="test")
+
+    db.add(add_event_body)
+    db.commit()
+    db.refresh(add_event_body)
+
+    event_id = str(add_event_body.id)
+
+    add_attribute_body1 = Attribute(
+        value="test", value1="test", type="text", category="Network Activity", event_id=event_id
+    )
+
+    db.add(add_attribute_body1)
+    db.commit()
+    db.refresh(add_attribute_body1)
+
+    attribute_id1 = add_attribute_body1.id
+
+    add_attribute_body2 = Attribute(
+        value="1.2.3.4", value1="1.2.3.4", type="ip-src", category="Network Activity", event_id=event_id
+    )
+
+    db.add(add_attribute_body2)
+    db.commit()
+    db.refresh(add_attribute_body2)
+
+    attribute_id2 = add_attribute_body2.id
+
+    attribute_ids = str(attribute_id1) + " " + str(attribute_id2)
+
+    delete_selected_existing_attributes_data["id"] = attribute_ids
+
+    headers = {"authorization": environment.site_admin_user_token}
+    response = client.post(
+        f"/attributes/deleteSelected/{event_id}", json=delete_selected_existing_attributes_data, headers=headers
+    )
+
+    assert response.status_code == 200
+    response_json = response.json()
+    counter_of_selected_attributes = len(attribute_ids)
+    if counter_of_selected_attributes == 1:
+        assert response_json["message"] == "1 attribute deleted."
+    else:
+        assert response_json["message"] == "2 attributes deleted."
+    assert response_json["url"] == f"/attributes/deleteSelected/{event_id}"
+
+
+def test_delete_selected_attributes_response_format(
+    existing_id: str, delete_selected_existing_attributes_data: Dict[str, Any]
+) -> None:
+    headers = {"authorization": environment.site_admin_user_token}
+    response = client.post(
+        f"/attributes/deleteSelected/{existing_id}", json=delete_selected_existing_attributes_data, headers=headers
+    )
+    assert response.headers["Content-Type"] == "application/json"
+
+
+def test_delete_selected_attributes_authorization(
+    existing_id: str, delete_selected_existing_attributes_data: Dict[str, Any]
+) -> None:
+    headers = {"authorization": ""}
+    response = client.post(
+        f"/attributes/deleteSelected/{existing_id}", json=delete_selected_existing_attributes_data, headers=headers
+    )
+    assert response.status_code == 401
+
+
 #
 #
 # def test_valid_search_attribute_data(search_attribute_valid_data: Dict[str, Any]) -> None:
@@ -410,52 +528,57 @@ def test_get_attribute_response_format(existing_id: str) -> None:
 #
 #
 # # --- Test attribute statistics
-#
-#
-# def test_valid_parameters_attribute_statistics(valid_parameters_attribute_statistics: Dict[str, Any]) -> None:
-#     context = valid_parameters_attribute_statistics["context"]
-#     percentage = valid_parameters_attribute_statistics["percentage"]
-#     response = client.get(f"/attributes/attributeStatistics/{context}/{percentage}")
-#     assert response.status_code == 200
-#     response_json = response.json()
-#     if "category" in context:
-#         for category in GetDescribeTypesAttributes().categories:
-#             assert category in response_json
-#     else:
-#         for type in GetDescribeTypesAttributes().types:
-#             assert type in response_json
-#     if percentage == 1:
-#         for item in response_json:
-#             assert "%" in item
-#
-#
-# def test_invalid_parameters_attribute_statistics(invalid_parameters_attribute_statistics: Dict[str, Any]) -> None:
-#     context = invalid_parameters_attribute_statistics["context"]
-#     percentage = invalid_parameters_attribute_statistics["percentage"]
-#     response = client.get(f"/attributes/attributeStatistics/{context}/{percentage}")
-#     assert response.status_code == 404
-#
-#
-# def test_attribute_statistics_response_format(valid_parameters_attribute_statistics: Dict[str, Any]) -> None:
-#     context = valid_parameters_attribute_statistics["context"]
-#     percentage = valid_parameters_attribute_statistics["percentage"]
-#     response = client.get(f"/attributes/attributeStatistics/{context}/{percentage}")
-#     assert response.headers["Content-Type"] == "application/json"
-#
-#
-# # --- Test attribute describe types
-#
-#
-# def test_attribute_describe_types() -> None:
-#     response = client.get("/attributes/describeTypes")
-#     assert response.status_code == 200
-#
-#
-# def test_attribute_describe_types_response_format() -> None:
-#     response = client.get("/attributes/describeTypes")
-#     assert response.headers["Content-Type"] == "application/json"
-#
-#
+
+
+def test_valid_parameters_attribute_statistics(valid_parameters_attribute_statistics: Dict[str, Any]) -> None:
+    context = valid_parameters_attribute_statistics["context"]
+    percentage = valid_parameters_attribute_statistics["percentage"]
+    response = client.get(f"/attributes/attributeStatistics/{context}/{percentage}")
+    assert response.status_code == 200
+    response_json = response.json()
+    if "category" in context:
+        for category in GetDescribeTypesAttributes().categories:
+            assert category in response_json
+    else:
+        for type in GetDescribeTypesAttributes().types:
+            assert type in response_json
+    if percentage == 1:
+        for item in response_json:
+            assert "%" in item
+
+
+def test_invalid_parameters_attribute_statistics(invalid_parameters_attribute_statistics: Dict[str, Any]) -> None:
+    context = invalid_parameters_attribute_statistics["context"]
+    percentage = invalid_parameters_attribute_statistics["percentage"]
+    response = client.get(f"/attributes/attributeStatistics/{context}/{percentage}")
+    assert response.status_code == 404
+
+
+def test_attribute_statistics_response_format(valid_parameters_attribute_statistics: Dict[str, Any]) -> None:
+    context = valid_parameters_attribute_statistics["context"]
+    percentage = valid_parameters_attribute_statistics["percentage"]
+    response = client.get(f"/attributes/attributeStatistics/{context}/{percentage}")
+    assert response.headers["Content-Type"] == "application/json"
+
+
+# --- Test attribute describe types
+
+
+def test_attribute_describe_types() -> None:
+    response = client.get("/attributes/describeTypes")
+    response_json = response.json()
+    print(response_json)
+    assert response.status_code == 200
+
+
+def test_attribute_describe_types_response_format() -> None:
+    response = client.get("/attributes/describeTypes")
+    assert response.headers["Content-Type"] == "application/json"
+    response_json = response.json()
+    assert "types" in response_json["result"]
+    assert "md5" in response_json["result"]["types"]
+
+
 # # --- Test restore attribute
 #
 #

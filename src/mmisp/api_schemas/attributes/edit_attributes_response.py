@@ -1,6 +1,4 @@
-from typing import Annotated
-
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 
 class EditAttributeTag(BaseModel):
@@ -20,7 +18,7 @@ class EditAttributeAttributes(BaseModel):
     id: str
     event_id: str
     object_id: str
-    object_relation: str
+    object_relation: str | None = None
     category: str
     type: str
     value: str
@@ -32,13 +30,13 @@ class EditAttributeAttributes(BaseModel):
     comment: str
     deleted: bool
     disable_correlation: bool
-    first_seen: str
-    last_seen: str
-    tag: Annotated[list[EditAttributeTag], Field(alias="Tag")]  # new
+    first_seen: str | None = None
+    last_seen: str | None = None
+    tag: list[EditAttributeTag]  # new
 
 
 class EditAttributeResponse(BaseModel):
-    attribute: Annotated[EditAttributeAttributes, Field(alias="Attribute")]
+    Attribute: EditAttributeAttributes  # Field(alias="Attribute")]
 
     class Config:
         orm_mode = True

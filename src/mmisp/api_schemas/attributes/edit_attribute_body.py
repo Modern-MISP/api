@@ -6,7 +6,7 @@ class EditAttributeBody(BaseModel):
     value: str | None = None
     value1: str | None = None
     value2: str | None = None
-    event_id: str | None = None
+    # event_id: str | None = None
     object_id: str | None = None
     object_relation: str | None = None
     category: str | None = None
@@ -20,7 +20,8 @@ class EditAttributeBody(BaseModel):
     disable_correlation: bool | None = None
     first_seen: str | None = None
     last_seen: str | None = None
-    event_uuid: str | None = None
+
+    # event_uuid: str | None = None
 
     class Config:
         orm_mode = True

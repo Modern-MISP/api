@@ -826,7 +826,7 @@ class AttributeIMPFUZZY(Attribute):
 
 class AttributeSHA224(Attribute):
     default_category = "Payload delivery"
-    categories = [""]
+    categories = ["Payload delivery"]
     to_ids = True
     __mapper_args__ = {"polymorphic_identity": "sha224"}
 
