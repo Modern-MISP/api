@@ -184,9 +184,14 @@ class TestGetSharingGroup:
         db.commit()
         db.refresh(sharing_group)
 
+        sharing_group_server = SharingGroupServer(sharing_group_id=sharing_group.id, server_id=0, all_orgs=True)
+
+        db.add(sharing_group_server)
+        db.commit()
+
         response = client.get(
             f"/sharing_groups/{sharing_group.id}",
-            headers={"authorization": environment.instance_owner_org_admin_user_token},
+            headers={"authorization": environment.instance_two_owner_org_admin_user_token},
         )
 
         assert response.status_code == status.HTTP_404_NOT_FOUND
@@ -464,6 +469,36 @@ class TestListSharingGroups:
         assert not sharing_group_item["editable"]
         assert not sharing_group_item["deletable"]
 
+    def test_list_sharing_group_with_no_access(self: "TestListSharingGroups") -> None:
+        db = get_db()
+
+        sharing_group = generate_sharing_group()
+        sharing_group.organisation_uuid = environment.instance_org_two.uuid
+        sharing_group.org_id = environment.instance_org_two.id
+
+        db.add(sharing_group)
+        db.commit()
+        db.refresh(sharing_group)
+
+        sharing_group_server = SharingGroupServer(sharing_group_id=sharing_group.id, server_id=0, all_orgs=True)
+
+        db.add(sharing_group_server)
+        db.commit()
+
+        response = client.get(
+            "/sharing_groups",
+            headers={"authorization": environment.instance_two_owner_org_admin_user_token},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        json = response.json()
+
+        sharing_group_item = next(
+            (item for item in json["response"] if item["SharingGroup"]["id"] == str(sharing_group.id)), None
+        )
+
+        assert not sharing_group_item
+
 
 class TestGetSharingGroupInfo:
     def test_get_own_created_sharing_group_info(self: "TestGetSharingGroupInfo") -> None:
@@ -575,9 +610,14 @@ class TestGetSharingGroupInfo:
         db.commit()
         db.refresh(sharing_group)
 
+        sharing_group_server = SharingGroupServer(sharing_group_id=sharing_group.id, server_id=0, all_orgs=True)
+
+        db.add(sharing_group_server)
+        db.commit()
+
         response = client.get(
             f"/sharing_groups/{sharing_group.id}/info",
-            headers={"authorization": environment.instance_owner_org_admin_user_token},
+            headers={"authorization": environment.instance_two_owner_org_admin_user_token},
         )
 
         assert response.status_code == status.HTTP_404_NOT_FOUND
@@ -619,6 +659,7 @@ class TestAddOrgToSharingGroup:
         sharing_group_org = SharingGroupOrg(
             sharing_group_id=sharing_group.id,
             org_id=999,
+            extend=False,
         )
 
         db.add(sharing_group_org)
@@ -751,6 +792,7 @@ class TestAddServerToSharingGroup:
         sharing_group_server = SharingGroupServer(
             sharing_group_id=sharing_group.id,
             server_id=999,
+            all_orgs=False,
         )
 
         db.add(sharing_group_server)
