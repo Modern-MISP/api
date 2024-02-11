@@ -21,7 +21,9 @@ from mmisp.api_schemas.sharing_groups.sharing_group_org import SharingGroupOrg a
 from mmisp.api_schemas.sharing_groups.sharing_group_server import SharingGroupServer as SharingGroupServerSchema
 from mmisp.api_schemas.sharing_groups.update_sharing_group_body import UpdateSharingGroupBody
 from mmisp.api_schemas.sharing_groups.update_sharing_group_legacy_body import UpdateSharingGroupLegacyBody
-from mmisp.api_schemas.sharing_groups.view_sharing_group_legacy_response import ViewSharingGroupLegacyResponse
+from mmisp.api_schemas.sharing_groups.view_update_sharing_group_legacy_response import (
+    ViewUpdateSharingGroupLegacyResponse,
+)
 from mmisp.api_schemas.standard_status_response import StandardStatusResponse
 from mmisp.config import config
 from mmisp.db.database import get_db
@@ -532,7 +534,9 @@ async def create_sharing_group_legacy(
 
 
 @router.get(
-    "/sharing_groups/view/{sharingGroupId}", deprecated=True, response_model=partial(ViewSharingGroupLegacyResponse)
+    "/sharing_groups/view/{sharingGroupId}",
+    deprecated=True,
+    response_model=partial(ViewUpdateSharingGroupLegacyResponse),
 )
 async def view_sharing_group_legacy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
@@ -603,7 +607,11 @@ async def view_sharing_group_legacy(
     }
 
 
-@router.post("/sharing_groups/edit/{sharingGroupId}", deprecated=True, response_model=partial(SharingGroupSchema))
+@router.post(
+    "/sharing_groups/edit/{sharingGroupId}",
+    deprecated=True,
+    response_model=partial(ViewUpdateSharingGroupLegacyResponse),
+)
 async def update_sharing_group_legacy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
@@ -620,7 +628,7 @@ async def update_sharing_group_legacy(
     if sharing_group.org_id != auth.org_id and not check_permissions(auth.user_id, [Permission.SITE_ADMIN]):
         raise HTTPException(404)
 
-    update = body.dict(include=["name", "description", "releasability", "local", "active", "roaming"])
+    update = body.dict(include={"name", "description", "releasability", "local", "active", "roaming"})
     update["modified"] = datetime.utcnow()
 
     update_record(sharing_group, update)
@@ -628,7 +636,40 @@ async def update_sharing_group_legacy(
     db.commit()
     db.refresh(sharing_group)
 
-    return sharing_group.__dict__
+    organisation = db.get(Organisation, sharing_group.org_id)
+    sharing_group_orgs: list[SharingGroupOrg] = (
+        db.query(SharingGroupOrg).filter(SharingGroupOrg.sharing_group_id == sharing_group.id).all()
+    )
+    sharing_group_servers: list[SharingGroupServer] = (
+        db.query(SharingGroupServer).filter(SharingGroupServer.sharing_group_id == sharing_group.id).all()
+    )
+
+    sharing_group_orgs_computed: list[dict] = []
+
+    for sharing_group_org in sharing_group_orgs:
+        sharing_group_org_organisation: Organisation = db.get(Organisation, sharing_group_org.org_id)
+
+        sharing_group_orgs_computed.append(
+            {**sharing_group_org.__dict__, "Organisation": getattr(sharing_group_org_organisation, "__dict__", None)}
+        )
+
+    sharing_group_servers_computed: list[dict] = []
+
+    for sharing_group_server in sharing_group_servers:
+        if sharing_group_server.server_id == 0:
+            sharing_group_server_server = LOCAL_INSTANCE_SERVER
+        else:
+            sharing_group_server_server = db.get(Server, sharing_group_server.server_id)
+            sharing_group_server_server = getattr(sharing_group_server_server, "__dict__", None)
+
+        sharing_group_servers_computed.append({**sharing_group_server.__dict__, "Server": sharing_group_server_server})
+
+    return {
+        "SharingGroup": sharing_group.__dict__,
+        "Organisation": organisation.__dict__,
+        "SharingGroupOrg": sharing_group_orgs_computed,
+        "SharingGroupServer": sharing_group_servers_computed,
+    }
 
 
 @router.delete(
@@ -655,7 +696,14 @@ async def delete_sharing_group_legacy(
     db.delete(sharing_group)
     db.commit()
 
-    return sharing_group.__dict__
+    return {
+        "id": sharing_group.id,
+        "saved": True,
+        "success": True,
+        "name": "Organisation removed from the sharing group.",
+        "message": "Organisation removed from the sharing group.",
+        "url": "/sharing_groups/removeOrg",
+    }
 
 
 @router.post(
@@ -668,7 +716,7 @@ async def add_org_to_sharing_group_legacy(
     db: Annotated[Session, Depends(get_db)],
     id: Annotated[str, Path(alias="sharingGroupId")],
     organisation_id: Annotated[str, Path(alias="organisationId")],
-    body: AddOrgToSharingGroupLegacyBody,
+    body: AddOrgToSharingGroupLegacyBody = AddOrgToSharingGroupLegacyBody(),
 ) -> dict:
     sharing_group: SharingGroup | None = db.get(SharingGroup, id)
 
@@ -755,7 +803,7 @@ async def add_server_to_sharing_group_legacy(
     db: Annotated[Session, Depends(get_db)],
     id: Annotated[str, Path(alias="sharingGroupId")],
     server_id: Annotated[str, Path(alias="serverId")],
-    body: AddServerToSharingGroupLegacyBody,
+    body: AddServerToSharingGroupLegacyBody = AddServerToSharingGroupLegacyBody(),
 ) -> dict:
     sharing_group: SharingGroup | None = db.get(SharingGroup, id)
 
