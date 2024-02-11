@@ -1,4 +1,3 @@
-from uuid import UUID
 from uuid import uuid4 as _uuid4
 
 
