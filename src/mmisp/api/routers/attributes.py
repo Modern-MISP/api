@@ -29,7 +29,6 @@ from mmisp.api_schemas.attributes.get_describe_types_response import (
     GetDescribeTypesAttributes,
     GetDescribeTypesResponse,
 )
-from mmisp.api_schemas.attributes.restore_attribute_reponse import RestoreAttributeResponse
 from mmisp.api_schemas.attributes.search_attributes_body import SearchAttributesBody
 from mmisp.api_schemas.attributes.search_attributes_response import SearchAttributesResponse
 from mmisp.db.database import get_db
@@ -182,8 +181,12 @@ async def delete_selected_attributes(
     return await _delete_selected_attributes(db, event_id, body, request)
 
 
-@router.post("/attributes/restSearch", summary="Get a filtered and paginated list of attributes")
-async def rest_search(body: SearchAttributesBody, db: Session = Depends(get_db)) -> SearchAttributesResponse:
+@router.post(
+    "/attributes/restSearch",
+    status_code=status.HTTP_501_NOT_IMPLEMENTED,
+    summary="Get a filtered and paginated list of attributes. NOT YET AVAILABLE!",
+)
+async def rest_search(db: Annotated[Session, Depends(get_db)], body: SearchAttributesBody) -> SearchAttributesResponse:
     return SearchAttributesResponse()
 
 
@@ -193,30 +196,52 @@ async def rest_search(body: SearchAttributesBody, db: Session = Depends(get_db))
     summary="Get the count/percentage of attributes per category/type",
 )
 async def get_attributes_statistics(db: Annotated[Session, Depends(get_db)], context: str, percentage: int) -> dict:
-    return _get_attribute_statistics(db, context, percentage)
+    return await _get_attribute_statistics(db, context, percentage)
 
 
-@router.post("/attributes/restore/{attributeId}", summary="Restore an attribute")
-async def restore_attribute(attribute_id: str, db: Session = Depends(get_db)) -> RestoreAttributeResponse:
-    return RestoreAttributeResponse(id="")
+@router.post(
+    "/attributes/restore/{attributeId}",
+    status_code=status.HTTP_200_OK,
+    response_model=partial(GetAttributeResponse),
+    summary="Restore an attribute",
+)
+async def restore_attribute(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
+    db: Annotated[Session, Depends(get_db)],
+    attribute_id: Annotated[str, Path(..., alias="attributeId")],
+) -> dict:
+    return await _restore_attribute(db, attribute_id)
 
 
-@router.post("/attributes/addTag/{attributeId}/{tagId}/local:{local}", summary="Add a tag to an attribute")
+@router.post(
+    "/attributes/addTag/{attributeId}/{tagId}/local:{local}",
+    status_code=status.HTTP_200_OK,
+    response_model=partial(AddRemoveTagAttributeResponse),
+    summary="Add a tag to an attribute",
+)
 async def add_tag_to_attribute(
-    attribute_id: str, tag_id: str, local: int, db: Session = Depends(get_db)
-) -> AddRemoveTagAttributeResponse:
-    return AddRemoveTagAttributeResponse(
-        saved=True, success="Tag added", check_publish=True, errors="Tag could not be added."
-    )
+    local: str,
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
+    db: Annotated[Session, Depends(get_db)],
+    attribute_id: Annotated[str, Path(..., alias="attributeId")],
+    tag_id: Annotated[str, Path(..., alias="tagId")],
+) -> dict:
+    return await _add_tag_to_attribute(db, attribute_id, tag_id, local)
 
 
-@router.post("/attributes/removeTag/{attributeId}/{tagId}", summary="Remove a tag from an attribute")
+@router.post(
+    "/attributes/removeTag/{attributeId}/{tagId}",
+    status_code=status.HTTP_200_OK,
+    response_model=partial(AddRemoveTagAttributeResponse),
+    summary="Remove a tag from an attribute",
+)
 async def remove_tag_from_attribute(
-    attribute_id: str, tag_id: str, db: Session = Depends(get_db)
-) -> AddRemoveTagAttributeResponse:
-    return AddRemoveTagAttributeResponse(
-        saved=True, success="Tag removed", check_publish=True, errors="Tag could not be removed."
-    )
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
+    db: Annotated[Session, Depends(get_db)],
+    attribute_id: Annotated[str, Path(..., alias="attributeId")],
+    tag_id: Annotated[str, Path(..., alias="tagId")],
+) -> dict:
+    return await _remove_tag_from_attribute(db, attribute_id, tag_id)
 
 
 # - Deprecated endpoints
@@ -296,7 +321,7 @@ async def _add_attribute(db: Session, event_id: str, body: AddAttributeBody) -> 
 async def _get_attribute_details(db: Session, attribute_id: str) -> dict:
     attribute = check_existence_and_raise(db, Attribute, attribute_id, "attribute_id", "Attribute not found.")
 
-    attribute_data = prepare_get_attribute_details_response(db, attribute_id, attribute)
+    attribute_data = _prepare_get_attribute_details_response(db, attribute_id, attribute)
 
     return GetAttributeResponse(Attribute=attribute_data)
 
@@ -309,8 +334,6 @@ async def _update_attribute(db: Session, attribute_id: str, body: EditAttributeB
     for key, value in update_data.items():
         if value is not None:
             setattr(existing_attribute, key, value if not isinstance(value, Enum) else value.value)
-
-    logger.info(existing_attribute.__dict__)
 
     try:
         db.commit()
@@ -392,6 +415,17 @@ async def _delete_selected_attributes(
         else:
             setattr(attribute, "deleted", True)
 
+            try:
+                db.commit()
+            except SQLAlchemyError as e:
+                db.rollback()
+                logger.exception(f"Failed to delete attribute: {e}")
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred."
+                )
+
+            db.refresh(attribute)
+
     logger.info(f"Attributes with ids '{attribute_ids}' deleted.")
 
     if len(attribute_ids) == 1:
@@ -414,18 +448,118 @@ async def _delete_selected_attributes(
         )
 
 
-async def _get_attribute_statistics(db: Session, context: str, percentage: str) -> dict:
+async def _get_attribute_statistics(db: Session, context: str, percentage: int) -> dict:
     if context not in ["type", "category"]:
         logger.exception("Get attribute statistics failed: parameter 'context' is invalid")
-        HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED, detail="Invalid 'context'")
-    if percentage not in ["0", "1"]:
+        raise HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED, detail="Invalid 'context'")
+    if int(percentage) not in [0, 1]:
         logger.exception("Get attribute statistics failed: parameter 'percentage' is invalid")
-        HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED, detail="Invalid 'percentage'")
+        raise HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED, detail="Invalid 'percentage'")
+
+    total_count_of_attributes = db.query(Attribute).count()
 
     if context == "category":
-        return _category_statistics(db, percentage)
+        return _category_statistics(db, percentage, total_count_of_attributes)
     else:
-        return _type_statistics(db, percentage)
+        return _type_statistics(db, percentage, total_count_of_attributes)
+
+
+async def _restore_attribute(db: Session, attribute_id: str) -> dict:
+    attribute = check_existence_and_raise(db, Attribute, attribute_id, "attribute_id", "Attribute not found.")
+
+    setattr(attribute, "deleted", False)
+
+    try:
+        db.commit()
+    except SQLAlchemyError as e:
+        db.rollback()
+        logger.exception(f"Failed to restore attribute: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred."
+        )
+
+    db.refresh(attribute)
+    logger.info(f"Attribute with id '{attribute.id}' restored.")
+
+    attribute_data = _prepare_get_attribute_details_response(db, attribute.id, attribute)
+
+    return GetAttributeResponse(Attribute=attribute_data)
+
+
+async def _add_tag_to_attribute(
+    db: Session, attribute_id: str, tag_id: str, local: str
+) -> AddRemoveTagAttributeResponse:
+    attribute = check_existence_and_raise(db, Attribute, attribute_id, "attribute_id", "Attribute not found")
+
+    try:
+        int(tag_id)
+    except ValueError:
+        logger.error("Failed to add tag to attribute: Invalid parameter tag")
+        return AddRemoveTagAttributeResponse(saved=False, errors="Invalid Tag")
+    if not db.query(Tag).filter(Tag.id == tag_id):
+        logger.error("Failed to add tag to attribute: Tag not found.")
+        return AddRemoveTagAttributeResponse(saved=False, errors="Tag could not be added.")
+    # tag = check_existence_and_raise(db, Tag, tag_id, "tag_id", "Tag not found.")
+
+    tag = db.query(Tag).filter(Tag.id == tag_id).first()
+
+    if int(local) not in [0, 1]:
+        logger.exception("Failed to add tag to attribute: parameter 'local' is invalid")
+        return AddRemoveTagAttributeResponse(saved=False, errors="Invalid 'local'")
+    if local == "0":
+        local = False
+    else:
+        local = True
+
+    new_attribute_tag = AttributeTag(attribute_id=attribute.id, event_id=attribute.event_id, tag_id=tag.id, local=local)
+
+    try:
+        db.add(new_attribute_tag)
+        db.commit()
+    except SQLAlchemyError as e:
+        db.rollback()
+        logger.exception(f"Failed to add tag to attribute: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred."
+        )
+
+    db.refresh(new_attribute_tag)
+    logger.info(f"Tag with id '{tag_id}' added to attribute with id '{attribute_id}'")
+
+    return AddRemoveTagAttributeResponse(saved=True, success="Tag added", check_publish=True)
+
+
+async def _remove_tag_from_attribute(db: Session, attribute_id: str, tag_id: str) -> AddRemoveTagAttributeResponse:
+    check_existence_and_raise(db, Attribute, attribute_id, "attribute_id", "Attribute not found")
+
+    try:
+        int(tag_id)
+    except ValueError:
+        logger.error("Failed to add tag to attribute: Invalid parameter tag")
+        return AddRemoveTagAttributeResponse(saved=False, errors="Invalid Tag")
+    if not db.query(Tag).filter(Tag.id == tag_id):
+        logger.error("Failed to add tag to attribute: Tag not found.")
+        return AddRemoveTagAttributeResponse(saved=False, errors="Tag could not be removed.")
+    # tag = check_existence_and_raise(db, Tag, tag_id, "tag_id", "Tag not found.")
+
+    attribute_tag = db.query(AttributeTag).filter(AttributeTag.attribute_id == attribute_id).first()
+
+    if not attribute_tag:
+        return AddRemoveTagAttributeResponse(saved=False, errors="Invalid attribute - tag combination.")
+
+    try:
+        db.delete(attribute_tag)
+        db.commit()
+    except SQLAlchemyError as e:
+        db.rollback()
+        logger.exception(f"Failed to add tag to attribute: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred."
+        )
+
+    logger.info(f"Tag with id '{tag_id}' removed from attribute with id '{attribute_id}'")
+
+    return AddRemoveTagAttributeResponse(saved=True, success="Tag removed", check_publish=True)
 
 
 def _prepare_attribute_response(attribute: Attribute, request_type: str) -> dict:
@@ -444,7 +578,7 @@ def _prepare_attribute_response(attribute: Attribute, request_type: str) -> dict
         return GetAllAttributesResponse(**attribute_dict)
 
 
-def prepare_get_attribute_details_response(
+def _prepare_get_attribute_details_response(
     db: Session, attribute_id: str, attribute: Attribute
 ) -> GetAttributeAttributes:
     attribute_dict = attribute.__dict__.copy()
@@ -511,17 +645,46 @@ def _prepare_edit_attribute_response(db: Session, attribute_id: str, attribute: 
     return EditAttributeAttributes(**attribute_dict)
 
 
-def _category_statistics(db: Session, percentage: str) -> GetAttributeStatisticsCategoriesResponse:
-    _count_of_attributes_with_given_category
+def _category_statistics(
+    db: Session, percentage: int, total_count_of_attributes: int
+) -> GetAttributeStatisticsCategoriesResponse:
+    response_dict = {}
+
+    for category in GetDescribeTypesAttributes().categories:
+        if percentage == 1:
+            response_dict[category] = (
+                str(
+                    round((_count_of_attributes_with_given_category(db, category) / total_count_of_attributes) * 100, 2)
+                )
+                + "%"
+            )
+        else:
+            response_dict[category] = _count_of_attributes_with_given_category(db, category)
+
+    return GetAttributeStatisticsCategoriesResponse(**response_dict)
 
 
-def _type_statistics(db: Session, percentage: str) -> GetAttributeStatisticsTypesResponse:
-    _count_of_attributes_with_given_type
+def _type_statistics(
+    db: Session, percentage: int, total_count_of_attributes: int
+) -> GetAttributeStatisticsTypesResponse:
+    response_dict = {}
+
+    for type in GetDescribeTypesAttributes().types:
+        if percentage == 1:
+            response_dict[type] = (
+                str(round((_count_of_attributes_with_given_type(db, type) / total_count_of_attributes) * 100, 2)) + "%"
+            )
+        else:
+            response_dict[type] = _count_of_attributes_with_given_type(db, type)
+
+    return GetAttributeStatisticsTypesResponse(**response_dict)
 
 
-def _count_of_attributes_with_given_category(db: Session) -> str:
-    pass
+def _count_of_attributes_with_given_category(db: Session, category: str) -> int:
+    attributes_with_given_category = db.query(Attribute).filter(Attribute.category == category).all()
+    return len(attributes_with_given_category)
 
 
-def _count_of_attributes_with_given_type(db: Session) -> str:
-    pass
+def _count_of_attributes_with_given_type(db: Session, type: str) -> int:
+    attributes_with_given_type = db.query(Attribute).filter(Attribute.type == type).all()
+    return len(attributes_with_given_type)

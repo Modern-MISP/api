@@ -63,12 +63,12 @@ def generate_invalid_search_attributes_data() -> SearchAttributesBody:
 
 
 def generate_valid_context_and_percentage_attribute_statistics() -> Dict[str, Any]:
-    return {"context": "type", "percentage": 1}
+    return {"context": "category", "percentage": "1"}
 
 
 def generate_invalid_context_and_percentage_attribute_statistics() -> Dict[str, Any]:
     return {"context": "invalid context", "percentage": 2}
 
 
-def generate_valid_local_add_tag_to_attribute() -> int:
-    return randint(0, 1)
+def generate_valid_local_add_tag_to_attribute() -> str:
+    return str(randint(0, 1))
