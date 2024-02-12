@@ -1,7 +1,8 @@
 from typing import Annotated, List
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, Path
 from sqlalchemy.orm import Session
+from starlette import status
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
 from mmisp.api_schemas.events.add_attribute_via_free_text_import_event_body import (
@@ -10,11 +11,10 @@ from mmisp.api_schemas.events.add_attribute_via_free_text_import_event_body impo
 from mmisp.api_schemas.events.add_attribute_via_free_text_import_event_response import (
     AddAttributeViaFreeTextImportEventResponse,
 )
-from mmisp.api_schemas.events.add_edit_get_event_response import AddEditGetEventAttributes, AddEditGetEventResponse
+from mmisp.api_schemas.events.add_edit_get_event_response import AddEditGetEventResponse
 from mmisp.api_schemas.events.add_event_body import AddEventBody
 from mmisp.api_schemas.events.add_remove_tag_events_response import AddRemoveTagEventsResponse
 from mmisp.api_schemas.events.delete_event_response import DeleteEventResponse
-from mmisp.api_schemas.events.edit_event_body import EditEventBody
 from mmisp.api_schemas.events.get_all_events_response import GetAllEventsResponse
 from mmisp.api_schemas.events.index_events_body import IndexEventsBody
 from mmisp.api_schemas.events.index_events_response import IndexEventsResponse
@@ -23,114 +23,286 @@ from mmisp.api_schemas.events.search_events_body import SearchEventsBody
 from mmisp.api_schemas.events.search_events_response import SearchEventsResponse
 from mmisp.api_schemas.events.unpublish_event_response import UnpublishEventResponse
 from mmisp.db.database import get_db
-from mmisp.db.models.event import Event
+from mmisp.util.partial import partial
 
 router = APIRouter(tags=["events"])
 
+
 # Sorted according to CRUD
 
-# - Creatte a {resource}
+# - Create a {resource}
 
 
-@router.post("/events/add", deprecated=True)  # deprecated
-@router.post("/events")  # new
-async def events_post(
+@router.post(
+    "/events",
+    status_code=status.HTTP_501_NOT_IMPLEMENTED,
+    response_model=partial(AddEditGetEventResponse),
+    summary="Add new event",
+    description="Add a new event with the given details. NOT YET AVAILABLE!",
+)  # new
+async def add_event(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.ADD]))],
+    db: Annotated[Session, Depends(get_db)],
     body: AddEventBody,
-    db: Session = Depends(get_db),
-) -> AddEditGetEventResponse:
-    new_event = Event(
-        info=body.info,
-        org_id=body.org_id,
-        distribution=body.distribution,
-        orgc_id=body.orgc_id,
-        uuid=body.uuid,
-        date=body.date,
-        published=body.published,
-        analysis=body.analysis,
-        attribute_count=body.attribute_count,
-        timestamp=body.timestamp,
-        sharing_group_id=body.sharing_group_id,
-        proposal_email_lock=body.proposal_email_lock,
-        locked=body.locked,
-        threat_level_id=body.threat_level_id,
-        publish_timestamp=body.publish_timestamp,
-        sighting_timestamp=body.sighting_timestamp,
-        disable_correlation=body.disable_correlation,
-        extends_uuid=body.extends_uuid,
-        event_creator_email=body.event_creator_email,
-    )
-
-    db.add(new_event)
-    try:
-        db.commit()
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
-
-    db.refresh(new_event)
-    event_data = AddEditGetEventResponse(
-        Event=AddEditGetEventAttributes(
-            id=new_event.id,
-            orgc_id=new_event.org_id,
-            org_id=new_event.org_id,
-            date=new_event.date,
-            threat_level_id=new_event.threat_level_id,
-            info=new_event.info,
-            published=new_event.published,
-            uuid=new_event.uuid,
-            attribute_count=new_event.attribute_count,
-            analysis=new_event.analysis,
-            timestamp=new_event.timestamp,
-            distribution=new_event.distribution,
-            proposal_email_lock=new_event.proposal_email_lock,
-            locked=new_event.locked,
-            publish_timestamp=new_event.timestamp,
-            sharing_group_id=new_event.sharing_group_id,
-            disable_correlation=new_event.disable_correlation,
-            extends_uuid=new_event.extends_uuid,
-            protected=new_event.protected,
-            event_creator_email=new_event.event_creator_email,
-            Org={},
-            Orgc={},
-            Attribute=[],
-            ShadowAttribute=[],
-            RelatedEvent=[],
-            Galaxy=[],
-            Object=[],
-            EventReport=[],
-            CryptographicKey=[],
-            Tag=[],
-        )
-    )
-
-    return event_data
+) -> dict:
+    return await _add_event(db, body)
 
 
 # - Read / Get a {resource}
 
 
-@router.get("/events/view/{eventId}", deprecated=True)  # deprecated
-@router.get("/events/{eventId}")  # new
-async def events_getBy_id(event_id: str, db: Session = Depends(get_db)) -> AddEditGetEventResponse:
-    return AddEditGetEventResponse(id="")
+@router.get(
+    "/events/{eventId}",
+    status_code=status.HTTP_501_NOT_IMPLEMENTED,
+    response_model=partial(AddEditGetEventResponse),
+    summary="Get event details",
+    description="Retrieve details of a specific attribute by ist ID. NOT YET AVAILABLE!",
+)  # new
+async def get_event_details(
+    db: Annotated[Session, Depends(get_db)], event_id: Annotated[str, Path(..., alias="eventId")]
+) -> dict:
+    return await _get_event_details(db, event_id)
 
 
 # - Updating a {resource}
 
 
-@router.put("/events/edit/{eventId}", deprecated=True)  # deprecated
-@router.put("/events/{eventId}")  # new
-async def events_put(event_id: str, body: EditEventBody, db: Session = Depends(get_db)) -> AddEditGetEventResponse:
-    return AddEditGetEventResponse(Event="")
+@router.put(
+    "/events/{eventId}",
+    status_code=status.HTTP_501_NOT_IMPLEMENTED,
+    response_model=partial(AddEditGetEventResponse),
+    summary="Update an event",
+    description="Update an existing event by its ID. NOT YET AVAILABLE!",
+)  # new
+async def update_event(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
+    db: Annotated[Session, Depends(get_db)],
+    event_id: Annotated[str, Path(..., alias="eventId")],
+) -> dict:
+    return await _update_event(db, event_id)
 
 
 # - Deleting a {resource}
 
 
-@router.delete("/events/delete/{eventId}", deprecated=True)  # deprecated
-@router.delete("/events/{eventId}")  # new
-async def events_delete(event_id: str, db: Session = Depends(get_db)) -> DeleteEventResponse:
+@router.delete(
+    "/events/{eventId}",
+    status_code=status.HTTP_501_NOT_IMPLEMENTED,
+    response_model=partial(DeleteEventResponse),
+    summary="Delete an event",
+    description="Delete an attribute by its ID. NOT YET AVAILABLE!",
+)  # new
+async def delete_event(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
+    db: Annotated[Session, Depends(get_db)],
+    event_id: Annotated[str, Path(..., alias="eventId")],
+) -> dict:
+    return await _delete_event(db, event_id)
+
+
+# - Get all {resource}s
+
+
+@router.get(
+    "/events",
+    status_code=status.HTTP_501_NOT_IMPLEMENTED,
+    response_model=partial(GetAllEventsResponse),
+    summary="Get all attributes",
+    description="Retrieve a list of all available attribute types and categories. NOT YET AVAILABLE!",
+)
+async def get_all_events(db: Annotated[Session, Depends(get_db)]) -> dict:
+    return await _get_all_events(db)
+
+
+# - More niche endpoints
+
+
+@router.post(
+    "/events/restSearch",
+    status_code=status.HTTP_501_NOT_IMPLEMENTED,
+    response_model=partial(SearchEventsResponse),
+    summary="Search events",
+    description="Search for events based on various filters. NOT YET AVAILABLE!",
+)
+async def rest_search_events(
+    db: Annotated[Session, Depends(get_db)],
+    body: SearchEventsBody,
+) -> dict:
+    return await _rest_search_events(db)
+
+
+@router.post(
+    "/events/index",
+    status_code=status.HTTP_501_NOT_IMPLEMENTED,
+    response_model=partial(IndexEventsResponse),
+    summary="Search events",
+    description="Search for events based on various filters, which are more general than the ones in 'rest search'."
+    "NOT YET AVAILABLE!",
+)
+async def index_events(db: Annotated[Session, Depends(get_db)], body: IndexEventsBody) -> List[IndexEventsResponse]:
+    return await _index_events(db)
+
+
+@router.post(
+    "/events/publish/{eventId}",
+    status_code=status.HTTP_501_NOT_IMPLEMENTED,
+    response_model=partial(PublishEventResponse),
+    summary="Publish an event",
+    description="Publish an event by ist ID. NOT YET AVAILABLE!",
+)
+async def publish_event(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.PUBLISH]))],
+    db: Annotated[Session, Depends(get_db)],
+    event_id: Annotated[str, Path(..., alias="eventId")],
+) -> dict:
+    return await _publish_event(db, event_id)
+
+
+@router.post(
+    "/events/unpublish/{eventId}",
+    status_code=status.HTTP_501_NOT_IMPLEMENTED,
+    response_model=partial(UnpublishEventResponse),
+    summary="Unpublish an event",
+    description="Unpublish an event by its ID. NOT YET AVAILABLE!",
+)
+async def unpublish_event(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
+    db: Annotated[Session, Depends(get_db)],
+    event_id: Annotated[str, Path(..., alias="eventId")],
+) -> dict:
+    return await _unpublish_event(db, event_id)
+
+
+@router.post(
+    "/events/addTag/{eventId}/{tagId}/local:{local}",
+    status_code=status.HTTP_501_NOT_IMPLEMENTED,
+    response_model=partial(AddRemoveTagEventsResponse),
+    summary="Add tag to event",
+    description="Add a tag to an attribute by there ids. NOT YET AVAILABLE!",
+)
+async def add_tag_to_event(
+    local: str,
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.ADD]))],
+    db: Annotated[Session, Depends(get_db)],
+    event_id: Annotated[str, Path(..., alias="eventId")],
+    tag_id: Annotated[str, Path(..., alias="tagId")],
+) -> dict:
+    return await _add_tag_to_event(db, event_id, tag_id, local)
+
+
+@router.post(
+    "/events/removeTag/{eventId}/{tagId}",
+    status_code=status.HTTP_501_NOT_IMPLEMENTED,
+    response_model=partial(AddRemoveTagEventsResponse),
+    summary="Add tag to event",
+    description="Add a tag to an event by there ids. NOT YET AVAILABLE!",
+)
+async def remove_tag_from_event(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
+    db: Annotated[Session, Depends(get_db)],
+    event_id: Annotated[str, Path(..., alias="eventId")],
+    tag_id: Annotated[str, Path(..., alias="tagId")],
+) -> dict:
+    return await _remove_tag_from_event(db, event_id, tag_id)
+
+
+@router.post(
+    "/events/freeTextImport/{eventId}",
+    status_code=status.HTTP_501_NOT_IMPLEMENTED,
+    response_model=partial(AddAttributeViaFreeTextImportEventResponse),
+    summary="Add attribute to event",
+    description="Add attribute to event via free text import. NOT YET AVAILABLE!",
+)
+async def add_attribute_via_free_text_import(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.ADD]))],
+    db: Annotated[Session, Depends(get_db)],
+    event_id: Annotated[str, Path(..., alias="eventId")],
+    body: AddAttributeViaFreeTextImportEventBody,
+) -> dict:
+    return await _add_attribute_via_free_text_import(db, event_id, body)
+
+
+# - Deprecated endpoints
+
+
+@router.post(
+    "/events/add",
+    deprecated=True,
+    status_code=status.HTTP_501_NOT_IMPLEMENTED,
+    response_model=partial(AddEditGetEventResponse),
+    summary="Add new event (Deprecated)",
+    description="Deprecated. Add a new event with the given details. NOT YET AVAILABLE!",
+)
+async def add_event_depr(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.ADD]))],
+    db: Annotated[Session, Depends(get_db)],
+    body: AddEventBody,
+) -> dict:
+    return await _add_event(db, body)
+
+
+@router.get(
+    "/events/view/{eventId}",
+    deprecated=True,
+    status_code=status.HTTP_501_NOT_IMPLEMENTED,
+    response_model=partial(AddEditGetEventResponse),
+    summary="Get event details (Deprecated)",
+    description="Deprecated. Retrieve details of a specific attribute by ist ID. NOT YET AVAILABLE!",
+)
+async def get_event_details_depr(
+    db: Annotated[Session, Depends(get_db)], event_id: Annotated[str, Path(..., alias="eventId")]
+) -> dict:
+    return await _get_event_details(db, event_id)
+
+
+@router.put(
+    "/events/edit/{eventId}",
+    deprecated=True,
+    status_code=status.HTTP_501_NOT_IMPLEMENTED,
+    response_model=partial(AddEditGetEventResponse),
+    summary="Update an event (Deprecated)",
+    description="Deprecated. Update an existing event by its ID. NOT YET AVAILABLE!",
+)  # new
+async def update_event_depr(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
+    db: Annotated[Session, Depends(get_db)],
+    event_id: Annotated[str, Path(..., alias="eventId")],
+) -> dict:
+    return await _update_event(db, event_id)
+
+
+@router.delete(
+    "/events/delete/{eventId}",
+    deprecated=True,
+    status_code=status.HTTP_501_NOT_IMPLEMENTED,
+    response_model=partial(AddEditGetEventResponse),
+    summary="Update an event (Deprecated)",
+    description="Deprecated. Update an existing event by its ID. NOT YET AVAILABLE!",
+)  # new
+async def delete_event_depr(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
+    db: Annotated[Session, Depends(get_db)],
+    event_id: Annotated[str, Path(..., alias="eventId")],
+) -> dict:
+    return _delete_event(db, event_id)
+
+
+# --- endpoint logic ---
+
+
+async def _add_event(db: Session, body: AddEventBody) -> dict:
+    return {}
+
+
+async def _get_event_details(db: Session, event_id: str) -> dict:
+    return {}
+
+
+async def _update_event(db: Session, event_id: str) -> dict:
+    return {}
+
+
+async def _delete_event(db: Session, event_id: str) -> dict:
     return DeleteEventResponse(
         saved=True,
         success=True,
@@ -141,34 +313,24 @@ async def events_delete(event_id: str, db: Session = Depends(get_db)) -> DeleteE
     )
 
 
-# - Get all {resource}s
+async def _get_all_events(db: Session) -> dict:
+    return {}
 
 
-@router.get("/events")
-async def events_get(db: Session = Depends(get_db)) -> GetAllEventsResponse:
-    return GetAllEventsResponse(events=[])
+async def _rest_search_events(db: Session) -> dict:
+    return {}
 
 
-# - More niche endpoints
+async def _index_events(db: Session) -> dict:
+    return {}
 
 
-@router.post("/events/restSearch")
-async def events_restSearch(body: SearchEventsBody, db: Session = Depends(get_db)) -> List[SearchEventsResponse]:
-    return SearchEventsResponse(response=[])
+async def _publish_event(db: Session, event_id: str) -> dict:
+    pass
+    PublishEventResponse(name="Publish", message="Job queued", url="", id="")
 
 
-@router.post("/events/index")
-async def events_index(body: IndexEventsBody, db: Session = Depends(get_db)) -> List[IndexEventsResponse]:
-    return IndexEventsResponse(events=[])
-
-
-@router.post("/events/publish/{eventId}")
-async def events_publish(event_id: str, db: Session = Depends(get_db)) -> PublishEventResponse:
-    return PublishEventResponse(name="Publish", message="Job queued", url="", id="")
-
-
-@router.post("/events/unpublish/{eventId}")
-async def events_unpublish(event_id: str, db: Session = Depends(get_db)) -> UnpublishEventResponse:
+async def _unpublish_event(db: Session, event_id: str) -> dict:
     return UnpublishEventResponse(
         saved=True,
         success=True,
@@ -178,24 +340,19 @@ async def events_unpublish(event_id: str, db: Session = Depends(get_db)) -> Unpu
     )
 
 
-@router.post("/events/addTag/{eventId}/{tagId}/local:{local}")
-async def events_addTag(
-    event_id: str, tag_id: str, local: int, db: Session = Depends(get_db)
-) -> AddRemoveTagEventsResponse:
+async def _add_tag_to_event(db: Session, event_id: str, tag_id: str, local: str) -> dict:
     return AddRemoveTagEventsResponse(
         saved=True, success="Tag added", check_publish=True, errors="Tag could not be added."
     )
 
 
-@router.post("/events/removeTag/{eventId}/{tagId}")
-async def events_removeTag(event_id: str, tag_id: str, db: Session = Depends(get_db)) -> AddRemoveTagEventsResponse:
+async def _remove_tag_from_event(db: Session, event_id: str, tag_id: str) -> dict:
     return AddRemoveTagEventsResponse(
         saved=True, success="Tag added", check_publish=True, errors="Tag could not be added."
     )
 
 
-@router.post("/events/freeTextImport/{eventId}")
-async def events_freeTextImport(
-    event_id: str, body: AddAttributeViaFreeTextImportEventBody, db: Session = Depends(get_db)
-) -> AddAttributeViaFreeTextImportEventResponse:
-    return AddAttributeViaFreeTextImportEventResponse(comment="")
+async def _add_attribute_via_free_text_import(
+    db: Session, event_id: str, body: AddAttributeViaFreeTextImportEventBody
+) -> dict:
+    return {}
