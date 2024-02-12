@@ -50,6 +50,10 @@ class AttributeTag(Base):
     local = Column(Boolean, default=False)
 
 
+# TODO
+# categories als enum und dann pro typ ein set von categories
+
+
 class AttributeMD5(Attribute):
     default_category = "Payload delivery"
     categories = [
