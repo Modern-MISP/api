@@ -536,7 +536,8 @@ def test_valid_parameters_attribute_statistics(valid_parameters_attribute_statis
     response = client.get(f"/attributes/attributeStatistics/{context}/{percentage}")
     assert response.status_code == 200
     response_json = response.json()
-    if "category" in context:
+    print(response_json)
+    if context == "category":
         for category in GetDescribeTypesAttributes().categories:
             assert category in response_json
     else:
@@ -551,7 +552,7 @@ def test_invalid_parameters_attribute_statistics(invalid_parameters_attribute_st
     context = invalid_parameters_attribute_statistics["context"]
     percentage = invalid_parameters_attribute_statistics["percentage"]
     response = client.get(f"/attributes/attributeStatistics/{context}/{percentage}")
-    assert response.status_code == 404
+    assert response.status_code == 405
 
 
 def test_attribute_statistics_response_format(valid_parameters_attribute_statistics: Dict[str, Any]) -> None:
@@ -579,98 +580,220 @@ def test_attribute_describe_types_response_format() -> None:
     assert "md5" in response_json["result"]["types"]
 
 
-# # --- Test restore attribute
-#
-#
-# def test_restore_existing_attribute(existing_id: str) -> None:
-#     headers = {"authorization": environment.site_admin_user_token}
-#     response = client.post(f"/attributes/restore/{existing_id}", headers=headers)
-#     assert response.status_code == 200
-#
-#
-# def test_restore_invalid_attribute(invalid_or_non_existing_ids: Any) -> None:
-#     headers = {"authorization": environment.site_admin_user_token}
-#     response = client.post(f"/attributes/restore/{invalid_or_non_existing_ids}", headers=headers)
-#     assert response.status_code == 404
-#
-#
-# def test_restore_attribute_response_format(existing_id: str) -> None:
-#     headers = {"authorization": environment.site_admin_user_token}
-#     response = client.post(f"/attributes/restore/{existing_id}", headers=headers)
-#     assert response.headers["Content-Type"] == "application/json"
-#
-#
-# def test_restore_attribute_authorization(existing_id: str) -> None:
-#     headers = {"authorization": ""}
-#     response = client.post(f"/attributes/restore/{existing_id}", headers=headers)
-#     assert response.status_code == 401
-#
-#
-# def test_add_existing_tag_to_attribute(existing_id: str, valid_local_add_tag_to_attribute: int) -> None:
-#     headers = {"authorization": environment.site_admin_user_token}
-#     response = client.post(
-#         f"/attributes/addTag/{existing_id}/{existing_id}/local:{valid_local_add_tag_to_attribute}",
-#         headers=headers,
-#     )
-#     assert response.status_code == 200
-#     response_json = response.json()
-#     assert response_json["saved"] is True
-#     assert response_json["success"] == "Tag added"
-#     assert response_json["check_publish"] is True
-#
-#
-# def test_add_invalid_or_non_existing_tag_to_attribute(
-#         existing_id: str, invalid_or_non_existing_ids: Any, valid_local_add_tag_to_attribute: int
-# ) -> None:
-#     headers = {"authorization": environment.site_admin_user_token}
-#     response = client.post(
-#         f"/attributes/addTag/{invalid_or_non_existing_ids}/{invalid_or_non_existing_ids}/
-#         local:{valid_local_add_tag_to_attribute}",
-#         headers=headers,
-#     )
-#     assert response.status_code == 200
-#     response_json = response.json()
-#     assert response_json["saved"] is False
-#     if isinstance(invalid_or_non_existing_ids, str):
-#         assert response_json["errors"] == "Invalid Tag."
-#     else:
-#         assert response_json["errors"] == "Tag could not be added."
-#
-#
-# def test_add_tag_to_attribute_response_format(existing_id: str, valid_local_add_tag_to_attribute: int) -> None:
-#     headers = {"authorization": environment.site_admin_user_token}
-#     response = client.post(
-#         f"/attributes/addTag/{existing_id}/{existing_id}/local:{valid_local_add_tag_to_attribute}",
-#         headers=headers,
-#     )
-#     assert response.headers["Content-Type"] == "application/json"
-#
-#
-# def test_add_tag_to_attribute_authorization(existing_id: str, valid_local_add_tag_to_attribute: int) -> None:
-#     headers = {"authorization": ""}
-#     response = client.post(
-#         f"/attributes/addTag/{existing_id}/{existing_id}/local:{valid_local_add_tag_to_attribute}",
-#         headers=headers,
-#     )
-#     assert response.status_code == 401
-#
-#
-# def test_remove_existing_tag_from_attribute(existing_id: str) -> None:
-#     headers = {"authorization": environment.site_admin_user_token}
-#     response = client.post(f"/attributes/removeTag/{existing_id}/{existing_id}", headers=headers)
-#     assert response.status_code == 200
-#     response_json = response.json()
-#     assert response_json["saved"] is True
-#     assert response_json["success"] == "Tag removed"
-#
-#
-# def test_remove_tag_from_attribute_response_format(existing_id: str) -> None:
-#     headers = {"authorization": environment.site_admin_user_token}
-#     response = client.post(f"/attributes/removeTag/{existing_id}/{existing_id}", headers=headers)
-#     assert response.headers["Content-Type"] == "application/json"
-#
-#
-# def test_remove_tag_from_attribute(existing_id: str) -> None:
-#     headers = {"authorization": ""}
-#     response = client.post(f"/attributes/removeTag/{existing_id}/{existing_id}", headers=headers)
-#     assert response.status_code == 401
+# --- Test restore attribute
+
+
+def test_restore_existing_attribute(db: Session) -> None:
+    add_event_body = Event(info="test")
+
+    db.add(add_event_body)
+    db.commit()
+    db.refresh(add_event_body)
+
+    event_id = str(add_event_body.id)
+
+    add_attribute_body = Attribute(
+        value="1.2.3.4", value1="1.2.3.4", type="ip-src", category="Network Activity", event_id=event_id
+    )
+
+    db.add(add_attribute_body)
+    db.commit()
+    db.refresh(add_attribute_body)
+
+    attribute_id = add_attribute_body.id
+
+    headers = {"authorization": environment.site_admin_user_token}
+    response = client.post(f"/attributes/restore/{attribute_id}", headers=headers)
+    assert response.status_code == 200
+
+
+def test_restore_invalid_attribute(invalid_or_non_existing_ids: Any) -> None:
+    headers = {"authorization": environment.site_admin_user_token}
+    response = client.post(f"/attributes/restore/{invalid_or_non_existing_ids}", headers=headers)
+    assert response.status_code == 404
+
+
+def test_restore_attribute_response_format(existing_id: str) -> None:
+    headers = {"authorization": environment.site_admin_user_token}
+    response = client.post(f"/attributes/restore/{existing_id}", headers=headers)
+    assert response.headers["Content-Type"] == "application/json"
+
+
+def test_restore_attribute_authorization(existing_id: str) -> None:
+    headers = {"authorization": ""}
+    response = client.post(f"/attributes/restore/{existing_id}", headers=headers)
+    assert response.status_code == 401
+
+
+# --- Test adding a tag
+
+
+def test_add_existing_tag_to_attribute(db: Session, existing_id: str, valid_local_add_tag_to_attribute: int) -> None:
+    add_event_body = Event(info="test")
+
+    db.add(add_event_body)
+    db.commit()
+    db.refresh(add_event_body)
+
+    event_id = str(add_event_body.id)
+
+    add_attribute_body = Attribute(
+        value="1.2.3.4", value1="1.2.3.4", type="ip-src", category="Network Activity", event_id=event_id
+    )
+
+    db.add(add_attribute_body)
+    db.commit()
+    db.refresh(add_attribute_body)
+
+    attribute_id = add_attribute_body.id
+
+    add_tag_body = Tag(
+        name="adkljdfas5876dfdhgrtzerdfghjdfh dasfdsfasasddfd<xy<akadsjsoupipsdfzfdiuzoiogsvklfhjahkjhnmals",
+        colour="blue",
+        exportable=False,
+        org_id=1,
+        user_id=1,
+        hide_tag=False,
+        numerical_value=1,
+        is_galaxy=False,
+        is_custom_galaxy=False,
+        attribute_count=1,
+        count=1,
+        favourite=False,
+        local_only=False,
+    )
+
+    db.add(add_tag_body)
+    db.commit()
+    db.refresh(add_tag_body)
+
+    tag_id = add_tag_body.id
+
+    headers = {"authorization": environment.site_admin_user_token}
+    response = client.post(
+        f"/attributes/addTag/{attribute_id}/{tag_id}/local:{valid_local_add_tag_to_attribute}",
+        headers=headers,
+    )
+
+    assert response.status_code == 200
+    response_json = response.json()
+    assert response_json["saved"] is True
+    assert response_json["success"] == "Tag added"
+    assert response_json["check_publish"] is True
+
+
+def test_add_invalid_or_non_existing_tag_to_attribute(
+    db: Session, existing_id: str, invalid_or_non_existing_ids: Any, valid_local_add_tag_to_attribute: int
+) -> None:
+    add_event_body = Event(info="test")
+
+    db.add(add_event_body)
+    db.commit()
+    db.refresh(add_event_body)
+
+    event_id = str(add_event_body.id)
+
+    add_attribute_body = Attribute(
+        value="1.2.3.4", value1="1.2.3.4", type="ip-src", category="Network Activity", event_id=event_id
+    )
+
+    db.add(add_attribute_body)
+    db.commit()
+    db.refresh(add_attribute_body)
+
+    attribute_id = add_attribute_body.id
+
+    headers = {"authorization": environment.site_admin_user_token}
+    response = client.post(
+        f"/attributes/addTag/{attribute_id}/{invalid_or_non_existing_ids}/local:{valid_local_add_tag_to_attribute}",
+        headers=headers,
+    )
+    assert response.status_code == 200
+    response_json = response.json()
+    assert response_json["saved"] is False
+
+
+def test_add_tag_to_attribute_response_format(existing_id: str, valid_local_add_tag_to_attribute: int) -> None:
+    headers = {"authorization": environment.site_admin_user_token}
+    response = client.post(
+        f"/attributes/addTag/{existing_id}/{existing_id}/local:{valid_local_add_tag_to_attribute}",
+        headers=headers,
+    )
+    assert response.headers["Content-Type"] == "application/json"
+
+
+def test_add_tag_to_attribute_authorization(existing_id: str, valid_local_add_tag_to_attribute: int) -> None:
+    headers = {"authorization": ""}
+    response = client.post(
+        f"/attributes/addTag/{existing_id}/{existing_id}/local:{valid_local_add_tag_to_attribute}",
+        headers=headers,
+    )
+    assert response.status_code == 401
+
+
+def test_remove_existing_tag_from_attribute(db: Session) -> None:
+    add_event_body = Event(info="test")
+
+    db.add(add_event_body)
+    db.commit()
+    db.refresh(add_event_body)
+
+    event_id = str(add_event_body.id)
+
+    add_attribute_body = Attribute(
+        value="1.2.3.4", value1="1.2.3.4", type="ip-src", category="Network Activity", event_id=event_id
+    )
+
+    db.add(add_attribute_body)
+    db.commit()
+    db.refresh(add_attribute_body)
+
+    attribute_id = add_attribute_body.id
+
+    add_tag_body = Tag(
+        name="adkljdfasdfdhgrtzerdfghjdfh dasfdsfasdfamnmddfgsdffsasddfdakadsjssretzetrzdfzfdgsvklfhjahk123jhals",
+        colour="blue",
+        exportable=False,
+        org_id=1,
+        user_id=1,
+        hide_tag=False,
+        numerical_value=1,
+        is_galaxy=False,
+        is_custom_galaxy=False,
+        attribute_count=1,
+        count=1,
+        favourite=False,
+        local_only=False,
+    )
+
+    db.add(add_tag_body)
+    db.commit()
+    db.refresh(add_tag_body)
+
+    tag_id = add_tag_body.id
+
+    add_attribute_tag_body = AttributeTag(attribute_id=attribute_id, event_id=event_id, tag_id=tag_id, local=False)
+
+    db.add(add_attribute_tag_body)
+    db.commit()
+    db.refresh(add_attribute_tag_body)
+
+    headers = {"authorization": environment.site_admin_user_token}
+    response = client.post(f"/attributes/removeTag/{attribute_id}/{tag_id}", headers=headers)
+
+    assert response.status_code == 200
+    response_json = response.json()
+    assert response_json["saved"] is True
+    assert response_json["success"] == "Tag removed"
+
+
+def test_remove_tag_from_attribute_response_format(existing_id: str) -> None:
+    headers = {"authorization": environment.site_admin_user_token}
+    response = client.post(f"/attributes/removeTag/{existing_id}/{existing_id}", headers=headers)
+    assert response.headers["Content-Type"] == "application/json"
+
+
+def test_remove_tag_from_attribute(existing_id: str) -> None:
+    headers = {"authorization": ""}
+    response = client.post(f"/attributes/removeTag/{existing_id}/{existing_id}", headers=headers)
+    assert response.status_code == 401

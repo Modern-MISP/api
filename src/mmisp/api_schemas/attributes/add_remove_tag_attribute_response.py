@@ -1,11 +1,13 @@
+from typing import Optional
+
 from pydantic import BaseModel
 
 
 class AddRemoveTagAttributeResponse(BaseModel):
     saved: bool
-    success: str
-    check_publish: bool
-    errors: str
+    success: Optional[str]
+    check_publish: Optional[bool]
+    errors: Optional[str]
 
     class Config:
         orm_mode = True
