@@ -7,7 +7,7 @@ def generate_user() -> User:
     """These fields need to be set manually: org_id, server_id, role_id"""
     return User(
         password="encrypt me",  # TODO
-        email=f"site-admin-user+{time_ns()}@test.com",
+        email=f"generated-user+{time_ns()}@test.com",
         autoalert=False,
         authkey="auth key",
         invited_by=0,
