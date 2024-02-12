@@ -23,6 +23,7 @@ dev/native:
 
 test:
 	source venv/bin/activate; \
+	ENV_FILE=.env.test python tests/prepare.py; \
 	ENV_FILE=.env.test pytest tests
 
 test/plain:
