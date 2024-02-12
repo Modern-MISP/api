@@ -165,9 +165,9 @@ async def delete_object_depr(
 
 async def _add_object(db: Session, event_id: str, object_template_id: str, body: ObjectCreateBody) -> dict:
     template: ObjectTemplate = check_existence_and_raise(
-        db, ObjectTemplate, object_template_id, "object_template_id", "Object template not found"
+        db, ObjectTemplate, object_template_id, "object_template_id", "Object template not found."
     )
-    check_existence_and_raise(db, Event, event_id, "event_id", "Event not found")
+    check_existence_and_raise(db, Event, event_id, "event_id", "Event not found.")
 
     object_data: dict[str, Any] = {
         **body.dict(exclude={"attributes"}),
@@ -218,14 +218,14 @@ async def _restsearch(db: Session, body: ObjectSearchBody) -> dict:
         # todo: not all fields in 'ObjectSearchBody' are taken into account yet
 
     objects_data: list[ObjectWithAttributesResponse] = [
-        ObjectWithAttributesResponse(**{**object.__dict__, "attributes": object.attributes, "event": None})
-        for object in objects
+        ObjectWithAttributesResponse(**object.__dict__, attributes=object.attributes, event=None) for object in objects
     ]
+
     return ObjectSearchResponse(response=[{"object": object_data} for object_data in objects_data])
 
 
 async def _get_object_details(db: Session, object_id: str) -> dict:
-    object: Object = check_existence_and_raise(db, Object, object_id, "object_id", "Object not found")
+    object: Object = check_existence_and_raise(db, Object, object_id, "object_id", "Object not found.")
     attributes: list[Attribute] = db.query(Attribute).filter(Attribute.object_id == object.id).all()
     event: Event = db.query(Event).join(Object, Event.id == Object.event_id).filter(Object.id == object_id).first()
     event_response: ObjectEventResponse = ObjectEventResponse(
@@ -236,14 +236,14 @@ async def _get_object_details(db: Session, object_id: str) -> dict:
         GetAllAttributesResponse(**attribute.__dict__) for attribute in attributes
     ]
     object_data: ObjectWithAttributesResponse = ObjectWithAttributesResponse(
-        **{**object.__dict__, "attributes": attributes_response, "event": event_response}
+        **object.__dict__, attributes=attributes_response, event=event_response
     )
 
     return ObjectResponse(object=object_data)
 
 
 async def _delete_object(db: Session, object_id: str, hard_delete: str) -> dict:
-    object: Object = check_existence_and_raise(db, Object, object_id, "object_id", "Object not found")
+    object: Object = check_existence_and_raise(db, Object, object_id, "object_id", "Object not found.")
     saved = False
     success = False
 
