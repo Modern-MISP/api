@@ -87,8 +87,8 @@ async def add_attribute(
     "/attributes/describeTypes",
     status_code=status.HTTP_200_OK,
     response_model=partial(GetDescribeTypesResponse),
-    summary="Get all available attribute types",
-    description="Retrieve a list of all attributes.",
+    summary="Get all attribute describe types",
+    description="Retrieve a list of all available attribute types and categories.",
 )
 async def get_attributes_describe_types() -> GetDescribeTypesResponse:
     return GetDescribeTypesResponse(result=GetDescribeTypesAttributes())
@@ -152,6 +152,7 @@ async def delete_attribute(
     status_code=status.HTTP_200_OK,
     response_model=list[partial(GetAllAttributesResponse)],
     summary="Get all Attributes",
+    description="Retrieve a list of all attributes.",
 )
 async def get_attributes(db: Annotated[Session, Depends(get_db)]) -> dict:
     return await _get_attributes(db)
@@ -176,19 +177,24 @@ async def delete_selected_attributes(
     return await _delete_selected_attributes(db, event_id, body, request)
 
 
+# TODO
+# Implement Rest Search
 @router.post(
     "/attributes/restSearch",
     status_code=status.HTTP_501_NOT_IMPLEMENTED,
-    summary="Get a filtered and paginated list of attributes. NOT YET AVAILABLE!",
+    response_model=partial(SearchAttributesResponse),
+    summary="Search attributes",
+    description="Search for attributes based on various filters. NOT YET AVAILABLE!",
 )
-async def rest_search(db: Annotated[Session, Depends(get_db)], body: SearchAttributesBody) -> SearchAttributesResponse:
+async def rest_search_attributes(db: Annotated[Session, Depends(get_db)], body: SearchAttributesBody) -> dict:
     return SearchAttributesResponse()
 
 
 @router.get(
     "/attributes/attributeStatistics/{context}/{percentage}",
     status_code=status.HTTP_200_OK,
-    summary="Get the count/percentage of attributes per category/type",
+    summary="Get attribute statistics",
+    description="Get the count/percentage of attributes per category/type.",
 )
 async def get_attributes_statistics(db: Annotated[Session, Depends(get_db)], context: str, percentage: int) -> dict:
     return await _get_attribute_statistics(db, context, percentage)
@@ -199,6 +205,7 @@ async def get_attributes_statistics(db: Annotated[Session, Depends(get_db)], con
     status_code=status.HTTP_200_OK,
     response_model=partial(GetAttributeResponse),
     summary="Restore an attribute",
+    description="Restore an attribute by its ID.",
 )
 async def restore_attribute(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
@@ -212,7 +219,8 @@ async def restore_attribute(
     "/attributes/addTag/{attributeId}/{tagId}/local:{local}",
     status_code=status.HTTP_200_OK,
     response_model=partial(AddRemoveTagAttributeResponse),
-    summary="Add a tag to an attribute",
+    summary="Add tag to attribute",
+    description="Add a tag to an attribute by there ids.",
 )
 async def add_tag_to_attribute(
     local: str,
@@ -228,7 +236,8 @@ async def add_tag_to_attribute(
     "/attributes/removeTag/{attributeId}/{tagId}",
     status_code=status.HTTP_200_OK,
     response_model=partial(AddRemoveTagAttributeResponse),
-    summary="Remove a tag from an attribute",
+    summary="Remove tag from attribute",
+    description="Remove a tag from an attribute by there ids.",
 )
 async def remove_tag_from_attribute(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
