@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from mmisp.db.models.attribute import Attribute
+from mmisp.db.models.attribute import Attribute, AttributeCategories
 
 
 class GetDescribeTypesAttributes(BaseModel):
@@ -20,11 +20,7 @@ class GetDescribeTypesAttributes(BaseModel):
     for cls in __attribute_types__:
         types.append(cls.__mapper_args__["polymorphic_identity"])
 
-    categories: list[str] = []
-    for cls in __attribute_types__:
-        for __category__ in cls.categories:
-            if __category__ not in categories:
-                categories.append(__category__)
+    categories: list[str] = [member.value for member in AttributeCategories]
 
     category_type_mappings: dict = {}
     # iterate over all elements of the list "categories"
