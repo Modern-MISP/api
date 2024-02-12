@@ -88,6 +88,7 @@ async def add_attribute(
     status_code=status.HTTP_200_OK,
     response_model=partial(GetDescribeTypesResponse),
     summary="Get all available attribute types",
+    description="Retrieve a list of all attributes.",
 )
 async def get_attributes_describe_types() -> GetDescribeTypesResponse:
     return GetDescribeTypesResponse(result=GetDescribeTypesAttributes())
@@ -96,16 +97,13 @@ async def get_attributes_describe_types() -> GetDescribeTypesResponse:
 @router.get(
     "/attributes/{attributeId}",
     status_code=status.HTTP_200_OK,
-    # response_model=partial(GetAttributeResponse),
+    response_model=partial(GetAttributeResponse),
     summary="Get attribute details",
     description="Retrieve details of a specific attribute by its ID.",
 )  # new
 async def get_attribute_details(
     db: Annotated[Session, Depends(get_db)], attribute_id: Annotated[str, Path(..., alias="attributeId")]
 ) -> dict:
-    # if attribute_id == "describeTypes":
-    #     return await get_attributes_describe_types()
-    # else:
     return await _get_attribute_details(db, attribute_id)
 
 
@@ -116,7 +114,8 @@ async def get_attribute_details(
     "/attributes/{attributeId}",
     status_code=status.HTTP_200_OK,
     response_model=partial(EditAttributeResponse),
-    summary="Edit an attribute",
+    summary="Update an attribute",
+    description="Update an existing attribute by its ID.",
 )  # new
 async def update_attribute(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
@@ -135,6 +134,7 @@ async def update_attribute(
     status_code=status.HTTP_200_OK,
     response_model=DeleteAttributeResponse,
     summary="Delete an Attribute",
+    description="Delete an attribute by its ID.",
 )  # new
 async def delete_attribute(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
@@ -155,11 +155,6 @@ async def delete_attribute(
 )
 async def get_attributes(db: Annotated[Session, Depends(get_db)]) -> dict:
     return await _get_attributes(db)
-    # try:
-    #     attributes = db.query(Attribute).all()
-    #     return attributes
-    # except Exception as e:
-    #     raise HTTPException(status_code=500, detail=str(e))
 
 
 # - More niche endpoints
@@ -221,7 +216,7 @@ async def restore_attribute(
 )
 async def add_tag_to_attribute(
     local: str,
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.ADD]))],
     db: Annotated[Session, Depends(get_db)],
     attribute_id: Annotated[str, Path(..., alias="attributeId")],
     tag_id: Annotated[str, Path(..., alias="tagId")],
@@ -247,24 +242,68 @@ async def remove_tag_from_attribute(
 # - Deprecated endpoints
 
 
-@router.post("/attributes/add/{eventId}", summary="Add an attribute", deprecated=True)
-async def add_attribute_depr() -> None:
-    return None
+@router.post(
+    "/attributes/add/{eventId}",
+    deprecated=True,
+    status_code=status.HTTP_200_OK,
+    response_model=partial(AddAttributeResponse),
+    summary="Add new attribute (Deprecated)",
+    description="Deprecated. Add a new attribute with the given details using the old route.",
+)
+async def add_attribute_depr(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.ADD]))],
+    db: Annotated[Session, Depends(get_db)],
+    event_id: Annotated[str, Path(..., alias="eventId")],
+    body: AddAttributeBody,
+) -> dict:
+    return await _add_attribute(db, event_id, body)
 
 
-@router.get("/attributes/view/{attributeId}", summary="Get an Attribute by its ID", deprecated=True)
-async def get_attribute_details_depr() -> None:
-    return None
+@router.get(
+    "/attributes/view/{attributeId}",
+    deprecated=True,
+    status_code=status.HTTP_200_OK,
+    response_model=partial(GetAttributeResponse),
+    summary="Get attribute details (Deprecated)",
+    description="Deprecated. Retrieve details of a specific attribute by its ID using the old route.",
+)
+async def get_attribute_details_depr(
+    db: Annotated[Session, Depends(get_db)], attribute_id: Annotated[str, Path(..., alias="attributeId")]
+) -> dict:
+    return await _get_attribute_details(db, attribute_id)
 
 
-@router.put("/attributes/edit/{attributeId}", summary="Edit an attribute", deprecated=True)
-async def update_attribute_depr() -> None:
-    return None
+@router.put(
+    "/attributes/edit/{attributeId}",
+    deprecated=True,
+    status_code=status.HTTP_200_OK,
+    response_model=partial(EditAttributeResponse),
+    summary="Update an attribute (Deprecated)",
+    description="Deprecated. Update an existing attribute by its ID using the old route.",
+)
+async def update_attribute_depr(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
+    db: Annotated[Session, Depends(get_db)],
+    attribute_id: Annotated[str, Path(..., alias="attributeId")],
+    body: EditAttributeBody,
+) -> dict:
+    return await _update_attribute(db, attribute_id, body)
 
 
-@router.delete("/attributes/delete/{attributeId}", summary="Delete an Attribute", deprecated=True)  # deprecated
-async def delete_attribute_depr() -> None:
-    return None
+@router.delete(
+    "/attributes/delete/{attributeId}",
+    deprecated=True,
+    status_code=status.HTTP_200_OK,
+    response_model=DeleteAttributeResponse,
+    summary="Delete an Attribute (Deprecated)",
+    description="Deprecated. Delete an attribute by its ID using the old route.",
+)  # deprecated
+async def delete_attribute_depr(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
+    db: Annotated[Session, Depends(get_db)],
+    attribute_id: Annotated[str, Path(..., alias="attributeId")],
+) -> dict:
+    return await _delete_attribute(db, attribute_id)
 
 
 # --- endpoint logic ---
