@@ -1,4 +1,4 @@
-from random import random
+from random import Random
 from typing import Any, Dict
 
 import pytest
@@ -182,8 +182,10 @@ class TestGetAttributeDetails:
 
         attribute_id = add_attribute_body.id
 
+        random = Random()
+
         add_tag_body = Tag(
-            name=random.__str__(),
+            name=str(random.randint(0, 100000)),
             colour="blue",
             exportable=False,
             org_id=1,
@@ -666,8 +668,10 @@ class TestAddTagToAttribute:
 
         attribute_id = add_attribute_body.id
 
+        random = Random()
+
         add_tag_body = Tag(
-            name=random.__str__(),
+            name=str(random.randint(100001, 200000)),
             colour="blue",
             exportable=False,
             org_id=1,
@@ -775,8 +779,10 @@ class TestRemoveTagFromAttribute:
 
         attribute_id = add_attribute_body.id
 
+        random = Random()
+
         add_tag_body = Tag(
-            name=random.__str__(),
+            name=str(random.randint(200001, 300000)),
             colour="blue",
             exportable=False,
             org_id=1,
