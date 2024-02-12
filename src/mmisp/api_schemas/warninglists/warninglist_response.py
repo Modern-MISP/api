@@ -16,24 +16,25 @@ class Category(Enum):
     KNOWN_IDENTIFIER = "Known identifier"
 
 
-class WarninglistEntry(BaseModel):
-    id: int
+# TODO: int or str, ids?
+class WarninglistEntryResponse(BaseModel):
+    id: str
     value: str = Field(max_length=65535)
-    warninglist_id: int
+    warninglist_id: str
     comment: str = Field(max_length=65535)
 
 
-class Warninglist(BaseModel):
+class WarninglistResponse(BaseModel):
     id: int
     name: str = Field(max_length=255)
-    type: Type
+    type: str
     description: str = Field(max_length=65535)
     version: int
     enabled: bool
     default: bool
-    category: Category
+    category: str
     warninglist_entry_count: int
-    WarninglistEntry: list[WarninglistEntry]
+    WarninglistEntry: list[WarninglistEntryResponse] | None = None
 
     class Config:
         orm_mode = True

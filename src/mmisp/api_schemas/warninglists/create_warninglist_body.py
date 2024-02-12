@@ -1,14 +1,13 @@
 from pydantic import BaseModel, Field
 
-from .warninglist import Category, Type
-
 
 class CreateWarninglistBody(BaseModel):
     name: str = Field(max_length=255)
-    type: Type
+    type: str
     description: str = Field(max_length=65535)
-    category: Category
-    accepted_attribute_type: str
+    default: bool
+    category: str
+    valid_attributes: str
     values: str = Field(max_length=65535)
 
     class Config:

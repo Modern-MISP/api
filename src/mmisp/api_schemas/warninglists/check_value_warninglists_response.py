@@ -6,9 +6,13 @@ class NameWarninglist(BaseModel):
     name: str
 
 
+class ValueWarninglistsResponse(BaseModel):
+    value: str
+    NameWarninglist: list[NameWarninglist] | None
+
+
 class CheckValueWarninglistsResponse(BaseModel):
-    response: str
-    NameWarninglist: list[NameWarninglist]
+    response: list[ValueWarninglistsResponse]
 
     class Config:
         orm_mode = True

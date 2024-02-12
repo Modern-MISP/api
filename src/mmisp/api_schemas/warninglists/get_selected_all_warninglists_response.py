@@ -1,10 +1,10 @@
 from pydantic import BaseModel
 
-from .warninglist import Warninglist
+from .warninglist_response import WarninglistResponse
 
 
 class GetSelectedAllWarninglistsResponse(BaseModel):
-    response: list[Warninglist]
+    response: list[WarninglistResponse]
 
     class Config:
         orm_mode = True
