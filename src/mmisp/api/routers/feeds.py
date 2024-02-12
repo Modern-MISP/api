@@ -11,7 +11,7 @@ from mmisp.api_schemas.feeds.cache_feed_response import FeedCacheResponse
 from mmisp.api_schemas.feeds.create_update_feed_body import FeedCreateAndUpdateBody
 from mmisp.api_schemas.feeds.enable_disable_feed_response import FeedEnableDisableResponse
 from mmisp.api_schemas.feeds.fetch_feeds_response import FeedFetchResponse
-from mmisp.api_schemas.feeds.get_feed_response import FeedAttributesResponse, FeedResponse, FeedsResponse
+from mmisp.api_schemas.feeds.get_feed_response import FeedResponse, FeedsResponse
 from mmisp.api_schemas.feeds.toggle_feed_body import FeedToggleBody
 from mmisp.db.database import get_db
 from mmisp.db.models.feed import Feed
@@ -291,16 +291,7 @@ async def update_feed_depr(
 
 
 async def _add_feed(db: Session, body: FeedCreateAndUpdateBody) -> dict:
-    feed: Feed = Feed(
-        **{
-            **body.dict(),
-            "distribution": int(body.distribution) if body.distribution is not None else None,
-            "sharing_group_id": int(body.sharing_group_id) if body.sharing_group_id is not None else None,
-            "tag_id": int(body.tag_id) if body.tag_id is not None else None,
-            "event_id": int(body.event_id) if body.event_id is not None else None,
-            "orgc_id": int(body.orgc_id) if body.orgc_id is not None else None,
-        }
-    )
+    feed: Feed = Feed(**body.dict())
 
     try:
         db.add(feed)
@@ -313,52 +304,33 @@ async def _add_feed(db: Session, body: FeedCreateAndUpdateBody) -> dict:
         )
 
     logger.info(f"New feed added: {feed.id}")
-
-    return FeedResponse(feed={**feed.__dict__})
+    return FeedResponse(feed=feed.__dict__)
 
 
 async def _cache_feeds(db: Session, cache_feeds_scope: str) -> dict:
+    logger.error("Cache feeds endpoint not yet implemented.")
     raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Endpoint not yet supported.")
 
-    # try:
-    #     feeds_to_cache = db.query(Feed).filter(Feed.scope == cache_feeds_scope).all()  # noqa: F841
-    #     #! logic to save 'feeds_to_cache' in cache (worker)
-    #     message = "Feeds successfully cached" if success else "Caching failed"
-    #     success = False
-    #     saved = False
-    #     return FeedCacheResponse(  # ? make dynamic, according to the response
-    #         name="Caching Operation",
-    #         message=message,
-    #         url="",
-    #         saved=saved,
-    #         success=success,
-    #     )
-    # except SQLAlchemyError as e:
-    #     logger.exception(f"Failed to cache feed: {e}")
-    #     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred."
+    #! logic to save 'feeds_to_cache' in cache (worker)
 
 
 async def _fetch_from_feed(db: Session, feed_id: str) -> dict:
+    logger.error("Fetch from feed endpoint not yet implemented.")
     raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Endpoint not yet supported")
 
-    # feed = db.get(Feed, feed_id)
-    # if not feed:
-    #     logger.error(f"Feed with id '{feed_id}' not found.")
-    #     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Feed not found.")
-    # #! logic to start the pull process (worker)
-    # return FeedFetchResponse(result="Pull queued for background execution.")
+    #! logic to start the pull process (worker)
 
 
 async def _get_feed_details(db: Session, feed_id: str) -> dict:
     feed: Feed = check_existence_and_raise(db, Feed, feed_id, "feed_id", "Feed not found.")
 
-    return FeedResponse(feed={**feed.__dict__})
+    return FeedResponse(feed=feed.__dict__)
 
 
 async def _update_feed(db: Session, feed_id: str, body: FeedCreateAndUpdateBody) -> dict:
     feed = check_existence_and_raise(db, Feed, feed_id, "feed_id", "Feed not found.")
-
     update_data = body.dict(exclude_unset=True)
+
     for key, value in update_data.items():
         if value is not None:
             setattr(feed, key, value if not isinstance(value, Enum) else value.value)
@@ -373,9 +345,7 @@ async def _update_feed(db: Session, feed_id: str, body: FeedCreateAndUpdateBody)
         )
 
     logger.info(f"Feed with id '{feed.id}' updated.")
-    feed_data: FeedAttributesResponse = {**feed.__dict__}
-
-    return FeedResponse(feed=feed_data)
+    return FeedResponse(feed=feed.__dict__)
 
 
 async def _toggle_feed(db: Session, feed_id: str, body: FeedToggleBody) -> dict:
@@ -398,16 +368,15 @@ async def _toggle_feed(db: Session, feed_id: str, body: FeedToggleBody) -> dict:
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred."
         )
 
+    logger.info(f"Feed with id '{feed_id}': {message}")
     return FeedEnableDisableResponse(name=feed.name, message=message, url=feed.url)
 
 
 async def _fetch_data_from_all_feeds(db: Session) -> dict:
+    logger.error("fetch from all feeds endpoint not yet implemented.")
     raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Endpoint not yet supported")
 
-    # feeds = db.query(Feed).all()  # noqa: F841
-    # #! logic to start the pull process
-    # fetched_data = ""
-    # return FeedFetchResponse(result=fetched_data)
+    #! logic to start the pull process
 
 
 async def _get_feeds(db: Session) -> list[dict]:
@@ -417,7 +386,7 @@ async def _get_feeds(db: Session) -> list[dict]:
         logger.info("No feeds found.")
         return FeedsResponse(feeds=[])
 
-    return FeedsResponse(feeds=[{**feed.__dict__} for feed in feeds])
+    return FeedsResponse(feeds=[feed.__dict__ for feed in feeds])
 
 
 async def _enable_feed(db: Session, feed_id: str) -> dict:
@@ -431,6 +400,7 @@ async def _enable_feed(db: Session, feed_id: str) -> dict:
         message = "Feed enabled successfully."
         logger.info(f"Feed with id '{feed_id}' enabled.")
 
+    logger.info(f"Feed with id '{feed_id}' enabled.")
     return FeedEnableDisableResponse(name=feed.name, message=message, url=feed.url)
 
 
@@ -445,4 +415,5 @@ async def _disable_feed(db: Session, feed_id: str) -> dict:
         message = "Feed disabled successfully."
         logger.info(f"Feed with id '{feed_id}' disabled.")
 
+    logger.info(f"Feed with id '{feed_id}' enabled.")
     return FeedEnableDisableResponse(name=feed.name, message=message, url=feed.url)
