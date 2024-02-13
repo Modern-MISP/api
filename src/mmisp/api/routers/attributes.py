@@ -634,7 +634,7 @@ def _prepare_get_attribute_details_response(
     # Don't know why, but 'event_uuid' is not in attribute_dict
     attribute_dict.update({"event_uuid": attribute.event_uuid})
 
-    fields_to_convert = ["object_id", "sharing_group_id"]
+    fields_to_convert = ["object_id", "sharing_group_id", "timestamp"]
     for field in fields_to_convert:
         if attribute_dict.get(field) is not None:
             attribute_dict[field] = str(attribute_dict[field])
@@ -663,7 +663,7 @@ def _prepare_get_attribute_details_response(
 def _prepare_edit_attribute_response(db: Session, attribute_id: str, attribute: Attribute) -> EditAttributeAttributes:
     attribute_dict = attribute.__dict__.copy()
 
-    fields_to_convert = ["object_id", "sharing_group_id"]
+    fields_to_convert = ["object_id", "sharing_group_id", "timestamp"]
     for field in fields_to_convert:
         if attribute_dict.get(field) is not None:
             attribute_dict[field] = str(attribute_dict[field])
