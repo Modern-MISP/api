@@ -176,7 +176,7 @@ async def _add_object(db: Session, event_id: str, object_template_id: str, body:
         "template_uuid": template.uuid if template is not None else None,
         "template_version": template.version if template is not None else None,
         "template_description": template.description if template is not None else None,
-        "event_id": int(event_id) if event_id is not None else None,
+        "event_id": int(event_id),
         "timestamp": _create_timestamp(),
     }
     new_object = Object(**object_data)
@@ -185,7 +185,13 @@ async def _add_object(db: Session, event_id: str, object_template_id: str, body:
     db.refresh(new_object)
 
     attributes_data = [
-        {**attr.dict(), "object_id": new_object.id, "timestamp": _create_timestamp()} for attr in body.attributes
+        {
+            **attr.dict(),
+            "object_id": new_object.id,
+            "timestamp": _create_timestamp(),
+            "event_id": int(event_id),
+        }
+        for attr in body.attributes
     ]
 
     try:
