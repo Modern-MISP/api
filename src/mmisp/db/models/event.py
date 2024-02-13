@@ -22,7 +22,7 @@ class Event(Base):
     analysis = Column(String(255))
     attribute_count = Column(String(255))
     timestamp = Column(String(255))
-    sharing_group_id = Column(String(255))
+    sharing_group_id = Column(Integer, ForeignKey("sharing_groups.id"))
     proposal_email_lock = Column(Boolean)
     locked = Column(Boolean)
     threat_level_id = Column(String(255))
@@ -33,6 +33,7 @@ class Event(Base):
     event_creator_email = Column(String(255))
     protected = Column(Boolean)
     cryptographic_key = Column(String(255))  # must be serialized
+
     attributes = relationship("Attribute", back_populates="event")
 
 

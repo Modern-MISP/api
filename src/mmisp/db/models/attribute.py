@@ -7,8 +7,6 @@ from mmisp.util.uuid import uuid
 
 from ..database import Base
 from .event import Event
-from .object import Object
-from .sharing_group import SharingGroup
 from .tag import Tag
 
 
@@ -17,8 +15,8 @@ class Attribute(Base):
 
     id = Column(Integer, primary_key=True)
     uuid = Column(String(255), unique=True, default=uuid, index=True)
-    event_id = Column(Integer, ForeignKey(Event.id), index=True)
-    object_id = Column(Integer, ForeignKey(Object.id), index=True, nullable=True, default=None)
+    event_id = Column(Integer, ForeignKey("events.id"), index=True)
+    object_id = Column(Integer, ForeignKey("objects.id"), index=True, nullable=True, default=None)
     object_relation = Column(String(255), nullable=True, index=True)
     category = Column(String(255), nullable=False, index=True)
     type = Column(String(255), nullable=False, index=True)
@@ -28,7 +26,7 @@ class Attribute(Base):
     to_ids = Column(Boolean, default=True)
     timestamp = Column(Integer, default=0)
     distribution = Column(Integer, default=0)
-    sharing_group_id = Column(Integer, ForeignKey(SharingGroup.id), index=True, nullable=True, default=None)
+    sharing_group_id = Column(Integer, ForeignKey("sharing_groups.id"), index=True, nullable=True, default=None)
     comment = Column(String(255), default="")
     deleted = Column(Boolean, default=False)
     disable_correlation = Column(Boolean, default=False)
@@ -36,6 +34,7 @@ class Attribute(Base):
     last_seen = Column(String(255), nullable=True, index=True)
 
     event = relationship("Event", back_populates="attributes")
+    object = relationship("Object", back_populates="attributes")
 
     @property
     def event_uuid(self: "Attribute") -> str:

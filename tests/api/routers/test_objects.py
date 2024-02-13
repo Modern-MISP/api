@@ -4,6 +4,7 @@ import pytest
 
 from mmisp.db.models.event import Event
 from mmisp.db.models.object import ObjectTemplate
+from mmisp.db.models.sharing_group import SharingGroup
 
 from ...environment import client, environment, get_db
 from ...generators.object_generator import (
@@ -31,21 +32,29 @@ def object_data(request: Any) -> Dict[str, Any]:
 class TestAddObject:
     def test_add_object_to_event(self: "TestAddObject", object_data: Dict[str, Any]) -> None:
         db = get_db()
+
+        sharing_group = SharingGroup(
+            name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
+        )
+        db.add(sharing_group)
+        db.commit()
+        db.refresh(sharing_group)
+        object_data["sharing_group_id"] = sharing_group.id
+        for attribute in object_data["attributes"]:
+            attribute["sharing_group_id"] = sharing_group.id
+
         object_template = ObjectTemplate(name="test_template", user_id=1, org_id=1, version=100)
         db.add(object_template)
         db.commit()
         db.refresh(object_template)
 
-        add_event_body = Event(
-            info="test",
-        )
-        db.add(add_event_body)
+        event = Event(info="test")
+        db.add(event)
         db.commit()
-
-        db.refresh(add_event_body)
+        db.refresh(event)
 
         object_template_id = object_template.id
-        event_id = add_event_body.id
+        event_id = event.id
 
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post(f"/objects/{event_id}/{object_template_id}", json=object_data, headers=headers)
@@ -58,21 +67,29 @@ class TestAddObject:
 
     def test_add_object_response_format(self: "TestAddObject", object_data: Dict[str, Any]) -> None:
         db = get_db()
+
+        sharing_group = SharingGroup(
+            name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
+        )
+        db.add(sharing_group)
+        db.commit()
+        db.refresh(sharing_group)
+        object_data["sharing_group_id"] = sharing_group.id
+        for attribute in object_data["attributes"]:
+            attribute["sharing_group_id"] = sharing_group.id
+
         object_template = ObjectTemplate(name="test_template", user_id=1, org_id=1, version=100)
         db.add(object_template)
         db.commit()
         db.refresh(object_template)
 
-        add_event_body = Event(
-            info="test",
-        )
-        db.add(add_event_body)
+        event = Event(info="test")
+        db.add(event)
         db.commit()
-
-        db.refresh(add_event_body)
+        db.refresh(event)
 
         object_template_id = object_template.id
-        event_id = add_event_body.id
+        event_id = event.id
 
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post(f"/objects/{event_id}/{object_template_id}", json=object_data, headers=headers)
@@ -134,20 +151,30 @@ class TestSearchObject:
 class TestGetObjectInfo:
     def test_get_object_details_valid_id(self: "TestGetObjectInfo", object_data: Dict[str, Any]) -> None:
         db = get_db()
+
+        sharing_group = SharingGroup(
+            name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
+        )
+        db.add(sharing_group)
+        db.commit()
+        db.refresh(sharing_group)
+        object_data["sharing_group_id"] = sharing_group.id
+        for attribute in object_data["attributes"]:
+            attribute["sharing_group_id"] = sharing_group.id
+
         object_template = ObjectTemplate(name="test_template", user_id=1, org_id=1, version=100)
         db.add(object_template)
         db.commit()
         db.refresh(object_template)
 
-        add_event_body = Event(
-            info="test",
-        )
-        db.add(add_event_body)
+        event = Event(info="test")
+        db.add(event)
         db.commit()
-        db.refresh(add_event_body)
+        db.refresh(event)
 
         object_template_id = object_template.id
-        event_id = add_event_body.id
+        event_id = event.id
+
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post(f"/objects/{event_id}/{object_template_id}", json=object_data, headers=headers)
         assert response.status_code == 201
@@ -169,20 +196,30 @@ class TestGetObjectInfo:
 
     def test_get_object_details_response_format(self: "TestGetObjectInfo", object_data: Dict[str, Any]) -> None:
         db = get_db()
+
+        sharing_group = SharingGroup(
+            name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
+        )
+        db.add(sharing_group)
+        db.commit()
+        db.refresh(sharing_group)
+        object_data["sharing_group_id"] = sharing_group.id
+        for attribute in object_data["attributes"]:
+            attribute["sharing_group_id"] = sharing_group.id
+
         object_template = ObjectTemplate(name="test_template", user_id=1, org_id=1, version=100)
         db.add(object_template)
         db.commit()
         db.refresh(object_template)
 
-        add_event_body = Event(
-            info="test",
-        )
-        db.add(add_event_body)
+        event = Event(info="test")
+        db.add(event)
         db.commit()
-        db.refresh(add_event_body)
+        db.refresh(event)
 
         object_template_id = object_template.id
-        event_id = add_event_body.id
+        event_id = event.id
+
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post(f"/objects/{event_id}/{object_template_id}", json=object_data, headers=headers)
         assert response.status_code == 201
@@ -202,20 +239,30 @@ class TestGetObjectInfo:
 
     def test_get_object_details_data_integrity(self: "TestGetObjectInfo", object_data: Dict[str, Any]) -> None:
         db = get_db()
+
+        sharing_group = SharingGroup(
+            name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
+        )
+        db.add(sharing_group)
+        db.commit()
+        db.refresh(sharing_group)
+        object_data["sharing_group_id"] = sharing_group.id
+        for attribute in object_data["attributes"]:
+            attribute["sharing_group_id"] = sharing_group.id
+
         object_template = ObjectTemplate(name="test_template", user_id=1, org_id=1, version=100)
         db.add(object_template)
         db.commit()
         db.refresh(object_template)
 
-        add_event_body = Event(
-            info="test",
-        )
-        db.add(add_event_body)
+        event = Event(info="test")
+        db.add(event)
         db.commit()
-        db.refresh(add_event_body)
+        db.refresh(event)
 
         object_template_id = object_template.id
-        event_id = add_event_body.id
+        event_id = event.id
+
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post(f"/objects/{event_id}/{object_template_id}", json=object_data, headers=headers)
         assert response.status_code == 201
@@ -232,20 +279,30 @@ class TestGetObjectInfo:
 class TestDeleteObject:
     def test_delete_object_hard_delete(self: "TestDeleteObject", object_data: Dict[str, Any]) -> None:
         db = get_db()
+
+        sharing_group = SharingGroup(
+            name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
+        )
+        db.add(sharing_group)
+        db.commit()
+        db.refresh(sharing_group)
+        object_data["sharing_group_id"] = sharing_group.id
+        for attribute in object_data["attributes"]:
+            attribute["sharing_group_id"] = sharing_group.id
+
         object_template = ObjectTemplate(name="test_template", user_id=1, org_id=1, version=100)
         db.add(object_template)
         db.commit()
         db.refresh(object_template)
 
-        add_event_body = Event(
-            info="test",
-        )
-        db.add(add_event_body)
+        event = Event(info="test")
+        db.add(event)
         db.commit()
-        db.refresh(add_event_body)
+        db.refresh(event)
 
         object_template_id = object_template.id
-        event_id = add_event_body.id
+        event_id = event.id
+
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post(f"/objects/{event_id}/{object_template_id}", json=object_data, headers=headers)
         assert response.status_code == 201
@@ -263,20 +320,30 @@ class TestDeleteObject:
 
     def test_delete_object_soft_delete(self: "TestDeleteObject", object_data: Dict[str, Any]) -> None:
         db = get_db()
+
+        sharing_group = SharingGroup(
+            name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
+        )
+        db.add(sharing_group)
+        db.commit()
+        db.refresh(sharing_group)
+        object_data["sharing_group_id"] = sharing_group.id
+        for attribute in object_data["attributes"]:
+            attribute["sharing_group_id"] = sharing_group.id
+
         object_template = ObjectTemplate(name="test_template", user_id=1, org_id=1, version=100)
         db.add(object_template)
         db.commit()
         db.refresh(object_template)
 
-        add_event_body = Event(
-            info="test",
-        )
-        db.add(add_event_body)
+        event = Event(info="test")
+        db.add(event)
         db.commit()
-        db.refresh(add_event_body)
+        db.refresh(event)
 
         object_template_id = object_template.id
-        event_id = add_event_body.id
+        event_id = event.id
+
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post(f"/objects/{event_id}/{object_template_id}", json=object_data, headers=headers)
         assert response.status_code == 201
@@ -301,20 +368,30 @@ class TestDeleteObject:
 
     def test_delete_object_invalid_hard_delete(self: "TestDeleteObject", object_data: Dict[str, Any]) -> None:
         db = get_db()
+
+        sharing_group = SharingGroup(
+            name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
+        )
+        db.add(sharing_group)
+        db.commit()
+        db.refresh(sharing_group)
+        object_data["sharing_group_id"] = sharing_group.id
+        for attribute in object_data["attributes"]:
+            attribute["sharing_group_id"] = sharing_group.id
+
         object_template = ObjectTemplate(name="test_template", user_id=1, org_id=1, version=100)
         db.add(object_template)
         db.commit()
         db.refresh(object_template)
 
-        add_event_body = Event(
-            info="test",
-        )
-        db.add(add_event_body)
+        event = Event(info="test")
+        db.add(event)
         db.commit()
-        db.refresh(add_event_body)
+        db.refresh(event)
 
         object_template_id = object_template.id
-        event_id = add_event_body.id
+        event_id = event.id
+
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post(f"/objects/{event_id}/{object_template_id}", json=object_data, headers=headers)
         assert response.status_code == 201
@@ -327,20 +404,30 @@ class TestDeleteObject:
 
     def test_delete_object_no_authorization(self: "TestDeleteObject", object_data: Dict[str, Any]) -> None:
         db = get_db()
+
+        sharing_group = SharingGroup(
+            name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
+        )
+        db.add(sharing_group)
+        db.commit()
+        db.refresh(sharing_group)
+        object_data["sharing_group_id"] = sharing_group.id
+        for attribute in object_data["attributes"]:
+            attribute["sharing_group_id"] = sharing_group.id
+
         object_template = ObjectTemplate(name="test_template", user_id=1, org_id=1, version=100)
         db.add(object_template)
         db.commit()
         db.refresh(object_template)
 
-        add_event_body = Event(
-            info="test",
-        )
-        db.add(add_event_body)
+        event = Event(info="test")
+        db.add(event)
         db.commit()
-        db.refresh(add_event_body)
+        db.refresh(event)
 
         object_template_id = object_template.id
-        event_id = add_event_body.id
+        event_id = event.id
+
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post(f"/objects/{event_id}/{object_template_id}", json=object_data, headers=headers)
         assert response.status_code == 201

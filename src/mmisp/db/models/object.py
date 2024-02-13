@@ -25,13 +25,13 @@ class Object(Base):
     event_id = Column(Integer, ForeignKey("events.id"), index=True, nullable=False)
     timestamp = Column(Integer, index=True, nullable=False, default=0)
     distribution = Column(Integer, index=True, nullable=False, default=0)
-    sharing_group_id = Column(Integer, index=True)
+    sharing_group_id = Column(Integer, ForeignKey("sharing_groups.id"), index=True)
     comment = Column(String(255), nullable=False)
     deleted = Column(Boolean, nullable=False, default=False)
     first_seen = Column(Integer, index=True, default=None)
     last_seen = Column(Integer, index=True, default=None)
 
-    attributes = relationship("Attribute", backref="object")
+    attributes = relationship("Attribute", back_populates="object")
 
 
 class ObjectTemplate(Base):
