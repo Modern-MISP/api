@@ -1,8 +1,14 @@
+import random
+import string
 from typing import Any, Dict, Generator
 
 import pytest
 
-from ...environment import client, environment
+from mmisp.db.models.event import Event
+from mmisp.db.models.sharing_group import SharingGroup
+from mmisp.db.models.tag import Tag
+
+from ...environment import client, environment, get_db
 from ...generators.feed_generator import (
     generate_random_valid_feed_data,
     generate_valid_feed_data,
@@ -25,6 +31,32 @@ def feed_data(request: Any) -> Dict[str, Any]:
 
 class TestAddFeed:
     def test_add_feed(self: "TestAddFeed", feed_data: Dict[str, Any]) -> None:
+        db = get_db()
+
+        sharing_group = SharingGroup(
+            name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
+        )
+        db.add(sharing_group)
+        db.commit()
+        db.refresh(sharing_group)
+        feed_data["sharing_group_id"] = sharing_group.id
+
+        tag = Tag(
+            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
+            colour="#FFFFFF",
+            exportable=False,
+        )
+        db.add(tag)
+        db.commit()
+        db.refresh(tag)
+        feed_data["tag_id"] = tag.id
+
+        event = Event(info="test")
+        db.add(event)
+        db.commit()
+        db.refresh(event)
+        feed_data["event_id"] = event.id
+
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/feeds", json=feed_data, headers=headers)
 
@@ -40,6 +72,32 @@ class TestAddFeed:
         assert response.json()["detail"][0]["type"] == "value_error.missing"
 
     def test_feed_response_format(self: "TestAddFeed", feed_data: Dict[str, Any]) -> None:
+        db = get_db()
+
+        sharing_group = SharingGroup(
+            name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
+        )
+        db.add(sharing_group)
+        db.commit()
+        db.refresh(sharing_group)
+        feed_data["sharing_group_id"] = sharing_group.id
+
+        tag = Tag(
+            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
+            colour="#FFFFFF",
+            exportable=False,
+        )
+        db.add(tag)
+        db.commit()
+        db.refresh(tag)
+        feed_data["tag_id"] = tag.id
+
+        event = Event(info="test")
+        db.add(event)
+        db.commit()
+        db.refresh(event)
+        feed_data["event_id"] = event.id
+
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/feeds", json=feed_data, headers=headers)
         assert response.headers["Content-Type"] == "application/json"
@@ -47,6 +105,32 @@ class TestAddFeed:
         assert response.json()["feed"]["id"] is not None
 
     def test_add_feed_authorization(self: "TestAddFeed", feed_data: Dict[str, Any]) -> None:
+        db = get_db()
+
+        sharing_group = SharingGroup(
+            name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
+        )
+        db.add(sharing_group)
+        db.commit()
+        db.refresh(sharing_group)
+        feed_data["sharing_group_id"] = sharing_group.id
+
+        tag = Tag(
+            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
+            colour="#FFFFFF",
+            exportable=False,
+        )
+        db.add(tag)
+        db.commit()
+        db.refresh(tag)
+        feed_data["tag_id"] = tag.id
+
+        event = Event(info="test")
+        db.add(event)
+        db.commit()
+        db.refresh(event)
+        feed_data["event_id"] = event.id
+
         headers = {"authorization": ""}
         response = client.post("/feeds", json=feed_data, headers=headers)
         assert response.status_code == 401
@@ -64,6 +148,32 @@ def feed_test_ids() -> Generator:
 
 class TestEnableFeed:
     def test_enable_feed(self: "TestEnableFeed", feed_test_ids: Dict[str, Any], feed_data: Dict[str, Any]) -> None:
+        db = get_db()
+
+        sharing_group = SharingGroup(
+            name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
+        )
+        db.add(sharing_group)
+        db.commit()
+        db.refresh(sharing_group)
+        feed_data["sharing_group_id"] = sharing_group.id
+
+        tag = Tag(
+            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
+            colour="#FFFFFF",
+            exportable=False,
+        )
+        db.add(tag)
+        db.commit()
+        db.refresh(tag)
+        feed_data["tag_id"] = tag.id
+
+        event = Event(info="test")
+        db.add(event)
+        db.commit()
+        db.refresh(event)
+        feed_data["event_id"] = event.id
+
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/feeds", json=feed_data, headers=headers)
         feed_id = response.json()["feed"]["id"]
@@ -81,6 +191,32 @@ class TestEnableFeed:
         assert response.json()["detail"] == "Feed not found."
 
     def test_feed_enable_response_format(self: "TestEnableFeed", feed_data: Dict[str, Any]) -> None:
+        db = get_db()
+
+        sharing_group = SharingGroup(
+            name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
+        )
+        db.add(sharing_group)
+        db.commit()
+        db.refresh(sharing_group)
+        feed_data["sharing_group_id"] = sharing_group.id
+
+        tag = Tag(
+            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
+            colour="#FFFFFF",
+            exportable=False,
+        )
+        db.add(tag)
+        db.commit()
+        db.refresh(tag)
+        feed_data["tag_id"] = tag.id
+
+        event = Event(info="test")
+        db.add(event)
+        db.commit()
+        db.refresh(event)
+        feed_data["event_id"] = event.id
+
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/feeds", json=feed_data, headers=headers)
         feed_id = response.json()["feed"]["id"]
@@ -90,6 +226,32 @@ class TestEnableFeed:
         assert response.headers["Content-Type"] == "application/json"
 
     def test_enable_feed_authorization(self: "TestEnableFeed", feed_data: Dict[str, Any]) -> None:
+        db = get_db()
+
+        sharing_group = SharingGroup(
+            name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
+        )
+        db.add(sharing_group)
+        db.commit()
+        db.refresh(sharing_group)
+        feed_data["sharing_group_id"] = sharing_group.id
+
+        tag = Tag(
+            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
+            colour="#FFFFFF",
+            exportable=False,
+        )
+        db.add(tag)
+        db.commit()
+        db.refresh(tag)
+        feed_data["tag_id"] = tag.id
+
+        event = Event(info="test")
+        db.add(event)
+        db.commit()
+        db.refresh(event)
+        feed_data["event_id"] = event.id
+
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/feeds", json=feed_data, headers=headers)
         feed_id = response.json()["feed"]["id"]
@@ -103,6 +265,32 @@ class TestEnableFeed:
 
 class TestDisableFeed:
     def test_disable_feed(self: "TestDisableFeed", feed_test_ids: Dict[str, Any], feed_data: Dict[str, Any]) -> None:
+        db = get_db()
+
+        sharing_group = SharingGroup(
+            name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
+        )
+        db.add(sharing_group)
+        db.commit()
+        db.refresh(sharing_group)
+        feed_data["sharing_group_id"] = sharing_group.id
+
+        tag = Tag(
+            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
+            colour="#FFFFFF",
+            exportable=False,
+        )
+        db.add(tag)
+        db.commit()
+        db.refresh(tag)
+        feed_data["tag_id"] = tag.id
+
+        event = Event(info="test")
+        db.add(event)
+        db.commit()
+        db.refresh(event)
+        feed_data["event_id"] = event.id
+
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/feeds", json=feed_data, headers=headers)
         feed_id = response.json()["feed"]["id"]
@@ -120,6 +308,32 @@ class TestDisableFeed:
         assert response.json()["detail"] == "Feed not found."
 
     def test_disable_feed_response_format(self: "TestDisableFeed", feed_data: Dict[str, Any]) -> None:
+        db = get_db()
+
+        sharing_group = SharingGroup(
+            name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
+        )
+        db.add(sharing_group)
+        db.commit()
+        db.refresh(sharing_group)
+        feed_data["sharing_group_id"] = sharing_group.id
+
+        tag = Tag(
+            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
+            colour="#FFFFFF",
+            exportable=False,
+        )
+        db.add(tag)
+        db.commit()
+        db.refresh(tag)
+        feed_data["tag_id"] = tag.id
+
+        event = Event(info="test")
+        db.add(event)
+        db.commit()
+        db.refresh(event)
+        feed_data["event_id"] = event.id
+
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/feeds", json=feed_data, headers=headers)
         feed_id = response.json()["feed"]["id"]
@@ -129,6 +343,32 @@ class TestDisableFeed:
         assert response.headers["Content-Type"] == "application/json"
 
     def test_disable_feed_authorization(self: "TestDisableFeed", feed_data: Dict[str, Any]) -> None:
+        db = get_db()
+
+        sharing_group = SharingGroup(
+            name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
+        )
+        db.add(sharing_group)
+        db.commit()
+        db.refresh(sharing_group)
+        feed_data["sharing_group_id"] = sharing_group.id
+
+        tag = Tag(
+            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
+            colour="#FFFFFF",
+            exportable=False,
+        )
+        db.add(tag)
+        db.commit()
+        db.refresh(tag)
+        feed_data["tag_id"] = tag.id
+
+        event = Event(info="test")
+        db.add(event)
+        db.commit()
+        db.refresh(event)
+        feed_data["event_id"] = event.id
+
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/feeds", json=feed_data, headers=headers)
         feed_id = response.json()["feed"]["id"]
@@ -198,6 +438,32 @@ class TestFetchFeeds:
 
 class TestGetFeedByIdInfo:
     def test_get_existing_feed_details(self: "TestGetFeedByIdInfo", feed_data: Dict[str, Any]) -> None:
+        db = get_db()
+
+        sharing_group = SharingGroup(
+            name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
+        )
+        db.add(sharing_group)
+        db.commit()
+        db.refresh(sharing_group)
+        feed_data["sharing_group_id"] = sharing_group.id
+
+        tag = Tag(
+            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
+            colour="#FFFFFF",
+            exportable=False,
+        )
+        db.add(tag)
+        db.commit()
+        db.refresh(tag)
+        feed_data["tag_id"] = tag.id
+
+        event = Event(info="test")
+        db.add(event)
+        db.commit()
+        db.refresh(event)
+        feed_data["event_id"] = event.id
+
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/feeds", json=feed_data, headers=headers)
         feed_id = response.json()["feed"]["id"]
@@ -219,6 +485,32 @@ class TestGetFeedByIdInfo:
         assert response.json()["detail"] == "Feed not found."
 
     def test_get_feed_response_format(self: "TestGetFeedByIdInfo", feed_data: Dict[str, Any]) -> None:
+        db = get_db()
+
+        sharing_group = SharingGroup(
+            name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
+        )
+        db.add(sharing_group)
+        db.commit()
+        db.refresh(sharing_group)
+        feed_data["sharing_group_id"] = sharing_group.id
+
+        tag = Tag(
+            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
+            colour="#FFFFFF",
+            exportable=False,
+        )
+        db.add(tag)
+        db.commit()
+        db.refresh(tag)
+        feed_data["tag_id"] = tag.id
+
+        event = Event(info="test")
+        db.add(event)
+        db.commit()
+        db.refresh(event)
+        feed_data["event_id"] = event.id
+
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/feeds", json=feed_data, headers=headers)
         feed_id = response.json()["feed"]["id"]
@@ -234,6 +526,32 @@ class TestGetFeedByIdInfo:
 
 class TestUpdateFeed:
     def test_update_existing_feed(self: "TestUpdateFeed", feed_data: Dict[str, Any]) -> None:
+        db = get_db()
+
+        sharing_group = SharingGroup(
+            name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
+        )
+        db.add(sharing_group)
+        db.commit()
+        db.refresh(sharing_group)
+        feed_data["sharing_group_id"] = sharing_group.id
+
+        tag = Tag(
+            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
+            colour="#FFFFFF",
+            exportable=False,
+        )
+        db.add(tag)
+        db.commit()
+        db.refresh(tag)
+        feed_data["tag_id"] = tag.id
+
+        event = Event(info="test")
+        db.add(event)
+        db.commit()
+        db.refresh(event)
+        feed_data["event_id"] = event.id
+
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/feeds", json=feed_data, headers=headers)
         feed_id = response.json()["feed"]["id"]
@@ -255,6 +573,32 @@ class TestUpdateFeed:
         assert response.json()["detail"] == "Feed not found."
 
     def test_update_feed_response_format(self: "TestUpdateFeed", feed_data: Dict[str, Any]) -> None:
+        db = get_db()
+
+        sharing_group = SharingGroup(
+            name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
+        )
+        db.add(sharing_group)
+        db.commit()
+        db.refresh(sharing_group)
+        feed_data["sharing_group_id"] = sharing_group.id
+
+        tag = Tag(
+            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
+            colour="#FFFFFF",
+            exportable=False,
+        )
+        db.add(tag)
+        db.commit()
+        db.refresh(tag)
+        feed_data["tag_id"] = tag.id
+
+        event = Event(info="test")
+        db.add(event)
+        db.commit()
+        db.refresh(event)
+        feed_data["event_id"] = event.id
+
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/feeds", json=feed_data, headers=headers)
         feed_id = response.json()["feed"]["id"]
@@ -268,6 +612,32 @@ class TestUpdateFeed:
         assert response.json()["feed"]["name"] == feed_data["name"]
 
     def test_update_feed_authorization(self: "TestUpdateFeed", feed_data: Dict[str, Any]) -> None:
+        db = get_db()
+
+        sharing_group = SharingGroup(
+            name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
+        )
+        db.add(sharing_group)
+        db.commit()
+        db.refresh(sharing_group)
+        feed_data["sharing_group_id"] = sharing_group.id
+
+        tag = Tag(
+            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
+            colour="#FFFFFF",
+            exportable=False,
+        )
+        db.add(tag)
+        db.commit()
+        db.refresh(tag)
+        feed_data["tag_id"] = tag.id
+
+        event = Event(info="test")
+        db.add(event)
+        db.commit()
+        db.refresh(event)
+        feed_data["event_id"] = event.id
+
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/feeds", json=feed_data, headers=headers)
         feed_id = response.json()["feed"]["id"]
@@ -281,6 +651,32 @@ class TestUpdateFeed:
 
 class TestToggleFeed:
     def test_toggle_existing_feed(self: "TestToggleFeed", feed_data: Dict[str, Any]) -> None:
+        db = get_db()
+
+        sharing_group = SharingGroup(
+            name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
+        )
+        db.add(sharing_group)
+        db.commit()
+        db.refresh(sharing_group)
+        feed_data["sharing_group_id"] = sharing_group.id
+
+        tag = Tag(
+            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
+            colour="#FFFFFF",
+            exportable=False,
+        )
+        db.add(tag)
+        db.commit()
+        db.refresh(tag)
+        feed_data["tag_id"] = tag.id
+
+        event = Event(info="test")
+        db.add(event)
+        db.commit()
+        db.refresh(event)
+        feed_data["event_id"] = event.id
+
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/feeds", json=feed_data, headers=headers)
         feed_id = response.json()["feed"]["id"]
@@ -314,6 +710,32 @@ class TestToggleFeed:
         assert response.json()["detail"] == "Feed not found."
 
     def test_toggle_feed_response_format(self: "TestToggleFeed", feed_data: Dict[str, Any]) -> None:
+        db = get_db()
+
+        sharing_group = SharingGroup(
+            name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
+        )
+        db.add(sharing_group)
+        db.commit()
+        db.refresh(sharing_group)
+        feed_data["sharing_group_id"] = sharing_group.id
+
+        tag = Tag(
+            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
+            colour="#FFFFFF",
+            exportable=False,
+        )
+        db.add(tag)
+        db.commit()
+        db.refresh(tag)
+        feed_data["tag_id"] = tag.id
+
+        event = Event(info="test")
+        db.add(event)
+        db.commit()
+        db.refresh(event)
+        feed_data["event_id"] = event.id
+
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/feeds", json=feed_data, headers=headers)
         feed_id = response.json()["feed"]["id"]
@@ -365,6 +787,32 @@ class TestToggleFeed:
         assert "url" in data
 
     def test_toggle_feed_authorization(self: "TestToggleFeed", feed_data: Dict[str, Any]) -> None:
+        db = get_db()
+
+        sharing_group = SharingGroup(
+            name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
+        )
+        db.add(sharing_group)
+        db.commit()
+        db.refresh(sharing_group)
+        feed_data["sharing_group_id"] = sharing_group.id
+
+        tag = Tag(
+            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
+            colour="#FFFFFF",
+            exportable=False,
+        )
+        db.add(tag)
+        db.commit()
+        db.refresh(tag)
+        feed_data["tag_id"] = tag.id
+
+        event = Event(info="test")
+        db.add(event)
+        db.commit()
+        db.refresh(event)
+        feed_data["event_id"] = event.id
+
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/feeds", json=feed_data, headers=headers)
         feed_id = response.json()["feed"]["id"]
@@ -396,6 +844,32 @@ class TestFetschFromAllFeeds:
 
 class TestGetAllFeeds:
     def test_get_all_feeds(self: "TestGetAllFeeds", feed_data: Dict[str, Any]) -> None:
+        db = get_db()
+
+        sharing_group = SharingGroup(
+            name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
+        )
+        db.add(sharing_group)
+        db.commit()
+        db.refresh(sharing_group)
+        feed_data["sharing_group_id"] = sharing_group.id
+
+        tag = Tag(
+            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
+            colour="#FFFFFF",
+            exportable=False,
+        )
+        db.add(tag)
+        db.commit()
+        db.refresh(tag)
+        feed_data["tag_id"] = tag.id
+
+        event = Event(info="test")
+        db.add(event)
+        db.commit()
+        db.refresh(event)
+        feed_data["event_id"] = event.id
+
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/feeds", json=feed_data, headers=headers)
         assert response.status_code == 201
@@ -405,6 +879,32 @@ class TestGetAllFeeds:
         assert isinstance(response.json()["feeds"], list)
 
     def test_get_feeds_response_format(self: "TestGetAllFeeds", feed_data: Dict[str, Any]) -> None:
+        db = get_db()
+
+        sharing_group = SharingGroup(
+            name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
+        )
+        db.add(sharing_group)
+        db.commit()
+        db.refresh(sharing_group)
+        feed_data["sharing_group_id"] = sharing_group.id
+
+        tag = Tag(
+            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
+            colour="#FFFFFF",
+            exportable=False,
+        )
+        db.add(tag)
+        db.commit()
+        db.refresh(tag)
+        feed_data["tag_id"] = tag.id
+
+        event = Event(info="test")
+        db.add(event)
+        db.commit()
+        db.refresh(event)
+        feed_data["event_id"] = event.id
+
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/feeds", json=feed_data, headers=headers)
         assert response.status_code == 201

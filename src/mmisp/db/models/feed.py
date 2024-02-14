@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, Integer, String
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
 
 from mmisp.util.uuid import uuid
 
@@ -16,13 +16,13 @@ class Feed(Base):
     rules = Column(String(255), nullable=True)
     enabled = Column(Boolean, default=False)
     distribution = Column(Integer, nullable=False, default=0)
-    sharing_group_id = Column(Integer, nullable=False, default=0)
-    tag_id = Column(Integer, nullable=False, default=0)
+    sharing_group_id = Column(Integer, ForeignKey("sharing_groups.id"), index=True)
+    tag_id = Column(Integer, ForeignKey("tags.id"), nullable=False, default=0)
     default = Column(Boolean, default=False)
     source_format = Column(String(255), default="misp")
     fixed_event = Column(Boolean, nullable=False, default=False)
     delta_merge = Column(Boolean, nullable=False, default=False)
-    event_id = Column(Integer, nullable=False, default=0)
+    event_id = Column(Integer, ForeignKey("events.id"), nullable=False, default=0)
     publish = Column(Boolean, nullable=False, default=False)
     override_ids = Column(Boolean, nullable=False, default=False)
     settings = Column(String(255), nullable=True)
