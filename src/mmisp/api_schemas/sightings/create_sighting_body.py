@@ -2,23 +2,23 @@ from pydantic import BaseModel
 
 
 class SightingCoreConfigBody(BaseModel):
-    estimative_language_confidence_in_analytic_judgment: float
-    estimative_language_likelihood_probability: float
-    phishing_psychological_acceptability: float
-    phishing_state: float
+    estimative_language_confidence_in_analytic_judgment: str
+    estimative_language_likelihood_probability: str
+    phishing_psychological_acceptability: str
+    phishing_state: str
 
 
 class SightingModelOverridesBody(BaseModel):
-    lifetime: int
-    decay_speed: float
-    threshold: int
-    default_base_score: int
+    lifetime: str
+    decay_speed: str
+    threshold: str
+    default_base_score: str
     base_score_config: SightingCoreConfigBody
 
 
 class SightingFiltersBody(BaseModel):
-    page: int
-    limit: int
+    page: str
+    limit: str
     value: str
     value1: str
     value2: str
@@ -28,37 +28,37 @@ class SightingFiltersBody(BaseModel):
     tags: list[str]
     from_: str  # 'from' is a reserved word in Python, so an underscore is added
     to: str
-    last: int
-    eventid: str
-    withAttachments: bool
+    last: str
+    event_id: str
+    with_attachments: bool
     uuid: str
     publish_timestamp: str
     published: bool
     timestamp: str
     attribute_timestamp: str
-    enforceWarninglist: bool
+    enforce_warninglist: bool
     to_ids: bool
     deleted: bool
     event_timestamp: str
     threat_level_id: str
     eventinfo: str
     sharinggroup: list[str]
-    decayingModel: str
+    decaying_model: str
     score: str
     first_seen: str
     last_seen: str
-    includeEventUuid: bool
-    includeEventTags: bool
-    includeProposals: bool
+    include_event_uuid: bool
+    include_event_tags: bool
+    include_proposals: bool
     requested_attributes: list[str]
-    includeContext: bool
+    include_context: bool
     headerless: bool
-    includeWarninglistHits: bool
-    attackGalaxy: str
+    include_warninglist_hits: bool
+    attack_galaxy: str
     object_relation: str
-    includeSightings: bool
-    includeCorrelations: bool
-    modelOverrides: SightingModelOverridesBody
+    include_sightings: bool
+    include_correlations: bool
+    model_overrides: SightingModelOverridesBody
     includeDecayScore: bool
     includeFullModel: bool
     excludeDecayed: bool
