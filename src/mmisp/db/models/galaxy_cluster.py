@@ -11,7 +11,7 @@ class GalaxyCluster(Base):
 
     id = Column(Integer, primary_key=True)
     uuid = Column(String(255), unique=True, default=uuid, index=True)
-    collection_uuid = Column(String(255), nullable=False, index=True)
+    collection_uuid = Column(String(255), nullable=True, index=True)
     type = Column(String(255), nullable=False, index=True)
     value = Column(String(255), nullable=False, index=True)
     tag_name = Column(String(255), nullable=False, default="", index=True)

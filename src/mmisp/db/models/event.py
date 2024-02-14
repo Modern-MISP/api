@@ -5,6 +5,7 @@ from mmisp.util.uuid import uuid
 
 from ..database import Base
 from .organisation import Organisation
+from .sharing_group import SharingGroup
 from .tag import Tag
 
 
@@ -16,13 +17,13 @@ class Event(Base):
     org_id = Column(Integer, ForeignKey(Organisation.id), nullable=False, index=True)  # owner org
     orgc_id = Column(Integer, ForeignKey(Organisation.id), nullable=False, index=True)  # creator org
     info = Column(String(255), nullable=False, index=True)
-    distribution = Column(String(255), nullable=False, default="0")
+    distribution = Column(Integer, nullable=False, default=0)
     date = Column(String(255), nullable=False)
     published = Column(Boolean, nullable=False, default=False)
     analysis = Column(String(255), nullable=False)
     attribute_count = Column(Integer, default=0)
     timestamp = Column(Integer, nullable=False, default=0)
-    sharing_group_id = Column(String(255), nullable=True, default=None, index=True)
+    sharing_group_id = Column(Integer, ForeignKey(SharingGroup.id), nullable=True, default=None, index=True)
     proposal_email_lock = Column(Boolean, nullable=False, default=False)
     locked = Column(Boolean, nullable=False, default=False)
     threat_level_id = Column(Integer, nullable=False, default=4)
