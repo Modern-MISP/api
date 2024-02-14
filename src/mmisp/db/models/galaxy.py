@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Boolean, Column, Integer, String
 
 from mmisp.util.uuid import uuid
 
@@ -16,4 +16,5 @@ class Galaxy(Base):
     version = Column(String(255), nullable=False)
     icon = Column(String(255), nullable=False, default="")
     namespace = Column(String(255), nullable=False, default="misp", index=True)
+    enabled = Column(Boolean, nullable=False, default=True)
     kill_chain_order = Column(String(255))  # must be serialized
