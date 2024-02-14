@@ -60,7 +60,7 @@ async def add_object(
     event_id: Annotated[str, Path(..., alias="eventId")],
     object_template_id: Annotated[str, Path(..., alias="objectTemplateId")],
     body: ObjectCreateBody,
-) -> dict:
+) -> dict[str, Any]:
     return await _add_object(db, event_id, object_template_id, body)
 
 
@@ -71,7 +71,7 @@ async def add_object(
     summary="Search objects",
     description="Search for objects based on various filters.",
 )
-async def restsearch(db: Annotated[Session, Depends(get_db)], body: ObjectSearchBody) -> dict:
+async def restsearch(db: Annotated[Session, Depends(get_db)], body: ObjectSearchBody) -> dict[str, Any]:
     return await _restsearch(db, body)
 
 
@@ -85,7 +85,7 @@ async def restsearch(db: Annotated[Session, Depends(get_db)], body: ObjectSearch
 async def get_object_details(
     db: Annotated[Session, Depends(get_db)],
     object_id: Annotated[str, Path(..., alias="objectId")],
-) -> dict:
+) -> dict[str, Any]:
     return await _get_object_details(db, object_id)
 
 
@@ -101,7 +101,7 @@ async def delete_object(
     db: Annotated[Session, Depends(get_db)],
     object_id: Annotated[str, Path(..., alias="objectId")],
     hard_delete: Annotated[str, Path(..., alias="hardDelete")],
-) -> dict:
+) -> dict[str, Any]:
     return await _delete_object(db, object_id, hard_delete)
 
 
@@ -122,7 +122,7 @@ async def add_object_depr(
     event_id: Annotated[str, Path(..., alias="eventId")],
     object_template_id: Annotated[str, Path(..., alias="objectTemplateId")],
     body: ObjectCreateBody,
-) -> dict:
+) -> dict[str, Any]:
     return await _add_object(db, event_id, object_template_id, body)
 
 
@@ -137,7 +137,7 @@ async def add_object_depr(
 async def get_object_details_depr(
     db: Annotated[Session, Depends(get_db)],
     object_id: Annotated[str, Path(..., alias="objectId")],
-) -> dict:
+) -> dict[str, Any]:
     return await _get_object_details(db, object_id)
 
 
@@ -156,14 +156,14 @@ async def delete_object_depr(
     db: Annotated[Session, Depends(get_db)],
     object_id: Annotated[str, Path(..., alias="objectId")],
     hard_delete: Annotated[str, Path(..., alias="hardDelete")],
-) -> dict:
+) -> dict[str, Any]:
     return await _delete_object(db, object_id, hard_delete)
 
 
 # --- endpoint logic ---
 
 
-async def _add_object(db: Session, event_id: str, object_template_id: str, body: ObjectCreateBody) -> dict:
+async def _add_object(db: Session, event_id: str, object_template_id: str, body: ObjectCreateBody) -> dict[str, Any]:
     template: ObjectTemplate = check_existence_and_raise(
         db, ObjectTemplate, object_template_id, "object_template_id", "Object template not found."
     )
@@ -217,7 +217,7 @@ async def _add_object(db: Session, event_id: str, object_template_id: str, body:
     return ObjectResponse(object=object_response)
 
 
-async def _restsearch(db: Session, body: ObjectSearchBody) -> dict:
+async def _restsearch(db: Session, body: ObjectSearchBody) -> dict[str, Any]:
     for field, value in body.dict().items():
         objects: list[Object] = db.query(Object).filter(getattr(Object, field) == value).all()
 
@@ -230,7 +230,7 @@ async def _restsearch(db: Session, body: ObjectSearchBody) -> dict:
     return ObjectSearchResponse(response=[{"object": object_data} for object_data in objects_data])
 
 
-async def _get_object_details(db: Session, object_id: str) -> dict:
+async def _get_object_details(db: Session, object_id: str) -> dict[str, Any]:
     object: Object = check_existence_and_raise(db, Object, object_id, "object_id", "Object not found.")
     attributes: list[Attribute] = db.query(Attribute).filter(Attribute.object_id == object.id).all()
     event: Event = db.query(Event).join(Object, Event.id == Object.event_id).filter(Object.id == object_id).first()
@@ -248,7 +248,7 @@ async def _get_object_details(db: Session, object_id: str) -> dict:
     return ObjectResponse(object=object_data)
 
 
-async def _delete_object(db: Session, object_id: str, hard_delete: str) -> dict:
+async def _delete_object(db: Session, object_id: str, hard_delete: str) -> dict[str, Any]:
     object: Object = check_existence_and_raise(db, Object, object_id, "object_id", "Object not found.")
     saved = False
     success = False
