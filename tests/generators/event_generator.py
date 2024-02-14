@@ -7,3 +7,11 @@ def generate_valid_add_event_body() -> AddEventBody:
 
 def generate_invalid_add_event_body() -> AddEventBody:
     return AddEventBody(info=10)
+
+
+def generate_non_existing_id() -> str:
+    return "0"
+
+
+def generate_invalid_id() -> str:
+    return "invalid id"
