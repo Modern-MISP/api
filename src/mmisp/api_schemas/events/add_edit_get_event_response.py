@@ -3,6 +3,12 @@ from pydantic import BaseModel
 from ..organisations.organisation import Organisation
 
 
+class AddEditGetEventGalaxyClusterMeta(BaseModel):
+    external_id: str | None = None
+    refs: list[str] | None = None
+    kill_chain: str | None = None
+
+
 class AddEditGetEventGalaxyClusterRelationTag(BaseModel):
     id: str
     name: str
@@ -42,24 +48,25 @@ class AddEditGetEventGalaxyCluster(BaseModel):
     source: str
     authors: list[str]
     version: str
-    distribution: str
+    distribution: str | None = None  # change back later
     sharing_group_id: str | None = None
     org_id: str
     orgc_id: str
-    default: bool
-    locked: bool
-    extends_uuid: str
-    extends_version: str
-    published: bool
-    deleted: bool
+    default: bool | None = None  # change back later
+    locked: bool | None = None  # change back later
+    extends_uuid: str | None = None  # change back later
+    extends_version: str | None = None  # change back later
+    published: bool | None = None  # change back later
+    deleted: bool | None = None  # change back later
     GalaxyClusterRelation: list[AddEditGetEventGalaxyClusterRelation] = []
-    Org: Organisation
-    Orgc: Organisation
-    meta: str | None
-    tag_id: int
-    event_tag_id: str
-    local: bool
-    relationship_type: bool
+    Org: Organisation | None = None  # change back later
+    Orgc: Organisation | None = None  # change back later
+    meta: AddEditGetEventGalaxyClusterMeta | None = None
+    tag_id: str
+    attribute_tag_id: str | None = None
+    event_tag_id: str | None = None
+    local: bool | None = None  # change back later
+    relationship_type: str = ""
 
 
 class AddEditGetEventGalaxy(BaseModel):
@@ -126,7 +133,7 @@ class AddEditGetEventTag(BaseModel):
     hide_tag: bool
     numerical_value: int | None = None
     is_galaxy: bool
-    is_costum_galaxy: bool
+    is_custom_galaxy: bool
     local_only: bool
     local: int
     relationship_type: str | None = None
