@@ -544,14 +544,14 @@ async def _add_tag_to_attribute(
     try:
         int(tag_id)
     except ValueError:
-        logger.error("Failed to add tag to attribute: Invalid parameter tag")
+        logger.error("Failed to add tag to attribute: Invalid 'tag_id'")
         return AddRemoveTagAttributeResponse(saved=False, errors="Invalid Tag")
-    if not db.query(Tag).filter(Tag.id == tag_id):
+    if not db.get(Tag, tag_id):
         logger.error("Failed to add tag to attribute: Tag not found.")
         return AddRemoveTagAttributeResponse(saved=False, errors="Tag could not be added.")
     # tag = check_existence_and_raise(db, Tag, tag_id, "tag_id", "Tag not found.")
 
-    tag = db.query(Tag).filter(Tag.id == tag_id).first()
+    tag = db.get(Tag, tag_id)
 
     if int(local) not in [0, 1]:
         logger.exception("Failed to add tag to attribute: parameter 'local' is invalid")
@@ -587,10 +587,9 @@ async def _remove_tag_from_attribute(db: Session, attribute_id: str, tag_id: str
     except ValueError:
         logger.error("Failed to add tag to attribute: Invalid parameter tag")
         return AddRemoveTagAttributeResponse(saved=False, errors="Invalid Tag")
-    if not db.query(Tag).filter(Tag.id == tag_id):
+    if not db.get(Tag, tag_id):
         logger.error("Failed to add tag to attribute: Tag not found.")
         return AddRemoveTagAttributeResponse(saved=False, errors="Tag could not be removed.")
-    # tag = check_existence_and_raise(db, Tag, tag_id, "tag_id", "Tag not found.")
 
     attribute_tag = db.query(AttributeTag).filter(AttributeTag.attribute_id == attribute_id).first()
 
