@@ -193,6 +193,7 @@ async def rest_search_attributes(db: Annotated[Session, Depends(get_db)], body: 
 @router.get(
     "/attributes/attributeStatistics/{context}/{percentage}",
     status_code=status.HTTP_200_OK,
+    response_model=GetAttributeStatisticsCategoriesResponse,
     summary="Get attribute statistics",
     description="Get the count/percentage of attributes per category/type.",
 )
@@ -319,7 +320,7 @@ async def delete_attribute_depr(
 
 
 async def _add_attribute(db: Session, event_id: str, body: AddAttributeBody) -> dict:
-    check_existence_and_raise(db, Event, event_id, "event_id", "Event not found.")
+    event = check_existence_and_raise(db, Event, event_id, "event_id", "Event not found.")
     if not body.value:
         if not body.value1:
             logger.error("Attribute creation failed: attribute 'value' or 'value1' is required.")
@@ -359,6 +360,7 @@ async def _add_attribute(db: Session, event_id: str, body: AddAttributeBody) -> 
         )
 
     db.refresh(new_attribute)
+    setattr(event, "attribute_count", event.attribute_count + 1)
     logger.info(f"New attribute with id = {new_attribute.id} added.")
 
     attribute_data = _prepare_attribute_response(new_attribute, "add")
@@ -418,7 +420,7 @@ async def _delete_attribute(db: Session, attribute_id: str) -> DeleteAttributeRe
 
 
 async def _get_attributes(db: Session) -> dict:
-    attributes = db.query(Attribute).limit(2)
+    attributes = db.query(Attribute).all()
 
     if not attributes:
         logger.error("No attributes found.")
