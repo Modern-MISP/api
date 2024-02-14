@@ -1,11 +1,33 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from ..organisations.organisation import Organisation
 
 
-class AddEditGetEventGalaxyClusterMeta(BaseModel):
-    external_id: list[str]
-    kill_chain: list[str]
+class AddEditGetEventGalaxyClusterRelationTag(BaseModel):
+    id: str
+    name: str
+    colour: str
+    exportable: bool
+    org_id: str
+    user_id: str
+    hide_tag: bool
+    numerical_value: str
+    is_galaxy: bool
+    is_custom_galaxy: bool
+    local_only: bool
+
+
+class AddEditGetEventGalaxyClusterRelation(BaseModel):
+    id: str
+    galaxy_cluster_id: str
+    referenced_galaxy_cluster_id: str
+    referenced_galaxy_cluster_uuid: str
+    referenced_galaxy_cluster_type: str
+    galaxy_cluster_uuid: str
+    distribution: str
+    sharing_group_id: str | None = None
+    default: bool
+    Tag: list[AddEditGetEventGalaxyClusterRelationTag] = []
 
 
 class AddEditGetEventGalaxyCluster(BaseModel):
@@ -30,10 +52,10 @@ class AddEditGetEventGalaxyCluster(BaseModel):
     extends_version: str
     published: bool
     deleted: bool
-    GalaxyClusterRelation: list[str]
+    GalaxyClusterRelation: list[AddEditGetEventGalaxyClusterRelation] = []
     Org: Organisation
     Orgc: Organisation
-    meta: AddEditGetEventGalaxyClusterMeta
+    meta: str | None
     tag_id: int
     event_tag_id: str
     local: bool
@@ -52,7 +74,7 @@ class AddEditGetEventGalaxy(BaseModel):
     enabled: bool
     local_only: bool
     kill_chain_order: str
-    GalaxyCluster: list[AddEditGetEventGalaxyCluster]
+    GalaxyCluster: list[AddEditGetEventGalaxyCluster] = []
 
 
 class AddEditGetEventOrg(BaseModel):
@@ -67,44 +89,6 @@ class AddEditGetEventShadowAttribute(BaseModel):
     to_ids: bool
     type: str
     category: str
-
-
-class AddEditGetEventAttributeTag(BaseModel):
-    id: str
-    name: str
-    colour: str
-    exportable: bool
-    user_id: str
-    hide_tag: bool
-    numerical_value: str | None = None
-    is_galaxy: bool
-    is_custom_galaxy: bool
-    local_only: bool
-    local: int
-    relationship_type: str | None = None
-
-
-class AddEditGetEventAttribute(BaseModel):
-    id: str
-    event_id: str
-    object_id: str
-    object_relation: str | None = None
-    category: str
-    type: str
-    value: str
-    to_ids: bool
-    uuid: str
-    timestamp: str
-    distribution: str
-    sharing_group_id: str
-    comment: str
-    deleted: bool
-    disable_correlation: bool
-    first_seen: str | None = None
-    last_seen: str | None = None
-    Galaxy: list[str] = [AddEditGetEventGalaxy]
-    ShadowAttribute: list[str] = []
-    Tag: list[AddEditGetEventAttributeTag]
 
 
 class AddEditGetEventRelatedEventAttributesOrg(BaseModel):
@@ -130,39 +114,7 @@ class AddEditGetEventRelatedEventAttributes(BaseModel):
 
 
 class AddEditGetEventRelatedEvent(BaseModel):
-    Event: AddEditGetEventRelatedEventAttributes
-
-
-class AddEditGetEventObject(BaseModel):
-    id: str
-    name: str
-    meta_category: str = Field(..., alias="meta-category")
-    description: str
-    template_uuid: str
-    template_version: str
-    event_id: str
-    uuid: str
-    timestamp: str
-    distribution: str
-    sharing_group_id: str
-    comment: str
-    deleted: bool
-    first_seen: str | None = None
-    last_seen: str | None = None
-    ObjectReference: list[str] = []
-    Attribute: str
-
-
-class AddEditGetEventEventReport(BaseModel):
-    id: str
-    uuid: str
-    event_id: str
-    name: str
-    content: str
-    distribution: str
-    sharing_group_id: str
-    timestamp: str
-    deleted: bool
+    Event: list[AddEditGetEventRelatedEventAttributes] = []
 
 
 class AddEditGetEventTag(BaseModel):
@@ -178,6 +130,61 @@ class AddEditGetEventTag(BaseModel):
     local_only: bool
     local: int
     relationship_type: str | None = None
+
+
+class AddEditGetEventAttribute(BaseModel):
+    id: str
+    event_id: str
+    object_id: str
+    object_relation: str | None = None
+    category: str
+    type: str
+    value: str
+    to_ids: bool
+    uuid: str
+    timestamp: str
+    distribution: str
+    sharing_group_id: str
+    comment: str
+    deleted: bool
+    disable_correlation: bool
+    first_seen: str | None = None
+    last_seen: str | None = None
+    Galaxy: list[AddEditGetEventGalaxy] = []
+    ShadowAttribute: list[str] = []
+    Tag: list[AddEditGetEventTag] = []
+
+
+class AddEditGetEventObject(BaseModel):
+    id: str
+    name: str
+    meta_category: str
+    description: str
+    template_uuid: str
+    template_version: str
+    event_id: str
+    uuid: str
+    timestamp: str
+    distribution: str
+    sharing_group_id: str
+    comment: str
+    deleted: bool
+    first_seen: str | None = None
+    last_seen: str | None = None
+    ObjectReference: list[str] = []
+    Attribute: list[AddEditGetEventAttribute] = []
+
+
+class AddEditGetEventEventReport(BaseModel):
+    id: str
+    uuid: str
+    event_id: str
+    name: str
+    content: str
+    distribution: str
+    sharing_group_id: str
+    timestamp: str
+    deleted: bool
 
 
 class AddEditGetEventDetails(BaseModel):

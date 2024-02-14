@@ -25,7 +25,7 @@ class Event(Base):
     sharing_group_id = Column(String(255), nullable=True, default=None, index=True)
     proposal_email_lock = Column(Boolean, nullable=False, default=False)
     locked = Column(Boolean, nullable=False, default=False)
-    threat_level_id = Column(Integer, nullable=False)
+    threat_level_id = Column(Integer, nullable=False, default=4)
     publish_timestamp = Column(String(255), nullable=False, default=0)
     sighting_timestamp = Column(String(255), nullable=False, default=0)
     disable_correlation = Column(Boolean, nullable=False, default=False)
@@ -44,6 +44,10 @@ class EventReport(Base):
     event_id = Column(Integer, ForeignKey(Event.id), nullable=False, index=True)
     name = Column(String(255), nullable=False)
     content = Column(String(255), nullable=False, default="")
+    distribution = Column(Integer, nullable=False, default=0)
+    sharing_group_id = Column(Integer)
+    timestamp = Column(Integer, nullable=False)
+    deleted = Column(Boolean, nullable=False, default=False)
 
 
 class EventTag(Base):
