@@ -149,7 +149,7 @@ async def fetch_data_from_all_feeds(
 @router.get(
     "/feeds",
     status_code=status.HTTP_200_OK,
-    response_model=partial(FeedsResponse),  # type: ignore
+    response_model=partial(FeedsResponse),
     summary="Get all feeds",
     description="Retrieve a list of all feeds.",
 )
