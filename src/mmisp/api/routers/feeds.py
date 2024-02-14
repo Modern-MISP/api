@@ -49,7 +49,7 @@ logger.addHandler(error_handler)
     description="Add a new feed with given details.",
 )
 async def add_feed(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.ADD]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.ADD]))],
     db: Annotated[Session, Depends(get_db)],
     body: FeedCreateAndUpdateBody,
 ) -> dict:
@@ -64,7 +64,7 @@ async def add_feed(
     description="Cache feeds based on a specific scope. NOT YET AVAILABLE!",
 )
 async def cache_feeds(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.ADMIN, Permission.SITE_ADMIN]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.WORKER_KEY, [Permission.ADMIN, Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     cache_feeds_scope: Annotated[str, Path(..., alias="cacheFeedsScope")],
 ) -> dict:
@@ -79,7 +79,7 @@ async def cache_feeds(
     description="Fetch data from a specific feed by its ID. NOT YET AVAILABLE!",
 )
 async def fetch_from_feed(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.SYNC]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.WORKER_KEY, [Permission.SYNC]))],
     db: Annotated[Session, Depends(get_db)],
     feed_id: Annotated[str, Path(..., alias="feedId")],
 ) -> dict:
@@ -108,7 +108,7 @@ async def get_feed_details(
     description="Update an existing feed by its ID.",
 )
 async def update_feed(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.MODIFY]))],
     db: Annotated[Session, Depends(get_db)],
     feed_id: Annotated[str, Path(..., alias="feedId")],
     body: FeedCreateAndUpdateBody,
@@ -124,7 +124,7 @@ async def update_feed(
     description="Toggle the status of a feed between enabled and disabled.",
 )
 async def toggle_feed(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.MODIFY]))],
     db: Annotated[Session, Depends(get_db)],
     feed_id: Annotated[str, Path(..., alias="feedId")],
     body: FeedToggleBody,
@@ -140,7 +140,7 @@ async def toggle_feed(
     description="Fetch data from all available feeds. NOT YET AVAILABLE!",
 )
 async def fetch_data_from_all_feeds(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.SYNC]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.WORKER_KEY, [Permission.SYNC]))],
     db: Annotated[Session, Depends(get_db)],
 ) -> dict:
     return await _fetch_data_from_all_feeds(db)
@@ -169,7 +169,7 @@ async def get_feeds(db: Annotated[Session, Depends(get_db)]) -> list[dict]:
     description="Deprecated. Add a new feed with given details using the old route.",
 )
 async def add_feed_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.ADD]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.ADD]))],
     db: Annotated[Session, Depends(get_db)],
     body: FeedCreateAndUpdateBody,
 ) -> dict:
@@ -185,7 +185,7 @@ async def add_feed_depr(
     description="Deprecated. Enable a specific feed by its ID using the old route.",
 )
 async def enable_feed(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.MODIFY]))],
     db: Annotated[Session, Depends(get_db)],
     feed_id: Annotated[str, Path(..., alias="feedId")],
 ) -> dict:
@@ -201,7 +201,7 @@ async def enable_feed(
     description="Deprecated. Disable a specific feed by its ID using the old route.",
 )
 async def disable_feed(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.MODIFY]))],
     db: Annotated[Session, Depends(get_db)],
     feed_id: Annotated[str, Path(..., alias="feedId")],
 ) -> dict:
@@ -217,7 +217,7 @@ async def disable_feed(
     description="Cache feeds based on a specific scope.",
 )
 async def cache_feeds_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.ADMIN, Permission.SITE_ADMIN]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.WORKER_KEY, [Permission.ADMIN, Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     cache_feeds_scope: Annotated[str, Path(..., alias="cacheFeedsScope")],
 ) -> dict:
@@ -233,7 +233,7 @@ async def cache_feeds_depr(
     description="Deprecated. Fetch data from a specific feed by its ID using the old route.",
 )
 async def fetch_from_feed_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.SYNC]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.WORKER_KEY, [Permission.SYNC]))],
     db: Annotated[Session, Depends(get_db)],
     feed_id: Annotated[str, Path(..., alias="feedId")],
 ) -> dict:
@@ -249,7 +249,7 @@ async def fetch_from_feed_depr(
     description="Deprecated. Fetch data from all available feeds using the old route.",
 )
 async def fetch_data_from_all_feeds_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.SYNC]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.WORKER_KEY, [Permission.SYNC]))],
     db: Annotated[Session, Depends(get_db)],
 ) -> dict:
     return await _fetch_data_from_all_feeds(db)
@@ -279,7 +279,7 @@ async def get_feed_details_depr(
     description="Deprecated. Update an existing feed by its ID using the old route.",
 )
 async def update_feed_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.MODIFY]))],
     db: Annotated[Session, Depends(get_db)],
     feed_id: Annotated[str, Path(..., alias="feedId")],
     body: FeedCreateAndUpdateBody,

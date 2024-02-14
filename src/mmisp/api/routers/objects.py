@@ -55,7 +55,7 @@ logger.addHandler(error_handler)
     description="Add a new object to a specific event using a template.",
 )
 async def add_object(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.ADD]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.ADD]))],
     db: Annotated[Session, Depends(get_db)],
     event_id: Annotated[str, Path(..., alias="eventId")],
     object_template_id: Annotated[str, Path(..., alias="objectTemplateId")],
@@ -97,7 +97,7 @@ async def get_object_details(
     description="Delete a specific object. The hardDelete parameter determines if it's a hard or soft delete.",
 )
 async def delete_object(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.MODIFY]))],
     db: Annotated[Session, Depends(get_db)],
     object_id: Annotated[str, Path(..., alias="objectId")],
     hard_delete: Annotated[str, Path(..., alias="hardDelete")],
@@ -117,7 +117,7 @@ async def delete_object(
     description="Deprecated. Add an object to an event using the old route.",
 )
 async def add_object_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.ADD]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.ADD]))],
     db: Annotated[Session, Depends(get_db)],
     event_id: Annotated[str, Path(..., alias="eventId")],
     object_template_id: Annotated[str, Path(..., alias="objectTemplateId")],
@@ -152,7 +152,7 @@ async def get_object_details_depr(
     The hardDelete parameter determines if it's a hard or soft delete.""",
 )
 async def delete_object_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.MODIFY]))],
     db: Annotated[Session, Depends(get_db)],
     object_id: Annotated[str, Path(..., alias="objectId")],
     hard_delete: Annotated[str, Path(..., alias="hardDelete")],
