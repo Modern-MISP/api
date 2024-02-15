@@ -6,34 +6,34 @@ from mmisp.util.uuid import uuid
 from ..database import Base
 from .organisation import Organisation
 from .sharing_group import SharingGroup
+from .tag import Tag
 
 
 class Event(Base):
     __tablename__ = "events"
 
     id = Column(Integer, primary_key=True)
-    uuid = Column(String(255), unique=True, default=uuid)
-    org_id = Column(Integer, ForeignKey(Organisation.id))  # owner org
-    orgc_id = Column(Integer, ForeignKey(Organisation.id))  # creator org
-    info = Column(String(255))
-    distribution = Column(String(255))
-    date = Column(String(255))
-    published = Column(Boolean)
-    analysis = Column(String(255))
-    attribute_count = Column(String(255))
-    timestamp = Column(String(255))
-    sharing_group_id = Column(Integer, ForeignKey("sharing_groups.id"))
-    proposal_email_lock = Column(Boolean)
-    locked = Column(Boolean)
-    threat_level_id = Column(String(255))
-    publish_timestamp = Column(String(255))
-    sighting_timestamp = Column(String(255))
-    disable_correlation = Column(Boolean)
-    extends_uuid = Column(String(255))
-    event_creator_email = Column(String(255))
-    protected = Column(Boolean)
-    cryptographic_key = Column(String(255))  # must be serialized
-
+    uuid = Column(String(255), unique=True, default=uuid, index=True)
+    org_id = Column(Integer, ForeignKey(Organisation.id), nullable=False, index=True)  # owner org
+    orgc_id = Column(Integer, ForeignKey(Organisation.id), nullable=False, index=True)  # creator org
+    info = Column(String(255), nullable=False, index=True)
+    distribution = Column(Integer, nullable=False, default=0)
+    date = Column(String(255), nullable=False)
+    published = Column(Boolean, nullable=False, default=False)
+    analysis = Column(String(255), nullable=False)
+    attribute_count = Column(Integer, default=0)
+    timestamp = Column(Integer, nullable=False, default=0)
+    sharing_group_id = Column(Integer, ForeignKey(SharingGroup.id), nullable=True, default=None, index=True)
+    proposal_email_lock = Column(Boolean, nullable=False, default=False)
+    locked = Column(Boolean, nullable=False, default=False)
+    threat_level_id = Column(Integer, nullable=False, default=4)
+    publish_timestamp = Column(String(255), nullable=False, default=0)
+    sighting_timestamp = Column(String(255), nullable=False, default=0)
+    disable_correlation = Column(Boolean, nullable=False, default=False)
+    extends_uuid = Column(String(255), default="")
+    event_creator_email = Column(String(255), nullable=False)
+    protected = Column(Boolean, nullable=True, default=None)
+    cryptographic_key = Column(String(255), nullable=True, default=None)  # must be serialized
     attributes = relationship("Attribute", back_populates="event")
 
 
@@ -42,10 +42,19 @@ class EventReport(Base):
 
     id = Column(Integer, primary_key=True)
     uuid = Column(String(255), unique=True, default=uuid)
-    event_id = Column(Integer, ForeignKey(Event.id))
-    name = Column(String(255))
-    content = Column(String(255))
-    distribution = Column(String(255))
-    sharing_group_id = Column(Integer, ForeignKey(SharingGroup.id))
-    timestamp = Column(String(255))
-    deleted = Column(Boolean)
+    event_id = Column(Integer, ForeignKey(Event.id), nullable=False, index=True)
+    name = Column(String(255), nullable=False)
+    content = Column(String(255), nullable=False, default="")
+    distribution = Column(Integer, nullable=False, default=0)
+    sharing_group_id = Column(Integer)
+    timestamp = Column(Integer, nullable=False)
+    deleted = Column(Boolean, nullable=False, default=False)
+
+
+class EventTag(Base):
+    __tablename__ = "event_tags"
+
+    id = Column(Integer, primary_key=True)
+    event_id = Column(Integer, ForeignKey(Event.id), nullable=False, index=True)
+    tag_id = Column(Integer, ForeignKey(Tag.id), nullable=False, index=True)
+    local = Column(Boolean, nullable=False, default=False)

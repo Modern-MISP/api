@@ -1,5 +1,88 @@
 from pydantic import BaseModel
 
+from ..organisations.organisation import Organisation
+
+
+class AddEditGetEventGalaxyClusterMeta(BaseModel):
+    external_id: str | None = None
+    refs: list[str] | None = None
+    kill_chain: str | None = None
+
+
+class AddEditGetEventGalaxyClusterRelationTag(BaseModel):
+    id: str
+    name: str
+    colour: str
+    exportable: bool
+    org_id: str
+    user_id: str
+    hide_tag: bool
+    numerical_value: str
+    is_galaxy: bool
+    is_custom_galaxy: bool
+    local_only: bool
+
+
+class AddEditGetEventGalaxyClusterRelation(BaseModel):
+    id: str
+    galaxy_cluster_id: str
+    referenced_galaxy_cluster_id: str
+    referenced_galaxy_cluster_uuid: str
+    referenced_galaxy_cluster_type: str
+    galaxy_cluster_uuid: str
+    distribution: str
+    sharing_group_id: str | None = None
+    default: bool
+    Tag: list[AddEditGetEventGalaxyClusterRelationTag] = []
+
+
+class AddEditGetEventGalaxyCluster(BaseModel):
+    id: str
+    uuid: str
+    collection_uuid: str
+    type: str
+    value: str
+    tag_name: str
+    description: str
+    galaxy_id: str
+    source: str
+    authors: list[str]
+    version: str
+    distribution: str | None = None  # change back later
+    sharing_group_id: str | None = None
+    org_id: str
+    orgc_id: str
+    default: bool | None = None  # change back later
+    locked: bool | None = None  # change back later
+    extends_uuid: str | None = None  # change back later
+    extends_version: str | None = None  # change back later
+    published: bool | None = None  # change back later
+    deleted: bool | None = None  # change back later
+    GalaxyClusterRelation: list[AddEditGetEventGalaxyClusterRelation] = []
+    Org: Organisation | None = None  # change back later
+    Orgc: Organisation | None = None  # change back later
+    meta: AddEditGetEventGalaxyClusterMeta | None = None
+    tag_id: str
+    attribute_tag_id: str | None = None
+    event_tag_id: str | None = None
+    local: bool | None = None  # change back later
+    relationship_type: str = ""
+
+
+class AddEditGetEventGalaxy(BaseModel):
+    id: str
+    uuid: str
+    name: str
+    type: str
+    description: str
+    version: str
+    icon: str
+    namespace: str
+    enabled: bool
+    local_only: bool
+    kill_chain_order: str
+    GalaxyCluster: list[AddEditGetEventGalaxyCluster] = []
+
 
 class AddEditGetEventOrg(BaseModel):
     id: str
@@ -38,7 +121,65 @@ class AddEditGetEventRelatedEventAttributes(BaseModel):
 
 
 class AddEditGetEventRelatedEvent(BaseModel):
-    Event: AddEditGetEventRelatedEventAttributes
+    Event: list[AddEditGetEventRelatedEventAttributes] = []
+
+
+class AddEditGetEventTag(BaseModel):
+    id: str
+    name: str
+    colour: str
+    exportable: str
+    user_id: str
+    hide_tag: bool
+    numerical_value: int | None = None
+    is_galaxy: bool
+    is_custom_galaxy: bool
+    local_only: bool
+    local: int
+    relationship_type: str | None = None
+
+
+class AddEditGetEventAttribute(BaseModel):
+    id: str
+    event_id: str
+    object_id: str
+    object_relation: str | None = None
+    category: str
+    type: str
+    value: str
+    to_ids: bool
+    uuid: str
+    timestamp: str
+    distribution: str
+    sharing_group_id: str
+    comment: str
+    deleted: bool
+    disable_correlation: bool
+    first_seen: str | None = None
+    last_seen: str | None = None
+    Galaxy: list[AddEditGetEventGalaxy] = []
+    ShadowAttribute: list[str] = []
+    Tag: list[AddEditGetEventTag] = []
+
+
+class AddEditGetEventObject(BaseModel):
+    id: str
+    name: str
+    meta_category: str
+    description: str
+    template_uuid: str
+    template_version: str
+    event_id: str
+    uuid: str
+    timestamp: str
+    distribution: str
+    sharing_group_id: str
+    comment: str
+    deleted: bool
+    first_seen: str | None = None
+    last_seen: str | None = None
+    ObjectReference: list[str] = []
+    Attribute: list[AddEditGetEventAttribute] = []
 
 
 class AddEditGetEventEventReport(BaseModel):
@@ -53,22 +194,7 @@ class AddEditGetEventEventReport(BaseModel):
     deleted: bool
 
 
-class AddEditGetEventTag(BaseModel):
-    id: str
-    name: str
-    colour: str
-    exportable: str
-    user_id: str
-    hide_tag: bool
-    numerical_value: int
-    is_galaxy: bool
-    is_costum_galaxy: bool
-    local_only: bool
-    local: int
-    relationship_type: str
-
-
-class AddEditGetEventAttributes(BaseModel):
+class AddEditGetEventDetails(BaseModel):
     id: str
     orgc_id: str
     org_id: str
@@ -87,22 +213,22 @@ class AddEditGetEventAttributes(BaseModel):
     sharing_group_id: str
     disable_correlation: bool
     extends_uuid: str
-    protected: bool
+    protected: bool | None = None
     event_creator_email: str
     Org: AddEditGetEventOrg
     Orgc: AddEditGetEventOrg
-    Attribute: list[str]
-    ShadowAttribute: list[AddEditGetEventShadowAttribute]
-    RelatedEvent: list[AddEditGetEventEventReport]
-    Galaxy: list[str]
-    Object: list[str]
-    EventReport: list[AddEditGetEventEventReport]
-    CryptographicKey: list[str]
-    Tag: list[AddEditGetEventTag]
+    Attribute: list[AddEditGetEventAttribute] = []
+    ShadowAttribute: list[AddEditGetEventShadowAttribute] = []
+    RelatedEvent: list[AddEditGetEventEventReport] = []
+    Galaxy: list[AddEditGetEventGalaxy] = []
+    Object: list[AddEditGetEventObject] = []
+    EventReport: list[AddEditGetEventEventReport] = []
+    CryptographicKey: list[str] = []
+    Tag: list[AddEditGetEventTag] = []
 
 
 class AddEditGetEventResponse(BaseModel):
-    Event: AddEditGetEventAttributes
+    Event: AddEditGetEventDetails
 
     class Config:
         orm_mode = True
