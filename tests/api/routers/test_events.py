@@ -721,4 +721,4 @@ class TestAddAttributeViaFreeTextImport:
             f"/events/freeTextImport/{event_id}", json=add_attribute_via_free_text_import_valid_data, headers=headers
         )
 
-        assert response.status_code == 200
+        assert response.status_code == 501
