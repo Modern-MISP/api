@@ -179,15 +179,15 @@ async def _add_object(db: Session, event_id: str, object_template_id: str, body:
         "event_id": int(event_id),
         "timestamp": _create_timestamp(),
     }
-    new_object = Object(**object_data)
-    db.add(new_object)
+    object = Object(**object_data)
+    db.add(object)
     db.flush()
-    db.refresh(new_object)
+    db.refresh(object)
 
     attributes_data = [
         {
             **attr.dict(),
-            "object_id": new_object.id,
+            "object_id": object.id,
             "timestamp": _create_timestamp(),
             "event_id": int(event_id),
         }
@@ -197,7 +197,7 @@ async def _add_object(db: Session, event_id: str, object_template_id: str, body:
     try:
         db.bulk_insert_mappings(Attribute, attributes_data)
         db.commit()
-        logger.info(f"New object with attributes added: {new_object.id}")
+        logger.info(f"New object with attributes added: {object.id}")
     except SQLAlchemyError as e:
         db.rollback()
         logger.exception(f"Failed to add new object with attributes: {e}")
@@ -205,12 +205,12 @@ async def _add_object(db: Session, event_id: str, object_template_id: str, body:
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred."
         )
 
-    db.refresh(new_object)
-    attributes = db.query(Attribute).filter(Attribute.object_id == new_object.id).all()
+    db.refresh(object)
+    attributes = db.query(Attribute).filter(Attribute.object_id == object.id).all()
     attributes_response = [GetAllAttributesResponse(**attribute.__dict__) for attribute in attributes]
 
     object_response = ObjectWithAttributesResponse(
-        **new_object.__dict__,
+        **object.__dict__,
         attributes=attributes_response,
         event=None,
     )
