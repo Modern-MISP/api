@@ -1,9 +1,7 @@
-import logging
 import time
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Path, status
-from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
@@ -25,23 +23,6 @@ from mmisp.util.partial import partial
 from mmisp.util.request_validations import check_existence_and_raise
 
 router = APIRouter(tags=["objects"])
-logging.basicConfig(level=logging.INFO)
-
-info_format = "%(asctime)s - %(message)s"
-error_format = "%(asctime)s - %(filename)s:%(lineno)d - %(message)s"
-
-info_handler = logging.StreamHandler()
-info_handler.setLevel(logging.INFO)
-info_handler.setFormatter(logging.Formatter(info_format))
-
-error_handler = logging.StreamHandler()
-error_handler.setLevel(logging.ERROR)
-error_handler.setFormatter(logging.Formatter(error_format))
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-logger.addHandler(info_handler)
-logger.addHandler(error_handler)
 
 
 # sorted according to CRUD
@@ -174,7 +155,7 @@ async def _add_object(db: Session, event_id: str, object_template_id: str, body:
         "template_id": int(object_template_id) if object_template_id is not None else None,
         "template_name": template.name if template is not None else None,
         "template_uuid": template.uuid if template is not None else None,
-        "template_version": template.version if template is not None else None,
+        "template_version": int(template.version) if template is not None else None,
         "template_description": template.description if template is not None else None,
         "event_id": int(event_id),
         "timestamp": _create_timestamp(),
@@ -194,17 +175,8 @@ async def _add_object(db: Session, event_id: str, object_template_id: str, body:
         for attr in body.attributes
     ]
 
-    try:
-        db.bulk_insert_mappings(Attribute, attributes_data)
-        db.commit()
-        logger.info(f"New object with attributes added: {object.id}")
-    except SQLAlchemyError as e:
-        db.rollback()
-        logger.exception(f"Failed to add new object with attributes: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred."
-        )
-
+    db.bulk_insert_mappings(Attribute, attributes_data)
+    db.commit()
     db.refresh(object)
     attributes = db.query(Attribute).filter(Attribute.object_id == object.id).all()
     attributes_response = [GetAllAttributesResponse(**attribute.__dict__) for attribute in attributes]
@@ -257,31 +229,15 @@ async def _delete_object(db: Session, object_id: str, hard_delete: str) -> dict[
     if hard_delete.lower() == "true" or hard_delete == "1":
         db.query(Attribute).filter(Attribute.object_id == object_id).delete(synchronize_session="fetch")
         db.delete(object)
-        try:
-            db.commit()
-            logger.info(f"Hard deleted object with id '{object_id}'.")
-            saved = True
-            success = True
-        except SQLAlchemyError as e:
-            db.rollback()
-            logger.exception(f"Failed to hard delete object with id '{object_id}': {e}")
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred."
-            )
+        db.commit()
+        saved = True
+        success = True
         message = "Object has been permanently deleted."
     elif hard_delete.lower() == "false" or hard_delete == "0":
         object.deleted = True
-        try:
-            db.commit()
-            logger.info(f"Soft deleted object with id '{object_id}'.")
-            saved = True
-            success = True
-        except SQLAlchemyError as e:
-            db.rollback()
-            logger.exception(f"Failed to soft delete object with id '{object_id}': {e}")
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred."
-            )
+        db.commit()
+        saved = True
+        success = True
         message = "Object has been soft deleted."
     else:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid 'hardDelete' parameter.")
