@@ -6,7 +6,7 @@ from mmisp.db.models.user import User
 def generate_user() -> User:
     """These fields need to be set manually: org_id, server_id, role_id"""
     return User(
-        password="encrypt me",  # TODO
+        password="manually set me",
         email=f"generated-user+{time_ns()}@test.com",
         autoalert=False,
         authkey="auth key",

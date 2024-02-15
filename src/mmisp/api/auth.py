@@ -175,15 +175,40 @@ def encode_token(user_id: str) -> str:
     return jwt.encode(payload, config.HASH_SECRET, "HS256")
 
 
-def _decode_token(authorization: str) -> str | None:
+def encode_exchange_token(user_id: str) -> str:
+    payload = {
+        "user_id": user_id,
+        "exchange_token": True,
+        "exp": datetime.utcnow() + timedelta(minutes=1),
+        "iat": datetime.utcnow(),
+    }
+
+    return jwt.encode(payload, config.HASH_SECRET, "HS256")
+
+
+def decode_exchange_token(token: str) -> str | None:
     payload: dict
 
     try:
-        payload = jwt.decode(authorization, config.HASH_SECRET, ["HS256"])
+        payload = jwt.decode(token, config.HASH_SECRET, ["HS256"])
     except jwt.InvalidTokenError:
         return None
 
-    if not payload:
+    if not payload or not payload.get("exchange_token", None):
+        return None
+
+    return payload.get("user_id", None)
+
+
+def _decode_token(token: str) -> str | None:
+    payload: dict
+
+    try:
+        payload = jwt.decode(token, config.HASH_SECRET, ["HS256"])
+    except jwt.InvalidTokenError:
+        return None
+
+    if not payload or payload.get("exchange_token", None):
         return None
 
     return payload.get("user_id", None)
