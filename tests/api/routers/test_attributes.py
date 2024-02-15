@@ -156,10 +156,33 @@ class TestAddAttribute:
         assert response.status_code == 404
 
     def test_add_attribute_invalid_data(
-        self: "TestAddAttribute", existing_id: str, add_attribute_invalid_data: Dict[str, Any]
+        self: "TestAddAttribute", db: Session, existing_id: str, add_attribute_invalid_data: Dict[str, Any]
     ) -> None:
+        add_org_body = Organisation(name="test", local=True)
+
+        db.add(add_org_body)
+        db.commit()
+        db.refresh(add_org_body)
+
+        org_id = add_org_body.id
+
+        add_event_body = Event(
+            org_id=org_id,
+            orgc_id=org_id,
+            info="test event",
+            date="2024-02-13",
+            analysis="test analysis",
+            event_creator_email="test@mail.de",
+        )
+
+        db.add(add_event_body)
+        db.commit()
+        db.refresh(add_event_body)
+
+        event_id = str(add_event_body.id)
+
         headers = {"authorization": environment.site_admin_user_token}
-        response = client.post(f"/attributes/{existing_id}", json=add_attribute_invalid_data, headers=headers)
+        response = client.post(f"/attributes/{event_id}", json=add_attribute_invalid_data, headers=headers)
         assert response.status_code == 403
 
     def test_add_attribute_response_format(
