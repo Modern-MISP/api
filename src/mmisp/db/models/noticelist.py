@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
+from sqlalchemy import JSON, Boolean, Column, Integer, String
 
 from ..database import Base
 
@@ -8,15 +8,18 @@ class Noticelist(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String(255))
     expanded_name = Column(String(255))
-    ref = Column(String(255))  # data must be serialized
-    geographical_area = Column(String(255))  # data must be serialized
+    ref = Column(JSON)  # data must be serialized as json
+    geographical_area = Column(JSON)  # data must be serialized as json
     version = Column(Integer)
     enabled = Column(Boolean)
-    # noticelist_entries = relationship("noticelistsEntries")
 
 
 class NoticelistEntry(Base):
     __tablename__ = "noticelists_entries"
     id = Column(Integer, primary_key=True)
-    noticelist_id = Column(Integer, ForeignKey(Noticelist.id))
-    data = Column(String(255))
+    noticelist_id = Column(Integer, nullable=False)
+    scope = Column(JSON)  # data must be serialized as json
+    field = Column(JSON)  # data must be serialized as json
+    value = Column(JSON)  # data must be serialized as json
+    tags = Column(JSON)  # data must be serialized as json
+    message = Column(String(255))
