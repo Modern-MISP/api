@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from mmisp.api_schemas.attributes.get_describe_types_response import GetDescribeTypesAttributes
 from mmisp.db.models.attribute import Attribute, AttributeTag
 from mmisp.db.models.event import Event
+from mmisp.db.models.organisation import Organisation
 from mmisp.db.models.tag import Tag
 
 from ...environment import client, environment, get_db
@@ -107,7 +108,22 @@ class TestAddAttribute:
     def test_add_attribute_valid_data(
         self: "TestAddAttribute", db: Session, add_attribute_valid_data: Dict[str, Any]
     ) -> None:
-        add_event_body = Event(info="test")
+        add_org_body = Organisation(name="test", local=True)
+
+        db.add(add_org_body)
+        db.commit()
+        db.refresh(add_org_body)
+
+        org_id = add_org_body.id
+
+        add_event_body = Event(
+            org_id=org_id,
+            orgc_id=org_id,
+            info="test event",
+            date="2024-02-13",
+            analysis="test analysis",
+            event_creator_email="test@mail.de",
+        )
 
         db.add(add_event_body)
         db.commit()
@@ -166,7 +182,22 @@ class TestAddAttribute:
 
 class TestGetAttributeDetails:
     def test_get_existing_attribute(self: "TestGetAttributeDetails", db: Session) -> None:
-        add_event_body = Event(info="test")
+        add_org_body = Organisation(name="test", local=True)
+
+        db.add(add_org_body)
+        db.commit()
+        db.refresh(add_org_body)
+
+        org_id = add_org_body.id
+
+        add_event_body = Event(
+            org_id=org_id,
+            orgc_id=org_id,
+            info="test event",
+            date="2024-02-13",
+            analysis="test analysis",
+            event_creator_email="test@mail.de",
+        )
 
         db.add(add_event_body)
         db.commit()
@@ -258,7 +289,22 @@ class TestEditAttribute:
     def test_edit_existing_attribute(
         self: "TestEditAttribute", db: Session, existing_id: str, edit_attribute_valid_data: Dict[str, Any]
     ) -> None:
-        add_event_body = Event(info="test")
+        add_org_body = Organisation(name="test", local=True)
+
+        db.add(add_org_body)
+        db.commit()
+        db.refresh(add_org_body)
+
+        org_id = add_org_body.id
+
+        add_event_body = Event(
+            org_id=org_id,
+            orgc_id=org_id,
+            info="test event",
+            date="2024-02-13",
+            analysis="test analysis",
+            event_creator_email="test@mail.de",
+        )
 
         db.add(add_event_body)
         db.commit()
@@ -332,7 +378,22 @@ class TestEditAttribute:
 
 class TestDeleteAttribute:
     def test_delete_existing_attribute(self: "TestDeleteAttribute", db: Session) -> None:
-        add_event_body = Event(info="test")
+        add_org_body = Organisation(name="test", local=True)
+
+        db.add(add_org_body)
+        db.commit()
+        db.refresh(add_org_body)
+
+        org_id = add_org_body.id
+
+        add_event_body = Event(
+            org_id=org_id,
+            orgc_id=org_id,
+            info="test event",
+            date="2024-02-13",
+            analysis="test analysis",
+            event_creator_email="test@mail.de",
+        )
 
         db.add(add_event_body)
         db.commit()
@@ -378,7 +439,22 @@ class TestDeleteAttribute:
 
 class TestGetAllAttributes:
     def test_get_all_attributes(self: "TestGetAllAttributes", db: Session) -> None:
-        add_event_body = Event(info="test")
+        add_org_body = Organisation(name="test", local=True)
+
+        db.add(add_org_body)
+        db.commit()
+        db.refresh(add_org_body)
+
+        org_id = add_org_body.id
+
+        add_event_body = Event(
+            org_id=org_id,
+            orgc_id=org_id,
+            info="test event",
+            date="2024-02-13",
+            analysis="test analysis",
+            event_creator_email="test@mail.de",
+        )
 
         db.add(add_event_body)
         db.commit()
@@ -442,7 +518,22 @@ class TestDeleteSelectedAttributes:
     def test_delete_selected_attributes_from_existing_event(
         self: "TestDeleteSelectedAttributes", db: Session, delete_selected_existing_attributes_data: Dict[str, Any]
     ) -> None:
-        add_event_body = Event(info="test")
+        add_org_body = Organisation(name="test", local=True)
+
+        db.add(add_org_body)
+        db.commit()
+        db.refresh(add_org_body)
+
+        org_id = add_org_body.id
+
+        add_event_body = Event(
+            org_id=org_id,
+            orgc_id=org_id,
+            info="test event",
+            date="2024-02-13",
+            analysis="test analysis",
+            event_creator_email="test@mail.de",
+        )
 
         db.add(add_event_body)
         db.commit()
@@ -605,7 +696,22 @@ class TestAttributeDescribeTypes:
 
 class TestRestoreAttribute:
     def test_restore_existing_attribute(self: "TestRestoreAttribute", db: Session) -> None:
-        add_event_body = Event(info="test")
+        add_org_body = Organisation(name="test", local=True)
+
+        db.add(add_org_body)
+        db.commit()
+        db.refresh(add_org_body)
+
+        org_id = add_org_body.id
+
+        add_event_body = Event(
+            org_id=org_id,
+            orgc_id=org_id,
+            info="test event",
+            date="2024-02-13",
+            analysis="test analysis",
+            event_creator_email="test@mail.de",
+        )
 
         db.add(add_event_body)
         db.commit()
@@ -650,7 +756,22 @@ class TestAddTagToAttribute:
     def test_add_existing_tag_to_attribute(
         self: "TestAddTagToAttribute", db: Session, existing_id: str, valid_local_add_tag_to_attribute: int
     ) -> None:
-        add_event_body = Event(info="test")
+        add_org_body = Organisation(name="test", local=True)
+
+        db.add(add_org_body)
+        db.commit()
+        db.refresh(add_org_body)
+
+        org_id = add_org_body.id
+
+        add_event_body = Event(
+            org_id=org_id,
+            orgc_id=org_id,
+            info="test event",
+            date="2024-02-13",
+            analysis="test analysis",
+            event_creator_email="test@mail.de",
+        )
 
         db.add(add_event_body)
         db.commit()
@@ -711,7 +832,22 @@ class TestAddTagToAttribute:
         invalid_or_non_existing_ids: Any,
         valid_local_add_tag_to_attribute: int,
     ) -> None:
-        add_event_body = Event(info="test")
+        add_org_body = Organisation(name="test", local=True)
+
+        db.add(add_org_body)
+        db.commit()
+        db.refresh(add_org_body)
+
+        org_id = add_org_body.id
+
+        add_event_body = Event(
+            org_id=org_id,
+            orgc_id=org_id,
+            info="test event",
+            date="2024-02-13",
+            analysis="test analysis",
+            event_creator_email="test@mail.de",
+        )
 
         db.add(add_event_body)
         db.commit()
@@ -761,7 +897,22 @@ class TestAddTagToAttribute:
 
 class TestRemoveTagFromAttribute:
     def test_remove_existing_tag_from_attribute(self: "TestRemoveTagFromAttribute", db: Session) -> None:
-        add_event_body = Event(info="test")
+        add_org_body = Organisation(name="test", local=True)
+
+        db.add(add_org_body)
+        db.commit()
+        db.refresh(add_org_body)
+
+        org_id = add_org_body.id
+
+        add_event_body = Event(
+            org_id=org_id,
+            orgc_id=org_id,
+            info="test event",
+            date="2024-02-13",
+            analysis="test analysis",
+            event_creator_email="test@mail.de",
+        )
 
         db.add(add_event_body)
         db.commit()
