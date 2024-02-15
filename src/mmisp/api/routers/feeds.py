@@ -303,6 +303,7 @@ async def _add_feed(db: Session, body: FeedCreateAndUpdateBody) -> dict[str, Any
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred."
         )
 
+    db.refresh(feed)
     logger.info(f"New feed added: {feed.id}")
     return FeedResponse(feed=feed.__dict__)
 
