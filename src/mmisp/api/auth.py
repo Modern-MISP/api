@@ -180,7 +180,7 @@ def _decode_token(authorization: str) -> str | None:
 
     try:
         payload = jwt.decode(authorization, config.HASH_SECRET, ["HS256"])
-    except jwt.DecodeError:
+    except jwt.InvalidTokenError:
         return None
 
     if not payload:
