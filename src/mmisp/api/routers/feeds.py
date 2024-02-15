@@ -1,9 +1,7 @@
-import logging
 from enum import Enum
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Path, status
-from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
@@ -19,23 +17,6 @@ from mmisp.util.partial import partial
 from mmisp.util.request_validations import check_existence_and_raise
 
 router = APIRouter(tags=["feeds"])
-logging.basicConfig(level=logging.INFO)
-
-info_format = "%(asctime)s - %(message)s"
-error_format = "%(asctime)s - %(filename)s:%(lineno)d - %(message)s"
-
-info_handler = logging.StreamHandler()
-info_handler.setLevel(logging.INFO)
-info_handler.setFormatter(logging.Formatter(info_format))
-
-error_handler = logging.StreamHandler()
-error_handler.setLevel(logging.ERROR)
-error_handler.setFormatter(logging.Formatter(error_format))
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-logger.addHandler(info_handler)
-logger.addHandler(error_handler)
 
 
 # sorted according to CRUD
@@ -56,7 +37,7 @@ async def add_feed(
     return await _add_feed(db, body)
 
 
-@router.post(  #! @worker: also change 'status_code' and 'description'
+@router.post(  # @worker: also change 'status_code' and 'description'
     "/feeds/cache_feeds/{cacheFeedsScope}",
     status_code=status.HTTP_501_NOT_IMPLEMENTED,
     response_model=partial(FeedCacheResponse),
@@ -71,7 +52,7 @@ async def cache_feeds(
     return await _cache_feeds(db, cache_feeds_scope)
 
 
-@router.get(  #! @worker: also change 'status_code' and 'description'
+@router.get(  # @worker: also change 'status_code' and 'description'
     "/feeds/fetch_from_feed/{feedId}",
     status_code=status.HTTP_501_NOT_IMPLEMENTED,
     response_model=partial(FeedFetchResponse),
@@ -132,7 +113,7 @@ async def toggle_feed(
     return await _toggle_feed(db, feed_id, body)
 
 
-@router.get(  #! @worker: also change 'status_code' and 'description'
+@router.get(  # @worker: also change 'status_code' and 'description'
     "/feeds/fetch_from_all_feeds",
     status_code=status.HTTP_501_NOT_IMPLEMENTED,
     response_model=partial(FeedFetchResponse),
@@ -208,7 +189,7 @@ async def disable_feed(
     return await _disable_feed(db, feed_id)
 
 
-@router.post(  #! @worker: also change 'status_code' and 'description'
+@router.post(  # @worker: also change 'status_code' and 'description'
     "/feeds/cacheFeeds/{cacheFeedsScope}",
     deprecated=True,
     status_code=status.HTTP_501_NOT_IMPLEMENTED,
@@ -224,7 +205,7 @@ async def cache_feeds_depr(
     return await _cache_feeds(db, cache_feeds_scope)
 
 
-@router.post(  #! @worker: also change 'status_code' and 'description'
+@router.post(  # @worker: also change 'status_code' and 'description'
     "/feeds/fetchFromFeed/{feedId}",
     deprecated=True,
     status_code=status.HTTP_501_NOT_IMPLEMENTED,
@@ -240,7 +221,7 @@ async def fetch_from_feed_depr(
     return await _fetch_from_feed(db, feed_id)
 
 
-@router.post(  #! @worker: also change 'status_code' and 'description'
+@router.post(  # @worker: also change 'status_code' and 'description'
     "/feeds/fetchFromAllFeeds",
     deprecated=True,
     status_code=status.HTTP_501_NOT_IMPLEMENTED,
@@ -293,33 +274,23 @@ async def update_feed_depr(
 async def _add_feed(db: Session, body: FeedCreateAndUpdateBody) -> dict[str, Any]:
     feed: Feed = Feed(**body.dict())
 
-    try:
-        db.add(feed)
-        db.commit()
-    except SQLAlchemyError as e:
-        db.rollback()
-        logger.exception(f"Failed to add new feed: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred."
-        )
-
+    db.add(feed)
+    db.commit()
     db.refresh(feed)
-    logger.info(f"New feed added: {feed.id}")
+
     return FeedResponse(feed=feed.__dict__)
 
 
 async def _cache_feeds(db: Session, cache_feeds_scope: str) -> dict[str, Any]:
-    logger.error("Cache feeds endpoint not yet implemented.")
     raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Endpoint not yet supported.")
 
-    #! logic to save 'feeds_to_cache' in cache (worker)
+    # logic to save 'feeds_to_cache' in cache (worker)
 
 
 async def _fetch_from_feed(db: Session, feed_id: str) -> dict[str, Any]:
-    logger.error("Fetch from feed endpoint not yet implemented.")
     raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Endpoint not yet supported")
 
-    #! logic to start the pull process (worker)
+    # logic to start the pull process (worker)
 
 
 async def _get_feed_details(db: Session, feed_id: str) -> dict[str, Any]:
@@ -336,16 +307,9 @@ async def _update_feed(db: Session, feed_id: str, body: FeedCreateAndUpdateBody)
         if value is not None:
             setattr(feed, key, value if not isinstance(value, Enum) else value.value)
 
-    try:
-        db.commit()
-    except SQLAlchemyError as e:
-        db.rollback()
-        logger.exception(f"Failed to update feed: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred."
-        )
+    db.commit()
+    db.refresh(feed)
 
-    logger.info(f"Feed with id '{feed.id}' updated.")
     return FeedResponse(feed=feed.__dict__)
 
 
@@ -359,32 +323,21 @@ async def _toggle_feed(db: Session, feed_id: str, body: FeedToggleBody) -> dict[
         feed.enabled = enable_status
         message = "Feed " + ("enabled" if enable_status else "disabled") + " successfully."
 
-    try:
-        db.commit()
-        logging.info(f"Feed with id '{feed_id}': {message}.")
-    except SQLAlchemyError as e:
-        db.rollback()
-        logger.exception(f"Failed to toggle feed: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred."
-        )
+    db.commit()
 
-    logger.info(f"Feed with id '{feed_id}': {message}")
     return FeedEnableDisableResponse(name=feed.name, message=message, url=feed.url)
 
 
 async def _fetch_data_from_all_feeds(db: Session) -> dict[str, Any]:
-    logger.error("fetch from all feeds endpoint not yet implemented.")
     raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Endpoint not yet supported")
 
-    #! logic to start the pull process
+    # logic to start the pull process
 
 
 async def _get_feeds(db: Session) -> list[dict[str, Any]]:
     feeds: list[Feed] = db.query(Feed).all()
 
     if not feeds:
-        logger.info("No feeds found.")
         return FeedsResponse(feeds=[])
 
     return FeedsResponse(feeds=[feed.__dict__ for feed in feeds])
@@ -399,9 +352,7 @@ async def _enable_feed(db: Session, feed_id: str) -> dict[str, Any]:
         feed.enabled = True
         db.commit()
         message = "Feed enabled successfully."
-        logger.info(f"Feed with id '{feed_id}' enabled.")
 
-    logger.info(f"Feed with id '{feed_id}' enabled.")
     return FeedEnableDisableResponse(name=feed.name, message=message, url=feed.url)
 
 
@@ -414,7 +365,5 @@ async def _disable_feed(db: Session, feed_id: str) -> dict[str, Any]:
         feed.enabled = False
         db.commit()
         message = "Feed disabled successfully."
-        logger.info(f"Feed with id '{feed_id}' disabled.")
 
-    logger.info(f"Feed with id '{feed_id}' enabled.")
     return FeedEnableDisableResponse(name=feed.name, message=message, url=feed.url)
