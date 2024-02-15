@@ -205,6 +205,7 @@ async def _add_object(db: Session, event_id: str, object_template_id: str, body:
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred."
         )
 
+    db.refresh(new_object)
     attributes = db.query(Attribute).filter(Attribute.object_id == new_object.id).all()
     attributes_response = [GetAllAttributesResponse(**attribute.__dict__) for attribute in attributes]
 
