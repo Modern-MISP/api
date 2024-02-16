@@ -1,4 +1,5 @@
 import time
+from datetime import datetime
 from typing import Any
 
 import pytest
@@ -51,8 +52,8 @@ class TestAddObject:
 
         organisation = Organisation(
             name="test",
-            date_created=str(int(time.time())),
-            date_modified=str(int(time.time())),
+            date_created=datetime.utcnow(),
+            date_modified=datetime.utcnow(),
         )
         db.add(organisation)
         db.flush()
@@ -104,8 +105,8 @@ class TestAddObject:
 
         organisation = Organisation(
             name="test",
-            date_created=str(int(time.time())),
-            date_modified=str(int(time.time())),
+            date_created=datetime.utcnow(),
+            date_modified=datetime.utcnow(),
         )
         db.add(organisation)
         db.flush()
@@ -206,8 +207,8 @@ class TestGetObjectInfo:
 
         organisation = Organisation(
             name="test",
-            date_created=str(int(time.time())),
-            date_modified=str(int(time.time())),
+            date_created=datetime.utcnow(),
+            date_modified=datetime.utcnow(),
         )
         db.add(organisation)
         db.flush()
@@ -269,8 +270,8 @@ class TestGetObjectInfo:
 
         organisation = Organisation(
             name="test",
-            date_created=str(int(time.time())),
-            date_modified=str(int(time.time())),
+            date_created=datetime.utcnow(),
+            date_modified=datetime.utcnow(),
         )
         db.add(organisation)
         db.flush()
@@ -330,8 +331,8 @@ class TestGetObjectInfo:
 
         organisation = Organisation(
             name="test",
-            date_created=str(int(time.time())),
-            date_modified=str(int(time.time())),
+            date_created=datetime.utcnow(),
+            date_modified=datetime.utcnow(),
         )
         db.add(organisation)
         db.flush()
@@ -388,8 +389,8 @@ class TestDeleteObject:
 
         organisation = Organisation(
             name="test",
-            date_created=str(int(time.time())),
-            date_modified=str(int(time.time())),
+            date_created=datetime.utcnow(),
+            date_modified=datetime.utcnow(),
         )
         db.add(organisation)
         db.flush()
@@ -447,8 +448,8 @@ class TestDeleteObject:
 
         organisation = Organisation(
             name="test",
-            date_created=str(int(time.time())),
-            date_modified=str(int(time.time())),
+            date_created=datetime.utcnow(),
+            date_modified=datetime.utcnow(),
         )
         db.add(organisation)
         db.flush()
@@ -513,8 +514,8 @@ class TestDeleteObject:
 
         organisation = Organisation(
             name="test",
-            date_created=str(int(time.time())),
-            date_modified=str(int(time.time())),
+            date_created=datetime.utcnow(),
+            date_modified=datetime.utcnow(),
         )
         db.add(organisation)
         db.flush()
@@ -567,8 +568,8 @@ class TestDeleteObject:
 
         organisation = Organisation(
             name="test",
-            date_created=str(int(time.time())),
-            date_modified=str(int(time.time())),
+            date_created=datetime.utcnow(),
+            date_modified=datetime.utcnow(),
         )
         db.add(organisation)
         db.flush()

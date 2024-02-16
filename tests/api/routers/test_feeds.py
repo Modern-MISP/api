@@ -1,6 +1,7 @@
 import random
 import string
 import time
+from datetime import datetime
 from typing import Any, Generator
 
 import pytest
@@ -56,8 +57,8 @@ class TestAddFeed:
 
         organisation = Organisation(
             name="test",
-            date_created=str(int(time.time())),
-            date_modified=str(int(time.time())),
+            date_created=datetime.utcnow(),
+            date_modified=datetime.utcnow(),
         )
         db.add(organisation)
         db.flush()
@@ -115,8 +116,8 @@ class TestAddFeed:
 
         organisation = Organisation(
             name="test",
-            date_created=str(int(time.time())),
-            date_modified=str(int(time.time())),
+            date_created=datetime.utcnow(),
+            date_modified=datetime.utcnow(),
         )
         db.add(organisation)
         db.flush()
@@ -166,8 +167,8 @@ class TestAddFeed:
 
         organisation = Organisation(
             name="test",
-            date_created=str(int(time.time())),
-            date_modified=str(int(time.time())),
+            date_created=datetime.utcnow(),
+            date_modified=datetime.utcnow(),
         )
         db.add(organisation)
         db.flush()
@@ -227,8 +228,8 @@ class TestEnableFeed:
 
         organisation = Organisation(
             name="test",
-            date_created=str(int(time.time())),
-            date_modified=str(int(time.time())),
+            date_created=datetime.utcnow(),
+            date_modified=datetime.utcnow(),
         )
         db.add(organisation)
         db.flush()
@@ -288,8 +289,8 @@ class TestEnableFeed:
 
         organisation = Organisation(
             name="test",
-            date_created=str(int(time.time())),
-            date_modified=str(int(time.time())),
+            date_created=datetime.utcnow(),
+            date_modified=datetime.utcnow(),
         )
         db.add(organisation)
         db.flush()
@@ -341,8 +342,8 @@ class TestEnableFeed:
 
         organisation = Organisation(
             name="test",
-            date_created=str(int(time.time())),
-            date_modified=str(int(time.time())),
+            date_created=datetime.utcnow(),
+            date_modified=datetime.utcnow(),
         )
         db.add(organisation)
         db.flush()
@@ -398,8 +399,8 @@ class TestDisableFeed:
 
         organisation = Organisation(
             name="test",
-            date_created=str(int(time.time())),
-            date_modified=str(int(time.time())),
+            date_created=datetime.utcnow(),
+            date_modified=datetime.utcnow(),
         )
         db.add(organisation)
         db.flush()
@@ -459,8 +460,8 @@ class TestDisableFeed:
 
         organisation = Organisation(
             name="test",
-            date_created=str(int(time.time())),
-            date_modified=str(int(time.time())),
+            date_created=datetime.utcnow(),
+            date_modified=datetime.utcnow(),
         )
         db.add(organisation)
         db.flush()
@@ -512,8 +513,8 @@ class TestDisableFeed:
 
         organisation = Organisation(
             name="test",
-            date_created=str(int(time.time())),
-            date_modified=str(int(time.time())),
+            date_created=datetime.utcnow(),
+            date_modified=datetime.utcnow(),
         )
         db.add(organisation)
         db.flush()
@@ -625,8 +626,8 @@ class TestGetFeedByIdInfo:
 
         organisation = Organisation(
             name="test",
-            date_created=str(int(time.time())),
-            date_modified=str(int(time.time())),
+            date_created=datetime.utcnow(),
+            date_modified=datetime.utcnow(),
         )
         db.add(organisation)
         db.flush()
@@ -690,8 +691,8 @@ class TestGetFeedByIdInfo:
 
         organisation = Organisation(
             name="test",
-            date_created=str(int(time.time())),
-            date_modified=str(int(time.time())),
+            date_created=datetime.utcnow(),
+            date_modified=datetime.utcnow(),
         )
         db.add(organisation)
         db.flush()
@@ -749,8 +750,8 @@ class TestUpdateFeed:
 
         organisation = Organisation(
             name="test",
-            date_created=str(int(time.time())),
-            date_modified=str(int(time.time())),
+            date_created=datetime.utcnow(),
+            date_modified=datetime.utcnow(),
         )
         db.add(organisation)
         db.flush()
@@ -814,8 +815,8 @@ class TestUpdateFeed:
 
         organisation = Organisation(
             name="test",
-            date_created=str(int(time.time())),
-            date_modified=str(int(time.time())),
+            date_created=datetime.utcnow(),
+            date_modified=datetime.utcnow(),
         )
         db.add(organisation)
         db.flush()
@@ -871,8 +872,8 @@ class TestUpdateFeed:
 
         organisation = Organisation(
             name="test",
-            date_created=str(int(time.time())),
-            date_modified=str(int(time.time())),
+            date_created=datetime.utcnow(),
+            date_modified=datetime.utcnow(),
         )
         db.add(organisation)
         db.flush()
@@ -928,8 +929,8 @@ class TestToggleFeed:
 
         organisation = Organisation(
             name="test",
-            date_created=str(int(time.time())),
-            date_modified=str(int(time.time())),
+            date_created=datetime.utcnow(),
+            date_modified=datetime.utcnow(),
         )
         db.add(organisation)
         db.flush()
@@ -1005,8 +1006,8 @@ class TestToggleFeed:
 
         organisation = Organisation(
             name="test",
-            date_created=str(int(time.time())),
-            date_modified=str(int(time.time())),
+            date_created=datetime.utcnow(),
+            date_modified=datetime.utcnow(),
         )
         db.add(organisation)
         db.flush()
@@ -1100,8 +1101,8 @@ class TestToggleFeed:
 
         organisation = Organisation(
             name="test",
-            date_created=str(int(time.time())),
-            date_modified=str(int(time.time())),
+            date_created=datetime.utcnow(),
+            date_modified=datetime.utcnow(),
         )
         db.add(organisation)
         db.flush()
@@ -1175,8 +1176,8 @@ class TestGetAllFeeds:
 
         organisation = Organisation(
             name="test",
-            date_created=str(int(time.time())),
-            date_modified=str(int(time.time())),
+            date_created=datetime.utcnow(),
+            date_modified=datetime.utcnow(),
         )
         db.add(organisation)
         db.flush()
@@ -1228,8 +1229,8 @@ class TestGetAllFeeds:
 
         organisation = Organisation(
             name="test",
-            date_created=str(int(time.time())),
-            date_modified=str(int(time.time())),
+            date_created=datetime.utcnow(),
+            date_modified=datetime.utcnow(),
         )
         db.add(organisation)
         db.flush()
