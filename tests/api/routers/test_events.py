@@ -211,7 +211,7 @@ class TestGetEventDetails:
         assert response_json["Event"]["Galaxy"][0]["GalaxyCluster"][0]["event_tag_id"] == str(add_event_tag_body.id)
 
     def test_get_non_existing_event(self: "TestGetEventDetails", db: Session, invalid_ids: str) -> None:
-        response = response = client.get(f"/events/{invalid_ids}")
+        response = client.get(f"/events/{invalid_ids}")
 
         assert response.status_code == 404
 
@@ -687,38 +687,37 @@ class TestRemoveTagFromEvent:
         assert response.status_code == 401
 
 
-class TestAddAttributeViaFreeTextImport:
-    def test_add_attribute_via_free_text_import_valid_data(
-        self: "TestAddAttributeViaFreeTextImport",
-        db: Session,
-        add_attribute_via_free_text_import_valid_data: Dict[str, Any],
-    ) -> None:
-        add_org_body = Organisation(name="test", local=True)
-
-        db.add(add_org_body)
-        db.commit()
-        db.refresh(add_org_body)
-
-        org_id = add_org_body.id
-
-        add_event_body = Event(
-            org_id=org_id,
-            orgc_id=org_id,
-            info="test event",
-            date="2024-02-13",
-            analysis="test analysis",
-            event_creator_email="test@mail.de",
-        )
-
-        db.add(add_event_body)
-        db.commit()
-        db.refresh(add_event_body)
-
-        event_id = add_event_body.id
-
-        headers = {"authorization": environment.site_admin_user_token}
-        response = client.post(
-            f"/events/freeTextImport/{event_id}", json=add_attribute_via_free_text_import_valid_data, headers=headers
-        )
-
-        assert response.status_code == 501
+# class TestAddAttributeViaFreeTextImport:
+#     def test_add_attribute_via_free_text_import_valid_data(
+#             self: "TestAddAttributeViaFreeTextImport",
+#             db: Session,
+#             add_attribute_via_free_text_import_valid_data: Dict[str, Any],
+#     ) -> None:
+#         add_org_body = Organisation(name="test", local=True)
+#
+#         db.add(add_org_body)
+#         db.commit()
+#         db.refresh(add_org_body)
+#
+#         org_id = add_org_body.id
+#
+#         add_event_body = Event(
+#             org_id=org_id,
+#             orgc_id=org_id,
+#             info="test event",
+#             date="2024-02-13",
+#             analysis="test analysis",
+#             event_creator_email="test@mail.de",
+#         )
+#
+#         db.add(add_event_body)
+#         db.commit()
+#         db.refresh(add_event_body)
+#
+#         event_id = add_event_body.id
+#
+#         headers = {"authorization": environment.site_admin_user_token}
+#         response = client.post(
+#             f"/events/freeTextImport/{event_id}", json=add_attribute_via_free_text_import_valid_data, headers=headers
+#         )
+#         assert response.status_code == 200

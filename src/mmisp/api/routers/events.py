@@ -12,9 +12,7 @@ from starlette import status
 from starlette.requests import Request
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
-from mmisp.api_schemas.events.add_attribute_via_free_text_import_event_body import (
-    AddAttributeViaFreeTextImportEventBody,
-)
+from mmisp.api_schemas.attributes.get_describe_types_response import GetDescribeTypesAttributes
 from mmisp.api_schemas.events.add_attribute_via_free_text_import_event_response import (
     AddAttributeViaFreeTextImportEventResponse,
 )
@@ -261,20 +259,29 @@ async def remove_tag_from_event(
     return await _remove_tag_from_event(db, event_id, tag_id)
 
 
-@router.post(
-    "/events/freeTextImport/{eventId}",
-    status_code=status.HTTP_501_NOT_IMPLEMENTED,
-    response_model=partial(AddAttributeViaFreeTextImportEventResponse),
-    summary="Add attribute to event",
-    description="Add attribute to event via free text import. NOT YET AVAILABLE!",
-)
-async def add_attribute_via_free_text_import(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.ADD]))],
-    db: Annotated[Session, Depends(get_db)],
-    event_id: Annotated[str, Path(..., alias="eventId")],
-    body: AddAttributeViaFreeTextImportEventBody,
-) -> dict:
-    return await _add_attribute_via_free_text_import(db, event_id, body)
+# @router.post(
+#     "/events/freeTextImport/{eventId}",
+#     status_code=status.HTTP_501_NOT_IMPLEMENTED,
+#     response_model=list[partial(AddAttributeViaFreeTextImportEventResponse)],
+#     summary="Add attribute to event",
+#     description="Add attribute to event via free text import.",
+# )
+# async def add_attribute_via_free_text_import(
+#         auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.ADD]))],
+#         db: Annotated[Session, Depends(get_db)],
+#         event_id: Annotated[str, Path(..., alias="eventId")],
+#         body: AddAttributeViaFreeTextImportEventBody,
+# ) -> dict:
+#     body_dict = body.dict()
+#     user = FreeTextImportWorkerUser(user_id=auth.user_id)
+#     data = FreeTextImportWorkerData(data=body_dict["Attribute"]["value"])
+#     worker_body = FreeTextImportWorkerBody(user=user, data=data).dict()
+#     print(worker_body)
+#     async with httpx.AsyncClient() as client:
+#         response = await client.post(
+#             "http://http://worker.mmisp.cert.kit.edu/job/processFreeText", json=worker_body)
+#     response_json = response.json()
+#     return await _add_attribute_via_free_text_import(db, event_id, response_json)
 
 
 # - Deprecated endpoints
@@ -607,10 +614,25 @@ async def _remove_tag_from_event(db: Session, event_id: str, tag_id: str) -> dic
     return AddRemoveTagEventsResponse(saved=True, success="Tag removed", check_publish=True)
 
 
-async def _add_attribute_via_free_text_import(
-    db: Session, event_id: str, body: AddAttributeViaFreeTextImportEventBody
-) -> dict:
-    return {}
+async def _add_attribute_via_free_text_import(db: Session, event_id: str, response_json: Any) -> dict:
+    check_existence_and_raise(db, Event, event_id, "event_id", "Event not found")
+    response_list = []
+
+    for attribute in response_json["attributes"]:
+        value = response_json["attributes"]["Items"]["value"]
+        attribute_type = response_json["attributes"]["Items"]["default_type"]
+        category = GetDescribeTypesAttributes().sane_defaults[type]["default_category"]
+
+        new_attribute = Attribute(event_id=event_id, value=value, type=attribute_type, category=category)
+
+        db.add(new_attribute)
+        db.commit()
+
+        attribute_response_dict = new_attribute.__dict__.copy()
+        attribute_response_dict["original_value"] = new_attribute.value
+        response_list.append(AddAttributeViaFreeTextImportEventResponse(**attribute_response_dict))
+
+    return response_list
 
 
 def _prepare_event_response(db: Session, event: Event) -> AddEditGetEventDetails:
