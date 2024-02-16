@@ -288,7 +288,7 @@ async def _cache_feeds(db: Session, cache_feeds_scope: str) -> dict[str, Any]:
 
 
 async def _fetch_from_feed(db: Session, feed_id: str) -> dict[str, Any]:
-    raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Endpoint not yet supported")
+    raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Endpoint not yet supported.")
 
     # logic to start the pull process (worker)
 
@@ -335,7 +335,7 @@ async def _toggle_feed(db: Session, feed_id: str, body: FeedToggleBody) -> dict[
 
 
 async def _fetch_data_from_all_feeds(db: Session) -> dict[str, Any]:
-    raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Endpoint not yet supported")
+    raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Endpoint not yet supported.")
 
     # logic to start the pull process for all feeds
 
