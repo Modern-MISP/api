@@ -1,10 +1,12 @@
 import random
 import string
-from typing import Any, Dict, Generator
+import time
+from typing import Any, Generator
 
 import pytest
 
 from mmisp.db.models.event import Event
+from mmisp.db.models.organisation import Organisation
 from mmisp.db.models.sharing_group import SharingGroup
 from mmisp.db.models.tag import Tag
 
@@ -23,21 +25,22 @@ from ...generators.feed_generator import (
         generate_random_valid_feed_data().dict(),
         generate_random_valid_feed_data().dict(),
         generate_random_valid_feed_data().dict(),
+        generate_random_valid_feed_data().dict(),
     ]
 )
-def feed_data(request: Any) -> Dict[str, Any]:
+def feed_data(request: Any) -> dict[str, Any]:
     return request.param
 
 
 class TestAddFeed:
-    def test_add_feed(self: "TestAddFeed", feed_data: Dict[str, Any]) -> None:
+    def test_add_feed(self: "TestAddFeed", feed_data: dict[str, Any]) -> None:
         db = get_db()
 
         sharing_group = SharingGroup(
             name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
         )
         db.add(sharing_group)
-        db.commit()
+        db.flush()
         db.refresh(sharing_group)
         feed_data["sharing_group_id"] = sharing_group.id
 
@@ -47,15 +50,33 @@ class TestAddFeed:
             exportable=False,
         )
         db.add(tag)
-        db.commit()
+        db.flush()
         db.refresh(tag)
         feed_data["tag_id"] = tag.id
 
-        event = Event(info="test")
+        organisation = Organisation(
+            name="test",
+            date_created=str(int(time.time())),
+            date_modified=str(int(time.time())),
+        )
+        db.add(organisation)
+        db.flush()
+        db.refresh(organisation)
+
+        event = Event(
+            org_id=organisation.id,
+            orgc_id=organisation.id,
+            info="test",
+            date=str(int(time.time())),
+            analysis="test",
+            event_creator_email="XXXXXXXXXXXXX",
+        )
         db.add(event)
-        db.commit()
+        db.flush()
         db.refresh(event)
         feed_data["event_id"] = event.id
+
+        db.commit()
 
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/feeds", json=feed_data, headers=headers)
@@ -71,14 +92,14 @@ class TestAddFeed:
         assert response.json()["detail"][0]["msg"] == "field required"
         assert response.json()["detail"][0]["type"] == "value_error.missing"
 
-    def test_feed_response_format(self: "TestAddFeed", feed_data: Dict[str, Any]) -> None:
+    def test_feed_response_format(self: "TestAddFeed", feed_data: dict[str, Any]) -> None:
         db = get_db()
 
         sharing_group = SharingGroup(
             name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
         )
         db.add(sharing_group)
-        db.commit()
+        db.flush()
         db.refresh(sharing_group)
         feed_data["sharing_group_id"] = sharing_group.id
 
@@ -88,15 +109,33 @@ class TestAddFeed:
             exportable=False,
         )
         db.add(tag)
-        db.commit()
+        db.flush()
         db.refresh(tag)
         feed_data["tag_id"] = tag.id
 
-        event = Event(info="test")
+        organisation = Organisation(
+            name="test",
+            date_created=str(int(time.time())),
+            date_modified=str(int(time.time())),
+        )
+        db.add(organisation)
+        db.flush()
+        db.refresh(organisation)
+
+        event = Event(
+            org_id=organisation.id,
+            orgc_id=organisation.id,
+            info="test",
+            date=str(int(time.time())),
+            analysis="test",
+            event_creator_email="XXXXXXXXXXXXX",
+        )
         db.add(event)
-        db.commit()
+        db.flush()
         db.refresh(event)
         feed_data["event_id"] = event.id
+
+        db.commit()
 
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/feeds", json=feed_data, headers=headers)
@@ -104,14 +143,14 @@ class TestAddFeed:
         assert response.json()["feed"]["name"] == feed_data["name"]
         assert response.json()["feed"]["id"] is not None
 
-    def test_add_feed_authorization(self: "TestAddFeed", feed_data: Dict[str, Any]) -> None:
+    def test_add_feed_authorization(self: "TestAddFeed", feed_data: dict[str, Any]) -> None:
         db = get_db()
 
         sharing_group = SharingGroup(
             name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
         )
         db.add(sharing_group)
-        db.commit()
+        db.flush()
         db.refresh(sharing_group)
         feed_data["sharing_group_id"] = sharing_group.id
 
@@ -121,15 +160,33 @@ class TestAddFeed:
             exportable=False,
         )
         db.add(tag)
-        db.commit()
+        db.flush()
         db.refresh(tag)
         feed_data["tag_id"] = tag.id
 
-        event = Event(info="test")
+        organisation = Organisation(
+            name="test",
+            date_created=str(int(time.time())),
+            date_modified=str(int(time.time())),
+        )
+        db.add(organisation)
+        db.flush()
+        db.refresh(organisation)
+
+        event = Event(
+            org_id=organisation.id,
+            orgc_id=organisation.id,
+            info="test",
+            date=str(int(time.time())),
+            analysis="test",
+            event_creator_email="XXXXXXXXXXXXX",
+        )
         db.add(event)
-        db.commit()
+        db.flush()
         db.refresh(event)
         feed_data["event_id"] = event.id
+
+        db.commit()
 
         headers = {"authorization": ""}
         response = client.post("/feeds", json=feed_data, headers=headers)
@@ -147,14 +204,14 @@ def feed_test_ids() -> Generator:
 
 
 class TestEnableFeed:
-    def test_enable_feed(self: "TestEnableFeed", feed_test_ids: Dict[str, Any], feed_data: Dict[str, Any]) -> None:
+    def test_enable_feed(self: "TestEnableFeed", feed_test_ids: dict[str, Any], feed_data: dict[str, Any]) -> None:
         db = get_db()
 
         sharing_group = SharingGroup(
             name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
         )
         db.add(sharing_group)
-        db.commit()
+        db.flush()
         db.refresh(sharing_group)
         feed_data["sharing_group_id"] = sharing_group.id
 
@@ -164,15 +221,33 @@ class TestEnableFeed:
             exportable=False,
         )
         db.add(tag)
-        db.commit()
+        db.flush()
         db.refresh(tag)
         feed_data["tag_id"] = tag.id
 
-        event = Event(info="test")
+        organisation = Organisation(
+            name="test",
+            date_created=str(int(time.time())),
+            date_modified=str(int(time.time())),
+        )
+        db.add(organisation)
+        db.flush()
+        db.refresh(organisation)
+
+        event = Event(
+            org_id=organisation.id,
+            orgc_id=organisation.id,
+            info="test",
+            date=str(int(time.time())),
+            analysis="test",
+            event_creator_email="XXXXXXXXXXXXX",
+        )
         db.add(event)
-        db.commit()
+        db.flush()
         db.refresh(event)
         feed_data["event_id"] = event.id
+
+        db.commit()
 
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/feeds", json=feed_data, headers=headers)
@@ -190,14 +265,14 @@ class TestEnableFeed:
         assert response.status_code == 404
         assert response.json()["detail"] == "Feed not found."
 
-    def test_feed_enable_response_format(self: "TestEnableFeed", feed_data: Dict[str, Any]) -> None:
+    def test_feed_enable_response_format(self: "TestEnableFeed", feed_data: dict[str, Any]) -> None:
         db = get_db()
 
         sharing_group = SharingGroup(
             name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
         )
         db.add(sharing_group)
-        db.commit()
+        db.flush()
         db.refresh(sharing_group)
         feed_data["sharing_group_id"] = sharing_group.id
 
@@ -207,15 +282,33 @@ class TestEnableFeed:
             exportable=False,
         )
         db.add(tag)
-        db.commit()
+        db.flush()
         db.refresh(tag)
         feed_data["tag_id"] = tag.id
 
-        event = Event(info="test")
+        organisation = Organisation(
+            name="test",
+            date_created=str(int(time.time())),
+            date_modified=str(int(time.time())),
+        )
+        db.add(organisation)
+        db.flush()
+        db.refresh(organisation)
+
+        event = Event(
+            org_id=organisation.id,
+            orgc_id=organisation.id,
+            info="test",
+            date=str(int(time.time())),
+            analysis="test",
+            event_creator_email="XXXXXXXXXXXXX",
+        )
         db.add(event)
-        db.commit()
+        db.flush()
         db.refresh(event)
         feed_data["event_id"] = event.id
+
+        db.commit()
 
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/feeds", json=feed_data, headers=headers)
@@ -225,14 +318,14 @@ class TestEnableFeed:
         response = client.post(f"feeds/enable/{feed_id}", headers=headers)
         assert response.headers["Content-Type"] == "application/json"
 
-    def test_enable_feed_authorization(self: "TestEnableFeed", feed_data: Dict[str, Any]) -> None:
+    def test_enable_feed_authorization(self: "TestEnableFeed", feed_data: dict[str, Any]) -> None:
         db = get_db()
 
         sharing_group = SharingGroup(
             name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
         )
         db.add(sharing_group)
-        db.commit()
+        db.flush()
         db.refresh(sharing_group)
         feed_data["sharing_group_id"] = sharing_group.id
 
@@ -242,15 +335,33 @@ class TestEnableFeed:
             exportable=False,
         )
         db.add(tag)
-        db.commit()
+        db.flush()
         db.refresh(tag)
         feed_data["tag_id"] = tag.id
 
-        event = Event(info="test")
+        organisation = Organisation(
+            name="test",
+            date_created=str(int(time.time())),
+            date_modified=str(int(time.time())),
+        )
+        db.add(organisation)
+        db.flush()
+        db.refresh(organisation)
+
+        event = Event(
+            org_id=organisation.id,
+            orgc_id=organisation.id,
+            info="test",
+            date=str(int(time.time())),
+            analysis="test",
+            event_creator_email="XXXXXXXXXXXXX",
+        )
         db.add(event)
-        db.commit()
+        db.flush()
         db.refresh(event)
         feed_data["event_id"] = event.id
+
+        db.commit()
 
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/feeds", json=feed_data, headers=headers)
@@ -264,14 +375,14 @@ class TestEnableFeed:
 
 
 class TestDisableFeed:
-    def test_disable_feed(self: "TestDisableFeed", feed_test_ids: Dict[str, Any], feed_data: Dict[str, Any]) -> None:
+    def test_disable_feed(self: "TestDisableFeed", feed_test_ids: dict[str, Any], feed_data: dict[str, Any]) -> None:
         db = get_db()
 
         sharing_group = SharingGroup(
             name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
         )
         db.add(sharing_group)
-        db.commit()
+        db.flush()
         db.refresh(sharing_group)
         feed_data["sharing_group_id"] = sharing_group.id
 
@@ -281,15 +392,33 @@ class TestDisableFeed:
             exportable=False,
         )
         db.add(tag)
-        db.commit()
+        db.flush()
         db.refresh(tag)
         feed_data["tag_id"] = tag.id
 
-        event = Event(info="test")
+        organisation = Organisation(
+            name="test",
+            date_created=str(int(time.time())),
+            date_modified=str(int(time.time())),
+        )
+        db.add(organisation)
+        db.flush()
+        db.refresh(organisation)
+
+        event = Event(
+            org_id=organisation.id,
+            orgc_id=organisation.id,
+            info="test",
+            date=str(int(time.time())),
+            analysis="test",
+            event_creator_email="XXXXXXXXXXXXX",
+        )
         db.add(event)
-        db.commit()
+        db.flush()
         db.refresh(event)
         feed_data["event_id"] = event.id
+
+        db.commit()
 
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/feeds", json=feed_data, headers=headers)
@@ -307,14 +436,14 @@ class TestDisableFeed:
         assert response.status_code == 404
         assert response.json()["detail"] == "Feed not found."
 
-    def test_disable_feed_response_format(self: "TestDisableFeed", feed_data: Dict[str, Any]) -> None:
+    def test_disable_feed_response_format(self: "TestDisableFeed", feed_data: dict[str, Any]) -> None:
         db = get_db()
 
         sharing_group = SharingGroup(
             name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
         )
         db.add(sharing_group)
-        db.commit()
+        db.flush()
         db.refresh(sharing_group)
         feed_data["sharing_group_id"] = sharing_group.id
 
@@ -324,15 +453,33 @@ class TestDisableFeed:
             exportable=False,
         )
         db.add(tag)
-        db.commit()
+        db.flush()
         db.refresh(tag)
         feed_data["tag_id"] = tag.id
 
-        event = Event(info="test")
+        organisation = Organisation(
+            name="test",
+            date_created=str(int(time.time())),
+            date_modified=str(int(time.time())),
+        )
+        db.add(organisation)
+        db.flush()
+        db.refresh(organisation)
+
+        event = Event(
+            org_id=organisation.id,
+            orgc_id=organisation.id,
+            info="test",
+            date=str(int(time.time())),
+            analysis="test",
+            event_creator_email="XXXXXXXXXXXXX",
+        )
         db.add(event)
-        db.commit()
+        db.flush()
         db.refresh(event)
         feed_data["event_id"] = event.id
+
+        db.commit()
 
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/feeds", json=feed_data, headers=headers)
@@ -342,14 +489,14 @@ class TestDisableFeed:
         response = client.post(f"feeds/disable/{feed_id}", headers=headers)
         assert response.headers["Content-Type"] == "application/json"
 
-    def test_disable_feed_authorization(self: "TestDisableFeed", feed_data: Dict[str, Any]) -> None:
+    def test_disable_feed_authorization(self: "TestDisableFeed", feed_data: dict[str, Any]) -> None:
         db = get_db()
 
         sharing_group = SharingGroup(
             name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
         )
         db.add(sharing_group)
-        db.commit()
+        db.flush()
         db.refresh(sharing_group)
         feed_data["sharing_group_id"] = sharing_group.id
 
@@ -359,15 +506,33 @@ class TestDisableFeed:
             exportable=False,
         )
         db.add(tag)
-        db.commit()
+        db.flush()
         db.refresh(tag)
         feed_data["tag_id"] = tag.id
 
-        event = Event(info="test")
+        organisation = Organisation(
+            name="test",
+            date_created=str(int(time.time())),
+            date_modified=str(int(time.time())),
+        )
+        db.add(organisation)
+        db.flush()
+        db.refresh(organisation)
+
+        event = Event(
+            org_id=organisation.id,
+            orgc_id=organisation.id,
+            info="test",
+            date=str(int(time.time())),
+            analysis="test",
+            event_creator_email="XXXXXXXXXXXXX",
+        )
         db.add(event)
-        db.commit()
+        db.flush()
         db.refresh(event)
         feed_data["event_id"] = event.id
+
+        db.commit()
 
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/feeds", json=feed_data, headers=headers)
@@ -391,23 +556,23 @@ def cach_feed_test_data() -> Generator:
 class TestCacheFeeds:
     pass  # TODO: route not yet implemented
 
-    # def test_cache_feeds_valid_data(self: "TestCacheFeeds", cach_feed_test_data: Dict[str, Any]) -> None:
+    # def test_cache_feeds_valid_data(self: "TestCacheFeeds", cach_feed_test_data: dict[str, Any]) -> None:
     #     headers = {"authorization": environment.site_admin_user_token}
     #     response = client.post(f"/feeds/cacheFeeds/{cach_feed_test_data['valid_scope']}", headers=headers)
     #     assert response.status_code == 200
     #     assert response.json()["success"] is True
 
-    # def test_cache_feeds_invalid_data(self: "TestCacheFeeds", cach_feed_test_data: Dict[str, Any]) -> None:
+    # def test_cache_feeds_invalid_data(self: "TestCacheFeeds", cach_feed_test_data: dict[str, Any]) -> None:
     #     headers = {"authorization": environment.site_admin_user_token}
     #     response = client.post(f"/feeds/cacheFeeds/{cach_feed_test_data['invalid_scope']}", headers=headers)
     #     assert response.status_code == 400
 
-    # def test_cache_feeds_response_format(self: "TestCacheFeeds", cach_feed_test_data: Dict[str, Any]) -> None:
+    # def test_cache_feeds_response_format(self: "TestCacheFeeds", cach_feed_test_data: dict[str, Any]) -> None:
     #     headers = {"authorization": environment.site_admin_user_token}
     #     response = client.post(f"/feeds/cacheFeeds/{cach_feed_test_data['valid_scope']}", headers=headers)
     #     assert response.headers["Content-Type"] == "application/json"
 
-    # def test_cache_feeds_authorization(self: "TestCacheFeeds", cach_feed_test_data: Dict[str, Any]) -> None:
+    # def test_cache_feeds_authorization(self: "TestCacheFeeds", cach_feed_test_data: dict[str, Any]) -> None:
     #     headers = {"authorization": ""}
     #     response = client.post(f"/feeds/cacheFeeds/{cach_feed_test_data['valid_scope']}", headers=headers)
     #     assert response.status_code == 401
@@ -416,35 +581,35 @@ class TestCacheFeeds:
 class TestFetchFeeds:
     pass  # TODO: route not yet implemented
 
-    # def test_fetch_from_feed_existing_id(self: "TestFetchFeeds", feed_test_ids: Dict[str, Any]) -> None:
+    # def test_fetch_from_feed_existing_id(self: "TestFetchFeeds", feed_test_ids: dict[str, Any]) -> None:
     #     headers = {"authorization": environment.site_admin_user_token}
     #     response = client.get(f"/feeds/fetchFromFeed/{feed_test_ids['valid_feed_id']}", headers=headers)
     #     assert response.status_code == 200
     #     assert "result" in response.json()
 
-    # def test_fetch_from_feed_invalid_id(self: "TestFetchFeeds", feed_test_ids: Dict[str, Any]) -> None:
+    # def test_fetch_from_feed_invalid_id(self: "TestFetchFeeds", feed_test_ids: dict[str, Any]) -> None:
     #     headers = {"authorization": environment.site_admin_user_token}
     #     response = client.get(f"/feeds/fetchFromFeed/{feed_test_ids['invalid_feed_id']}", headers=headers)
     #     assert response.status_code == 422
 
-    # def test_fetch_from_feed_non_existing_id(self: "TestFetchFeeds", feed_test_ids: Dict[str, Any]) -> None:
+    # def test_fetch_from_feed_non_existing_id(self: "TestFetchFeeds", feed_test_ids: dict[str, Any]) -> None:
     #     response = client.get(f"/feeds/fetchFromFeed/{feed_test_ids['non_existing_feed_id']}")
     #     assert response.status_code in (404, 405)
 
-    # def test_fetch_from_feed_response_format(self: "TestFetchFeeds", feed_test_ids: Dict[str, Any]) -> None:
+    # def test_fetch_from_feed_response_format(self: "TestFetchFeeds", feed_test_ids: dict[str, Any]) -> None:
     #     response = client.get(f"/feeds/fetchFromFeed/{feed_test_ids['valid_feed_id']}")
     #     assert response.headers["Content-Type"] == "application/json"
 
 
 class TestGetFeedByIdInfo:
-    def test_get_existing_feed_details(self: "TestGetFeedByIdInfo", feed_data: Dict[str, Any]) -> None:
+    def test_get_existing_feed_details(self: "TestGetFeedByIdInfo", feed_data: dict[str, Any]) -> None:
         db = get_db()
 
         sharing_group = SharingGroup(
             name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
         )
         db.add(sharing_group)
-        db.commit()
+        db.flush()
         db.refresh(sharing_group)
         feed_data["sharing_group_id"] = sharing_group.id
 
@@ -454,15 +619,33 @@ class TestGetFeedByIdInfo:
             exportable=False,
         )
         db.add(tag)
-        db.commit()
+        db.flush()
         db.refresh(tag)
         feed_data["tag_id"] = tag.id
 
-        event = Event(info="test")
+        organisation = Organisation(
+            name="test",
+            date_created=str(int(time.time())),
+            date_modified=str(int(time.time())),
+        )
+        db.add(organisation)
+        db.flush()
+        db.refresh(organisation)
+
+        event = Event(
+            org_id=organisation.id,
+            orgc_id=organisation.id,
+            info="test",
+            date=str(int(time.time())),
+            analysis="test",
+            event_creator_email="XXXXXXXXXXXXX",
+        )
         db.add(event)
-        db.commit()
+        db.flush()
         db.refresh(event)
         feed_data["event_id"] = event.id
+
+        db.commit()
 
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/feeds", json=feed_data, headers=headers)
@@ -474,24 +657,24 @@ class TestGetFeedByIdInfo:
         assert response.json()["feed"]["id"] == feed_id
         assert response.json()["feed"]["name"] == feed_data["name"]
 
-    def test_get_invalid_feed_by_id(self: "TestGetFeedByIdInfo", feed_test_ids: Dict[str, Any]) -> None:
+    def test_get_invalid_feed_by_id(self: "TestGetFeedByIdInfo", feed_test_ids: dict[str, Any]) -> None:
         response = client.get(f"/feeds/{feed_test_ids['invalid_feed_id']}")
         assert response.status_code == 404
         assert response.json()["detail"] == "Feed not found."
 
-    def test_get_non_existing_feed_details(self: "TestGetFeedByIdInfo", feed_test_ids: Dict[str, Any]) -> None:
+    def test_get_non_existing_feed_details(self: "TestGetFeedByIdInfo", feed_test_ids: dict[str, Any]) -> None:
         response = client.get(f"/feeds/{feed_test_ids['non_existing_feed_id']}")
         assert response.status_code == 404
         assert response.json()["detail"] == "Feed not found."
 
-    def test_get_feed_response_format(self: "TestGetFeedByIdInfo", feed_data: Dict[str, Any]) -> None:
+    def test_get_feed_response_format(self: "TestGetFeedByIdInfo", feed_data: dict[str, Any]) -> None:
         db = get_db()
 
         sharing_group = SharingGroup(
             name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
         )
         db.add(sharing_group)
-        db.commit()
+        db.flush()
         db.refresh(sharing_group)
         feed_data["sharing_group_id"] = sharing_group.id
 
@@ -501,15 +684,33 @@ class TestGetFeedByIdInfo:
             exportable=False,
         )
         db.add(tag)
-        db.commit()
+        db.flush()
         db.refresh(tag)
         feed_data["tag_id"] = tag.id
 
-        event = Event(info="test")
+        organisation = Organisation(
+            name="test",
+            date_created=str(int(time.time())),
+            date_modified=str(int(time.time())),
+        )
+        db.add(organisation)
+        db.flush()
+        db.refresh(organisation)
+
+        event = Event(
+            org_id=organisation.id,
+            orgc_id=organisation.id,
+            info="test",
+            date=str(int(time.time())),
+            analysis="test",
+            event_creator_email="XXXXXXXXXXXXX",
+        )
         db.add(event)
-        db.commit()
+        db.flush()
         db.refresh(event)
         feed_data["event_id"] = event.id
+
+        db.commit()
 
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/feeds", json=feed_data, headers=headers)
@@ -525,14 +726,14 @@ class TestGetFeedByIdInfo:
 
 
 class TestUpdateFeed:
-    def test_update_existing_feed(self: "TestUpdateFeed", feed_data: Dict[str, Any]) -> None:
+    def test_update_existing_feed(self: "TestUpdateFeed", feed_data: dict[str, Any]) -> None:
         db = get_db()
 
         sharing_group = SharingGroup(
             name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
         )
         db.add(sharing_group)
-        db.commit()
+        db.flush()
         db.refresh(sharing_group)
         feed_data["sharing_group_id"] = sharing_group.id
 
@@ -542,15 +743,33 @@ class TestUpdateFeed:
             exportable=False,
         )
         db.add(tag)
-        db.commit()
+        db.flush()
         db.refresh(tag)
         feed_data["tag_id"] = tag.id
 
-        event = Event(info="test")
+        organisation = Organisation(
+            name="test",
+            date_created=str(int(time.time())),
+            date_modified=str(int(time.time())),
+        )
+        db.add(organisation)
+        db.flush()
+        db.refresh(organisation)
+
+        event = Event(
+            org_id=organisation.id,
+            orgc_id=organisation.id,
+            info="test",
+            date=str(int(time.time())),
+            analysis="test",
+            event_creator_email="XXXXXXXXXXXXX",
+        )
         db.add(event)
-        db.commit()
+        db.flush()
         db.refresh(event)
         feed_data["event_id"] = event.id
+
+        db.commit()
 
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/feeds", json=feed_data, headers=headers)
@@ -565,21 +784,21 @@ class TestUpdateFeed:
         assert response_data["feed"]["url"] == feed_data["url"]
 
     def test_update_non_existing_feed(
-        self: "TestUpdateFeed", feed_test_ids: Dict[str, Any], feed_data: Dict[str, Any]
+        self: "TestUpdateFeed", feed_test_ids: dict[str, Any], feed_data: dict[str, Any]
     ) -> None:
         headers = {"authorization": environment.site_admin_user_token}
         response = client.put(f"/feeds/{feed_test_ids['non_existing_feed_id']}", json=feed_data, headers=headers)
         assert response.status_code == 404
         assert response.json()["detail"] == "Feed not found."
 
-    def test_update_feed_response_format(self: "TestUpdateFeed", feed_data: Dict[str, Any]) -> None:
+    def test_update_feed_response_format(self: "TestUpdateFeed", feed_data: dict[str, Any]) -> None:
         db = get_db()
 
         sharing_group = SharingGroup(
             name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
         )
         db.add(sharing_group)
-        db.commit()
+        db.flush()
         db.refresh(sharing_group)
         feed_data["sharing_group_id"] = sharing_group.id
 
@@ -589,15 +808,33 @@ class TestUpdateFeed:
             exportable=False,
         )
         db.add(tag)
-        db.commit()
+        db.flush()
         db.refresh(tag)
         feed_data["tag_id"] = tag.id
 
-        event = Event(info="test")
+        organisation = Organisation(
+            name="test",
+            date_created=str(int(time.time())),
+            date_modified=str(int(time.time())),
+        )
+        db.add(organisation)
+        db.flush()
+        db.refresh(organisation)
+
+        event = Event(
+            org_id=organisation.id,
+            orgc_id=organisation.id,
+            info="test",
+            date=str(int(time.time())),
+            analysis="test",
+            event_creator_email="XXXXXXXXXXXXX",
+        )
         db.add(event)
-        db.commit()
+        db.flush()
         db.refresh(event)
         feed_data["event_id"] = event.id
+
+        db.commit()
 
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/feeds", json=feed_data, headers=headers)
@@ -611,14 +848,14 @@ class TestUpdateFeed:
         assert response.json()["feed"]["id"] == feed_id
         assert response.json()["feed"]["name"] == feed_data["name"]
 
-    def test_update_feed_authorization(self: "TestUpdateFeed", feed_data: Dict[str, Any]) -> None:
+    def test_update_feed_authorization(self: "TestUpdateFeed", feed_data: dict[str, Any]) -> None:
         db = get_db()
 
         sharing_group = SharingGroup(
             name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
         )
         db.add(sharing_group)
-        db.commit()
+        db.flush()
         db.refresh(sharing_group)
         feed_data["sharing_group_id"] = sharing_group.id
 
@@ -628,15 +865,33 @@ class TestUpdateFeed:
             exportable=False,
         )
         db.add(tag)
-        db.commit()
+        db.flush()
         db.refresh(tag)
         feed_data["tag_id"] = tag.id
 
-        event = Event(info="test")
+        organisation = Organisation(
+            name="test",
+            date_created=str(int(time.time())),
+            date_modified=str(int(time.time())),
+        )
+        db.add(organisation)
+        db.flush()
+        db.refresh(organisation)
+
+        event = Event(
+            org_id=organisation.id,
+            orgc_id=organisation.id,
+            info="test",
+            date=str(int(time.time())),
+            analysis="test",
+            event_creator_email="XXXXXXXXXXXXX",
+        )
         db.add(event)
-        db.commit()
+        db.flush()
         db.refresh(event)
         feed_data["event_id"] = event.id
+
+        db.commit()
 
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/feeds", json=feed_data, headers=headers)
@@ -650,14 +905,14 @@ class TestUpdateFeed:
 
 
 class TestToggleFeed:
-    def test_toggle_existing_feed(self: "TestToggleFeed", feed_data: Dict[str, Any]) -> None:
+    def test_toggle_existing_feed(self: "TestToggleFeed", feed_data: dict[str, Any]) -> None:
         db = get_db()
 
         sharing_group = SharingGroup(
             name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
         )
         db.add(sharing_group)
-        db.commit()
+        db.flush()
         db.refresh(sharing_group)
         feed_data["sharing_group_id"] = sharing_group.id
 
@@ -667,15 +922,33 @@ class TestToggleFeed:
             exportable=False,
         )
         db.add(tag)
-        db.commit()
+        db.flush()
         db.refresh(tag)
         feed_data["tag_id"] = tag.id
 
-        event = Event(info="test")
+        organisation = Organisation(
+            name="test",
+            date_created=str(int(time.time())),
+            date_modified=str(int(time.time())),
+        )
+        db.add(organisation)
+        db.flush()
+        db.refresh(organisation)
+
+        event = Event(
+            org_id=organisation.id,
+            orgc_id=organisation.id,
+            info="test",
+            date=str(int(time.time())),
+            analysis="test",
+            event_creator_email="XXXXXXXXXXXXX",
+        )
         db.add(event)
-        db.commit()
+        db.flush()
         db.refresh(event)
         feed_data["event_id"] = event.id
+
+        db.commit()
 
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/feeds", json=feed_data, headers=headers)
@@ -702,21 +975,21 @@ class TestToggleFeed:
         response = client.patch(f"feeds/{feed_id}", json=toggle_data, headers=headers)
         assert response.status_code == 200
 
-    def test_toggle_non_existing_feed(self: "TestToggleFeed", feed_test_ids: Dict[str, Any]) -> None:
+    def test_toggle_non_existing_feed(self: "TestToggleFeed", feed_test_ids: dict[str, Any]) -> None:
         toggle_data = {"enable": True}
         headers = {"authorization": environment.site_admin_user_token}
         response = client.patch(f"feeds/{feed_test_ids['non_existing_feed_id']}", json=toggle_data, headers=headers)
         assert response.status_code == 404
         assert response.json()["detail"] == "Feed not found."
 
-    def test_toggle_feed_response_format(self: "TestToggleFeed", feed_data: Dict[str, Any]) -> None:
+    def test_toggle_feed_response_format(self: "TestToggleFeed", feed_data: dict[str, Any]) -> None:
         db = get_db()
 
         sharing_group = SharingGroup(
             name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
         )
         db.add(sharing_group)
-        db.commit()
+        db.flush()
         db.refresh(sharing_group)
         feed_data["sharing_group_id"] = sharing_group.id
 
@@ -726,15 +999,33 @@ class TestToggleFeed:
             exportable=False,
         )
         db.add(tag)
-        db.commit()
+        db.flush()
         db.refresh(tag)
         feed_data["tag_id"] = tag.id
 
-        event = Event(info="test")
+        organisation = Organisation(
+            name="test",
+            date_created=str(int(time.time())),
+            date_modified=str(int(time.time())),
+        )
+        db.add(organisation)
+        db.flush()
+        db.refresh(organisation)
+
+        event = Event(
+            org_id=organisation.id,
+            orgc_id=organisation.id,
+            info="test",
+            date=str(int(time.time())),
+            analysis="test",
+            event_creator_email="XXXXXXXXXXXXX",
+        )
         db.add(event)
-        db.commit()
+        db.flush()
         db.refresh(event)
         feed_data["event_id"] = event.id
+
+        db.commit()
 
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/feeds", json=feed_data, headers=headers)
@@ -786,14 +1077,14 @@ class TestToggleFeed:
         assert data["message"] == "Feed already enabled."
         assert "url" in data
 
-    def test_toggle_feed_authorization(self: "TestToggleFeed", feed_data: Dict[str, Any]) -> None:
+    def test_toggle_feed_authorization(self: "TestToggleFeed", feed_data: dict[str, Any]) -> None:
         db = get_db()
 
         sharing_group = SharingGroup(
             name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
         )
         db.add(sharing_group)
-        db.commit()
+        db.flush()
         db.refresh(sharing_group)
         feed_data["sharing_group_id"] = sharing_group.id
 
@@ -803,15 +1094,33 @@ class TestToggleFeed:
             exportable=False,
         )
         db.add(tag)
-        db.commit()
+        db.flush()
         db.refresh(tag)
         feed_data["tag_id"] = tag.id
 
-        event = Event(info="test")
+        organisation = Organisation(
+            name="test",
+            date_created=str(int(time.time())),
+            date_modified=str(int(time.time())),
+        )
+        db.add(organisation)
+        db.flush()
+        db.refresh(organisation)
+
+        event = Event(
+            org_id=organisation.id,
+            orgc_id=organisation.id,
+            info="test",
+            date=str(int(time.time())),
+            analysis="test",
+            event_creator_email="XXXXXXXXXXXXX",
+        )
         db.add(event)
-        db.commit()
+        db.flush()
         db.refresh(event)
         feed_data["event_id"] = event.id
+
+        db.commit()
 
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/feeds", json=feed_data, headers=headers)
@@ -843,14 +1152,14 @@ class TestFetschFromAllFeeds:
 
 
 class TestGetAllFeeds:
-    def test_get_all_feeds(self: "TestGetAllFeeds", feed_data: Dict[str, Any]) -> None:
+    def test_get_all_feeds(self: "TestGetAllFeeds", feed_data: dict[str, Any]) -> None:
         db = get_db()
 
         sharing_group = SharingGroup(
             name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
         )
         db.add(sharing_group)
-        db.commit()
+        db.flush()
         db.refresh(sharing_group)
         feed_data["sharing_group_id"] = sharing_group.id
 
@@ -860,15 +1169,33 @@ class TestGetAllFeeds:
             exportable=False,
         )
         db.add(tag)
-        db.commit()
+        db.flush()
         db.refresh(tag)
         feed_data["tag_id"] = tag.id
 
-        event = Event(info="test")
+        organisation = Organisation(
+            name="test",
+            date_created=str(int(time.time())),
+            date_modified=str(int(time.time())),
+        )
+        db.add(organisation)
+        db.flush()
+        db.refresh(organisation)
+
+        event = Event(
+            org_id=organisation.id,
+            orgc_id=organisation.id,
+            info="test",
+            date=str(int(time.time())),
+            analysis="test",
+            event_creator_email="XXXXXXXXXXXXX",
+        )
         db.add(event)
-        db.commit()
+        db.flush()
         db.refresh(event)
         feed_data["event_id"] = event.id
+
+        db.commit()
 
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/feeds", json=feed_data, headers=headers)
@@ -878,14 +1205,14 @@ class TestGetAllFeeds:
         assert response.status_code == 200
         assert isinstance(response.json()["feeds"], list)
 
-    def test_get_feeds_response_format(self: "TestGetAllFeeds", feed_data: Dict[str, Any]) -> None:
+    def test_get_feeds_response_format(self: "TestGetAllFeeds", feed_data: dict[str, Any]) -> None:
         db = get_db()
 
         sharing_group = SharingGroup(
             name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
         )
         db.add(sharing_group)
-        db.commit()
+        db.flush()
         db.refresh(sharing_group)
         feed_data["sharing_group_id"] = sharing_group.id
 
@@ -895,15 +1222,33 @@ class TestGetAllFeeds:
             exportable=False,
         )
         db.add(tag)
-        db.commit()
+        db.flush()
         db.refresh(tag)
         feed_data["tag_id"] = tag.id
 
-        event = Event(info="test")
+        organisation = Organisation(
+            name="test",
+            date_created=str(int(time.time())),
+            date_modified=str(int(time.time())),
+        )
+        db.add(organisation)
+        db.flush()
+        db.refresh(organisation)
+
+        event = Event(
+            org_id=organisation.id,
+            orgc_id=organisation.id,
+            info="test",
+            date=str(int(time.time())),
+            analysis="test",
+            event_creator_email="XXXXXXXXXXXXX",
+        )
         db.add(event)
-        db.commit()
+        db.flush()
         db.refresh(event)
         feed_data["event_id"] = event.id
+
+        db.commit()
 
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/feeds", json=feed_data, headers=headers)
