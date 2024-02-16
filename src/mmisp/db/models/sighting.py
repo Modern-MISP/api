@@ -1,10 +1,8 @@
 from sqlalchemy import Column, ForeignKey, Integer, String
-from sqlalchemy.orm import relationship
 
 from mmisp.util.uuid import uuid
 
 from ..database import Base
-from .organisation import Organisation
 
 
 class Sighting(Base):
@@ -12,15 +10,12 @@ class Sighting(Base):
 
     id = Column(Integer, primary_key=True)
     uuid = Column(String(255), unique=True, default=uuid)
-    attribute_id = Column(Integer, index=True, nullable=False)
-    event_id = Column(Integer, index=True, nullable=False)
-    org_id = Column(Integer, ForeignKey(Organisation.id), index=True, nullable=False)
+    attribute_id = Column(Integer, ForeignKey("attributes.id"), index=True, nullable=False)
+    event_id = Column(Integer, ForeignKey("events.id"), index=True, nullable=False)
+    org_id = Column(Integer, ForeignKey("organisations.id"), index=True, nullable=False)
     date_sighting = Column(Integer, nullable=False)
     source = Column(String(255), index=True)
     type = Column(Integer, index=True, default=0)
-    # attribute_uuid = Column(String(255))
-
-    organisation = relationship("Organisation")
 
 
 # class SightingCoreConfig(Base):
