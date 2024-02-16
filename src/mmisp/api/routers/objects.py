@@ -8,13 +8,13 @@ from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
 from mmisp.api_schemas.attributes.get_all_attributes_response import GetAllAttributesResponse
 from mmisp.api_schemas.events.get_event_response import ObjectEventResponse
 from mmisp.api_schemas.objects.create_object_body import ObjectCreateBody
-from mmisp.api_schemas.objects.delete_object_response import ObjectDeleteResponse
 from mmisp.api_schemas.objects.get_object_response import (
     ObjectResponse,
     ObjectSearchResponse,
     ObjectWithAttributesResponse,
 )
 from mmisp.api_schemas.objects.search_objects_body import ObjectSearchBody
+from mmisp.api_schemas.standard_status_response import StandardStatusResponse
 from mmisp.db.database import get_db
 from mmisp.db.models.attribute import Attribute
 from mmisp.db.models.event import Event
@@ -73,7 +73,7 @@ async def get_object_details(
 @router.delete(
     "/objects/{objectId}/{hardDelete}",
     status_code=status.HTTP_200_OK,
-    response_model=partial(ObjectDeleteResponse),
+    response_model=partial(StandardStatusResponse),
     summary="Delete object",
     description="Delete a specific object. The hardDelete parameter determines if it's a hard or soft delete.",
 )
@@ -126,7 +126,7 @@ async def get_object_details_depr(
     "/objects/delete/{objectId}/{hardDelete}",
     deprecated=True,
     status_code=status.HTTP_200_OK,
-    response_model=partial(ObjectDeleteResponse),
+    response_model=partial(StandardStatusResponse),
     summary="Delete object (Deprecated)",
     description="""
     Deprecated. Delete a specific object using the old route.
@@ -244,7 +244,7 @@ async def _delete_object(db: Session, object_id: str, hard_delete: bool) -> dict
         success = True
         message = "Object has been soft deleted."
 
-    return ObjectDeleteResponse(
+    return StandardStatusResponse(
         saved=saved,
         success=success,
         name=object.name,
