@@ -34,7 +34,7 @@ def generate_random_filter() -> SightingFiltersBody:
         value=val,
         value1=val,
         value2="",
-        type=random_string() if random_bool() else None,
+        type=generate_number_as_str() if random_bool() else None,
         category=random_string() if random_bool() else None,
         org=random_string() if random_bool() else None,
         tags=random_list_of_strings() if random_bool() else None,
