@@ -302,8 +302,10 @@ async def _get_feed_details(db: Session, feed_id: str) -> dict[str, Any]:
 
 
 async def _update_feed(db: Session, feed_id: str, body: FeedCreateAndUpdateBody) -> dict[str, Any]:
-    feed = check_existence_and_raise(db=db, model=Feed, value=feed_id, column_name="id", error_detail="Feed not found.")
-    update_data = body.dict(exclude_unset=True)
+    feed: Feed = check_existence_and_raise(
+        db=db, model=Feed, value=feed_id, column_name="id", error_detail="Feed not found."
+    )
+    update_data: dict[str, Any] = body.dict(exclude_unset=True)
 
     for key, value in update_data.items():
         if value is not None:
@@ -319,7 +321,7 @@ async def _toggle_feed(db: Session, feed_id: str, body: FeedToggleBody) -> dict[
     feed: Feed = check_existence_and_raise(
         db=db, model=Feed, value=feed_id, column_name="id", error_detail="Feed not found."
     )
-    enable_status = body.enable
+    enable_status: bool = body.enable
 
     if enable_status == feed.enabled:
         message = "Feed already " + ("enabled." if feed.enabled else "disabled.")
