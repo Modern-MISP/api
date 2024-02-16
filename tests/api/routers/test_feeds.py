@@ -26,7 +26,6 @@ from ...generators.feed_generator import (
         generate_random_valid_feed_data().dict(),
         generate_random_valid_feed_data().dict(),
         generate_random_valid_feed_data().dict(),
-        generate_random_valid_feed_data().dict(),
     ]
 )
 def feed_data(request: Any) -> dict[str, Any]:
