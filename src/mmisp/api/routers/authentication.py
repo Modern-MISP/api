@@ -17,7 +17,7 @@ from mmisp.config import config
 from mmisp.db.database import get_db
 from mmisp.db.models.identity_provider import OIDCIdentityProvider
 from mmisp.db.models.user import User
-from mmisp.util.crypto import create_hash
+from mmisp.util.crypto import verify_password
 
 router = APIRouter(tags=["authentication"])
 
@@ -47,12 +47,7 @@ async def start_login(db: Annotated[Session, Depends(get_db)], body: StartLoginB
 async def password_login(db: Annotated[Session, Depends(get_db)], body: PasswordLoginBody) -> TokenResponse:
     user: User | None = db.query(User).filter(User.email == body.email).first()
 
-    if not user or user.external_auth_required:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED)
-
-    hashed_password = create_hash(config.HASH_SECRET, body.password)
-
-    if hashed_password != user.password:
+    if not user or user.external_auth_required or not verify_password(body.password, user.password):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
     return TokenResponse(token=encode_token(str(user.id)))
