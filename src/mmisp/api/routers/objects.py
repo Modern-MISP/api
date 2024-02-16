@@ -154,34 +154,45 @@ async def _add_object(db: Session, event_id: str, object_template_id: str, body:
     )
     check_existence_and_raise(db=db, model=Event, value=event_id, column_name="id", error_detail="Event not found.")
 
-    object_data: dict[str, Any] = {
-        **body.dict(exclude={"attributes"}),
-        "template_id": int(object_template_id) if object_template_id is not None else None,
-        "template_name": template.name if template is not None else None,
-        "template_uuid": template.uuid if template is not None else None,
-        "template_version": int(template.version) if template is not None else None,
-        "template_description": template.description if template is not None else None,
-        "event_id": int(event_id),
-        "timestamp": _create_timestamp(),
-    }
-    object = Object(**object_data)
+    object: Object = Object(
+        **body.dict(
+            exclude={
+                "attributes",
+                "template_id",
+                "template_name",
+                "template_uuid",
+                "template_version",
+                "template_description",
+                "event_id",
+                "timestamp",
+            }
+        ),
+        template_id=int(object_template_id) if object_template_id is not None else None,
+        template_name=template.name if template is not None else None,
+        template_uuid=template.uuid if template is not None else None,
+        template_version=int(template.version) if template is not None else None,
+        template_description=template.description if template is not None else None,
+        event_id=int(event_id),
+        timestamp=_create_timestamp(),
+    )
 
     for attr in body.attributes:
-        attribute_data = {
-            **attr.dict(),
-            "timestamp": _create_timestamp(),
-            "event_id": int(event_id),
-        }
-        attribute = Attribute(**attribute_data)
+        attribute: Attribute = Attribute(
+            **attr.dict(exclude={"timestamp", "event_id"}),
+            timestamp=_create_timestamp(),
+            event_id=int(event_id),
+        )
         object.attributes.append(attribute)
 
     db.add(object)
     db.commit()
     db.refresh(object)
-    attributes = db.query(Attribute).filter(Attribute.object_id == object.id).all()
-    attributes_response = [GetAllAttributesResponse(**attribute.__dict__) for attribute in attributes]
+    attributes: list[Attribute] = db.query(Attribute).filter(Attribute.object_id == object.id).all()
+    attributes_response: list[GetAllAttributesResponse] = [
+        GetAllAttributesResponse(**attribute.__dict__) for attribute in attributes
+    ]
 
-    object_response = ObjectWithAttributesResponse(
+    object_response: ObjectWithAttributesResponse = ObjectWithAttributesResponse(
         **object.__dict__,
         attributes=attributes_response,
         event=None,
@@ -227,8 +238,8 @@ async def _delete_object(db: Session, object_id: str, hard_delete: bool) -> dict
     object: Object = check_existence_and_raise(
         db=db, model=Object, value=object_id, column_name="id", error_detail="Object not found."
     )
-    saved = False
-    success = False
+    saved: bool = False
+    success: bool = False
 
     if hard_delete:
         db.query(Attribute).filter(Attribute.object_id == object_id).delete(synchronize_session="fetch")
