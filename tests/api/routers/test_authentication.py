@@ -15,7 +15,7 @@ from mmisp.util.crypto import create_hash
 from mmisp.util.uuid import uuid
 from tests.environment import client, environment
 from tests.generators.model_generators.identity_provider_generator import generate_oidc_identity_provider
-from tests.generators.user_generator import generate_user
+from tests.generators.model_generators.user_generator import generate_user
 
 
 class AuthEnvironment:
