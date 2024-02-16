@@ -2,20 +2,20 @@ from pydantic import BaseModel
 
 
 class Data(BaseModel):
-    scope: list[str]
-    field: list[str]
-    value: list[str]
-    tags: list[str]
+    scope: str | list[str] | None
+    field: str | list[str] | None
+    value: str | list[str] | None
+    tags: str | list[str] | None
     message: str
 
 
-class NoticelistEntry(BaseModel):
+class NoticelistEntryResponse(BaseModel):
     id: int
     noticelistId: int
     data: Data
 
 
-class Noticelist(BaseModel):
+class NoticelistResponse(BaseModel):
     id: int
     name: str
     expanded_name: str
@@ -23,7 +23,7 @@ class Noticelist(BaseModel):
     geographical_area: str
     version: int
     enabled: bool
-    NoticelistEntry: list[NoticelistEntry]
+    NoticelistEntry: list[NoticelistEntryResponse]
 
     class Config:
         orm_mode = True

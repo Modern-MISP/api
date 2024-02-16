@@ -1,5 +1,7 @@
 from pydantic import BaseModel
 
+from .add_edit_get_event_response import AddEditGetEventGalaxyClusterMeta
+
 
 class GetAllEventsOrg(BaseModel):
     id: str
@@ -18,7 +20,7 @@ class GetAllEventsGalaxyClusterGalaxy(BaseModel):
     namespace: str
     enabled: bool
     local_only: bool
-    kill_chain_order: list[str]  # optional
+    kill_chain_order: str | None = None  # optional
 
 
 class GetAllEventsGalaxyCluster(BaseModel):
@@ -33,21 +35,21 @@ class GetAllEventsGalaxyCluster(BaseModel):
     source: str
     authors: list[str]
     version: str
-    distribution: str
-    sharing_group_id: str
+    distribution: str | None = None
+    sharing_group_id: str | None = None
     org_id: str
     orgc_id: str
-    default: str
-    locked: bool
+    default: str | None = None
+    locked: bool | None = None
     extends_uuid: str
     extends_version: str
-    published: bool
-    deleted: bool
-    Galaxy: list[GetAllEventsGalaxyClusterGalaxy]
-    meta: list[str]
+    published: bool | None = None
+    deleted: bool | None = None
+    Galaxy: GetAllEventsGalaxyClusterGalaxy
+    meta: AddEditGetEventGalaxyClusterMeta | None = None
     tag_id: str
-    local: bool
-    relationship_type: str
+    local: bool | None = None
+    relationship_type: str | None = None
 
 
 class GetAllEventsEventTagTag(BaseModel):
@@ -63,10 +65,10 @@ class GetAllEventsEventTag(BaseModel):
     tag_id: str
     local: bool
     relationship_type: str
-    Tag: list[GetAllEventsEventTagTag]
+    Tag: GetAllEventsEventTagTag
 
 
-class GetAllEventsAttributes(BaseModel):
+class GetAllEventsResponse(BaseModel):
     id: str
     org_id: str  # owner org
     distribution: str
@@ -78,6 +80,7 @@ class GetAllEventsAttributes(BaseModel):
     analysis: str
     attribute_count: str
     timestamp: str
+    distribution: str
     sharing_group_id: str
     proposal_email_lock: bool
     locked: bool
@@ -87,15 +90,11 @@ class GetAllEventsAttributes(BaseModel):
     disable_correlation: bool
     extends_uuid: str
     event_creator_email: str  # omitted
-    protected: str
+    protected: str | None = None
     Org: GetAllEventsOrg
     Orgc: GetAllEventsOrg
     GalaxyCluster: list[GetAllEventsGalaxyCluster]
     EventTag: list[GetAllEventsEventTag]
-
-
-class GetAllEventsResponse(BaseModel):
-    events: list[GetAllEventsAttributes]
 
     class Config:
         orm_mode = True
