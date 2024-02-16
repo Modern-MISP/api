@@ -1,9 +1,7 @@
-import logging
 from enum import Enum
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Path, status
-from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
@@ -19,23 +17,6 @@ from mmisp.util.partial import partial
 from mmisp.util.request_validations import check_existence_and_raise
 
 router = APIRouter(tags=["feeds"])
-logging.basicConfig(level=logging.INFO)
-
-info_format = "%(asctime)s - %(message)s"
-error_format = "%(asctime)s - %(filename)s:%(lineno)d - %(message)s"
-
-info_handler = logging.StreamHandler()
-info_handler.setLevel(logging.INFO)
-info_handler.setFormatter(logging.Formatter(info_format))
-
-error_handler = logging.StreamHandler()
-error_handler.setLevel(logging.ERROR)
-error_handler.setFormatter(logging.Formatter(error_format))
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-logger.addHandler(info_handler)
-logger.addHandler(error_handler)
 
 
 # sorted according to CRUD
@@ -49,14 +30,14 @@ logger.addHandler(error_handler)
     description="Add a new feed with given details.",
 )
 async def add_feed(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.ADD]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.ADD]))],
     db: Annotated[Session, Depends(get_db)],
     body: FeedCreateAndUpdateBody,
-) -> dict:
+) -> dict[str, Any]:
     return await _add_feed(db, body)
 
 
-@router.post(  #! @worker: also change 'status_code' and 'description'
+@router.post(  # @worker: also change 'status_code' and 'description'
     "/feeds/cache_feeds/{cacheFeedsScope}",
     status_code=status.HTTP_501_NOT_IMPLEMENTED,
     response_model=partial(FeedCacheResponse),
@@ -64,14 +45,14 @@ async def add_feed(
     description="Cache feeds based on a specific scope. NOT YET AVAILABLE!",
 )
 async def cache_feeds(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.ADMIN, Permission.SITE_ADMIN]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.WORKER_KEY, [Permission.ADMIN, Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     cache_feeds_scope: Annotated[str, Path(..., alias="cacheFeedsScope")],
-) -> dict:
+) -> dict[str, Any]:
     return await _cache_feeds(db, cache_feeds_scope)
 
 
-@router.get(  #! @worker: also change 'status_code' and 'description'
+@router.get(  # @worker: also change 'status_code' and 'description'
     "/feeds/fetch_from_feed/{feedId}",
     status_code=status.HTTP_501_NOT_IMPLEMENTED,
     response_model=partial(FeedFetchResponse),
@@ -79,10 +60,10 @@ async def cache_feeds(
     description="Fetch data from a specific feed by its ID. NOT YET AVAILABLE!",
 )
 async def fetch_from_feed(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.SYNC]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.WORKER_KEY, [Permission.SYNC]))],
     db: Annotated[Session, Depends(get_db)],
     feed_id: Annotated[str, Path(..., alias="feedId")],
-) -> dict:
+) -> dict[str, Any]:
     return await _fetch_from_feed(db, feed_id)
 
 
@@ -96,7 +77,7 @@ async def fetch_from_feed(
 async def get_feed_details(
     db: Annotated[Session, Depends(get_db)],
     feed_id: Annotated[str, Path(..., alias="feedId")],
-) -> dict:
+) -> dict[str, Any]:
     return await _get_feed_details(db, feed_id)
 
 
@@ -108,11 +89,11 @@ async def get_feed_details(
     description="Update an existing feed by its ID.",
 )
 async def update_feed(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.MODIFY]))],
     db: Annotated[Session, Depends(get_db)],
     feed_id: Annotated[str, Path(..., alias="feedId")],
     body: FeedCreateAndUpdateBody,
-) -> dict:
+) -> dict[str, Any]:
     return await _update_feed(db, feed_id, body)
 
 
@@ -124,15 +105,15 @@ async def update_feed(
     description="Toggle the status of a feed between enabled and disabled.",
 )
 async def toggle_feed(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.MODIFY]))],
     db: Annotated[Session, Depends(get_db)],
     feed_id: Annotated[str, Path(..., alias="feedId")],
     body: FeedToggleBody,
-) -> dict:
+) -> dict[str, Any]:
     return await _toggle_feed(db, feed_id, body)
 
 
-@router.get(  #! @worker: also change 'status_code' and 'description'
+@router.get(  # @worker: also change 'status_code' and 'description'
     "/feeds/fetch_from_all_feeds",
     status_code=status.HTTP_501_NOT_IMPLEMENTED,
     response_model=partial(FeedFetchResponse),
@@ -140,20 +121,20 @@ async def toggle_feed(
     description="Fetch data from all available feeds. NOT YET AVAILABLE!",
 )
 async def fetch_data_from_all_feeds(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.SYNC]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.WORKER_KEY, [Permission.SYNC]))],
     db: Annotated[Session, Depends(get_db)],
-) -> dict:
+) -> dict[str, Any]:
     return await _fetch_data_from_all_feeds(db)
 
 
 @router.get(
     "/feeds",
     status_code=status.HTTP_200_OK,
-    response_model=partial(FeedsResponse),  # type: ignore
+    response_model=partial(FeedsResponse),
     summary="Get all feeds",
     description="Retrieve a list of all feeds.",
 )
-async def get_feeds(db: Annotated[Session, Depends(get_db)]) -> list[dict]:
+async def get_feeds(db: Annotated[Session, Depends(get_db)]) -> list[dict[str, Any]]:
     return await _get_feeds(db)
 
 
@@ -169,10 +150,10 @@ async def get_feeds(db: Annotated[Session, Depends(get_db)]) -> list[dict]:
     description="Deprecated. Add a new feed with given details using the old route.",
 )
 async def add_feed_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.ADD]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.ADD]))],
     db: Annotated[Session, Depends(get_db)],
     body: FeedCreateAndUpdateBody,
-) -> dict:
+) -> dict[str, Any]:
     return await _add_feed(db, body)
 
 
@@ -185,10 +166,10 @@ async def add_feed_depr(
     description="Deprecated. Enable a specific feed by its ID using the old route.",
 )
 async def enable_feed(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.MODIFY]))],
     db: Annotated[Session, Depends(get_db)],
     feed_id: Annotated[str, Path(..., alias="feedId")],
-) -> dict:
+) -> dict[str, Any]:
     return await _enable_feed(db, feed_id)
 
 
@@ -201,14 +182,14 @@ async def enable_feed(
     description="Deprecated. Disable a specific feed by its ID using the old route.",
 )
 async def disable_feed(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.MODIFY]))],
     db: Annotated[Session, Depends(get_db)],
     feed_id: Annotated[str, Path(..., alias="feedId")],
-) -> dict:
+) -> dict[str, Any]:
     return await _disable_feed(db, feed_id)
 
 
-@router.post(  #! @worker: also change 'status_code' and 'description'
+@router.post(  # @worker: also change 'status_code' and 'description'
     "/feeds/cacheFeeds/{cacheFeedsScope}",
     deprecated=True,
     status_code=status.HTTP_501_NOT_IMPLEMENTED,
@@ -217,14 +198,14 @@ async def disable_feed(
     description="Cache feeds based on a specific scope.",
 )
 async def cache_feeds_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.ADMIN, Permission.SITE_ADMIN]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.WORKER_KEY, [Permission.ADMIN, Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     cache_feeds_scope: Annotated[str, Path(..., alias="cacheFeedsScope")],
-) -> dict:
+) -> dict[str, Any]:
     return await _cache_feeds(db, cache_feeds_scope)
 
 
-@router.post(  #! @worker: also change 'status_code' and 'description'
+@router.post(  # @worker: also change 'status_code' and 'description'
     "/feeds/fetchFromFeed/{feedId}",
     deprecated=True,
     status_code=status.HTTP_501_NOT_IMPLEMENTED,
@@ -233,14 +214,14 @@ async def cache_feeds_depr(
     description="Deprecated. Fetch data from a specific feed by its ID using the old route.",
 )
 async def fetch_from_feed_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.SYNC]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.WORKER_KEY, [Permission.SYNC]))],
     db: Annotated[Session, Depends(get_db)],
     feed_id: Annotated[str, Path(..., alias="feedId")],
-) -> dict:
+) -> dict[str, Any]:
     return await _fetch_from_feed(db, feed_id)
 
 
-@router.post(  #! @worker: also change 'status_code' and 'description'
+@router.post(  # @worker: also change 'status_code' and 'description'
     "/feeds/fetchFromAllFeeds",
     deprecated=True,
     status_code=status.HTTP_501_NOT_IMPLEMENTED,
@@ -249,9 +230,9 @@ async def fetch_from_feed_depr(
     description="Deprecated. Fetch data from all available feeds using the old route.",
 )
 async def fetch_data_from_all_feeds_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.SYNC]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.WORKER_KEY, [Permission.SYNC]))],
     db: Annotated[Session, Depends(get_db)],
-) -> dict:
+) -> dict[str, Any]:
     return await _fetch_data_from_all_feeds(db)
 
 
@@ -266,7 +247,7 @@ async def fetch_data_from_all_feeds_depr(
 async def get_feed_details_depr(
     db: Annotated[Session, Depends(get_db)],
     feed_id: Annotated[str, Path(..., alias="feedId")],
-) -> dict:
+) -> dict[str, Any]:
     return await _get_feed_details(db, feed_id)
 
 
@@ -279,78 +260,68 @@ async def get_feed_details_depr(
     description="Deprecated. Update an existing feed by its ID using the old route.",
 )
 async def update_feed_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.MODIFY]))],
     db: Annotated[Session, Depends(get_db)],
     feed_id: Annotated[str, Path(..., alias="feedId")],
     body: FeedCreateAndUpdateBody,
-) -> dict:
+) -> dict[str, Any]:
     return await _update_feed(db, feed_id, body)
 
 
 # --- endpoint logic ---
 
 
-async def _add_feed(db: Session, body: FeedCreateAndUpdateBody) -> dict:
+async def _add_feed(db: Session, body: FeedCreateAndUpdateBody) -> dict[str, Any]:
     feed: Feed = Feed(**body.dict())
 
-    try:
-        db.add(feed)
-        db.commit()
-    except SQLAlchemyError as e:
-        db.rollback()
-        logger.exception(f"Failed to add new feed: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred."
-        )
+    db.add(feed)
+    db.commit()
+    db.refresh(feed)
 
-    logger.info(f"New feed added: {feed.id}")
     return FeedResponse(feed=feed.__dict__)
 
 
-async def _cache_feeds(db: Session, cache_feeds_scope: str) -> dict:
-    logger.error("Cache feeds endpoint not yet implemented.")
+async def _cache_feeds(db: Session, cache_feeds_scope: str) -> dict[str, Any]:
     raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Endpoint not yet supported.")
 
-    #! logic to save 'feeds_to_cache' in cache (worker)
+    # logic to save 'feeds_to_cache' in cache (worker)
 
 
-async def _fetch_from_feed(db: Session, feed_id: str) -> dict:
-    logger.error("Fetch from feed endpoint not yet implemented.")
-    raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Endpoint not yet supported")
+async def _fetch_from_feed(db: Session, feed_id: str) -> dict[str, Any]:
+    raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Endpoint not yet supported.")
 
-    #! logic to start the pull process (worker)
+    # logic to start the pull process (worker)
 
 
-async def _get_feed_details(db: Session, feed_id: str) -> dict:
-    feed: Feed = check_existence_and_raise(db, Feed, feed_id, "feed_id", "Feed not found.")
+async def _get_feed_details(db: Session, feed_id: str) -> dict[str, Any]:
+    feed: Feed = check_existence_and_raise(
+        db=db, model=Feed, value=feed_id, column_name="id", error_detail="Feed not found."
+    )
 
     return FeedResponse(feed=feed.__dict__)
 
 
-async def _update_feed(db: Session, feed_id: str, body: FeedCreateAndUpdateBody) -> dict:
-    feed = check_existence_and_raise(db, Feed, feed_id, "feed_id", "Feed not found.")
-    update_data = body.dict(exclude_unset=True)
+async def _update_feed(db: Session, feed_id: str, body: FeedCreateAndUpdateBody) -> dict[str, Any]:
+    feed: Feed = check_existence_and_raise(
+        db=db, model=Feed, value=feed_id, column_name="id", error_detail="Feed not found."
+    )
+    update_data: dict[str, Any] = body.dict(exclude_unset=True)
 
     for key, value in update_data.items():
         if value is not None:
             setattr(feed, key, value if not isinstance(value, Enum) else value.value)
 
-    try:
-        db.commit()
-    except SQLAlchemyError as e:
-        db.rollback()
-        logger.exception(f"Failed to update feed: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred."
-        )
+    db.commit()
+    db.refresh(feed)
 
-    logger.info(f"Feed with id '{feed.id}' updated.")
     return FeedResponse(feed=feed.__dict__)
 
 
-async def _toggle_feed(db: Session, feed_id: str, body: FeedToggleBody) -> dict:
-    feed: Feed = check_existence_and_raise(db, Feed, feed_id, "feed_id", "Feed not found.")
-    enable_status = body.enable
+async def _toggle_feed(db: Session, feed_id: str, body: FeedToggleBody) -> dict[str, Any]:
+    feed: Feed = check_existence_and_raise(
+        db=db, model=Feed, value=feed_id, column_name="id", error_detail="Feed not found."
+    )
+    enable_status: bool = body.enable
 
     if enable_status == feed.enabled:
         message = "Feed already " + ("enabled." if feed.enabled else "disabled.")
@@ -358,39 +329,30 @@ async def _toggle_feed(db: Session, feed_id: str, body: FeedToggleBody) -> dict:
         feed.enabled = enable_status
         message = "Feed " + ("enabled" if enable_status else "disabled") + " successfully."
 
-    try:
-        db.commit()
-        logging.info(f"Feed with id '{feed_id}': {message}.")
-    except SQLAlchemyError as e:
-        db.rollback()
-        logger.exception(f"Failed to toggle feed: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred."
-        )
+    db.commit()
 
-    logger.info(f"Feed with id '{feed_id}': {message}")
     return FeedEnableDisableResponse(name=feed.name, message=message, url=feed.url)
 
 
-async def _fetch_data_from_all_feeds(db: Session) -> dict:
-    logger.error("fetch from all feeds endpoint not yet implemented.")
-    raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Endpoint not yet supported")
+async def _fetch_data_from_all_feeds(db: Session) -> dict[str, Any]:
+    raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Endpoint not yet supported.")
 
-    #! logic to start the pull process
+    # logic to start the pull process for all feeds
 
 
-async def _get_feeds(db: Session) -> list[dict]:
+async def _get_feeds(db: Session) -> list[dict[str, Any]]:
     feeds: list[Feed] = db.query(Feed).all()
 
     if not feeds:
-        logger.info("No feeds found.")
         return FeedsResponse(feeds=[])
 
     return FeedsResponse(feeds=[feed.__dict__ for feed in feeds])
 
 
-async def _enable_feed(db: Session, feed_id: str) -> dict:
-    feed: Feed = check_existence_and_raise(db, Feed, feed_id, "feed_id", "Feed not found.")
+async def _enable_feed(db: Session, feed_id: str) -> dict[str, Any]:
+    feed: Feed = check_existence_and_raise(
+        db=db, model=Feed, value=feed_id, column_name="id", error_detail="Feed not found."
+    )
 
     if feed.enabled:
         message = "Feed already enabled."
@@ -398,14 +360,14 @@ async def _enable_feed(db: Session, feed_id: str) -> dict:
         feed.enabled = True
         db.commit()
         message = "Feed enabled successfully."
-        logger.info(f"Feed with id '{feed_id}' enabled.")
 
-    logger.info(f"Feed with id '{feed_id}' enabled.")
     return FeedEnableDisableResponse(name=feed.name, message=message, url=feed.url)
 
 
-async def _disable_feed(db: Session, feed_id: str) -> dict:
-    feed: Feed = check_existence_and_raise(db, Feed, feed_id, "feed_id", "Feed not found.")
+async def _disable_feed(db: Session, feed_id: str) -> dict[str, Any]:
+    feed: Feed = check_existence_and_raise(
+        db=db, model=Feed, value=feed_id, column_name="id", error_detail="Feed not found."
+    )
 
     if not feed.enabled:
         message = "Feed already disabled."
@@ -413,7 +375,5 @@ async def _disable_feed(db: Session, feed_id: str) -> dict:
         feed.enabled = False
         db.commit()
         message = "Feed disabled successfully."
-        logger.info(f"Feed with id '{feed_id}' disabled.")
 
-    logger.info(f"Feed with id '{feed_id}' enabled.")
     return FeedEnableDisableResponse(name=feed.name, message=message, url=feed.url)

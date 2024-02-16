@@ -9,19 +9,25 @@ class SightingOrganisationResponse(BaseModel):
 
 class SightingAttributesResponse(BaseModel):
     id: str
+    uuid: str
     attribute_id: str
     event_id: str
     org_id: str
     date_sighting: str
-    uuid: str
-    source: str
-    type: str
-    attribute_uuid: str
+    source: str | None = None
+    type: str | None = None
     organisation: SightingOrganisationResponse
 
 
+class SightingsGetResponse(BaseModel):
+    sightings: list[SightingAttributesResponse]
+
+    class Config:
+        orm_mode = True
+
+
 class SightingGetResponse(BaseModel):
-    root: list[SightingAttributesResponse]
+    sighting: SightingAttributesResponse
 
     class Config:
         orm_mode = True
