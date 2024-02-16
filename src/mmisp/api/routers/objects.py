@@ -1,4 +1,4 @@
-import time
+from time import time
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, Path, status
@@ -165,21 +165,17 @@ async def _add_object(db: Session, event_id: str, object_template_id: str, body:
         "timestamp": _create_timestamp(),
     }
     object = Object(**object_data)
-    db.add(object)
-    db.flush()
-    db.refresh(object)
 
-    attributes_data = [
-        {
+    for attr in body.attributes:
+        attribute_data = {
             **attr.dict(),
-            "object_id": object.id,
             "timestamp": _create_timestamp(),
             "event_id": int(event_id),
         }
-        for attr in body.attributes
-    ]
+        attribute = Attribute(**attribute_data)
+        object.attributes.append(attribute)
 
-    db.bulk_insert_mappings(Attribute, attributes_data)
+    db.add(object)
     db.commit()
     db.refresh(object)
     attributes = db.query(Attribute).filter(Attribute.object_id == object.id).all()
@@ -258,7 +254,7 @@ async def _delete_object(db: Session, object_id: str, hard_delete: bool) -> dict
 
 
 def _create_timestamp() -> int:
-    return int(time.time())
+    return int(time())
 
 
 #####################################################################
