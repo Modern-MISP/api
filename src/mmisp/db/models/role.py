@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from sqlalchemy import Boolean, Column, DateTime, Integer, String
 
 from ..database import Base
@@ -8,8 +10,8 @@ class Role(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String(255))
-    created = Column(DateTime)
-    modified = Column(DateTime)
+    created = Column(DateTime, default=datetime.utcnow)
+    modified = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     perm_add = Column(Boolean)
     perm_modify = Column(Boolean)
     perm_modify_org = Column(Boolean)

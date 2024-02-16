@@ -1,13 +1,9 @@
-from datetime import datetime
-
 from mmisp.db.models.organisation import Organisation
 
 
 def generate_organisation() -> Organisation:
     return Organisation(
         name="ORGNAME",
-        date_created=datetime.utcnow(),
-        date_modified=datetime.utcnow(),
         description="auto-generated org",
         type="another free text description",
         nationality="earthian",

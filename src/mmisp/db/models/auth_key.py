@@ -1,4 +1,6 @@
-from sqlalchemy import Boolean, Column, Integer, String
+from datetime import datetime
+
+from sqlalchemy import Boolean, Column, DateTime, Integer, String
 
 from mmisp.util.uuid import uuid
 
@@ -16,7 +18,7 @@ class AuthKey(Base):
     allowed_ips = Column(String(255))
     authkey_start = Column(String(255))
     authkey_end = Column(String(255))
-    created = Column(String(255))
+    created = Column(DateTime, default=datetime.utcnow)
     expiration = Column(String(255))
     last_used = Column(String(255))
     unique_ips = Column(String(255))

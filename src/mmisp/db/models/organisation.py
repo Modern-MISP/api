@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from sqlalchemy import Boolean, Column, DateTime, Integer, String
 
 from mmisp.util.uuid import uuid
@@ -11,8 +13,8 @@ class Organisation(Base):
     id = Column(Integer, primary_key=True)
     uuid = Column(String(255), unique=True, default=uuid)
     name = Column(String(255))
-    date_created = Column(DateTime)
-    date_modified = Column(DateTime)
+    date_created = Column(DateTime, default=datetime.utcnow)
+    date_modified = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     description = Column(String(255))
     type = Column(String(255))
     nationality = Column(String(255))
