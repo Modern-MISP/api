@@ -1,9 +1,7 @@
-import logging
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, HTTPException, Path, status
+from fastapi import APIRouter, Depends, Path, status
 from sqlalchemy import and_, or_
-from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
@@ -25,25 +23,6 @@ from mmisp.db.models.warninglist import Warninglist, WarninglistEntry
 from mmisp.util.request_validations import check_existence_and_raise
 
 router = APIRouter(tags=["warninglists"])
-logging.basicConfig(level=logging.INFO)
-
-info_format = "%(asctime)s - %(message)s"
-error_format = "%(asctime)s - %(filename)s:%(lineno)d - %(message)s"
-
-info_handler = logging.StreamHandler()
-info_handler.setLevel(logging.INFO)
-info_handler.setFormatter(logging.Formatter(info_format))
-
-error_handler = logging.StreamHandler()
-error_handler.setLevel(logging.ERROR)
-error_handler.setFormatter(logging.Formatter(error_format))
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-logger.addHandler(info_handler)
-logger.addHandler(error_handler)
-
-# TODO:  db: Session = Depends(get_db), or db: Annotated[Session, Depends(get_db)],
 
 
 @router.post(
@@ -54,11 +33,11 @@ logger.addHandler(error_handler)
     description="Add a new warninglist with given details.",
 )
 async def add_warninglist(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.ADD]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WARNINGLIST]))],
+    db: Annotated[Session, Depends(get_db)],
     body: CreateWarninglistBody,
-    db: Session = Depends(get_db),
 ) -> dict:
-    return await _add_warninglist(body, db)
+    return await _add_warninglist(db, body)
 
 
 @router.get(
@@ -69,8 +48,8 @@ async def add_warninglist(
     description="Retrieve details of a specific warninglist by its ID.",
 )
 async def view_warninglist(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
-    db: Session = Depends(get_db),
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.AUTH]))],
+    db: Annotated[Session, Depends(get_db)],
     warninglist_id: str = Path(..., alias="warninglistId"),
 ) -> dict:
     return await _view_warninglist(db, warninglist_id)
@@ -84,11 +63,11 @@ async def view_warninglist(
     description="Disable/Enable a specific warninglist by its ID or name.",
 )
 async def post_toggleEnable(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.ADD]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.SITE_ADMIN]))],
+    db: Annotated[Session, Depends(get_db)],
     body: ToggleEnableWarninglistsBody,
-    db: Session = Depends(get_db),
 ) -> dict:
-    return await _toggleEnable(body, db)
+    return await _toggleEnable(db, body)
 
 
 @router.delete(
@@ -99,7 +78,7 @@ async def post_toggleEnable(
     description="Delete a specific warninglist.",
 )
 async def delete_warninglist(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY, Permission.WARNINGLIST]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY, Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     warninglist_id: str = Path(..., alias="id"),
 ) -> dict:
@@ -113,15 +92,16 @@ async def delete_warninglist(
     summary="Get all warninglists, or selected ones by value and status",
     description="Retrieve a list of all warninglists.",
 )
-async def get_all_warninglists(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.ADD, Permission.WARNINGLIST]))],
+async def get_all_or_selected_warninglists(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.ADD, Permission.AUTH]))],
     db: Annotated[Session, Depends(get_db)],
     value: str | None = None,
     enabled: bool | None = None,
 ) -> dict:
-    return await _get_all_warninglists(db)  # , value, enabled)
+    return await _get_all_or_selected_warninglists(db, value, enabled)
 
 
+# TODO: delete
 # @router.get(
 #     "/warninglists?value=String&enabled=boolean",
 #     summary="Get selected warninglists",
@@ -139,11 +119,11 @@ async def get_all_warninglists(
     description="Retrieve a list of ID and name of warninglists, which match has the given search term as Entry.",
 )
 async def get_warninglists_by_value(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.FULL]))],
-    body: CheckValueWarninglistsBody,
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.AUTH]))],
     db: Annotated[Session, Depends(get_db)],
+    body: CheckValueWarninglistsBody,
 ) -> dict:
-    return await _get_warninglists_by_value(body, db)
+    return await _get_warninglists_by_value(db, body)
 
 
 @router.put(
@@ -154,13 +134,12 @@ async def get_warninglists_by_value(
     description="Update all warninglists.",
 )
 async def update_all_warninglists(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.ADD]))],
-    db: Session = Depends(get_db),
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.SITE_ADMIN]))],
+    db: Annotated[Session, Depends(get_db)],
 ) -> dict:
-    return await _update_all_warninglists(db)
+    return await _update_all_warninglists(db, False)
 
 
-# DEPRECATED ENDPOINTS
 @router.post(
     "/warninglists/update",
     deprecated=True,
@@ -170,10 +149,10 @@ async def update_all_warninglists(
     description="Deprecated. Update all warninglists.",
 )
 async def update_all_warninglists_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.SYNC]))],
-    db: Session = Depends(get_db),
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.SITE_ADMIN]))],
+    db: Annotated[Session, Depends(get_db)],
 ) -> dict:
-    return await _update_all_warninglists(db)
+    return await _update_all_warninglists(db, True)
 
 
 @router.get(
@@ -185,8 +164,8 @@ async def update_all_warninglists_depr(
     description="Deprecated. Retrieve details of a specific warninglist by its ID using the old route.",
 )
 async def view_warninglist_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
-    db: Session = Depends(get_db),
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.AUTH]))],
+    db: Annotated[Session, Depends(get_db)],
     warninglist_id: str = Path(..., alias="warninglistId"),
 ) -> dict:
     return await _view_warninglist(db, warninglist_id)
@@ -199,17 +178,17 @@ async def view_warninglist_depr(
     description="Retrieve a list of warninglists, which match given search terms using the old route.",
 )
 async def search_warninglists(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WARNINGLIST]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.AUTH]))],
+    db: Annotated[Session, Depends(get_db)],
     body: GetSelectedWarninglistsBody,
-    db: Session = Depends(get_db),
 ) -> dict:
-    return await _get_selected_warninglists(body, db)
+    return await _get_selected_warninglists(db, body)
 
 
 # --- endpoint logic ---
 async def _add_warninglist(
-    body: CreateWarninglistBody,
     db: Session,
+    body: CreateWarninglistBody,
 ) -> dict:
     warninglist_entry_count = len(body.values.splitlines())
     create = body.dict()
@@ -223,25 +202,16 @@ async def _add_warninglist(
 
     db.add(new_warninglist)
     db.flush()
-    db.refresh(new_warninglist)
+    db.refresh(new_warninglist)  # TODO: Test if refresh is needed
 
     new_warninglist_entries = _create_warninglist_entries(body.values, new_warninglist.id)
 
     db.add_all(new_warninglist_entries)
 
-    try:
-        db.commit()
-    except SQLAlchemyError as e:
-        db.rollback()
-        logger.exception(f"Failed to add new warninglist: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred."
-        )
+    db.commit()
 
     for new_warninglist_entry in new_warninglist_entries:
         db.refresh(new_warninglist_entry)
-
-    logger.info(f"New warninglist added: {new_warninglist.id}")
 
     warninglist_data = _prepare_warninglist_response(new_warninglist, new_warninglist_entries)
 
@@ -249,58 +219,35 @@ async def _add_warninglist(
 
 
 async def _toggleEnable(
-    body: ToggleEnableWarninglistsBody,
     db: Session,
+    body: ToggleEnableWarninglistsBody,
 ) -> dict:
-    warninglist_id_list = _convert_to_list(body.id)
-    for id in warninglist_id_list:
-        id = int(id)
+    warninglist_id_str_list = _convert_to_list(body.id)
+    warninglist_id_list = [int(id_str) for id_str in warninglist_id_str_list]
     warninglist_name_list = _convert_to_list(body.name)
-    warninglist_enabled = body.enabled
-    # Imlementation like old/current route. Maybe optimize later. Only looks after warninglist_ids
-    # if not warninglist_id_list:
-    #     for warninglist_name in warninglist_name_list:
-    #         warninglists = db.query(Warninglist).filter(Warninglist.id == warninglist_name).all()
-    #         for warninglist in warninglists:
-    #             warninglist.enabled = warninglist_enabled  # type: ignore
-    #             counter += 1
-    #             db.commit()
-
-    for warninglist_id in warninglist_id_list:
-        warninglist = db.query(Warninglist).filter(Warninglist.id == warninglist_id).first()
-        if warninglist:
-            warninglist.enabled = warninglist_enabled  # type: ignore
-        db.commit()
+    warninglist_status = body.enabled
 
     id_filter = db.query(Warninglist).filter(Warninglist.id.in_(warninglist_id_list))
     name_filter = db.query(Warninglist).filter(Warninglist.name.in_(warninglist_name_list))
 
-    updated_warninglists = id_filter.union(name_filter).all()
+    warninglists = id_filter.union(name_filter).all()
 
-    # updated_warninglists = db.query(Warninglist).filter(Warninglist.id == 228).all()
+    for warninglist in warninglists:
+        warninglist.enabled = warninglist_status
 
-    disable_status = "disabled" if body.enabled is False else "enabled"
-    if not updated_warninglists:
+    db.commit()
+
+    errors = ""
+    success = ""
+    if not warninglists:
         status = False
-        message = "Warninglist(s) not found"
+        errors = "Warninglist(s) not found"
     else:
-        for updated_warninglist in updated_warninglists:
-            updated_warninglist.enabled = body.enabled
-        number_updated_warninglists = len(updated_warninglists)
+        disable_status = "enabled" if warninglist_status is False else "disabled"
         status = True
-        message = str(number_updated_warninglists) + " warninglist(s) " + disable_status
+        success = str(len(warninglists)) + " warninglist(s) " + disable_status
 
-    try:
-        db.commit()
-        logger.info(f"Warninglists '{disable_status}'.")
-    except SQLAlchemyError:
-        db.rollback()
-        logger.exception(f"Failed to '{disable_status}'d warninglists.")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred."
-        )
-
-    return ToggleEnableWarninglistsResponse(saved=status, success=message)
+    return ToggleEnableWarninglistsResponse(saved=status, success=success, errors=errors)
 
 
 async def _view_warninglist(
@@ -310,7 +257,7 @@ async def _view_warninglist(
     warninglist: Warninglist = check_existence_and_raise(
         db, Warninglist, warninglist_id, "id", "Warninglist not found."
     )
-    # TODO: best practice? already known warninglist_id is a int
+
     warninglist_entries = _get_warninglist_entries(db, int(warninglist_id))
 
     warninglist_data = _prepare_warninglist_response(warninglist, warninglist_entries)
@@ -326,7 +273,6 @@ async def _delete_warninglist(
         db, Warninglist, warninglist_id, "id", "Warninglist not found."
     )
 
-    # TODO: best practice? already known warninglist_id is a int
     warninglist_entries = _get_warninglist_entries(db, int(warninglist_id))
 
     for warninglist_entry in warninglist_entries:
@@ -334,48 +280,17 @@ async def _delete_warninglist(
 
     db.delete(warninglist)
 
-    try:
-        db.commit()
-        logger.info(f"Deleted warninglist with id '{warninglist_id}'.")
-    except SQLAlchemyError as e:
-        db.rollback()
-        logger.exception(f"Failed to delete warninglist with id '{warninglist_id}': {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred."
-        )
+    db.commit()
 
     return _prepare_warninglist_response(warninglist, warninglist_entries)
 
 
-async def _get_all_warninglists(
+async def _get_all_or_selected_warninglists(
     db: Session,
-    value: str | None = None,
-    enabled: bool | None = None,
+    value: str = None,
+    enabled: bool = None,
 ) -> dict:
-    # TODO: optimize
-    if value is not None and enabled is not None:
-        warninglists = (
-            db.query(Warninglist)
-            .filter(
-                (
-                    and_(
-                        or_(Warninglist.name == value, Warninglist.description == value, Warninglist.type == value),
-                        Warninglist.enabled == enabled,
-                    )
-                )
-            )
-            .all()
-        )
-    elif value is not None:
-        warninglists = (
-            db.query(Warninglist)
-            .filter(or_(Warninglist.name == value, Warninglist.description == value, Warninglist.type == value))
-            .all()
-        )
-    elif enabled is not None:
-        warninglists = db.query(Warninglist).filter(Warninglist.enabled == enabled).all()
-    else:
-        warninglists = db.query(Warninglist).all()
+    warninglists = _search_warninglist(db, value, enabled)
 
     warninglists_data = []
     for warninglist in warninglists:
@@ -386,8 +301,8 @@ async def _get_all_warninglists(
 
 
 async def _get_warninglists_by_value(
-    body: CheckValueWarninglistsBody,
     db: Session,
+    body: CheckValueWarninglistsBody,
 ) -> dict:
     values = body.value
 
@@ -413,13 +328,14 @@ async def _get_warninglists_by_value(
 
 async def _update_all_warninglists(
     db: Session,
+    deprecated: bool,
 ) -> dict:
     number_updated_lists = db.query(Warninglist).count()
     saved = True
     success = True
     name = "Succesfully updated " + str(number_updated_lists) + "warninglists."
     message = "Succesfully updated " + str(number_updated_lists) + "warninglists."
-    url = "/warninglists/"
+    url = "/warninglists/update" if deprecated else "/warninglists"
 
     return UpdateAllWarninglistsResponse(
         saved=saved,
@@ -431,35 +347,10 @@ async def _update_all_warninglists(
 
 
 async def _get_selected_warninglists(
-    body: GetSelectedWarninglistsBody,
     db: Session,
+    body: GetSelectedWarninglistsBody,
 ) -> dict:
-    # TODO: optimize
-    value = body.value
-    enabled = body.enabled
-    if value is not None and enabled is not None:
-        warninglists = (
-            db.query(Warninglist)
-            .filter(
-                (
-                    and_(
-                        or_(Warninglist.name == value, Warninglist.description == value, Warninglist.type == value),
-                        Warninglist.enabled == enabled,
-                    )
-                )
-            )
-            .all()
-        )
-    elif value is not None:
-        warninglists = (
-            db.query(Warninglist)
-            .filter(or_(Warninglist.name == value, Warninglist.description == value, Warninglist.type == value))
-            .all()
-        )
-    elif enabled is not None:
-        warninglists = db.query(Warninglist).filter(Warninglist.enabled == enabled).all()
-    else:
-        warninglists = []
+    warninglists = _search_warninglist(db, body.value, body.enabled)
 
     warninglists_data = []
     for warninglist in warninglists:
@@ -469,7 +360,30 @@ async def _get_selected_warninglists(
     return GetSelectedAllWarninglistsResponse(response=warninglists_data)
 
 
-def _create_warninglist_entries(values: str, warninglist_id: int) -> list[WarninglistEntry]:
+def _search_warninglist(
+    db: Session,
+    value: str = None,
+    enabled: bool = None,
+) -> list[Warninglist]:
+    search_value = or_(Warninglist.name == value, Warninglist.description == value, Warninglist.type == value)
+    search_enabled = Warninglist.enabled == enabled
+
+    if value is not None and enabled is not None:
+        warninglists = db.query(Warninglist).filter(and_(search_value, search_enabled)).all()
+    elif value is not None:
+        warninglists = db.query(Warninglist).filter(search_value).all()
+    elif enabled is not None:
+        warninglists = db.query(Warninglist).filter(search_enabled).all()
+    else:
+        warninglists = db.query(Warninglist).all()
+
+    return warninglists
+
+
+def _create_warninglist_entries(
+    values: str,
+    warninglist_id: int,
+) -> list[WarninglistEntry]:
     raw_text = values.splitlines()
     new_warninglist_entries = []
     for line in raw_text:
@@ -507,7 +421,8 @@ def _prepare_warninglistEntry_response(warninglist_entry: WarninglistEntry) -> W
 
 
 def _prepare_warninglist_response(
-    warninglist: Warninglist, warninglist_entries: list[WarninglistEntry] | None
+    warninglist: Warninglist,
+    warninglist_entries: list[WarninglistEntry] | None,
 ) -> WarninglistResponse:
     warninglist_entries_response = []
     if warninglist_entries is not None:
@@ -530,7 +445,10 @@ def _prepare_warninglist_response(
     return warninglist_data
 
 
-def _get_warninglist_entries(db: Session, warninglist_id: int) -> list[WarninglistEntry]:
+def _get_warninglist_entries(
+    db: Session,
+    warninglist_id: int,
+) -> list[WarninglistEntry]:
     warninglist_entries: list[WarninglistEntry] | None = (
         db.query(WarninglistEntry).filter(WarninglistEntry.warninglist_id == str(warninglist_id)).all()
     )
