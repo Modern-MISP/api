@@ -1,7 +1,7 @@
 import time
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, HTTPException, Path, status
+from fastapi import APIRouter, Depends, Path, status
 from sqlalchemy.orm import Session
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
@@ -81,7 +81,7 @@ async def delete_object(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.MODIFY]))],
     db: Annotated[Session, Depends(get_db)],
     object_id: Annotated[str, Path(..., alias="objectId")],
-    hard_delete: Annotated[str, Path(..., alias="hardDelete")],
+    hard_delete: Annotated[bool, Path(..., alias="hardDelete")],
 ) -> dict[str, Any]:
     return await _delete_object(db, object_id, hard_delete)
 
@@ -136,7 +136,7 @@ async def delete_object_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.MODIFY]))],
     db: Annotated[Session, Depends(get_db)],
     object_id: Annotated[str, Path(..., alias="objectId")],
-    hard_delete: Annotated[str, Path(..., alias="hardDelete")],
+    hard_delete: Annotated[bool, Path(..., alias="hardDelete")],
 ) -> dict[str, Any]:
     return await _delete_object(db, object_id, hard_delete)
 
@@ -221,26 +221,24 @@ async def _get_object_details(db: Session, object_id: str) -> dict[str, Any]:
     return ObjectResponse(object=object_data)
 
 
-async def _delete_object(db: Session, object_id: str, hard_delete: str) -> dict[str, Any]:
+async def _delete_object(db: Session, object_id: str, hard_delete: bool) -> dict[str, Any]:
     object: Object = check_existence_and_raise(db, Object, object_id, "object_id", "Object not found.")
     saved = False
     success = False
 
-    if hard_delete.lower() == "true" or hard_delete == "1":
+    if hard_delete:
         db.query(Attribute).filter(Attribute.object_id == object_id).delete(synchronize_session="fetch")
         db.delete(object)
         db.commit()
         saved = True
         success = True
         message = "Object has been permanently deleted."
-    elif hard_delete.lower() == "false" or hard_delete == "0":
+    else:
         object.deleted = True
         db.commit()
         saved = True
         success = True
         message = "Object has been soft deleted."
-    else:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid 'hardDelete' parameter.")
 
     return ObjectDeleteResponse(
         saved=saved,
