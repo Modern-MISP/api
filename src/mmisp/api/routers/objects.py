@@ -155,23 +155,12 @@ async def _add_object(db: Session, event_id: str, object_template_id: str, body:
     check_existence_and_raise(db=db, model=Event, value=event_id, column_name="id", error_detail="Event not found.")
 
     object: Object = Object(
-        **body.dict(
-            exclude={
-                "attributes",
-                "template_id",
-                "template_name",
-                "template_uuid",
-                "template_version",
-                "template_description",
-                "event_id",
-                "timestamp",
-            }
-        ),
-        template_id=int(object_template_id) if object_template_id is not None else None,
-        template_name=template.name if template is not None else None,
-        template_uuid=template.uuid if template is not None else None,
-        template_version=int(template.version) if template is not None else None,
-        template_description=template.description if template is not None else None,
+        **body.dict(exclude={"attributes"}),
+        template_id=object_template_id,
+        template_name=template.name,
+        template_uuid=template.uuid,
+        template_version=template.version,
+        template_description=template.description,
         event_id=int(event_id),
         timestamp=_create_timestamp(),
     )
@@ -179,7 +168,7 @@ async def _add_object(db: Session, event_id: str, object_template_id: str, body:
     for attr in body.attributes:
         attribute: Attribute = Attribute(
             **attr.dict(exclude={"timestamp", "event_id"}),
-            timestamp=_create_timestamp(),
+            timestamp=_create_timestamp() if not attr.timestamp else attr.timestamp,
             event_id=int(event_id),
         )
         object.attributes.append(attribute)
