@@ -7,20 +7,27 @@ class SightingOrganisationResponse(BaseModel):
     name: str
 
 
-class SightingAttributesResponse(BaseModel):  # todo: validate 'None = None'
+class SightingAttributesResponse(BaseModel):
     id: str
-    uuid: str | None = None
-    attribute_id: str | None = None
-    event_id: str | None = None
-    org_id: str | None = None
-    date_sighting: str | None = None
+    uuid: str
+    attribute_id: str
+    event_id: str
+    org_id: str
+    date_sighting: str
     source: str | None = None
     type: str | None = None
-    organisation: SightingOrganisationResponse | None = None
+    organisation: SightingOrganisationResponse
+
+
+class SightingsGetResponse(BaseModel):
+    sightings: list[SightingAttributesResponse]
+
+    class Config:
+        orm_mode = True
 
 
 class SightingGetResponse(BaseModel):
-    root: list[SightingAttributesResponse]
+    sighting: SightingAttributesResponse
 
     class Config:
         orm_mode = True
