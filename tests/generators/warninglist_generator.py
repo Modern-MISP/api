@@ -1,6 +1,8 @@
 import random
 import string
 
+from sqlalchemy import func
+from sqlalchemy.orm import Session
 from src.mmisp.api_schemas.warninglists.create_warninglist_body import CreateWarninglistBody
 from src.mmisp.api_schemas.warninglists.warninglist_response import Category, Type
 from src.mmisp.db.models.warninglist import Warninglist, WarninglistEntry
@@ -91,7 +93,7 @@ def generate_random_warninglistentry_input(warninglist_id: int) -> WarninglistEn
     )
 
 
-def add_warninglists(number: int = 1) -> list[int]:
+def add_warninglists(number: int = 10) -> list[int]:
     db = get_db()
     warninglist_ids = []
     for i in range(number):
@@ -107,15 +109,42 @@ def add_warninglists(number: int = 1) -> list[int]:
     return warninglist_ids
 
 
-# def remove_warninglists(ids: list[int]) -> None:
-#     db = get_db()
-#     for id in ids:
-#         db.get(Warninglist).
+def remove_warninglists(ids: list[int]) -> None:
+    db: Session = get_db()
+    for id in ids:
+        warninglist = db.get(Warninglist, id)
+        db.delete(warninglist)
+
+    db.commit()
 
 
-def generate_togglelist() -> ToggleEnableWarninglistsBody:
+def generate_togglelist(ids: list[int]) -> ToggleEnableWarninglistsBody:
+    partial_ids = random.choices(ids)
+    warninglist_ids = [str(id) for id in partial_ids]
     return ToggleEnableWarninglistsBody(
-        id=["249", "250", "251"],
+        id=warninglist_ids,
         name="cqzZI32ZKy",
-        enabled=0,
+        enabled=bool(random.getrandbits),
+    )
+
+
+def get_largest_id() -> int:
+    db: Session = get_db()
+    largest_id = db.query(func.max(Warninglist.id)).scalar()
+    if not largest_id:
+        largest_id = 1
+
+    return largest_id
+
+
+def generate_invalid_togglelist() -> ToggleEnableWarninglistsBody:
+    warninglist_ids = []
+    largest_id = get_largest_id()
+    for i in range(1, 5):
+        warninglist_ids.append(str(largest_id + i * random.randint(1, 9)))
+
+    return ToggleEnableWarninglistsBody(
+        id=warninglist_ids,
+        name="",
+        enabled=bool(random.getrandbits),
     )
