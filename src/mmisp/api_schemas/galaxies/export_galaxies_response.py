@@ -2,15 +2,15 @@ from pydantic import BaseModel
 
 
 class ExportGalaxyGalaxyElement(BaseModel):
-    id: str
-    galaxy_cluster_id: str
+    id: str | None = None
+    galaxy_cluster_id: str | None = None
     key: str
     value: str
 
 
 class ExportGalaxyResponse(BaseModel):
-    id: str
-    uuid: str
+    id: str | None = None
+    uuid: str | None = None
     collection_uuid: str
     type: str
     value: str

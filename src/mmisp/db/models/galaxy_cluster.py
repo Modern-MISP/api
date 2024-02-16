@@ -1,9 +1,11 @@
-from sqlalchemy import Column, ForeignKey, Integer, String
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
 
 from mmisp.util.uuid import uuid
 
 from ..database import Base
 from .galaxy import Galaxy
+from .organisation import Organisation
+from .sharing_group import SharingGroup
 
 
 class GalaxyCluster(Base):
@@ -20,6 +22,16 @@ class GalaxyCluster(Base):
     source = Column(String(255), nullable=False, default="")
     authors = Column(String(255), nullable=False)
     version = Column(Integer, default=0)
+    distribution = Column(Integer)
+    sharing_group_id = Column(Integer, ForeignKey(SharingGroup.id), nullable=True)
+    org_id = Column(Integer, ForeignKey(Organisation.id), nullable=True)
+    orgc_id = Column(Integer, ForeignKey(Organisation.id), nullable=True)
+    default = Column(Boolean)
+    locked = Column(Boolean)
+    extends_uuid = Column(String(255))
+    extends_version = Column(Integer)
+    published = Column(Boolean)
+    deleted = Column(Boolean)
 
 
 class GalaxyElement(Base):
