@@ -1,22 +1,20 @@
-import logging
-import time
+from time import time
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, HTTPException, Path, status
-from sqlalchemy.exc import SQLAlchemyError
+from fastapi import APIRouter, Depends, Path, status
 from sqlalchemy.orm import Session
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
 from mmisp.api_schemas.attributes.get_all_attributes_response import GetAllAttributesResponse
 from mmisp.api_schemas.events.get_event_response import ObjectEventResponse
 from mmisp.api_schemas.objects.create_object_body import ObjectCreateBody
-from mmisp.api_schemas.objects.delete_object_response import ObjectDeleteResponse
 from mmisp.api_schemas.objects.get_object_response import (
     ObjectResponse,
     ObjectSearchResponse,
     ObjectWithAttributesResponse,
 )
 from mmisp.api_schemas.objects.search_objects_body import ObjectSearchBody
+from mmisp.api_schemas.standard_status_response import StandardStatusResponse
 from mmisp.db.database import get_db
 from mmisp.db.models.attribute import Attribute
 from mmisp.db.models.event import Event
@@ -25,23 +23,6 @@ from mmisp.util.partial import partial
 from mmisp.util.request_validations import check_existence_and_raise
 
 router = APIRouter(tags=["objects"])
-logging.basicConfig(level=logging.INFO)
-
-info_format = "%(asctime)s - %(message)s"
-error_format = "%(asctime)s - %(filename)s:%(lineno)d - %(message)s"
-
-info_handler = logging.StreamHandler()
-info_handler.setLevel(logging.INFO)
-info_handler.setFormatter(logging.Formatter(info_format))
-
-error_handler = logging.StreamHandler()
-error_handler.setLevel(logging.ERROR)
-error_handler.setFormatter(logging.Formatter(error_format))
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-logger.addHandler(info_handler)
-logger.addHandler(error_handler)
 
 
 # sorted according to CRUD
@@ -55,12 +36,12 @@ logger.addHandler(error_handler)
     description="Add a new object to a specific event using a template.",
 )
 async def add_object(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.ADD]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.ADD]))],
     db: Annotated[Session, Depends(get_db)],
     event_id: Annotated[str, Path(..., alias="eventId")],
     object_template_id: Annotated[str, Path(..., alias="objectTemplateId")],
     body: ObjectCreateBody,
-) -> dict:
+) -> dict[str, Any]:
     return await _add_object(db, event_id, object_template_id, body)
 
 
@@ -71,7 +52,7 @@ async def add_object(
     summary="Search objects",
     description="Search for objects based on various filters.",
 )
-async def restsearch(db: Annotated[Session, Depends(get_db)], body: ObjectSearchBody) -> dict:
+async def restsearch(db: Annotated[Session, Depends(get_db)], body: ObjectSearchBody) -> dict[str, Any]:
     return await _restsearch(db, body)
 
 
@@ -85,23 +66,23 @@ async def restsearch(db: Annotated[Session, Depends(get_db)], body: ObjectSearch
 async def get_object_details(
     db: Annotated[Session, Depends(get_db)],
     object_id: Annotated[str, Path(..., alias="objectId")],
-) -> dict:
+) -> dict[str, Any]:
     return await _get_object_details(db, object_id)
 
 
 @router.delete(
     "/objects/{objectId}/{hardDelete}",
     status_code=status.HTTP_200_OK,
-    response_model=partial(ObjectDeleteResponse),
+    response_model=partial(StandardStatusResponse),
     summary="Delete object",
     description="Delete a specific object. The hardDelete parameter determines if it's a hard or soft delete.",
 )
 async def delete_object(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.MODIFY]))],
     db: Annotated[Session, Depends(get_db)],
     object_id: Annotated[str, Path(..., alias="objectId")],
-    hard_delete: Annotated[str, Path(..., alias="hardDelete")],
-) -> dict:
+    hard_delete: Annotated[bool, Path(..., alias="hardDelete")],
+) -> dict[str, Any]:
     return await _delete_object(db, object_id, hard_delete)
 
 
@@ -117,12 +98,12 @@ async def delete_object(
     description="Deprecated. Add an object to an event using the old route.",
 )
 async def add_object_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.ADD]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.ADD]))],
     db: Annotated[Session, Depends(get_db)],
     event_id: Annotated[str, Path(..., alias="eventId")],
     object_template_id: Annotated[str, Path(..., alias="objectTemplateId")],
     body: ObjectCreateBody,
-) -> dict:
+) -> dict[str, Any]:
     return await _add_object(db, event_id, object_template_id, body)
 
 
@@ -137,7 +118,7 @@ async def add_object_depr(
 async def get_object_details_depr(
     db: Annotated[Session, Depends(get_db)],
     object_id: Annotated[str, Path(..., alias="objectId")],
-) -> dict:
+) -> dict[str, Any]:
     return await _get_object_details(db, object_id)
 
 
@@ -145,71 +126,63 @@ async def get_object_details_depr(
     "/objects/delete/{objectId}/{hardDelete}",
     deprecated=True,
     status_code=status.HTTP_200_OK,
-    response_model=partial(ObjectDeleteResponse),
+    response_model=partial(StandardStatusResponse),
     summary="Delete object (Deprecated)",
     description="""
     Deprecated. Delete a specific object using the old route.
     The hardDelete parameter determines if it's a hard or soft delete.""",
 )
 async def delete_object_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.MODIFY]))],
     db: Annotated[Session, Depends(get_db)],
     object_id: Annotated[str, Path(..., alias="objectId")],
-    hard_delete: Annotated[str, Path(..., alias="hardDelete")],
-) -> dict:
+    hard_delete: Annotated[bool, Path(..., alias="hardDelete")],
+) -> dict[str, Any]:
     return await _delete_object(db, object_id, hard_delete)
 
 
 # --- endpoint logic ---
 
 
-async def _add_object(db: Session, event_id: str, object_template_id: str, body: ObjectCreateBody) -> dict:
+async def _add_object(db: Session, event_id: str, object_template_id: str, body: ObjectCreateBody) -> dict[str, Any]:
     template: ObjectTemplate = check_existence_and_raise(
-        db, ObjectTemplate, object_template_id, "object_template_id", "Object template not found."
+        db=db,
+        model=ObjectTemplate,
+        value=object_template_id,
+        column_name="id",
+        error_detail="Object template not found.",
     )
-    check_existence_and_raise(db, Event, event_id, "event_id", "Event not found.")
+    check_existence_and_raise(db=db, model=Event, value=event_id, column_name="id", error_detail="Event not found.")
 
-    object_data: dict[str, Any] = {
+    object: Object = Object(
         **body.dict(exclude={"attributes"}),
-        "template_id": int(object_template_id) if object_template_id is not None else None,
-        "template_name": template.name if template is not None else None,
-        "template_uuid": template.uuid if template is not None else None,
-        "template_version": template.version if template is not None else None,
-        "template_description": template.description if template is not None else None,
-        "event_id": int(event_id),
-        "timestamp": _create_timestamp(),
-    }
-    new_object = Object(**object_data)
-    db.add(new_object)
-    db.flush()
-    db.refresh(new_object)
+        template_id=object_template_id,
+        template_name=template.name,
+        template_uuid=template.uuid,
+        template_version=template.version,
+        template_description=template.description,
+        event_id=int(event_id),
+        timestamp=_create_timestamp(),
+    )
 
-    attributes_data = [
-        {
-            **attr.dict(),
-            "object_id": new_object.id,
-            "timestamp": _create_timestamp(),
-            "event_id": int(event_id),
-        }
-        for attr in body.attributes
+    for attr in body.attributes:
+        attribute: Attribute = Attribute(
+            **attr.dict(exclude={"timestamp", "event_id"}),
+            timestamp=_create_timestamp() if not attr.timestamp else attr.timestamp,
+            event_id=int(event_id),
+        )
+        object.attributes.append(attribute)
+
+    db.add(object)
+    db.commit()
+    db.refresh(object)
+    attributes: list[Attribute] = db.query(Attribute).filter(Attribute.object_id == object.id).all()
+    attributes_response: list[GetAllAttributesResponse] = [
+        GetAllAttributesResponse(**attribute.__dict__) for attribute in attributes
     ]
 
-    try:
-        db.bulk_insert_mappings(Attribute, attributes_data)
-        db.commit()
-        logger.info(f"New object with attributes added: {new_object.id}")
-    except SQLAlchemyError as e:
-        db.rollback()
-        logger.exception(f"Failed to add new object with attributes: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred."
-        )
-
-    attributes = db.query(Attribute).filter(Attribute.object_id == new_object.id).all()
-    attributes_response = [GetAllAttributesResponse(**attribute.__dict__) for attribute in attributes]
-
-    object_response = ObjectWithAttributesResponse(
-        **new_object.__dict__,
+    object_response: ObjectWithAttributesResponse = ObjectWithAttributesResponse(
+        **object.__dict__,
         attributes=attributes_response,
         event=None,
     )
@@ -217,7 +190,7 @@ async def _add_object(db: Session, event_id: str, object_template_id: str, body:
     return ObjectResponse(object=object_response)
 
 
-async def _restsearch(db: Session, body: ObjectSearchBody) -> dict:
+async def _restsearch(db: Session, body: ObjectSearchBody) -> dict[str, Any]:
     for field, value in body.dict().items():
         objects: list[Object] = db.query(Object).filter(getattr(Object, field) == value).all()
 
@@ -230,8 +203,10 @@ async def _restsearch(db: Session, body: ObjectSearchBody) -> dict:
     return ObjectSearchResponse(response=[{"object": object_data} for object_data in objects_data])
 
 
-async def _get_object_details(db: Session, object_id: str) -> dict:
-    object: Object = check_existence_and_raise(db, Object, object_id, "object_id", "Object not found.")
+async def _get_object_details(db: Session, object_id: str) -> dict[str, Any]:
+    object: Object = check_existence_and_raise(
+        db=db, model=Object, value=object_id, column_name="id", error_detail="Object not found."
+    )
     attributes: list[Attribute] = db.query(Attribute).filter(Attribute.object_id == object.id).all()
     event: Event = db.query(Event).join(Object, Event.id == Object.event_id).filter(Object.id == object_id).first()
     event_response: ObjectEventResponse = ObjectEventResponse(
@@ -248,44 +223,28 @@ async def _get_object_details(db: Session, object_id: str) -> dict:
     return ObjectResponse(object=object_data)
 
 
-async def _delete_object(db: Session, object_id: str, hard_delete: str) -> dict:
-    object: Object = check_existence_and_raise(db, Object, object_id, "object_id", "Object not found.")
-    saved = False
-    success = False
+async def _delete_object(db: Session, object_id: str, hard_delete: bool) -> dict[str, Any]:
+    object: Object = check_existence_and_raise(
+        db=db, model=Object, value=object_id, column_name="id", error_detail="Object not found."
+    )
+    saved: bool = False
+    success: bool = False
 
-    if hard_delete.lower() == "true" or hard_delete == "1":
+    if hard_delete:
         db.query(Attribute).filter(Attribute.object_id == object_id).delete(synchronize_session="fetch")
         db.delete(object)
-        try:
-            db.commit()
-            logger.info(f"Hard deleted object with id '{object_id}'.")
-            saved = True
-            success = True
-        except SQLAlchemyError as e:
-            db.rollback()
-            logger.exception(f"Failed to hard delete object with id '{object_id}': {e}")
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred."
-            )
+        db.commit()
+        saved = True
+        success = True
         message = "Object has been permanently deleted."
-    elif hard_delete.lower() == "false" or hard_delete == "0":
-        object.deleted = True
-        try:
-            db.commit()
-            logger.info(f"Soft deleted object with id '{object_id}'.")
-            saved = True
-            success = True
-        except SQLAlchemyError as e:
-            db.rollback()
-            logger.exception(f"Failed to soft delete object with id '{object_id}': {e}")
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred."
-            )
-        message = "Object has been soft deleted."
     else:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid 'hardDelete' parameter.")
+        object.deleted = True
+        db.commit()
+        saved = True
+        success = True
+        message = "Object has been soft deleted."
 
-    return ObjectDeleteResponse(
+    return StandardStatusResponse(
         saved=saved,
         success=success,
         name=object.name,
@@ -295,7 +254,7 @@ async def _delete_object(db: Session, object_id: str, hard_delete: str) -> dict:
 
 
 def _create_timestamp() -> int:
-    return int(time.time())
+    return int(time())
 
 
 #####################################################################
