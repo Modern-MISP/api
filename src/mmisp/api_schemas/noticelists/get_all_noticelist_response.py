@@ -1,10 +1,10 @@
 from pydantic import BaseModel
 
-from .noticelist import Noticelist
+from .get_noticelist_response import NoticelistResponse
 
 
-class GetAllNoticelist(BaseModel):
-    response: list[Noticelist]
+class GetAllNoticelistResponse(BaseModel):
+    response: list[NoticelistResponse]
 
     class Config:
         orm_mode = True

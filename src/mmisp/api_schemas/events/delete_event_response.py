@@ -3,7 +3,7 @@ from pydantic import BaseModel
 
 class DeleteEventResponse(BaseModel):
     saved: bool
-    success: bool
+    success: bool | None = None
     name: str
     message: str
     url: str

@@ -1,3 +1,5 @@
+from time import time
+
 from sqlalchemy import BigInteger, Boolean, Column, DateTime, Integer, String
 
 from ..database import Base
@@ -10,7 +12,7 @@ class User(Base):
     password = Column(String(255))
     org_id = Column(Integer)
     server_id = Column(Integer)
-    email = Column(String(255))
+    email = Column(String(255), unique=True)
     autoalert = Column(Boolean)
     authkey = Column(String(255))
     invited_by = Column(Integer)
@@ -27,8 +29,8 @@ class User(Base):
     current_login = Column(Integer)
     last_login = Column(Integer)
     force_logout = Column(Boolean)
-    date_created = Column(BigInteger)
-    date_modified = Column(BigInteger)
+    date_created = Column(BigInteger, default=time)
+    date_modified = Column(BigInteger, default=time)
     sub = Column(String(255))
     external_auth_required = Column(Boolean)
     external_auth_key = Column(String(255))

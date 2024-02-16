@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 
-class UpdateNoticelist(BaseModel):
+class UpdateAllNoticelistsResponse(BaseModel):
     saved: bool
     success: bool
     name: str
