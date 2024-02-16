@@ -146,9 +146,13 @@ async def delete_object_depr(
 
 async def _add_object(db: Session, event_id: str, object_template_id: str, body: ObjectCreateBody) -> dict[str, Any]:
     template: ObjectTemplate = check_existence_and_raise(
-        db, ObjectTemplate, object_template_id, "object_template_id", "Object template not found."
+        db=db,
+        model=ObjectTemplate,
+        value=object_template_id,
+        column_name="id",
+        error_detail="Object template not found.",
     )
-    check_existence_and_raise(db, Event, event_id, "event_id", "Event not found.")
+    check_existence_and_raise(db=db, model=Event, value=event_id, column_name="id", error_detail="Event not found.")
 
     object_data: dict[str, Any] = {
         **body.dict(exclude={"attributes"}),
@@ -204,7 +208,9 @@ async def _restsearch(db: Session, body: ObjectSearchBody) -> dict[str, Any]:
 
 
 async def _get_object_details(db: Session, object_id: str) -> dict[str, Any]:
-    object: Object = check_existence_and_raise(db, Object, object_id, "object_id", "Object not found.")
+    object: Object = check_existence_and_raise(
+        db=db, model=Object, value=object_id, column_name="id", error_detail="Object not found."
+    )
     attributes: list[Attribute] = db.query(Attribute).filter(Attribute.object_id == object.id).all()
     event: Event = db.query(Event).join(Object, Event.id == Object.event_id).filter(Object.id == object_id).first()
     event_response: ObjectEventResponse = ObjectEventResponse(
@@ -222,7 +228,9 @@ async def _get_object_details(db: Session, object_id: str) -> dict[str, Any]:
 
 
 async def _delete_object(db: Session, object_id: str, hard_delete: bool) -> dict[str, Any]:
-    object: Object = check_existence_and_raise(db, Object, object_id, "object_id", "Object not found.")
+    object: Object = check_existence_and_raise(
+        db=db, model=Object, value=object_id, column_name="id", error_detail="Object not found."
+    )
     saved = False
     success = False
 

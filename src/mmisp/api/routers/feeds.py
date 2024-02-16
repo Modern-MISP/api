@@ -294,13 +294,15 @@ async def _fetch_from_feed(db: Session, feed_id: str) -> dict[str, Any]:
 
 
 async def _get_feed_details(db: Session, feed_id: str) -> dict[str, Any]:
-    feed: Feed = check_existence_and_raise(db, Feed, feed_id, "feed_id", "Feed not found.")
+    feed: Feed = check_existence_and_raise(
+        db=db, model=Feed, value=feed_id, column_name="id", error_detail="Feed not found."
+    )
 
     return FeedResponse(feed=feed.__dict__)
 
 
 async def _update_feed(db: Session, feed_id: str, body: FeedCreateAndUpdateBody) -> dict[str, Any]:
-    feed = check_existence_and_raise(db, Feed, feed_id, "feed_id", "Feed not found.")
+    feed = check_existence_and_raise(db=db, model=Feed, value=feed_id, column_name="id", error_detail="Feed not found.")
     update_data = body.dict(exclude_unset=True)
 
     for key, value in update_data.items():
@@ -314,7 +316,9 @@ async def _update_feed(db: Session, feed_id: str, body: FeedCreateAndUpdateBody)
 
 
 async def _toggle_feed(db: Session, feed_id: str, body: FeedToggleBody) -> dict[str, Any]:
-    feed: Feed = check_existence_and_raise(db, Feed, feed_id, "feed_id", "Feed not found.")
+    feed: Feed = check_existence_and_raise(
+        db=db, model=Feed, value=feed_id, column_name="id", error_detail="Feed not found."
+    )
     enable_status = body.enable
 
     if enable_status == feed.enabled:
@@ -331,7 +335,7 @@ async def _toggle_feed(db: Session, feed_id: str, body: FeedToggleBody) -> dict[
 async def _fetch_data_from_all_feeds(db: Session) -> dict[str, Any]:
     raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Endpoint not yet supported")
 
-    # logic to start the pull process
+    # logic to start the pull process for all feeds
 
 
 async def _get_feeds(db: Session) -> list[dict[str, Any]]:
@@ -344,7 +348,9 @@ async def _get_feeds(db: Session) -> list[dict[str, Any]]:
 
 
 async def _enable_feed(db: Session, feed_id: str) -> dict[str, Any]:
-    feed: Feed = check_existence_and_raise(db, Feed, feed_id, "feed_id", "Feed not found.")
+    feed: Feed = check_existence_and_raise(
+        db=db, model=Feed, value=feed_id, column_name="id", error_detail="Feed not found."
+    )
 
     if feed.enabled:
         message = "Feed already enabled."
@@ -357,7 +363,9 @@ async def _enable_feed(db: Session, feed_id: str) -> dict[str, Any]:
 
 
 async def _disable_feed(db: Session, feed_id: str) -> dict[str, Any]:
-    feed: Feed = check_existence_and_raise(db, Feed, feed_id, "feed_id", "Feed not found.")
+    feed: Feed = check_existence_and_raise(
+        db=db, model=Feed, value=feed_id, column_name="id", error_detail="Feed not found."
+    )
 
     if not feed.enabled:
         message = "Feed already disabled."
