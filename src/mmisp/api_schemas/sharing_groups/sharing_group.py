@@ -1,17 +1,17 @@
 from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 
 class SharingGroup(BaseModel):
-    id: str = Field(max_length=36)
-    name: str = Field(max_length=255)
-    releasability: str | None = Field(default=None, max_length=65535)
-    description: str | None = Field(default=None, max_length=65535)
+    id: str
+    name: str
+    releasability: str
+    description: str
     uuid: str
     organisation_uuid: str
-    org_id: str = Field(max_length=10)
-    sync_user_id: str | None = Field(default=None, max_length=10)
+    org_id: str
+    sync_user_id: str
     active: bool
     created: datetime
     modified: datetime
