@@ -9,7 +9,7 @@ class Warninglist(Base):
     name = Column(String(255))
     type = Column(String(255))
     description = Column(String(255))
-    version = Column(Integer, default=1)
+    version = Column(Integer, nullable=False, default=1)
     enabled = Column(Boolean, default=True)
     default = Column(Boolean)
     category = Column(String(255))
