@@ -30,7 +30,7 @@ class User(Base):
     last_login = Column(Integer)
     force_logout = Column(Boolean)
     date_created = Column(BigInteger, default=time)
-    date_modified = Column(BigInteger, default=time)
+    date_modified = Column(BigInteger, default=time, onupdate=time)
     sub = Column(String(255))
     external_auth_required = Column(Boolean)
     external_auth_key = Column(String(255))

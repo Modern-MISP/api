@@ -1,4 +1,3 @@
-from datetime import datetime
 from typing import Annotated, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Path, status
@@ -138,10 +137,7 @@ async def update_sharing_group(
     if sharing_group.org_id != auth.org_id and not check_permissions(auth.user_id, [Permission.SITE_ADMIN]):
         raise HTTPException(404)
 
-    update = body.dict()
-    update["modified"] = datetime.utcnow()
-
-    update_record(sharing_group, update)
+    update_record(sharing_group, body.dict())
 
     db.commit()
     db.refresh(sharing_group)
@@ -629,8 +625,6 @@ async def update_sharing_group_legacy(
         raise HTTPException(404)
 
     update = body.dict(include={"name", "description", "releasability", "local", "active", "roaming"})
-    update["modified"] = datetime.utcnow()
-
     update_record(sharing_group, update)
 
     db.commit()

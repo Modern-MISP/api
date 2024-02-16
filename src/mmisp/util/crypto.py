@@ -1,7 +1,11 @@
-import hashlib
-import hmac
+from passlib.context import CryptContext
 
 
-def create_hash(secret_key: str, value: str) -> str:
-    hmac_object = hmac.new(secret_key.encode(), value.encode(), hashlib.sha256)
-    return hmac_object.hexdigest()
+def verify_password(pw: str, pw_hash: str) -> bool:
+    context = CryptContext(schemes=["argon2", "bcrypt"])
+    return context.verify(pw, pw_hash)
+
+
+def hash_password(pw: str) -> str:
+    context = CryptContext(schemes=["argon2", "bcrypt"])
+    return context.hash(pw)
