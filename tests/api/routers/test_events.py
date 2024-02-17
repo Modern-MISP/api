@@ -1,3 +1,4 @@
+from datetime import datetime
 from random import Random
 from typing import Any, Dict
 
@@ -160,12 +161,9 @@ class TestGetEventDetails:
             user_id=1,
             hide_tag=False,
             numerical_value=1,
+            inherited=False,
             is_galaxy=True,
             is_custom_galaxy=False,
-            attribute_count=1,
-            count=1,
-            favourite=False,
-            local_only=False,
         )
 
         db.add(add_tag_body)
@@ -373,6 +371,97 @@ class TestGetAllEvents:
         assert response.headers["Content-Type"] == "application/json"
 
 
+class TestEventRestSearch:
+    def test_valid_search_attribute_data(self: "TestEventRestSearch", db: Session) -> None:
+        add_org_body = Organisation(
+            name="test",
+            date_created=datetime.utcnow(),
+            date_modified=datetime.utcnow(),
+        )
+
+        db.add(add_org_body)
+        db.commit()
+        db.refresh(add_org_body)
+
+        org_id = add_org_body.id
+
+        add_event_body = Event(
+            org_id=org_id,
+            orgc_id=org_id,
+            info="test event",
+            date="2024-02-13",
+            analysis="test analysis",
+            event_creator_email="test@mail.de",
+        )
+
+        db.add(add_event_body)
+        db.commit()
+        db.refresh(add_event_body)
+
+        event_id = str(add_event_body.id)
+
+        add_attribute_body = Attribute(
+            value="1.2.3.4", value1="1.2.3.4", type="ip-src", category="Network Activity", event_id=event_id
+        )
+
+        db.add(add_attribute_body)
+        db.commit()
+        db.refresh(add_attribute_body)
+        json = {"returnFormat": "json"}
+        headers = {"authorization": environment.site_admin_user_token}
+        response = client.post("/events/restSearch", json=json, headers=headers)
+        assert response.status_code == 200
+        response_json = response.json()
+        assert "response" in response_json
+        assert isinstance(response_json["response"], list)
+        response_json_attribute = response_json["response"][0]
+        assert "Event" in response_json_attribute
+
+    def test_invalid_search_attribute_data(self: "TestEventRestSearch") -> None:
+        json = {"returnFormat": "invalid format"}
+        headers = {"authorization": environment.site_admin_user_token}
+        response = client.post("/events/restSearch", json=json, headers=headers)
+        assert response.status_code == 404
+
+
+class TestIndexEvents:
+    def test_index_events_valid_data(self: "TestIndexEvents", db: Session) -> None:
+        add_org_body = Organisation(
+            name="test",
+            date_created=datetime.utcnow(),
+            date_modified=datetime.utcnow(),
+        )
+
+        db.add(add_org_body)
+        db.commit()
+        db.refresh(add_org_body)
+
+        org_id = add_org_body.id
+
+        add_event_body = Event(
+            org_id=org_id,
+            orgc_id=org_id,
+            info="test event",
+            date="2024-02-13",
+            analysis="test analysis",
+            event_creator_email="test@mail.de",
+            distribution=1,
+        )
+
+        db.add(add_event_body)
+        db.commit()
+        db.refresh(add_event_body)
+
+        json = {"distribution": "1"}
+        headers = {"authorization": environment.site_admin_user_token}
+        response = client.post("/events/index", json=json, headers=headers)
+        assert response.status_code == 200
+        response_json = response.json()
+        assert isinstance(response_json, list)
+        assert "id" in response_json[0]
+        assert "GalaxyCluster" in response_json[0]
+
+
 class TestPublishEvent:
     def test_publish_existing_event(self: "TestPublishEvent", db: Session) -> None:
         add_org_body = Organisation(name="test", local=True)
@@ -532,12 +621,9 @@ class TestAddTagToEvent:
             user_id=1,
             hide_tag=False,
             numerical_value=1,
+            inherited=False,
             is_galaxy=False,
             is_custom_galaxy=False,
-            attribute_count=1,
-            count=1,
-            favourite=False,
-            local_only=False,
         )
 
         db.add(add_tag_body)
@@ -648,12 +734,9 @@ class TestRemoveTagFromEvent:
             user_id=1,
             hide_tag=False,
             numerical_value=1,
+            inherited=False,
             is_galaxy=False,
             is_custom_galaxy=False,
-            attribute_count=1,
-            count=1,
-            favourite=False,
-            local_only=False,
         )
 
         db.add(add_tag_body)
@@ -720,4 +803,7 @@ class TestRemoveTagFromEvent:
 #         response = client.post(
 #             f"/events/freeTextImport/{event_id}", json=add_attribute_via_free_text_import_valid_data, headers=headers
 #         )
-#         assert response.status_code == 200
+#
+#         print(response.json())
+#
+#         assert response.status_code == 501

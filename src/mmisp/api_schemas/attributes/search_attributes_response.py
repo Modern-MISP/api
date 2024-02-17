@@ -1,6 +1,4 @@
-from typing import Annotated
-
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from .get_attribute_response import GetAttributeTag
 
@@ -55,9 +53,9 @@ class SearchAttributesObject(BaseModel):
 
 class SearchAttributesAttributesDetails(BaseModel):
     id: str
-    event_id: str
-    object_id: str
-    object_relation: str
+    event_id: str | None = None
+    object_id: str | None = None
+    object_relation: str | None = None
     category: str
     type: str
     value: str
@@ -65,19 +63,19 @@ class SearchAttributesAttributesDetails(BaseModel):
     uuid: str
     timestamp: str
     distribution: str
-    sharing_group_id: str
+    sharing_group_id: str | None = None
     comment: str
     deleted: bool
     disable_correlation: bool
-    first_seen: str
-    last_seen: str
-    event: Annotated[SearchAttributesEvent, Field(alias="Event")]
-    object: Annotated[SearchAttributesObject, Field(alias="Object")]
-    tag: Annotated[list[GetAttributeTag], Field(alias="Tag")]
+    first_seen: str | None = None
+    last_seen: str | None = None
+    Event: SearchAttributesEvent | None = None
+    Object: SearchAttributesObject | None = None
+    Tag: list[GetAttributeTag] = []
 
 
 class SearchAttributesAttributes(BaseModel):
-    attributes: Annotated[SearchAttributesAttributesDetails, Field(alias="Attribute")]
+    Attribute: SearchAttributesAttributesDetails
 
 
 class SearchAttributesResponse(BaseModel):

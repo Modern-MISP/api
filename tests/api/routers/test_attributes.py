@@ -1,4 +1,4 @@
-import time
+from datetime import datetime
 from random import Random
 from typing import Any, Dict
 
@@ -111,8 +111,8 @@ class TestAddAttribute:
     ) -> None:
         add_org_body = Organisation(
             name="test",
-            date_created=str(int(time.time())),
-            date_modified=str(int(time.time())),
+            date_created=datetime.utcnow(),
+            date_modified=datetime.utcnow(),
         )
 
         db.add(add_org_body)
@@ -165,8 +165,8 @@ class TestAddAttribute:
     ) -> None:
         add_org_body = Organisation(
             name="test",
-            date_created=str(int(time.time())),
-            date_modified=str(int(time.time())),
+            date_created=datetime.utcnow(),
+            date_modified=datetime.utcnow(),
         )
 
         db.add(add_org_body)
@@ -216,8 +216,8 @@ class TestGetAttributeDetails:
     def test_get_existing_attribute(self: "TestGetAttributeDetails", db: Session) -> None:
         add_org_body = Organisation(
             name="test",
-            date_created=str(int(time.time())),
-            date_modified=str(int(time.time())),
+            date_created=datetime.utcnow(),
+            date_modified=datetime.utcnow(),
         )
 
         db.add(add_org_body)
@@ -259,12 +259,9 @@ class TestGetAttributeDetails:
             user_id=1,
             hide_tag=False,
             numerical_value=1,
+            inherited=False,
             is_galaxy=False,
             is_custom_galaxy=False,
-            attribute_count=1,
-            count=1,
-            favourite=False,
-            local_only=False,
         )
 
         db.add(add_tag_body)
@@ -327,8 +324,8 @@ class TestEditAttribute:
     ) -> None:
         add_org_body = Organisation(
             name="test",
-            date_created=str(int(time.time())),
-            date_modified=str(int(time.time())),
+            date_created=datetime.utcnow(),
+            date_modified=datetime.utcnow(),
         )
 
         db.add(add_org_body)
@@ -420,8 +417,8 @@ class TestDeleteAttribute:
     def test_delete_existing_attribute(self: "TestDeleteAttribute", db: Session) -> None:
         add_org_body = Organisation(
             name="test",
-            date_created=str(int(time.time())),
-            date_modified=str(int(time.time())),
+            date_created=datetime.utcnow(),
+            date_modified=datetime.utcnow(),
         )
 
         db.add(add_org_body)
@@ -485,8 +482,8 @@ class TestGetAllAttributes:
     def test_get_all_attributes(self: "TestGetAllAttributes", db: Session) -> None:
         add_org_body = Organisation(
             name="test",
-            date_created=str(int(time.time())),
-            date_modified=str(int(time.time())),
+            date_created=datetime.utcnow(),
+            date_modified=datetime.utcnow(),
         )
 
         db.add(add_org_body)
@@ -568,8 +565,8 @@ class TestDeleteSelectedAttributes:
     ) -> None:
         add_org_body = Organisation(
             name="test",
-            date_created=str(int(time.time())),
-            date_modified=str(int(time.time())),
+            date_created=datetime.utcnow(),
+            date_modified=datetime.utcnow(),
         )
 
         db.add(add_org_body)
@@ -650,29 +647,62 @@ class TestDeleteSelectedAttributes:
         assert response.status_code == 401
 
 
-# class TestAttributesRestSearch:
-#
-# def test_valid_search_attribute_data(search_attribute_valid_data: Dict[str, Any]) -> None:
-#     headers = {"authorization": environment.site_admin_user_token}
-#     response = client.post("/attributes/restSearch", json=search_attribute_valid_data, headers=headers)
-#     assert response.status_code == 200
-#     response_json = response.json()
-#     assert response_json[0] == "response"
-#     response_json_attribute = response_json["response"][0]
-#     assert response_json_attribute == "Attribute"
-#     response_json_details = response_json_attribute["Attribute"][0]
-#     for key, value in search_attribute_valid_data:
-#         assert response_json_details[key] == value
-#
-#
-# def test_invalid_search_attribute_data(
-#         search_attributes_invalid_data: Dict[str, Any],
-# ) -> None:
-#     headers = {"authorization": environment.site_admin_user_token}
-#     response = client.post("/attributes/restSearch", json=search_attributes_invalid_data, headers=headers)
-#     assert response.status_code == 404
-#
-#
+class TestAttributesRestSearch:
+    def test_valid_search_attribute_data(
+        self: "TestAttributesRestSearch", search_attribute_valid_data: Dict[str, Any], db: Session
+    ) -> None:
+        add_org_body = Organisation(
+            name="test",
+            date_created=datetime.utcnow(),
+            date_modified=datetime.utcnow(),
+        )
+
+        db.add(add_org_body)
+        db.commit()
+        db.refresh(add_org_body)
+
+        org_id = add_org_body.id
+
+        add_event_body = Event(
+            org_id=org_id,
+            orgc_id=org_id,
+            info="test event",
+            date="2024-02-13",
+            analysis="test analysis",
+            event_creator_email="test@mail.de",
+        )
+
+        db.add(add_event_body)
+        db.commit()
+        db.refresh(add_event_body)
+
+        event_id = str(add_event_body.id)
+
+        add_attribute_body = Attribute(
+            value="1.2.3.4", value1="1.2.3.4", type="ip-src", category="Network Activity", event_id=event_id
+        )
+
+        db.add(add_attribute_body)
+        db.commit()
+        db.refresh(add_attribute_body)
+        headers = {"authorization": environment.site_admin_user_token}
+        response = client.post("/attributes/restSearch", json=search_attribute_valid_data, headers=headers)
+        assert response.status_code == 200
+        response_json = response.json()
+        assert "response" in response_json
+        assert isinstance(response_json["response"], list)
+        response_json_attribute = response_json["response"][0]
+        assert "Attribute" in response_json_attribute
+
+    def test_invalid_search_attribute_data(
+        self: "TestAttributesRestSearch",
+        search_attributes_invalid_data: Dict[str, Any],
+    ) -> None:
+        headers = {"authorization": environment.site_admin_user_token}
+        response = client.post("/attributes/restSearch", json=search_attributes_invalid_data, headers=headers)
+        assert response.status_code == 404
+
+
 # def test_search_attributes_response_format(search_attribute_valid_data: Dict[str, Any]) -> None:
 #     headers = {"authorization": environment.site_admin_user_token}
 #     response = client.post("/attributes/restSearch", json=search_attribute_valid_data, headers=headers)
@@ -683,9 +713,9 @@ class TestDeleteSelectedAttributes:
 #     headers = {"authorization": ""}
 #     response = client.post("/attributes/restSearch", json=search_attribute_valid_data, headers=headers)
 #     assert response.status_code == 401
-#
-#
-# # --- Test attribute statistics
+
+
+# --- Test attribute statistics
 
 
 class TestAttributeStatistics:
@@ -750,8 +780,8 @@ class TestRestoreAttribute:
     def test_restore_existing_attribute(self: "TestRestoreAttribute", db: Session) -> None:
         add_org_body = Organisation(
             name="test",
-            date_created=str(int(time.time())),
-            date_modified=str(int(time.time())),
+            date_created=datetime.utcnow(),
+            date_modified=datetime.utcnow(),
         )
 
         db.add(add_org_body)
@@ -814,8 +844,8 @@ class TestAddTagToAttribute:
     ) -> None:
         add_org_body = Organisation(
             name="test",
-            date_created=str(int(time.time())),
-            date_modified=str(int(time.time())),
+            date_created=datetime.utcnow(),
+            date_modified=datetime.utcnow(),
         )
 
         db.add(add_org_body)
@@ -859,12 +889,9 @@ class TestAddTagToAttribute:
             user_id=1,
             hide_tag=False,
             numerical_value=1,
+            inherited=False,
             is_galaxy=False,
             is_custom_galaxy=False,
-            attribute_count=1,
-            count=1,
-            favourite=False,
-            local_only=False,
         )
 
         db.add(add_tag_body)
@@ -894,8 +921,8 @@ class TestAddTagToAttribute:
     ) -> None:
         add_org_body = Organisation(
             name="test",
-            date_created=str(int(time.time())),
-            date_modified=str(int(time.time())),
+            date_created=datetime.utcnow(),
+            date_modified=datetime.utcnow(),
         )
 
         db.add(add_org_body)
@@ -963,8 +990,8 @@ class TestRemoveTagFromAttribute:
     def test_remove_existing_tag_from_attribute(self: "TestRemoveTagFromAttribute", db: Session) -> None:
         add_org_body = Organisation(
             name="test",
-            date_created=str(int(time.time())),
-            date_modified=str(int(time.time())),
+            date_created=datetime.utcnow(),
+            date_modified=datetime.utcnow(),
         )
 
         db.add(add_org_body)
@@ -1008,12 +1035,9 @@ class TestRemoveTagFromAttribute:
             user_id=1,
             hide_tag=False,
             numerical_value=1,
+            inherited=False,
             is_galaxy=False,
             is_custom_galaxy=False,
-            attribute_count=1,
-            count=1,
-            favourite=False,
-            local_only=False,
         )
 
         db.add(add_tag_body)
