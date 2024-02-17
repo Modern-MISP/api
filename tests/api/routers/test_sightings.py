@@ -351,7 +351,8 @@ class TestGetSighting:
         db.add(attribute)
         db.commit()
 
-        response = client.get(f"/sightings/{event.id}")
+        headers = {"authorization": environment.site_admin_user_token}
+        response = client.get(f"/sightings/{event.id}", headers=headers)
         assert response.status_code == 200
         assert "sightings" in response.json()
 

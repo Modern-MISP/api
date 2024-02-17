@@ -1,7 +1,7 @@
 import random
 import string
-import time
 from datetime import datetime
+from time import time
 from typing import Any, Generator
 
 import pytest
@@ -67,7 +67,7 @@ class TestAddFeed:
             org_id=organisation.id,
             orgc_id=organisation.id,
             info="test",
-            date=str(int(time.time())),
+            date=str(int(time())),
             analysis="test",
             event_creator_email="XXXXXXXXXXXXX",
         )
@@ -126,7 +126,7 @@ class TestAddFeed:
             org_id=organisation.id,
             orgc_id=organisation.id,
             info="test",
-            date=str(int(time.time())),
+            date=str(int(time())),
             analysis="test",
             event_creator_email="XXXXXXXXXXXXX",
         )
@@ -177,7 +177,7 @@ class TestAddFeed:
             org_id=organisation.id,
             orgc_id=organisation.id,
             info="test",
-            date=str(int(time.time())),
+            date=str(int(time())),
             analysis="test",
             event_creator_email="XXXXXXXXXXXXX",
         )
@@ -238,7 +238,7 @@ class TestEnableFeed:
             org_id=organisation.id,
             orgc_id=organisation.id,
             info="test",
-            date=str(int(time.time())),
+            date=str(int(time())),
             analysis="test",
             event_creator_email="XXXXXXXXXXXXX",
         )
@@ -299,7 +299,7 @@ class TestEnableFeed:
             org_id=organisation.id,
             orgc_id=organisation.id,
             info="test",
-            date=str(int(time.time())),
+            date=str(int(time())),
             analysis="test",
             event_creator_email="XXXXXXXXXXXXX",
         )
@@ -352,7 +352,7 @@ class TestEnableFeed:
             org_id=organisation.id,
             orgc_id=organisation.id,
             info="test",
-            date=str(int(time.time())),
+            date=str(int(time())),
             analysis="test",
             event_creator_email="XXXXXXXXXXXXX",
         )
@@ -409,7 +409,7 @@ class TestDisableFeed:
             org_id=organisation.id,
             orgc_id=organisation.id,
             info="test",
-            date=str(int(time.time())),
+            date=str(int(time())),
             analysis="test",
             event_creator_email="XXXXXXXXXXXXX",
         )
@@ -470,7 +470,7 @@ class TestDisableFeed:
             org_id=organisation.id,
             orgc_id=organisation.id,
             info="test",
-            date=str(int(time.time())),
+            date=str(int(time())),
             analysis="test",
             event_creator_email="XXXXXXXXXXXXX",
         )
@@ -523,7 +523,7 @@ class TestDisableFeed:
             org_id=organisation.id,
             orgc_id=organisation.id,
             info="test",
-            date=str(int(time.time())),
+            date=str(int(time())),
             analysis="test",
             event_creator_email="XXXXXXXXXXXXX",
         )
@@ -636,7 +636,7 @@ class TestGetFeedByIdInfo:
             org_id=organisation.id,
             orgc_id=organisation.id,
             info="test",
-            date=str(int(time.time())),
+            date=str(int(time())),
             analysis="test",
             event_creator_email="XXXXXXXXXXXXX",
         )
@@ -652,18 +652,20 @@ class TestGetFeedByIdInfo:
         feed_id = response.json()["feed"]["id"]
         assert response.status_code == 201
 
-        response = client.get(f"/feeds/{feed_id}")
+        response = client.get(f"/feeds/{feed_id}", headers=headers)
         assert response.status_code == 200
         assert response.json()["feed"]["id"] == feed_id
         assert response.json()["feed"]["name"] == feed_data["name"]
 
     def test_get_invalid_feed_by_id(self: "TestGetFeedByIdInfo", feed_test_ids: dict[str, Any]) -> None:
-        response = client.get(f"/feeds/{feed_test_ids['invalid_feed_id']}")
+        headers = {"authorization": environment.site_admin_user_token}
+        response = client.get(f"/feeds/{feed_test_ids['invalid_feed_id']}", headers=headers)
         assert response.status_code == 404
         assert response.json()["detail"] == "Feed not found."
 
     def test_get_non_existing_feed_details(self: "TestGetFeedByIdInfo", feed_test_ids: dict[str, Any]) -> None:
-        response = client.get(f"/feeds/{feed_test_ids['non_existing_feed_id']}")
+        headers = {"authorization": environment.site_admin_user_token}
+        response = client.get(f"/feeds/{feed_test_ids['non_existing_feed_id']}", headers=headers)
         assert response.status_code == 404
         assert response.json()["detail"] == "Feed not found."
 
@@ -701,7 +703,7 @@ class TestGetFeedByIdInfo:
             org_id=organisation.id,
             orgc_id=organisation.id,
             info="test",
-            date=str(int(time.time())),
+            date=str(int(time())),
             analysis="test",
             event_creator_email="XXXXXXXXXXXXX",
         )
@@ -717,7 +719,7 @@ class TestGetFeedByIdInfo:
         feed_id = response.json()["feed"]["id"]
         assert response.status_code == 201
 
-        response = client.get(f"/feeds/{feed_id}")
+        response = client.get(f"/feeds/{feed_id}", headers=headers)
         assert response.headers["Content-Type"] == "application/json"
         data = response.json()
         assert "feed" in data
@@ -760,7 +762,7 @@ class TestUpdateFeed:
             org_id=organisation.id,
             orgc_id=organisation.id,
             info="test",
-            date=str(int(time.time())),
+            date=str(int(time())),
             analysis="test",
             event_creator_email="XXXXXXXXXXXXX",
         )
@@ -825,7 +827,7 @@ class TestUpdateFeed:
             org_id=organisation.id,
             orgc_id=organisation.id,
             info="test",
-            date=str(int(time.time())),
+            date=str(int(time())),
             analysis="test",
             event_creator_email="XXXXXXXXXXXXX",
         )
@@ -882,7 +884,7 @@ class TestUpdateFeed:
             org_id=organisation.id,
             orgc_id=organisation.id,
             info="test",
-            date=str(int(time.time())),
+            date=str(int(time())),
             analysis="test",
             event_creator_email="XXXXXXXXXXXXX",
         )
@@ -939,7 +941,7 @@ class TestToggleFeed:
             org_id=organisation.id,
             orgc_id=organisation.id,
             info="test",
-            date=str(int(time.time())),
+            date=str(int(time())),
             analysis="test",
             event_creator_email="XXXXXXXXXXXXX",
         )
@@ -1016,7 +1018,7 @@ class TestToggleFeed:
             org_id=organisation.id,
             orgc_id=organisation.id,
             info="test",
-            date=str(int(time.time())),
+            date=str(int(time())),
             analysis="test",
             event_creator_email="XXXXXXXXXXXXX",
         )
@@ -1111,7 +1113,7 @@ class TestToggleFeed:
             org_id=organisation.id,
             orgc_id=organisation.id,
             info="test",
-            date=str(int(time.time())),
+            date=str(int(time())),
             analysis="test",
             event_creator_email="XXXXXXXXXXXXX",
         )
@@ -1186,7 +1188,7 @@ class TestGetAllFeeds:
             org_id=organisation.id,
             orgc_id=organisation.id,
             info="test",
-            date=str(int(time.time())),
+            date=str(int(time())),
             analysis="test",
             event_creator_email="XXXXXXXXXXXXX",
         )
@@ -1201,7 +1203,7 @@ class TestGetAllFeeds:
         response = client.post("/feeds", json=feed_data, headers=headers)
         assert response.status_code == 201
 
-        response = client.get("/feeds")
+        response = client.get("/feeds", headers=headers)
         assert response.status_code == 200
         assert isinstance(response.json()["feeds"], list)
 
@@ -1239,7 +1241,7 @@ class TestGetAllFeeds:
             org_id=organisation.id,
             orgc_id=organisation.id,
             info="test",
-            date=str(int(time.time())),
+            date=str(int(time())),
             analysis="test",
             event_creator_email="XXXXXXXXXXXXX",
         )
@@ -1254,7 +1256,7 @@ class TestGetAllFeeds:
         response = client.post("/feeds", json=feed_data, headers=headers)
         assert response.status_code == 201
 
-        response = client.get("/feeds")
+        response = client.get("/feeds", headers=headers)
         assert response.headers["Content-Type"] == "application/json"
         response_data = response.json()
         assert isinstance(response_data["feeds"], list)
