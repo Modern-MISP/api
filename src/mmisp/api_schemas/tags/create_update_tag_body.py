@@ -1,11 +1,11 @@
 from pydantic import BaseModel
 
 
-class TagCreateBody(BaseModel):
+class TagCreateAndUpdateBody(BaseModel):
     name: str
     colour: str
     exportable: bool
-    org_id: str | None = None
+    org_id: str
     user_id: str | None = None
     hide_tag: bool | None = None
     numerical_value: str | None = None
