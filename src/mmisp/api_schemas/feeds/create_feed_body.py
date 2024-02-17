@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
 
 
-class FeedCreateAndUpdateBody(BaseModel):
+class FeedCreateBody(BaseModel):
     name: str = Field(min_length=1)
     provider: str = Field(min_length=1)
     url: str = Field(min_length=1)
