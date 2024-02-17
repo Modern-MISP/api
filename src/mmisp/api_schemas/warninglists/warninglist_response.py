@@ -1,19 +1,4 @@
-from enum import Enum
-
 from pydantic import BaseModel, Field
-
-
-class Type(Enum):
-    CIDR = "cidr"
-    HOSTNAME = "hostname"
-    STRING = "string"
-    SUBSTRING = "substring"
-    REGEX = "regex"
-
-
-class Category(Enum):
-    FALSE_POSITIVE = "False positive"
-    KNOWN_IDENTIFIER = "Known identifier"
 
 
 # TODO: int or str, ids?

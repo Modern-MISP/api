@@ -1,6 +1,21 @@
+from enum import Enum
+
 from sqlalchemy import Boolean, Column, Integer, String
 
 from ..database import Base
+
+
+class WarninglistType(Enum):
+    CIDR = "cidr"
+    HOSTNAME = "hostname"
+    STRING = "string"
+    SUBSTRING = "substring"
+    REGEX = "regex"
+
+
+class WarninglistCategory(Enum):
+    FALSE_POSITIVE = "False positive"
+    KNOWN_IDENTIFIER = "Known identifier"
 
 
 class Warninglist(Base):
@@ -22,5 +37,5 @@ class WarninglistEntry(Base):
     __tablename__ = "warninglist_entries"
     id = Column(Integer, primary_key=True)
     value = Column(String(255))
-    warninglist_id = Column(String(255))
+    warninglist_id = Column(Integer)
     comment = Column(String(255), nullable=True)
