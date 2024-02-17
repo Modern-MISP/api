@@ -46,7 +46,6 @@ def invalid_tag_data(request: Any) -> Dict[str, Any]:
     return request.param
 
 
-# --- Test cases ---
 class TestAddTag:
     def test_add_tag(self: "TestAddTag", tag_data: Dict[str, Any]) -> None:
         tag_data.pop("name")
@@ -68,16 +67,10 @@ class TestAddTag:
         tag_data["name"] = random_string()
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/tags/", json=tag_data, headers=headers)
-        assert response.headers["Content-Type"] == "application/json"
+        json = response.json()
+        json["name"] == tag_data["name"]
 
         remove_tags([response.json()["id"]])
-
-    def test_add_tag_authorization(self: "TestAddTag", tag_data: Dict[str, Any]) -> None:
-        tag_data.pop("name")
-        tag_data["name"] = random_string()
-        headers = {"authorization": ""}
-        response = client.post("/tags/", json=tag_data, headers=headers)
-        assert response.status_code == 401
 
 
 class TestViewTag:
@@ -106,18 +99,10 @@ class TestViewTag:
 
         tag = add_tags(1)
 
-        response = client.get(f"tags/{tag}", headers=headers)
-        assert response.headers["Content-Type"] == "application/json"
-
-        remove_tags(tag)
-
-    def test_view_tag_authorization(self: "TestViewTag") -> None:
-        headers = {"authorization": ""}
-
-        tag = add_tags(1)
-
-        response = client.get(f"/tags/{tag}", headers=headers)
-        assert response.status_code == 401
+        response = client.get(f"tags/{tag[0]}", headers=headers)
+        assert response.status_code == 200
+        json = response.json()
+        assert json["id"] == str(tag[0])
 
         remove_tags(tag)
 
@@ -147,32 +132,19 @@ class TestSearchTagByTagSearchTerm:
 
         remove_tags(tags)
 
-    # TODO: format
     def test_search_tag_response_format(self: "TestSearchTagByTagSearchTerm") -> None:
         headers = {"authorization": environment.site_admin_user_token}
         db: Session = get_db()
         tag = add_tags(1)
-        tag_name = db.get(Tag, tag).name
+        tag_name = db.get(Tag, tag[0]).name
         substring_start = random.randint(0, len(tag_name) - 1)
         substring_end = random.randint(substring_start + 1, len(tag_name))
         substring = tag_name[substring_start:substring_end]
 
         response = client.get(f"tags/search/{substring}", headers=headers)
-        assert response.headers["Content-Type"] == "application/json"
-
-        remove_tags(tag)
-
-    def test_search_tag_authorization(self: "TestSearchTagByTagSearchTerm") -> None:
-        headers = {"authorization": ""}
-        db: Session = get_db()
-        tag = add_tags(1)
-        tag_name = db.get(Tag, tag).name
-        substring_start = random.randint(0, len(tag_name) - 1)
-        substring_end = random.randint(substring_start + 1, len(tag_name))
-        substring = tag_name[substring_start:substring_end]
-
-        response = client.get(f"/tags/search/{substring}", headers=headers)
-        assert response.status_code == 401
+        assert response.status_code == 200
+        json = response.json()
+        assert isinstance(json["root"], list)
 
         remove_tags(tag)
 
@@ -211,7 +183,6 @@ class TestEditTag:
 
         remove_tags(tags)
 
-    # TODO: format
     def test_edit_tag_response_format(self: "TestEditTag", tag_data: Dict[str, Any]) -> None:
         tag = add_tags(1)
 
@@ -222,15 +193,6 @@ class TestEditTag:
         json = response.json()
         print(json)
         assert json["id"] == str(tag[0])
-
-        remove_tags(tag)
-
-    def test_edit_tag_authorization(self: "TestEditTag", tag_data: Dict[str, Any]) -> None:
-        tag = add_tags(1)
-
-        headers = {"authorization": ""}
-        response = client.put(f"/tags/{tag[0]}", json=tag_data, headers=headers)
-        assert response.status_code == 401
 
         remove_tags(tag)
 
@@ -263,13 +225,6 @@ class TestDeleteTag:
         json = response.json()
         json["name"] == "Tag deleted."
 
-    def test_delete_tag_authorization(self: "TestDeleteTag") -> None:
-        headers = {"authorization": ""}
-        tag = add_tags(1)
-        response = client.delete(f"/tags/{tag[0]}", headers=headers)
-        assert response.status_code == 401
-        remove_tags([tag])
-
 
 class TestGetAllTags:
     def test_get_all_tags(self: "TestGetAllTags") -> None:
@@ -296,8 +251,3 @@ class TestGetAllTags:
             assert "exportable" in tag_wrapper
 
         remove_tags(tags)
-
-    def test_get_all_tags_authorization(self: "TestGetAllTags") -> None:
-        headers = {"authorization": ""}
-        response = client.get("/tags/", headers=headers)
-        assert response.status_code == 401

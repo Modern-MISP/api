@@ -31,7 +31,7 @@ router = APIRouter(tags=["tags"])
     description="Add a new tag with given details.",
 )
 async def add_tag(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, Permission.TAG_EDITOR))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, Permission.TAG_EDITOR))],
     db: Annotated[Session, Depends(get_db)],
     body: TagCreateBody,
 ) -> dict:
@@ -46,7 +46,7 @@ async def add_tag(
     description="View details of a specific tag.",
 )
 async def view_tag(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, Permission.AUTH))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, Permission.AUTH))],
     db: Annotated[Session, Depends(get_db)],
     tag_id: str = Path(..., alias="tagId"),
 ) -> dict:
@@ -61,7 +61,7 @@ async def view_tag(
     description="Search for tags using a specific search term.",
 )
 async def search_tags(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, Permission.AUTH))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, Permission.AUTH))],
     db: Annotated[Session, Depends(get_db)],
     tag_search_term: str = Path(..., alias="tagSearchTerm"),
 ) -> dict:
@@ -76,7 +76,7 @@ async def search_tags(
     description="Edit details of a specific tag.",
 )
 async def update_tag(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, Permission.SITE_ADMIN))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, Permission.SITE_ADMIN))],
     db: Annotated[Session, Depends(get_db)],
     body: TagUpdateBody,
     tag_id: str = Path(..., alias="tagId"),
@@ -92,7 +92,7 @@ async def update_tag(
     description="Delete a specific tag.",
 )
 async def delete_tag(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, Permission.SITE_ADMIN))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, Permission.SITE_ADMIN))],
     db: Annotated[Session, Depends(get_db)],
     tag_id: str = Path(..., alias="tagId"),
 ) -> dict:
@@ -107,7 +107,7 @@ async def delete_tag(
     description="Retrieve a list of all tags.",
 )
 async def get_tags(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, Permission.AUTH))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, Permission.AUTH))],
     db: Annotated[Session, Depends(get_db)],
 ) -> dict:
     return await _get_tags(db)
@@ -122,7 +122,7 @@ async def get_tags(
     description="Deprecated. Add a new tag using the old route.",
 )
 async def add_tag_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, Permission.TAG_EDITOR))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, Permission.TAG_EDITOR))],
     db: Annotated[Session, Depends(get_db)],
     body: TagCreateBody,
 ) -> dict:
@@ -138,7 +138,7 @@ async def add_tag_depr(
     description="Deprecated. View details of a specific tag using the old route.",
 )
 async def view_tag_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, Permission.AUTH))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, Permission.AUTH))],
     db: Annotated[Session, Depends(get_db)],
     tag_id: str = Path(..., alias="tagId"),
 ) -> dict:
@@ -154,7 +154,7 @@ async def view_tag_depr(
     description="Deprecated. Edit a specific tag using the old route.",
 )
 async def update_tag_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, Permission.SITE_ADMIN))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, Permission.SITE_ADMIN))],
     db: Annotated[Session, Depends(get_db)],
     body: TagCreateBody,
     tag_id: str = Path(..., alias="tagId"),
@@ -171,7 +171,7 @@ async def update_tag_depr(
     description="Deprecated. Delete a specific tag using the old route.",
 )
 async def delete_tag_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, Permission.SITE_ADMIN))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, Permission.SITE_ADMIN))],
     db: Annotated[Session, Depends(get_db)],
     tag_id: str = Path(..., alias="tagId"),
 ) -> dict:
@@ -179,10 +179,7 @@ async def delete_tag_depr(
 
 
 # --- endpoint logic ---
-async def _add_tag(
-    db: Session,
-    body: TagCreateBody,
-) -> dict:
+async def _add_tag(db: Session, body: TagCreateBody) -> dict:
     _check_type_hex_color(body.colour)
     tag: Tag = Tag(**body.dict())
 
@@ -192,19 +189,13 @@ async def _add_tag(
     return tag.__dict__
 
 
-async def _view_tag(
-    db: Session,
-    tag_id: str,
-) -> dict:
+async def _view_tag(db: Session, tag_id: str) -> dict:
     tag: Tag = check_existence_and_raise(db, Tag, tag_id, "id", "Tag not found.")
 
     return tag.__dict__
 
 
-async def _search_tags(
-    db: Session,
-    tag_search_term: str,
-) -> dict:
+async def _search_tags(db: Session, tag_search_term: str) -> dict:
     tags = db.query(Tag).filter(Tag.name.contains(tag_search_term)).all()
 
     tag_datas = []
@@ -223,11 +214,7 @@ async def _search_tags(
     return TagSearchResponse(root=[tag_data.__dict__ for tag_data in tag_datas])
 
 
-async def _update_tag(
-    db: Session,
-    body: TagCreateBody,
-    tag_id: str,
-) -> dict:
+async def _update_tag(db: Session, body: TagCreateBody, tag_id: str) -> dict:
     tag: Tag = check_existence_and_raise(db, Tag, tag_id, "id", "Tag not found.")
     _check_type_hex_color(body.colour)
     update_data = body.dict()
@@ -241,10 +228,7 @@ async def _update_tag(
     return tag.__dict__
 
 
-async def _delete_tag(
-    db: Session,
-    tag_id: str,
-) -> dict:
+async def _delete_tag(db: Session, tag_id: str) -> dict:
     deleted_tag = check_existence_and_raise(db, Tag, tag_id, "id", "Tag not found.")
 
     feeds = db.query(Feed).filter(Feed.tag_id == deleted_tag.id).all()

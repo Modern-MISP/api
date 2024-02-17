@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
-from ..taxonomies.get_taxonomy_out import TaxonomyView
-from .get_tag_response import TagAttributesResponse
+from mmisp.api_schemas.tags.get_tag_response import TagAttributesResponse
+from mmisp.api_schemas.taxonomies.get_taxonomy_out import TaxonomyView
 
 
 # TODO: Import from schemas/taxonomie directly
