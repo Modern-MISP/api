@@ -9,6 +9,7 @@ from mmisp.db.models import (  # noqa: F401
     event,
     feed,
     galaxy,
+    identity_provider,
     noticelist,
     object,
     organisation,

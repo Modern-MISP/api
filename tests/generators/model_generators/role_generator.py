@@ -1,13 +1,9 @@
-from datetime import datetime
-
 from mmisp.db.models.role import Role
 
 
 def generate_site_admin_role() -> Role:
     return Role(
         name="Site Admin Role",
-        created=datetime.utcnow(),
-        modified=datetime.utcnow(),
         perm_add=True,
         perm_modify=True,
         perm_modify_org=True,
@@ -44,8 +40,6 @@ def generate_site_admin_role() -> Role:
 def generate_org_admin_role() -> Role:
     return Role(
         name="Org Admin Role",
-        created=datetime.utcnow(),
-        modified=datetime.utcnow(),
         perm_add=True,
         perm_modify=True,
         perm_modify_org=True,
@@ -82,8 +76,6 @@ def generate_org_admin_role() -> Role:
 def generate_read_only_role() -> Role:
     return Role(
         name="Read Only Role",
-        created=datetime.utcnow(),
-        modified=datetime.utcnow(),
         perm_add=False,
         perm_modify=False,
         perm_modify_org=False,

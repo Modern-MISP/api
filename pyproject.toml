@@ -16,6 +16,10 @@ dependencies = [
   "alembic==1.8.1",
   "mysql-connector-python",
   "PyJWT==2.8.0",
+  "httpx==0.26.0",
+  "passlib==1.7.4",
+  "argon2-cffi==23.1.0",
+  "bcrypt==4.1.2",
 ]
 
 
@@ -25,7 +29,7 @@ dev = [
   "mypy==1.8.0",
   "pre-commit==3.6.0",
   "pytest==8.0.0",
-  "httpx==0.26.0",
+  "respx==0.20.2",
 ]
 
 [tool.ruff]

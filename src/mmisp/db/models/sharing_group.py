@@ -20,7 +20,7 @@ class SharingGroup(Base):
     sync_user_id = Column(Integer)
     active = Column(Boolean, default=True)
     created = Column(DateTime, default=datetime.utcnow)
-    modified = Column(DateTime, default=datetime.utcnow)
+    modified = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     local = Column(Boolean, default=False)
     roaming = Column(Boolean, default=False)
 

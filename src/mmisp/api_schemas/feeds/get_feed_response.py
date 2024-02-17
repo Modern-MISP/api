@@ -5,6 +5,7 @@ from pydantic import BaseModel, validator
 
 class FeedAttributesResponse(BaseModel):
     id: str
+    uuid: str
     name: str
     provider: str
     url: str

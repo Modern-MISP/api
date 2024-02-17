@@ -8,13 +8,7 @@ class ObjectCreateBody(BaseModel):
     meta_category: str | None = None
     description: str | None = None
     action: str | None = None
-    template_id: str | None = None
-    template_uuid: str | None = None
-    template_name: str | None = None
-    template_version: str | None = None
-    template_description: str | None = None
     update_template_available: bool | None = None
-    event_id: str | None = None
     distribution: str | None = None
     sharing_group_id: str = Field(min_length=1)
     comment: str = Field(min_length=1)

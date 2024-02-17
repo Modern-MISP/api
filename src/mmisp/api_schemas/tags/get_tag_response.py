@@ -10,13 +10,14 @@ class TagAttributesResponse(BaseModel):
     user_id: str
     hide_tag: bool
     numerical_value: str
-    is_galaxy: bool
-    is_custom_galaxy: bool
-    inherited: int  # deprecated
-    attribute_count: int  # new
-    count: int  # new
-    favourite: bool  # new
-    local_only: bool  # new
+    # is_galaxy: bool
+    # is_custom_galaxy: bool
+    # inherited: int  # deprecated
+    # attribute_count: int  # new
+    # count: int  # new
+    # favourite: bool  # new
+    # local_only: bool  # new
+    inherited: bool
 
 
 class TagGetResponse(BaseModel):

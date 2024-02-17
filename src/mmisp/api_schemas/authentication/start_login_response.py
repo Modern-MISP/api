@@ -12,6 +12,9 @@ class IdentityProviderInfo(BaseModel):
     id: str
     name: str
 
+    class Config:
+        orm_mode = True
+
 
 class StartLoginResponse(BaseModel):
     loginType: LoginType
