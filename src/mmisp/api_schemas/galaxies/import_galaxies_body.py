@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from .export_galaxies_response import ExportGalaxyResponse
+from .export_galaxies_response import ExportGalaxyClusterResponse
 
 
 class ImportGalaxyGalaxy(BaseModel):
@@ -8,7 +8,7 @@ class ImportGalaxyGalaxy(BaseModel):
 
 
 class ImportGalaxyBody(BaseModel):
-    GalaxyCluster: ExportGalaxyResponse
+    GalaxyCluster: ExportGalaxyClusterResponse
     Galaxy: ImportGalaxyGalaxy
 
     class Config:

@@ -8,7 +8,7 @@ class ExportGalaxyGalaxyElement(BaseModel):
     value: str
 
 
-class ExportGalaxyResponse(BaseModel):
+class ExportGalaxyClusterResponse(BaseModel):
     id: str | None = None
     uuid: str | None = None
     collection_uuid: str
