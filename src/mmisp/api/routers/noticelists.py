@@ -8,9 +8,10 @@ from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
 from mmisp.api_schemas.noticelists.get_all_noticelist_response import GetAllNoticelistResponse
 from mmisp.api_schemas.noticelists.get_noticelist_response import Data, NoticelistEntryResponse, NoticelistResponse
 from mmisp.api_schemas.noticelists.toggle_enable_noticelist_response import ToggleEnableNoticelist
-from mmisp.api_schemas.noticelists.update_noticelist_response import UpdateAllNoticelistsResponse
+from mmisp.api_schemas.standard_status_response import StandardStatusResponse
 from mmisp.db.database import get_db
 from mmisp.db.models.noticelist import Noticelist, NoticelistEntry
+from mmisp.util.partial import partial
 from mmisp.util.request_validations import check_existence_and_raise
 
 router = APIRouter(tags=["noticelists"])
@@ -19,12 +20,12 @@ router = APIRouter(tags=["noticelists"])
 @router.get(
     "/noticelists/{noticelistId}",
     status_code=status.HTTP_200_OK,
-    response_model=NoticelistResponse,
+    response_model=partial(NoticelistResponse),
     summary="Get noticelist details",
     description="Retrieve details of a specific noticelist by its ID.",
 )
 async def get_noticelist(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, Permission.AUTH))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     tag_id: str = Path(..., alias="noticelistId"),
 ) -> dict:
@@ -34,12 +35,12 @@ async def get_noticelist(
 @router.post(
     "/noticelists/toggleEnable/{noticelistId}",
     status_code=status.HTTP_200_OK,
-    response_model=ToggleEnableNoticelist,
+    response_model=partial(ToggleEnableNoticelist),
     summary="Disable/Enable noticelist",
     description="Disable/Enable a specific noticelist by its ID.",
 )
 async def post_toggleEnable_noticelist(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, Permission.SITE_ADMIN))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, Permission.SITE_ADMIN))],
     db: Annotated[Session, Depends(get_db)],
     tag_id: str = Path(..., alias="noticelistId"),
 ) -> dict:
@@ -49,12 +50,12 @@ async def post_toggleEnable_noticelist(
 @router.put(
     "/noticelists",
     status_code=status.HTTP_200_OK,
-    response_model=UpdateAllNoticelistsResponse,
+    response_model=partial(StandardStatusResponse),
     summary="Update noticelists",
     description="Update all noticelists.",
 )
 async def update_noticelists(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, Permission.SITE_ADMIN))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, Permission.SITE_ADMIN))],
     db: Annotated[Session, Depends(get_db)],
 ) -> dict:
     return await _update_noticelists(db, False)
@@ -63,12 +64,12 @@ async def update_noticelists(
 @router.get(
     "/noticelists",
     status_code=status.HTTP_200_OK,
-    response_model=GetAllNoticelistResponse,
+    response_model=partial(GetAllNoticelistResponse),
     summary="Get all noticelists",
     description="Retrieve a list of all noticelists.",
 )
 async def get_all_noticelists(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, Permission.AUTH))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
 ) -> dict:
     return await _get_all_noticelists(db)
@@ -78,12 +79,12 @@ async def get_all_noticelists(
     "/noticelists/view/{noticelistId}",
     deprecated=True,
     status_code=status.HTTP_200_OK,
-    response_model=NoticelistResponse,
+    response_model=partial(NoticelistResponse),
     summary="Get noticelist details (Deprecated)",
     description="Deprecated. Retrieve details of a specific noticelist by its ID using the old route.",
 )
 async def get_noticelist_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, Permission.AUTH))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     noticelist_id: str = Path(..., alias="noticelistId"),
 ) -> dict:
@@ -94,34 +95,28 @@ async def get_noticelist_depr(
     "/noticelists/update",
     deprecated=True,
     status_code=status.HTTP_200_OK,
-    response_model=UpdateAllNoticelistsResponse,
+    response_model=partial(StandardStatusResponse),
     summary="Update noticelists (Deprecated)",
     description="Deprecated. Update all noticelists.",
 )
 async def update_noticelist_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, Permission.SITE_ADMIN))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, Permission.SITE_ADMIN))],
     db: Annotated[Session, Depends(get_db)],
 ) -> dict:
     return await _update_noticelists(db, True)
 
 
 # --- endpoint logic ---
-async def _get_noticelist(
-    db: Session,
-    noticelist_id: str,
-) -> dict:
+async def _get_noticelist(db: Session, noticelist_id: str) -> dict:
     noticelist = check_existence_and_raise(db, Noticelist, noticelist_id, "id", "Noticelist not found")
     noticelist_entries = db.query(NoticelistEntry).filter(NoticelistEntry.noticelist_id == noticelist_id).all()
 
     return _prepare_noticelist_response(noticelist, noticelist_entries)
 
 
-async def _toggleEnable_noticelists(
-    db: Session,
-    noticelist_id: str,
-) -> dict:
+async def _toggleEnable_noticelists(db: Session, noticelist_id: str) -> dict:
     noticelist = check_existence_and_raise(db, Noticelist, noticelist_id, "id", "Noticelist not found")
-    message = "disabled" if noticelist.enabled is True else "enabled"
+    message = "disabled" if noticelist.enabled else "enabled"
 
     noticelist.enabled = not noticelist.enabled
 
@@ -137,10 +132,7 @@ async def _toggleEnable_noticelists(
     )
 
 
-async def _update_noticelists(
-    db: Session,
-    depr: bool,
-) -> dict:
+async def _update_noticelists(db: Session, depr: bool) -> dict:
     number_updated_lists = db.query(Noticelist).count()
     saved = True
     success = True
@@ -148,7 +140,7 @@ async def _update_noticelists(
     message = "Succesfully updated " + str(number_updated_lists) + "noticelists."
     url = "/noticelists/update" if depr is True else "/noticelists/"
 
-    return UpdateAllNoticelistsResponse(
+    return StandardStatusResponse(
         saved=saved,
         success=success,
         name=name,
@@ -157,16 +149,14 @@ async def _update_noticelists(
     )
 
 
-async def _get_all_noticelists(
-    db: Session,
-) -> dict:
-    response: list[NoticelistResponse] = []
+async def _get_all_noticelists(db: Session) -> dict:
+    noticelist_data: list[NoticelistResponse] = []
     noticelists = db.query(Noticelist).all()
     for noticelist in noticelists:
         noticelist_entries = db.query(NoticelistEntry).filter(NoticelistEntry.noticelist_id == noticelist.id).all()
-        response.append(_prepare_noticelist_response(noticelist, noticelist_entries))
+        noticelist_data.append(_prepare_noticelist_response(noticelist, noticelist_entries))
 
-    return GetAllNoticelistResponse(response=response)
+    return GetAllNoticelistResponse(response=noticelist_data)
 
 
 def _prepare_noticelist_entries(noticelist_entries: list[NoticelistEntry]) -> list[NoticelistEntryResponse]:
