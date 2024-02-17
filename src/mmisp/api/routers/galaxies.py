@@ -1,5 +1,5 @@
 import logging
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Path
 from sqlalchemy.exc import SQLAlchemyError
@@ -8,16 +8,29 @@ from starlette import status
 from starlette.requests import Request
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
+from mmisp.api_schemas.events.add_edit_get_event_response import (
+    AddEditGetEventGalaxyClusterRelation,
+    AddEditGetEventGalaxyClusterRelationTag,
+)
+from mmisp.api_schemas.events.get_all_events_response import GetAllEventsGalaxyClusterGalaxy
+from mmisp.api_schemas.galaxies.attach_galaxy_cluster_body import AttachClusterGalaxyBody
+from mmisp.api_schemas.galaxies.attach_galaxy_cluster_response import AttachClusterGalaxyResponse
 from mmisp.api_schemas.galaxies.delete_force_update_import_galaxy_response import DeleteForceUpdateImportGalaxyResponse
+from mmisp.api_schemas.galaxies.export_galaxies_body import ExportGalaxyBody
 from mmisp.api_schemas.galaxies.export_galaxies_response import ExportGalaxyClusterResponse, ExportGalaxyGalaxyElement
 from mmisp.api_schemas.galaxies.get_all_search_galaxies_response import (
     GetAllSearchGalaxiesAttributes,
+    GetAllSearchGalaxiesResponse,
 )
-from mmisp.api_schemas.galaxies.get_galaxy_response import GetGalaxyResponse
+from mmisp.api_schemas.galaxies.get_galaxy_response import GetGalaxyClusterResponse, GetGalaxyResponse
 from mmisp.api_schemas.galaxies.import_galaxies_body import ImportGalaxyBody
+from mmisp.api_schemas.organisations.organisation import Organisation as OrganisationSchema
 from mmisp.db.database import get_db
+from mmisp.db.models.attribute import Attribute, AttributeTag
+from mmisp.db.models.event import Event, EventTag
 from mmisp.db.models.galaxy import Galaxy
-from mmisp.db.models.galaxy_cluster import GalaxyCluster, GalaxyElement
+from mmisp.db.models.galaxy_cluster import GalaxyCluster, GalaxyElement, GalaxyReference
+from mmisp.db.models.organisation import Organisation
 from mmisp.db.models.tag import Tag
 from mmisp.util.partial import partial
 from mmisp.util.request_validations import check_existence_and_raise
@@ -77,9 +90,18 @@ async def get_galaxy_details(
 # - Updating a {resource}
 
 
-# @router.post("/galaxies/update")
-# async def galaxies_update(db: Session = Depends(get_db)) -> DeleteForceUpdateImportGalaxyResponse:
-#     return DeleteForceUpdateImportGalaxyResponse()
+@router.post(
+    "/galaxies/update",
+    status_code=status.HTTP_501_NOT_IMPLEMENTED,
+    response_model=partial(DeleteForceUpdateImportGalaxyResponse),
+    summary="Update galaxies",
+    description="Force the galaxies to update with the JSON definitions. NOT YET IMPLEMENTED!",
+)
+async def update_galaxy(
+    dauth: Annotated[Auth, Depends(authorize(AuthStrategy.WORKER_KEY, [Permission.SYNC]))],
+    db: Annotated[Session, Depends(get_db)],
+) -> dict:
+    return DeleteForceUpdateImportGalaxyResponse()
 
 
 # - Deleting a {resource}
@@ -91,48 +113,58 @@ async def get_galaxy_details(
     status_code=status.HTTP_200_OK,
     response_model=partial(DeleteForceUpdateImportGalaxyResponse),
 )  # new
-async def galaxies_delete(
+async def delete_galaxy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
     db: Annotated[Session, Depends(get_db)],
     galaxy_id: Annotated[str, Path(..., alias="galaxyId")],
     request: Request,
-) -> DeleteForceUpdateImportGalaxyResponse:
+) -> dict:
     return await _delete_galaxy(db, galaxy_id, request)
 
 
 # - Get all {resource}s
 
 
-# @router.get("/galaxies")
-# async def galaxies_get(db: Session = Depends(get_db)) -> list[GetAllSearchGalaxiesResponse]:
-#     return list[GetAllSearchGalaxiesResponse()]
-#
-#
-# # - More niche endpoints
-#
-#
-# @router.post("/galaxies")
-# async def galaxies_post(body: SearchGalaxiesBody, db: Session = Depends(get_db))
-# -> list[GetAllSearchGalaxiesResponse]:
-#     return list[GetAllSearchGalaxiesResponse()]
-#
-#
-# @router.post("/galaxies/export/{galaxyId}")
-# async def galaxies_export(
-#         galaxy_id: str, body: ExportGalaxyBody, db: Session = Depends(get_db)
-# ) -> ExportGalaxyClusterResponse:
-#     return ExportGalaxyClusterResponse()
-#
-#
-# @router.post("/galaxies/attachCluster/{attachTargetId}/{attachTargetType}/local:{local}")
-# async def galaxies_attachCluster(
-#         attachTarget_id: str,
-#         attachTargetType: str,
-#         local: int,
-#         body: AttachClusterGalaxyBody,
-#         db: Session = Depends(get_db),
-# ) -> AttachClusterGalaxyResponse:
-#     return AttachClusterGalaxyResponse()
+@router.get("/galaxies", status_code=status.HTTP_200_OK, response_model=list[partial(GetAllSearchGalaxiesResponse)])
+async def get_galaxies(db: Annotated[Session, Depends(get_db)]) -> dict:
+    return await _get_galaxies(db)
+
+
+# - More niche endpoints
+
+
+@router.post("/galaxies", status_code=status.HTTP_200_OK, response_model=list[partial(GetAllSearchGalaxiesResponse)])
+async def search_galaxies(db: Annotated[Session, Depends(get_db)]) -> dict:
+    return await _get_galaxies(db)
+
+
+@router.post(
+    "/galaxies/export/{galaxyId}",
+    status_code=status.HTTP_200_OK,
+    response_model=list[partial(ExportGalaxyClusterResponse)],
+)
+async def export_galaxy(
+    db: Annotated[Session, Depends(get_db)],
+    galaxy_id: Annotated[str, Path(..., alias="galaxyId")],
+    body: ExportGalaxyBody,
+) -> dict:
+    return await _export_galaxy(db, galaxy_id, body)
+
+
+@router.post(
+    "/galaxies/attachCluster/{attachTargetId}/{attachTargetType}/local:{local}",
+    status_code=status.HTTP_200_OK,
+    response_model=partial(AttachClusterGalaxyResponse),
+)
+async def galaxies_attachCluster(
+    local: str,
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.ADD]))],
+    db: Annotated[Session, Depends(get_db)],
+    attach_target_id: Annotated[str, Path(..., alias="attachTargetId")],
+    attach_target_type: Annotated[str, Path(..., alias="attachTargetType")],
+    body: AttachClusterGalaxyBody,
+) -> dict:
+    return await _attach_cluster_to_galaxy(db, attach_target_id, attach_target_type, local, body)
 
 
 # --- endpoint logic ---
@@ -184,31 +216,6 @@ async def _import_galaxy_cluster(
             galaxy_cluster_dict["authors"] = " ".join(galaxy_cluster_dict["authors"])
             del galaxy_cluster_dict["GalaxyElement"]
 
-            # fields_to_convert = ["galaxy_id", "version", "distribution", "sharing_group_id", "org_id", "orgc_id",
-            #                      "extends_version"]
-            # for field in fields_to_convert:
-            #     if galaxy_cluster_dict.get(field) is not None:
-            #         galaxy_cluster_dict[field] = int(galaxy_cluster_dict[field])
-            #     else:
-            #         galaxy_cluster_dict[field] = 1
-
-            # ** {**galaxy_cluster_dict, "galaxy_id": int(galaxy_cluster.galaxy_id),
-            #     "version": int(galaxy_cluster.version),
-            #     "distribution": int(galaxy_cluster.distribution),
-            #     "sharing_group_id": int(galaxy_cluster.sharing_group_id),
-            #     "org_id": int(galaxy_cluster.org_id),
-            #     "orgc_id": int(galaxy_cluster.orgc_id),
-            #     "extends_version": int(galaxy_cluster.extends_version)}
-
-            # version = int(galaxy_cluster.version),
-            # distribution = galaxy_cluster.distribution,
-            # sharing_group_id = galaxy_cluster.sharing_group_id,
-            # org_id = galaxy_cluster.org_id, orgc_id = galaxy_cluster.orgc_id,
-            # default = galaxy_cluster.default, locked = galaxy_cluster.locked,
-            # extends_uuid = galaxy_cluster.extends_uuid,
-            # extends_version = int(galaxy_cluster.extends_version),
-            # published = galaxy_cluster.published, deleted = galaxy_cluster.deleted
-
             new_galaxy_cluster = GalaxyCluster(
                 type=galaxy_cluster.type,
                 value=galaxy_cluster.value,
@@ -217,9 +224,18 @@ async def _import_galaxy_cluster(
                 galaxy_id=galaxy_cluster.galaxy_id,
                 source=galaxy_cluster.source,
                 authors=" ".join(galaxy_cluster.authors),
+                version=galaxy_cluster.version,
+                distribution=galaxy_cluster.distribution,
+                sharing_group_id=galaxy_cluster.sharing_group_id,
+                org_id=galaxy_cluster.org_id,
+                orgc_id=galaxy_cluster.orgc_id,
+                default=galaxy_cluster.default,
+                locked=galaxy_cluster.locked,
+                extends_uuid=galaxy_cluster.extends_uuid,
+                extends_version=galaxy_cluster.extends_version,
+                published=galaxy_cluster.published,
+                deleted=galaxy_cluster.deleted,
             )
-
-            logger.info(new_galaxy_cluster.__dict__.copy())
 
             try:
                 db.add(new_galaxy_cluster)
@@ -239,8 +255,6 @@ async def _import_galaxy_cluster(
                 del galaxy_element["id"]
 
                 new_galaxy_element = GalaxyElement(**{**galaxy_element})
-
-                print(new_galaxy_element.__dict__.copy())
 
                 try:
                     db.add(new_galaxy_element)
@@ -274,7 +288,7 @@ async def _import_galaxy_cluster(
 
 
 async def _get_galaxy_details(db: Session, galaxy_id: str) -> dict:
-    galaxy = check_existence_and_raise(db, Galaxy, galaxy_id, "galaxy_id", "Galaxy not found")
+    galaxy = check_existence_and_raise(db, Galaxy, galaxy_id, "id", "Galaxy not found")
 
     galaxy_data = _prepare_galaxy_response(db, galaxy)
     galaxy_cluster_data = _prepare_galaxy_cluster_response(db, galaxy)
@@ -299,23 +313,100 @@ async def _delete_galaxy(db: Session, galaxy_id: str, request: Request) -> Delet
     db.delete(connected_tag)
     db.commit()
 
-    # galaxy = db.get(Galaxy, galaxy_id)
-
     return DeleteForceUpdateImportGalaxyResponse(
         saved=True, success=True, name="Galaxy deleted", message="Galaxy deleted", url=str(request.url.path)
     )
 
 
+async def _get_galaxies(db: Session) -> list[GetAllSearchGalaxiesResponse]:
+    galaxies = db.query(Galaxy).all()
+    logger.info(len(galaxies))
+    response_list = []
+
+    if not galaxies:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No galaxies found.")
+
+    for galaxy in galaxies:
+        response_list.append(GetAllSearchGalaxiesResponse(Galaxy=_prepare_galaxy_response(db, galaxy)))
+
+    return response_list
+
+
+async def _export_galaxy(db: Session, galaxy_id: str, body: ExportGalaxyBody) -> dict:
+    check_existence_and_raise(db, Galaxy, galaxy_id, "id", "Galaxy not found")
+
+    body_dict = body.dict()
+
+    missing_information_in_body = False
+
+    if "Galaxy" not in body_dict:
+        missing_information_in_body = True
+
+    body_dict_information = body_dict["Galaxy"]
+
+    if "default" not in body_dict_information:
+        missing_information_in_body = True
+    elif "distribution" not in body_dict_information:
+        missing_information_in_body = True
+
+    if missing_information_in_body is True:
+        return []
+
+    response_list = _prepare_export_galaxy_response(db, galaxy_id, body_dict_information)
+
+    return response_list
+
+
+async def _attach_cluster_to_galaxy(
+    db: Session, attach_target_id: str, attach_target_type: str, local: str, body: AttachClusterGalaxyBody
+) -> AttachClusterGalaxyResponse:
+    galaxy_cluster_id = body.Galaxy.target_id
+    galaxy_cluster = check_existence_and_raise(db, GalaxyCluster, galaxy_cluster_id, "id", "Invalid Galaxy cluster.")
+
+    if local not in ["0", "1"]:
+        local = 0
+
+    tag_id = db.query(Tag).filter(Tag.name == galaxy_cluster.tag_name).first().id
+
+    if attach_target_type == "event":
+        event = check_existence_and_raise(db, Event, attach_target_id, "id", "Invalid event.")
+        new_event_tag = EventTag(event_id=event.id, tag_id=tag_id, local=True if int(local) == 1 else False)
+        db.add(new_event_tag)
+        db.commit()
+    elif attach_target_type == "attribute":
+        attribute = check_existence_and_raise(db, Attribute, attach_target_id, "id", "Invalid attribute.")
+        new_attribute_tag = AttributeTag(
+            attribute_id=attribute.id,
+            event_id=attribute.event_id,
+            tag_id=tag_id,
+            local=True if int(local) == 1 else False,
+        )
+        db.add(new_attribute_tag)
+        db.commit()
+    elif attach_target_type == "tag_collection":
+        raise HTTPException(
+            status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Attachment to tag_collection is not available yet."
+        )
+    else:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal error occurred.")
+
+    return AttachClusterGalaxyResponse(saved=True, success="Cluster attached.", check_publish=True)
+
+
 def _prepare_galaxy_response(db: Session, galaxy: Galaxy) -> GetAllSearchGalaxiesAttributes:
     galaxy_dict = galaxy.__dict__.copy()
     galaxy_cluster = db.query(GalaxyCluster).filter(GalaxyCluster.galaxy_id == galaxy.id).first()
-    tag = db.query(Tag).filter(Tag.name == galaxy_cluster.tag_name).first()
-    galaxy_dict["local_only"] = tag.local_only
+
+    if galaxy_cluster is None:
+        galaxy_dict["local_only"] = True
+    else:
+        tag = db.query(Tag).filter(Tag.name == galaxy_cluster.tag_name).first()
+        galaxy_dict["local_only"] = tag.inherited
 
     return GetAllSearchGalaxiesAttributes(**galaxy_dict)
 
 
-def _prepare_galaxy_cluster_response(db: Session, galaxy: Galaxy) -> list[ExportGalaxyClusterResponse]:
+def _prepare_galaxy_cluster_response(db: Session, galaxy: Galaxy) -> list[GetGalaxyClusterResponse]:
     response_list = []
 
     galaxy_cluster_list = db.query(GalaxyCluster).filter(GalaxyCluster.galaxy_id == galaxy.id).all()
@@ -357,6 +448,82 @@ def _prepare_galaxy_cluster_response(db: Session, galaxy: Galaxy) -> list[Export
                     galaxy_element_dict = galaxy_element.__dict__.copy()
                     galaxy_cluster_dict["GalaxyElement"].append(ExportGalaxyGalaxyElement(**galaxy_element_dict))
 
-            response_list.append(ExportGalaxyClusterResponse(**galaxy_cluster_dict))
+            response_list.append(GetGalaxyClusterResponse(**galaxy_cluster_dict))
 
     return response_list
+
+
+def _prepare_export_galaxy_response(
+    db: Session, galaxy_id: str, body_dict_information: dict
+) -> list[ExportGalaxyClusterResponse]:
+    response_list = []
+    galaxy = db.get(Galaxy, galaxy_id)
+    galaxy_response = _prepare_galaxy_response(db, galaxy)
+    galaxy_cluster_response_list = _prepare_galaxy_cluster_response(db, galaxy)
+    for galaxy_cluster in galaxy_cluster_response_list:
+        if galaxy_cluster.distribution != body_dict_information["distribution"]:
+            continue
+        elif galaxy_cluster.default != body_dict_information["default"]:
+            continue
+        org = db.get(Organisation, galaxy_cluster.org_id)
+        orgc = db.get(Organisation, galaxy_cluster.orgc_id)
+        galaxy_cluster_dict = galaxy_cluster.dict()
+        galaxy_cluster_dict["Org"] = OrganisationSchema(**org.__dict__.copy())
+        galaxy_cluster_dict["Orgc"] = OrganisationSchema(**orgc.__dict__.copy())
+        galaxy_cluster_dict["Galaxy"] = GetAllEventsGalaxyClusterGalaxy(**galaxy_response.__dict__.copy())
+        galaxy_cluster_relation_list = (
+            db.query(GalaxyReference).filter(GalaxyReference.galaxy_cluster_id == galaxy_cluster.id).all()
+        )
+
+        galaxy_cluster_dict["GalaxyClusterRelation"] = _prepare_galaxy_cluster_relation_response(
+            db, galaxy_cluster_relation_list
+        )
+        response_list.append(ExportGalaxyClusterResponse(**galaxy_cluster_dict))
+
+    return response_list
+
+
+def _prepare_galaxy_cluster_relation_response(
+    db: Session, galaxy_cluster_relation_list: list[GalaxyReference]
+) -> list[AddEditGetEventGalaxyClusterRelation]:
+    galaxy_cluster_relation_response_list = []
+
+    for galaxy_cluster_relation in galaxy_cluster_relation_list:
+        galaxy_cluster_relation_dict = galaxy_cluster_relation.__dict__.copy()
+        related_galaxy_cluster = (
+            db.query(GalaxyCluster).filter(GalaxyCluster.id == galaxy_cluster_relation.galaxy_cluster_id).first()
+        )
+        tag_list = db.query(Tag).filter(Tag.name == related_galaxy_cluster.tag_name).all()
+        if len(tag_list) > 0:
+            galaxy_cluster_relation_dict["Tag"] = _prepare_tag_response(tag_list)
+
+        galaxy_cluster_relation_dict["galaxy_cluster_uuid"] = db.get(
+            GalaxyCluster, galaxy_cluster_relation.galaxy_cluster_id
+        ).uuid
+        galaxy_cluster_relation_dict["distribution"] = db.get(
+            GalaxyCluster, galaxy_cluster_relation.galaxy_cluster_id
+        ).distribution
+        galaxy_cluster_relation_dict["default"] = db.get(
+            GalaxyCluster, galaxy_cluster_relation.galaxy_cluster_id
+        ).default
+        galaxy_cluster_relation_dict["sharing_group_id"] = db.get(
+            GalaxyCluster, galaxy_cluster_relation.galaxy_cluster_id
+        ).sharing_group_id
+
+        galaxy_cluster_relation_response_list.append(
+            AddEditGetEventGalaxyClusterRelation(**galaxy_cluster_relation_dict)
+        )
+
+    return galaxy_cluster_relation_response_list
+
+
+def _prepare_tag_response(tag_list: list[Any]) -> list[AddEditGetEventGalaxyClusterRelationTag]:
+    tag_response_list = []
+
+    for tag in tag_list:
+        tag_dict = tag.__dict__.copy()
+        del tag_dict["inherited"]
+        tag_dict["local_only"] = tag.inherited
+        tag_response_list.append(AddEditGetEventGalaxyClusterRelationTag(**tag_dict))
+
+    return tag_response_list
