@@ -1,7 +1,7 @@
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, Path, status
-from sqlalchemy import and_, or_
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
@@ -48,7 +48,7 @@ async def add_warninglist(
     description="Retrieve details of a specific warninglist by its ID.",
 )
 async def view_warninglist(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.AUTH]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL))],
     db: Annotated[Session, Depends(get_db)],
     warninglist_id: str = Path(..., alias="warninglistId"),
 ) -> dict:
@@ -78,7 +78,7 @@ async def post_toggleEnable(
     description="Delete a specific warninglist.",
 )
 async def delete_warninglist(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY, Permission.SITE_ADMIN]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     warninglist_id: str = Path(..., alias="id"),
 ) -> dict:
@@ -93,22 +93,12 @@ async def delete_warninglist(
     description="Retrieve a list of all warninglists.",
 )
 async def get_all_or_selected_warninglists(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.ADD, Permission.AUTH]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL))],
     db: Annotated[Session, Depends(get_db)],
     value: str | None = None,
     enabled: bool | None = None,
 ) -> dict:
     return await _get_all_or_selected_warninglists(db, value, enabled)
-
-
-# TODO: delete
-# @router.get(
-#     "/warninglists?value=String&enabled=boolean",
-#     summary="Get selected warninglists",
-#     description="Retrieve a list of warninglists, which match given search terms using the old route.",
-# )
-# async def get_warninglists_by_param(value: str, enabled: bool) -> GetSelectedAllWarninglistsResponse:
-#     return None
 
 
 @router.post(
@@ -119,7 +109,7 @@ async def get_all_or_selected_warninglists(
     description="Retrieve a list of ID and name of warninglists, which match has the given search term as Entry.",
 )
 async def get_warninglists_by_value(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.AUTH]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL))],
     db: Annotated[Session, Depends(get_db)],
     body: CheckValueWarninglistsBody,
 ) -> dict:
@@ -164,7 +154,7 @@ async def update_all_warninglists_depr(
     description="Deprecated. Retrieve details of a specific warninglist by its ID using the old route.",
 )
 async def view_warninglist_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.AUTH]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL))],
     db: Annotated[Session, Depends(get_db)],
     warninglist_id: str = Path(..., alias="warninglistId"),
 ) -> dict:
@@ -172,13 +162,13 @@ async def view_warninglist_depr(
 
 
 @router.post(
-    "/warninglists/",
+    "/warninglists",
     deprecated=True,
     summary="Get selected warninglists (Deprecated)",
     description="Retrieve a list of warninglists, which match given search terms using the old route.",
 )
 async def search_warninglists(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.AUTH]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL))],
     db: Annotated[Session, Depends(get_db)],
     body: GetSelectedWarninglistsBody,
 ) -> dict:
@@ -186,6 +176,8 @@ async def search_warninglists(
 
 
 # --- endpoint logic ---
+
+
 async def _add_warninglist(
     db: Session,
     body: CreateWarninglistBody,
@@ -202,16 +194,12 @@ async def _add_warninglist(
 
     db.add(new_warninglist)
     db.flush()
-    db.refresh(new_warninglist)  # TODO: Test if refresh is needed
+    db.refresh(new_warninglist)
 
     new_warninglist_entries = _create_warninglist_entries(body.values, new_warninglist.id)
 
     db.add_all(new_warninglist_entries)
-
     db.commit()
-
-    for new_warninglist_entry in new_warninglist_entries:
-        db.refresh(new_warninglist_entry)
 
     warninglist_data = _prepare_warninglist_response(new_warninglist, new_warninglist_entries)
 
@@ -225,27 +213,31 @@ async def _toggleEnable(
     warninglist_id_str_list = _convert_to_list(body.id)
     warninglist_id_list = [int(id_str) for id_str in warninglist_id_str_list]
     warninglist_name_list = _convert_to_list(body.name)
-    warninglist_status = body.enabled
 
-    id_filter = db.query(Warninglist).filter(Warninglist.id.in_(warninglist_id_list))
-    name_filter = db.query(Warninglist).filter(Warninglist.name.in_(warninglist_name_list))
-
-    warninglists = id_filter.union(name_filter).all()
+    warninglists: list[Warninglist] = (
+        db.query(Warninglist)
+        .filter(or_(Warninglist.id.in_(warninglist_id_list), Warninglist.name.in_(warninglist_name_list)))
+        .all()
+    )
 
     for warninglist in warninglists:
-        warninglist.enabled = warninglist_status
+        warninglist.enabled = body.enabled
 
     db.commit()
 
     errors = ""
     success = ""
-    if not warninglists:
+    if not len(warninglists):
         status = False
         errors = "Warninglist(s) not found"
     else:
-        disable_status = "enabled" if warninglist_status is False else "disabled"
+        action = "enabled"
+
+        if not body.enabled:
+            action = "disabled"
+
         status = True
-        success = str(len(warninglists)) + " warninglist(s) " + disable_status
+        success = f"{len(warninglists)} warninglist(s) {action}"
 
     return ToggleEnableWarninglistsResponse(saved=status, success=success, errors=errors)
 
@@ -294,7 +286,7 @@ async def _get_all_or_selected_warninglists(
 
     warninglists_data = []
     for warninglist in warninglists:
-        warninglist_entries = _get_warninglist_entries(db, int(warninglist.id))
+        warninglist_entries = _get_warninglist_entries(db, warninglist.id)
         warninglists_data.append(_prepare_warninglist_response(warninglist, warninglist_entries))
 
     return GetSelectedAllWarninglistsResponse(response=warninglists_data)
@@ -356,6 +348,7 @@ async def _get_selected_warninglists(
     warninglists = _search_warninglist(db, body.value, body.enabled)
 
     warninglists_data = []
+
     for warninglist in warninglists:
         warninglist_entries = _get_warninglist_entries(db, int(warninglist.id))
         warninglists_data.append(_prepare_warninglist_response(warninglist, warninglist_entries))
@@ -368,17 +361,14 @@ def _search_warninglist(
     value: str = None,
     enabled: bool = None,
 ) -> list[Warninglist]:
-    search_value = or_(Warninglist.name == value, Warninglist.description == value, Warninglist.type == value)
-    search_enabled = Warninglist.enabled == enabled
+    query = db.query(Warninglist)
 
-    if value is not None and enabled is not None:
-        warninglists = db.query(Warninglist).filter(and_(search_value, search_enabled)).all()
-    elif value is not None:
-        warninglists = db.query(Warninglist).filter(search_value).all()
-    elif enabled is not None:
-        warninglists = db.query(Warninglist).filter(search_enabled).all()
-    else:
-        warninglists = db.query(Warninglist).all()
+    if enabled is not None:
+        query.filter(Warninglist.enabled.is_(enabled))
+    if value is not None:
+        query.filter(or_(Warninglist.name == value, Warninglist.description == value, Warninglist.type == value))
+
+    warninglists: list[Warninglist] = query.all()
 
     return warninglists
 
@@ -389,18 +379,23 @@ def _create_warninglist_entries(
 ) -> list[WarninglistEntry]:
     raw_text = values.splitlines()
     new_warninglist_entries = []
+
     for line in raw_text:
-        comment: str
-        if len(line.split("#", 1)) > 1:
-            comment = line.split("#", 1)[1]
-        else:
-            comment = ""
-        value = line.split("#", 1)[0]
+        comment: str = ""
+
+        line_split = line.split("#", 1)
+
+        if len(line_split) > 1:
+            comment = line_split.pop()
+
+        value = line_split.pop()
+
         new_warninglist_entry = WarninglistEntry(
             value=value,
             comment=comment,
             warninglist_id=str(warninglist_id),
         )
+
         new_warninglist_entries.append(new_warninglist_entry)
 
     return new_warninglist_entries
@@ -413,14 +408,15 @@ def _convert_to_list(value: Any) -> list[str]:
 
 
 def _prepare_warninglistEntry_response(warninglist_entry: WarninglistEntry) -> WarninglistEntryResponse:
-    if warninglist_entry is not None:
-        return WarninglistEntryResponse(
-            id=str(warninglist_entry.id),
-            value=warninglist_entry.value,
-            warninglist_id=warninglist_entry.warninglist_id,
-            comment=warninglist_entry.comment,
-        )
-    return None
+    if not warninglist_entry:
+        return None
+
+    return WarninglistEntryResponse(
+        id=str(warninglist_entry.id),
+        value=warninglist_entry.value,
+        warninglist_id=warninglist_entry.warninglist_id,
+        comment=warninglist_entry.comment,
+    )
 
 
 def _prepare_warninglist_response(
@@ -428,7 +424,8 @@ def _prepare_warninglist_response(
     warninglist_entries: list[WarninglistEntry] | None,
 ) -> WarninglistResponse:
     warninglist_entries_response = []
-    if warninglist_entries is not None:
+
+    if warninglist_entries:
         for warninglist_entry in warninglist_entries:
             warninglist_entries_response.append(_prepare_warninglistEntry_response(warninglist_entry))
 
@@ -452,10 +449,8 @@ def _get_warninglist_entries(
     db: Session,
     warninglist_id: int,
 ) -> list[WarninglistEntry]:
-    warninglist_entries: list[WarninglistEntry] | None = (
+    warninglist_entries: list[WarninglistEntry] = (
         db.query(WarninglistEntry).filter(WarninglistEntry.warninglist_id == str(warninglist_id)).all()
     )
-    if warninglist_entries is None:
-        warninglist_entries = []
 
     return warninglist_entries
