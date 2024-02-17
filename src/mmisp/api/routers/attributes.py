@@ -30,10 +30,17 @@ from mmisp.api_schemas.attributes.get_describe_types_response import (
     GetDescribeTypesResponse,
 )
 from mmisp.api_schemas.attributes.search_attributes_body import SearchAttributesBody
-from mmisp.api_schemas.attributes.search_attributes_response import SearchAttributesResponse
+from mmisp.api_schemas.attributes.search_attributes_response import (
+    SearchAttributesAttributes,
+    SearchAttributesAttributesDetails,
+    SearchAttributesEvent,
+    SearchAttributesObject,
+    SearchAttributesResponse,
+)
 from mmisp.db.database import get_db
 from mmisp.db.models.attribute import Attribute, AttributeTag
 from mmisp.db.models.event import Event
+from mmisp.db.models.object import Object
 from mmisp.db.models.tag import Tag
 from mmisp.util.partial import partial
 from mmisp.util.request_validations import check_existence_and_raise
@@ -62,6 +69,17 @@ logger.addHandler(error_handler)
 
 
 # - Create a {resource}
+
+
+@router.post(
+    "/attributes/restSearch",
+    status_code=status.HTTP_200_OK,
+    response_model=partial(SearchAttributesResponse),
+    summary="Search attributes",
+    description="Search for attributes based on various filters.",
+)
+async def rest_search_attributes(db: Annotated[Session, Depends(get_db)], body: SearchAttributesBody) -> dict:
+    return await _rest_search_attributes(db, body)
 
 
 @router.post(
@@ -175,19 +193,6 @@ async def delete_selected_attributes(
     request: Request,
 ) -> dict:
     return await _delete_selected_attributes(db, event_id, body, request)
-
-
-# TODO
-# Implement Rest Search
-@router.post(
-    "/attributes/restSearch",
-    status_code=status.HTTP_501_NOT_IMPLEMENTED,
-    response_model=partial(SearchAttributesResponse),
-    summary="Search attributes",
-    description="Search for attributes based on various filters. NOT YET AVAILABLE!",
-)
-async def rest_search_attributes(db: Annotated[Session, Depends(get_db)], body: SearchAttributesBody) -> dict:
-    return SearchAttributesResponse()
 
 
 @router.get(
@@ -320,7 +325,7 @@ async def delete_attribute_depr(
 
 
 async def _add_attribute(db: Session, event_id: str, body: AddAttributeBody) -> dict:
-    event = check_existence_and_raise(db, Event, event_id, "event_id", "Event not found.")
+    event = check_existence_and_raise(db, Event, event_id, "id", "Event not found.")
     if not body.value:
         if not body.value1:
             logger.error("Attribute creation failed: attribute 'value' or 'value1' is required.")
@@ -369,7 +374,7 @@ async def _add_attribute(db: Session, event_id: str, body: AddAttributeBody) -> 
 
 
 async def _get_attribute_details(db: Session, attribute_id: str) -> dict:
-    attribute = check_existence_and_raise(db, Attribute, attribute_id, "attribute_id", "Attribute not found.")
+    attribute = check_existence_and_raise(db, Attribute, attribute_id, "id", "Attribute not found.")
 
     attribute_data = _prepare_get_attribute_details_response(db, attribute_id, attribute)
 
@@ -377,7 +382,7 @@ async def _get_attribute_details(db: Session, attribute_id: str) -> dict:
 
 
 async def _update_attribute(db: Session, attribute_id: str, body: EditAttributeBody) -> dict:
-    existing_attribute = check_existence_and_raise(db, Attribute, attribute_id, "attribute_id", "Attribute not found.")
+    existing_attribute = check_existence_and_raise(db, Attribute, attribute_id, "id", "Attribute not found.")
 
     # event_id and event_uuid cannot be edited
     update_data = body.dict(exclude_unset=True)
@@ -403,7 +408,7 @@ async def _update_attribute(db: Session, attribute_id: str, body: EditAttributeB
 
 
 async def _delete_attribute(db: Session, attribute_id: str) -> DeleteAttributeResponse:
-    attribute = check_existence_and_raise(db, Attribute, attribute_id, "attribute_id", "Attribute not found.")
+    attribute = check_existence_and_raise(db, Attribute, attribute_id, "id", "Attribute not found.")
     try:
         db.delete(attribute)
         db.commit()
@@ -434,16 +439,14 @@ async def _get_attributes(db: Session) -> dict:
 async def _delete_selected_attributes(
     db: Session, event_id: str, body: DeleteSelectedAttributeBody, request: Request
 ) -> DeleteSelectedAttributeResponse:
-    check_existence_and_raise(db, Event, event_id, "event_id", "Event not found.")
+    check_existence_and_raise(db, Event, event_id, "id", "Event not found.")
 
     attribute_ids = body.id.split(" ")
 
     for attribute_id in attribute_ids:
         attribute = db.get(Attribute, attribute_id)
 
-        check_existence_and_raise(
-            db, Attribute, attribute_id, "attribute_id", f"Attribute with id '{attribute_id}' not found."
-        )
+        check_existence_and_raise(db, Attribute, attribute_id, "id", f"Attribute with id '{attribute_id}' not found.")
 
         if not attribute.event.id == int(event_id):
             logger.error("Failed to delete attribute: Attribute does exist, but not in the given event.")
@@ -498,6 +501,42 @@ async def _delete_selected_attributes(
         )
 
 
+async def _rest_search_attributes(db: Session, body: SearchAttributesBody) -> dict:
+    if body.returnFormat != "json":
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid output format.")
+    attributes: list[Attribute] = db.query(Attribute).all()
+    for field, value in body.dict().items():
+        attribute_dict = db.query(Attribute).__dict__.copy()
+        if field not in attribute_dict:
+            continue
+        attributes = db.query(Attribute).filter(getattr(Attribute, field) == value).all()
+
+        # todo: not all fields in 'SearchAttributesBody' are taken into account yet
+
+    response_list = []
+    for attribute in attributes:
+        attribute_dict = attribute.__dict__.copy()
+        if attribute.event_id is not None:
+            event = db.get(Event, attribute.event_id)
+            event_dict = event.__dict__.copy()
+            attribute_dict["Event"] = SearchAttributesEvent(**event_dict)
+        if attribute.object_id is not None:
+            object = db.get(Object, attribute.object_id)
+            object_dict = object.__dict__.copy()
+            attribute_dict["Object"] = SearchAttributesObject(**object_dict)
+        attribute_tags = db.query(AttributeTag).filter(AttributeTag.attribute_id == attribute.id).all()
+        attribute_dict["Tag"] = []
+        for attribute_tag in attribute_tags:
+            tag = db.get(Tag, attribute_tag.tag_id)
+            tag_dict = tag.__dict__.copy()
+            tag_dict["local"] = attribute_tag.local
+            attribute_dict["Tag"].append(GetAttributeTag(**tag_dict))
+
+        response_list.append(SearchAttributesAttributes(Attribute=SearchAttributesAttributesDetails(**attribute_dict)))
+
+    return SearchAttributesResponse(response=response_list)
+
+
 async def _get_attribute_statistics(db: Session, context: str, percentage: int) -> dict:
     if context not in ["type", "category"]:
         logger.exception("Get attribute statistics failed: parameter 'context' is invalid")
@@ -515,7 +554,7 @@ async def _get_attribute_statistics(db: Session, context: str, percentage: int) 
 
 
 async def _restore_attribute(db: Session, attribute_id: str) -> dict:
-    attribute = check_existence_and_raise(db, Attribute, attribute_id, "attribute_id", "Attribute not found.")
+    attribute = check_existence_and_raise(db, Attribute, attribute_id, "id", "Attribute not found.")
 
     setattr(attribute, "deleted", False)
 
@@ -539,7 +578,7 @@ async def _restore_attribute(db: Session, attribute_id: str) -> dict:
 async def _add_tag_to_attribute(
     db: Session, attribute_id: str, tag_id: str, local: str
 ) -> AddRemoveTagAttributeResponse:
-    attribute = check_existence_and_raise(db, Attribute, attribute_id, "attribute_id", "Attribute not found")
+    attribute = check_existence_and_raise(db, Attribute, attribute_id, "id", "Attribute not found")
 
     try:
         int(tag_id)
@@ -580,7 +619,7 @@ async def _add_tag_to_attribute(
 
 
 async def _remove_tag_from_attribute(db: Session, attribute_id: str, tag_id: str) -> AddRemoveTagAttributeResponse:
-    check_existence_and_raise(db, Attribute, attribute_id, "attribute_id", "Attribute not found")
+    check_existence_and_raise(db, Attribute, attribute_id, "id", "Attribute not found")
 
     try:
         int(tag_id)
