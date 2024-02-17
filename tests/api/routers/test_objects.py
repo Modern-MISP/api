@@ -148,6 +148,8 @@ class TestAddObject:
         generate_random_search_query().dict(),
         generate_random_search_query().dict(),
         generate_random_search_query().dict(),
+        generate_random_search_query().dict(),
+        generate_random_search_query().dict(),
     ]
 )
 def search_data(request: Any) -> dict[str, Any]:
@@ -156,7 +158,8 @@ def search_data(request: Any) -> dict[str, Any]:
 
 class TestSearchObject:
     def test_search_objects_with_filters(self: "TestSearchObject", search_data: dict[str, Any]) -> None:
-        response = client.post("/objects/restsearch", json=search_data)
+        headers = {"authorization": environment.site_admin_user_token}
+        response = client.post("/objects/restsearch", json=search_data, headers=headers)
         assert response.status_code == 200
 
         response_data = response.json()
@@ -170,14 +173,16 @@ class TestSearchObject:
             assert "comment" in obj["object"] != ""
 
     def test_search_objects_response_format(self: "TestSearchObject", search_data: dict[str, Any]) -> None:
-        response = client.post("/objects/restsearch", json=search_data)
+        headers = {"authorization": environment.site_admin_user_token}
+        response = client.post("/objects/restsearch", json=search_data, headers=headers)
         assert response.headers["Content-Type"] == "application/json"
         response_data = response.json()
         assert "response" in response_data
         assert isinstance(response_data["response"], list)
 
     def test_search_objects_data_integrity(self: "TestSearchObject", search_data: dict[str, Any]) -> None:
-        response = client.post("/objects/restsearch", json=search_data)
+        headers = {"authorization": environment.site_admin_user_token}
+        response = client.post("/objects/restsearch", json=search_data, headers=headers)
         response_data = response.json()
         for obj in response_data["response"]:
             assert "id" in obj["object"] != ""
