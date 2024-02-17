@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from .get_noticelist_response import NoticelistResponse
+from mmisp.api_schemas.noticelists.get_noticelist_response import NoticelistResponse
 
 
 class GetAllNoticelistResponse(BaseModel):

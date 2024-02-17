@@ -7,7 +7,7 @@ from mmisp.config import config
 url = make_url(config.DATABASE_URL).set(drivername="mysql+mysqlconnector")
 engine = create_engine(url, pool_size=100, max_overflow=20)
 
-session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+session = sessionmaker(autocommit=False, autoflush=False, expire_on_commit=False, bind=engine)
 Base = declarative_base()
 
 

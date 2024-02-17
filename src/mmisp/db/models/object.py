@@ -1,9 +1,8 @@
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
+from mmisp.db.database import Base
 from mmisp.util.uuid import uuid
-
-from ..database import Base
 
 
 class Object(Base):

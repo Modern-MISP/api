@@ -1,18 +1,10 @@
 from pydantic import BaseModel
 
-from ..taxonomies.get_taxonomy_out import TaxonomyView
-from .get_tag_response import TagAttributesResponse
-
-# class TaxonomyResponse(BaseModel):
-#     id: str
-#     namespace: str
-#     description: str
-#     version: str
-#     enabled: bool
-#     exclusive: bool
-#     required: bool
+from mmisp.api_schemas.tags.get_tag_response import TagAttributesResponse
+from mmisp.api_schemas.taxonomies.get_taxonomy_out import TaxonomyView
 
 
+# TODO: Import from schemas/taxonomie directly
 class TaxonomyPredicateResponse(BaseModel):
     id: str
     taxonomy_id: str
@@ -27,7 +19,7 @@ class TaxonomyPredicateResponse(BaseModel):
 class TagCombinedModel(BaseModel):
     Tag: TagAttributesResponse
     Taxonomy: TaxonomyView
-    TaxonomyPredicate: TaxonomyPredicateResponse  # TODO: Import from schemas/taxonomie directly
+    TaxonomyPredicate: TaxonomyPredicateResponse
 
 
 class TagSearchResponse(BaseModel):

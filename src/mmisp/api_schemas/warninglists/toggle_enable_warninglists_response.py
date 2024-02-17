@@ -10,15 +10,15 @@ class ToggleEnableWarninglistsResponse(BaseModel):
 
     @validator("success", always=True)
     def check_status_false(cls, value: Any, values: Dict[str, Any]) -> Optional[str]:  # noqa: ANN101
-        status = values.get("saved")
-        if status is False:
+        status = values.get("saved", None)
+        if not status:
             return "[hidden]"
         return value
 
     @validator("errors")
     def check_status_true(cls, value: Any, values: Dict[str, Any]) -> Optional[str]:  # noqa: ANN101
-        status = values.get("saved")
-        if status is True:
+        status = values.get("saved", None)
+        if status:
             return "[hidden]"
         return value
 

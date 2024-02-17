@@ -1,4 +1,4 @@
-import time
+from time import time
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, Path, status
@@ -65,6 +65,7 @@ async def add_sightings_at_index(
     description="Retrieve all sightings associated with a specific event ID.",
 )
 async def get_sightings_at_index(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     event_id: Annotated[str, Path(..., alias="eventId")],
 ) -> dict[str, Any]:
@@ -157,6 +158,7 @@ async def delete_sighting_depr(
     description="Deprecated. Retrieve all sightings associated with a specific event ID using the old route.",
 )
 async def get_sightings_at_index_depr(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     event_id: Annotated[str, Path(..., alias="eventId")],
 ) -> dict[str, Any]:
@@ -286,4 +288,4 @@ async def _get_sightings(db: Session) -> list[dict[str, Any]]:
 
 
 def _create_timestamp() -> int:
-    return int(time.time())
+    return int(time())
