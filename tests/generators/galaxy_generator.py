@@ -1,6 +1,6 @@
 from random import Random
 
-from mmisp.api_schemas.galaxies.export_galaxies_response import ExportGalaxyClusterResponse, ExportGalaxyGalaxyElement
+from mmisp.api_schemas.galaxies.export_galaxies_response import ExportGalaxyGalaxyElement, GetGalaxyClusterResponse
 from mmisp.api_schemas.galaxies.import_galaxies_body import ImportGalaxyBody, ImportGalaxyGalaxy
 from mmisp.db.models.galaxy import Galaxy
 from mmisp.db.models.organisation import Organisation
@@ -134,7 +134,7 @@ def generate_invalid_import_galaxy_cluster_body() -> list[ImportGalaxyBody]:
     tag_name = add_tag_body.name
     db_session.close()
     body = ImportGalaxyBody(
-        GalaxyCluster=ExportGalaxyClusterResponse(
+        GalaxyCluster=GetGalaxyClusterResponse(
             collection_uuid="",
             type="",
             value="test",

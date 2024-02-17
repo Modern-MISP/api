@@ -3,7 +3,7 @@ from pydantic import BaseModel
 
 class AttachClusterGalaxyResponse(BaseModel):
     saved: bool
-    succes: str
+    success: str
     check_publish: bool
 
     class Config:

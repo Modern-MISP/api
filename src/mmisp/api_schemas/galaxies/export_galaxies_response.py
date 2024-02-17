@@ -1,5 +1,9 @@
 from pydantic import BaseModel
 
+from mmisp.api_schemas.events.add_edit_get_event_response import AddEditGetEventGalaxyClusterRelation
+from mmisp.api_schemas.events.get_all_events_response import GetAllEventsGalaxyClusterGalaxy
+from mmisp.api_schemas.organisations.organisation import Organisation
+
 
 class ExportGalaxyGalaxyElement(BaseModel):
     id: str | None = None
@@ -9,8 +13,8 @@ class ExportGalaxyGalaxyElement(BaseModel):
 
 
 class ExportGalaxyClusterResponse(BaseModel):
-    id: str | None = None
-    uuid: str | None = None
+    id: str
+    uuid: str
     collection_uuid: str
     type: str
     value: str
@@ -31,6 +35,10 @@ class ExportGalaxyClusterResponse(BaseModel):
     published: bool
     deleted: bool
     GalaxyElement: list[ExportGalaxyGalaxyElement]
+    Galaxy: GetAllEventsGalaxyClusterGalaxy
+    GalaxyClusterRelation: list[AddEditGetEventGalaxyClusterRelation] = []
+    Org: Organisation
+    Orgc: Organisation
 
     class Config:
         orm_mode = True

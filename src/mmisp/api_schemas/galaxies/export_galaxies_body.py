@@ -3,10 +3,10 @@ from pydantic import BaseModel
 
 class ExportGalaxyAttributes(BaseModel):
     default: bool
-    custom: bool
+    custom: bool | None = None
     distribution: str
-    format: str
-    download: bool
+    format: str | None = None
+    download: bool | None = None
 
 
 class ExportGalaxyBody(BaseModel):
