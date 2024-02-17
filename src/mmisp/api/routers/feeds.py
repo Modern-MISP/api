@@ -76,7 +76,7 @@ async def fetch_from_feed(
     description="Retrieve details of a specific feed by its ID.",
 )
 async def get_feed_details(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     feed_id: Annotated[str, Path(..., alias="feedId")],
 ) -> dict[str, Any]:
@@ -137,7 +137,7 @@ async def fetch_data_from_all_feeds(
     description="Retrieve a list of all feeds.",
 )
 async def get_feeds(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
 ) -> list[dict[str, Any]]:
     return await _get_feeds(db)
@@ -250,7 +250,7 @@ async def fetch_data_from_all_feeds_depr(
     description="Deprecated. Retrieve details of a specific feed by its ID using the old route.",
 )
 async def get_feed_details_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     feed_id: Annotated[str, Path(..., alias="feedId")],
 ) -> dict[str, Any]:
