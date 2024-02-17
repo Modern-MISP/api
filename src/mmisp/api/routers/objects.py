@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Path, status
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
-from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
+from mmisp.api.auth import Auth, AuthStrategy, authorize
 from mmisp.api_schemas.attributes.get_all_attributes_response import GetAllAttributesResponse
 from mmisp.api_schemas.events.get_event_response import ObjectEventResponse
 from mmisp.api_schemas.objects.create_object_body import ObjectCreateBody
@@ -38,7 +38,7 @@ router = APIRouter(tags=["objects"])
     description="Add a new object to a specific event using a template.",
 )
 async def add_object(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     event_id: Annotated[str, Path(..., alias="eventId")],
     object_template_id: Annotated[str, Path(..., alias="objectTemplateId")],
@@ -55,7 +55,7 @@ async def add_object(
     description="Search for objects based on various filters.",
 )
 async def restsearch(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     body: ObjectSearchBody,
 ) -> dict[str, Any]:
@@ -70,7 +70,7 @@ async def restsearch(
     description="View details of a specific object including its attributes and related event.",
 )
 async def get_object_details(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     object_id: Annotated[str, Path(..., alias="objectId")],
 ) -> dict[str, Any]:
@@ -85,7 +85,7 @@ async def get_object_details(
     description="Delete a specific object. The hardDelete parameter determines if it's a hard or soft delete.",
 )
 async def delete_object(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     object_id: Annotated[str, Path(..., alias="objectId")],
     hard_delete: Annotated[bool, Path(..., alias="hardDelete")],
@@ -105,7 +105,7 @@ async def delete_object(
     description="Deprecated. Add an object to an event using the old route.",
 )
 async def add_object_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     event_id: Annotated[str, Path(..., alias="eventId")],
     object_template_id: Annotated[str, Path(..., alias="objectTemplateId")],
@@ -123,7 +123,7 @@ async def add_object_depr(
     description="Deprecated. View details of a specific object using the old route.",
 )
 async def get_object_details_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     object_id: Annotated[str, Path(..., alias="objectId")],
 ) -> dict[str, Any]:
@@ -141,7 +141,7 @@ async def get_object_details_depr(
     The hardDelete parameter determines if it's a hard or soft delete.""",
 )
 async def delete_object_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     object_id: Annotated[str, Path(..., alias="objectId")],
     hard_delete: Annotated[bool, Path(..., alias="hardDelete")],
@@ -199,8 +199,10 @@ async def _add_object(db: Session, event_id: str, object_template_id: str, body:
 
 
 async def _restsearch(db: Session, body: ObjectSearchBody) -> dict[str, Any]:
-    if body.returnFormat != "json":
-        raise HTTPException(status_code=400, detail="Invalid return format.")
+    if body.return_format is None:
+        body.return_format = "json"
+    else:
+        check_valid_return_format(return_format=body.return_format)
 
     filters = body.dict(exclude_unset=True)
     objects: list[Object] = _build_query(db, filters)
@@ -266,6 +268,11 @@ def _create_timestamp() -> int:
     return int(time())
 
 
+def check_valid_return_format(return_format: str) -> None:
+    if return_format not in ["json"]:
+        raise HTTPException(status_code=400, detail="Invalid return format.")
+
+
 def _build_query(db: Session, filters: ObjectSearchBody) -> list[Object]:
     search_body: ObjectSearchBody = ObjectSearchBody(**filters)
     query: Object = db.query(Object)
@@ -294,11 +301,11 @@ def _build_query(db: Session, filters: ObjectSearchBody) -> list[Object]:
     if search_body.last_seen:
         query = query.filter(str(Object.last_seen) == search_body.last_seen)
 
-    if search_body.quickFilter:
+    if search_body.quick_filter:
         query = query.filter(
             or_(
-                Object.name.like(f"%{search_body.quickFilter}%"),
-                Object.description.like(f"%{search_body.quickFilter}%"),
+                Object.name.like(f"%{search_body.quick_filter}%"),
+                Object.description.like(f"%{search_body.quick_filter}%"),
             )
         )
 

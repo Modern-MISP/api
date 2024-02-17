@@ -65,7 +65,7 @@ async def add_sightings_at_index(
     description="Retrieve all sightings associated with a specific event ID.",
 )
 async def get_sightings_at_index(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     event_id: Annotated[str, Path(..., alias="eventId")],
 ) -> dict[str, Any]:
@@ -158,7 +158,7 @@ async def delete_sighting_depr(
     description="Deprecated. Retrieve all sightings associated with a specific event ID using the old route.",
 )
 async def get_sightings_at_index_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     event_id: Annotated[str, Path(..., alias="eventId")],
 ) -> dict[str, Any]:
