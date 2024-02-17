@@ -1,7 +1,9 @@
+import logging
 import re
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Path, status
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
@@ -22,6 +24,27 @@ from mmisp.util.request_validations import check_existence_and_raise
 
 router = APIRouter(tags=["tags"])
 
+logging.basicConfig(level=logging.INFO)
+
+info_format = "%(asctime)s - %(message)s"
+error_format = "%(asctime)s - %(filename)s:%(lineno)d - %(message)s"
+
+info_handler = logging.StreamHandler()
+info_handler.setLevel(logging.INFO)
+info_handler.setFormatter(logging.Formatter(info_format))
+
+error_handler = logging.StreamHandler()
+error_handler.setLevel(logging.ERROR)
+error_handler.setFormatter(logging.Formatter(error_format))
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+logger.addHandler(info_handler)
+logger.addHandler(error_handler)
+
+
+# Sorted according to CRUD
+
 
 @router.post(
     "/tags",
@@ -31,7 +54,7 @@ router = APIRouter(tags=["tags"])
     description="Add a new tag with given details.",
 )
 async def add_tag(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, Permission.TAG_EDITOR))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, Permission.FULL))],
     db: Annotated[Session, Depends(get_db)],
     body: TagCreateBody,
 ) -> dict:
@@ -46,7 +69,7 @@ async def add_tag(
     description="View details of a specific tag.",
 )
 async def view_tag(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, Permission.AUTH))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, Permission.FULL))],
     db: Annotated[Session, Depends(get_db)],
     tag_id: str = Path(..., alias="tagId"),
 ) -> dict:
@@ -61,7 +84,7 @@ async def view_tag(
     description="Search for tags using a specific search term.",
 )
 async def search_tags(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, Permission.AUTH))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, Permission.FULL))],
     db: Annotated[Session, Depends(get_db)],
     tag_search_term: str = Path(..., alias="tagSearchTerm"),
 ) -> dict:
@@ -71,12 +94,12 @@ async def search_tags(
 @router.put(
     "/tags/{tagId}",
     status_code=status.HTTP_200_OK,
-    response_model=TagAttributesResponse,
+    response_model=partial(TagAttributesResponse),
     summary="Edit tag",
     description="Edit details of a specific tag.",
 )
 async def update_tag(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, Permission.SITE_ADMIN))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, Permission.FULL))],
     db: Annotated[Session, Depends(get_db)],
     body: TagUpdateBody,
     tag_id: str = Path(..., alias="tagId"),
@@ -92,7 +115,7 @@ async def update_tag(
     description="Delete a specific tag.",
 )
 async def delete_tag(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, Permission.SITE_ADMIN))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, Permission.FULL))],
     db: Annotated[Session, Depends(get_db)],
     tag_id: str = Path(..., alias="tagId"),
 ) -> dict:
@@ -107,7 +130,7 @@ async def delete_tag(
     description="Retrieve a list of all tags.",
 )
 async def get_tags(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, Permission.AUTH))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, Permission.FULL))],
     db: Annotated[Session, Depends(get_db)],
 ) -> dict:
     return await _get_tags(db)
@@ -122,7 +145,7 @@ async def get_tags(
     description="Deprecated. Add a new tag using the old route.",
 )
 async def add_tag_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, Permission.TAG_EDITOR))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, Permission.FULL))],
     db: Annotated[Session, Depends(get_db)],
     body: TagCreateBody,
 ) -> dict:
@@ -138,7 +161,7 @@ async def add_tag_depr(
     description="Deprecated. View details of a specific tag using the old route.",
 )
 async def view_tag_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, Permission.AUTH))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, Permission.FULL))],
     db: Annotated[Session, Depends(get_db)],
     tag_id: str = Path(..., alias="tagId"),
 ) -> dict:
@@ -154,7 +177,7 @@ async def view_tag_depr(
     description="Deprecated. Edit a specific tag using the old route.",
 )
 async def update_tag_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, Permission.SITE_ADMIN))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, Permission.FULL))],
     db: Annotated[Session, Depends(get_db)],
     body: TagCreateBody,
     tag_id: str = Path(..., alias="tagId"),
@@ -171,7 +194,7 @@ async def update_tag_depr(
     description="Deprecated. Delete a specific tag using the old route.",
 )
 async def delete_tag_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, Permission.SITE_ADMIN))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, Permission.FULL))],
     db: Annotated[Session, Depends(get_db)],
     tag_id: str = Path(..., alias="tagId"),
 ) -> dict:
@@ -186,8 +209,17 @@ async def _add_tag(
     _check_type_hex_color(body.colour)
     tag: Tag = Tag(**body.dict())
 
-    db.add(tag)
-    db.commit()
+    try:
+        db.add(tag)
+        db.commit()
+    except SQLAlchemyError as e:
+        db.rollback()
+        logger.exception(f"Failed to add new tag: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred."
+        )
+
+    logger.info(f"New tag added: {tag.id}")
 
     return tag.__dict__
 
@@ -205,7 +237,10 @@ async def _search_tags(
     db: Session,
     tag_search_term: str,
 ) -> dict:
-    tags = db.query(Tag).filter(Tag.name.contains(tag_search_term)).all()
+    regex_tag_search_term = "%" + tag_search_term + "%"
+
+    # tags = db.query(Tag).filter_by(Tag.name.like(regex_tag_search_term)).all()
+    tags = db.query(Tag).filter(Tag.name.contains(regex_tag_search_term)).all()
 
     tag_datas = []
     for tag in tags:
@@ -232,11 +267,24 @@ async def _update_tag(
     _check_type_hex_color(body.colour)
     update_data = body.dict()
 
+    if db.query(Tag).filter(Tag.name == body.name).first() is not None:
+        logger.info(f"name is: {body.name}")
+        raise HTTPException(400)
+
     update_record(tag, update_data)
 
-    db.commit()
+    try:
+        db.commit()
+    except SQLAlchemyError as e:
+        db.rollback()
+        logger.exception(f"Failed to update tag: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred."
+        )
 
     db.refresh(tag)
+
+    logger.info(f"Tag with id '{tag.id}' updated.")
 
     return tag.__dict__
 
@@ -245,7 +293,7 @@ async def _delete_tag(
     db: Session,
     tag_id: str,
 ) -> dict:
-    deleted_tag = check_existence_and_raise(db, Tag, tag_id, "id", "Tag not found.")
+    deleted_tag = check_existence_and_raise(db, Tag, tag_id, "tag_id", "Tag not found.")
 
     feeds = db.query(Feed).filter(Feed.tag_id == deleted_tag.id).all()
     for feed in feeds:
@@ -258,8 +306,15 @@ async def _delete_tag(
         taxonomy.tag_name = None
 
     db.delete(deleted_tag)
-    db.commit()
-
+    try:
+        db.commit()
+        logger.info(f"Deleted tag with id '{tag_id}'.")
+    except Exception as e:
+        db.rollback()
+        logger.exception(f"Failed to delete tag with id '{tag_id}': {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred."
+        )
     message = "Tag deleted."
 
     return TagDeleteResponse(name=message, message=message, url=f"/tags/{tag_id}")
@@ -267,6 +322,10 @@ async def _delete_tag(
 
 async def _get_tags(db: Session) -> dict:
     tags: list[Tag] | None = db.query(Tag).all()
+
+    if not tags:
+        logger.error("No tags found.")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No tags found.")
 
     return TagGetResponse(tag=[tag.__dict__ for tag in tags])
 
