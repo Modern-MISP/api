@@ -3,8 +3,16 @@ from pydantic import BaseModel
 from ..taxonomies.get_taxonomy_out import TaxonomyView
 from .get_tag_response import TagAttributesResponse
 
+# class TaxonomyResponse(BaseModel):
+#     id: str
+#     namespace: str
+#     description: str
+#     version: str
+#     enabled: bool
+#     exclusive: bool
+#     required: bool
 
-# TODO: Import from schemas/taxonomie directly
+
 class TaxonomyPredicateResponse(BaseModel):
     id: str
     taxonomy_id: str
@@ -19,7 +27,7 @@ class TaxonomyPredicateResponse(BaseModel):
 class TagCombinedModel(BaseModel):
     Tag: TagAttributesResponse
     Taxonomy: TaxonomyView
-    TaxonomyPredicate: TaxonomyPredicateResponse
+    TaxonomyPredicate: TaxonomyPredicateResponse  # TODO: Import from schemas/taxonomie directly
 
 
 class TagSearchResponse(BaseModel):
