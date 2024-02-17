@@ -309,12 +309,15 @@ async def _get_warninglists_by_value(
     response: list[ValueWarninglistsResponse] = []
 
     for value in values:
-        warninglist_entries = db.query(WarninglistEntry).filter(WarninglistEntry.value == value).all()
+        warninglist_entries: list[WarninglistEntry] = (
+            db.query(WarninglistEntry).filter(WarninglistEntry.value == value).all()
+        )
 
         warninglists: list[NameWarninglist] = []
         for warninglist_entry in warninglist_entries:
-            warninglist = db.query(Warninglist).filter(Warninglist.id == int(warninglist_entry.warninglist_id)).first()
-            warninglists.append(NameWarninglist(id=warninglist.id, name=warninglist.name))
+            warninglist: Warninglist = db.get(Warninglist, warninglist_entry.warninglist_id)
+            if warninglist:
+                warninglists.append(NameWarninglist(id=warninglist.id, name=warninglist.name))
 
         value_response = ValueWarninglistsResponse(
             value=value,
