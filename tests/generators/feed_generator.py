@@ -1,7 +1,7 @@
 import random
 import string
 
-from src.mmisp.api_schemas.feeds.create_update_feed_body import FeedCreateAndUpdateBody
+from mmisp.api_schemas.feeds.create_update_feed_body import FeedCreateAndUpdateBody
 
 
 def generate_number_as_str() -> str:
