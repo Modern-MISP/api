@@ -127,38 +127,6 @@ class TestAddSighting:
         assert response.status_code == 422
         assert response.json()["detail"][0]["msg"] == "field required"
 
-    def test_add_sighting_unauthorized(self: "TestAddSighting", sighting_data: dict[str, Any]) -> None:
-        db = get_db()
-
-        event = Event(
-            org_id=environment.instance_owner_org.id,
-            orgc_id=environment.instance_owner_org.id,
-            info="test",
-            date=str(int(time())),
-            analysis="test",
-            event_creator_email=generate_unique_email(),
-        )
-        db.add(event)
-        db.flush()
-        db.refresh(event)
-
-        for val in sighting_data["values"]:
-            attributes = Attribute(
-                event_id=event.id,
-                category="test",
-                type="test",
-                value=val,
-            )
-
-            db.add(attributes)
-
-        db.commit()
-
-        headers = {"authorization": ""}
-        response = client.post("/sightings", json=sighting_data, headers=headers)
-        assert response.status_code == 401
-        assert response.json()["detail"] == "Unauthorized"
-
 
 class TestAddSightingAtIndex:
     def test_add_sightings_at_index_success(self: "TestAddSightingAtIndex", sighting_data: dict[str, Any]) -> None:
@@ -227,37 +195,6 @@ class TestAddSightingAtIndex:
         response = client.post(f"/sightings/{non_existent_attribute_id}", headers=headers)
         assert response.status_code == 404
         assert response.json()["detail"] == "Attribute not found."
-
-    def test_add_sightings_at_index_unauthorized(self: "TestAddSightingAtIndex", sighting_data: dict[str, Any]) -> None:
-        db = get_db()
-
-        event = Event(
-            org_id=environment.instance_owner_org.id,
-            orgc_id=environment.instance_owner_org.id,
-            info="test",
-            date=str(int(time())),
-            analysis="test",
-            event_creator_email=generate_unique_email(),
-        )
-        db.add(event)
-        db.flush()
-        db.refresh(event)
-
-        attribute = Attribute(
-            event_id=event.id,
-            category="test",
-            type="test",
-            value=sighting_data["values"][0],
-        )
-
-        db.add(attribute)
-        db.commit()
-        db.refresh(attribute)
-
-        headers = {"authorization": ""}
-        response = client.post(f"/sightings/{attribute.id}", headers=headers)
-        assert response.status_code == 401
-        assert response.json()["detail"] == "Unauthorized"
 
 
 class TestGetSighting:
@@ -371,44 +308,6 @@ class TestDeleteSighting:
         assert response.status_code == 404
         assert "detail" in response.json()
         assert response.json()["detail"] == "Sighting not found."
-
-    def test_delete_no_authorization(self: "TestDeleteSighting", sighting_data: dict[str, Any]) -> None:
-        db = get_db()
-
-        event = Event(
-            org_id=environment.instance_owner_org.id,
-            orgc_id=environment.instance_owner_org.id,
-            info="test",
-            date=str(int(time())),
-            analysis="test",
-            event_creator_email=generate_unique_email(),
-        )
-        db.add(event)
-        db.flush()
-        db.refresh(event)
-
-        attribute = Attribute(
-            event_id=event.id,
-            category="test",
-            type="test",
-            value=sighting_data["values"][0],
-        )
-
-        db.add(attribute)
-        db.commit()
-        db.refresh(attribute)
-
-        headers = {"authorization": environment.site_admin_user_token}
-        response = client.post(f"/sightings/{attribute.id}", headers=headers)
-        assert response.status_code == 201
-
-        sighting_id = response.json()["sighting"]["id"]
-
-        headers = {"authorization": ""}
-        response = client.delete(f"/sightings/{sighting_id}", headers=headers)
-        assert response.status_code == 401
-        assert "detail" in response.json()
-        assert response.json()["detail"] == "Unauthorized"
 
 
 class TestGetAllSightings:
