@@ -1,6 +1,3 @@
-import random
-import string
-from datetime import datetime
 from time import time
 from typing import Any, Generator
 from uuid import uuid4
@@ -8,17 +5,14 @@ from uuid import uuid4
 import pytest
 
 from mmisp.db.models.event import Event
-from mmisp.db.models.organisation import Organisation
-from mmisp.db.models.sharing_group import SharingGroup
 from mmisp.db.models.tag import Tag
-from mmisp.db.models.user import User
-
-from ...environment import client, environment, get_db
-from ...generators.feed_generator import (
+from tests.environment import client, environment, get_db
+from tests.generators.feed_generator import (
     generate_random_valid_feed_data,
     generate_valid_feed_data,
     generate_valid_required_feed_data,
 )
+from tests.generators.model_generators.sharing_group_generator import generate_sharing_group
 
 
 @pytest.fixture(
@@ -38,40 +32,20 @@ class TestAddFeed:
     def test_add_feed(self: "TestAddFeed", feed_data: dict[str, Any]) -> None:
         db = get_db()
 
-        sharing_group = SharingGroup(
-            name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
-        )
+        sharing_group = generate_sharing_group()
+        sharing_group.organisation_uuid = environment.instance_owner_org.uuid
+        sharing_group.org_id = environment.instance_owner_org.id
         db.add(sharing_group)
         db.flush()
         db.refresh(sharing_group)
         feed_data["sharing_group_id"] = sharing_group.id
 
-        organisation = Organisation(
-            name="test",
-            date_created=datetime.utcnow(),
-            date_modified=datetime.utcnow(),
-        )
-        db.add(organisation)
-        db.flush()
-        db.refresh(organisation)
-
-        user = User(
-            password="XXXXXXXX",
-            org_id=organisation.id,
-            server_id=1,
-            email=generate_unique_email(),
-            autoalert=False,
-        )
-        db.add(user)
-        db.flush()
-        db.refresh(user)
-
         tag = Tag(
-            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
+            name=str(time()) + uuid4().hex,
             colour="#FFFFFF",
             exportable=False,
-            org_id=organisation.id,
-            user_id=user.id,
+            org_id=environment.instance_owner_org.id,
+            user_id=environment.instance_owner_org_admin_user.id,
         )
         db.add(tag)
         db.flush()
@@ -79,10 +53,10 @@ class TestAddFeed:
         feed_data["tag_id"] = tag.id
 
         event = Event(
-            org_id=organisation.id,
-            orgc_id=organisation.id,
+            org_id=environment.instance_owner_org.id,
+            orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(int(time())),
+            date=str(time()),
             analysis="test",
             event_creator_email=generate_unique_email(),
         )
@@ -110,40 +84,20 @@ class TestAddFeed:
     def test_feed_response_format(self: "TestAddFeed", feed_data: dict[str, Any]) -> None:
         db = get_db()
 
-        sharing_group = SharingGroup(
-            name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
-        )
+        sharing_group = generate_sharing_group()
+        sharing_group.organisation_uuid = environment.instance_owner_org.uuid
+        sharing_group.org_id = environment.instance_owner_org.id
         db.add(sharing_group)
         db.flush()
         db.refresh(sharing_group)
         feed_data["sharing_group_id"] = sharing_group.id
 
-        organisation = Organisation(
-            name="test",
-            date_created=datetime.utcnow(),
-            date_modified=datetime.utcnow(),
-        )
-        db.add(organisation)
-        db.flush()
-        db.refresh(organisation)
-
-        user = User(
-            password="XXXXXXXX",
-            org_id=organisation.id,
-            server_id=1,
-            email=generate_unique_email(),
-            autoalert=False,
-        )
-        db.add(user)
-        db.flush()
-        db.refresh(user)
-
         tag = Tag(
-            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
+            name=str(time()) + uuid4().hex,
             colour="#FFFFFF",
             exportable=False,
-            org_id=organisation.id,
-            user_id=user.id,
+            org_id=environment.instance_owner_org.id,
+            user_id=environment.instance_owner_org_admin_user.id,
         )
         db.add(tag)
         db.flush()
@@ -151,10 +105,10 @@ class TestAddFeed:
         feed_data["tag_id"] = tag.id
 
         event = Event(
-            org_id=organisation.id,
-            orgc_id=organisation.id,
+            org_id=environment.instance_owner_org.id,
+            orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(int(time())),
+            date=str(time()),
             analysis="test",
             event_creator_email=generate_unique_email(),
         )
@@ -174,40 +128,20 @@ class TestAddFeed:
     def test_add_feed_authorization(self: "TestAddFeed", feed_data: dict[str, Any]) -> None:
         db = get_db()
 
-        sharing_group = SharingGroup(
-            name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
-        )
+        sharing_group = generate_sharing_group()
+        sharing_group.organisation_uuid = environment.instance_owner_org.uuid
+        sharing_group.org_id = environment.instance_owner_org.id
         db.add(sharing_group)
         db.flush()
         db.refresh(sharing_group)
         feed_data["sharing_group_id"] = sharing_group.id
 
-        organisation = Organisation(
-            name="test",
-            date_created=datetime.utcnow(),
-            date_modified=datetime.utcnow(),
-        )
-        db.add(organisation)
-        db.flush()
-        db.refresh(organisation)
-
-        user = User(
-            password="XXXXXXXX",
-            org_id=organisation.id,
-            server_id=1,
-            email=generate_unique_email(),
-            autoalert=False,
-        )
-        db.add(user)
-        db.flush()
-        db.refresh(user)
-
         tag = Tag(
-            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
+            name=str(time()) + uuid4().hex,
             colour="#FFFFFF",
             exportable=False,
-            org_id=organisation.id,
-            user_id=user.id,
+            org_id=environment.instance_owner_org.id,
+            user_id=environment.instance_owner_org_admin_user.id,
         )
         db.add(tag)
         db.flush()
@@ -215,10 +149,10 @@ class TestAddFeed:
         feed_data["tag_id"] = tag.id
 
         event = Event(
-            org_id=organisation.id,
-            orgc_id=organisation.id,
+            org_id=environment.instance_owner_org.id,
+            orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(int(time())),
+            date=str(time()),
             analysis="test",
             event_creator_email=generate_unique_email(),
         )
@@ -248,40 +182,20 @@ class TestEnableFeed:
     def test_enable_feed(self: "TestEnableFeed", feed_test_ids: dict[str, Any], feed_data: dict[str, Any]) -> None:
         db = get_db()
 
-        sharing_group = SharingGroup(
-            name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
-        )
+        sharing_group = generate_sharing_group()
+        sharing_group.organisation_uuid = environment.instance_owner_org.uuid
+        sharing_group.org_id = environment.instance_owner_org.id
         db.add(sharing_group)
         db.flush()
         db.refresh(sharing_group)
         feed_data["sharing_group_id"] = sharing_group.id
 
-        organisation = Organisation(
-            name="test",
-            date_created=datetime.utcnow(),
-            date_modified=datetime.utcnow(),
-        )
-        db.add(organisation)
-        db.flush()
-        db.refresh(organisation)
-
-        user = User(
-            password="XXXXXXXX",
-            org_id=organisation.id,
-            server_id=1,
-            email=generate_unique_email(),
-            autoalert=False,
-        )
-        db.add(user)
-        db.flush()
-        db.refresh(user)
-
         tag = Tag(
-            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
+            name=str(time()) + uuid4().hex,
             colour="#FFFFFF",
             exportable=False,
-            org_id=organisation.id,
-            user_id=user.id,
+            org_id=environment.instance_owner_org.id,
+            user_id=environment.instance_owner_org_admin_user.id,
         )
         db.add(tag)
         db.flush()
@@ -289,10 +203,10 @@ class TestEnableFeed:
         feed_data["tag_id"] = tag.id
 
         event = Event(
-            org_id=organisation.id,
-            orgc_id=organisation.id,
+            org_id=environment.instance_owner_org.id,
+            orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(int(time())),
+            date=str(time()),
             analysis="test",
             event_creator_email=generate_unique_email(),
         )
@@ -322,40 +236,20 @@ class TestEnableFeed:
     def test_feed_enable_response_format(self: "TestEnableFeed", feed_data: dict[str, Any]) -> None:
         db = get_db()
 
-        sharing_group = SharingGroup(
-            name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
-        )
+        sharing_group = generate_sharing_group()
+        sharing_group.organisation_uuid = environment.instance_owner_org.uuid
+        sharing_group.org_id = environment.instance_owner_org.id
         db.add(sharing_group)
         db.flush()
         db.refresh(sharing_group)
         feed_data["sharing_group_id"] = sharing_group.id
 
-        organisation = Organisation(
-            name="test",
-            date_created=datetime.utcnow(),
-            date_modified=datetime.utcnow(),
-        )
-        db.add(organisation)
-        db.flush()
-        db.refresh(organisation)
-
-        user = User(
-            password="XXXXXXXX",
-            org_id=organisation.id,
-            server_id=1,
-            email=generate_unique_email(),
-            autoalert=False,
-        )
-        db.add(user)
-        db.flush()
-        db.refresh(user)
-
         tag = Tag(
-            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
+            name=str(time()) + uuid4().hex,
             colour="#FFFFFF",
             exportable=False,
-            org_id=organisation.id,
-            user_id=user.id,
+            org_id=environment.instance_owner_org.id,
+            user_id=environment.instance_owner_org_admin_user.id,
         )
         db.add(tag)
         db.flush()
@@ -363,10 +257,10 @@ class TestEnableFeed:
         feed_data["tag_id"] = tag.id
 
         event = Event(
-            org_id=organisation.id,
-            orgc_id=organisation.id,
+            org_id=environment.instance_owner_org.id,
+            orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(int(time())),
+            date=str(time()),
             analysis="test",
             event_creator_email=generate_unique_email(),
         )
@@ -388,40 +282,20 @@ class TestEnableFeed:
     def test_enable_feed_authorization(self: "TestEnableFeed", feed_data: dict[str, Any]) -> None:
         db = get_db()
 
-        sharing_group = SharingGroup(
-            name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
-        )
+        sharing_group = generate_sharing_group()
+        sharing_group.organisation_uuid = environment.instance_owner_org.uuid
+        sharing_group.org_id = environment.instance_owner_org.id
         db.add(sharing_group)
         db.flush()
         db.refresh(sharing_group)
         feed_data["sharing_group_id"] = sharing_group.id
 
-        organisation = Organisation(
-            name="test",
-            date_created=datetime.utcnow(),
-            date_modified=datetime.utcnow(),
-        )
-        db.add(organisation)
-        db.flush()
-        db.refresh(organisation)
-
-        user = User(
-            password="XXXXXXXX",
-            org_id=organisation.id,
-            server_id=1,
-            email=generate_unique_email(),
-            autoalert=False,
-        )
-        db.add(user)
-        db.flush()
-        db.refresh(user)
-
         tag = Tag(
-            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
+            name=str(time()) + uuid4().hex,
             colour="#FFFFFF",
             exportable=False,
-            org_id=organisation.id,
-            user_id=user.id,
+            org_id=environment.instance_owner_org.id,
+            user_id=environment.instance_owner_org_admin_user.id,
         )
         db.add(tag)
         db.flush()
@@ -429,10 +303,10 @@ class TestEnableFeed:
         feed_data["tag_id"] = tag.id
 
         event = Event(
-            org_id=organisation.id,
-            orgc_id=organisation.id,
+            org_id=environment.instance_owner_org.id,
+            orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(int(time())),
+            date=str(time()),
             analysis="test",
             event_creator_email=generate_unique_email(),
         )
@@ -458,40 +332,20 @@ class TestDisableFeed:
     def test_disable_feed(self: "TestDisableFeed", feed_test_ids: dict[str, Any], feed_data: dict[str, Any]) -> None:
         db = get_db()
 
-        sharing_group = SharingGroup(
-            name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
-        )
+        sharing_group = generate_sharing_group()
+        sharing_group.organisation_uuid = environment.instance_owner_org.uuid
+        sharing_group.org_id = environment.instance_owner_org.id
         db.add(sharing_group)
         db.flush()
         db.refresh(sharing_group)
         feed_data["sharing_group_id"] = sharing_group.id
 
-        organisation = Organisation(
-            name="test",
-            date_created=datetime.utcnow(),
-            date_modified=datetime.utcnow(),
-        )
-        db.add(organisation)
-        db.flush()
-        db.refresh(organisation)
-
-        user = User(
-            password="XXXXXXXX",
-            org_id=organisation.id,
-            server_id=1,
-            email=generate_unique_email(),
-            autoalert=False,
-        )
-        db.add(user)
-        db.flush()
-        db.refresh(user)
-
         tag = Tag(
-            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
+            name=str(time()) + uuid4().hex,
             colour="#FFFFFF",
             exportable=False,
-            org_id=organisation.id,
-            user_id=user.id,
+            org_id=environment.instance_owner_org.id,
+            user_id=environment.instance_owner_org_admin_user.id,
         )
         db.add(tag)
         db.flush()
@@ -499,10 +353,10 @@ class TestDisableFeed:
         feed_data["tag_id"] = tag.id
 
         event = Event(
-            org_id=organisation.id,
-            orgc_id=organisation.id,
+            org_id=environment.instance_owner_org.id,
+            orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(int(time())),
+            date=str(time()),
             analysis="test",
             event_creator_email=generate_unique_email(),
         )
@@ -532,40 +386,20 @@ class TestDisableFeed:
     def test_disable_feed_response_format(self: "TestDisableFeed", feed_data: dict[str, Any]) -> None:
         db = get_db()
 
-        sharing_group = SharingGroup(
-            name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
-        )
+        sharing_group = generate_sharing_group()
+        sharing_group.organisation_uuid = environment.instance_owner_org.uuid
+        sharing_group.org_id = environment.instance_owner_org.id
         db.add(sharing_group)
         db.flush()
         db.refresh(sharing_group)
         feed_data["sharing_group_id"] = sharing_group.id
 
-        organisation = Organisation(
-            name="test",
-            date_created=datetime.utcnow(),
-            date_modified=datetime.utcnow(),
-        )
-        db.add(organisation)
-        db.flush()
-        db.refresh(organisation)
-
-        user = User(
-            password="XXXXXXXX",
-            org_id=organisation.id,
-            server_id=1,
-            email=generate_unique_email(),
-            autoalert=False,
-        )
-        db.add(user)
-        db.flush()
-        db.refresh(user)
-
         tag = Tag(
-            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
+            name=str(time()) + uuid4().hex,
             colour="#FFFFFF",
             exportable=False,
-            org_id=organisation.id,
-            user_id=user.id,
+            org_id=environment.instance_owner_org.id,
+            user_id=environment.instance_owner_org_admin_user.id,
         )
         db.add(tag)
         db.flush()
@@ -573,10 +407,10 @@ class TestDisableFeed:
         feed_data["tag_id"] = tag.id
 
         event = Event(
-            org_id=organisation.id,
-            orgc_id=organisation.id,
+            org_id=environment.instance_owner_org.id,
+            orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(int(time())),
+            date=str(time()),
             analysis="test",
             event_creator_email=generate_unique_email(),
         )
@@ -598,40 +432,20 @@ class TestDisableFeed:
     def test_disable_feed_authorization(self: "TestDisableFeed", feed_data: dict[str, Any]) -> None:
         db = get_db()
 
-        sharing_group = SharingGroup(
-            name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
-        )
+        sharing_group = generate_sharing_group()
+        sharing_group.organisation_uuid = environment.instance_owner_org.uuid
+        sharing_group.org_id = environment.instance_owner_org.id
         db.add(sharing_group)
         db.flush()
         db.refresh(sharing_group)
         feed_data["sharing_group_id"] = sharing_group.id
 
-        organisation = Organisation(
-            name="test",
-            date_created=datetime.utcnow(),
-            date_modified=datetime.utcnow(),
-        )
-        db.add(organisation)
-        db.flush()
-        db.refresh(organisation)
-
-        user = User(
-            password="XXXXXXXX",
-            org_id=organisation.id,
-            server_id=1,
-            email=generate_unique_email(),
-            autoalert=False,
-        )
-        db.add(user)
-        db.flush()
-        db.refresh(user)
-
         tag = Tag(
-            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
+            name=str(time()) + uuid4().hex,
             colour="#FFFFFF",
             exportable=False,
-            org_id=organisation.id,
-            user_id=user.id,
+            org_id=environment.instance_owner_org.id,
+            user_id=environment.instance_owner_org_admin_user.id,
         )
         db.add(tag)
         db.flush()
@@ -639,10 +453,10 @@ class TestDisableFeed:
         feed_data["tag_id"] = tag.id
 
         event = Event(
-            org_id=organisation.id,
-            orgc_id=organisation.id,
+            org_id=environment.instance_owner_org.id,
+            orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(int(time())),
+            date=str(time()),
             analysis="test",
             event_creator_email=generate_unique_email(),
         )
@@ -673,7 +487,7 @@ def cach_feed_test_data() -> Generator:
 
 
 class TestCacheFeeds:
-    pass  # TODO: route not yet implemented
+    pass  # route not yet implemented (worker)
 
     # def test_cache_feeds_valid_data(self: "TestCacheFeeds", cach_feed_test_data: dict[str, Any]) -> None:
     #     headers = {"authorization": environment.site_admin_user_token}
@@ -698,7 +512,7 @@ class TestCacheFeeds:
 
 
 class TestFetchFeeds:
-    pass  # TODO: route not yet implemented
+    pass  # route not yet implemented (worker)
 
     # def test_fetch_from_feed_existing_id(self: "TestFetchFeeds", feed_test_ids: dict[str, Any]) -> None:
     #     headers = {"authorization": environment.site_admin_user_token}
@@ -724,40 +538,20 @@ class TestGetFeedByIdInfo:
     def test_get_existing_feed_details(self: "TestGetFeedByIdInfo", feed_data: dict[str, Any]) -> None:
         db = get_db()
 
-        sharing_group = SharingGroup(
-            name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
-        )
+        sharing_group = generate_sharing_group()
+        sharing_group.organisation_uuid = environment.instance_owner_org.uuid
+        sharing_group.org_id = environment.instance_owner_org.id
         db.add(sharing_group)
         db.flush()
         db.refresh(sharing_group)
         feed_data["sharing_group_id"] = sharing_group.id
 
-        organisation = Organisation(
-            name="test",
-            date_created=datetime.utcnow(),
-            date_modified=datetime.utcnow(),
-        )
-        db.add(organisation)
-        db.flush()
-        db.refresh(organisation)
-
-        user = User(
-            password="XXXXXXXX",
-            org_id=organisation.id,
-            server_id=1,
-            email=generate_unique_email(),
-            autoalert=False,
-        )
-        db.add(user)
-        db.flush()
-        db.refresh(user)
-
         tag = Tag(
-            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
+            name=str(time()) + uuid4().hex,
             colour="#FFFFFF",
             exportable=False,
-            org_id=organisation.id,
-            user_id=user.id,
+            org_id=environment.instance_owner_org.id,
+            user_id=environment.instance_owner_org_admin_user.id,
         )
         db.add(tag)
         db.flush()
@@ -765,10 +559,10 @@ class TestGetFeedByIdInfo:
         feed_data["tag_id"] = tag.id
 
         event = Event(
-            org_id=organisation.id,
-            orgc_id=organisation.id,
+            org_id=environment.instance_owner_org.id,
+            orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(int(time())),
+            date=str(time()),
             analysis="test",
             event_creator_email=generate_unique_email(),
         )
@@ -804,40 +598,20 @@ class TestGetFeedByIdInfo:
     def test_get_feed_response_format(self: "TestGetFeedByIdInfo", feed_data: dict[str, Any]) -> None:
         db = get_db()
 
-        sharing_group = SharingGroup(
-            name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
-        )
+        sharing_group = generate_sharing_group()
+        sharing_group.organisation_uuid = environment.instance_owner_org.uuid
+        sharing_group.org_id = environment.instance_owner_org.id
         db.add(sharing_group)
         db.flush()
         db.refresh(sharing_group)
         feed_data["sharing_group_id"] = sharing_group.id
 
-        organisation = Organisation(
-            name="test",
-            date_created=datetime.utcnow(),
-            date_modified=datetime.utcnow(),
-        )
-        db.add(organisation)
-        db.flush()
-        db.refresh(organisation)
-
-        user = User(
-            password="XXXXXXXX",
-            org_id=organisation.id,
-            server_id=1,
-            email=generate_unique_email(),
-            autoalert=False,
-        )
-        db.add(user)
-        db.flush()
-        db.refresh(user)
-
         tag = Tag(
-            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
+            name=str(time()) + uuid4().hex,
             colour="#FFFFFF",
             exportable=False,
-            org_id=organisation.id,
-            user_id=user.id,
+            org_id=environment.instance_owner_org.id,
+            user_id=environment.instance_owner_org_admin_user.id,
         )
         db.add(tag)
         db.flush()
@@ -845,10 +619,10 @@ class TestGetFeedByIdInfo:
         feed_data["tag_id"] = tag.id
 
         event = Event(
-            org_id=organisation.id,
-            orgc_id=organisation.id,
+            org_id=environment.instance_owner_org.id,
+            orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(int(time())),
+            date=str(time()),
             analysis="test",
             event_creator_email=generate_unique_email(),
         )
@@ -876,40 +650,20 @@ class TestUpdateFeed:
     def test_update_existing_feed(self: "TestUpdateFeed", feed_data: dict[str, Any]) -> None:
         db = get_db()
 
-        sharing_group = SharingGroup(
-            name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
-        )
+        sharing_group = generate_sharing_group()
+        sharing_group.organisation_uuid = environment.instance_owner_org.uuid
+        sharing_group.org_id = environment.instance_owner_org.id
         db.add(sharing_group)
         db.flush()
         db.refresh(sharing_group)
         feed_data["sharing_group_id"] = sharing_group.id
 
-        organisation = Organisation(
-            name="test",
-            date_created=datetime.utcnow(),
-            date_modified=datetime.utcnow(),
-        )
-        db.add(organisation)
-        db.flush()
-        db.refresh(organisation)
-
-        user = User(
-            password="XXXXXXXX",
-            org_id=organisation.id,
-            server_id=1,
-            email=generate_unique_email(),
-            autoalert=False,
-        )
-        db.add(user)
-        db.flush()
-        db.refresh(user)
-
         tag = Tag(
-            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
+            name=str(time()) + uuid4().hex,
             colour="#FFFFFF",
             exportable=False,
-            org_id=organisation.id,
-            user_id=user.id,
+            org_id=environment.instance_owner_org.id,
+            user_id=environment.instance_owner_org_admin_user.id,
         )
         db.add(tag)
         db.flush()
@@ -917,10 +671,10 @@ class TestUpdateFeed:
         feed_data["tag_id"] = tag.id
 
         event = Event(
-            org_id=organisation.id,
-            orgc_id=organisation.id,
+            org_id=environment.instance_owner_org.id,
+            orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(int(time())),
+            date=str(time()),
             analysis="test",
             event_creator_email=generate_unique_email(),
         )
@@ -954,40 +708,20 @@ class TestUpdateFeed:
     def test_update_feed_response_format(self: "TestUpdateFeed", feed_data: dict[str, Any]) -> None:
         db = get_db()
 
-        sharing_group = SharingGroup(
-            name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
-        )
+        sharing_group = generate_sharing_group()
+        sharing_group.organisation_uuid = environment.instance_owner_org.uuid
+        sharing_group.org_id = environment.instance_owner_org.id
         db.add(sharing_group)
         db.flush()
         db.refresh(sharing_group)
         feed_data["sharing_group_id"] = sharing_group.id
 
-        organisation = Organisation(
-            name="test",
-            date_created=datetime.utcnow(),
-            date_modified=datetime.utcnow(),
-        )
-        db.add(organisation)
-        db.flush()
-        db.refresh(organisation)
-
-        user = User(
-            password="XXXXXXXX",
-            org_id=organisation.id,
-            server_id=1,
-            email=generate_unique_email(),
-            autoalert=False,
-        )
-        db.add(user)
-        db.flush()
-        db.refresh(user)
-
         tag = Tag(
-            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
+            name=str(time()) + uuid4().hex,
             colour="#FFFFFF",
             exportable=False,
-            org_id=organisation.id,
-            user_id=user.id,
+            org_id=environment.instance_owner_org.id,
+            user_id=environment.instance_owner_org_admin_user.id,
         )
         db.add(tag)
         db.flush()
@@ -995,10 +729,10 @@ class TestUpdateFeed:
         feed_data["tag_id"] = tag.id
 
         event = Event(
-            org_id=organisation.id,
-            orgc_id=organisation.id,
+            org_id=environment.instance_owner_org.id,
+            orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(int(time())),
+            date=str(time()),
             analysis="test",
             event_creator_email=generate_unique_email(),
         )
@@ -1024,40 +758,20 @@ class TestUpdateFeed:
     def test_update_feed_authorization(self: "TestUpdateFeed", feed_data: dict[str, Any]) -> None:
         db = get_db()
 
-        sharing_group = SharingGroup(
-            name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
-        )
+        sharing_group = generate_sharing_group()
+        sharing_group.organisation_uuid = environment.instance_owner_org.uuid
+        sharing_group.org_id = environment.instance_owner_org.id
         db.add(sharing_group)
         db.flush()
         db.refresh(sharing_group)
         feed_data["sharing_group_id"] = sharing_group.id
 
-        organisation = Organisation(
-            name="test",
-            date_created=datetime.utcnow(),
-            date_modified=datetime.utcnow(),
-        )
-        db.add(organisation)
-        db.flush()
-        db.refresh(organisation)
-
-        user = User(
-            password="XXXXXXXX",
-            org_id=organisation.id,
-            server_id=1,
-            email=generate_unique_email(),
-            autoalert=False,
-        )
-        db.add(user)
-        db.flush()
-        db.refresh(user)
-
         tag = Tag(
-            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
+            name=str(time()) + uuid4().hex,
             colour="#FFFFFF",
             exportable=False,
-            org_id=organisation.id,
-            user_id=user.id,
+            org_id=environment.instance_owner_org.id,
+            user_id=environment.instance_owner_org_admin_user.id,
         )
         db.add(tag)
         db.flush()
@@ -1065,10 +779,10 @@ class TestUpdateFeed:
         feed_data["tag_id"] = tag.id
 
         event = Event(
-            org_id=organisation.id,
-            orgc_id=organisation.id,
+            org_id=environment.instance_owner_org.id,
+            orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(int(time())),
+            date=str(time()),
             analysis="test",
             event_creator_email=generate_unique_email(),
         )
@@ -1094,40 +808,20 @@ class TestToggleFeed:
     def test_toggle_existing_feed(self: "TestToggleFeed", feed_data: dict[str, Any]) -> None:
         db = get_db()
 
-        sharing_group = SharingGroup(
-            name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
-        )
+        sharing_group = generate_sharing_group()
+        sharing_group.organisation_uuid = environment.instance_owner_org.uuid
+        sharing_group.org_id = environment.instance_owner_org.id
         db.add(sharing_group)
         db.flush()
         db.refresh(sharing_group)
         feed_data["sharing_group_id"] = sharing_group.id
 
-        organisation = Organisation(
-            name="test",
-            date_created=datetime.utcnow(),
-            date_modified=datetime.utcnow(),
-        )
-        db.add(organisation)
-        db.flush()
-        db.refresh(organisation)
-
-        user = User(
-            password="XXXXXXXX",
-            org_id=organisation.id,
-            server_id=1,
-            email=generate_unique_email(),
-            autoalert=False,
-        )
-        db.add(user)
-        db.flush()
-        db.refresh(user)
-
         tag = Tag(
-            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
+            name=str(time()) + uuid4().hex,
             colour="#FFFFFF",
             exportable=False,
-            org_id=organisation.id,
-            user_id=user.id,
+            org_id=environment.instance_owner_org.id,
+            user_id=environment.instance_owner_org_admin_user.id,
         )
         db.add(tag)
         db.flush()
@@ -1135,10 +829,10 @@ class TestToggleFeed:
         feed_data["tag_id"] = tag.id
 
         event = Event(
-            org_id=organisation.id,
-            orgc_id=organisation.id,
+            org_id=environment.instance_owner_org.id,
+            orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(int(time())),
+            date=str(time()),
             analysis="test",
             event_creator_email=generate_unique_email(),
         )
@@ -1184,40 +878,20 @@ class TestToggleFeed:
     def test_toggle_feed_response_format(self: "TestToggleFeed", feed_data: dict[str, Any]) -> None:
         db = get_db()
 
-        sharing_group = SharingGroup(
-            name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
-        )
+        sharing_group = generate_sharing_group()
+        sharing_group.organisation_uuid = environment.instance_owner_org.uuid
+        sharing_group.org_id = environment.instance_owner_org.id
         db.add(sharing_group)
         db.flush()
         db.refresh(sharing_group)
         feed_data["sharing_group_id"] = sharing_group.id
 
-        organisation = Organisation(
-            name="test",
-            date_created=datetime.utcnow(),
-            date_modified=datetime.utcnow(),
-        )
-        db.add(organisation)
-        db.flush()
-        db.refresh(organisation)
-
-        user = User(
-            password="XXXXXXXX",
-            org_id=organisation.id,
-            server_id=1,
-            email=generate_unique_email(),
-            autoalert=False,
-        )
-        db.add(user)
-        db.flush()
-        db.refresh(user)
-
         tag = Tag(
-            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
+            name=str(time()) + uuid4().hex,
             colour="#FFFFFF",
             exportable=False,
-            org_id=organisation.id,
-            user_id=user.id,
+            org_id=environment.instance_owner_org.id,
+            user_id=environment.instance_owner_org_admin_user.id,
         )
         db.add(tag)
         db.flush()
@@ -1225,10 +899,10 @@ class TestToggleFeed:
         feed_data["tag_id"] = tag.id
 
         event = Event(
-            org_id=organisation.id,
-            orgc_id=organisation.id,
+            org_id=environment.instance_owner_org.id,
+            orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(int(time())),
+            date=str(time()),
             analysis="test",
             event_creator_email=generate_unique_email(),
         )
@@ -1292,40 +966,20 @@ class TestToggleFeed:
     def test_toggle_feed_authorization(self: "TestToggleFeed", feed_data: dict[str, Any]) -> None:
         db = get_db()
 
-        sharing_group = SharingGroup(
-            name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
-        )
+        sharing_group = generate_sharing_group()
+        sharing_group.organisation_uuid = environment.instance_owner_org.uuid
+        sharing_group.org_id = environment.instance_owner_org.id
         db.add(sharing_group)
         db.flush()
         db.refresh(sharing_group)
         feed_data["sharing_group_id"] = sharing_group.id
 
-        organisation = Organisation(
-            name="test",
-            date_created=datetime.utcnow(),
-            date_modified=datetime.utcnow(),
-        )
-        db.add(organisation)
-        db.flush()
-        db.refresh(organisation)
-
-        user = User(
-            password="XXXXXXXX",
-            org_id=organisation.id,
-            server_id=1,
-            email=generate_unique_email(),
-            autoalert=False,
-        )
-        db.add(user)
-        db.flush()
-        db.refresh(user)
-
         tag = Tag(
-            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
+            name=str(time()) + uuid4().hex,
             colour="#FFFFFF",
             exportable=False,
-            org_id=organisation.id,
-            user_id=user.id,
+            org_id=environment.instance_owner_org.id,
+            user_id=environment.instance_owner_org_admin_user.id,
         )
         db.add(tag)
         db.flush()
@@ -1333,10 +987,10 @@ class TestToggleFeed:
         feed_data["tag_id"] = tag.id
 
         event = Event(
-            org_id=organisation.id,
-            orgc_id=organisation.id,
+            org_id=environment.instance_owner_org.id,
+            orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(int(time())),
+            date=str(time()),
             analysis="test",
             event_creator_email=generate_unique_email(),
         )
@@ -1360,7 +1014,7 @@ class TestToggleFeed:
 
 
 class TestFetschFromAllFeeds:
-    pass  # TODO: route not yet implemented
+    pass  # route not yet implemented (worker)
 
     # def test_fetch_data_from_all_feeds(self: "TestFetschFromAllFeeds") -> None:
     #     headers = {"authorization": environment.site_admin_user_token}
@@ -1380,40 +1034,20 @@ class TestGetAllFeeds:
     def test_get_all_feeds(self: "TestGetAllFeeds", feed_data: dict[str, Any]) -> None:
         db = get_db()
 
-        sharing_group = SharingGroup(
-            name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
-        )
+        sharing_group = generate_sharing_group()
+        sharing_group.organisation_uuid = environment.instance_owner_org.uuid
+        sharing_group.org_id = environment.instance_owner_org.id
         db.add(sharing_group)
         db.flush()
         db.refresh(sharing_group)
         feed_data["sharing_group_id"] = sharing_group.id
 
-        organisation = Organisation(
-            name="test",
-            date_created=datetime.utcnow(),
-            date_modified=datetime.utcnow(),
-        )
-        db.add(organisation)
-        db.flush()
-        db.refresh(organisation)
-
-        user = User(
-            password="XXXXXXXX",
-            org_id=organisation.id,
-            server_id=1,
-            email=generate_unique_email(),
-            autoalert=False,
-        )
-        db.add(user)
-        db.flush()
-        db.refresh(user)
-
         tag = Tag(
-            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
+            name=str(time()) + uuid4().hex,
             colour="#FFFFFF",
             exportable=False,
-            org_id=organisation.id,
-            user_id=user.id,
+            org_id=environment.instance_owner_org.id,
+            user_id=environment.instance_owner_org_admin_user.id,
         )
         db.add(tag)
         db.flush()
@@ -1421,10 +1055,10 @@ class TestGetAllFeeds:
         feed_data["tag_id"] = tag.id
 
         event = Event(
-            org_id=organisation.id,
-            orgc_id=organisation.id,
+            org_id=environment.instance_owner_org.id,
+            orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(int(time())),
+            date=str(time()),
             analysis="test",
             event_creator_email=generate_unique_email(),
         )
@@ -1446,40 +1080,20 @@ class TestGetAllFeeds:
     def test_get_feeds_response_format(self: "TestGetAllFeeds", feed_data: dict[str, Any]) -> None:
         db = get_db()
 
-        sharing_group = SharingGroup(
-            name="test_group", releasability="", organisation_uuid="", org_id=1, sync_user_id=1
-        )
+        sharing_group = generate_sharing_group()
+        sharing_group.organisation_uuid = environment.instance_owner_org.uuid
+        sharing_group.org_id = environment.instance_owner_org.id
         db.add(sharing_group)
         db.flush()
         db.refresh(sharing_group)
         feed_data["sharing_group_id"] = sharing_group.id
 
-        organisation = Organisation(
-            name="test",
-            date_created=datetime.utcnow(),
-            date_modified=datetime.utcnow(),
-        )
-        db.add(organisation)
-        db.flush()
-        db.refresh(organisation)
-
-        user = User(
-            password="XXXXXXXX",
-            org_id=organisation.id,
-            server_id=1,
-            email=generate_unique_email(),
-            autoalert=False,
-        )
-        db.add(user)
-        db.flush()
-        db.refresh(user)
-
         tag = Tag(
-            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
+            name=str(time()) + uuid4().hex,
             colour="#FFFFFF",
             exportable=False,
-            org_id=organisation.id,
-            user_id=user.id,
+            org_id=environment.instance_owner_org.id,
+            user_id=environment.instance_owner_org_admin_user.id,
         )
         db.add(tag)
         db.flush()
@@ -1487,10 +1101,10 @@ class TestGetAllFeeds:
         feed_data["tag_id"] = tag.id
 
         event = Event(
-            org_id=organisation.id,
-            orgc_id=organisation.id,
+            org_id=environment.instance_owner_org.id,
+            orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(int(time())),
+            date=str(time()),
             analysis="test",
             event_creator_email=generate_unique_email(),
         )

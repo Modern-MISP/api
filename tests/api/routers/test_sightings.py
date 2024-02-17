@@ -1,12 +1,11 @@
-import time
-from datetime import datetime
+from time import time
 from typing import Any
+from uuid import uuid4
 
 import pytest
 
 from mmisp.db.models.attribute import Attribute
 from mmisp.db.models.event import Event
-from mmisp.db.models.organisation import Organisation
 from tests.environment import client, environment, get_db
 from tests.generators.sighting_generator import (
     generate_valid_random_sighting_data,
@@ -30,22 +29,13 @@ class TestAddSighting:
     def test_add_sighting(self: "TestAddSighting", sighting_data: dict[str, Any]) -> None:
         db = get_db()
 
-        organisation = Organisation(
-            name="test",
-            date_created=datetime.utcnow(),
-            date_modified=datetime.utcnow(),
-        )
-        db.add(organisation)
-        db.flush()
-        db.refresh(organisation)
-
         event = Event(
-            org_id=organisation.id,
-            orgc_id=organisation.id,
+            org_id=environment.instance_owner_org.id,
+            orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(int(time.time())),
+            date=str(int(time())),
             analysis="test",
-            event_creator_email="XXXXXXXXXXXXX",
+            event_creator_email=generate_unique_email(),
         )
         db.add(event)
         db.flush()
@@ -71,22 +61,13 @@ class TestAddSighting:
     def test_add_sighting_with_invalid_data(self: "TestAddSighting", sighting_data: dict[str, Any]) -> None:
         db = get_db()
 
-        organisation = Organisation(
-            name="test",
-            date_created=datetime.utcnow(),
-            date_modified=datetime.utcnow(),
-        )
-        db.add(organisation)
-        db.flush()
-        db.refresh(organisation)
-
         event = Event(
-            org_id=organisation.id,
-            orgc_id=organisation.id,
+            org_id=environment.instance_owner_org.id,
+            orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(int(time.time())),
+            date=str(int(time())),
             analysis="test",
-            event_creator_email="XXXXXXXXXXXXX",
+            event_creator_email=generate_unique_email(),
         )
         db.add(event)
         db.flush()
@@ -115,22 +96,13 @@ class TestAddSighting:
     def test_add_sighting_missing_required_fields(self: "TestAddSighting", sighting_data: dict[str, Any]) -> None:
         db = get_db()
 
-        organisation = Organisation(
-            name="test",
-            date_created=datetime.utcnow(),
-            date_modified=datetime.utcnow(),
-        )
-        db.add(organisation)
-        db.flush()
-        db.refresh(organisation)
-
         event = Event(
-            org_id=organisation.id,
-            orgc_id=organisation.id,
+            org_id=environment.instance_owner_org.id,
+            orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(int(time.time())),
+            date=str(int(time())),
             analysis="test",
-            event_creator_email="XXXXXXXXXXXXX",
+            event_creator_email=generate_unique_email(),
         )
         db.add(event)
         db.flush()
@@ -158,22 +130,13 @@ class TestAddSighting:
     def test_add_sighting_unauthorized(self: "TestAddSighting", sighting_data: dict[str, Any]) -> None:
         db = get_db()
 
-        organisation = Organisation(
-            name="test",
-            date_created=datetime.utcnow(),
-            date_modified=datetime.utcnow(),
-        )
-        db.add(organisation)
-        db.flush()
-        db.refresh(organisation)
-
         event = Event(
-            org_id=organisation.id,
-            orgc_id=organisation.id,
+            org_id=environment.instance_owner_org.id,
+            orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(int(time.time())),
+            date=str(int(time())),
             analysis="test",
-            event_creator_email="XXXXXXXXXXXXX",
+            event_creator_email=generate_unique_email(),
         )
         db.add(event)
         db.flush()
@@ -201,22 +164,13 @@ class TestAddSightingAtIndex:
     def test_add_sightings_at_index_success(self: "TestAddSightingAtIndex", sighting_data: dict[str, Any]) -> None:
         db = get_db()
 
-        organisation = Organisation(
-            name="test",
-            date_created=datetime.utcnow(),
-            date_modified=datetime.utcnow(),
-        )
-        db.add(organisation)
-        db.flush()
-        db.refresh(organisation)
-
         event = Event(
-            org_id=organisation.id,
-            orgc_id=organisation.id,
+            org_id=environment.instance_owner_org.id,
+            orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(int(time.time())),
+            date=str(int(time())),
             analysis="test",
-            event_creator_email="XXXXXXXXXXXXX",
+            event_creator_email=generate_unique_email(),
         )
         db.add(event)
         db.flush()
@@ -246,27 +200,26 @@ class TestAddSightingAtIndex:
     ) -> None:
         db = get_db()
 
-        organisation = Organisation(
-            name="test",
-            date_created=datetime.utcnow(),
-            date_modified=datetime.utcnow(),
-        )
-        db.add(organisation)
-        db.flush()
-        db.refresh(organisation)
-
         event = Event(
-            org_id=organisation.id,
-            orgc_id=organisation.id,
+            org_id=environment.instance_owner_org.id,
+            orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(int(time.time())),
+            date=str(int(time())),
             analysis="test",
-            event_creator_email="XXXXXXXXXXXXX",
+            event_creator_email=generate_unique_email(),
         )
         db.add(event)
         db.flush()
         db.refresh(event)
 
+        attribute = Attribute(
+            event_id=event.id,
+            category="test",
+            type="test",
+            value=sighting_data["values"][0],
+        )
+
+        db.add(attribute)
         db.commit()
 
         non_existent_attribute_id = "0"
@@ -278,22 +231,13 @@ class TestAddSightingAtIndex:
     def test_add_sightings_at_index_unauthorized(self: "TestAddSightingAtIndex", sighting_data: dict[str, Any]) -> None:
         db = get_db()
 
-        organisation = Organisation(
-            name="test",
-            date_created=datetime.utcnow(),
-            date_modified=datetime.utcnow(),
-        )
-        db.add(organisation)
-        db.flush()
-        db.refresh(organisation)
-
         event = Event(
-            org_id=organisation.id,
-            orgc_id=organisation.id,
+            org_id=environment.instance_owner_org.id,
+            orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(int(time.time())),
+            date=str(int(time())),
             analysis="test",
-            event_creator_email="XXXXXXXXXXXXX",
+            event_creator_email=generate_unique_email(),
         )
         db.add(event)
         db.flush()
@@ -320,22 +264,13 @@ class TestGetSighting:
     def test_get_sighting_success(self: "TestGetSighting", sighting_data: dict[str, Any]) -> None:
         db = get_db()
 
-        organisation = Organisation(
-            name="test",
-            date_created=datetime.utcnow(),
-            date_modified=datetime.utcnow(),
-        )
-        db.add(organisation)
-        db.flush()
-        db.refresh(organisation)
-
         event = Event(
-            org_id=organisation.id,
-            orgc_id=organisation.id,
+            org_id=environment.instance_owner_org.id,
+            orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(int(time.time())),
+            date=str(int(time())),
             analysis="test",
-            event_creator_email="XXXXXXXXXXXXX",
+            event_creator_email=generate_unique_email(),
         )
         db.add(event)
         db.flush()
@@ -361,22 +296,13 @@ class TestDeleteSighting:
     def test_delete_sighting_success(self: "TestDeleteSighting", sighting_data: dict[str, Any]) -> None:
         db = get_db()
 
-        organisation = Organisation(
-            name="test",
-            date_created=datetime.utcnow(),
-            date_modified=datetime.utcnow(),
-        )
-        db.add(organisation)
-        db.flush()
-        db.refresh(organisation)
-
         event = Event(
-            org_id=organisation.id,
-            orgc_id=organisation.id,
+            org_id=environment.instance_owner_org.id,
+            orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(int(time.time())),
+            date=str(int(time())),
             analysis="test",
-            event_creator_email="XXXXXXXXXXXXX",
+            event_creator_email=generate_unique_email(),
         )
         db.add(event)
         db.flush()
@@ -411,22 +337,13 @@ class TestDeleteSighting:
     def test_delete_sighting_invalid_id(self: "TestDeleteSighting", sighting_data: dict[str, Any]) -> None:
         db = get_db()
 
-        organisation = Organisation(
-            name="test",
-            date_created=datetime.utcnow(),
-            date_modified=datetime.utcnow(),
-        )
-        db.add(organisation)
-        db.flush()
-        db.refresh(organisation)
-
         event = Event(
-            org_id=organisation.id,
-            orgc_id=organisation.id,
+            org_id=environment.instance_owner_org.id,
+            orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(int(time.time())),
+            date=str(int(time())),
             analysis="test",
-            event_creator_email="XXXXXXXXXXXXX",
+            event_creator_email=generate_unique_email(),
         )
         db.add(event)
         db.flush()
@@ -458,22 +375,13 @@ class TestDeleteSighting:
     def test_delete_no_authorization(self: "TestDeleteSighting", sighting_data: dict[str, Any]) -> None:
         db = get_db()
 
-        organisation = Organisation(
-            name="test",
-            date_created=datetime.utcnow(),
-            date_modified=datetime.utcnow(),
-        )
-        db.add(organisation)
-        db.flush()
-        db.refresh(organisation)
-
         event = Event(
-            org_id=organisation.id,
-            orgc_id=organisation.id,
+            org_id=environment.instance_owner_org.id,
+            orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(int(time.time())),
+            date=str(int(time())),
             analysis="test",
-            event_creator_email="XXXXXXXXXXXXX",
+            event_creator_email=generate_unique_email(),
         )
         db.add(event)
         db.flush()
@@ -507,22 +415,13 @@ class TestGetAllSightings:
     def test_get_all_sightings_success(self: "TestGetAllSightings", sighting_data: dict[str, Any]) -> None:
         db = get_db()
 
-        organisation = Organisation(
-            name="test",
-            date_created=datetime.utcnow(),
-            date_modified=datetime.utcnow(),
-        )
-        db.add(organisation)
-        db.flush()
-        db.refresh(organisation)
-
         event = Event(
-            org_id=organisation.id,
-            orgc_id=organisation.id,
+            org_id=environment.instance_owner_org.id,
+            orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(int(time.time())),
+            date=str(int(time())),
             analysis="test",
-            event_creator_email="XXXXXXXXXXXXX",
+            event_creator_email=generate_unique_email(),
         )
         db.add(event)
         db.flush()
@@ -550,22 +449,13 @@ class TestGetAllSightings:
     def test_get_sightings_response_format(self: "TestGetAllSightings", sighting_data: dict[str, Any]) -> None:
         db = get_db()
 
-        organisation = Organisation(
-            name="test",
-            date_created=datetime.utcnow(),
-            date_modified=datetime.utcnow(),
-        )
-        db.add(organisation)
-        db.flush()
-        db.refresh(organisation)
-
         event = Event(
-            org_id=organisation.id,
-            orgc_id=organisation.id,
+            org_id=environment.instance_owner_org.id,
+            orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(int(time.time())),
+            date=str(int(time())),
             analysis="test",
-            event_creator_email="XXXXXXXXXXXXX",
+            event_creator_email=generate_unique_email(),
         )
         db.add(event)
         db.flush()
@@ -601,3 +491,10 @@ class TestGetAllSightings:
             assert "org_id" in sighting_wrapper
             assert "date_sighting" in sighting_wrapper
             assert "organisation" in sighting_wrapper
+
+
+def generate_unique_email() -> str:
+    timestamp = int(time())
+    random_str = uuid4().hex
+    email = f"unique-{timestamp}-{random_str}@test"
+    return email
