@@ -15,8 +15,8 @@ class Attribute(Base):
 
     id = Column(Integer, primary_key=True)
     uuid = Column(String(255), unique=True, default=uuid, index=True)
-    event_id = Column(Integer, ForeignKey("events.id"), index=True)
-    object_id = Column(Integer, ForeignKey("objects.id"), index=True, nullable=True, default=None)
+    event_id = Column(Integer, ForeignKey("events.id", ondelete="CASCADE"), index=True)
+    object_id = Column(Integer, ForeignKey("objects.id", ondelete="CASCADE"), index=True, nullable=True, default=None)
     object_relation = Column(String(255), nullable=True, index=True)
     category = Column(String(255), nullable=False, index=True)
     type = Column(String(255), nullable=False, index=True)
@@ -46,9 +46,9 @@ class AttributeTag(Base):
 
     id = Column(Integer, primary_key=True)
     uuid = Column(String(255), unique=True, default=uuid)
-    attribute_id = Column(Integer, ForeignKey(Attribute.id), nullable=False, index=True)
-    event_id = Column(Integer, ForeignKey(Event.id), nullable=False, index=True)
-    tag_id = Column(Integer, ForeignKey(Tag.id), nullable=False, index=True)
+    attribute_id = Column(Integer, ForeignKey(Attribute.id, ondelete="CASCADE"), nullable=False, index=True)
+    event_id = Column(Integer, ForeignKey(Event.id, ondelete="CASCADE"), nullable=False, index=True)
+    tag_id = Column(Integer, ForeignKey(Tag.id, ondelete="CASCADE"), nullable=False, index=True)
     local = Column(Boolean, nullable=False, default=False)
 
 
