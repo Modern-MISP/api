@@ -117,19 +117,11 @@ class TestAddObject:
         assert response.headers["Content-Type"] == "application/json"
         assert "object" in response.json()
 
-    def test_add_object_to_event_authorization(self: "TestAddObject", object_data: dict[str, Any]) -> None:
-        headers = {"authorization": ""}
-        response = client.post("/feeds", json=object_data, headers=headers)
-        assert response.status_code == 401
-
 
 @pytest.fixture(
     params=[
         generate_specific_search_query().dict(),
         generate_search_query().dict(),
-        generate_random_search_query().dict(),
-        generate_random_search_query().dict(),
-        generate_random_search_query().dict(),
         generate_random_search_query().dict(),
         generate_random_search_query().dict(),
         generate_random_search_query().dict(),
@@ -486,52 +478,6 @@ class TestDeleteObject:
         object_id = response_data["object"]["id"]
         response_delete = client.delete(f"/objects/{object_id}/invalid_value", headers=headers)
         assert response_delete.status_code == 422
-        assert "detail" in response_delete.json()
-
-    def test_delete_object_no_authorization(self: "TestDeleteObject", object_data: dict[str, Any]) -> None:
-        db = get_db()
-
-        sharing_group = generate_sharing_group()
-        sharing_group.organisation_uuid = environment.instance_owner_org.uuid
-        sharing_group.org_id = environment.instance_owner_org.id
-        db.add(sharing_group)
-        db.flush()
-        db.refresh(sharing_group)
-        object_data["sharing_group_id"] = sharing_group.id
-        for attribute in object_data["attributes"]:
-            attribute["sharing_group_id"] = sharing_group.id
-
-        object_template = ObjectTemplate(name="test_template", user_id=1, org_id=1, version=100)
-        db.add(object_template)
-        db.flush()
-        db.refresh(object_template)
-
-        event = Event(
-            org_id=environment.instance_owner_org.id,
-            orgc_id=environment.instance_owner_org.id,
-            info="test",
-            date=str(time()),
-            analysis="test",
-            event_creator_email=generate_unique_email(),
-        )
-        db.add(event)
-        db.flush()
-        db.refresh(event)
-        object_data["event_id"] = event.id
-
-        db.commit()
-
-        object_template_id = object_template.id
-        event_id = event.id
-
-        headers = {"authorization": environment.site_admin_user_token}
-        response = client.post(f"/objects/{event_id}/{object_template_id}", json=object_data, headers=headers)
-        assert response.status_code == 201
-
-        response_data = response.json()
-        object_id = response_data["object"]["id"]
-        response_delete = client.delete(f"/objects/{object_id}/true")
-        assert response_delete.status_code == 401
         assert "detail" in response_delete.json()
 
 

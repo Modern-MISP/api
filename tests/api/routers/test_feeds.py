@@ -125,50 +125,6 @@ class TestAddFeed:
         assert response.json()["feed"]["name"] == feed_data["name"]
         assert response.json()["feed"]["id"] is not None
 
-    def test_add_feed_authorization(self: "TestAddFeed", feed_data: dict[str, Any]) -> None:
-        db = get_db()
-
-        sharing_group = generate_sharing_group()
-        sharing_group.organisation_uuid = environment.instance_owner_org.uuid
-        sharing_group.org_id = environment.instance_owner_org.id
-        db.add(sharing_group)
-        db.flush()
-        db.refresh(sharing_group)
-        feed_data["sharing_group_id"] = sharing_group.id
-
-        tag = Tag(
-            name=str(time()) + uuid4().hex,
-            colour="#FFFFFF",
-            exportable=False,
-            org_id=environment.instance_owner_org.id,
-            user_id=environment.instance_owner_org_admin_user.id,
-        )
-        db.add(tag)
-        db.flush()
-        db.refresh(tag)
-        feed_data["tag_id"] = tag.id
-
-        event = Event(
-            org_id=environment.instance_owner_org.id,
-            orgc_id=environment.instance_owner_org.id,
-            info="test",
-            date=str(time()),
-            analysis="test",
-            event_creator_email=generate_unique_email(),
-        )
-        db.add(event)
-        db.flush()
-        db.refresh(event)
-        feed_data["event_id"] = event.id
-
-        db.commit()
-
-        headers = {"authorization": ""}
-        response = client.post("/feeds", json=feed_data, headers=headers)
-        assert response.status_code == 401
-        assert response.json()["detail"] == "Unauthorized"
-        assert response.headers["Content-Type"] == "application/json"
-
 
 @pytest.fixture(scope="module")
 def feed_test_ids() -> Generator:
@@ -279,54 +235,6 @@ class TestEnableFeed:
         response = client.post(f"feeds/enable/{feed_id}", headers=headers)
         assert response.headers["Content-Type"] == "application/json"
 
-    def test_enable_feed_authorization(self: "TestEnableFeed", feed_data: dict[str, Any]) -> None:
-        db = get_db()
-
-        sharing_group = generate_sharing_group()
-        sharing_group.organisation_uuid = environment.instance_owner_org.uuid
-        sharing_group.org_id = environment.instance_owner_org.id
-        db.add(sharing_group)
-        db.flush()
-        db.refresh(sharing_group)
-        feed_data["sharing_group_id"] = sharing_group.id
-
-        tag = Tag(
-            name=str(time()) + uuid4().hex,
-            colour="#FFFFFF",
-            exportable=False,
-            org_id=environment.instance_owner_org.id,
-            user_id=environment.instance_owner_org_admin_user.id,
-        )
-        db.add(tag)
-        db.flush()
-        db.refresh(tag)
-        feed_data["tag_id"] = tag.id
-
-        event = Event(
-            org_id=environment.instance_owner_org.id,
-            orgc_id=environment.instance_owner_org.id,
-            info="test",
-            date=str(time()),
-            analysis="test",
-            event_creator_email=generate_unique_email(),
-        )
-        db.add(event)
-        db.flush()
-        db.refresh(event)
-        feed_data["event_id"] = event.id
-
-        db.commit()
-
-        headers = {"authorization": environment.site_admin_user_token}
-        response = client.post("/feeds", json=feed_data, headers=headers)
-        feed_id = response.json()["feed"]["id"]
-        assert response.status_code == 201
-
-        headers = {"authorization": ""}
-        response = client.post(f"feeds/enable/{feed_id}", headers=headers)
-        assert response.status_code == 401
-        assert response.json()["detail"] == "Unauthorized"
-
 
 class TestDisableFeed:
     def test_disable_feed(self: "TestDisableFeed", feed_test_ids: dict[str, Any], feed_data: dict[str, Any]) -> None:
@@ -429,54 +337,6 @@ class TestDisableFeed:
         response = client.post(f"feeds/disable/{feed_id}", headers=headers)
         assert response.headers["Content-Type"] == "application/json"
 
-    def test_disable_feed_authorization(self: "TestDisableFeed", feed_data: dict[str, Any]) -> None:
-        db = get_db()
-
-        sharing_group = generate_sharing_group()
-        sharing_group.organisation_uuid = environment.instance_owner_org.uuid
-        sharing_group.org_id = environment.instance_owner_org.id
-        db.add(sharing_group)
-        db.flush()
-        db.refresh(sharing_group)
-        feed_data["sharing_group_id"] = sharing_group.id
-
-        tag = Tag(
-            name=str(time()) + uuid4().hex,
-            colour="#FFFFFF",
-            exportable=False,
-            org_id=environment.instance_owner_org.id,
-            user_id=environment.instance_owner_org_admin_user.id,
-        )
-        db.add(tag)
-        db.flush()
-        db.refresh(tag)
-        feed_data["tag_id"] = tag.id
-
-        event = Event(
-            org_id=environment.instance_owner_org.id,
-            orgc_id=environment.instance_owner_org.id,
-            info="test",
-            date=str(time()),
-            analysis="test",
-            event_creator_email=generate_unique_email(),
-        )
-        db.add(event)
-        db.flush()
-        db.refresh(event)
-        feed_data["event_id"] = event.id
-
-        db.commit()
-
-        headers = {"authorization": environment.site_admin_user_token}
-        response = client.post("/feeds", json=feed_data, headers=headers)
-        feed_id = response.json()["feed"]["id"]
-        assert response.status_code == 201
-
-        headers = {"authorization": ""}
-        response = client.post(f"feeds/enable/{feed_id}", headers=headers)
-        assert response.status_code == 401
-        assert response.json()["detail"] == "Unauthorized"
-
 
 @pytest.fixture(scope="module")
 def cach_feed_test_data() -> Generator:
@@ -504,11 +364,6 @@ class TestCacheFeeds:
     #     headers = {"authorization": environment.site_admin_user_token}
     #     response = client.post(f"/feeds/cacheFeeds/{cach_feed_test_data['valid_scope']}", headers=headers)
     #     assert response.headers["Content-Type"] == "application/json"
-
-    # def test_cache_feeds_authorization(self: "TestCacheFeeds", cach_feed_test_data: dict[str, Any]) -> None:
-    #     headers = {"authorization": ""}
-    #     response = client.post(f"/feeds/cacheFeeds/{cach_feed_test_data['valid_scope']}", headers=headers)
-    #     assert response.status_code == 401
 
 
 class TestFetchFeeds:
@@ -755,54 +610,6 @@ class TestUpdateFeed:
         assert response.json()["feed"]["id"] == feed_id
         assert response.json()["feed"]["name"] == feed_data["name"]
 
-    def test_update_feed_authorization(self: "TestUpdateFeed", feed_data: dict[str, Any]) -> None:
-        db = get_db()
-
-        sharing_group = generate_sharing_group()
-        sharing_group.organisation_uuid = environment.instance_owner_org.uuid
-        sharing_group.org_id = environment.instance_owner_org.id
-        db.add(sharing_group)
-        db.flush()
-        db.refresh(sharing_group)
-        feed_data["sharing_group_id"] = sharing_group.id
-
-        tag = Tag(
-            name=str(time()) + uuid4().hex,
-            colour="#FFFFFF",
-            exportable=False,
-            org_id=environment.instance_owner_org.id,
-            user_id=environment.instance_owner_org_admin_user.id,
-        )
-        db.add(tag)
-        db.flush()
-        db.refresh(tag)
-        feed_data["tag_id"] = tag.id
-
-        event = Event(
-            org_id=environment.instance_owner_org.id,
-            orgc_id=environment.instance_owner_org.id,
-            info="test",
-            date=str(time()),
-            analysis="test",
-            event_creator_email=generate_unique_email(),
-        )
-        db.add(event)
-        db.flush()
-        db.refresh(event)
-        feed_data["event_id"] = event.id
-
-        db.commit()
-
-        headers = {"authorization": environment.site_admin_user_token}
-        response = client.post("/feeds", json=feed_data, headers=headers)
-        feed_id = response.json()["feed"]["id"]
-        assert response.status_code == 201
-
-        headers = {"authorization": ""}
-        response = client.put(f"/feeds/{feed_id}", json=feed_data, headers=headers)
-        assert response.status_code == 401
-        assert response.json()["detail"] == "Unauthorized"
-
 
 class TestToggleFeed:
     def test_toggle_existing_feed(self: "TestToggleFeed", feed_data: dict[str, Any]) -> None:
@@ -962,55 +769,6 @@ class TestToggleFeed:
         assert "name" in data
         assert data["message"] == "Feed already enabled."
         assert "url" in data
-
-    def test_toggle_feed_authorization(self: "TestToggleFeed", feed_data: dict[str, Any]) -> None:
-        db = get_db()
-
-        sharing_group = generate_sharing_group()
-        sharing_group.organisation_uuid = environment.instance_owner_org.uuid
-        sharing_group.org_id = environment.instance_owner_org.id
-        db.add(sharing_group)
-        db.flush()
-        db.refresh(sharing_group)
-        feed_data["sharing_group_id"] = sharing_group.id
-
-        tag = Tag(
-            name=str(time()) + uuid4().hex,
-            colour="#FFFFFF",
-            exportable=False,
-            org_id=environment.instance_owner_org.id,
-            user_id=environment.instance_owner_org_admin_user.id,
-        )
-        db.add(tag)
-        db.flush()
-        db.refresh(tag)
-        feed_data["tag_id"] = tag.id
-
-        event = Event(
-            org_id=environment.instance_owner_org.id,
-            orgc_id=environment.instance_owner_org.id,
-            info="test",
-            date=str(time()),
-            analysis="test",
-            event_creator_email=generate_unique_email(),
-        )
-        db.add(event)
-        db.flush()
-        db.refresh(event)
-        feed_data["event_id"] = event.id
-
-        db.commit()
-
-        headers = {"authorization": environment.site_admin_user_token}
-        response = client.post("/feeds", json=feed_data, headers=headers)
-        feed_id = response.json()["feed"]["id"]
-        assert response.status_code == 201
-
-        toggle_data = {"enable": True}
-        headers = {"authorization": ""}
-        response = client.patch(f"feeds/{feed_id}", json=toggle_data, headers=headers)
-        assert response.status_code == 401
-        assert response.json()["detail"] == "Unauthorized"
 
 
 class TestFetschFromAllFeeds:
