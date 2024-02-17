@@ -3,6 +3,7 @@ import string
 from datetime import datetime
 from time import time
 from typing import Any, Generator
+from uuid import uuid4
 
 import pytest
 
@@ -10,6 +11,7 @@ from mmisp.db.models.event import Event
 from mmisp.db.models.organisation import Organisation
 from mmisp.db.models.sharing_group import SharingGroup
 from mmisp.db.models.tag import Tag
+from mmisp.db.models.user import User
 
 from ...environment import client, environment, get_db
 from ...generators.feed_generator import (
@@ -44,16 +46,6 @@ class TestAddFeed:
         db.refresh(sharing_group)
         feed_data["sharing_group_id"] = sharing_group.id
 
-        tag = Tag(
-            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
-            colour="#FFFFFF",
-            exportable=False,
-        )
-        db.add(tag)
-        db.flush()
-        db.refresh(tag)
-        feed_data["tag_id"] = tag.id
-
         organisation = Organisation(
             name="test",
             date_created=datetime.utcnow(),
@@ -63,13 +55,36 @@ class TestAddFeed:
         db.flush()
         db.refresh(organisation)
 
+        user = User(
+            password="XXXXXXXX",
+            org_id=organisation.id,
+            server_id=1,
+            email=generate_unique_email(),
+            autoalert=False,
+        )
+        db.add(user)
+        db.flush()
+        db.refresh(user)
+
+        tag = Tag(
+            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
+            colour="#FFFFFF",
+            exportable=False,
+            org_id=organisation.id,
+            user_id=user.id,
+        )
+        db.add(tag)
+        db.flush()
+        db.refresh(tag)
+        feed_data["tag_id"] = tag.id
+
         event = Event(
             org_id=organisation.id,
             orgc_id=organisation.id,
             info="test",
             date=str(int(time())),
             analysis="test",
-            event_creator_email="XXXXXXXXXXXXX",
+            event_creator_email=generate_unique_email(),
         )
         db.add(event)
         db.flush()
@@ -103,16 +118,6 @@ class TestAddFeed:
         db.refresh(sharing_group)
         feed_data["sharing_group_id"] = sharing_group.id
 
-        tag = Tag(
-            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
-            colour="#FFFFFF",
-            exportable=False,
-        )
-        db.add(tag)
-        db.flush()
-        db.refresh(tag)
-        feed_data["tag_id"] = tag.id
-
         organisation = Organisation(
             name="test",
             date_created=datetime.utcnow(),
@@ -122,13 +127,36 @@ class TestAddFeed:
         db.flush()
         db.refresh(organisation)
 
+        user = User(
+            password="XXXXXXXX",
+            org_id=organisation.id,
+            server_id=1,
+            email=generate_unique_email(),
+            autoalert=False,
+        )
+        db.add(user)
+        db.flush()
+        db.refresh(user)
+
+        tag = Tag(
+            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
+            colour="#FFFFFF",
+            exportable=False,
+            org_id=organisation.id,
+            user_id=user.id,
+        )
+        db.add(tag)
+        db.flush()
+        db.refresh(tag)
+        feed_data["tag_id"] = tag.id
+
         event = Event(
             org_id=organisation.id,
             orgc_id=organisation.id,
             info="test",
             date=str(int(time())),
             analysis="test",
-            event_creator_email="XXXXXXXXXXXXX",
+            event_creator_email=generate_unique_email(),
         )
         db.add(event)
         db.flush()
@@ -154,16 +182,6 @@ class TestAddFeed:
         db.refresh(sharing_group)
         feed_data["sharing_group_id"] = sharing_group.id
 
-        tag = Tag(
-            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
-            colour="#FFFFFF",
-            exportable=False,
-        )
-        db.add(tag)
-        db.flush()
-        db.refresh(tag)
-        feed_data["tag_id"] = tag.id
-
         organisation = Organisation(
             name="test",
             date_created=datetime.utcnow(),
@@ -173,13 +191,36 @@ class TestAddFeed:
         db.flush()
         db.refresh(organisation)
 
+        user = User(
+            password="XXXXXXXX",
+            org_id=organisation.id,
+            server_id=1,
+            email=generate_unique_email(),
+            autoalert=False,
+        )
+        db.add(user)
+        db.flush()
+        db.refresh(user)
+
+        tag = Tag(
+            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
+            colour="#FFFFFF",
+            exportable=False,
+            org_id=organisation.id,
+            user_id=user.id,
+        )
+        db.add(tag)
+        db.flush()
+        db.refresh(tag)
+        feed_data["tag_id"] = tag.id
+
         event = Event(
             org_id=organisation.id,
             orgc_id=organisation.id,
             info="test",
             date=str(int(time())),
             analysis="test",
-            event_creator_email="XXXXXXXXXXXXX",
+            event_creator_email=generate_unique_email(),
         )
         db.add(event)
         db.flush()
@@ -215,16 +256,6 @@ class TestEnableFeed:
         db.refresh(sharing_group)
         feed_data["sharing_group_id"] = sharing_group.id
 
-        tag = Tag(
-            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
-            colour="#FFFFFF",
-            exportable=False,
-        )
-        db.add(tag)
-        db.flush()
-        db.refresh(tag)
-        feed_data["tag_id"] = tag.id
-
         organisation = Organisation(
             name="test",
             date_created=datetime.utcnow(),
@@ -234,13 +265,36 @@ class TestEnableFeed:
         db.flush()
         db.refresh(organisation)
 
+        user = User(
+            password="XXXXXXXX",
+            org_id=organisation.id,
+            server_id=1,
+            email=generate_unique_email(),
+            autoalert=False,
+        )
+        db.add(user)
+        db.flush()
+        db.refresh(user)
+
+        tag = Tag(
+            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
+            colour="#FFFFFF",
+            exportable=False,
+            org_id=organisation.id,
+            user_id=user.id,
+        )
+        db.add(tag)
+        db.flush()
+        db.refresh(tag)
+        feed_data["tag_id"] = tag.id
+
         event = Event(
             org_id=organisation.id,
             orgc_id=organisation.id,
             info="test",
             date=str(int(time())),
             analysis="test",
-            event_creator_email="XXXXXXXXXXXXX",
+            event_creator_email=generate_unique_email(),
         )
         db.add(event)
         db.flush()
@@ -276,16 +330,6 @@ class TestEnableFeed:
         db.refresh(sharing_group)
         feed_data["sharing_group_id"] = sharing_group.id
 
-        tag = Tag(
-            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
-            colour="#FFFFFF",
-            exportable=False,
-        )
-        db.add(tag)
-        db.flush()
-        db.refresh(tag)
-        feed_data["tag_id"] = tag.id
-
         organisation = Organisation(
             name="test",
             date_created=datetime.utcnow(),
@@ -295,13 +339,36 @@ class TestEnableFeed:
         db.flush()
         db.refresh(organisation)
 
+        user = User(
+            password="XXXXXXXX",
+            org_id=organisation.id,
+            server_id=1,
+            email=generate_unique_email(),
+            autoalert=False,
+        )
+        db.add(user)
+        db.flush()
+        db.refresh(user)
+
+        tag = Tag(
+            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
+            colour="#FFFFFF",
+            exportable=False,
+            org_id=organisation.id,
+            user_id=user.id,
+        )
+        db.add(tag)
+        db.flush()
+        db.refresh(tag)
+        feed_data["tag_id"] = tag.id
+
         event = Event(
             org_id=organisation.id,
             orgc_id=organisation.id,
             info="test",
             date=str(int(time())),
             analysis="test",
-            event_creator_email="XXXXXXXXXXXXX",
+            event_creator_email=generate_unique_email(),
         )
         db.add(event)
         db.flush()
@@ -329,16 +396,6 @@ class TestEnableFeed:
         db.refresh(sharing_group)
         feed_data["sharing_group_id"] = sharing_group.id
 
-        tag = Tag(
-            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
-            colour="#FFFFFF",
-            exportable=False,
-        )
-        db.add(tag)
-        db.flush()
-        db.refresh(tag)
-        feed_data["tag_id"] = tag.id
-
         organisation = Organisation(
             name="test",
             date_created=datetime.utcnow(),
@@ -348,13 +405,36 @@ class TestEnableFeed:
         db.flush()
         db.refresh(organisation)
 
+        user = User(
+            password="XXXXXXXX",
+            org_id=organisation.id,
+            server_id=1,
+            email=generate_unique_email(),
+            autoalert=False,
+        )
+        db.add(user)
+        db.flush()
+        db.refresh(user)
+
+        tag = Tag(
+            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
+            colour="#FFFFFF",
+            exportable=False,
+            org_id=organisation.id,
+            user_id=user.id,
+        )
+        db.add(tag)
+        db.flush()
+        db.refresh(tag)
+        feed_data["tag_id"] = tag.id
+
         event = Event(
             org_id=organisation.id,
             orgc_id=organisation.id,
             info="test",
             date=str(int(time())),
             analysis="test",
-            event_creator_email="XXXXXXXXXXXXX",
+            event_creator_email=generate_unique_email(),
         )
         db.add(event)
         db.flush()
@@ -386,16 +466,6 @@ class TestDisableFeed:
         db.refresh(sharing_group)
         feed_data["sharing_group_id"] = sharing_group.id
 
-        tag = Tag(
-            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
-            colour="#FFFFFF",
-            exportable=False,
-        )
-        db.add(tag)
-        db.flush()
-        db.refresh(tag)
-        feed_data["tag_id"] = tag.id
-
         organisation = Organisation(
             name="test",
             date_created=datetime.utcnow(),
@@ -405,13 +475,36 @@ class TestDisableFeed:
         db.flush()
         db.refresh(organisation)
 
+        user = User(
+            password="XXXXXXXX",
+            org_id=organisation.id,
+            server_id=1,
+            email=generate_unique_email(),
+            autoalert=False,
+        )
+        db.add(user)
+        db.flush()
+        db.refresh(user)
+
+        tag = Tag(
+            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
+            colour="#FFFFFF",
+            exportable=False,
+            org_id=organisation.id,
+            user_id=user.id,
+        )
+        db.add(tag)
+        db.flush()
+        db.refresh(tag)
+        feed_data["tag_id"] = tag.id
+
         event = Event(
             org_id=organisation.id,
             orgc_id=organisation.id,
             info="test",
             date=str(int(time())),
             analysis="test",
-            event_creator_email="XXXXXXXXXXXXX",
+            event_creator_email=generate_unique_email(),
         )
         db.add(event)
         db.flush()
@@ -447,16 +540,6 @@ class TestDisableFeed:
         db.refresh(sharing_group)
         feed_data["sharing_group_id"] = sharing_group.id
 
-        tag = Tag(
-            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
-            colour="#FFFFFF",
-            exportable=False,
-        )
-        db.add(tag)
-        db.flush()
-        db.refresh(tag)
-        feed_data["tag_id"] = tag.id
-
         organisation = Organisation(
             name="test",
             date_created=datetime.utcnow(),
@@ -466,13 +549,36 @@ class TestDisableFeed:
         db.flush()
         db.refresh(organisation)
 
+        user = User(
+            password="XXXXXXXX",
+            org_id=organisation.id,
+            server_id=1,
+            email=generate_unique_email(),
+            autoalert=False,
+        )
+        db.add(user)
+        db.flush()
+        db.refresh(user)
+
+        tag = Tag(
+            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
+            colour="#FFFFFF",
+            exportable=False,
+            org_id=organisation.id,
+            user_id=user.id,
+        )
+        db.add(tag)
+        db.flush()
+        db.refresh(tag)
+        feed_data["tag_id"] = tag.id
+
         event = Event(
             org_id=organisation.id,
             orgc_id=organisation.id,
             info="test",
             date=str(int(time())),
             analysis="test",
-            event_creator_email="XXXXXXXXXXXXX",
+            event_creator_email=generate_unique_email(),
         )
         db.add(event)
         db.flush()
@@ -500,16 +606,6 @@ class TestDisableFeed:
         db.refresh(sharing_group)
         feed_data["sharing_group_id"] = sharing_group.id
 
-        tag = Tag(
-            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
-            colour="#FFFFFF",
-            exportable=False,
-        )
-        db.add(tag)
-        db.flush()
-        db.refresh(tag)
-        feed_data["tag_id"] = tag.id
-
         organisation = Organisation(
             name="test",
             date_created=datetime.utcnow(),
@@ -519,13 +615,36 @@ class TestDisableFeed:
         db.flush()
         db.refresh(organisation)
 
+        user = User(
+            password="XXXXXXXX",
+            org_id=organisation.id,
+            server_id=1,
+            email=generate_unique_email(),
+            autoalert=False,
+        )
+        db.add(user)
+        db.flush()
+        db.refresh(user)
+
+        tag = Tag(
+            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
+            colour="#FFFFFF",
+            exportable=False,
+            org_id=organisation.id,
+            user_id=user.id,
+        )
+        db.add(tag)
+        db.flush()
+        db.refresh(tag)
+        feed_data["tag_id"] = tag.id
+
         event = Event(
             org_id=organisation.id,
             orgc_id=organisation.id,
             info="test",
             date=str(int(time())),
             analysis="test",
-            event_creator_email="XXXXXXXXXXXXX",
+            event_creator_email=generate_unique_email(),
         )
         db.add(event)
         db.flush()
@@ -613,16 +732,6 @@ class TestGetFeedByIdInfo:
         db.refresh(sharing_group)
         feed_data["sharing_group_id"] = sharing_group.id
 
-        tag = Tag(
-            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
-            colour="#FFFFFF",
-            exportable=False,
-        )
-        db.add(tag)
-        db.flush()
-        db.refresh(tag)
-        feed_data["tag_id"] = tag.id
-
         organisation = Organisation(
             name="test",
             date_created=datetime.utcnow(),
@@ -632,13 +741,36 @@ class TestGetFeedByIdInfo:
         db.flush()
         db.refresh(organisation)
 
+        user = User(
+            password="XXXXXXXX",
+            org_id=organisation.id,
+            server_id=1,
+            email=generate_unique_email(),
+            autoalert=False,
+        )
+        db.add(user)
+        db.flush()
+        db.refresh(user)
+
+        tag = Tag(
+            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
+            colour="#FFFFFF",
+            exportable=False,
+            org_id=organisation.id,
+            user_id=user.id,
+        )
+        db.add(tag)
+        db.flush()
+        db.refresh(tag)
+        feed_data["tag_id"] = tag.id
+
         event = Event(
             org_id=organisation.id,
             orgc_id=organisation.id,
             info="test",
             date=str(int(time())),
             analysis="test",
-            event_creator_email="XXXXXXXXXXXXX",
+            event_creator_email=generate_unique_email(),
         )
         db.add(event)
         db.flush()
@@ -680,16 +812,6 @@ class TestGetFeedByIdInfo:
         db.refresh(sharing_group)
         feed_data["sharing_group_id"] = sharing_group.id
 
-        tag = Tag(
-            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
-            colour="#FFFFFF",
-            exportable=False,
-        )
-        db.add(tag)
-        db.flush()
-        db.refresh(tag)
-        feed_data["tag_id"] = tag.id
-
         organisation = Organisation(
             name="test",
             date_created=datetime.utcnow(),
@@ -699,13 +821,36 @@ class TestGetFeedByIdInfo:
         db.flush()
         db.refresh(organisation)
 
+        user = User(
+            password="XXXXXXXX",
+            org_id=organisation.id,
+            server_id=1,
+            email=generate_unique_email(),
+            autoalert=False,
+        )
+        db.add(user)
+        db.flush()
+        db.refresh(user)
+
+        tag = Tag(
+            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
+            colour="#FFFFFF",
+            exportable=False,
+            org_id=organisation.id,
+            user_id=user.id,
+        )
+        db.add(tag)
+        db.flush()
+        db.refresh(tag)
+        feed_data["tag_id"] = tag.id
+
         event = Event(
             org_id=organisation.id,
             orgc_id=organisation.id,
             info="test",
             date=str(int(time())),
             analysis="test",
-            event_creator_email="XXXXXXXXXXXXX",
+            event_creator_email=generate_unique_email(),
         )
         db.add(event)
         db.flush()
@@ -739,16 +884,6 @@ class TestUpdateFeed:
         db.refresh(sharing_group)
         feed_data["sharing_group_id"] = sharing_group.id
 
-        tag = Tag(
-            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
-            colour="#FFFFFF",
-            exportable=False,
-        )
-        db.add(tag)
-        db.flush()
-        db.refresh(tag)
-        feed_data["tag_id"] = tag.id
-
         organisation = Organisation(
             name="test",
             date_created=datetime.utcnow(),
@@ -758,13 +893,36 @@ class TestUpdateFeed:
         db.flush()
         db.refresh(organisation)
 
+        user = User(
+            password="XXXXXXXX",
+            org_id=organisation.id,
+            server_id=1,
+            email=generate_unique_email(),
+            autoalert=False,
+        )
+        db.add(user)
+        db.flush()
+        db.refresh(user)
+
+        tag = Tag(
+            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
+            colour="#FFFFFF",
+            exportable=False,
+            org_id=organisation.id,
+            user_id=user.id,
+        )
+        db.add(tag)
+        db.flush()
+        db.refresh(tag)
+        feed_data["tag_id"] = tag.id
+
         event = Event(
             org_id=organisation.id,
             orgc_id=organisation.id,
             info="test",
             date=str(int(time())),
             analysis="test",
-            event_creator_email="XXXXXXXXXXXXX",
+            event_creator_email=generate_unique_email(),
         )
         db.add(event)
         db.flush()
@@ -804,16 +962,6 @@ class TestUpdateFeed:
         db.refresh(sharing_group)
         feed_data["sharing_group_id"] = sharing_group.id
 
-        tag = Tag(
-            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
-            colour="#FFFFFF",
-            exportable=False,
-        )
-        db.add(tag)
-        db.flush()
-        db.refresh(tag)
-        feed_data["tag_id"] = tag.id
-
         organisation = Organisation(
             name="test",
             date_created=datetime.utcnow(),
@@ -823,13 +971,36 @@ class TestUpdateFeed:
         db.flush()
         db.refresh(organisation)
 
+        user = User(
+            password="XXXXXXXX",
+            org_id=organisation.id,
+            server_id=1,
+            email=generate_unique_email(),
+            autoalert=False,
+        )
+        db.add(user)
+        db.flush()
+        db.refresh(user)
+
+        tag = Tag(
+            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
+            colour="#FFFFFF",
+            exportable=False,
+            org_id=organisation.id,
+            user_id=user.id,
+        )
+        db.add(tag)
+        db.flush()
+        db.refresh(tag)
+        feed_data["tag_id"] = tag.id
+
         event = Event(
             org_id=organisation.id,
             orgc_id=organisation.id,
             info="test",
             date=str(int(time())),
             analysis="test",
-            event_creator_email="XXXXXXXXXXXXX",
+            event_creator_email=generate_unique_email(),
         )
         db.add(event)
         db.flush()
@@ -861,16 +1032,6 @@ class TestUpdateFeed:
         db.refresh(sharing_group)
         feed_data["sharing_group_id"] = sharing_group.id
 
-        tag = Tag(
-            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
-            colour="#FFFFFF",
-            exportable=False,
-        )
-        db.add(tag)
-        db.flush()
-        db.refresh(tag)
-        feed_data["tag_id"] = tag.id
-
         organisation = Organisation(
             name="test",
             date_created=datetime.utcnow(),
@@ -880,13 +1041,36 @@ class TestUpdateFeed:
         db.flush()
         db.refresh(organisation)
 
+        user = User(
+            password="XXXXXXXX",
+            org_id=organisation.id,
+            server_id=1,
+            email=generate_unique_email(),
+            autoalert=False,
+        )
+        db.add(user)
+        db.flush()
+        db.refresh(user)
+
+        tag = Tag(
+            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
+            colour="#FFFFFF",
+            exportable=False,
+            org_id=organisation.id,
+            user_id=user.id,
+        )
+        db.add(tag)
+        db.flush()
+        db.refresh(tag)
+        feed_data["tag_id"] = tag.id
+
         event = Event(
             org_id=organisation.id,
             orgc_id=organisation.id,
             info="test",
             date=str(int(time())),
             analysis="test",
-            event_creator_email="XXXXXXXXXXXXX",
+            event_creator_email=generate_unique_email(),
         )
         db.add(event)
         db.flush()
@@ -918,16 +1102,6 @@ class TestToggleFeed:
         db.refresh(sharing_group)
         feed_data["sharing_group_id"] = sharing_group.id
 
-        tag = Tag(
-            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
-            colour="#FFFFFF",
-            exportable=False,
-        )
-        db.add(tag)
-        db.flush()
-        db.refresh(tag)
-        feed_data["tag_id"] = tag.id
-
         organisation = Organisation(
             name="test",
             date_created=datetime.utcnow(),
@@ -937,13 +1111,36 @@ class TestToggleFeed:
         db.flush()
         db.refresh(organisation)
 
+        user = User(
+            password="XXXXXXXX",
+            org_id=organisation.id,
+            server_id=1,
+            email=generate_unique_email(),
+            autoalert=False,
+        )
+        db.add(user)
+        db.flush()
+        db.refresh(user)
+
+        tag = Tag(
+            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
+            colour="#FFFFFF",
+            exportable=False,
+            org_id=organisation.id,
+            user_id=user.id,
+        )
+        db.add(tag)
+        db.flush()
+        db.refresh(tag)
+        feed_data["tag_id"] = tag.id
+
         event = Event(
             org_id=organisation.id,
             orgc_id=organisation.id,
             info="test",
             date=str(int(time())),
             analysis="test",
-            event_creator_email="XXXXXXXXXXXXX",
+            event_creator_email=generate_unique_email(),
         )
         db.add(event)
         db.flush()
@@ -995,16 +1192,6 @@ class TestToggleFeed:
         db.refresh(sharing_group)
         feed_data["sharing_group_id"] = sharing_group.id
 
-        tag = Tag(
-            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
-            colour="#FFFFFF",
-            exportable=False,
-        )
-        db.add(tag)
-        db.flush()
-        db.refresh(tag)
-        feed_data["tag_id"] = tag.id
-
         organisation = Organisation(
             name="test",
             date_created=datetime.utcnow(),
@@ -1014,13 +1201,36 @@ class TestToggleFeed:
         db.flush()
         db.refresh(organisation)
 
+        user = User(
+            password="XXXXXXXX",
+            org_id=organisation.id,
+            server_id=1,
+            email=generate_unique_email(),
+            autoalert=False,
+        )
+        db.add(user)
+        db.flush()
+        db.refresh(user)
+
+        tag = Tag(
+            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
+            colour="#FFFFFF",
+            exportable=False,
+            org_id=organisation.id,
+            user_id=user.id,
+        )
+        db.add(tag)
+        db.flush()
+        db.refresh(tag)
+        feed_data["tag_id"] = tag.id
+
         event = Event(
             org_id=organisation.id,
             orgc_id=organisation.id,
             info="test",
             date=str(int(time())),
             analysis="test",
-            event_creator_email="XXXXXXXXXXXXX",
+            event_creator_email=generate_unique_email(),
         )
         db.add(event)
         db.flush()
@@ -1090,16 +1300,6 @@ class TestToggleFeed:
         db.refresh(sharing_group)
         feed_data["sharing_group_id"] = sharing_group.id
 
-        tag = Tag(
-            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
-            colour="#FFFFFF",
-            exportable=False,
-        )
-        db.add(tag)
-        db.flush()
-        db.refresh(tag)
-        feed_data["tag_id"] = tag.id
-
         organisation = Organisation(
             name="test",
             date_created=datetime.utcnow(),
@@ -1109,13 +1309,36 @@ class TestToggleFeed:
         db.flush()
         db.refresh(organisation)
 
+        user = User(
+            password="XXXXXXXX",
+            org_id=organisation.id,
+            server_id=1,
+            email=generate_unique_email(),
+            autoalert=False,
+        )
+        db.add(user)
+        db.flush()
+        db.refresh(user)
+
+        tag = Tag(
+            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
+            colour="#FFFFFF",
+            exportable=False,
+            org_id=organisation.id,
+            user_id=user.id,
+        )
+        db.add(tag)
+        db.flush()
+        db.refresh(tag)
+        feed_data["tag_id"] = tag.id
+
         event = Event(
             org_id=organisation.id,
             orgc_id=organisation.id,
             info="test",
             date=str(int(time())),
             analysis="test",
-            event_creator_email="XXXXXXXXXXXXX",
+            event_creator_email=generate_unique_email(),
         )
         db.add(event)
         db.flush()
@@ -1165,16 +1388,6 @@ class TestGetAllFeeds:
         db.refresh(sharing_group)
         feed_data["sharing_group_id"] = sharing_group.id
 
-        tag = Tag(
-            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
-            colour="#FFFFFF",
-            exportable=False,
-        )
-        db.add(tag)
-        db.flush()
-        db.refresh(tag)
-        feed_data["tag_id"] = tag.id
-
         organisation = Organisation(
             name="test",
             date_created=datetime.utcnow(),
@@ -1184,13 +1397,36 @@ class TestGetAllFeeds:
         db.flush()
         db.refresh(organisation)
 
+        user = User(
+            password="XXXXXXXX",
+            org_id=organisation.id,
+            server_id=1,
+            email=generate_unique_email(),
+            autoalert=False,
+        )
+        db.add(user)
+        db.flush()
+        db.refresh(user)
+
+        tag = Tag(
+            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
+            colour="#FFFFFF",
+            exportable=False,
+            org_id=organisation.id,
+            user_id=user.id,
+        )
+        db.add(tag)
+        db.flush()
+        db.refresh(tag)
+        feed_data["tag_id"] = tag.id
+
         event = Event(
             org_id=organisation.id,
             orgc_id=organisation.id,
             info="test",
             date=str(int(time())),
             analysis="test",
-            event_creator_email="XXXXXXXXXXXXX",
+            event_creator_email=generate_unique_email(),
         )
         db.add(event)
         db.flush()
@@ -1218,16 +1454,6 @@ class TestGetAllFeeds:
         db.refresh(sharing_group)
         feed_data["sharing_group_id"] = sharing_group.id
 
-        tag = Tag(
-            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
-            colour="#FFFFFF",
-            exportable=False,
-        )
-        db.add(tag)
-        db.flush()
-        db.refresh(tag)
-        feed_data["tag_id"] = tag.id
-
         organisation = Organisation(
             name="test",
             date_created=datetime.utcnow(),
@@ -1237,13 +1463,36 @@ class TestGetAllFeeds:
         db.flush()
         db.refresh(organisation)
 
+        user = User(
+            password="XXXXXXXX",
+            org_id=organisation.id,
+            server_id=1,
+            email=generate_unique_email(),
+            autoalert=False,
+        )
+        db.add(user)
+        db.flush()
+        db.refresh(user)
+
+        tag = Tag(
+            name="".join(random.choices(string.ascii_letters + string.digits, k=20)),
+            colour="#FFFFFF",
+            exportable=False,
+            org_id=organisation.id,
+            user_id=user.id,
+        )
+        db.add(tag)
+        db.flush()
+        db.refresh(tag)
+        feed_data["tag_id"] = tag.id
+
         event = Event(
             org_id=organisation.id,
             orgc_id=organisation.id,
             info="test",
             date=str(int(time())),
             analysis="test",
-            event_creator_email="XXXXXXXXXXXXX",
+            event_creator_email=generate_unique_email(),
         )
         db.add(event)
         db.flush()
@@ -1268,3 +1517,10 @@ class TestGetAllFeeds:
             assert "name" in feed_wrapper
             assert "provider" in feed_wrapper
             assert "url" in feed_wrapper
+
+
+def generate_unique_email() -> str:
+    timestamp = int(time())
+    random_str = uuid4().hex
+    email = f"unique-{timestamp}-{random_str}@test"
+    return email
