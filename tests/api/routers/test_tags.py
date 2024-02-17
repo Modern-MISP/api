@@ -6,9 +6,7 @@ from sqlalchemy.orm import Session
 
 from mmisp.db.database import get_db
 from mmisp.db.models.tag import Tag
-
-from ...environment import client, environment
-from ...generators.tag_generator import (
+from tests.api.helpers.tags_helper import (
     add_tags,
     generate_invalid_tag_data,
     generate_valid_required_tag_data,
@@ -19,6 +17,7 @@ from ...generators.tag_generator import (
     random_string_with_punctuation,
     remove_tags,
 )
+from tests.environment import client, environment
 
 
 @pytest.fixture(
@@ -47,22 +46,23 @@ def invalid_tag_data(request: Any) -> Dict[str, Any]:
 
 
 class TestAddTag:
-    def test_add_tag(self: "TestAddTag", tag_data: Dict[str, Any]) -> None:
-        tag_data.pop("name")
-        tag_data["name"] = random_string()
+    @staticmethod
+    def test_add_tag(tag_data: Dict[str, Any]) -> None:
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/tags/", json=tag_data, headers=headers)
         assert response.status_code == 201
 
         remove_tags([response.json()["id"]])
 
-    def test_add_tag_invalid_data(self: "TestAddTag", invalid_tag_data: Any) -> None:
+    @staticmethod
+    def test_add_tag_invalid_data(invalid_tag_data: Any) -> None:
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/tags/", json=invalid_tag_data, headers=headers)
         assert response.status_code == 422
         assert response.json()["detail"][0]["msg"] == "field required" or "none is not an allowed value"
 
-    def test_tag_response_format(self: "TestAddTag", tag_data: Dict[str, Any]) -> None:
+    @staticmethod
+    def test_tag_response_format(tag_data: Dict[str, Any]) -> None:
         tag_data.pop("name")
         tag_data["name"] = random_string()
         headers = {"authorization": environment.site_admin_user_token}
@@ -74,7 +74,8 @@ class TestAddTag:
 
 
 class TestViewTag:
-    def test_view_tag(self: "TestViewTag") -> None:
+    @staticmethod
+    def test_view_tag() -> None:
         headers = {"authorization": environment.site_admin_user_token}
         tags = add_tags()
         non_existing_tags = get_non_existing_tags()
@@ -94,7 +95,8 @@ class TestViewTag:
 
         remove_tags(tags)
 
-    def test_view_tag_response_format(self: "TestViewTag") -> None:
+    @staticmethod
+    def test_view_tag_response_format() -> None:
         headers = {"authorization": environment.site_admin_user_token}
 
         tag = add_tags(1)
@@ -108,8 +110,9 @@ class TestViewTag:
 
 
 # TODO: Need implementation of Taxonomies and TaxonomyPredicates
+@staticmethod
 class TestSearchTagByTagSearchTerm:
-    def test_search_tag(self: "TestSearchTagByTagSearchTerm") -> None:
+    def test_search_tag() -> None:
         db: Session = get_db()
         headers = {"authorization": environment.site_admin_user_token}
 
@@ -132,7 +135,8 @@ class TestSearchTagByTagSearchTerm:
 
         remove_tags(tags)
 
-    def test_search_tag_response_format(self: "TestSearchTagByTagSearchTerm") -> None:
+    @staticmethod
+    def test_search_tag_response_format() -> None:
         headers = {"authorization": environment.site_admin_user_token}
         db: Session = get_db()
         tag = add_tags(1)
@@ -150,7 +154,8 @@ class TestSearchTagByTagSearchTerm:
 
 
 class TestEditTag:
-    def test_edit_tag(self: "TestEditTag", tag_data: Dict[str, Any]) -> None:
+    @staticmethod
+    def test_edit_tag(tag_data: Dict[str, Any]) -> None:
         headers = {"authorization": environment.site_admin_user_token}
 
         tags = add_tags()
@@ -171,7 +176,8 @@ class TestEditTag:
 
         remove_tags(tags)
 
-    def test_edit_tag_same_name(self: "TestEditTag") -> None:
+    @staticmethod
+    def test_edit_tag_same_name() -> None:
         headers = {"authorization": environment.site_admin_user_token}
         db: Session = get_db()
 
@@ -183,7 +189,8 @@ class TestEditTag:
 
         remove_tags(tags)
 
-    def test_edit_tag_response_format(self: "TestEditTag", tag_data: Dict[str, Any]) -> None:
+    @staticmethod
+    def test_edit_tag_response_format(tag_data: Dict[str, Any]) -> None:
         tag = add_tags(1)
 
         headers = {"authorization": environment.site_admin_user_token}
@@ -198,7 +205,8 @@ class TestEditTag:
 
 
 class TestDeleteTag:
-    def test_delete_tag(self: "TestDeleteTag") -> None:
+    @staticmethod
+    def test_delete_tag() -> None:
         headers = {"authorization": environment.site_admin_user_token}
 
         tags = add_tags()
@@ -217,7 +225,8 @@ class TestDeleteTag:
             response = client.delete(f"/tags/{invalid_tag}", headers=headers)
             assert response.status_code == 404
 
-    def test_edit_delete_response_format(self: "TestDeleteTag") -> None:
+    @staticmethod
+    def test_edit_delete_response_format() -> None:
         headers = {"authorization": environment.site_admin_user_token}
         tag = add_tags(1)
         response = client.delete(f"tags/{tag[0]}", headers=headers)
@@ -227,12 +236,14 @@ class TestDeleteTag:
 
 
 class TestGetAllTags:
-    def test_get_all_tags(self: "TestGetAllTags") -> None:
+    @staticmethod
+    def test_get_all_tags() -> None:
         headers = {"authorization": environment.site_admin_user_token}
         response = client.get("/tags/", headers=headers)
         assert response.status_code == 200
 
-    def test_test_get_all_tags_response_format(self: "TestGetAllTags") -> None:
+    @staticmethod
+    def test_test_get_all_tags_response_format() -> None:
         tags = add_tags(1)
 
         headers = {"authorization": environment.site_admin_user_token}
