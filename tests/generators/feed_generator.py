@@ -1,7 +1,7 @@
 import random
 import string
 
-from mmisp.api_schemas.feeds.create_update_feed_body import FeedCreateAndUpdateBody
+from mmisp.api_schemas.feeds.create_feed_body import FeedCreateBody
 
 
 def generate_number_as_str() -> str:
@@ -18,16 +18,16 @@ def random_string(length: int = 10) -> str:
     return "".join(random.choices(string.ascii_letters + string.digits, k=length))
 
 
-def generate_valid_required_feed_data() -> FeedCreateAndUpdateBody:
-    return FeedCreateAndUpdateBody(
+def generate_valid_required_feed_data() -> FeedCreateBody:
+    return FeedCreateBody(
         name=random_string(),
         provider=random_string(),
         url=f"http://{random_string()}.com",
     )
 
 
-def generate_valid_feed_data() -> FeedCreateAndUpdateBody:
-    return FeedCreateAndUpdateBody(
+def generate_valid_feed_data() -> FeedCreateBody:
+    return FeedCreateBody(
         name=random_string(),
         provider=random_string(),
         url=f"http://{random_string()}.com",
@@ -54,8 +54,8 @@ def generate_valid_feed_data() -> FeedCreateAndUpdateBody:
     )
 
 
-def generate_random_valid_feed_data() -> FeedCreateAndUpdateBody:
-    return FeedCreateAndUpdateBody(
+def generate_random_valid_feed_data() -> FeedCreateBody:
+    return FeedCreateBody(
         name=random_string(),
         provider=random_string(),
         url=f"http://{random_string()}.com",
