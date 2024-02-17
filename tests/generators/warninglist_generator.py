@@ -8,7 +8,7 @@ from mmisp.api_schemas.warninglists.create_warninglist_body import CreateWarning
 from mmisp.api_schemas.warninglists.toggle_enable_warninglists_body import ToggleEnableWarninglistsBody
 from mmisp.api_schemas.warninglists.warninglist_response import Category, Type
 from mmisp.db.database import get_db
-from mmisp.db.models.warninglist import Warninglist
+from mmisp.db.models.warninglist import Warninglist, WarninglistEntry
 from mmisp.util.partial import partial
 
 
