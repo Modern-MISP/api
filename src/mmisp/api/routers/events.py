@@ -264,7 +264,7 @@ async def remove_tag_from_event(
 #     status_code=status.HTTP_501_NOT_IMPLEMENTED,
 #     response_model=list[partial(AddAttributeViaFreeTextImportEventResponse)],
 #     summary="Add attribute to event",
-#     description="Add attribute to event via free text import.",
+#     description="Add attribute to event via free text import. NOT YET IMPLEMENTED!",
 # )
 # async def add_attribute_via_free_text_import(
 #         auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.ADD]))],
@@ -424,12 +424,9 @@ async def _update_event(db: Session, event_id: str, body: EditEventBody) -> dict
 
 
 async def _delete_event(db: Session, event_id: str) -> DeleteEventResponse:
-    event = check_existence_and_raise(db, Event, event_id, "event_id", "Event not found.")
+    event = db.get(Event, event_id)
 
-    try:
-        int(event_id)
-    except ValueError:
-        logger.error("Failed to delete event: Invalid 'event_id'")
+    if event is None:
         return DeleteEventResponse(
             saved=False,
             name="Could not delete Event",
