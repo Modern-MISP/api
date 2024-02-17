@@ -1,6 +1,13 @@
 from pydantic import BaseModel
 
-from .get_all_events_response import GetAllEventsOrg
+from .get_all_events_response import GetAllEventsGalaxyCluster, GetAllEventsOrg
+
+
+class IndexEventsEventTag(BaseModel):
+    id: str
+    event_id: str
+    tag_id: str
+    local: bool
 
 
 class IndexEventsAttributes(BaseModel):
@@ -26,12 +33,8 @@ class IndexEventsAttributes(BaseModel):
     protected: bool
     Org: GetAllEventsOrg
     Orgc: GetAllEventsOrg
-    GalaxyCluster: list[str]
-    EventTag: list[str]
-
-
-class IndexEventsResponse(BaseModel):
-    events: list[IndexEventsAttributes]
+    GalaxyCluster: list[GetAllEventsGalaxyCluster] = []
+    EventTag: list[IndexEventsEventTag] = []
 
     class Config:
         orm_mode = True

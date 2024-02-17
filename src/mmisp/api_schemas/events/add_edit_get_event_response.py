@@ -88,7 +88,7 @@ class AddEditGetEventOrg(BaseModel):
     id: str
     name: str
     uuid: str
-    local: bool
+    local: bool | None = None
 
 
 class AddEditGetEventShadowAttribute(BaseModel):
