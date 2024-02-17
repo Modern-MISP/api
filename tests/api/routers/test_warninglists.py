@@ -270,13 +270,13 @@ class TestUpdateWarninglist:
         headers = {"authorization": environment.site_admin_user_token}
         response = client.put("/warninglists", headers=headers)
         assert response.headers["Content-Type"] == "application/json"
-        json = response.json()
-        assert json["url"] == "/warninglists"
+        jason = response.json()
+        jason["url"] == "/warninglists"
 
         response = client.post("/warninglists/update", headers=headers)
         assert response.headers["Content-Type"] == "application/json"
-        json = response.json()
-        assert json["url"] == "/warninglists/update"
+        jason = response.json()
+        jason["url"] == "/warninglists/update"
 
     def test_update_warninglist_authorization(self: "TestUpdateWarninglist") -> None:
         headers = {"authorization": ""}
