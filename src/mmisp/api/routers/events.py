@@ -12,10 +12,6 @@ from starlette import status
 from starlette.requests import Request
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
-from mmisp.api_schemas.attributes.get_describe_types_response import GetDescribeTypesAttributes
-from mmisp.api_schemas.events.add_attribute_via_free_text_import_event_response import (
-    AddAttributeViaFreeTextImportEventResponse,
-)
 from mmisp.api_schemas.events.add_edit_get_event_response import (
     AddEditGetEventAttribute,
     AddEditGetEventDetails,
@@ -41,7 +37,7 @@ from mmisp.api_schemas.events.get_all_events_response import (
     GetAllEventsResponse,
 )
 from mmisp.api_schemas.events.index_events_body import IndexEventsBody
-from mmisp.api_schemas.events.index_events_response import IndexEventsResponse
+from mmisp.api_schemas.events.index_events_response import IndexEventsAttributes
 from mmisp.api_schemas.events.publish_event_response import PublishEventResponse
 from mmisp.api_schemas.events.search_events_body import SearchEventsBody
 from mmisp.api_schemas.events.search_events_response import SearchEventsResponse
@@ -158,8 +154,8 @@ async def delete_event(
     "/events",
     status_code=status.HTTP_200_OK,
     response_model=list[partial(GetAllEventsResponse)],
-    summary="Get all attributes",
-    description="Retrieve a list of all available attribute types and categories.",
+    summary="Get all events",
+    description="Retrieve a list of all events.",
 )
 async def get_all_events(db: Annotated[Session, Depends(get_db)]) -> dict:
     return await _get_events(db)
@@ -170,27 +166,26 @@ async def get_all_events(db: Annotated[Session, Depends(get_db)]) -> dict:
 
 @router.post(
     "/events/restSearch",
-    status_code=status.HTTP_501_NOT_IMPLEMENTED,
+    status_code=status.HTTP_200_OK,
     response_model=partial(SearchEventsResponse),
     summary="Search events",
-    description="Search for events based on various filters. NOT YET AVAILABLE!",
+    description="Search for events based on various filters.",
 )
 async def rest_search_events(
     db: Annotated[Session, Depends(get_db)],
     body: SearchEventsBody,
 ) -> dict:
-    return await _rest_search_events(db)
+    return await _rest_search_events(db, body)
 
 
 @router.post(
     "/events/index",
-    status_code=status.HTTP_501_NOT_IMPLEMENTED,
-    response_model=partial(IndexEventsResponse),
+    status_code=status.HTTP_200_OK,
+    response_model=list[partial(GetAllEventsResponse)],
     summary="Search events",
-    description="Search for events based on various filters, which are more general than the ones in 'rest search'."
-    "NOT YET AVAILABLE!",
+    description="Search for events based on various filters, which are more general than the ones in 'rest search'.",
 )
-async def index_events(db: Annotated[Session, Depends(get_db)], body: IndexEventsBody) -> list[IndexEventsResponse]:
+async def index_events(db: Annotated[Session, Depends(get_db)], body: IndexEventsBody) -> list[IndexEventsAttributes]:
     return await _index_events(db, body)
 
 
@@ -267,7 +262,7 @@ async def remove_tag_from_event(
 #     description="Add attribute to event via free text import. NOT YET IMPLEMENTED!",
 # )
 # async def add_attribute_via_free_text_import(
-#         auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.ADD]))],
+#         auth: Annotated[Auth, Depends(authorize(AuthStrategy.WORKER_KEY, [Permission.ADD]))],
 #         db: Annotated[Session, Depends(get_db)],
 #         event_id: Annotated[str, Path(..., alias="eventId")],
 #         body: AddAttributeViaFreeTextImportEventBody,
@@ -279,8 +274,9 @@ async def remove_tag_from_event(
 #     print(worker_body)
 #     async with httpx.AsyncClient() as client:
 #         response = await client.post(
-#             "http://http://worker.mmisp.cert.kit.edu/job/processFreeText", json=worker_body)
+#             config.WORKER_URL, json=worker_body)
 #     response_json = response.json()
+#     print(response_json)
 #     return await _add_attribute_via_free_text_import(db, event_id, response_json)
 
 
@@ -391,7 +387,7 @@ async def _add_event(auth: Auth, db: Session, body: AddEventBody) -> dict:
 
 
 async def _get_event_details(db: Session, event_id: str) -> dict:
-    event = check_existence_and_raise(db, Event, event_id, "event_id", "Event not found.")
+    event = check_existence_and_raise(db, Event, event_id, "id", "Event not found.")
 
     event_data = _prepare_event_response(db, event)
 
@@ -399,7 +395,7 @@ async def _get_event_details(db: Session, event_id: str) -> dict:
 
 
 async def _update_event(db: Session, event_id: str, body: EditEventBody) -> dict:
-    existing_event = check_existence_and_raise(db, Event, event_id, "event_id", "Event not found.")
+    existing_event = check_existence_and_raise(db, Event, event_id, "id", "Event not found.")
 
     update_data = body.dict(exclude_unset=True)
     for key, value in update_data.items():
@@ -427,12 +423,15 @@ async def _delete_event(db: Session, event_id: str) -> DeleteEventResponse:
     event = db.get(Event, event_id)
 
     if event is None:
-        return DeleteEventResponse(
-            saved=False,
-            name="Could not delete Event",
-            message="Could not delete Event",
-            url=f"/events/delete/{event_id}",
-            errors="Event was not deleted.",
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=DeleteEventResponse(
+                saved=False,
+                name="Could not delete Event",
+                message="Could not delete Event",
+                url=f"/events/delete/{event_id}",
+                errors="Event was not deleted.",
+            ).dict(),
         )
 
     try:
@@ -458,7 +457,7 @@ async def _delete_event(db: Session, event_id: str) -> DeleteEventResponse:
 
 
 async def _get_events(db: Session) -> dict:
-    events = db.query(Event).limit(2)
+    events = db.query(Event).all()
 
     if not events:
         logger.error("No events found.")
@@ -471,12 +470,38 @@ async def _get_events(db: Session) -> dict:
     return event_responses
 
 
-async def _rest_search_events(db: Session) -> dict:
-    return SearchEventsResponse()
+async def _rest_search_events(db: Session, body: SearchEventsBody) -> dict:
+    if body.returnFormat != "json":
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid output format.")
+    events = db.query(Event).all()
+    for field, value in body.dict().items():
+        event_dict = db.query(Event).__dict__.copy()
+        if field not in event_dict:
+            continue
+        events = db.query(Event).filter(getattr(Event, field) == value).all()
+
+        # todo: not all fields in 'SearchAttributesBody' are taken into account yet
+
+    response_list = []
+    for event in events:
+        response_list.append(AddEditGetEventResponse(Event=_prepare_event_response(db, event)))
+
+    return SearchEventsResponse(response=response_list)
 
 
 async def _index_events(db: Session, body: IndexEventsBody) -> dict:
-    return IndexEventsResponse()
+    events = db.query(Event).all()
+    for field, value in body.dict().items():
+        event_dict = db.query(Event).__dict__.copy()
+        if field not in event_dict:
+            continue
+        events = db.query(Event).filter(getattr(Event, field) == value).all()
+
+        # todo: not all fields in 'IndexEventsBody' are taken into account yet
+
+    response_list = [_prepare_all_events_response(db, event) for event in events]
+
+    return response_list
 
 
 async def _publish_event(db: Session, event_id: str, request: Request) -> PublishEventResponse:
@@ -539,7 +564,7 @@ async def _unpublish_event(db: Session, event_id: str, request: Request) -> Unpu
 
 
 async def _add_tag_to_event(db: Session, event_id: str, tag_id: str, local: str) -> dict:
-    check_existence_and_raise(db, Event, event_id, "event_id", "Event not found")
+    check_existence_and_raise(db, Event, event_id, "id", "Event not found")
 
     try:
         int(tag_id)
@@ -580,7 +605,7 @@ async def _add_tag_to_event(db: Session, event_id: str, tag_id: str, local: str)
 
 
 async def _remove_tag_from_event(db: Session, event_id: str, tag_id: str) -> dict:
-    check_existence_and_raise(db, Event, event_id, "event_id", "Event not found")
+    check_existence_and_raise(db, Event, event_id, "id", "Event not found")
 
     try:
         int(tag_id)
@@ -611,25 +636,25 @@ async def _remove_tag_from_event(db: Session, event_id: str, tag_id: str) -> dic
     return AddRemoveTagEventsResponse(saved=True, success="Tag removed", check_publish=True)
 
 
-async def _add_attribute_via_free_text_import(db: Session, event_id: str, response_json: Any) -> dict:
-    check_existence_and_raise(db, Event, event_id, "event_id", "Event not found")
-    response_list = []
-
-    for attribute in response_json["attributes"]:
-        value = response_json["attributes"]["Items"]["value"]
-        attribute_type = response_json["attributes"]["Items"]["default_type"]
-        category = GetDescribeTypesAttributes().sane_defaults[type]["default_category"]
-
-        new_attribute = Attribute(event_id=event_id, value=value, type=attribute_type, category=category)
-
-        db.add(new_attribute)
-        db.commit()
-
-        attribute_response_dict = new_attribute.__dict__.copy()
-        attribute_response_dict["original_value"] = new_attribute.value
-        response_list.append(AddAttributeViaFreeTextImportEventResponse(**attribute_response_dict))
-
-    return response_list
+# async def _add_attribute_via_free_text_import(db: Session, event_id: str, response_json: Any) -> dict:
+#     check_existence_and_raise(db, Event, event_id, "id", "Event not found")
+#     response_list = []
+#
+#     for attribute in response_json["attributes"]:
+#         value = response_json["attributes"]["Items"]["value"]
+#         attribute_type = response_json["attributes"]["Items"]["default_type"]
+#         category = GetDescribeTypesAttributes().sane_defaults[type]["default_category"]
+#
+#         new_attribute = Attribute(event_id=event_id, value=value, type=attribute_type, category=category)
+#
+#         db.add(new_attribute)
+#         db.commit()
+#
+#         attribute_response_dict = new_attribute.__dict__.copy()
+#         attribute_response_dict["original_value"] = new_attribute.value
+#         response_list.append(AddAttributeViaFreeTextImportEventResponse(**attribute_response_dict))
+#
+#     return response_list
 
 
 def _prepare_event_response(db: Session, event: Event) -> AddEditGetEventDetails:
@@ -725,13 +750,14 @@ def _prepare_tag_response(db: Session, tag_list: list[Any]) -> list[AddEditGetEv
         tag = db.get(Tag, int(attribute_or_event_tag.tag_id))
         attribute_or_event_tag_dict = tag.__dict__.copy()
 
-        del (
-            attribute_or_event_tag_dict["attribute_count"],
-            attribute_or_event_tag_dict["count"],
-            attribute_or_event_tag_dict["favourite"],
-        )
+        # del (
+        #     attribute_or_event_tag_dict["attribute_count"],
+        #     attribute_or_event_tag_dict["count"],
+        #     attribute_or_event_tag_dict["favourite"],
+        # )
 
         attribute_or_event_tag_dict["local"] = attribute_or_event_tag.local
+        attribute_or_event_tag_dict["local_only"] = tag.inherited
         tag_response_list.append(AddEditGetEventTag(**attribute_or_event_tag_dict))
 
     return tag_response_list
@@ -749,7 +775,7 @@ def _prepare_galaxy_response(
         if len(galaxy_cluster_list) > 0:
             galaxy_dict["GalaxyCluster"] = _prepare_galaxy_cluster_response(db, galaxy_cluster_list, attribute)
 
-        galaxy_dict["local_only"] = db.query(Tag).filter(Tag.name == galaxy_cluster_list[0].tag_name).first().local_only
+        galaxy_dict["local_only"] = db.query(Tag).filter(Tag.name == galaxy_cluster_list[0].tag_name).first().inherited
 
         galaxy_response_list.append(AddEditGetEventGalaxy(**galaxy_dict))
 
@@ -887,7 +913,7 @@ def _prepare_all_events_galaxy_cluster_response(
 
                 galaxy = db.get(Galaxy, galaxy_cluster.galaxy_id)
                 galaxy_dict = galaxy.__dict__.copy()
-                galaxy_dict["local_only"] = tag.local_only
+                galaxy_dict["local_only"] = tag.inherited
 
                 galaxy_cluster_dict["authors"] = galaxy_cluster.authors.split(" ")
                 tag = db.query(Tag).filter(Tag.name == galaxy_cluster.tag_name).first()
@@ -896,6 +922,7 @@ def _prepare_all_events_galaxy_cluster_response(
                 galaxy_cluster_dict["tag_id"] = tag.id
                 galaxy_cluster_dict["extends_uuid"] = ""
                 galaxy_cluster_dict["extends_version"] = "0"
+                galaxy_cluster_dict["collection_uuid"] = ""
 
                 galaxy_cluster_dict["Galaxy"] = GetAllEventsGalaxyClusterGalaxy(**galaxy_dict)
 
