@@ -4,59 +4,39 @@ from typing import Any
 
 from sqlalchemy import func
 from sqlalchemy.orm import Session
-from tests.generators.model_generators.organisation_generator import generate_organisation
-from tests.generators.model_generators.user_generator import generate_user
 
 from mmisp.api_schemas.tags.create_tag_body import TagCreateBody
 from mmisp.db.database import get_db
-from mmisp.db.models.organisation import Organisation
 from mmisp.db.models.tag import Tag
-from mmisp.db.models.user import User
 
 
+# TODO: util class for generate numbers/strings
 def generate_number() -> int:
     number = random.randint(1, 4)
     return number
 
 
-def get_org_id() -> str:
-    db: Session = get_db()
-    organisation = db.query(Organisation).first()
-    if organisation is None:
-        organisation = Organisation(generate_organisation())
-        db.add(organisation)
-        db.commit()
-
-    return str(organisation.id)
-
-
-def get_user_id() -> str:
-    db: Session = get_db()
-    user = db.query(User).first()
-    if user is None:
-        user = User(generate_user())
-        db.add(user)
-        db.commit()
-
-    return str(user.id)
+def generate_ids_as_str() -> str:
+    id_str = random.randint(1, 10)
+    return str(id_str)
 
 
 def random_string_with_punctuation(length: int = 10) -> str:
-    return random_string(length - 1) + "++"
+    return random_string(length - 1).join(random.choice(string.punctuation))
 
 
 def random_string(length: int = 10) -> str:
     return "".join(random.choices(string.ascii_letters + string.digits, k=length))
 
 
-def random_hexcolour(length: int = 6) -> str:
+def random_hexcolour(length: int = 3) -> str:
     return "#" + "".join(random.choices(string.hexdigits, k=length))
 
 
 def generate_valid_required_tag_data() -> TagCreateBody:
     return TagCreateBody(
         name=random_string(),
-        colour=random_hexcolour(),
+        colour=random_hexcolour(6),
         exportable=bool(random.getrandbits),
     )
 
@@ -64,10 +44,10 @@ def generate_valid_required_tag_data() -> TagCreateBody:
 def generate_valid_tag_data() -> TagCreateBody:
     return TagCreateBody(
         name=random_string(),
-        colour=random_hexcolour(),
+        colour=random_hexcolour(6),
         exportable=bool(random.getrandbits),
-        org_id=get_org_id(),
-        user_id=get_user_id(),
+        org_id=generate_ids_as_str(),
+        user_id=generate_ids_as_str(),
         hide_tag=bool(random.getrandbits),
         numerical_value=generate_number(),
         inherited=bool(random.getrandbits),
@@ -87,7 +67,7 @@ def generate_invalid_tag_data() -> Any:
     return {"name": input_list[0], "colour": input_list[1], "exportable": input_list[2]}
 
 
-def add_tags(number: int = 10) -> list[int]:
+def generate_tags(number: int = 10) -> list:
     db: Session = get_db()
     tag_ids = []
     for i in range(number):
@@ -125,7 +105,5 @@ def remove_tags(ids: list[int]) -> None:
     db: Session = get_db()
     for id in ids:
         tag = db.get(Tag, id)
-        if tag is not None:
-            db.delete(tag)
-
-    db.commit()
+        db.delete(tag)
+        db.commit()
