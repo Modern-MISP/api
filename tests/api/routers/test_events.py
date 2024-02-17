@@ -681,7 +681,7 @@ class TestRemoveTagFromEvent:
         response = client.post("/events/removeTag/1/1", headers=headers)
         assert response.headers["Content-Type"] == "application/json"
 
-    def test_remove_tag_from_attribute(self: "TestRemoveTagFromEvent") -> None:
+    def test_remove_tag_from_attribute_authorization(self: "TestRemoveTagFromEvent") -> None:
         headers = {"authorization": ""}
         response = client.post("/events/removeTag/1/1", headers=headers)
         assert response.status_code == 401
