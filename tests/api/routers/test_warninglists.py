@@ -192,16 +192,16 @@ class TestGetAllOrSelectedWarninglists:
 
         assert response.status_code == 200
 
-    def test_get_warninglist_by_value(self: "TestGetAllOrSelectedWarninglists") -> None:
+    def test_get_all_warninglists(self: "TestGetAllOrSelectedWarninglists") -> None:
         db: Session = get_db()
-        warninglist_ids = add_warninglists(1)
-        warninglist_name = db.get(Warninglist, warninglist_ids[0]).name
+        warninglist_id, *_ = add_warninglists(1)
+        warninglist: Warninglist = db.get(Warninglist, warninglist_id)
 
         headers = {"authorization": environment.site_admin_user_token}
-        response = client.get(f"/warninglists?value={warninglist_name}&enabled=True", headers=headers)
+        response = client.get(f"/warninglists?value={warninglist.name}&enabled=True", headers=headers)
         assert response.status_code == 200
 
-        response = client.get("/warninglists?value={warninglist_name}", headers=headers)
+        response = client.get(f"/warninglists?value={warninglist.name}", headers=headers)
         assert response.status_code == 200
 
         response = client.get("/warninglists?enabled=True", headers=headers)
@@ -210,18 +210,17 @@ class TestGetAllOrSelectedWarninglists:
         response = client.get("/warninglists?enabled=False", headers=headers)
         assert response.status_code == 200
 
-        remove_warninglists(warninglist_ids)
+        remove_warninglists([warninglist_id])
 
-    def test_get_warninglist_response_format(self: "TestGetAllOrSelectedWarninglists") -> None:
+    def test_get_all_warninglist_response_format(self: "TestGetAllOrSelectedWarninglists") -> None:
         db: Session = get_db()
         warninglist_ids = add_warninglists(1)
         warninglist_name = db.get(Warninglist, warninglist_ids[0]).name
 
         headers = {"authorization": environment.site_admin_user_token}
         response = client.get(f"/warninglists?value={warninglist_name}", headers=headers)
-        assert response.headers["Content-Type"] == "application/json"
-        data = response.json()
-        assert isinstance(data["response"], list)
+        json = response.json()
+        assert isinstance(json["response"], list)
 
         remove_warninglists(warninglist_ids)
 
@@ -229,16 +228,21 @@ class TestGetAllOrSelectedWarninglists:
 class TestGetWarninglistByValue:
     def test_get_warninglist_by_value(self: "TestGetWarninglistByValue") -> None:
         db: Session = get_db()
-        warninglist_ids = add_warninglists(1)
-        warninglist_entry = db.get(WarninglistEntry, warninglist_ids[0]).value
+        warninglist_id, *_ = add_warninglists(1)
+        warninglist_entry: WarninglistEntry = (
+            db.query(WarninglistEntry).filter(WarninglistEntry.warninglist_id == warninglist_id).first()
+        )
 
         headers = {"authorization": environment.site_admin_user_token}
-        value_data = CheckValueWarninglistsBody(value=[warninglist_entry]).dict()
+        value_data = CheckValueWarninglistsBody(value=[warninglist_entry.value]).dict()
         response = client.post("/warninglists/checkValue", json=value_data, headers=headers)
 
         assert response.status_code == 200
 
-        remove_warninglists(warninglist_ids)
+        json = response.json()
+        assert next((entry for entry in json["response"] if entry["value"] == warninglist_entry.value), None)
+
+        remove_warninglists([warninglist_id])
 
     def test_get_warninglist_response_format(self: "TestGetWarninglistByValue") -> None:
         db: Session = get_db()
