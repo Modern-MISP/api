@@ -1,10 +1,12 @@
+from datetime import datetime
 from time import time
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, Path, status
+from fastapi import APIRouter, Depends, HTTPException, Path, status
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
-from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
+from mmisp.api.auth import Auth, AuthStrategy, authorize
 from mmisp.api_schemas.attributes.get_all_attributes_response import GetAllAttributesResponse
 from mmisp.api_schemas.events.get_event_response import ObjectEventResponse
 from mmisp.api_schemas.objects.create_object_body import ObjectCreateBody
@@ -36,7 +38,7 @@ router = APIRouter(tags=["objects"])
     description="Add a new object to a specific event using a template.",
 )
 async def add_object(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.ADD]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     event_id: Annotated[str, Path(..., alias="eventId")],
     object_template_id: Annotated[str, Path(..., alias="objectTemplateId")],
@@ -52,7 +54,11 @@ async def add_object(
     summary="Search objects",
     description="Search for objects based on various filters.",
 )
-async def restsearch(db: Annotated[Session, Depends(get_db)], body: ObjectSearchBody) -> dict[str, Any]:
+async def restsearch(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    db: Annotated[Session, Depends(get_db)],
+    body: ObjectSearchBody,
+) -> dict[str, Any]:
     return await _restsearch(db, body)
 
 
@@ -64,6 +70,7 @@ async def restsearch(db: Annotated[Session, Depends(get_db)], body: ObjectSearch
     description="View details of a specific object including its attributes and related event.",
 )
 async def get_object_details(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     object_id: Annotated[str, Path(..., alias="objectId")],
 ) -> dict[str, Any]:
@@ -78,7 +85,7 @@ async def get_object_details(
     description="Delete a specific object. The hardDelete parameter determines if it's a hard or soft delete.",
 )
 async def delete_object(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.MODIFY]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     object_id: Annotated[str, Path(..., alias="objectId")],
     hard_delete: Annotated[bool, Path(..., alias="hardDelete")],
@@ -98,7 +105,7 @@ async def delete_object(
     description="Deprecated. Add an object to an event using the old route.",
 )
 async def add_object_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.ADD]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     event_id: Annotated[str, Path(..., alias="eventId")],
     object_template_id: Annotated[str, Path(..., alias="objectTemplateId")],
@@ -116,6 +123,7 @@ async def add_object_depr(
     description="Deprecated. View details of a specific object using the old route.",
 )
 async def get_object_details_depr(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     object_id: Annotated[str, Path(..., alias="objectId")],
 ) -> dict[str, Any]:
@@ -133,7 +141,7 @@ async def get_object_details_depr(
     The hardDelete parameter determines if it's a hard or soft delete.""",
 )
 async def delete_object_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.MODIFY]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     object_id: Annotated[str, Path(..., alias="objectId")],
     hard_delete: Annotated[bool, Path(..., alias="hardDelete")],
@@ -191,10 +199,13 @@ async def _add_object(db: Session, event_id: str, object_template_id: str, body:
 
 
 async def _restsearch(db: Session, body: ObjectSearchBody) -> dict[str, Any]:
-    for field, value in body.dict().items():
-        objects: list[Object] = db.query(Object).filter(getattr(Object, field) == value).all()
+    if body.return_format is None:
+        body.return_format = "json"
+    else:
+        check_valid_return_format(return_format=body.return_format)
 
-        # todo: not all fields in 'ObjectSearchBody' are taken into account yet
+    filters = body.dict(exclude_unset=True)
+    objects: list[Object] = _build_query(db, filters)
 
     objects_data: list[ObjectWithAttributesResponse] = [
         ObjectWithAttributesResponse(**object.__dict__, attributes=object.attributes, event=None) for object in objects
@@ -257,235 +268,132 @@ def _create_timestamp() -> int:
     return int(time())
 
 
-#####################################################################
-#####################################################################
-###                                                               ###
-###     Search logic for all fields in ObjectSearchBody (wip)     ###
-###                                                               ###
-#####################################################################
-#####################################################################
+def check_valid_return_format(return_format: str) -> None:
+    if return_format not in ["json"]:
+        raise HTTPException(status_code=400, detail="Invalid return format.")
 
 
-# def _build_query(db: Session, search_body: ObjectSearchBody) -> list[Object]:
-#     query = db.query(Object)
+def _build_query(db: Session, filters: ObjectSearchBody) -> list[Object]:
+    search_body: ObjectSearchBody = ObjectSearchBody(**filters)
+    query: Object = db.query(Object)
 
-#     if search_body.object_name:
-#         query = query.filter(Object.name == search_body.object_name)
+    if search_body.object_name:
+        query = query.filter(Object.name == search_body.object_name)
 
-#     if search_body.object_template_uuid:
-#         query = query.filter(Object.template_id == search_body.object_template_uuid)
+    if search_body.object_template_uuid:
+        query = query.filter(str(Object.template_id) == search_body.object_template_uuid)
 
-#     if search_body.eventid:
-#         query = query.filter(Object.event_id == search_body.eventid)
+    if search_body.object_template_version:
+        query = query.filter(str(Object.template_version) == search_body.object_template_version)
 
-#     if search_body.meta_category:
-#         query = query.filter(Object.meta_category == search_body.meta_category)
+    if search_body.event_id:
+        query = query.filter(str(Object.event_id) == search_body.event_id)
 
-#     if search_body.distribution:
-#         query = query.filter(Object.distribution == search_body.distribution)
+    if search_body.category:
+        query = query.filter(Object.meta_category == search_body.category)
 
-#     if search_body.sharing_group_id:
-#         query = query.filter(Object.sharing_group_id == search_body.sharing_group_id)
+    if search_body.comment:
+        query = query.filter(Object.comment.like(f"%{search_body.comment}%"))
 
-#     if search_body.comment:
-#         query = query.filter(Object.comment.like(f"%{search_body.comment}%"))
+    if search_body.first_seen:
+        query = query.filter(str(Object.first_seen) == search_body.first_seen)
 
-#     if search_body.first_seen:
-#         query = query.filter(Object.first_seen == search_body.first_seen)
+    if search_body.last_seen:
+        query = query.filter(str(Object.last_seen) == search_body.last_seen)
 
-#     if search_body.last_seen:
-#         query = query.filter(Object.last_seen == search_body.last_seen)
+    if search_body.quick_filter:
+        query = query.filter(
+            or_(
+                Object.name.like(f"%{search_body.quick_filter}%"),
+                Object.description.like(f"%{search_body.quick_filter}%"),
+            )
+        )
 
-#     if search_body.page:
-#         query = query.offset((search_body.page - 1) * search_body.limit)
+    if search_body.timestamp:
+        query = query.filter(Object.timestamp == search_body.timestamp)
 
-#     if search_body.limit:
-#         query = query.limit(search_body.limit)
+    if search_body.from_:
+        query = query.filter(Object.timestamp >= search_body.from_)
 
-#     if search_body.quickFilter:
-#         query = query.filter(
-#             or_(
-#                 Object.name.like(f"%{search_body.quickFilter}%"),
-#                 Object.description.like(f"%{search_body.quickFilter}%"),
-#             )
-#         )
+    if search_body.to:
+        query = query.filter(Object.timestamp <= search_body.to)
 
-#     if search_body.timestamp:
-#         query = query.filter(Object.timestamp == search_body.timestamp)
+    if search_body.date:
+        day_start = datetime.strptime(search_body.date, "%Y-%m-%d")
+        start_timestamp = int(day_start.timestamp())
 
-#     if search_body.eventinfo:
-#         query = query.join(Event).filter(Event.info.like(f"%{search_body.eventinfo}%"))
+        day_end = day_start.replace(hour=23, minute=59, second=59)
+        end_timestamp = int(day_end.timestamp())
 
-#     if search_body.ignore:
-#         # Logic to ignore certain objects based on the 'ignore' field
-#         pass
+        query = query.filter(Object.timestamp >= start_timestamp, Object.timestamp <= end_timestamp)
 
-#     if search_body.from_:
-#         query = query.filter(Object.timestamp >= search_body.from_)
+    if search_body.last:
+        query = query.filter(Object.last_seen > search_body.last)
 
-#     if search_body.to:
-#         query = query.filter(Object.timestamp <= search_body.to)
+    if search_body.event_timestamp:
+        events = db.query(Event).filter(Event.timestamp == search_body.event_timestamp).all()
 
-#     if search_body.date:
-#         # Logic to filter based on a specific date
-#         pass
+        for event in events:
+            query = query.filter(Object.event_id == event.id)
 
-#     if search_body.tags:
-#         # Logic to filter based on tags, possibly via a relation
-#         pass
+    if search_body.org_id:
+        events = db.query(Event).filter(Event.org_id == search_body.org_id).all()
 
-#     if search_body.last:
-#         # Logic to consider the 'last' filter
-#         pass
+        for event in events:
+            query = query.filter(Object.event_id == event.id)
 
-#     if search_body.event_timestamp:
-#         # Logic to filter based on the event timestamp
-#         pass
+    if search_body.uuid:
+        query = query.filter(Object.uuid == search_body.uuid)
 
-#     if search_body.publish_timestamp:
-#         # Logic to filter based on the publication timestamp
-#         pass
+    if search_body.value:
+        attributes = db.query(Attribute).filter(Attribute.value == search_body.value).all()
 
-#     if search_body.org:
-#         # Logic to filter based on organization
-#         pass
+        for attribute in attributes:
+            query = query.filter(Object.id == attribute.object_id)
 
-#     if search_body.uuid:
-#         query = query.filter(Object.uuid == search_body.uuid)
+    if search_body.value1:
+        attributes = db.query(Attribute).filter(Attribute.value1 == search_body.value1).all()
 
-#     if search_body.value1:
-#         # Logic to filter based on 'value1'
-#         pass
+        for attribute in attributes:
+            query = query.filter(Object.id == attribute.object_id)
 
-#     if search_body.value2:
-#         # Logic to filter based on 'value2'
-#         pass
+    if search_body.value2:
+        attributes = db.query(Attribute).filter(Attribute.value2 == search_body.value2).all()
 
-#     if search_body.type:
-#         # Logic to filter based on type
-#         pass
+        for attribute in attributes:
+            query = query.filter(Object.id == attribute.object_id)
 
-#     if search_body.category:
-#         # Logic to filter based on category
-#         pass
+    if search_body.type:
+        attributes = db.query(Attribute).filter(Attribute.type == search_body.type).all()
 
-#     if search_body.object_relation:
-#         # Logic to filter based on object relation
-#         pass
+        for attribute in attributes:
+            query = query.filter(Object.id == attribute.object_id)
 
-#     if search_body.attribute_timestamp:
-#         # Logic to filter based on the attribute timestamp
-#         pass
+    if search_body.object_relation:
+        query = query.filter(Object.object_relation == search_body.object_relation)
 
-#     if search_body.first_seen:
-#         # Logic to filter based on 'first_seen'
-#         pass
+    if search_body.attribute_timestamp:
+        attributes = db.query(Attribute).filter(Attribute.timestamp == search_body.attribute_timestamp).all()
 
-#     if search_body.last_seen:
-#         # Logic to filter based on 'last_seen'
-#         pass
+        for attribute in attributes:
+            query = query.filter(Object.id == attribute.object_id)
 
-#     if search_body.comment:
-#         # Logic to filter based on comments
-#         pass
+    if search_body.to_ids:
+        attributes = db.query(Attribute).filter(Attribute.to_ids == search_body.to_ids).all()
 
-#     if search_body.to_ids:
-#         # Logic to filter based on the 'to_ids' field
-#         pass
+        for attribute in attributes:
+            query = query.filter(Object.id == attribute.object_id)
 
-#     if search_body.published:
-#         # Logic to filter based on whether the object is published
-#         pass
+    if search_body.published:
+        events = db.query(Event).filter(Event.published == search_body.published).all()
 
-#     if search_body.deleted:
-#         query = query.filter(Object.deleted == search_body.deleted)
+        for event in events:
+            query = query.filter(Object.event_id == event.id)
 
-#     if search_body.withAttachments:
-#         # Logic to consider attachments
-#         pass
+    if search_body.deleted:
+        query = query.filter(Object.deleted == search_body.deleted)
 
-#     if search_body.enforceWarninglist:
-#         # Logic to consider the warning list
-#         pass
+    if search_body.limit:
+        query = query.limit(int(search_body.limit))
 
-#     if search_body.includeAllTags:
-#         # Logic to include all tags
-#         pass
-
-#     if search_body.includeEventUuid:
-#         # Logic to include the event UUID
-#         pass
-
-#     if search_body.include_event_uuid:
-#         # Logic to include the event UUID (alternative field)
-#         pass
-
-#     if search_body.includeEventTags:
-#         # Logic to include event tags
-#         pass
-
-#     if search_body.includeProposals:
-#         # Logic to include proposals
-#         pass
-
-#     if search_body.includeWarninglistHits:
-#         # Logic to include warning list hits
-#         pass
-
-#     if search_body.includeContext:
-#         # Logic to include context
-#         pass
-
-#     if search_body.includeSightings:
-#         # Logic to include sightings
-#         pass
-
-#     if search_body.includeSightingdb:
-#         # Logic to include the sighting database
-#         pass
-
-#     if search_body.includeCorrelations:
-#         # Logic to include correlations
-#         pass
-
-#     if search_body.includeDecayScore:
-#         # Logic to include the decay score
-#         pass
-
-#     if search_body.includeFullModel:
-#         # Logic to include the full model
-#         pass
-
-#     if search_body.allow_proposal_blocking:
-#         # Logic to consider proposal blocking
-#         pass
-
-#     if search_body.metadata:
-#         # Logic to consider metadata
-#         pass
-
-#     if search_body.attackGalaxy:
-#         # Logic to filter based on 'attackGalaxy'
-#         pass
-
-#     if search_body.excludeDecayed:
-#         # Logic to exclude decayed objects
-#         pass
-
-#     if search_body.decayingModel:
-#         # Logic to consider the decaying model
-#         pass
-
-#     if search_body.modelOverrides:
-#         # Logic to consider model overrides
-#         pass
-
-#     if search_body.score:
-#         # Logic to filter based on a score
-#         pass
-
-#     if search_body.returnFormat:
-#         # Logic to adjust the return format, if necessary
-#         pass
-
-#     return query.all()
+    return query.all()

@@ -4,9 +4,9 @@ import string
 
 from sqlalchemy import func
 from sqlalchemy.orm import Session
-from src.mmisp.db.models.noticelist import Noticelist, NoticelistEntry
 
 from mmisp.db.database import get_db
+from mmisp.db.models.noticelist import Noticelist, NoticelistEntry
 
 
 def random_string(length: int = 10) -> str:
