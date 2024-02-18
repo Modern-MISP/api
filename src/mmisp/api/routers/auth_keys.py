@@ -21,7 +21,7 @@ from mmisp.api_schemas.standard_status_response import StandardStatusIdentifiedR
 from mmisp.db.database import get_db
 from mmisp.db.models.auth_key import AuthKey
 from mmisp.db.models.user import User
-from mmisp.util.crypto import hash_password
+from mmisp.util.crypto import hash_auth_key
 from mmisp.util.models import update_record
 from mmisp.util.partial import partial
 from mmisp.util.uuid import is_uuid
@@ -153,7 +153,7 @@ async def _auth_key_add(auth: Auth, db: Session, user_id: int, body: AddAuthKeyB
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
     auth_key_string = generate(size=42)
-    hashed_auth_key = hash_password(auth_key_string)
+    hashed_auth_key = hash_auth_key(auth_key_string)
 
     auth_key = AuthKey(
         uuid=body.uuid,
