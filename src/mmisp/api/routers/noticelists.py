@@ -40,7 +40,7 @@ async def get_noticelist(
     description="Disable/Enable a specific noticelist by its ID.",
 )
 async def post_toggleEnable_noticelist(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, Permission.SITE_ADMIN))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     tag_id: str = Path(..., alias="noticelistId"),
 ) -> dict:
@@ -55,7 +55,7 @@ async def post_toggleEnable_noticelist(
     description="Update all noticelists.",
 )
 async def update_noticelists(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, Permission.SITE_ADMIN))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
 ) -> dict:
     return await _update_noticelists(db, False)
@@ -100,13 +100,15 @@ async def get_noticelist_depr(
     description="Deprecated. Update all noticelists.",
 )
 async def update_noticelist_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, Permission.SITE_ADMIN))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
 ) -> dict:
     return await _update_noticelists(db, True)
 
 
 # --- endpoint logic ---
+
+
 async def _get_noticelist(db: Session, noticelist_id: str) -> dict:
     noticelist = check_existence_and_raise(db, Noticelist, noticelist_id, "id", "Noticelist not found")
     noticelist_entries = db.query(NoticelistEntry).filter(NoticelistEntry.noticelist_id == noticelist_id).all()
