@@ -107,7 +107,8 @@ def authorize(strategy: AuthStrategy, permissions: list[Permission] = []) -> Cal
             user_id = _check_api_key(authorization)
 
             if user_id:
-                permissions.append(Permission.AUTH)  # only users with this permission are allowed to use api keys
+                # only users with this permission are allowed to use api keys
+                permissions.append(Permission.AUTH)
 
         if not user_id:
             raise HTTPException(401)
@@ -215,4 +216,5 @@ def _decode_token(token: str) -> str | None:
 
 
 def _check_api_key(authorization: str) -> str | None:
+    # TODO implement
     pass
