@@ -25,7 +25,7 @@ from mmisp.api_schemas.sharing_groups.view_update_sharing_group_legacy_response 
 )
 from mmisp.api_schemas.standard_status_response import StandardStatusResponse
 from mmisp.config import config
-from mmisp.db.database import get_db
+from mmisp.db.database import get_db, with_session_management
 from mmisp.db.models.organisation import Organisation
 from mmisp.db.models.server import Server
 from mmisp.db.models.sharing_group import SharingGroup, SharingGroupOrg, SharingGroupServer
@@ -38,6 +38,7 @@ LOCAL_INSTANCE_SERVER = {"id": 0, "name": "Local instance", "url": config.OWN_UR
 
 
 @router.post("/sharing_groups", status_code=status.HTTP_201_CREATED, response_model=partial(SharingGroupSchema))
+@with_session_management
 async def create_sharing_group(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
@@ -76,6 +77,7 @@ async def create_sharing_group(
 
 
 @router.get("/sharing_groups/{id}", response_model=partial(SharingGroupSchema))
+@with_session_management
 async def get_sharing_group(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
@@ -121,6 +123,7 @@ async def get_sharing_group(
 
 
 @router.put("/sharing_groups/{id}", response_model=partial(SharingGroupSchema))
+@with_session_management
 async def update_sharing_group(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
@@ -146,6 +149,7 @@ async def update_sharing_group(
 
 
 @router.delete("/sharing_groups/{id}", response_model=partial(SharingGroupSchema))
+@with_session_management
 async def delete_sharing_group(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
@@ -171,6 +175,7 @@ async def delete_sharing_group(
 
 
 @router.get("/sharing_groups", response_model=partial(GetAllSharingGroupsResponse))
+@with_session_management
 async def get_all_sharing_groups(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
@@ -258,6 +263,7 @@ async def get_all_sharing_groups(
 
 
 @router.get("/sharing_groups/{id}/info", response_model=partial(GetSharingGroupInfoResponse))
+@with_session_management
 async def get_sharing_group_info(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
@@ -329,6 +335,7 @@ async def get_sharing_group_info(
 
 
 @router.patch("/sharing_groups/{id}/organisations", response_model=partial(SharingGroupOrgSchema))
+@with_session_management
 async def add_org_to_sharing_group(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
@@ -369,6 +376,7 @@ async def add_org_to_sharing_group(
 
 
 @router.delete("/sharing_groups/{id}/organisations/{organisationId}", response_model=partial(SharingGroupOrgSchema))
+@with_session_management
 async def remove_org_from_sharing_group(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
@@ -398,6 +406,7 @@ async def remove_org_from_sharing_group(
 
 
 @router.patch("/sharing_groups/{id}/servers", response_model=partial(SharingGroupServerSchema))
+@with_session_management
 async def add_server_to_sharing_group(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
@@ -438,6 +447,7 @@ async def add_server_to_sharing_group(
 
 
 @router.delete("/sharing_groups/{id}/servers/{serverId}", response_model=partial(SharingGroupServerSchema))
+@with_session_management
 async def remove_server_from_sharing_group(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
@@ -475,6 +485,7 @@ async def remove_server_from_sharing_group(
     status_code=status.HTTP_201_CREATED,
     response_model=partial(CreateSharingGroupLegacyResponse),
 )
+@with_session_management
 async def create_sharing_group_legacy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
@@ -534,6 +545,7 @@ async def create_sharing_group_legacy(
     deprecated=True,
     response_model=partial(ViewUpdateSharingGroupLegacyResponse),
 )
+@with_session_management
 async def view_sharing_group_legacy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
@@ -608,6 +620,7 @@ async def view_sharing_group_legacy(
     deprecated=True,
     response_model=partial(ViewUpdateSharingGroupLegacyResponse),
 )
+@with_session_management
 async def update_sharing_group_legacy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
@@ -669,6 +682,7 @@ async def update_sharing_group_legacy(
 @router.delete(
     "/sharing_groups/delete/{sharingGroupId}", deprecated=True, response_model=partial(DeleteSharingGroupLegacyResponse)
 )
+@with_session_management
 async def delete_sharing_group_legacy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
@@ -705,6 +719,7 @@ async def delete_sharing_group_legacy(
     deprecated=True,
     response_model=partial(StandardStatusResponse),
 )
+@with_session_management
 async def add_org_to_sharing_group_legacy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
@@ -753,6 +768,7 @@ async def add_org_to_sharing_group_legacy(
     deprecated=True,
     response_model=partial(StandardStatusResponse),
 )
+@with_session_management
 async def remove_org_from_sharing_group_legacy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
@@ -792,6 +808,7 @@ async def remove_org_from_sharing_group_legacy(
     deprecated=True,
     response_model=partial(StandardStatusResponse),
 )
+@with_session_management
 async def add_server_to_sharing_group_legacy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
@@ -840,6 +857,7 @@ async def add_server_to_sharing_group_legacy(
     deprecated=True,
     response_model=partial(StandardStatusResponse),
 )
+@with_session_management
 async def remove_server_from_sharing_group_legacy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],

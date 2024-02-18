@@ -34,7 +34,7 @@ from mmisp.api_schemas.attributes.search_attributes_response import (
     SearchAttributesObject,
     SearchAttributesResponse,
 )
-from mmisp.db.database import get_db
+from mmisp.db.database import get_db, with_session_management
 from mmisp.db.models.attribute import Attribute, AttributeTag
 from mmisp.db.models.event import Event
 from mmisp.db.models.object import Object
@@ -58,6 +58,7 @@ router = APIRouter(tags=["attributes"])
     summary="Search attributes",
     description="Search for attributes based on various filters.",
 )
+@with_session_management
 async def rest_search_attributes(db: Annotated[Session, Depends(get_db)], body: SearchAttributesBody) -> dict:
     return await _rest_search_attributes(db, body)
 
@@ -69,6 +70,7 @@ async def rest_search_attributes(db: Annotated[Session, Depends(get_db)], body: 
     summary="Add new attribute",
     description="Add a new attribute with the given details.",
 )
+@with_session_management
 async def add_attribute(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.ADD]))],
     db: Annotated[Session, Depends(get_db)],
@@ -99,6 +101,7 @@ async def get_attributes_describe_types() -> GetDescribeTypesResponse:
     summary="Get attribute details",
     description="Retrieve details of a specific attribute by its ID.",
 )  # new
+@with_session_management
 async def get_attribute_details(
     db: Annotated[Session, Depends(get_db)], attribute_id: Annotated[str, Path(..., alias="attributeId")]
 ) -> dict:
@@ -115,6 +118,7 @@ async def get_attribute_details(
     summary="Update an attribute",
     description="Update an existing attribute by its ID.",
 )  # new
+@with_session_management
 async def update_attribute(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
     db: Annotated[Session, Depends(get_db)],
@@ -134,6 +138,7 @@ async def update_attribute(
     summary="Delete an Attribute",
     description="Delete an attribute by its ID.",
 )  # new
+@with_session_management
 async def delete_attribute(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
     db: Annotated[Session, Depends(get_db)],
@@ -152,6 +157,7 @@ async def delete_attribute(
     summary="Get all Attributes",
     description="Retrieve a list of all attributes.",
 )
+@with_session_management
 async def get_attributes(db: Annotated[Session, Depends(get_db)]) -> dict:
     return await _get_attributes(db)
 
@@ -165,6 +171,7 @@ async def get_attributes(db: Annotated[Session, Depends(get_db)]) -> dict:
     response_model=partial(DeleteSelectedAttributeResponse),
     summary="Delete the selected attributes",
 )
+@with_session_management
 async def delete_selected_attributes(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
     db: Annotated[Session, Depends(get_db)],
@@ -182,6 +189,7 @@ async def delete_selected_attributes(
     summary="Get attribute statistics",
     description="Get the count/percentage of attributes per category/type.",
 )
+@with_session_management
 async def get_attributes_statistics(db: Annotated[Session, Depends(get_db)], context: str, percentage: int) -> dict:
     return await _get_attribute_statistics(db, context, percentage)
 
@@ -193,6 +201,7 @@ async def get_attributes_statistics(db: Annotated[Session, Depends(get_db)], con
     summary="Restore an attribute",
     description="Restore an attribute by its ID.",
 )
+@with_session_management
 async def restore_attribute(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
     db: Annotated[Session, Depends(get_db)],
@@ -208,6 +217,7 @@ async def restore_attribute(
     summary="Add tag to attribute",
     description="Add a tag to an attribute by there ids.",
 )
+@with_session_management
 async def add_tag_to_attribute(
     local: str,
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.ADD]))],
@@ -225,6 +235,7 @@ async def add_tag_to_attribute(
     summary="Remove tag from attribute",
     description="Remove a tag from an attribute by there ids.",
 )
+@with_session_management
 async def remove_tag_from_attribute(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
     db: Annotated[Session, Depends(get_db)],
@@ -245,6 +256,7 @@ async def remove_tag_from_attribute(
     summary="Add new attribute (Deprecated)",
     description="Deprecated. Add a new attribute with the given details using the old route.",
 )
+@with_session_management
 async def add_attribute_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.ADD]))],
     db: Annotated[Session, Depends(get_db)],
@@ -262,6 +274,7 @@ async def add_attribute_depr(
     summary="Get attribute details (Deprecated)",
     description="Deprecated. Retrieve details of a specific attribute by its ID using the old route.",
 )
+@with_session_management
 async def get_attribute_details_depr(
     db: Annotated[Session, Depends(get_db)], attribute_id: Annotated[str, Path(..., alias="attributeId")]
 ) -> dict:
@@ -276,6 +289,7 @@ async def get_attribute_details_depr(
     summary="Update an attribute (Deprecated)",
     description="Deprecated. Update an existing attribute by its ID using the old route.",
 )
+@with_session_management
 async def update_attribute_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
     db: Annotated[Session, Depends(get_db)],
@@ -293,6 +307,7 @@ async def update_attribute_depr(
     summary="Delete an Attribute (Deprecated)",
     description="Deprecated. Delete an attribute by its ID using the old route.",
 )  # deprecated
+@with_session_management
 async def delete_attribute_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
     db: Annotated[Session, Depends(get_db)],

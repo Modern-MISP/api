@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from mmisp.api_schemas.users.users_view_me_response import UsersViewMeResponse
-from mmisp.db.database import get_db
+from mmisp.db.database import get_db, with_session_management
 from mmisp.db.models.organisation import Organisation
 from mmisp.db.models.role import Role
 from mmisp.db.models.user import User
@@ -16,6 +16,7 @@ router = APIRouter(tags=["users"])
 
 
 @router.get("/users/view/me", response_model=partial(UsersViewMeResponse))
+@with_session_management
 async def get_logged_in_user_info(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))], db: Annotated[Session, Depends(get_db)]
 ) -> dict:
