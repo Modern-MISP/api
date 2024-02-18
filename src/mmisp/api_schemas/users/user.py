@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel
 
 
@@ -15,6 +17,7 @@ class User(BaseModel):
     change_pw: bool
     contactalert: bool
     disabled: bool
+    expiration: datetime
     current_login: str
     """time in seconds"""
     last_login: str
