@@ -1,4 +1,4 @@
-from ...environment import client, environment
+from tests.environment import client, environment
 
 
 def test_users_me() -> None:
