@@ -1,3 +1,4 @@
+from datetime import datetime
 from time import time
 from typing import Any
 from uuid import uuid4
@@ -54,7 +55,7 @@ class TestAddObject:
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(time()),
+            date=datetime.utcnow(),
             analysis="test",
             event_creator_email=generate_unique_email(),
         )
@@ -100,7 +101,7 @@ class TestAddObject:
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(time()),
+            date=datetime.utcnow(),
             analysis="test",
             event_creator_email=generate_unique_email(),
         )
@@ -195,7 +196,7 @@ class TestGetObjectInfo:
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(time()),
+            date=datetime.utcnow(),
             analysis="test",
             event_creator_email=generate_unique_email(),
         )
@@ -251,7 +252,7 @@ class TestGetObjectInfo:
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(time()),
+            date=datetime.utcnow(),
             analysis="test",
             event_creator_email=generate_unique_email(),
         )
@@ -306,7 +307,7 @@ class TestGetObjectInfo:
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(time()),
+            date=datetime.utcnow(),
             analysis="test",
             event_creator_email=generate_unique_email(),
         )
@@ -357,7 +358,7 @@ class TestDeleteObject:
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(time()),
+            date=datetime.utcnow(),
             analysis="test",
             event_creator_email=generate_unique_email(),
         )
@@ -409,7 +410,7 @@ class TestDeleteObject:
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(time()),
+            date=datetime.utcnow(),
             analysis="test",
             event_creator_email=generate_unique_email(),
         )
@@ -469,7 +470,7 @@ class TestDeleteObject:
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(time()),
+            date=datetime.utcnow(),
             analysis="test",
             event_creator_email=generate_unique_email(),
         )

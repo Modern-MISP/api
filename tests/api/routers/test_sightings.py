@@ -1,3 +1,4 @@
+from datetime import datetime
 from time import time
 from typing import Any
 from uuid import uuid4
@@ -34,7 +35,7 @@ class TestAddSighting:
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(int(time())),
+            date=datetime.utcnow(),
             analysis="test",
             event_creator_email=generate_unique_email(),
         )
@@ -67,7 +68,7 @@ class TestAddSighting:
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(int(time())),
+            date=datetime.utcnow(),
             analysis="test",
             event_creator_email=generate_unique_email(),
         )
@@ -103,7 +104,7 @@ class TestAddSighting:
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(int(time())),
+            date=datetime.utcnow(),
             analysis="test",
             event_creator_email=generate_unique_email(),
         )
@@ -140,7 +141,7 @@ class TestAddSightingAtIndex:
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(int(time())),
+            date=datetime.utcnow(),
             analysis="test",
             event_creator_email=generate_unique_email(),
         )
@@ -175,7 +176,7 @@ class TestAddSightingAtIndex:
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(int(time())),
+            date=datetime.utcnow(),
             analysis="test",
             event_creator_email=generate_unique_email(),
         )
@@ -209,7 +210,7 @@ class TestGetSighting:
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(int(time())),
+            date=datetime.utcnow(),
             analysis="test",
             event_creator_email=generate_unique_email(),
         )
@@ -242,7 +243,7 @@ class TestDeleteSighting:
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(int(time())),
+            date=datetime.utcnow(),
             analysis="test",
             event_creator_email=generate_unique_email(),
         )
@@ -284,7 +285,7 @@ class TestDeleteSighting:
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(int(time())),
+            date=datetime.utcnow(),
             analysis="test",
             event_creator_email=generate_unique_email(),
         )
@@ -325,7 +326,7 @@ class TestGetAllSightings:
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(int(time())),
+            date=datetime.utcnow(),
             analysis="test",
             event_creator_email=generate_unique_email(),
         )
@@ -360,7 +361,7 @@ class TestGetAllSightings:
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(int(time())),
+            date=datetime.utcnow(),
             analysis="test",
             event_creator_email=generate_unique_email(),
         )

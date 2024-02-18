@@ -1,3 +1,4 @@
+from datetime import datetime
 from time import time
 from typing import Any, Generator
 from uuid import uuid4
@@ -57,7 +58,7 @@ class TestAddFeed:
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(time()),
+            date=datetime.utcnow(),
             analysis="test",
             event_creator_email=generate_unique_email(),
         )
@@ -111,7 +112,7 @@ class TestAddFeed:
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(time()),
+            date=datetime.utcnow(),
             analysis="test",
             event_creator_email=generate_unique_email(),
         )
@@ -166,7 +167,7 @@ class TestEnableFeed:
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(time()),
+            date=datetime.utcnow(),
             analysis="test",
             event_creator_email=generate_unique_email(),
         )
@@ -219,7 +220,7 @@ class TestEnableFeed:
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(time()),
+            date=datetime.utcnow(),
             analysis="test",
             event_creator_email=generate_unique_email(),
         )
@@ -268,7 +269,7 @@ class TestDisableFeed:
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(time()),
+            date=datetime.utcnow(),
             analysis="test",
             event_creator_email=generate_unique_email(),
         )
@@ -321,7 +322,7 @@ class TestDisableFeed:
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(time()),
+            date=datetime.utcnow(),
             analysis="test",
             event_creator_email=generate_unique_email(),
         )
@@ -428,7 +429,7 @@ class TestGetFeedByIdInfo:
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(time()),
+            date=datetime.utcnow(),
             analysis="test",
             event_creator_email=generate_unique_email(),
         )
@@ -489,7 +490,7 @@ class TestGetFeedByIdInfo:
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(time()),
+            date=datetime.utcnow(),
             analysis="test",
             event_creator_email=generate_unique_email(),
         )
@@ -542,7 +543,7 @@ class TestUpdateFeed:
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(time()),
+            date=datetime.utcnow(),
             analysis="test",
             event_creator_email=generate_unique_email(),
         )
@@ -599,7 +600,7 @@ class TestUpdateFeed:
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(time()),
+            date=datetime.utcnow(),
             analysis="test",
             event_creator_email=generate_unique_email(),
         )
@@ -652,7 +653,7 @@ class TestToggleFeed:
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(time()),
+            date=datetime.utcnow(),
             analysis="test",
             event_creator_email=generate_unique_email(),
         )
@@ -723,7 +724,7 @@ class TestToggleFeed:
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(time()),
+            date=datetime.utcnow(),
             analysis="test",
             event_creator_email=generate_unique_email(),
         )
@@ -833,7 +834,7 @@ class TestGetAllFeeds:
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(time()),
+            date=datetime.utcnow(),
             analysis="test",
             event_creator_email=generate_unique_email(),
         )
@@ -880,7 +881,7 @@ class TestGetAllFeeds:
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
-            date=str(time()),
+            date=datetime.utcnow(),
             analysis="test",
             event_creator_email=generate_unique_email(),
         )
