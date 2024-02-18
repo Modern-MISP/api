@@ -139,6 +139,8 @@ class TestGetAttributeDetails:
         attribute_id = attribute.id
 
         tag = generate_tag()
+        setattr(tag, "user_id", 1)
+        setattr(tag, "org_id", 1)
 
         db.add(tag)
         db.commit()
@@ -622,6 +624,8 @@ class TestAddTagToAttribute:
         attribute_id = attribute.id
 
         tag = generate_tag()
+        setattr(tag, "user_id", 1)
+        setattr(tag, "org_id", 1)
 
         db.add(tag)
         db.commit()
@@ -720,6 +724,8 @@ class TestRemoveTagFromAttribute:
         attribute_id = attribute.id
 
         tag = generate_tag()
+        setattr(tag, "user_id", 1)
+        setattr(tag, "org_id", 1)
 
         db.add(tag)
         db.commit()
