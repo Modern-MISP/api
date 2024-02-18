@@ -4,7 +4,6 @@ from typing import Any, Dict
 import pytest
 from sqlalchemy.orm import Session
 
-from mmisp.db.database import get_db
 from mmisp.db.models.tag import Tag
 from tests.api.helpers.tags_helper import (
     add_tags,
@@ -17,6 +16,7 @@ from tests.api.helpers.tags_helper import (
     random_string_with_punctuation,
     remove_tags,
 )
+from tests.database import get_db
 from tests.environment import client, environment
 
 
