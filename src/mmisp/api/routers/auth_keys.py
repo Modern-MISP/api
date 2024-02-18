@@ -18,7 +18,7 @@ from mmisp.api_schemas.auth_keys.search_get_all_auth_keys_users_response import 
 )
 from mmisp.api_schemas.auth_keys.view_auth_key_response import ViewAuthKeysResponse
 from mmisp.api_schemas.standard_status_response import StandardStatusIdentifiedResponse
-from mmisp.db.database import get_db
+from mmisp.db.database import get_db, with_session_management
 from mmisp.db.models.auth_key import AuthKey
 from mmisp.db.models.user import User
 from mmisp.util.crypto import hash_auth_key
@@ -30,6 +30,7 @@ router = APIRouter(tags=["auth_keys"])
 
 
 @router.post("/auth_keys/{userId}", status_code=status.HTTP_201_CREATED, response_model=partial(AddAuthKeyResponse))
+@with_session_management
 async def auth_keys_add_user(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.AUTH]))],
     db: Annotated[Session, Depends(get_db)],
@@ -40,6 +41,7 @@ async def auth_keys_add_user(
 
 
 @router.get("/auth_keys/view/{AuthKeyId}", response_model=partial(ViewAuthKeysResponse))
+@with_session_management
 async def auth_keys_view_auth_key(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
     db: Annotated[Session, Depends(get_db)],
@@ -49,6 +51,7 @@ async def auth_keys_view_auth_key(
 
 
 @router.post("/auth_keys", response_model=list[partial(SearchGetAuthKeysResponseItem)])
+@with_session_management
 async def search_auth_keys(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
     db: Annotated[Session, Depends(get_db)],
@@ -58,6 +61,7 @@ async def search_auth_keys(
 
 
 @router.put("/auth_keys/{AuthKeyId}", response_model=partial(EditAuthKeyResponse))
+@with_session_management
 async def auth_keys_edit_auth_key(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.AUTH]))],
     db: Annotated[Session, Depends(get_db)],
@@ -68,6 +72,7 @@ async def auth_keys_edit_auth_key(
 
 
 @router.delete("/auth_keys/{AuthKeyId}")
+@with_session_management
 async def auth_keys_delete_auth_key(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.AUTH]))],
     db: Annotated[Session, Depends(get_db)],
@@ -86,6 +91,7 @@ async def auth_keys_delete_auth_key(
 
 
 @router.get("/auth_keys", response_model=list[partial(SearchGetAuthKeysResponseItem)])
+@with_session_management
 async def auth_keys_get(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
     db: Annotated[Session, Depends(get_db)],
@@ -102,6 +108,7 @@ async def auth_keys_get(
     deprecated=True,
     response_model=partial(AddAuthKeyResponse),
 )
+@with_session_management
 async def auth_keys_add_user_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.AUTH]))],
     db: Annotated[Session, Depends(get_db)],
@@ -112,6 +119,7 @@ async def auth_keys_add_user_depr(
 
 
 @router.post("/auth_keys/edit/{AuthKeyId}", deprecated=True, response_model=partial(EditAuthKeyResponse))
+@with_session_management
 async def auth_keys_edit_auth_key_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.AUTH]))],
     db: Annotated[Session, Depends(get_db)],
@@ -122,6 +130,7 @@ async def auth_keys_edit_auth_key_depr(
 
 
 @router.delete("/auth_keys/delete/{AuthKeyId}", deprecated=True)
+@with_session_management
 async def auth_keys_delete_auth_key_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.AUTH]))],
     db: Annotated[Session, Depends(get_db)],

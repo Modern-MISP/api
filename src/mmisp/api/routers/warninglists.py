@@ -18,7 +18,7 @@ from mmisp.api_schemas.warninglists.toggle_enable_warninglists_body import Toggl
 from mmisp.api_schemas.warninglists.toggle_enable_warninglists_response import ToggleEnableWarninglistsResponse
 from mmisp.api_schemas.warninglists.update_all_warninglists_response import UpdateAllWarninglistsResponse
 from mmisp.api_schemas.warninglists.warninglist_response import WarninglistEntryResponse, WarninglistResponse
-from mmisp.db.database import get_db
+from mmisp.db.database import get_db, with_session_management
 from mmisp.db.models.warninglist import Warninglist, WarninglistEntry
 
 router = APIRouter(tags=["warninglists"])
@@ -31,6 +31,7 @@ router = APIRouter(tags=["warninglists"])
     summary="Add a new warninglist",
     description="Add a new warninglist with given details.",
 )
+@with_session_management
 async def add_warninglist(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.WARNINGLIST]))],
     db: Annotated[Session, Depends(get_db)],
@@ -46,6 +47,7 @@ async def add_warninglist(
     summary="Get warninglist details",
     description="Retrieve details of a specific warninglist by its ID.",
 )
+@with_session_management
 async def get_warninglist_details(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -61,6 +63,7 @@ async def get_warninglist_details(
     summary="Disable/Enable warninglist",
     description="Disable/Enable a specific warninglist by its ID or name.",
 )
+@with_session_management
 async def post_toggleEnable(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -76,6 +79,7 @@ async def post_toggleEnable(
     summary="Delete warninglist",
     description="Delete a specific warninglist.",
 )
+@with_session_management
 async def delete_warninglist(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -91,6 +95,7 @@ async def delete_warninglist(
     summary="Get all warninglists, or selected ones by value and status",
     description="Retrieve a list of all warninglists.",
 )
+@with_session_management
 async def get_all_or_selected_warninglists(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -107,6 +112,7 @@ async def get_all_or_selected_warninglists(
     summary="Get a list of ID and name of warninglists",
     description="Retrieve a list of ID and name of warninglists, which match has the given search term as Entry.",
 )
+@with_session_management
 async def get_warninglists_by_value(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -122,6 +128,7 @@ async def get_warninglists_by_value(
     summary="Update warninglists",
     description="Update all warninglists.",
 )
+@with_session_management
 async def update_all_warninglists(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -137,6 +144,7 @@ async def update_all_warninglists(
     summary="Update warninglists (Deprecated)",
     description="Deprecated. Update all warninglists.",
 )
+@with_session_management
 async def update_all_warninglists_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -152,6 +160,7 @@ async def update_all_warninglists_depr(
     summary="Get warninglist details (Deprecated)",
     description="Deprecated. Retrieve details of a specific warninglist by its ID using the old route.",
 )
+@with_session_management
 async def get_warninglist_details_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -166,6 +175,7 @@ async def get_warninglist_details_depr(
     summary="Get selected warninglists (Deprecated)",
     description="Retrieve a list of warninglists, which match given search terms using the old route.",
 )
+@with_session_management
 async def search_warninglists(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],

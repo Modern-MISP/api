@@ -19,13 +19,14 @@ from mmisp.api_schemas.user_settings.view_user_setting_response import (
     ViewUserSettingResponse,
     ViewUserSettingResponseUserSetting,
 )
-from mmisp.db.database import get_db
+from mmisp.db.database import get_db, with_session_management
 from mmisp.db.models.user_setting import SettingName, UserSetting
 
 router = APIRouter(tags=["user_settings"])
 
 
 @router.post("/user_settings/setSetting/{userId}/{userSettingName}")
+@with_session_management
 async def set_user_settings(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS]))],
     db: Annotated[Session, Depends(get_db)],
@@ -37,6 +38,7 @@ async def set_user_settings(
 
 
 @router.get("/user_settings/{userSettingId}")
+@with_session_management
 async def view_user_settings(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -46,6 +48,7 @@ async def view_user_settings(
 
 
 @router.get("/user_settings/{userId}/{userSettingName}")
+@with_session_management
 async def get_user_setting_by_id(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -56,6 +59,7 @@ async def get_user_setting_by_id(
 
 
 @router.post("/user_settings")
+@with_session_management
 async def search_user_settings(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -65,6 +69,7 @@ async def search_user_settings(
 
 
 @router.get("/user_settings")
+@with_session_management
 async def get_user_settings(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -73,6 +78,7 @@ async def get_user_settings(
 
 
 @router.delete("/user_settings/{userSettingId}")
+@with_session_management
 async def delete_user_settings(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS]))],
     db: Annotated[Session, Depends(get_db)],
@@ -94,6 +100,7 @@ async def delete_user_settings(
 
 
 @router.get("/user_settings/view/{userSettingId}", deprecated=True)
+@with_session_management
 async def view_user_settings_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -117,6 +124,7 @@ async def view_user_settings_depr(
 
 
 @router.get("/user_settings/getSetting/{userId}/{userSettingName}", deprecated=True)
+@with_session_management
 async def get_user_setting_by_ids(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -142,6 +150,7 @@ async def get_user_setting_by_ids(
 
 
 @router.delete("/user_settings/delete/{userSettingId}", deprecated=True)
+@with_session_management
 async def delete_user_settings_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS]))],
     db: Annotated[Session, Depends(get_db)],
