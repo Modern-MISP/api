@@ -1,6 +1,6 @@
 from time import time
 
-from mmisp.db.database import get_db
+from tests.database import get_db
 from tests.environment import client, environment
 from tests.generators.model_generators.auth_key_generator import generate_auth_key
 

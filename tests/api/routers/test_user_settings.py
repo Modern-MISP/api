@@ -1,7 +1,7 @@
 from time import time
 
-from mmisp.db.database import get_db
 from mmisp.db.models.user_setting import SettingName
+from tests.database import get_db
 from tests.environment import client, environment
 from tests.generators.model_generators.user_setting_generator import generate_user_setting
 
