@@ -599,6 +599,8 @@ def _prepare_event_response(db: Session, event: Event) -> AddEditGetEventDetails
         else:
             event_dict[field] = "0"
 
+    event_dict["date"] = str(event_dict["date"])
+
     org = db.get(Organisation, event.org_id)
     orgc = db.get(Organisation, event.orgc_id)
 
@@ -637,6 +639,7 @@ def _prepare_event_response(db: Session, event: Event) -> AddEditGetEventDetails
             )
 
     event_dict["Galaxy"] = _prepare_galaxy_response(db, event_dict["Galaxy"], event)
+    event_dict["date"] = str(event_dict["date"])
 
     return AddEditGetEventDetails(**event_dict)
 
@@ -829,6 +832,7 @@ def _prepare_all_events_response(db: Session, event: Event) -> GetAllEventsRespo
     event_dict["EventTag"] = _prepare_all_events_event_tag_response(db, event_tag_list)
 
     event_dict["GalaxyCluster"] = _prepare_all_events_galaxy_cluster_response(db, event_tag_list)
+    event_dict["date"] = str(event_dict["date"])
 
     return GetAllEventsResponse(**event_dict)
 
