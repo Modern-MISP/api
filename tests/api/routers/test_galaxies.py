@@ -97,8 +97,8 @@ class TestImportGalaxyCluster:
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/galaxies/import", json=response_list, headers=headers)
         response_json = response.json()
-        assert response.status_code == 500
-        assert response_json["detail"]["name"] == "An Internal Error Has Occurred."
+        assert response.status_code == 200
+        assert response_json["name"] == "Galaxy clusters imported. 1 imported, 0 ignored, 0 failed."
 
     def test_import_galaxy_cluster_invalid_data(self: "TestImportGalaxyCluster", db: Session) -> None:
         add_org_body = Organisation(name="test", local=True)
