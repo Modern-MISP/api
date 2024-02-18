@@ -465,6 +465,7 @@ async def _rest_search_attributes(db: Session, body: SearchAttributesBody) -> di
         if attribute.event_id is not None:
             event = db.get(Event, attribute.event_id)
             event_dict = event.__dict__.copy()
+            event_dict["date"] = str(event_dict["date"])
             attribute_dict["Event"] = SearchAttributesEvent(**event_dict)
         if attribute.object_id is not None:
             object = db.get(Object, attribute.object_id)
