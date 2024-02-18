@@ -10,7 +10,7 @@ from mmisp.api_schemas.tags.delete_tag_response import TagDeleteResponse
 from mmisp.api_schemas.tags.get_tag_response import TagAttributesResponse, TagGetResponse
 from mmisp.api_schemas.tags.search_tags_response import TagCombinedModel, TagSearchResponse, TaxonomyPredicateResponse
 from mmisp.api_schemas.tags.update_tag_body import TagUpdateBody
-from mmisp.api_schemas.taxonomies.get_taxonomy_out import TaxonomyView
+from mmisp.api_schemas.taxonomies.get_taxonomy_response import TaxonomyView
 from mmisp.db.database import get_db, with_session_management
 from mmisp.db.models.attribute import AttributeTag
 from mmisp.db.models.feed import Feed
@@ -256,9 +256,6 @@ async def _delete_tag(db: Session, tag_id: str) -> dict:
     attribute_tags = db.query(AttributeTag).filter(AttributeTag.tag_id == deleted_tag.id).all()
     for attribute_tag in attribute_tags:
         attribute_tag.tag_id = None
-    taxonomies = db.query(Taxonomy).filter(Taxonomy.tag == deleted_tag.name).all()
-    for taxonomy in taxonomies:
-        taxonomy.tag_name = None
 
     db.delete(deleted_tag)
     db.commit()
