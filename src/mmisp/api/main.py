@@ -6,6 +6,7 @@ from mmisp.db.database import Base, engine
 # if you add a new model module, add it here too
 from mmisp.db.models import (  # noqa: F401
     attribute,
+    auth_key,
     event,
     feed,
     galaxy,
@@ -20,18 +21,13 @@ from mmisp.db.models import (  # noqa: F401
     tag,
     taxonomy,
     user,
+    user_setting,
     warninglist,
-)
-from mmisp.db.models import (  # noqa: F401
-    auth_key as auth_key_model,
-)
-from mmisp.db.models import (  # noqa: F401
-    user_settings as user_settings_model,
 )
 
 from .routers import (
     attributes,
-    auth_key,
+    auth_keys,
     authentication,
     events,
     feeds,
@@ -53,7 +49,7 @@ app = FastAPI()
 
 # include Routes
 app.include_router(attributes.router)
-app.include_router(auth_key.router)
+app.include_router(auth_keys.router)
 app.include_router(events.router)
 app.include_router(user_settings.router)
 app.include_router(feeds.router)

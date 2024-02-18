@@ -2,16 +2,16 @@ from pydantic import BaseModel
 
 
 class SearchAuthKeyBody(BaseModel):
-    page: int
-    limit: int
-    id: str
-    uuid: str
-    authkey_start: str
-    authkey_end: str
-    created: str
-    expiration: str
-    read_only: bool
-    user_id: str
-    comment: str
-    allowed_ips: list[str]
-    last_used: str
+    page: int | None = 0
+    limit: int | None = 25
+    id: str | None = None
+    uuid: str | None = None
+    authkey_start: str | None = None
+    authkey_end: str | None = None
+    created: str | None = None
+    expiration: str | None = None
+    read_only: bool | None = None
+    user_id: str | None = None
+    comment: str | None = None
+    allowed_ips: str | list[str] | None = None
+    last_used: str | None = None  # deprecated

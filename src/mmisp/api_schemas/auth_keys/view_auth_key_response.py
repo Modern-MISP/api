@@ -1,17 +1,24 @@
+from datetime import datetime
+
 from pydantic import BaseModel
 
-from ..user_schema import User
+from .search_get_all_auth_keys_users_response import SearchGetAuthKeysResponseItemUser
 
 
-class ViewAuthKeysResponse(BaseModel):
+class ViewAuthKeyResponseWrapper(BaseModel):
     id: str
     uuid: str
     authkey_start: str
     authkey_end: str
-    created: str
-    expiration: str
+    created: datetime
+    expiration: int
     read_only: bool
     user_id: str
     comment: str
     allowed_ips: list[str]
-    user: User
+    unique_ips: list[str]
+
+
+class ViewAuthKeysResponse(BaseModel):
+    AuthKey: ViewAuthKeyResponseWrapper
+    User: SearchGetAuthKeysResponseItemUser

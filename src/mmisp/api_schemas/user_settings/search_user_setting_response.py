@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from .get_get_id_user_setting_response import Value
+from .get_uid_user_setting_response import Value
 
 
 class SearchUserSettingResponse(BaseModel):
