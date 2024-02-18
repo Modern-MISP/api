@@ -1,3 +1,6 @@
+from functools import wraps
+from typing import Any, Callable
+
 from sqlalchemy import create_engine
 from sqlalchemy.engine.url import make_url
 from sqlalchemy.orm import Session, declarative_base, sessionmaker
@@ -13,3 +16,17 @@ Base = declarative_base()
 
 def get_db() -> Session:
     return session()
+
+
+def with_session_management(fn: Callable) -> Callable:
+    @wraps(fn)
+    async def wrapper(*args, **kwargs) -> Any:
+        db: Session = kwargs.pop("db")
+        output: Any = None
+
+        with db:
+            output = await fn(*args, **kwargs, db=db)
+
+        return output
+
+    return wrapper
