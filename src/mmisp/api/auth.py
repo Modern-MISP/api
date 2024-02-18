@@ -1,15 +1,18 @@
 from datetime import datetime, timedelta
 from enum import Enum
+from time import time
 from typing import Callable
 
 import jwt
-from fastapi import Depends, Header, HTTPException
+from fastapi import Depends, Header, HTTPException, status
 from sqlalchemy.orm import Session
 
 from mmisp.config import config
 from mmisp.db.database import get_db
+from mmisp.db.models.auth_key import AuthKey
 from mmisp.db.models.role import Role
 from mmisp.db.models.user import User
+from mmisp.util.crypto import hash_auth_key
 
 
 class AuthStrategy(Enum):
@@ -83,11 +86,13 @@ class Auth:
         user_id: int | None = None,
         org_id: int | None = None,
         role_id: int | None = None,
+        auth_key_id: int | None = False,
         is_worker: bool | None = False,
     ) -> None:
         self.user_id = user_id
         self.org_id = org_id
         self.role_id = role_id
+        self.auth_key_id = auth_key_id
         self.is_worker = is_worker
 
 
@@ -101,30 +106,33 @@ def authorize(strategy: AuthStrategy, permissions: list[Permission] = []) -> Cal
         if strategy in [AuthStrategy.WORKER_KEY, AuthStrategy.ALL] and authorization == config.WORKER_KEY:
             return Auth(is_worker=True)
 
-        user_id: str | None = None
+        user_id: int | None = None
+        auth_key_id: int | None = None
 
         if strategy in [AuthStrategy.JWT, AuthStrategy.HYBRID, AuthStrategy.ALL]:
             user_id = _decode_token(authorization)
 
         if not user_id and strategy in [AuthStrategy.API_KEY, AuthStrategy.HYBRID, AuthStrategy.ALL]:
-            user_id = _check_api_key(authorization)
+            res = _check_api_key(db, authorization)
 
-            if user_id:
+            if res:
+                user_id, auth_key_id = res
+
                 # only users with this permission are allowed to use api keys
                 permissions.append(Permission.AUTH)
 
         if not user_id:
-            raise HTTPException(401)
+            raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
         user: User = db.get(User, user_id)
 
         if not user:
-            raise HTTPException(401)
+            raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
-        auth = Auth(user.id, user.org_id, user.role_id)
+        auth = Auth(user_id=user.id, org_id=user.org_id, role_id=user.role_id, auth_key_id=auth_key_id)
 
         if not check_permissions(auth, permissions):
-            raise HTTPException(401)
+            raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
         return auth
 
@@ -139,7 +147,15 @@ def check_permissions(auth: Auth, permissions: list[Permission] = []) -> bool:
     if not role:
         return False
 
-    if role.perm_site_admin:
+    auth_key: AuthKey | None = None
+
+    if auth.auth_key_id:
+        auth_key = db.get(AuthKey, auth.auth_key_id)
+
+        if not auth_key:
+            return False
+
+    if role.perm_site_admin and not auth_key:
         return True
 
     for permission in permissions:
@@ -168,6 +184,7 @@ def check_permissions(auth: Auth, permissions: list[Permission] = []) -> bool:
             or (permission == Permission.GALAXY_EDITOR and not role.perm_galaxy_editor)
             or (permission == Permission.WARNINGLIST and not role.perm_warninglist)
             or (permission == Permission.VIEW_FEED_CORRELATIONS and not role.perm_view_feed_correlations)
+            or (permission == Permission.WRITE_ACCESS and auth_key and auth_key.read_only)
         ):
             return False
 
@@ -223,6 +240,12 @@ def _decode_token(token: str) -> str | None:
     return payload.get("user_id", None)
 
 
-def _check_api_key(authorization: str) -> str | None:
-    # TODO implement
-    pass
+def _check_api_key(db: Session, authorization: str) -> tuple[int, int] | None:
+    hashed = hash_auth_key(authorization)
+
+    auth_key: AuthKey | None = db.query(AuthKey).filter(AuthKey.authkey == hashed).first()
+
+    if not auth_key or (auth_key.expiration and auth_key.expiration < time()):
+        return None
+
+    return auth_key.user_id, auth_key.id
