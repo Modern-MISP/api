@@ -27,7 +27,7 @@ router = APIRouter(tags=["user_settings"])
 
 @router.post("/user_settings/setSetting/{userId}/{userSettingName}")
 async def set_user_settings(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS]))],
     db: Annotated[Session, Depends(get_db)],
     user_id: Annotated[int, Path(alias="userId")],
     user_setting_name: Annotated[str, Path(alias="userSettingName")],
@@ -74,7 +74,7 @@ async def get_user_settings(
 
 @router.delete("/user_settings/{userSettingId}")
 async def delete_user_settings(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS]))],
     db: Annotated[Session, Depends(get_db)],
     user_setting_id: Annotated[int, Path(alias="userSettingId")],
 ) -> StandardStatusIdentifiedResponse:
@@ -117,7 +117,7 @@ async def view_user_settings_depr(
 
 
 @router.get("/user_settings/getSetting/{userId}/{userSettingName}", deprecated=True)
-async def get_auth_key_by_id_depr(
+async def get_user_setting_by_ids(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     user_id: Annotated[int, Path(alias="userId")],
@@ -143,7 +143,7 @@ async def get_auth_key_by_id_depr(
 
 @router.delete("/user_settings/delete/{userSettingId}", deprecated=True)
 async def delete_user_settings_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS]))],
     db: Annotated[Session, Depends(get_db)],
     user_setting_id: Annotated[int, Path(alias="userSettingId")],
 ) -> StandardStatusIdentifiedResponse:
