@@ -72,6 +72,9 @@ class Permission(Enum):
     """Allow to manage warninglists."""
     VIEW_FEED_CORRELATIONS = "view_feed_correlations"
     """Allow the viewing of feed correlations. Enabling this can come at a performance cost."""
+    WRITE_ACCESS = "write_access"
+    """The only new permission compared to the legacy misp implementation,
+    it is required for every route that writes data"""
 
 
 class Auth:
