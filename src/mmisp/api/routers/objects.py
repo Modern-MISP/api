@@ -22,7 +22,6 @@ from mmisp.db.models.attribute import Attribute
 from mmisp.db.models.event import Event
 from mmisp.db.models.object import Object, ObjectTemplate
 from mmisp.util.partial import partial
-from mmisp.util.request_validations import check_existence_and_raise
 
 router = APIRouter(tags=["objects"])
 
@@ -40,8 +39,8 @@ router = APIRouter(tags=["objects"])
 async def add_object(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    event_id: Annotated[str, Path(..., alias="eventId")],
-    object_template_id: Annotated[str, Path(..., alias="objectTemplateId")],
+    event_id: Annotated[str, Path(alias="eventId")],
+    object_template_id: Annotated[str, Path(alias="objectTemplateId")],
     body: ObjectCreateBody,
 ) -> dict[str, Any]:
     return await _add_object(db, event_id, object_template_id, body)
@@ -72,7 +71,7 @@ async def restsearch(
 async def get_object_details(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    object_id: Annotated[str, Path(..., alias="objectId")],
+    object_id: Annotated[str, Path(alias="objectId")],
 ) -> dict[str, Any]:
     return await _get_object_details(db, object_id)
 
@@ -87,8 +86,8 @@ async def get_object_details(
 async def delete_object(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    object_id: Annotated[str, Path(..., alias="objectId")],
-    hard_delete: Annotated[bool, Path(..., alias="hardDelete")],
+    object_id: Annotated[str, Path(alias="objectId")],
+    hard_delete: Annotated[bool, Path(alias="hardDelete")],
 ) -> dict[str, Any]:
     return await _delete_object(db, object_id, hard_delete)
 
@@ -107,8 +106,8 @@ async def delete_object(
 async def add_object_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    event_id: Annotated[str, Path(..., alias="eventId")],
-    object_template_id: Annotated[str, Path(..., alias="objectTemplateId")],
+    event_id: Annotated[str, Path(alias="eventId")],
+    object_template_id: Annotated[str, Path(alias="objectTemplateId")],
     body: ObjectCreateBody,
 ) -> dict[str, Any]:
     return await _add_object(db, event_id, object_template_id, body)
@@ -125,7 +124,7 @@ async def add_object_depr(
 async def get_object_details_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    object_id: Annotated[str, Path(..., alias="objectId")],
+    object_id: Annotated[str, Path(alias="objectId")],
 ) -> dict[str, Any]:
     return await _get_object_details(db, object_id)
 
@@ -143,8 +142,8 @@ async def get_object_details_depr(
 async def delete_object_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    object_id: Annotated[str, Path(..., alias="objectId")],
-    hard_delete: Annotated[bool, Path(..., alias="hardDelete")],
+    object_id: Annotated[str, Path(alias="objectId")],
+    hard_delete: Annotated[bool, Path(alias="hardDelete")],
 ) -> dict[str, Any]:
     return await _delete_object(db, object_id, hard_delete)
 
@@ -153,14 +152,12 @@ async def delete_object_depr(
 
 
 async def _add_object(db: Session, event_id: str, object_template_id: str, body: ObjectCreateBody) -> dict[str, Any]:
-    template: ObjectTemplate = check_existence_and_raise(
-        db=db,
-        model=ObjectTemplate,
-        value=object_template_id,
-        column_name="id",
-        error_detail="Object template not found.",
-    )
-    check_existence_and_raise(db=db, model=Event, value=event_id, column_name="id", error_detail="Event not found.")
+    template: ObjectTemplate | None = db.get(ObjectTemplate, object_template_id)
+
+    if not template:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Object template not found.")
+    if not db.get(Event, event_id):
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Event not found.")
 
     object: Object = Object(
         **body.dict(exclude={"attributes"}),
@@ -202,7 +199,7 @@ async def _restsearch(db: Session, body: ObjectSearchBody) -> dict[str, Any]:
     if body.return_format is None:
         body.return_format = "json"
     else:
-        check_valid_return_format(return_format=body.return_format)
+        _check_valid_return_format(return_format=body.return_format)
 
     filters = body.dict(exclude_unset=True)
     objects: list[Object] = _build_query(db, filters)
@@ -215,9 +212,11 @@ async def _restsearch(db: Session, body: ObjectSearchBody) -> dict[str, Any]:
 
 
 async def _get_object_details(db: Session, object_id: str) -> dict[str, Any]:
-    object: Object = check_existence_and_raise(
-        db=db, model=Object, value=object_id, column_name="id", error_detail="Object not found."
-    )
+    object: Object | None = db.get(Object, object_id)
+
+    if not object:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Object not found.")
+
     attributes: list[Attribute] = db.query(Attribute).filter(Attribute.object_id == object.id).all()
     event: Event = db.query(Event).join(Object, Event.id == Object.event_id).filter(Object.id == object_id).first()
     event_response: ObjectEventResponse = ObjectEventResponse(
@@ -235,11 +234,10 @@ async def _get_object_details(db: Session, object_id: str) -> dict[str, Any]:
 
 
 async def _delete_object(db: Session, object_id: str, hard_delete: bool) -> dict[str, Any]:
-    object: Object = check_existence_and_raise(
-        db=db, model=Object, value=object_id, column_name="id", error_detail="Object not found."
-    )
-    saved: bool = False
-    success: bool = False
+    object: Object | None = db.get(Object, object_id)
+
+    if not object:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Object not found.")
 
     if hard_delete:
         db.query(Attribute).filter(Attribute.object_id == object_id).delete(synchronize_session="fetch")
@@ -268,7 +266,7 @@ def _create_timestamp() -> int:
     return int(time())
 
 
-def check_valid_return_format(return_format: str) -> None:
+def _check_valid_return_format(return_format: str) -> None:
     if return_format not in ["json"]:
         raise HTTPException(status_code=400, detail="Invalid return format.")
 
