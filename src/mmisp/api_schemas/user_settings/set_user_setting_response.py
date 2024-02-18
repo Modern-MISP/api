@@ -1,11 +1,13 @@
 from pydantic import BaseModel
 
-from .get_get_id_user_setting_response import Value
+
+class SetUserSettingResponseUserSetting(BaseModel):
+    id: str
+    setting: str
+    value: dict
+    user_id: str
+    timestamp: str
 
 
 class SetUserSettingResponse(BaseModel):
-    id: str
-    setting: str
-    value: Value
-    user_id: str
-    timestamp: str
+    UserSetting: SetUserSettingResponseUserSetting

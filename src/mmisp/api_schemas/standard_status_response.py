@@ -7,3 +7,7 @@ class StandardStatusResponse(BaseModel):
     name: str
     message: str
     url: str
+
+
+class StandardStatusIdentifiedResponse(StandardStatusResponse):
+    id: str

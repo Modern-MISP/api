@@ -1,9 +1,12 @@
 from pydantic import BaseModel
 
-from ..user_schema import User
+
+class SearchGetAuthKeysResponseItemUser(BaseModel):
+    id: str
+    email: str
 
 
-class SearchGetAuthKeysReponse(BaseModel):
+class SearchGetAuthKeysResponseItemAuthKey(BaseModel):
     id: str
     uuid: str
     authkey_start: str
@@ -13,7 +16,13 @@ class SearchGetAuthKeysReponse(BaseModel):
     read_only: bool
     user_id: str
     comment: str
-    allowed_ips: str  # Stringified JSON Array of IP addresses
-    last_used: str
+    allowed_ips: list[str]
     unique_ips: list[str]
-    user: User
+
+
+class SearchGetAuthKeysResponseItem(BaseModel):
+    AuthKey: SearchGetAuthKeysResponseItemAuthKey
+    User: SearchGetAuthKeysResponseItemUser
+
+    class Config:
+        orm_mode = True
