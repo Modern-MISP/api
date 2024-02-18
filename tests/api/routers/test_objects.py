@@ -281,7 +281,7 @@ class TestGetObjectInfo:
         object_id: str = "invalid_id"
         headers = {"authorization": environment.site_admin_user_token}
         response = client.get(f"/objects/{object_id}", headers=headers)
-        assert response.status_code == 404
+        assert response.status_code == 422
 
     @staticmethod
     def test_get_object_details_data_integrity(object_data: dict[str, Any]) -> None:
@@ -443,7 +443,7 @@ class TestDeleteObject:
         object_id = "invalid_id"
         headers = {"authorization": environment.site_admin_user_token}
         response_delete = client.delete(f"/objects/{object_id}/true", headers=headers)
-        assert response_delete.status_code == 404
+        assert response_delete.status_code == 422
         assert "detail" in response_delete.json()
 
     @staticmethod
