@@ -1,4 +1,3 @@
-from enum import Enum
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Request, status
@@ -40,8 +39,8 @@ from mmisp.db.models.attribute import Attribute, AttributeTag
 from mmisp.db.models.event import Event
 from mmisp.db.models.object import Object
 from mmisp.db.models.tag import Tag
+from mmisp.util.models import update_record
 from mmisp.util.partial import partial
-from mmisp.util.request_validations import check_existence_and_raise
 
 router = APIRouter(tags=["attributes"])
 
@@ -306,7 +305,10 @@ async def delete_attribute_depr(
 
 
 async def _add_attribute(db: Session, event_id: str, body: AddAttributeBody) -> dict:
-    event = check_existence_and_raise(db, Event, event_id, "id", "Event not found.")
+    event: Event | None = db.get(Event, event_id)
+
+    if not event:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
     if not body.value:
         if not body.value1:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="'value' or 'value1' is required")
@@ -343,7 +345,10 @@ async def _add_attribute(db: Session, event_id: str, body: AddAttributeBody) -> 
 
 
 async def _get_attribute_details(db: Session, attribute_id: str) -> dict:
-    attribute = check_existence_and_raise(db, Attribute, attribute_id, "id", "Attribute not found.")
+    attribute: Attribute | None = db.get(Attribute, attribute_id)
+
+    if not attribute:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     attribute_data = _prepare_get_attribute_details_response(db, attribute_id, attribute)
 
@@ -351,25 +356,27 @@ async def _get_attribute_details(db: Session, attribute_id: str) -> dict:
 
 
 async def _update_attribute(db: Session, attribute_id: str, body: EditAttributeBody) -> dict:
-    existing_attribute = check_existence_and_raise(db, Attribute, attribute_id, "id", "Attribute not found.")
+    attribute: Attribute | None = db.get(Attribute, attribute_id)
 
-    # event_id and event_uuid cannot be edited
-    update_data = body.dict(exclude_unset=True)
-    for key, value in update_data.items():
-        if value is not None:
-            setattr(existing_attribute, key, value if not isinstance(value, Enum) else value.value)
+    if not attribute:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
+
+    update_record(attribute, body.dict())
 
     db.commit()
+    db.refresh(attribute)
 
-    db.refresh(existing_attribute)
-
-    attribute_data = _prepare_edit_attribute_response(db, attribute_id, existing_attribute)
+    attribute_data = _prepare_edit_attribute_response(db, attribute_id, attribute)
 
     return EditAttributeResponse(Attribute=attribute_data)
 
 
 async def _delete_attribute(db: Session, attribute_id: str) -> DeleteAttributeResponse:
-    attribute = check_existence_and_raise(db, Attribute, attribute_id, "id", "Attribute not found.")
+    attribute: Attribute | None = db.get(Attribute, attribute_id)
+
+    if not attribute:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
+
     db.delete(attribute)
     db.commit()
 
@@ -390,14 +397,20 @@ async def _get_attributes(db: Session) -> dict:
 async def _delete_selected_attributes(
     db: Session, event_id: str, body: DeleteSelectedAttributeBody, request: Request
 ) -> DeleteSelectedAttributeResponse:
-    check_existence_and_raise(db, Event, event_id, "id", "Event not found.")
+    event: Event | None = db.get(Event, event_id)
+
+    if not event:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     attribute_ids = body.id.split(" ")
 
     for attribute_id in attribute_ids:
         attribute = db.get(Attribute, attribute_id)
 
-        check_existence_and_raise(db, Attribute, attribute_id, "id", f"Attribute with id '{attribute_id}' not found.")
+        attribute: Attribute | None = db.get(Attribute, attribute_id)
+
+        if not attribute:
+            raise HTTPException(status.HTTP_404_NOT_FOUND)
 
         if not attribute.event.id == int(event_id):
             raise HTTPException(
@@ -485,7 +498,10 @@ async def _get_attribute_statistics(db: Session, context: str, percentage: int) 
 
 
 async def _restore_attribute(db: Session, attribute_id: str) -> dict:
-    attribute = check_existence_and_raise(db, Attribute, attribute_id, "id", "Attribute not found.")
+    attribute: Attribute | None = db.get(Attribute, attribute_id)
+
+    if not attribute:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     setattr(attribute, "deleted", False)
 
@@ -501,7 +517,10 @@ async def _restore_attribute(db: Session, attribute_id: str) -> dict:
 async def _add_tag_to_attribute(
     db: Session, attribute_id: str, tag_id: str, local: str
 ) -> AddRemoveTagAttributeResponse:
-    attribute = check_existence_and_raise(db, Attribute, attribute_id, "id", "Attribute not found")
+    attribute: Attribute | None = db.get(Attribute, attribute_id)
+
+    if not attribute:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     try:
         int(tag_id)
@@ -530,7 +549,10 @@ async def _add_tag_to_attribute(
 
 
 async def _remove_tag_from_attribute(db: Session, attribute_id: str, tag_id: str) -> AddRemoveTagAttributeResponse:
-    check_existence_and_raise(db, Attribute, attribute_id, "id", "Attribute not found")
+    attribute: Attribute | None = db.get(Attribute, attribute_id)
+
+    if not attribute:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     try:
         int(tag_id)
