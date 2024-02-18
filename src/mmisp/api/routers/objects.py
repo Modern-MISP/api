@@ -202,7 +202,7 @@ async def _restsearch(db: Session, body: ObjectSearchBody) -> dict[str, Any]:
         _check_valid_return_format(return_format=body.return_format)
 
     filters = body.dict(exclude_unset=True)
-    objects: list[Object] = _build_query(db, filters)
+    objects: list[Object] = _build_query(db=db, filters=filters)
 
     objects_data: list[ObjectWithAttributesResponse] = [
         ObjectWithAttributesResponse(**object.__dict__, attributes=object.attributes, event=None) for object in objects

@@ -29,7 +29,8 @@ def feed_data(request: Any) -> dict[str, Any]:
 
 
 class TestAddFeed:
-    def test_add_feed(self: "TestAddFeed", feed_data: dict[str, Any]) -> None:
+    @staticmethod
+    def test_add_feed(feed_data: dict[str, Any]) -> None:
         db = get_db()
 
         sharing_group = generate_sharing_group()
@@ -73,7 +74,8 @@ class TestAddFeed:
         assert response.status_code == 201
         assert response.json()["feed"]["name"] == feed_data["name"]
 
-    def test_feed_error_handling(self: "TestAddFeed") -> None:
+    @staticmethod
+    def test_feed_error_handling() -> None:
         invalid_data = {"name": "Test Feed"}
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/feeds", json=invalid_data, headers=headers)
@@ -81,7 +83,8 @@ class TestAddFeed:
         assert response.json()["detail"][0]["msg"] == "field required"
         assert response.json()["detail"][0]["type"] == "value_error.missing"
 
-    def test_feed_response_format(self: "TestAddFeed", feed_data: dict[str, Any]) -> None:
+    @staticmethod
+    def test_feed_response_format(feed_data: dict[str, Any]) -> None:
         db = get_db()
 
         sharing_group = generate_sharing_group()
@@ -135,7 +138,8 @@ def feed_test_ids() -> Generator:
 
 
 class TestEnableFeed:
-    def test_enable_feed(self: "TestEnableFeed", feed_test_ids: dict[str, Any], feed_data: dict[str, Any]) -> None:
+    @staticmethod
+    def test_enable_feed(feed_test_ids: dict[str, Any], feed_data: dict[str, Any]) -> None:
         db = get_db()
 
         sharing_group = generate_sharing_group()
@@ -187,7 +191,8 @@ class TestEnableFeed:
         response = client.post(f"feeds/enable/{feed_test_ids['invalid_feed_id']}", headers=headers)
         assert response.status_code == 404
 
-    def test_feed_enable_response_format(self: "TestEnableFeed", feed_data: dict[str, Any]) -> None:
+    @staticmethod
+    def test_feed_enable_response_format(feed_data: dict[str, Any]) -> None:
         db = get_db()
 
         sharing_group = generate_sharing_group()
@@ -235,7 +240,8 @@ class TestEnableFeed:
 
 
 class TestDisableFeed:
-    def test_disable_feed(self: "TestDisableFeed", feed_test_ids: dict[str, Any], feed_data: dict[str, Any]) -> None:
+    @staticmethod
+    def test_disable_feed(feed_test_ids: dict[str, Any], feed_data: dict[str, Any]) -> None:
         db = get_db()
 
         sharing_group = generate_sharing_group()
@@ -287,7 +293,8 @@ class TestDisableFeed:
         response = client.post(f"feeds/disable/{feed_test_ids['invalid_feed_id']}", headers=headers)
         assert response.status_code == 404
 
-    def test_disable_feed_response_format(self: "TestDisableFeed", feed_data: dict[str, Any]) -> None:
+    @staticmethod
+    def test_disable_feed_response_format(feed_data: dict[str, Any]) -> None:
         db = get_db()
 
         sharing_group = generate_sharing_group()
@@ -345,18 +352,21 @@ def cach_feed_test_data() -> Generator:
 class TestCacheFeeds:
     pass  # route not yet implemented (worker)
 
-    # def test_cache_feeds_valid_data(self: "TestCacheFeeds", cach_feed_test_data: dict[str, Any]) -> None:
+    # @staticmethod
+    # def test_cache_feeds_valid_data(cach_feed_test_data: dict[str, Any]) -> None:
     #     headers = {"authorization": environment.site_admin_user_token}
     #     response = client.post(f"/feeds/cacheFeeds/{cach_feed_test_data['valid_scope']}", headers=headers)
     #     assert response.status_code == 200
     #     assert response.json()["success"] is True
 
-    # def test_cache_feeds_invalid_data(self: "TestCacheFeeds", cach_feed_test_data: dict[str, Any]) -> None:
+    # @staticmethod
+    # def test_cache_feeds_invalid_data(cach_feed_test_data: dict[str, Any]) -> None:
     #     headers = {"authorization": environment.site_admin_user_token}
     #     response = client.post(f"/feeds/cacheFeeds/{cach_feed_test_data['invalid_scope']}", headers=headers)
     #     assert response.status_code == 400
 
-    # def test_cache_feeds_response_format(self: "TestCacheFeeds", cach_feed_test_data: dict[str, Any]) -> None:
+    # @staticmethod
+    # def test_cache_feeds_response_format(cach_feed_test_data: dict[str, Any]) -> None:
     #     headers = {"authorization": environment.site_admin_user_token}
     #     response = client.post(f"/feeds/cacheFeeds/{cach_feed_test_data['valid_scope']}", headers=headers)
     #     assert response.headers["Content-Type"] == "application/json"
@@ -365,28 +375,33 @@ class TestCacheFeeds:
 class TestFetchFeeds:
     pass  # route not yet implemented (worker)
 
-    # def test_fetch_from_feed_existing_id(self: "TestFetchFeeds", feed_test_ids: dict[str, Any]) -> None:
+    # @staticmethod
+    # def test_fetch_from_feed_existing_id(feed_test_ids: dict[str, Any]) -> None:
     #     headers = {"authorization": environment.site_admin_user_token}
     #     response = client.get(f"/feeds/fetchFromFeed/{feed_test_ids['valid_feed_id']}", headers=headers)
     #     assert response.status_code == 200
     #     assert "result" in response.json()
 
-    # def test_fetch_from_feed_invalid_id(self: "TestFetchFeeds", feed_test_ids: dict[str, Any]) -> None:
+    # @staticmethod
+    # def test_fetch_from_feed_invalid_id(feed_test_ids: dict[str, Any]) -> None:
     #     headers = {"authorization": environment.site_admin_user_token}
     #     response = client.get(f"/feeds/fetchFromFeed/{feed_test_ids['invalid_feed_id']}", headers=headers)
     #     assert response.status_code == 422
 
-    # def test_fetch_from_feed_non_existing_id(self: "TestFetchFeeds", feed_test_ids: dict[str, Any]) -> None:
+    # @staticmethod
+    # def test_fetch_from_feed_non_existing_id(feed_test_ids: dict[str, Any]) -> None:
     #     response = client.get(f"/feeds/fetchFromFeed/{feed_test_ids['non_existing_feed_id']}")
     #     assert response.status_code in (404, 405)
 
-    # def test_fetch_from_feed_response_format(self: "TestFetchFeeds", feed_test_ids: dict[str, Any]) -> None:
+    # @staticmethod
+    # def test_fetch_from_feed_response_format(feed_test_ids: dict[str, Any]) -> None:
     #     response = client.get(f"/feeds/fetchFromFeed/{feed_test_ids['valid_feed_id']}")
     #     assert response.headers["Content-Type"] == "application/json"
 
 
 class TestGetFeedByIdInfo:
-    def test_get_existing_feed_details(self: "TestGetFeedByIdInfo", feed_data: dict[str, Any]) -> None:
+    @staticmethod
+    def test_get_existing_feed_details(feed_data: dict[str, Any]) -> None:
         db = get_db()
 
         sharing_group = generate_sharing_group()
@@ -434,17 +449,20 @@ class TestGetFeedByIdInfo:
         assert response.json()["feed"]["id"] == feed_id
         assert response.json()["feed"]["name"] == feed_data["name"]
 
-    def test_get_invalid_feed_by_id(self: "TestGetFeedByIdInfo", feed_test_ids: dict[str, Any]) -> None:
+    @staticmethod
+    def test_get_invalid_feed_by_id(feed_test_ids: dict[str, Any]) -> None:
         headers = {"authorization": environment.site_admin_user_token}
         response = client.get(f"/feeds/{feed_test_ids['invalid_feed_id']}", headers=headers)
         assert response.status_code == 404
 
-    def test_get_non_existing_feed_details(self: "TestGetFeedByIdInfo", feed_test_ids: dict[str, Any]) -> None:
+    @staticmethod
+    def test_get_non_existing_feed_details(feed_test_ids: dict[str, Any]) -> None:
         headers = {"authorization": environment.site_admin_user_token}
         response = client.get(f"/feeds/{feed_test_ids['non_existing_feed_id']}", headers=headers)
         assert response.status_code == 404
 
-    def test_get_feed_response_format(self: "TestGetFeedByIdInfo", feed_data: dict[str, Any]) -> None:
+    @staticmethod
+    def test_get_feed_response_format(feed_data: dict[str, Any]) -> None:
         db = get_db()
 
         sharing_group = generate_sharing_group()
@@ -496,7 +514,8 @@ class TestGetFeedByIdInfo:
 
 
 class TestUpdateFeed:
-    def test_update_existing_feed(self: "TestUpdateFeed", feed_data: dict[str, Any]) -> None:
+    @staticmethod
+    def test_update_existing_feed(feed_data: dict[str, Any]) -> None:
         db = get_db()
 
         sharing_group = generate_sharing_group()
@@ -546,14 +565,14 @@ class TestUpdateFeed:
         assert response_data["feed"]["name"] == feed_data["name"]
         assert response_data["feed"]["url"] == feed_data["url"]
 
-    def test_update_non_existing_feed(
-        self: "TestUpdateFeed", feed_test_ids: dict[str, Any], feed_data: dict[str, Any]
-    ) -> None:
+    @staticmethod
+    def test_update_non_existing_feed(feed_test_ids: dict[str, Any], feed_data: dict[str, Any]) -> None:
         headers = {"authorization": environment.site_admin_user_token}
         response = client.put(f"/feeds/{feed_test_ids['non_existing_feed_id']}", json=feed_data, headers=headers)
         assert response.status_code == 404
 
-    def test_update_feed_response_format(self: "TestUpdateFeed", feed_data: dict[str, Any]) -> None:
+    @staticmethod
+    def test_update_feed_response_format(feed_data: dict[str, Any]) -> None:
         db = get_db()
 
         sharing_group = generate_sharing_group()
@@ -605,7 +624,8 @@ class TestUpdateFeed:
 
 
 class TestToggleFeed:
-    def test_toggle_existing_feed(self: "TestToggleFeed", feed_data: dict[str, Any]) -> None:
+    @staticmethod
+    def test_toggle_existing_feed(feed_data: dict[str, Any]) -> None:
         db = get_db()
 
         sharing_group = generate_sharing_group()
@@ -668,13 +688,15 @@ class TestToggleFeed:
         response = client.patch(f"feeds/{feed_id}", json=toggle_data, headers=headers)
         assert response.status_code == 200
 
-    def test_toggle_non_existing_feed(self: "TestToggleFeed", feed_test_ids: dict[str, Any]) -> None:
+    @staticmethod
+    def test_toggle_non_existing_feed(feed_test_ids: dict[str, Any]) -> None:
         toggle_data = {"enable": True}
         headers = {"authorization": environment.site_admin_user_token}
         response = client.patch(f"feeds/{feed_test_ids['non_existing_feed_id']}", json=toggle_data, headers=headers)
         assert response.status_code == 404
 
-    def test_toggle_feed_response_format(self: "TestToggleFeed", feed_data: dict[str, Any]) -> None:
+    @staticmethod
+    def test_toggle_feed_response_format(feed_data: dict[str, Any]) -> None:
         db = get_db()
 
         sharing_group = generate_sharing_group()
@@ -766,14 +788,16 @@ class TestToggleFeed:
 class TestFetschFromAllFeeds:
     pass  # route not yet implemented (worker)
 
-    # def test_fetch_data_from_all_feeds(self: "TestFetschFromAllFeeds") -> None:
+    # @staticmethod
+    # def test_fetch_data_from_all_feeds() -> None:
     #     headers = {"authorization": environment.site_admin_user_token}
     #     response = client.get("/feeds/fetchFromAllFeeds", headers=headers)
     #     assert response.status_code == 200
     #     response_data = response.json()
     #     assert "result" in response_data
 
-    # def test_fetch_from_all_feeds_response_format(self: "TestFetschFromAllFeeds") -> None:
+    # @staticmethod
+    # def test_fetch_from_all_feeds_response_format() -> None:
     #     headers = {"authorization": environment.site_admin_user_token}
     #     response = client.get("/feeds/fetchFromAllFeeds", headers=headers)
     #     assert response.headers["Content-Type"] == "application/json"
@@ -781,7 +805,8 @@ class TestFetschFromAllFeeds:
 
 
 class TestGetAllFeeds:
-    def test_get_all_feeds(self: "TestGetAllFeeds", feed_data: dict[str, Any]) -> None:
+    @staticmethod
+    def test_get_all_feeds(feed_data: dict[str, Any]) -> None:
         db = get_db()
 
         sharing_group = generate_sharing_group()
@@ -827,7 +852,8 @@ class TestGetAllFeeds:
         assert response.status_code == 200
         assert isinstance(response.json()["feeds"], list)
 
-    def test_get_feeds_response_format(self: "TestGetAllFeeds", feed_data: dict[str, Any]) -> None:
+    @staticmethod
+    def test_get_feeds_response_format(feed_data: dict[str, Any]) -> None:
         db = get_db()
 
         sharing_group = generate_sharing_group()
