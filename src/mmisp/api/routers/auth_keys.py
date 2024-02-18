@@ -31,7 +31,7 @@ router = APIRouter(tags=["auth_keys"])
 
 @router.post("/auth_keys/{userId}", status_code=status.HTTP_201_CREATED, response_model=partial(AddAuthKeyResponse))
 async def auth_keys_add_user(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.AUTH]))],
     db: Annotated[Session, Depends(get_db)],
     user_id: Annotated[int, Path(alias="userId")],
     body: AddAuthKeyBody,
@@ -59,7 +59,7 @@ async def search_auth_keys(
 
 @router.put("/auth_keys/{AuthKeyId}", response_model=partial(EditAuthKeyResponse))
 async def auth_keys_edit_auth_key(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.AUTH]))],
     db: Annotated[Session, Depends(get_db)],
     auth_key_id: Annotated[int, Path(alias="AuthKeyId")],
     body: EditAuthKeyBody,
@@ -69,7 +69,7 @@ async def auth_keys_edit_auth_key(
 
 @router.delete("/auth_keys/{AuthKeyId}")
 async def auth_keys_delete_auth_key(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.AUTH]))],
     db: Annotated[Session, Depends(get_db)],
     auth_key_id: Annotated[int, Path(alias="AuthKeyId")],
 ) -> StandardStatusIdentifiedResponse:
@@ -103,7 +103,7 @@ async def auth_keys_get(
     response_model=partial(AddAuthKeyResponse),
 )
 async def auth_keys_add_user_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.AUTH]))],
     db: Annotated[Session, Depends(get_db)],
     user_id: Annotated[int, Path(alias="userId")],
     body: AddAuthKeyBody,
@@ -113,7 +113,7 @@ async def auth_keys_add_user_depr(
 
 @router.post("/auth_keys/edit/{AuthKeyId}", deprecated=True, response_model=partial(EditAuthKeyResponse))
 async def auth_keys_edit_auth_key_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.AUTH]))],
     db: Annotated[Session, Depends(get_db)],
     auth_key_id: Annotated[int, Path(alias="AuthKeyId")],
     body: EditAuthKeyBody,
@@ -123,7 +123,7 @@ async def auth_keys_edit_auth_key_depr(
 
 @router.delete("/auth_keys/delete/{AuthKeyId}", deprecated=True)
 async def auth_keys_delete_auth_key_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.AUTH]))],
     db: Annotated[Session, Depends(get_db)],
     auth_key_id: Annotated[int, Path(alias="AuthKeyId")],
 ) -> StandardStatusIdentifiedResponse:
