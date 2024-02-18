@@ -1,11 +1,11 @@
 from time import time
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, Path, status
+from fastapi import APIRouter, Depends, HTTPException, Path, status
 from sqlalchemy.orm import Session
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
-from mmisp.api_schemas.sightings.create_sighting_body import SightingCreateBody
+from mmisp.api_schemas.sightings.create_sighting_body import SightingCreateBody, SightingFiltersBody
 from mmisp.api_schemas.sightings.get_sighting_response import (
     SightingAttributesResponse,
     SightingGetResponse,
@@ -16,10 +16,10 @@ from mmisp.api_schemas.standard_status_response import StandardStatusResponse
 from mmisp.db.database import get_db
 from mmisp.db.models.attribute import Attribute
 from mmisp.db.models.event import Event
+from mmisp.db.models.object import Object
 from mmisp.db.models.organisation import Organisation
 from mmisp.db.models.sighting import Sighting
 from mmisp.util.partial import partial
-from mmisp.util.request_validations import check_existence_and_raise
 
 router = APIRouter(tags=["sightings"])
 
@@ -169,10 +169,16 @@ async def get_sightings_at_index_depr(
 
 
 async def _add_sighting(db: Session, body: SightingCreateBody) -> list[dict[str, Any]]:
+    filters: SightingFiltersBody | None = body.filters.dict(exclude_unset=True) if body.filters else None
     responses: list[SightingsGetResponse] = []
 
     for value in body.values:
-        attributes: list[Attribute] = db.query(Attribute).filter(Attribute.value == value).all()
+        value_specific_filters = {"value": value}
+        if filters:
+            value_specific_filters.update(filters)
+            attributes: list[Attribute] = _build_query(db=db, filters=value_specific_filters)
+        else:
+            attributes = db.query(Attribute).filter(Attribute.value == value).all()
 
         for attribute in attributes:
             sighting: Sighting = Sighting(
@@ -206,9 +212,10 @@ async def _add_sighting(db: Session, body: SightingCreateBody) -> list[dict[str,
 
 
 async def _add_sightings_at_index(db: Session, attribute_id: str) -> dict[str, Any]:
-    attribute: Attribute = check_existence_and_raise(
-        db=db, model=Attribute, value=attribute_id, column_name="id", error_detail="Attribute not found."
-    )
+    attribute: Attribute | None = db.get(Attribute, attribute_id)
+
+    if not attribute:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Attribute not found.")
 
     sighting: Sighting = Sighting(
         attribute_id=int(attribute_id),
@@ -236,16 +243,19 @@ async def _add_sightings_at_index(db: Session, attribute_id: str) -> dict[str, A
 
 
 async def _get_sightings_at_index(db: Session, event_id: str) -> dict[str, Any]:
-    check_existence_and_raise(db=db, model=Event, value=event_id, column_name="id", error_detail="Event not found.")
+    if not db.get(Event, event_id):
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Event not found.")
     sightings: list[Sighting] = db.query(Sighting).filter(Sighting.event_id == event_id).all()
 
     return SightingsGetResponse(sightings=[sighting.__dict__ for sighting in sightings])
 
 
 async def _delete_sighting(db: Session, sighting_id: str) -> dict[str, Any]:
-    sighting: Sighting = check_existence_and_raise(
-        db=db, model=Sighting, value=sighting_id, column_name="id", error_detail="Sighting not found."
-    )
+    sighting: Sighting | None = db.get(Sighting, sighting_id)
+
+    if not sighting:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Sighting not found.")
+
     db.delete(sighting)
     db.commit()
     saved: bool = True
@@ -289,3 +299,87 @@ async def _get_sightings(db: Session) -> list[dict[str, Any]]:
 
 def _create_timestamp() -> int:
     return int(time())
+
+
+def _build_query(db: Session, filters: SightingFiltersBody) -> list[Attribute]:
+    search_body: SightingFiltersBody = SightingFiltersBody(**filters)
+    query: Attribute = db.query(Attribute)
+
+    if search_body.value:
+        query = query.filter(Attribute.value == search_body.value)
+
+    if search_body.value1:
+        query = query.filter(Attribute.value1 == search_body.value1)
+
+    if search_body.value2:
+        query = query.filter(Attribute.value2 == search_body.value2)
+
+    if search_body.type:
+        query = query.filter(Attribute.type == search_body.type)
+
+    if search_body.category:
+        query = query.filter(Attribute.category == search_body.category)
+
+    if search_body.from_:
+        query = query.filter(Attribute.timestamp >= search_body.from_)
+
+    if search_body.to:
+        query = query.filter(Attribute.timestamp <= search_body.to)
+
+    if search_body.last:
+        query = query.filter(Attribute.last_seen > search_body.last)
+
+    if search_body.timestamp:
+        query = query.filter(Attribute.timestamp == search_body.timestamp)
+
+    if search_body.event_id:
+        query = query.filter(Attribute.event_id == search_body.event_id)
+
+    if search_body.uuid:
+        query = query.filter(Attribute.uuid == search_body.uuid)
+
+    if search_body.timestamp:
+        query = query.filter(Attribute.timestamp == search_body.attribute_timestamp)
+
+    if search_body.to_ids:
+        query = query.filter(Attribute.to_ids == search_body.to_ids)
+
+    if search_body.deleted:
+        query = query.filter(Attribute.deleted == search_body.deleted)
+
+    if search_body.event_timestamp:
+        events = db.query(Event).filter(Event.timestamp == search_body.event_timestamp).all()
+
+        for event in events:
+            query = query.filter(Attribute.event_id == event.id)
+
+    if search_body.event_info:
+        events = db.query(Event).filter(Event.info.like(f"%{search_body.event_info}%"))
+
+        for event in events:
+            query = query.filter(Attribute.event_id == event.id)
+
+    if search_body.sharing_group:
+        for sharing_group in search_body.sharing_group:
+            query = query.filter(Attribute.sharing_group_id == sharing_group)
+
+    if search_body.first_seen:
+        query = query.filter(Attribute.first_seen == search_body.first_seen)
+
+    if search_body.last_seen:
+        query = query.filter(Attribute.last_seen == search_body.last_seen)
+
+    if search_body.requested_attributes:
+        for attribute in search_body.requested_attributes:
+            query = query.filter(Attribute.id == attribute)
+
+    if search_body.object_relation:
+        objects = db.query(Object).filter(Object.object_relation == search_body.object_relation).all()
+
+        for object in objects:
+            query = query.filter(Attribute.object_id == object.id)
+
+    if search_body.limit:
+        query = query.limit(int(search_body.limit))
+
+    return query.all()
