@@ -25,7 +25,7 @@ from mmisp.api_schemas.galaxies.get_all_search_galaxies_response import (
 from mmisp.api_schemas.galaxies.get_galaxy_response import GetGalaxyClusterResponse, GetGalaxyResponse
 from mmisp.api_schemas.galaxies.import_galaxies_body import ImportGalaxyBody
 from mmisp.api_schemas.organisations.organisation import Organisation as OrganisationSchema
-from mmisp.db.database import get_db
+from mmisp.db.database import get_db, with_session_management
 from mmisp.db.models.attribute import Attribute, AttributeTag
 from mmisp.db.models.event import Event, EventTag
 from mmisp.db.models.galaxy import Galaxy
@@ -67,6 +67,7 @@ logger.addHandler(error_handler)
     summary="Add new galaxy cluster",
     description="Add a new galaxy cluster to an existing galaxy.",
 )
+@with_session_management
 async def import_galaxy_cluster(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.ADD]))],
     db: Annotated[Session, Depends(get_db)],
@@ -81,6 +82,7 @@ async def import_galaxy_cluster(
 
 @router.get("/galaxies/view/{galaxyId}", deprecated=True)  # deprecated
 @router.get("/galaxies/{galaxyId}", status_code=status.HTTP_200_OK, response_model=partial(GetGalaxyResponse))  # new
+@with_session_management
 async def get_galaxy_details(
     db: Annotated[Session, Depends(get_db)], galaxy_id: Annotated[str, Path(..., alias="galaxyId")]
 ) -> dict:
@@ -97,6 +99,7 @@ async def get_galaxy_details(
     summary="Update galaxies",
     description="Force the galaxies to update with the JSON definitions. NOT YET IMPLEMENTED!",
 )
+@with_session_management
 async def update_galaxy(
     dauth: Annotated[Auth, Depends(authorize(AuthStrategy.WORKER_KEY, [Permission.SYNC]))],
     db: Annotated[Session, Depends(get_db)],
@@ -113,6 +116,7 @@ async def update_galaxy(
     status_code=status.HTTP_200_OK,
     response_model=partial(DeleteForceUpdateImportGalaxyResponse),
 )  # new
+@with_session_management
 async def delete_galaxy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
     db: Annotated[Session, Depends(get_db)],
@@ -126,6 +130,7 @@ async def delete_galaxy(
 
 
 @router.get("/galaxies", status_code=status.HTTP_200_OK, response_model=list[partial(GetAllSearchGalaxiesResponse)])
+@with_session_management
 async def get_galaxies(db: Annotated[Session, Depends(get_db)]) -> dict:
     return await _get_galaxies(db)
 
@@ -134,6 +139,7 @@ async def get_galaxies(db: Annotated[Session, Depends(get_db)]) -> dict:
 
 
 @router.post("/galaxies", status_code=status.HTTP_200_OK, response_model=list[partial(GetAllSearchGalaxiesResponse)])
+@with_session_management
 async def search_galaxies(db: Annotated[Session, Depends(get_db)]) -> dict:
     return await _get_galaxies(db)
 
@@ -143,6 +149,7 @@ async def search_galaxies(db: Annotated[Session, Depends(get_db)]) -> dict:
     status_code=status.HTTP_200_OK,
     response_model=list[partial(ExportGalaxyClusterResponse)],
 )
+@with_session_management
 async def export_galaxy(
     db: Annotated[Session, Depends(get_db)],
     galaxy_id: Annotated[str, Path(..., alias="galaxyId")],
@@ -156,6 +163,7 @@ async def export_galaxy(
     status_code=status.HTTP_200_OK,
     response_model=partial(AttachClusterGalaxyResponse),
 )
+@with_session_management
 async def galaxies_attachCluster(
     local: str,
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.ADD]))],
