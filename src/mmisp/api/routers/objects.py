@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Path, status
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
-from mmisp.api.auth import Auth, AuthStrategy, authorize
+from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
 from mmisp.api_schemas.attributes.get_all_attributes_response import GetAllAttributesResponse
 from mmisp.api_schemas.events.get_event_response import ObjectEventResponse
 from mmisp.api_schemas.objects.create_object_body import ObjectCreateBody
@@ -26,9 +26,6 @@ from mmisp.util.partial import partial
 router = APIRouter(tags=["objects"])
 
 
-# sorted according to CRUD
-
-
 @router.post(
     "/objects/{eventId}/{objectTemplateId}",
     status_code=status.HTTP_201_CREATED,
@@ -37,10 +34,10 @@ router = APIRouter(tags=["objects"])
     description="Add a new object to a specific event using a template.",
 )
 async def add_object(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS]))],
     db: Annotated[Session, Depends(get_db)],
-    event_id: Annotated[str, Path(alias="eventId")],
-    object_template_id: Annotated[str, Path(alias="objectTemplateId")],
+    event_id: Annotated[int, Path(alias="eventId")],
+    object_template_id: Annotated[int, Path(alias="objectTemplateId")],
     body: ObjectCreateBody,
 ) -> dict[str, Any]:
     return await _add_object(db, event_id, object_template_id, body)
@@ -71,7 +68,7 @@ async def restsearch(
 async def get_object_details(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    object_id: Annotated[str, Path(alias="objectId")],
+    object_id: Annotated[int, Path(alias="objectId")],
 ) -> dict[str, Any]:
     return await _get_object_details(db, object_id)
 
@@ -84,9 +81,9 @@ async def get_object_details(
     description="Delete a specific object. The hardDelete parameter determines if it's a hard or soft delete.",
 )
 async def delete_object(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS]))],
     db: Annotated[Session, Depends(get_db)],
-    object_id: Annotated[str, Path(alias="objectId")],
+    object_id: Annotated[int, Path(alias="objectId")],
     hard_delete: Annotated[bool, Path(alias="hardDelete")],
 ) -> dict[str, Any]:
     return await _delete_object(db, object_id, hard_delete)
@@ -104,10 +101,10 @@ async def delete_object(
     description="Deprecated. Add an object to an event using the old route.",
 )
 async def add_object_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS]))],
     db: Annotated[Session, Depends(get_db)],
-    event_id: Annotated[str, Path(alias="eventId")],
-    object_template_id: Annotated[str, Path(alias="objectTemplateId")],
+    event_id: Annotated[int, Path(alias="eventId")],
+    object_template_id: Annotated[int, Path(alias="objectTemplateId")],
     body: ObjectCreateBody,
 ) -> dict[str, Any]:
     return await _add_object(db, event_id, object_template_id, body)
@@ -124,7 +121,7 @@ async def add_object_depr(
 async def get_object_details_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    object_id: Annotated[str, Path(alias="objectId")],
+    object_id: Annotated[int, Path(alias="objectId")],
 ) -> dict[str, Any]:
     return await _get_object_details(db, object_id)
 
@@ -140,9 +137,9 @@ async def get_object_details_depr(
     The hardDelete parameter determines if it's a hard or soft delete.""",
 )
 async def delete_object_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS]))],
     db: Annotated[Session, Depends(get_db)],
-    object_id: Annotated[str, Path(alias="objectId")],
+    object_id: Annotated[int, Path(alias="objectId")],
     hard_delete: Annotated[bool, Path(alias="hardDelete")],
 ) -> dict[str, Any]:
     return await _delete_object(db, object_id, hard_delete)
@@ -151,7 +148,7 @@ async def delete_object_depr(
 # --- endpoint logic ---
 
 
-async def _add_object(db: Session, event_id: str, object_template_id: str, body: ObjectCreateBody) -> dict[str, Any]:
+async def _add_object(db: Session, event_id: int, object_template_id: int, body: ObjectCreateBody) -> dict[str, Any]:
     template: ObjectTemplate | None = db.get(ObjectTemplate, object_template_id)
 
     if not template:
@@ -211,7 +208,7 @@ async def _restsearch(db: Session, body: ObjectSearchBody) -> dict[str, Any]:
     return ObjectSearchResponse(response=[{"object": object_data} for object_data in objects_data])
 
 
-async def _get_object_details(db: Session, object_id: str) -> dict[str, Any]:
+async def _get_object_details(db: Session, object_id: int) -> dict[str, Any]:
     object: Object | None = db.get(Object, object_id)
 
     if not object:
@@ -233,7 +230,7 @@ async def _get_object_details(db: Session, object_id: str) -> dict[str, Any]:
     return ObjectResponse(object=object_data)
 
 
-async def _delete_object(db: Session, object_id: str, hard_delete: bool) -> dict[str, Any]:
+async def _delete_object(db: Session, object_id: int, hard_delete: bool) -> dict[str, Any]:
     object: Object | None = db.get(Object, object_id)
 
     if not object:

@@ -8,7 +8,6 @@ from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
 from mmisp.api_schemas.sightings.create_sighting_body import SightingCreateBody, SightingFiltersBody
 from mmisp.api_schemas.sightings.get_sighting_response import (
     SightingAttributesResponse,
-    SightingGetResponse,
     SightingOrganisationResponse,
     SightingsGetResponse,
 )
@@ -24,9 +23,6 @@ from mmisp.util.partial import partial
 router = APIRouter(tags=["sightings"])
 
 
-# Sorted according to CRUD
-
-
 @router.post(
     "/sightings",
     status_code=status.HTTP_201_CREATED,
@@ -35,7 +31,7 @@ router = APIRouter(tags=["sightings"])
     description="Add a new sighting.",
 )
 async def add_sighting(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SIGHTING]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SIGHTING]))],
     db: Annotated[Session, Depends(get_db)],
     body: SightingCreateBody,
 ) -> list[dict[str, Any]]:
@@ -45,14 +41,14 @@ async def add_sighting(
 @router.post(
     "/sightings/{attributeId}",
     status_code=status.HTTP_201_CREATED,
-    response_model=partial(SightingGetResponse),
+    response_model=partial(SightingsGetResponse),
     summary="Add sighting at index",
     description="Add a new sighting for a specific attribute.",
 )
 async def add_sightings_at_index(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SIGHTING]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SIGHTING]))],
     db: Annotated[Session, Depends(get_db)],
-    attribute_id: Annotated[str, Path(..., alias="attributeId")],
+    attribute_id: Annotated[int, Path(alias="attributeId")],
 ) -> dict[str, Any]:
     return await _add_sightings_at_index(db, attribute_id)
 
@@ -67,7 +63,7 @@ async def add_sightings_at_index(
 async def get_sightings_at_index(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    event_id: Annotated[str, Path(..., alias="eventId")],
+    event_id: Annotated[int, Path(alias="eventId")],
 ) -> dict[str, Any]:
     return await _get_sightings_at_index(db, event_id)
 
@@ -80,9 +76,9 @@ async def get_sightings_at_index(
     description="Delete a specific sighting.",
 )
 async def delete_sighting(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SIGHTING]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SIGHTING]))],
     db: Annotated[Session, Depends(get_db)],
-    sighting_id: Annotated[str, Path(..., alias="sightingId")],
+    sighting_id: Annotated[int, Path(alias="sightingId")],
 ) -> dict[str, Any]:
     return await _delete_sighting(db, sighting_id)
 
@@ -94,7 +90,10 @@ async def delete_sighting(
     summary="Get all sightings",
     description="Retrieve a list of all sightings.",
 )
-async def get_sightings(db: Annotated[Session, Depends(get_db)]) -> list[dict[str, Any]]:
+async def get_sightings(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    db: Annotated[Session, Depends(get_db)],
+) -> list[dict[str, Any]]:
     return await _get_sightings(db)
 
 
@@ -110,7 +109,7 @@ async def get_sightings(db: Annotated[Session, Depends(get_db)]) -> list[dict[st
     description="Deprecated. Add a new sighting using the old route.",
 )
 async def add_sighting_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SIGHTING]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SIGHTING]))],
     db: Annotated[Session, Depends(get_db)],
     body: SightingCreateBody,
 ) -> list[dict[str, Any]]:
@@ -121,14 +120,14 @@ async def add_sighting_depr(
     "/sightings/add/{attributeId}",
     deprecated=True,
     status_code=status.HTTP_201_CREATED,
-    response_model=partial(SightingGetResponse),
+    response_model=partial(SightingsGetResponse),
     summary="Add sighting at index (Deprecated)",
     description="Deprecated. Add a new sighting for a specific attribute using the old route.",
 )
 async def add_sightings_at_index_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SIGHTING]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SIGHTING]))],
     db: Annotated[Session, Depends(get_db)],
-    attribute_id: Annotated[str, Path(..., alias="attributeId")],
+    attribute_id: Annotated[int, Path(alias="attributeId")],
 ) -> dict[str, Any]:
     return await _add_sightings_at_index(db, attribute_id)
 
@@ -142,9 +141,9 @@ async def add_sightings_at_index_depr(
     description="Deprecated. Delete a specific sighting using the old route.",
 )
 async def delete_sighting_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SIGHTING]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SIGHTING]))],
     db: Annotated[Session, Depends(get_db)],
-    sighting_id: Annotated[str, Path(..., alias="sightingId")],
+    sighting_id: Annotated[int, Path(alias="sightingId")],
 ) -> dict[str, Any]:
     return await _delete_sighting(db, sighting_id)
 
@@ -160,7 +159,7 @@ async def delete_sighting_depr(
 async def get_sightings_at_index_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    event_id: Annotated[str, Path(..., alias="eventId")],
+    event_id: Annotated[int, Path(alias="eventId")],
 ) -> dict[str, Any]:
     return await _get_sightings_at_index(db, event_id)
 
@@ -211,7 +210,7 @@ async def _add_sighting(db: Session, body: SightingCreateBody) -> list[dict[str,
     return SightingsGetResponse(sightings=[response.__dict__ for response in responses])
 
 
-async def _add_sightings_at_index(db: Session, attribute_id: str) -> dict[str, Any]:
+async def _add_sightings_at_index(db: Session, attribute_id: int) -> dict[str, Any]:
     attribute: Attribute | None = db.get(Attribute, attribute_id)
 
     if not attribute:
@@ -239,18 +238,30 @@ async def _add_sightings_at_index(db: Session, attribute_id: str) -> dict[str, A
         organisation=organisation_response,
     )
 
-    return SightingGetResponse(sighting=response.__dict__)
+    return SightingsGetResponse(sightings=[response.__dict__])
 
 
-async def _get_sightings_at_index(db: Session, event_id: str) -> dict[str, Any]:
+async def _get_sightings_at_index(db: Session, event_id: int) -> dict[str, Any]:
     if not db.get(Event, event_id):
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Event not found.")
+
     sightings: list[Sighting] = db.query(Sighting).filter(Sighting.event_id == event_id).all()
+
+    for sighting in sightings:
+        organisation: Organisation = db.get(Organisation, sighting.org_id)
+
+        organisation_response: SightingOrganisationResponse = SightingOrganisationResponse(
+            id=organisation.id if organisation else None,
+            uuid=organisation.uuid if organisation else None,
+            name=organisation.name if organisation else None,
+        )
+
+        sighting.organisation = organisation_response.__dict__
 
     return SightingsGetResponse(sightings=[sighting.__dict__ for sighting in sightings])
 
 
-async def _delete_sighting(db: Session, sighting_id: str) -> dict[str, Any]:
+async def _delete_sighting(db: Session, sighting_id: int) -> dict[str, Any]:
     sighting: Sighting | None = db.get(Sighting, sighting_id)
 
     if not sighting:
