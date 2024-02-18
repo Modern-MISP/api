@@ -18,7 +18,6 @@ from mmisp.db.models.tag import Tag
 from mmisp.db.models.taxonomy import Taxonomy, TaxonomyPredicate
 from mmisp.util.models import update_record
 from mmisp.util.partial import partial
-from mmisp.util.request_validations import check_existence_and_raise
 
 router = APIRouter(tags=["tags"])
 
@@ -31,7 +30,7 @@ router = APIRouter(tags=["tags"])
     description="Add a new tag with given details.",
 )
 async def add_tag(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, Permission.TAG_EDITOR))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.TAG_EDITOR]))],
     db: Annotated[Session, Depends(get_db)],
     body: TagCreateBody,
 ) -> dict:
@@ -48,7 +47,7 @@ async def add_tag(
 async def view_tag(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    tag_id: str = Path(..., alias="tagId"),
+    tag_id: int = Path(..., alias="tagId"),
 ) -> dict:
     return await _view_tag(db, tag_id)
 
@@ -76,10 +75,10 @@ async def search_tags(
     description="Edit details of a specific tag.",
 )
 async def update_tag(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, Permission.SITE_ADMIN))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     body: TagUpdateBody,
-    tag_id: str = Path(..., alias="tagId"),
+    tag_id: int = Path(..., alias="tagId"),
 ) -> dict:
     return await _update_tag(db, body, tag_id)
 
@@ -92,9 +91,9 @@ async def update_tag(
     description="Delete a specific tag.",
 )
 async def delete_tag(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, Permission.SITE_ADMIN))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
-    tag_id: str = Path(..., alias="tagId"),
+    tag_id: int = Path(..., alias="tagId"),
 ) -> dict:
     return await _delete_tag(db, tag_id)
 
@@ -122,7 +121,7 @@ async def get_tags(
     description="Deprecated. Add a new tag using the old route.",
 )
 async def add_tag_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, Permission.TAG_EDITOR))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.TAG_EDITOR]))],
     db: Annotated[Session, Depends(get_db)],
     body: TagCreateBody,
 ) -> dict:
@@ -140,7 +139,7 @@ async def add_tag_depr(
 async def view_tag_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    tag_id: str = Path(..., alias="tagId"),
+    tag_id: int = Path(..., alias="tagId"),
 ) -> dict:
     return await _view_tag(db, tag_id)
 
@@ -154,10 +153,10 @@ async def view_tag_depr(
     description="Deprecated. Edit a specific tag using the old route.",
 )
 async def update_tag_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, Permission.SITE_ADMIN))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     body: TagCreateBody,
-    tag_id: str = Path(..., alias="tagId"),
+    tag_id: int = Path(..., alias="tagId"),
 ) -> dict:
     return await _update_tag(db, body, tag_id)
 
@@ -171,9 +170,9 @@ async def update_tag_depr(
     description="Deprecated. Delete a specific tag using the old route.",
 )
 async def delete_tag_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, Permission.SITE_ADMIN))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
-    tag_id: str = Path(..., alias="tagId"),
+    tag_id: int = Path(..., alias="tagId"),
 ) -> dict:
     return await _delete_tag(db, tag_id)
 
@@ -190,7 +189,10 @@ async def _add_tag(db: Session, body: TagCreateBody) -> dict:
 
 
 async def _view_tag(db: Session, tag_id: str) -> dict:
-    tag: Tag = check_existence_and_raise(db, Tag, tag_id, "id", "Tag not found.")
+    tag: Tag | None = db.get(Tag, tag_id)
+
+    if not tag:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Tag not found.")
 
     return tag.__dict__
 
@@ -215,7 +217,11 @@ async def _search_tags(db: Session, tag_search_term: str) -> dict:
 
 
 async def _update_tag(db: Session, body: TagCreateBody, tag_id: str) -> dict:
-    tag: Tag = check_existence_and_raise(db, Tag, tag_id, "id", "Tag not found.")
+    tag: Tag | None = db.get(Tag, tag_id)
+
+    if not tag:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Tag not found.")
+
     _check_type_hex_color(body.colour)
     update_data = body.dict()
 
@@ -229,9 +235,12 @@ async def _update_tag(db: Session, body: TagCreateBody, tag_id: str) -> dict:
 
 
 async def _delete_tag(db: Session, tag_id: str) -> dict:
-    deleted_tag = check_existence_and_raise(db, Tag, tag_id, "id", "Tag not found.")
+    deleted_tag: Tag | None = db.get(Tag, tag_id)
 
+    if not deleted_tag:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Tag not found.")
     feeds = db.query(Feed).filter(Feed.tag_id == deleted_tag.id).all()
+
     for feed in feeds:
         feed.tag_id = None
     attribute_tags = db.query(AttributeTag).filter(AttributeTag.tag_id == deleted_tag.id).all()

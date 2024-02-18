@@ -91,7 +91,7 @@ class TestViewTag:
 
         for invalid_tag in invalid_tags:
             response = client.get(f"/tags/{invalid_tag}", headers=headers)
-            assert response.status_code == 404
+            assert response.status_code == 422
 
         remove_tags(tags)
 
@@ -172,7 +172,7 @@ class TestEditTag:
         invalid_tags = get_invalid_tags()
         for invalid_tag in invalid_tags:
             response = client.put(f"/tags/{invalid_tag}", json=tag_data, headers=headers)
-            assert response.status_code == 404
+            assert response.status_code == 422
 
         remove_tags(tags)
 
@@ -223,7 +223,7 @@ class TestDeleteTag:
         invalid_tags = get_invalid_tags()
         for invalid_tag in invalid_tags:
             response = client.delete(f"/tags/{invalid_tag}", headers=headers)
-            assert response.status_code == 404
+            assert response.status_code == 422
 
     @staticmethod
     def test_edit_delete_response_format() -> None:

@@ -8,18 +8,19 @@ from mmisp.db.database import get_db
 from mmisp.db.models.organisation import Organisation
 from mmisp.db.models.role import Role
 from mmisp.db.models.user import User
+from mmisp.util.partial import partial
 
 from ..auth import Auth, AuthStrategy, authorize
 
 router = APIRouter(tags=["users"])
 
 
-@router.get("/users/view/me")
+@router.get("/users/view/me", response_model=partial(UsersViewMeResponse))
 async def get_logged_in_user_info(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))], db: Annotated[Session, Depends(get_db)]
-) -> UsersViewMeResponse:
+) -> dict:
     user = db.get(User, auth.user_id)
     organisation = db.get(Organisation, auth.org_id)
     role = db.get(Role, auth.role_id)
 
-    return UsersViewMeResponse(User=user, Organisation=organisation, Role=role)
+    return {"User": user.__dict__, "Organisation": organisation.__dict__, "Role": role.__dict__}
