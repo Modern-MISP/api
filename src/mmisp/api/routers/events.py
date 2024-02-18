@@ -1,6 +1,5 @@
 from calendar import timegm
 from datetime import date
-from enum import Enum
 from time import gmtime
 from typing import Annotated, Any
 
@@ -63,8 +62,8 @@ from mmisp.db.models.object import Object
 from mmisp.db.models.organisation import Organisation
 from mmisp.db.models.tag import Tag
 from mmisp.db.models.user import User
+from mmisp.util.models import update_record
 from mmisp.util.partial import partial
-from mmisp.util.request_validations import check_existence_and_raise
 
 router = APIRouter(tags=["events"])
 
@@ -251,10 +250,10 @@ async def remove_tag_from_event(
 
 @router.post(
     "/events/freeTextImport/{eventId}",
-    status_code=status.HTTP_501_NOT_IMPLEMENTED,
+    status_code=status.HTTP_200_OK,
     response_model=list[partial(AddAttributeViaFreeTextImportEventResponse)],
     summary="Add attribute to event",
-    description="Add attribute to event via free text import. NOT YET IMPLEMENTED!",
+    description="Add attribute to event via free text import.",
 )
 async def add_attribute_via_free_text_import(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
@@ -328,8 +327,8 @@ async def update_event_depr(
     deprecated=True,
     status_code=status.HTTP_200_OK,
     response_model=partial(AddEditGetEventResponse),
-    summary="Update an event (Deprecated)",
-    description="Deprecated. Update an existing event by its ID. NOT YET AVAILABLE!",
+    summary="Delete an event (Deprecated)",
+    description="Deprecated. Delete an existing event by its ID. NOT YET AVAILABLE!",
 )  # new
 async def delete_event_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
@@ -345,6 +344,8 @@ async def delete_event_depr(
 async def _add_event(auth: Auth, db: Session, body: AddEventBody) -> dict:
     if not body.info:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="value 'info' is required")
+    if not isinstance(body.info, str):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN_BAD_REQUEST, detail="invalid 'info'")
 
     user = db.get(User, auth.user_id)
 
@@ -372,7 +373,10 @@ async def _add_event(auth: Auth, db: Session, body: AddEventBody) -> dict:
 
 
 async def _get_event_details(db: Session, event_id: str) -> dict:
-    event = check_existence_and_raise(db, Event, event_id, "id", "Event not found.")
+    event: Event | None = db.get(Event, event_id)
+
+    if not event:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     event_data = _prepare_event_response(db, event)
 
@@ -380,17 +384,17 @@ async def _get_event_details(db: Session, event_id: str) -> dict:
 
 
 async def _update_event(db: Session, event_id: str, body: EditEventBody) -> dict:
-    existing_event = check_existence_and_raise(db, Event, event_id, "id", "Event not found.")
+    event: Event | None = db.get(Event, event_id)
 
-    update_data = body.dict(exclude_unset=True)
-    for key, value in update_data.items():
-        if value is not None:
-            setattr(existing_event, key, value if not isinstance(value, Enum) else value.value)
+    if not event:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
+
+    update_record(event, body.dict())
 
     db.commit()
-    db.refresh(existing_event)
+    db.refresh(event)
 
-    event_data = _prepare_event_response(db, existing_event)
+    event_data = _prepare_event_response(db, event)
 
     return AddEditGetEventResponse(Event=event_data)
 
@@ -510,7 +514,10 @@ async def _unpublish_event(db: Session, event_id: str, request: Request) -> Unpu
 
 
 async def _add_tag_to_event(db: Session, event_id: str, tag_id: str, local: str) -> dict:
-    check_existence_and_raise(db, Event, event_id, "id", "Event not found")
+    event: Event | None = db.get(Event, event_id)
+
+    if not event:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     try:
         int(tag_id)
@@ -518,18 +525,13 @@ async def _add_tag_to_event(db: Session, event_id: str, tag_id: str, local: str)
         return AddRemoveTagEventsResponse(saved=False, errors="Invalid Tag")
     if not db.get(Tag, tag_id):
         return AddRemoveTagEventsResponse(saved=False, errors="Tag could not be added.")
-    # tag = check_existence_and_raise(db, Tag, tag_id, "tag_id", "Tag not found.")
 
     tag = db.get(Tag, tag_id)
 
-    if int(local) not in [0, 1]:
-        return AddRemoveTagEventsResponse(saved=False, errors="Invalid 'local'")
-    if local == "0":
-        local = False
-    else:
-        local = True
+    if local not in ["0", "1"]:
+        local = 0
 
-    new_event_tag = EventTag(event_id=event_id, tag_id=tag.id, local=local)
+    new_event_tag = EventTag(event_id=event_id, tag_id=tag.id, local=True if int(local) == 1 else False)
 
     db.add(new_event_tag)
     db.commit()
@@ -540,7 +542,10 @@ async def _add_tag_to_event(db: Session, event_id: str, tag_id: str, local: str)
 
 
 async def _remove_tag_from_event(db: Session, event_id: str, tag_id: str) -> dict:
-    check_existence_and_raise(db, Event, event_id, "id", "Event not found")
+    event: Event | None = db.get(Event, event_id)
+
+    if not event:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     try:
         int(tag_id)
@@ -561,7 +566,10 @@ async def _remove_tag_from_event(db: Session, event_id: str, tag_id: str) -> dic
 
 
 async def _add_attribute_via_free_text_import(db: Session, event_id: str, response_json: Any) -> dict:
-    check_existence_and_raise(db, Event, event_id, "id", "Event not found")
+    event: Event | None = db.get(Event, event_id)
+
+    if not event:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
     response_list = []
 
     for attribute in response_json["attributes"]:
@@ -676,6 +684,7 @@ def _prepare_tag_response(db: Session, tag_list: list[Any]) -> list[AddEditGetEv
 
         attribute_or_event_tag_dict["local"] = attribute_or_event_tag.local
         attribute_or_event_tag_dict["local_only"] = tag.inherited
+        attribute_or_event_tag_dict["user_id"] = tag.user_id if tag.user_id is not None else "0"
         tag_response_list.append(AddEditGetEventTag(**attribute_or_event_tag_dict))
 
     return tag_response_list
@@ -709,12 +718,20 @@ def _prepare_galaxy_cluster_response(
         galaxy_cluster_dict = galaxy_cluster.__dict__.copy()
         galaxy_cluster_dict["authors"] = galaxy_cluster.authors.split(" ")
         tag = db.query(Tag).filter(Tag.name == galaxy_cluster.tag_name).first()
-        galaxy_cluster_dict["org_id"] = tag.org_id
-        galaxy_cluster_dict["orgc_id"] = tag.org_id
+        fields_to_convert = ["org_id", "orgc_id", "extends_version"]
+        for field in fields_to_convert:
+            if galaxy_cluster_dict.get(field) is not None:
+                galaxy_cluster_dict[field] = str(galaxy_cluster_dict[field])
+            else:
+                galaxy_cluster_dict[field] = "0"
+
         galaxy_cluster_dict["tag_id"] = tag.id
-        galaxy_cluster_dict["extends_uuid"] = ""
-        galaxy_cluster_dict["extends_version"] = "0"
-        galaxy_cluster_dict["collection_uuid"] = ""
+        galaxy_cluster_dict["extends_uuid"] = (
+            galaxy_cluster.extends_uuid if galaxy_cluster.extends_uuid is not None else ""
+        )
+        galaxy_cluster_dict["collection_uuid"] = (
+            galaxy_cluster.collection_uuid if galaxy_cluster.collection_uuid is not None else ""
+        )
 
         if isinstance(data_object, Attribute):
             galaxy_cluster_dict["attribute_tag_id"] = (
@@ -836,8 +853,8 @@ def _prepare_all_events_galaxy_cluster_response(
 
                 galaxy_cluster_dict["authors"] = galaxy_cluster.authors.split(" ")
                 tag = db.query(Tag).filter(Tag.name == galaxy_cluster.tag_name).first()
-                galaxy_cluster_dict["org_id"] = tag.org_id
-                galaxy_cluster_dict["orgc_id"] = tag.org_id
+                galaxy_cluster_dict["org_id"] = tag.org_id if tag.org_id is not None else "0"
+                galaxy_cluster_dict["orgc_id"] = tag.org_id if tag.org_id is not None else "0"
                 galaxy_cluster_dict["tag_id"] = tag.id
                 galaxy_cluster_dict["extends_uuid"] = ""
                 galaxy_cluster_dict["extends_version"] = "0"

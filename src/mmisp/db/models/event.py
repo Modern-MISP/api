@@ -1,4 +1,6 @@
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
+from datetime import datetime
+
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
 from mmisp.util.uuid import uuid
@@ -18,7 +20,7 @@ class Event(Base):
     orgc_id = Column(Integer, ForeignKey(Organisation.id), nullable=False, index=True)  # creator org
     info = Column(String(255), nullable=False, index=True)
     distribution = Column(Integer, nullable=False, default=0)
-    date = Column(String(255), nullable=False)
+    date = Column(DateTime, default=datetime.utcnow())
     published = Column(Boolean, nullable=False, default=False)
     analysis = Column(String(255), nullable=False)
     attribute_count = Column(Integer, default=0)
