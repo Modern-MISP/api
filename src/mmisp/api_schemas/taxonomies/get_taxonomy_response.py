@@ -13,9 +13,13 @@ class TaxonomyView(BaseModel):
 
 
 class ViewTaxonomyResponse(BaseModel):
-    taxonomy: TaxonomyView
+    Taxonomy: TaxonomyView
     total_count: int
     current_count: int
 
     class Config:
         orm_mode = True
+
+
+class ViewTaxonomyResponseWrapper(BaseModel):
+    taxonomies: list[ViewTaxonomyResponse]

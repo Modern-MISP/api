@@ -3,15 +3,17 @@ from pydantic import BaseModel
 from mmisp.api_schemas.tags.get_tag_response import TagAttributesResponse
 
 
-class TaxonomyEntrySchema(BaseModel):
+class TaxonomyTagEntrySchema(BaseModel):
     tag: str
     expanded: str
     exclusive_predicate: bool
     description: str
     existing_tag: bool | TagAttributesResponse
+    events: int
+    attributes: int
 
 
-class GetIdTaxonomyResponse(BaseModel):
+class GetTagTaxonomyResponse(BaseModel):
     id: str
     namespace: str
     description: str
@@ -20,11 +22,11 @@ class GetIdTaxonomyResponse(BaseModel):
     exclusive: bool
     required: bool
     highlighted: bool
-    entries: list[TaxonomyEntrySchema]
+    entries: list[TaxonomyTagEntrySchema]
 
     class Config:
         orm_mode = True
 
 
 class GetIdTaxonomyResponseWrapper(BaseModel):
-    Taxonomy: GetIdTaxonomyResponse
+    Taxonomy: GetTagTaxonomyResponse
