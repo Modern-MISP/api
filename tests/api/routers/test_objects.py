@@ -31,7 +31,8 @@ def object_data(request: Any) -> dict[str, Any]:
 
 
 class TestAddObject:
-    def test_add_object_to_event(self: "TestAddObject", object_data: dict[str, Any]) -> None:
+    @staticmethod
+    def test_add_object_to_event(object_data: dict[str, Any]) -> None:
         db = get_db()
 
         sharing_group = generate_sharing_group()
@@ -76,7 +77,8 @@ class TestAddObject:
         assert int(response_data["object"]["event_id"]) == event_id
         assert int(response_data["object"]["template_id"]) == object_template_id
 
-    def test_add_object_response_format(self: "TestAddObject", object_data: dict[str, Any]) -> None:
+    @staticmethod
+    def test_add_object_response_format(object_data: dict[str, Any]) -> None:
         db = get_db()
 
         sharing_group = generate_sharing_group()
@@ -132,7 +134,8 @@ def search_data(request: Any) -> dict[str, Any]:
 
 
 class TestSearchObject:
-    def test_search_objects_with_filters(self: "TestSearchObject", search_data: dict[str, Any]) -> None:
+    @staticmethod
+    def test_search_objects_with_filters(search_data: dict[str, Any]) -> None:
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/objects/restsearch", json=search_data, headers=headers)
         assert response.status_code == 200
@@ -147,7 +150,8 @@ class TestSearchObject:
             assert "distribution" in obj["object"] != ""
             assert "comment" in obj["object"] != ""
 
-    def test_search_objects_response_format(self: "TestSearchObject", search_data: dict[str, Any]) -> None:
+    @staticmethod
+    def test_search_objects_response_format(search_data: dict[str, Any]) -> None:
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/objects/restsearch", json=search_data, headers=headers)
         assert response.headers["Content-Type"] == "application/json"
@@ -155,7 +159,8 @@ class TestSearchObject:
         assert "response" in response_data
         assert isinstance(response_data["response"], list)
 
-    def test_search_objects_data_integrity(self: "TestSearchObject", search_data: dict[str, Any]) -> None:
+    @staticmethod
+    def test_search_objects_data_integrity(search_data: dict[str, Any]) -> None:
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/objects/restsearch", json=search_data, headers=headers)
         response_data = response.json()
@@ -167,7 +172,8 @@ class TestSearchObject:
 
 
 class TestGetObjectInfo:
-    def test_get_object_details_valid_id(self: "TestGetObjectInfo", object_data: dict[str, Any]) -> None:
+    @staticmethod
+    def test_get_object_details_valid_id(object_data: dict[str, Any]) -> None:
         db = get_db()
 
         sharing_group = generate_sharing_group()
@@ -222,7 +228,8 @@ class TestGetObjectInfo:
         assert "comment" in object_data
         assert "sharing_group_id" in object_data
 
-    def test_get_object_details_response_format(self: "TestGetObjectInfo", object_data: dict[str, Any]) -> None:
+    @staticmethod
+    def test_get_object_details_response_format(object_data: dict[str, Any]) -> None:
         db = get_db()
 
         sharing_group = generate_sharing_group()
@@ -269,13 +276,15 @@ class TestGetObjectInfo:
         response_data = response.json()
         assert "object" in response_data
 
-    def test_get_object_details_invalid_id(self: "TestGetObjectInfo") -> None:
+    @staticmethod
+    def test_get_object_details_invalid_id() -> None:
         object_id: str = "invalid_id"
         headers = {"authorization": environment.site_admin_user_token}
         response = client.get(f"/objects/{object_id}", headers=headers)
         assert response.status_code == 404
 
-    def test_get_object_details_data_integrity(self: "TestGetObjectInfo", object_data: dict[str, Any]) -> None:
+    @staticmethod
+    def test_get_object_details_data_integrity(object_data: dict[str, Any]) -> None:
         db = get_db()
 
         sharing_group = generate_sharing_group()
@@ -325,7 +334,8 @@ class TestGetObjectInfo:
 
 
 class TestDeleteObject:
-    def test_delete_object_hard_delete(self: "TestDeleteObject", object_data: dict[str, Any]) -> None:
+    @staticmethod
+    def test_delete_object_hard_delete(object_data: dict[str, Any]) -> None:
         db = get_db()
 
         sharing_group = generate_sharing_group()
@@ -376,7 +386,8 @@ class TestDeleteObject:
         assert response_data["saved"] is True
         assert response_data["success"] is True
 
-    def test_delete_object_soft_delete(self: "TestDeleteObject", object_data: dict[str, Any]) -> None:
+    @staticmethod
+    def test_delete_object_soft_delete(object_data: dict[str, Any]) -> None:
         db = get_db()
 
         sharing_group = generate_sharing_group()
@@ -427,14 +438,16 @@ class TestDeleteObject:
         assert response_data["saved"] is True
         assert response_data["success"] is True
 
-    def test_delete_object_invalid_id(self: "TestDeleteObject") -> None:
+    @staticmethod
+    def test_delete_object_invalid_id() -> None:
         object_id = "invalid_id"
         headers = {"authorization": environment.site_admin_user_token}
         response_delete = client.delete(f"/objects/{object_id}/true", headers=headers)
         assert response_delete.status_code == 404
         assert "detail" in response_delete.json()
 
-    def test_delete_object_invalid_hard_delete(self: "TestDeleteObject", object_data: dict[str, Any]) -> None:
+    @staticmethod
+    def test_delete_object_invalid_hard_delete(object_data: dict[str, Any]) -> None:
         db = get_db()
 
         sharing_group = generate_sharing_group()

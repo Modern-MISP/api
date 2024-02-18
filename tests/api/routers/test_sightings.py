@@ -26,7 +26,8 @@ def sighting_data(request: Any) -> dict[str, Any]:
 
 
 class TestAddSighting:
-    def test_add_sighting(self: "TestAddSighting", sighting_data: dict[str, Any]) -> None:
+    @staticmethod
+    def test_add_sighting(sighting_data: dict[str, Any]) -> None:
         db = get_db()
 
         event = Event(
@@ -58,7 +59,8 @@ class TestAddSighting:
         assert response.status_code == 201
         assert "sightings" in response.json()
 
-    def test_add_sighting_with_invalid_data(self: "TestAddSighting", sighting_data: dict[str, Any]) -> None:
+    @staticmethod
+    def test_add_sighting_with_invalid_data(sighting_data: dict[str, Any]) -> None:
         db = get_db()
 
         event = Event(
@@ -93,7 +95,8 @@ class TestAddSighting:
         response_second = client.post("/sightings", json=sighting_data, headers=headers)
         assert response_second.status_code == 201
 
-    def test_add_sighting_missing_required_fields(self: "TestAddSighting", sighting_data: dict[str, Any]) -> None:
+    @staticmethod
+    def test_add_sighting_missing_required_fields(sighting_data: dict[str, Any]) -> None:
         db = get_db()
 
         event = Event(
@@ -129,7 +132,8 @@ class TestAddSighting:
 
 
 class TestAddSightingAtIndex:
-    def test_add_sightings_at_index_success(self: "TestAddSightingAtIndex", sighting_data: dict[str, Any]) -> None:
+    @staticmethod
+    def test_add_sightings_at_index_success(sighting_data: dict[str, Any]) -> None:
         db = get_db()
 
         event = Event(
@@ -163,9 +167,8 @@ class TestAddSightingAtIndex:
         assert "event_id" in response.json()["sighting"]
         assert "attribute_id" in response.json()["sighting"]
 
-    def test_add_sighting_at_index_invalid_attribute(
-        self: "TestAddSightingAtIndex", sighting_data: dict[str, Any]
-    ) -> None:
+    @staticmethod
+    def test_add_sighting_at_index_invalid_attribute(sighting_data: dict[str, Any]) -> None:
         db = get_db()
 
         event = Event(
@@ -198,7 +201,8 @@ class TestAddSightingAtIndex:
 
 
 class TestGetSighting:
-    def test_get_sighting_success(self: "TestGetSighting", sighting_data: dict[str, Any]) -> None:
+    @staticmethod
+    def test_get_sighting_success(sighting_data: dict[str, Any]) -> None:
         db = get_db()
 
         event = Event(
@@ -230,7 +234,8 @@ class TestGetSighting:
 
 
 class TestDeleteSighting:
-    def test_delete_sighting_success(self: "TestDeleteSighting", sighting_data: dict[str, Any]) -> None:
+    @staticmethod
+    def test_delete_sighting_success(sighting_data: dict[str, Any]) -> None:
         db = get_db()
 
         event = Event(
@@ -271,7 +276,8 @@ class TestDeleteSighting:
         assert response_data["message"] == "Sighting successfully deleted."
         assert response_data["name"] == "Sighting successfully deleted."
 
-    def test_delete_sighting_invalid_id(self: "TestDeleteSighting", sighting_data: dict[str, Any]) -> None:
+    @staticmethod
+    def test_delete_sighting_invalid_id(sighting_data: dict[str, Any]) -> None:
         db = get_db()
 
         event = Event(
@@ -311,7 +317,8 @@ class TestDeleteSighting:
 
 
 class TestGetAllSightings:
-    def test_get_all_sightings_success(self: "TestGetAllSightings", sighting_data: dict[str, Any]) -> None:
+    @staticmethod
+    def test_get_all_sightings_success(sighting_data: dict[str, Any]) -> None:
         db = get_db()
 
         event = Event(
@@ -345,7 +352,8 @@ class TestGetAllSightings:
         assert response.status_code == 200
         assert isinstance(response.json()["sightings"], list)
 
-    def test_get_sightings_response_format(self: "TestGetAllSightings", sighting_data: dict[str, Any]) -> None:
+    @staticmethod
+    def test_get_sightings_response_format(sighting_data: dict[str, Any]) -> None:
         db = get_db()
 
         event = Event(
