@@ -4,8 +4,8 @@ import string
 
 from sqlalchemy import func
 from sqlalchemy.orm import Session
+from tests.database import get_db
 
-from mmisp.db.database import get_db
 from mmisp.db.models.noticelist import Noticelist, NoticelistEntry
 
 

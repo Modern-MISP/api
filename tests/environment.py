@@ -3,11 +3,11 @@ from sqlalchemy.orm import Session
 
 from mmisp.api.auth import encode_token
 from mmisp.api.main import app
-from mmisp.db.database import get_db
 from mmisp.db.models.organisation import Organisation
 from mmisp.db.models.role import Role
 from mmisp.db.models.server import Server
 from mmisp.db.models.user import User
+from tests.database import get_db
 
 from .generators.model_generators.organisation_generator import generate_organisation
 from .generators.model_generators.role_generator import generate_org_admin_role, generate_site_admin_role

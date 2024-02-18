@@ -3,8 +3,8 @@ from uuid import uuid4
 
 from fastapi import status
 
-from mmisp.db.database import get_db
 from mmisp.db.models.sharing_group import SharingGroup, SharingGroupOrg, SharingGroupServer
+from tests.database import get_db
 from tests.generators.model_generators.sharing_group_generator import generate_sharing_group
 
 from ...environment import client, environment
