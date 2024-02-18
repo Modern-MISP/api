@@ -24,10 +24,3 @@ class SightingsGetResponse(BaseModel):
 
     class Config:
         orm_mode = True
-
-
-class SightingGetResponse(BaseModel):
-    sighting: SightingAttributesResponse
-
-    class Config:
-        orm_mode = True
