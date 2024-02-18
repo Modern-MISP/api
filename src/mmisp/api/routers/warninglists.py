@@ -33,7 +33,7 @@ router = APIRouter(tags=["warninglists"])
     description="Add a new warninglist with given details.",
 )
 async def add_warninglist(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WARNINGLIST]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS, Permission.WARNINGLIST]))],
     db: Annotated[Session, Depends(get_db)],
     body: CreateWarninglistBody,
 ) -> dict:
@@ -63,7 +63,7 @@ async def view_warninglist(
     description="Disable/Enable a specific warninglist by its ID or name.",
 )
 async def post_toggleEnable(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.SITE_ADMIN]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     body: ToggleEnableWarninglistsBody,
 ) -> dict:
@@ -78,7 +78,7 @@ async def post_toggleEnable(
     description="Delete a specific warninglist.",
 )
 async def delete_warninglist(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.SITE_ADMIN]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     warninglist_id: str = Path(..., alias="id"),
 ) -> dict:
@@ -124,7 +124,7 @@ async def get_warninglists_by_value(
     description="Update all warninglists.",
 )
 async def update_all_warninglists(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.SITE_ADMIN]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
 ) -> dict:
     return await _update_all_warninglists(db, False)
@@ -139,7 +139,7 @@ async def update_all_warninglists(
     description="Deprecated. Update all warninglists.",
 )
 async def update_all_warninglists_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.SITE_ADMIN]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
 ) -> dict:
     return await _update_all_warninglists(db, True)
