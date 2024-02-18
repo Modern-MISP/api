@@ -30,6 +30,8 @@ class TestImportGalaxyCluster:
         galaxy_id = galaxy.id
 
         tag = generate_tag()
+        setattr(tag, "user_id", 1)
+        setattr(tag, "org_id", 1)
 
         db.add(tag)
         db.commit()
@@ -65,6 +67,8 @@ class TestImportGalaxyCluster:
         galaxy_id = galaxy.id
 
         tag = generate_tag()
+        setattr(tag, "user_id", 1)
+        setattr(tag, "org_id", 1)
 
         db.add(tag)
         db.commit()
@@ -85,6 +89,8 @@ class TestGetGalaxyDetails:
     def test_get_existing_galaxy_details() -> None:
         db = get_db()
         tag = generate_tag()
+        setattr(tag, "user_id", 1)
+        setattr(tag, "org_id", 1)
 
         db.add(tag)
         db.commit()
@@ -142,6 +148,8 @@ class TestDeleteGalaxy:
     def test_delete_existing_galaxy() -> None:
         db = get_db()
         tag = generate_tag()
+        setattr(tag, "user_id", 1)
+        setattr(tag, "org_id", 1)
 
         db.add(tag)
         db.commit()
@@ -197,6 +205,8 @@ class TestGetAllGalaxies:
     def test_get_all_galaxies() -> None:
         db = get_db()
         tag = generate_tag()
+        setattr(tag, "user_id", 1)
+        setattr(tag, "org_id", 1)
 
         db.add(tag)
         db.commit()
@@ -256,6 +266,8 @@ class TestExportGalaxy:
         org_id = organisation.id
 
         tag = generate_tag()
+        setattr(tag, "user_id", 1)
+        setattr(tag, "org_id", 1)
 
         db.add(tag)
         db.commit()
@@ -347,6 +359,8 @@ class TestExportGalaxy:
         org_id = organisation.id
 
         tag = generate_tag()
+        setattr(tag, "user_id", 1)
+        setattr(tag, "org_id", 1)
 
         db.add(tag)
         db.commit()
@@ -439,6 +453,8 @@ class TestAttachCluster:
         org_id = organisation.id
 
         tag = generate_tag()
+        setattr(tag, "user_id", 1)
+        setattr(tag, "org_id", 1)
 
         db.add(tag)
         db.commit()
