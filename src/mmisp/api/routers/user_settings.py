@@ -102,7 +102,7 @@ async def view_user_settings_depr(
     user_setting: UserSetting | None = db.get(UserSetting, user_setting_id)
 
     if not user_setting or (
-        user_setting.user_id != auth.user_id and not check_permissions(auth.user_id, [Permission.SITE_ADMIN])
+        user_setting.user_id != auth.user_id and not check_permissions(auth, [Permission.SITE_ADMIN])
     ):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
@@ -128,7 +128,7 @@ async def get_auth_key_by_id_depr(
     )
 
     if not user_setting or (
-        user_setting.user_id != auth.user_id and not check_permissions(auth.user_id, [Permission.SITE_ADMIN])
+        user_setting.user_id != auth.user_id and not check_permissions(auth, [Permission.SITE_ADMIN])
     ):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
@@ -177,7 +177,7 @@ async def _set_user_settings(
             detail=f"User Setting not found. Defined user Settings are: {', '.join(possible_names)}",
         )
 
-    if user_id != auth.user_id and not check_permissions(auth.user_id, [Permission.SITE_ADMIN]):
+    if user_id != auth.user_id and not check_permissions(auth, [Permission.SITE_ADMIN]):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     user_setting: UserSetting | None = (
@@ -219,7 +219,7 @@ async def _view_user_settings(
     user_setting: UserSetting | None = db.get(UserSetting, user_setting_id)
 
     if not user_setting or (
-        user_setting.user_id != auth.user_id and not check_permissions(auth.user_id, [Permission.SITE_ADMIN])
+        user_setting.user_id != auth.user_id and not check_permissions(auth, [Permission.SITE_ADMIN])
     ):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
@@ -240,7 +240,7 @@ async def _get_user_setting_by_id(
     user_id: int,
     user_setting_name: str,
 ) -> ViewUserSettingResponse:
-    if user_id != auth.user_id and not check_permissions(auth.user_id, [Permission.SITE_ADMIN]):
+    if user_id != auth.user_id and not check_permissions(auth, [Permission.SITE_ADMIN]):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     user_setting: UserSetting | None = (
@@ -271,7 +271,7 @@ async def _search_user_settings(
 
     query = db.query(UserSetting)
 
-    if not check_permissions(auth.user_id, [Permission.SITE_ADMIN]):
+    if not check_permissions(auth, [Permission.SITE_ADMIN]):
         query = query.filter(UserSetting.user_id == auth.user_id)
 
     if id:
@@ -307,7 +307,7 @@ async def _get_user_settings(
 ) -> list[UserSettingResponse]:
     query = db.query(UserSetting)
 
-    if not check_permissions(auth.user_id, [Permission.SITE_ADMIN]):
+    if not check_permissions(auth, [Permission.SITE_ADMIN]):
         query.filter(UserSetting.user_id == auth.user_id)
 
     user_settings: list[UserSetting] = db.query(UserSetting).all()
@@ -338,7 +338,7 @@ async def _delete_user_settings(
     user_setting: UserSetting | None = db.get(UserSetting, user_setting_id)
 
     if not user_setting or (
-        user_setting.user_id != auth.user_id and not check_permissions(auth.user_id, [Permission.SITE_ADMIN])
+        user_setting.user_id != auth.user_id and not check_permissions(auth, [Permission.SITE_ADMIN])
     ):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 

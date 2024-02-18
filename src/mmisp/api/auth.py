@@ -113,20 +113,25 @@ def authorize(strategy: AuthStrategy, permissions: list[Permission] = []) -> Cal
         if not user_id:
             raise HTTPException(401)
 
-        if not check_permissions(user_id, permissions):
-            raise HTTPException(401)
-
         user: User = db.get(User, user_id)
 
-        return Auth(user.id, user.org_id, user.role_id)
+        if not user:
+            raise HTTPException(401)
+
+        auth = Auth(user.id, user.org_id, user.role_id)
+
+        if not check_permissions(auth, permissions):
+            raise HTTPException(401)
+
+        return auth
 
     return authorizer
 
 
-def check_permissions(user_id: str, permissions: list[Permission] = []) -> bool:
+def check_permissions(auth: Auth, permissions: list[Permission] = []) -> bool:
     db = get_db()
 
-    role: Role | None = db.query(Role).join(User, Role.id == User.role_id).filter(User.id == user_id).first()
+    role: Role | None = db.query(Role).join(User, Role.id == User.role_id).filter(User.id == auth.user_id).first()
 
     if not role:
         return False

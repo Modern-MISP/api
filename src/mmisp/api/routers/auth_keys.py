@@ -149,7 +149,7 @@ async def _auth_key_add(auth: Auth, db: Session, user_id: int, body: AddAuthKeyB
     if body.user_id is not None:
         user_id = body.user_id
 
-    if auth.user_id != user_id and not check_permissions(auth.user_id, [Permission.SITE_ADMIN]):
+    if auth.user_id != user_id and not check_permissions(auth, [Permission.SITE_ADMIN]):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
     auth_key_string = generate(size=42)
@@ -192,8 +192,8 @@ async def _auth_keys_view(
 
     if not auth_key or (
         auth_key.user_id != auth.user_id
-        and (not check_permissions(auth.user_id, [Permission.ADMIN]) or auth_key.user.org_id != auth.org_id)
-        and (not check_permissions(auth.user_id, [Permission.SITE_ADMIN]))
+        and (not check_permissions(auth, [Permission.ADMIN]) or auth_key.user.org_id != auth.org_id)
+        and (not check_permissions(auth, [Permission.SITE_ADMIN]))
     ):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
@@ -214,9 +214,9 @@ async def _search_auth_keys(
 ) -> list[dict]:
     query = db.query(AuthKey).join(User, AuthKey.user_id == User.id)
 
-    if not check_permissions(auth.user_id, [Permission.SITE_ADMIN]):
+    if not check_permissions(auth, [Permission.SITE_ADMIN]):
         query = query.filter(User.org_id == auth.org_id)
-    if not check_permissions(auth.user_id, [Permission.ADMIN]):
+    if not check_permissions(auth, [Permission.ADMIN]):
         query = query.filter(AuthKey.user_id == auth.user_id)
 
     if body.id:
@@ -267,8 +267,8 @@ async def _auth_keys_edit(auth: Auth, db: Session, auth_key_id: int, body: EditA
 
     if not auth_key or (
         auth_key.user_id != auth.user_id
-        and (not check_permissions(auth.user_id, [Permission.ADMIN]) or auth_key.user.org_id != auth.org_id)
-        and (not check_permissions(auth.user_id, [Permission.SITE_ADMIN]))
+        and (not check_permissions(auth, [Permission.ADMIN]) or auth_key.user.org_id != auth.org_id)
+        and (not check_permissions(auth, [Permission.SITE_ADMIN]))
     ):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
@@ -295,8 +295,8 @@ async def _auth_keys_delete(auth: Auth, db: Session, auth_key_id: int) -> None:
 
     if not auth_key or (
         auth_key.user_id != auth.user_id
-        and (not check_permissions(auth.user_id, [Permission.ADMIN]) or auth_key.user.org_id != auth.org_id)
-        and (not check_permissions(auth.user_id, [Permission.SITE_ADMIN]))
+        and (not check_permissions(auth, [Permission.ADMIN]) or auth_key.user.org_id != auth.org_id)
+        and (not check_permissions(auth, [Permission.SITE_ADMIN]))
     ):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
@@ -310,9 +310,9 @@ async def _auth_keys_get(
 ) -> list[dict]:
     query = db.query(AuthKey).join(User, AuthKey.user_id == User.id)
 
-    if not check_permissions(auth.user_id, [Permission.SITE_ADMIN]):
+    if not check_permissions(auth, [Permission.SITE_ADMIN]):
         query = query.filter(User.org_id == auth.org_id)
-    if not check_permissions(auth.user_id, [Permission.ADMIN]):
+    if not check_permissions(auth, [Permission.ADMIN]):
         query = query.filter(AuthKey.user_id == auth.user_id)
 
     auth_keys: list[AuthKey] = query.all()
