@@ -54,7 +54,7 @@ from mmisp.api_schemas.events.search_events_body import SearchEventsBody
 from mmisp.api_schemas.events.search_events_response import SearchEventsResponse
 from mmisp.api_schemas.events.unpublish_event_response import UnpublishEventResponse
 from mmisp.config import config
-from mmisp.db.database import get_db
+from mmisp.db.database import get_db, with_session_management
 from mmisp.db.models.attribute import Attribute, AttributeTag
 from mmisp.db.models.event import Event, EventReport, EventTag
 from mmisp.db.models.galaxy import Galaxy
@@ -81,6 +81,7 @@ router = APIRouter(tags=["events"])
     summary="Add new event",
     description="Add a new event with the given details.",
 )  # new
+@with_session_management
 async def add_event(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.ADD]))],
     db: Annotated[Session, Depends(get_db)],
@@ -99,6 +100,7 @@ async def add_event(
     summary="Get event details",
     description="Retrieve details of a specific attribute by ist ID.",
 )  # new
+@with_session_management
 async def get_event_details(
     db: Annotated[Session, Depends(get_db)], event_id: Annotated[str, Path(..., alias="eventId")]
 ) -> dict:
@@ -115,6 +117,7 @@ async def get_event_details(
     summary="Update an event",
     description="Update an existing event by its ID.",
 )  # new
+@with_session_management
 async def update_event(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
     db: Annotated[Session, Depends(get_db)],
@@ -134,6 +137,7 @@ async def update_event(
     summary="Delete an event",
     description="Delete an attribute by its ID.",
 )  # new
+@with_session_management
 async def delete_event(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
     db: Annotated[Session, Depends(get_db)],
@@ -152,6 +156,7 @@ async def delete_event(
     summary="Get all events",
     description="Retrieve a list of all events.",
 )
+@with_session_management
 async def get_all_events(db: Annotated[Session, Depends(get_db)]) -> dict:
     return await _get_events(db)
 
@@ -166,6 +171,7 @@ async def get_all_events(db: Annotated[Session, Depends(get_db)]) -> dict:
     summary="Search events",
     description="Search for events based on various filters.",
 )
+@with_session_management
 async def rest_search_events(
     db: Annotated[Session, Depends(get_db)],
     body: SearchEventsBody,
@@ -180,6 +186,7 @@ async def rest_search_events(
     summary="Search events",
     description="Search for events based on various filters, which are more general than the ones in 'rest search'.",
 )
+@with_session_management
 async def index_events(db: Annotated[Session, Depends(get_db)], body: IndexEventsBody) -> list[IndexEventsAttributes]:
     return await _index_events(db, body)
 
@@ -191,6 +198,7 @@ async def index_events(db: Annotated[Session, Depends(get_db)], body: IndexEvent
     summary="Publish an event",
     description="Publish an event by ist ID.",
 )
+@with_session_management
 async def publish_event(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.PUBLISH]))],
     db: Annotated[Session, Depends(get_db)],
@@ -207,6 +215,7 @@ async def publish_event(
     summary="Unpublish an event",
     description="Unpublish an event by its ID.",
 )
+@with_session_management
 async def unpublish_event(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
     db: Annotated[Session, Depends(get_db)],
@@ -223,6 +232,7 @@ async def unpublish_event(
     summary="Add tag to event",
     description="Add a tag to an attribute by their ids.",
 )
+@with_session_management
 async def add_tag_to_event(
     local: str,
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.ADD]))],
@@ -240,6 +250,7 @@ async def add_tag_to_event(
     summary="Add tag to event",
     description="Add a tag to an event by their ids.",
 )
+@with_session_management
 async def remove_tag_from_event(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
     db: Annotated[Session, Depends(get_db)],
@@ -256,6 +267,7 @@ async def remove_tag_from_event(
     summary="Add attribute to event",
     description="Add attribute to event via free text import. NOT YET IMPLEMENTED!",
 )
+@with_session_management
 async def add_attribute_via_free_text_import(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -285,6 +297,7 @@ async def add_attribute_via_free_text_import(
     summary="Add new event (Deprecated)",
     description="Deprecated. Add a new event with the given details.",
 )
+@with_session_management
 async def add_event_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.ADD]))],
     db: Annotated[Session, Depends(get_db)],
@@ -301,6 +314,7 @@ async def add_event_depr(
     summary="Get event details (Deprecated)",
     description="Deprecated. Retrieve details of a specific attribute by ist ID. NOT YET AVAILABLE!",
 )
+@with_session_management
 async def get_event_details_depr(
     db: Annotated[Session, Depends(get_db)], event_id: Annotated[str, Path(..., alias="eventId")]
 ) -> dict:
@@ -315,6 +329,7 @@ async def get_event_details_depr(
     summary="Update an event (Deprecated)",
     description="Deprecated. Update an existing event by its ID. NOT YET AVAILABLE!",
 )  # new
+@with_session_management
 async def update_event_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
     db: Annotated[Session, Depends(get_db)],
@@ -331,6 +346,7 @@ async def update_event_depr(
     summary="Update an event (Deprecated)",
     description="Deprecated. Update an existing event by its ID. NOT YET AVAILABLE!",
 )  # new
+@with_session_management
 async def delete_event_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
     db: Annotated[Session, Depends(get_db)],

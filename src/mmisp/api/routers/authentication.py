@@ -14,7 +14,7 @@ from mmisp.api_schemas.authentication.start_login_body import StartLoginBody
 from mmisp.api_schemas.authentication.start_login_response import LoginType, StartLoginResponse
 from mmisp.api_schemas.authentication.token_response import TokenResponse
 from mmisp.config import config
-from mmisp.db.database import get_db
+from mmisp.db.database import get_db, with_session_management
 from mmisp.db.models.identity_provider import OIDCIdentityProvider
 from mmisp.db.models.user import User
 from mmisp.util.crypto import verify_password
@@ -23,6 +23,7 @@ router = APIRouter(tags=["authentication"])
 
 
 @router.post("/auth/login/start", response_model=StartLoginResponse)
+@with_session_management
 async def start_login(db: Annotated[Session, Depends(get_db)], body: StartLoginBody) -> dict:
     user: User | None = db.query(User).filter(User.email == body.email).first()
 
@@ -44,6 +45,7 @@ async def start_login(db: Annotated[Session, Depends(get_db)], body: StartLoginB
 
 
 @router.post("/auth/login/password")
+@with_session_management
 async def password_login(db: Annotated[Session, Depends(get_db)], body: PasswordLoginBody) -> TokenResponse:
     user: User | None = db.query(User).filter(User.email == body.email).first()
 
@@ -54,6 +56,7 @@ async def password_login(db: Annotated[Session, Depends(get_db)], body: Password
 
 
 @router.get("/auth/login/idp/{identityProviderId}/authorize", response_class=RedirectResponse)
+@with_session_management
 async def redirect_to_idp(
     db: Annotated[Session, Depends(get_db)], identity_provider_id: Annotated[int, Path(alias="identityProviderId")]
 ) -> RedirectResponse:
@@ -80,6 +83,7 @@ async def redirect_to_idp(
 
 @router.get("/auth/login/idp/{identityProviderId}/callback", response_class=RedirectResponse)
 @router.post("/auth/login/idp/{identityProviderId}/callback", response_class=RedirectResponse)
+@with_session_management
 async def redirect_to_frontend(
     db: Annotated[Session, Depends(get_db)],
     identity_provider_id: Annotated[int, Path(alias="identityProviderId")],
@@ -150,7 +154,7 @@ async def redirect_to_frontend(
 
 
 @router.post("/auth/login/token")
-async def exchange_token_login(db: Annotated[Session, Depends(get_db)], body: ExchangeTokenLoginBody) -> TokenResponse:
+async def exchange_token_login(body: ExchangeTokenLoginBody) -> TokenResponse:
     user_id = decode_exchange_token(body.exchangeToken)
 
     if not user_id:
