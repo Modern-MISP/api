@@ -83,7 +83,7 @@ class TestGetWarninglistById:
     def test_get_invalid_warninglist_by_id() -> None:
         headers = {"authorization": environment.site_admin_user_token}
         response = client.get("/warninglists/text", headers=headers)
-        assert response.status_code == 404
+        assert response.status_code == 422
 
     @staticmethod
     def test_get_non_existing_warninglist_details() -> None:
@@ -123,7 +123,7 @@ class TestDeleteWarninglist:
     def test_delete_invalid_warninglist_by_id() -> None:
         headers = {"authorization": environment.site_admin_user_token}
         response = client.delete("/warninglists/text", headers=headers)
-        assert response.status_code == 404
+        assert response.status_code == 422
 
     @staticmethod
     def test_delete_non_existing_warninglist() -> None:
