@@ -9,7 +9,7 @@ def generate_oidc_identity_provider() -> OIDCIdentityProvider:
     return OIDCIdentityProvider(
         name="Test Identity Provider",
         active=True,
-        base_url=f"https://{time_ns()}.test-idp.kit.edu",
+        base_url=f"https://{time_ns()}.test-idp.kit.service",
         client_id=uuid(),
         client_secret=uuid(),
         scope="",
