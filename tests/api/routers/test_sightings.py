@@ -162,10 +162,10 @@ class TestAddSightingAtIndex:
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post(f"/sightings/{attribute.id}", headers=headers)
         assert response.status_code == 201
-        assert "sighting" in response.json()
-        assert "id" in response.json()["sighting"]
-        assert "event_id" in response.json()["sighting"]
-        assert "attribute_id" in response.json()["sighting"]
+        assert "sightings" in response.json()
+        assert "id" in response.json()["sightings"][0]
+        assert "event_id" in response.json()["sightings"][0]
+        assert "attribute_id" in response.json()["sightings"][0]
 
     @staticmethod
     def test_add_sighting_at_index_invalid_attribute(sighting_data: dict[str, Any]) -> None:
@@ -265,7 +265,7 @@ class TestDeleteSighting:
         response = client.post(f"/sightings/{attribute.id}", headers=headers)
         assert response.status_code == 201
 
-        sighting_id = response.json()["sighting"]["id"]
+        sighting_id = response.json()["sightings"][0]["id"]
 
         headers = {"authorization": environment.site_admin_user_token}
         response = client.delete(f"/sightings/{sighting_id}", headers=headers)
@@ -348,7 +348,7 @@ class TestGetAllSightings:
         response = client.post(f"/sightings/{attribute.id}", headers=headers)
         assert response.status_code == 201
 
-        response = client.get("/sightings")
+        response = client.get("/sightings", headers=headers)
         assert response.status_code == 200
         assert isinstance(response.json()["sightings"], list)
 
@@ -383,7 +383,7 @@ class TestGetAllSightings:
         response = client.post(f"/sightings/{attribute.id}", headers=headers)
         assert response.status_code == 201
 
-        response = client.get("/sightings")
+        response = client.get("/sightings", headers=headers)
         assert response.headers["Content-Type"] == "application/json"
         response_data = response.json()
         assert isinstance(response_data["sightings"], list)

@@ -1,13 +1,13 @@
 from pydantic import BaseModel
 
 
-class UserOrgId(BaseModel):
+class EditAuthKeyResponseUser(BaseModel):
     id: str
     org_id: str
 
 
-class EditAuthKeyResponse(BaseModel):
-    id: str  # TODO: Schemas = String? (db = Integer)
+class EditAuthKeyResponseAuthKey(BaseModel):
+    id: str
     uuid: str
     authkey_start: str
     authkey_end: str
@@ -16,5 +16,9 @@ class EditAuthKeyResponse(BaseModel):
     read_only: bool
     user_id: str
     comment: str
-    allowed_ips: list[str]
-    user: UserOrgId
+    allowed_ips: str
+
+
+class EditAuthKeyResponse(BaseModel):
+    AuthKey: EditAuthKeyResponseAuthKey
+    User: EditAuthKeyResponseUser

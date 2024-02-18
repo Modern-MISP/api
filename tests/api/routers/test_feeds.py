@@ -189,7 +189,7 @@ class TestEnableFeed:
         assert response.status_code == 404
 
         response = client.post(f"feeds/enable/{feed_test_ids['invalid_feed_id']}", headers=headers)
-        assert response.status_code == 404
+        assert response.status_code == 422
 
     @staticmethod
     def test_feed_enable_response_format(feed_data: dict[str, Any]) -> None:
@@ -291,7 +291,7 @@ class TestDisableFeed:
         assert response.status_code == 404
 
         response = client.post(f"feeds/disable/{feed_test_ids['invalid_feed_id']}", headers=headers)
-        assert response.status_code == 404
+        assert response.status_code == 422
 
     @staticmethod
     def test_disable_feed_response_format(feed_data: dict[str, Any]) -> None:
@@ -453,7 +453,7 @@ class TestGetFeedByIdInfo:
     def test_get_invalid_feed_by_id(feed_test_ids: dict[str, Any]) -> None:
         headers = {"authorization": environment.site_admin_user_token}
         response = client.get(f"/feeds/{feed_test_ids['invalid_feed_id']}", headers=headers)
-        assert response.status_code == 404
+        assert response.status_code == 422
 
     @staticmethod
     def test_get_non_existing_feed_details(feed_test_ids: dict[str, Any]) -> None:

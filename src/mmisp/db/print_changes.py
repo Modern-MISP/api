@@ -39,7 +39,7 @@ from .models import (  # noqa: F401
     tag,
     #    taxonomy,
     user,
-    user_settings,
+    user_setting,
     warninglist,
 )
 

@@ -25,7 +25,7 @@ class User(Base):
     change_pw = Column(Boolean)
     contactalert = Column(Boolean)
     disabled = Column(Boolean)
-    expiration = Column(DateTime)  # TODO might need to add to api schema
+    expiration = Column(DateTime)
     current_login = Column(Integer)
     last_login = Column(Integer)
     force_logout = Column(Boolean)
