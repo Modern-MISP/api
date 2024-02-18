@@ -46,7 +46,7 @@ async def add_tag(
     description="View details of a specific tag.",
 )
 async def view_tag(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, Permission.AUTH))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     tag_id: str = Path(..., alias="tagId"),
 ) -> dict:
@@ -61,7 +61,7 @@ async def view_tag(
     description="Search for tags using a specific search term.",
 )
 async def search_tags(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, Permission.AUTH))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     tag_search_term: str = Path(..., alias="tagSearchTerm"),
 ) -> dict:
@@ -107,7 +107,7 @@ async def delete_tag(
     description="Retrieve a list of all tags.",
 )
 async def get_tags(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, Permission.AUTH))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
 ) -> dict:
     return await _get_tags(db)
@@ -138,7 +138,7 @@ async def add_tag_depr(
     description="Deprecated. View details of a specific tag using the old route.",
 )
 async def view_tag_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, Permission.AUTH))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     tag_id: str = Path(..., alias="tagId"),
 ) -> dict:
