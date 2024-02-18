@@ -1,7 +1,7 @@
 import json
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Path, status
+from fastapi import APIRouter, Depends, HTTPException, Path, status
 from sqlalchemy.orm import Session
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
@@ -12,7 +12,6 @@ from mmisp.api_schemas.standard_status_response import StandardStatusResponse
 from mmisp.db.database import get_db
 from mmisp.db.models.noticelist import Noticelist, NoticelistEntry
 from mmisp.util.partial import partial
-from mmisp.util.request_validations import check_existence_and_raise
 
 router = APIRouter(tags=["noticelists"])
 
@@ -27,7 +26,7 @@ router = APIRouter(tags=["noticelists"])
 async def get_noticelist(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    tag_id: str = Path(..., alias="noticelistId"),
+    tag_id: int = Path(..., alias="noticelistId"),
 ) -> dict:
     return await _get_noticelist(db, tag_id)
 
@@ -42,7 +41,7 @@ async def get_noticelist(
 async def post_toggleEnable_noticelist(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
-    tag_id: str = Path(..., alias="noticelistId"),
+    tag_id: int = Path(..., alias="noticelistId"),
 ) -> dict:
     return await _toggleEnable_noticelists(db, tag_id)
 
@@ -86,7 +85,7 @@ async def get_all_noticelists(
 async def get_noticelist_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    noticelist_id: str = Path(..., alias="noticelistId"),
+    noticelist_id: int = Path(..., alias="noticelistId"),
 ) -> dict:
     return await _get_noticelist(db, noticelist_id)
 
@@ -110,14 +109,22 @@ async def update_noticelist_depr(
 
 
 async def _get_noticelist(db: Session, noticelist_id: str) -> dict:
-    noticelist = check_existence_and_raise(db, Noticelist, noticelist_id, "id", "Noticelist not found")
+    noticelist: Noticelist | None = db.get(Noticelist, noticelist_id)
+
+    if not noticelist:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Noticelist not found.")
+
     noticelist_entries = db.query(NoticelistEntry).filter(NoticelistEntry.noticelist_id == noticelist_id).all()
 
     return _prepare_noticelist_response(noticelist, noticelist_entries)
 
 
 async def _toggleEnable_noticelists(db: Session, noticelist_id: str) -> dict:
-    noticelist = check_existence_and_raise(db, Noticelist, noticelist_id, "id", "Noticelist not found")
+    noticelist: Noticelist | None = db.get(Noticelist, noticelist_id)
+
+    if not noticelist:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Noticelist not found.")
+
     message = "disabled" if noticelist.enabled else "enabled"
 
     noticelist.enabled = not noticelist.enabled

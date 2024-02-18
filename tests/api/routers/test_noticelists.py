@@ -33,10 +33,10 @@ class TestGetNoticelist:
 
         for invalid_noticelist_id in invalid_noticelist_ids:
             response = client.get(f"/noticelists/{invalid_noticelist_id}", headers=headers)
-            assert response.status_code == 404
+            assert response.status_code == 422
 
             response = client.get(f"/noticelists/view/{invalid_noticelist_id}", headers=headers)
-            assert response.status_code == 404
+            assert response.status_code == 422
 
     @staticmethod
     def test_get_non_existing_noticelist_details() -> None:
@@ -104,7 +104,7 @@ class TestToggleEnableNoticelist:
 
         for invalid_noticelist_id in invalid_noticelist_ids:
             response = client.post(f"/noticelists/toggleEnable/{invalid_noticelist_id}", headers=headers)
-            assert response.status_code == 404
+            assert response.status_code == 422
 
     @staticmethod
     def test_toggleEnable_non_existing_noticelist_details() -> None:

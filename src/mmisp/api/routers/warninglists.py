@@ -1,6 +1,6 @@
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, Path, status
+from fastapi import APIRouter, Depends, HTTPException, Path, status
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
@@ -20,7 +20,6 @@ from mmisp.api_schemas.warninglists.update_all_warninglists_response import Upda
 from mmisp.api_schemas.warninglists.warninglist_response import WarninglistEntryResponse, WarninglistResponse
 from mmisp.db.database import get_db
 from mmisp.db.models.warninglist import Warninglist, WarninglistEntry
-from mmisp.util.request_validations import check_existence_and_raise
 
 router = APIRouter(tags=["warninglists"])
 
@@ -33,7 +32,7 @@ router = APIRouter(tags=["warninglists"])
     description="Add a new warninglist with given details.",
 )
 async def add_warninglist(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS, Permission.WARNINGLIST]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.WARNINGLIST]))],
     db: Annotated[Session, Depends(get_db)],
     body: CreateWarninglistBody,
 ) -> dict:
@@ -47,12 +46,12 @@ async def add_warninglist(
     summary="Get warninglist details",
     description="Retrieve details of a specific warninglist by its ID.",
 )
-async def view_warninglist(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL))],
+async def get_warninglist_details(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    warninglist_id: str = Path(..., alias="warninglistId"),
+    warninglist_id: int = Path(..., alias="warninglistId"),
 ) -> dict:
-    return await _view_warninglist(db, warninglist_id)
+    return await _get_warninglist_details(db, warninglist_id)
 
 
 @router.post(
@@ -63,7 +62,7 @@ async def view_warninglist(
     description="Disable/Enable a specific warninglist by its ID or name.",
 )
 async def post_toggleEnable(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     body: ToggleEnableWarninglistsBody,
 ) -> dict:
@@ -78,9 +77,9 @@ async def post_toggleEnable(
     description="Delete a specific warninglist.",
 )
 async def delete_warninglist(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
-    warninglist_id: str = Path(..., alias="id"),
+    warninglist_id: int = Path(..., alias="id"),
 ) -> dict:
     return await _delete_warninglist(db, warninglist_id)
 
@@ -93,7 +92,7 @@ async def delete_warninglist(
     description="Retrieve a list of all warninglists.",
 )
 async def get_all_or_selected_warninglists(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     value: str | None = None,
     enabled: bool | None = None,
@@ -109,7 +108,7 @@ async def get_all_or_selected_warninglists(
     description="Retrieve a list of ID and name of warninglists, which match has the given search term as Entry.",
 )
 async def get_warninglists_by_value(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     body: CheckValueWarninglistsBody,
 ) -> dict:
@@ -124,7 +123,7 @@ async def get_warninglists_by_value(
     description="Update all warninglists.",
 )
 async def update_all_warninglists(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
 ) -> dict:
     return await _update_all_warninglists(db, False)
@@ -139,7 +138,7 @@ async def update_all_warninglists(
     description="Deprecated. Update all warninglists.",
 )
 async def update_all_warninglists_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
 ) -> dict:
     return await _update_all_warninglists(db, True)
@@ -153,12 +152,12 @@ async def update_all_warninglists_depr(
     summary="Get warninglist details (Deprecated)",
     description="Deprecated. Retrieve details of a specific warninglist by its ID using the old route.",
 )
-async def view_warninglist_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL))],
+async def get_warninglist_details_depr(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    warninglist_id: str = Path(..., alias="warninglistId"),
+    warninglist_id: int = Path(..., alias="warninglistId"),
 ) -> dict:
-    return await _view_warninglist(db, warninglist_id)
+    return await _get_warninglist_details(db, warninglist_id)
 
 
 @router.post(
@@ -168,7 +167,7 @@ async def view_warninglist_depr(
     description="Retrieve a list of warninglists, which match given search terms using the old route.",
 )
 async def search_warninglists(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     body: GetSelectedWarninglistsBody,
 ) -> dict:
@@ -242,13 +241,14 @@ async def _toggleEnable(
     return ToggleEnableWarninglistsResponse(saved=status, success=success, errors=errors)
 
 
-async def _view_warninglist(
+async def _get_warninglist_details(
     db: Session,
     warninglist_id: str,
 ) -> dict:
-    warninglist: Warninglist = check_existence_and_raise(
-        db, Warninglist, warninglist_id, "id", "Warninglist not found."
-    )
+    warninglist: Warninglist | None = db.get(Warninglist, warninglist_id)
+
+    if not warninglist:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Warninglist not found.")
 
     warninglist_entries = _get_warninglist_entries(db, int(warninglist_id))
 
@@ -261,9 +261,10 @@ async def _delete_warninglist(
     db: Session,
     warninglist_id: str,
 ) -> dict:
-    warninglist: Warninglist = check_existence_and_raise(
-        db, Warninglist, warninglist_id, "id", "Warninglist not found."
-    )
+    warninglist: Warninglist | None = db.get(Warninglist, warninglist_id)
+
+    if not warninglist:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Warninglist not found.")
 
     warninglist_entries = _get_warninglist_entries(db, int(warninglist_id))
 
