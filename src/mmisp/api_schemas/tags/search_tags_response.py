@@ -1,17 +1,14 @@
 from pydantic import BaseModel
 
 from mmisp.api_schemas.tags.get_tag_response import TagAttributesResponse
-from mmisp.api_schemas.taxonomies.get_taxonomy_out import TaxonomyView
+from mmisp.api_schemas.taxonomies.export_taxonomies_response import TaxonomyPredicateSchema
+from mmisp.api_schemas.taxonomies.get_taxonomy_response import TaxonomyView
 
 
-# TODO: Import from schemas/taxonomie directly
-class TaxonomyPredicateResponse(BaseModel):
+class TaxonomyPredicateResponse(TaxonomyPredicateSchema):
     id: str
     taxonomy_id: str
-    value: str
-    expanded: str
     colour: str
-    description: str
     exclusive: bool
     numerical_value: int
 

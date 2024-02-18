@@ -1,19 +1,19 @@
 from pydantic import BaseModel
 
 
-class TaxonomyPredicateSchema:
+class TaxonomyPredicateSchema(BaseModel):
     description: str
     value: str
     expanded: str
 
 
-class Entry:
+class Entry(BaseModel):
     value: str
     expanded: str
     description: str
 
 
-class TaxonomyValueSchema:
+class TaxonomyValueSchema(BaseModel):
     predicate: str
     entries: list[Entry]
 
