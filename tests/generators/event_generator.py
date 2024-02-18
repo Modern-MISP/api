@@ -34,4 +34,4 @@ def generate_valid_local_add_tag_to_event() -> str:
 
 
 def generate_valid_add_attribute_via_free_text_import_body() -> Dict[str, Any]:
-    return {"Attribute": {"value": "1.2.3.4 test_value"}}
+    return {"Attribute": {"value": "1.2.3.4"}}

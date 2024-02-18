@@ -1,17 +1,23 @@
-import logging
 from calendar import timegm
 from datetime import date
 from enum import Enum
 from time import gmtime
 from typing import Annotated, Any
 
+import httpx
 from fastapi import APIRouter, Depends, HTTPException, Path
-from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from starlette import status
 from starlette.requests import Request
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
+from mmisp.api_schemas.attributes.get_describe_types_response import GetDescribeTypesAttributes
+from mmisp.api_schemas.events.add_attribute_via_free_text_import_event_body import (
+    AddAttributeViaFreeTextImportEventBody,
+)
+from mmisp.api_schemas.events.add_attribute_via_free_text_import_event_response import (
+    AddAttributeViaFreeTextImportEventResponse,
+)
 from mmisp.api_schemas.events.add_edit_get_event_response import (
     AddEditGetEventAttribute,
     AddEditGetEventDetails,
@@ -28,6 +34,11 @@ from mmisp.api_schemas.events.add_event_body import AddEventBody
 from mmisp.api_schemas.events.add_remove_tag_events_response import AddRemoveTagEventsResponse
 from mmisp.api_schemas.events.delete_event_response import DeleteEventResponse
 from mmisp.api_schemas.events.edit_event_body import EditEventBody
+from mmisp.api_schemas.events.FreeTextImportWorkerBody import (
+    FreeTextImportWorkerBody,
+    FreeTextImportWorkerData,
+    FreeTextImportWorkerUser,
+)
 from mmisp.api_schemas.events.get_all_events_response import (
     GetAllEventsEventTag,
     GetAllEventsEventTagTag,
@@ -42,6 +53,7 @@ from mmisp.api_schemas.events.publish_event_response import PublishEventResponse
 from mmisp.api_schemas.events.search_events_body import SearchEventsBody
 from mmisp.api_schemas.events.search_events_response import SearchEventsResponse
 from mmisp.api_schemas.events.unpublish_event_response import UnpublishEventResponse
+from mmisp.config import config
 from mmisp.db.database import get_db
 from mmisp.db.models.attribute import Attribute, AttributeTag
 from mmisp.db.models.event import Event, EventReport, EventTag
@@ -55,23 +67,6 @@ from mmisp.util.partial import partial
 from mmisp.util.request_validations import check_existence_and_raise
 
 router = APIRouter(tags=["events"])
-logging.basicConfig(level=logging.INFO)
-
-info_format = "%(asctime)s - %(message)s"
-error_format = "%(asctime)s - %(filename)s:%(lineno)d - %(message)s"
-
-info_handler = logging.StreamHandler()
-info_handler.setLevel(logging.INFO)
-info_handler.setFormatter(logging.Formatter(info_format))
-
-error_handler = logging.StreamHandler()
-error_handler.setLevel(logging.ERROR)
-error_handler.setFormatter(logging.Formatter(error_format))
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-logger.addHandler(info_handler)
-logger.addHandler(error_handler)
 
 
 # Sorted according to CRUD
@@ -254,30 +249,29 @@ async def remove_tag_from_event(
     return await _remove_tag_from_event(db, event_id, tag_id)
 
 
-# @router.post(
-#     "/events/freeTextImport/{eventId}",
-#     status_code=status.HTTP_501_NOT_IMPLEMENTED,
-#     response_model=list[partial(AddAttributeViaFreeTextImportEventResponse)],
-#     summary="Add attribute to event",
-#     description="Add attribute to event via free text import. NOT YET IMPLEMENTED!",
-# )
-# async def add_attribute_via_free_text_import(
-#         auth: Annotated[Auth, Depends(authorize(AuthStrategy.WORKER_KEY, [Permission.ADD]))],
-#         db: Annotated[Session, Depends(get_db)],
-#         event_id: Annotated[str, Path(..., alias="eventId")],
-#         body: AddAttributeViaFreeTextImportEventBody,
-# ) -> dict:
-#     body_dict = body.dict()
-#     user = FreeTextImportWorkerUser(user_id=auth.user_id)
-#     data = FreeTextImportWorkerData(data=body_dict["Attribute"]["value"])
-#     worker_body = FreeTextImportWorkerBody(user=user, data=data).dict()
-#     print(worker_body)
-#     async with httpx.AsyncClient() as client:
-#         response = await client.post(
-#             config.WORKER_URL, json=worker_body)
-#     response_json = response.json()
-#     print(response_json)
-#     return await _add_attribute_via_free_text_import(db, event_id, response_json)
+@router.post(
+    "/events/freeTextImport/{eventId}",
+    status_code=status.HTTP_501_NOT_IMPLEMENTED,
+    response_model=list[partial(AddAttributeViaFreeTextImportEventResponse)],
+    summary="Add attribute to event",
+    description="Add attribute to event via free text import. NOT YET IMPLEMENTED!",
+)
+async def add_attribute_via_free_text_import(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
+    db: Annotated[Session, Depends(get_db)],
+    event_id: Annotated[str, Path(..., alias="eventId")],
+    body: AddAttributeViaFreeTextImportEventBody,
+) -> dict:
+    body_dict = body.dict()
+    user = FreeTextImportWorkerUser(user_id=auth.user_id)
+    data = FreeTextImportWorkerData(data=body_dict["Attribute"]["value"])
+    worker_body = FreeTextImportWorkerBody(user=user, data=data).dict()
+    print(worker_body)
+    async with httpx.AsyncClient() as client:
+        response = await client.post(f"{config.WORKER_URL}/job/processFreeText", json=worker_body)
+    response_json = response.json()
+    print(response_json)
+    return await _add_attribute_via_free_text_import(db, event_id, response_json)
 
 
 # - Deprecated endpoints
@@ -350,7 +344,6 @@ async def delete_event_depr(
 
 async def _add_event(auth: Auth, db: Session, body: AddEventBody) -> dict:
     if not body.info:
-        logger.error("Event creation failed: attribute 'info' is required.")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="value 'info' is required")
 
     user = db.get(User, auth.user_id)
@@ -368,18 +361,10 @@ async def _add_event(auth: Auth, db: Session, body: AddEventBody) -> dict:
         }
     )
 
-    try:
-        db.add(new_event)
-        db.commit()
-    except SQLAlchemyError as e:
-        db.rollback()
-        logger.exception(f"Failed to add new event: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred."
-        )
+    db.add(new_event)
+    db.commit()
 
     db.refresh(new_event)
-    logger.info(f"New event with id = {new_event.id} added.")
 
     event_data = _prepare_event_response(db, new_event)
 
@@ -402,17 +387,8 @@ async def _update_event(db: Session, event_id: str, body: EditEventBody) -> dict
         if value is not None:
             setattr(existing_event, key, value if not isinstance(value, Enum) else value.value)
 
-    try:
-        db.commit()
-    except SQLAlchemyError as e:
-        db.rollback()
-        logger.exception(f"Failed to update event: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred."
-        )
-
+    db.commit()
     db.refresh(existing_event)
-    logger.info(f"Event with id '{existing_event.id}' updated.")
 
     event_data = _prepare_event_response(db, existing_event)
 
@@ -434,17 +410,8 @@ async def _delete_event(db: Session, event_id: str) -> DeleteEventResponse:
             ).dict(),
         )
 
-    try:
-        db.delete(event)
-        db.commit()
-    except SQLAlchemyError as e:
-        db.rollback()
-        logger.exception(f"Failed to delete event: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred."
-        )
-
-    logger.info(f"Event with id '{event_id}' deleted.")
+    db.delete(event)
+    db.commit()
 
     return DeleteEventResponse(
         saved=True,
@@ -460,12 +427,9 @@ async def _get_events(db: Session) -> dict:
     events = db.query(Event).all()
 
     if not events:
-        logger.error("No events found.")
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No events found.")
 
     event_responses = [_prepare_all_events_response(db, event) for event in events]
-
-    logger.info(event_responses)
 
     return event_responses
 
@@ -507,24 +471,15 @@ async def _index_events(db: Session, body: IndexEventsBody) -> dict:
 async def _publish_event(db: Session, event_id: str, request: Request) -> PublishEventResponse:
     event = db.get(Event, event_id)
     if not event:
-        logger.error("Failed to publish event: Invalid 'event_id'")
         return PublishEventResponse(name="Invalid event.", message="Invalid event.", url=str(request.url.path))
     timegm(gmtime())
 
     setattr(event, "published", True)
     setattr(event, "publish_timestamp", timegm(gmtime()))
 
-    try:
-        db.commit()
-    except SQLAlchemyError as e:
-        db.rollback()
-        logger.exception(f"Failed to publish event: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred."
-        )
+    db.commit()
 
     db.refresh(event)
-    logger.info(f"Publish event with id '{event_id}'")
 
     return PublishEventResponse(
         saved=True, success=True, name="Job queued", message="Job queued", url=str(request.url.path), id=str(event_id)
@@ -534,24 +489,15 @@ async def _publish_event(db: Session, event_id: str, request: Request) -> Publis
 async def _unpublish_event(db: Session, event_id: str, request: Request) -> UnpublishEventResponse:
     event = db.get(Event, event_id)
     if not event:
-        logger.error("Failed to unpublish event: Invalid 'event_id'")
         return UnpublishEventResponse(name="Invalid event.", message="Invalid event.", url=str(request.url.path))
     timegm(gmtime())
 
     setattr(event, "published", False)
     setattr(event, "publish_timestamp", 0)
 
-    try:
-        db.commit()
-    except SQLAlchemyError as e:
-        db.rollback()
-        logger.exception(f"Failed to unpublish event: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred."
-        )
+    db.commit()
 
     db.refresh(event)
-    logger.info(f"Unpublish event with id '{event_id}'")
 
     return UnpublishEventResponse(
         saved=True,
@@ -569,17 +515,14 @@ async def _add_tag_to_event(db: Session, event_id: str, tag_id: str, local: str)
     try:
         int(tag_id)
     except ValueError:
-        logger.error("Failed to add tag to event: Invalid 'tag_id'")
         return AddRemoveTagEventsResponse(saved=False, errors="Invalid Tag")
     if not db.get(Tag, tag_id):
-        logger.error("Failed to add tag to event: Tag not found.")
         return AddRemoveTagEventsResponse(saved=False, errors="Tag could not be added.")
     # tag = check_existence_and_raise(db, Tag, tag_id, "tag_id", "Tag not found.")
 
     tag = db.get(Tag, tag_id)
 
     if int(local) not in [0, 1]:
-        logger.exception("Failed to add tag to event: parameter 'local' is invalid")
         return AddRemoveTagEventsResponse(saved=False, errors="Invalid 'local'")
     if local == "0":
         local = False
@@ -588,18 +531,10 @@ async def _add_tag_to_event(db: Session, event_id: str, tag_id: str, local: str)
 
     new_event_tag = EventTag(event_id=event_id, tag_id=tag.id, local=local)
 
-    try:
-        db.add(new_event_tag)
-        db.commit()
-    except SQLAlchemyError as e:
-        db.rollback()
-        logger.exception(f"Failed to add tag to event: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred."
-        )
+    db.add(new_event_tag)
+    db.commit()
 
     db.refresh(new_event_tag)
-    logger.info(f"Tag with id '{tag_id}' added to event with id '{event_id}'")
 
     return AddRemoveTagEventsResponse(saved=True, success="Tag added", check_publish=True)
 
@@ -610,10 +545,8 @@ async def _remove_tag_from_event(db: Session, event_id: str, tag_id: str) -> dic
     try:
         int(tag_id)
     except ValueError:
-        logger.error("Failed to add tag to attribute: Invalid parameter tag")
         return AddRemoveTagEventsResponse(saved=False, errors="Invalid Tag")
     if not db.get(Tag, tag_id):
-        logger.error("Failed to add tag to attribute: Tag not found.")
         return AddRemoveTagEventsResponse(saved=False, errors="Tag could not be removed.")
 
     event_tag = db.query(EventTag).filter(EventTag.event_id == event_id).first()
@@ -621,40 +554,31 @@ async def _remove_tag_from_event(db: Session, event_id: str, tag_id: str) -> dic
     if not event_tag:
         return AddRemoveTagEventsResponse(saved=False, errors="Invalid event - tag combination.")
 
-    try:
-        db.delete(event_tag)
-        db.commit()
-    except SQLAlchemyError as e:
-        db.rollback()
-        logger.exception(f"Failed to add tag to attribute: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred."
-        )
-
-    logger.info(f"Tag with id '{tag_id}' removed from attribute with id '{event_id}'")
+    db.delete(event_tag)
+    db.commit()
 
     return AddRemoveTagEventsResponse(saved=True, success="Tag removed", check_publish=True)
 
 
-# async def _add_attribute_via_free_text_import(db: Session, event_id: str, response_json: Any) -> dict:
-#     check_existence_and_raise(db, Event, event_id, "id", "Event not found")
-#     response_list = []
-#
-#     for attribute in response_json["attributes"]:
-#         value = response_json["attributes"]["Items"]["value"]
-#         attribute_type = response_json["attributes"]["Items"]["default_type"]
-#         category = GetDescribeTypesAttributes().sane_defaults[type]["default_category"]
-#
-#         new_attribute = Attribute(event_id=event_id, value=value, type=attribute_type, category=category)
-#
-#         db.add(new_attribute)
-#         db.commit()
-#
-#         attribute_response_dict = new_attribute.__dict__.copy()
-#         attribute_response_dict["original_value"] = new_attribute.value
-#         response_list.append(AddAttributeViaFreeTextImportEventResponse(**attribute_response_dict))
-#
-#     return response_list
+async def _add_attribute_via_free_text_import(db: Session, event_id: str, response_json: Any) -> dict:
+    check_existence_and_raise(db, Event, event_id, "id", "Event not found")
+    response_list = []
+
+    for attribute in response_json["attributes"]:
+        value = response_json["attributes"]["Items"]["value"]
+        attribute_type = response_json["attributes"]["Items"]["default_type"]
+        category = GetDescribeTypesAttributes().sane_defaults[attribute_type]["default_category"].value
+
+        new_attribute = Attribute(event_id=event_id, value=value, type=attribute_type, category=category)
+
+        db.add(new_attribute)
+        db.commit()
+
+        attribute_response_dict = new_attribute.__dict__.copy()
+        attribute_response_dict["original_value"] = new_attribute.value
+        response_list.append(AddAttributeViaFreeTextImportEventResponse(**attribute_response_dict))
+
+    return response_list
 
 
 def _prepare_event_response(db: Session, event: Event) -> AddEditGetEventDetails:
@@ -750,12 +674,6 @@ def _prepare_tag_response(db: Session, tag_list: list[Any]) -> list[AddEditGetEv
         tag = db.get(Tag, int(attribute_or_event_tag.tag_id))
         attribute_or_event_tag_dict = tag.__dict__.copy()
 
-        # del (
-        #     attribute_or_event_tag_dict["attribute_count"],
-        #     attribute_or_event_tag_dict["count"],
-        #     attribute_or_event_tag_dict["favourite"],
-        # )
-
         attribute_or_event_tag_dict["local"] = attribute_or_event_tag.local
         attribute_or_event_tag_dict["local_only"] = tag.inherited
         tag_response_list.append(AddEditGetEventTag(**attribute_or_event_tag_dict))
@@ -796,6 +714,7 @@ def _prepare_galaxy_cluster_response(
         galaxy_cluster_dict["tag_id"] = tag.id
         galaxy_cluster_dict["extends_uuid"] = ""
         galaxy_cluster_dict["extends_version"] = "0"
+        galaxy_cluster_dict["collection_uuid"] = ""
 
         if isinstance(data_object, Attribute):
             galaxy_cluster_dict["attribute_tag_id"] = (

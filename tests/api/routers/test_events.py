@@ -3,8 +3,11 @@ from random import Random
 from typing import Any, Dict
 
 import pytest
+import respx
+from httpx import Response
 from sqlalchemy.orm import Session
 
+from mmisp.config import config
 from mmisp.db.models.attribute import Attribute
 from mmisp.db.models.event import Event, EventTag
 from mmisp.db.models.galaxy import Galaxy
@@ -770,40 +773,51 @@ class TestRemoveTagFromEvent:
         assert response.status_code == 401
 
 
-# class TestAddAttributeViaFreeTextImport:
-#     def test_add_attribute_via_free_text_import_valid_data(
-#             self: "TestAddAttributeViaFreeTextImport",
-#             db: Session,
-#             add_attribute_via_free_text_import_valid_data: Dict[str, Any],
-#     ) -> None:
-#         add_org_body = Organisation(name="test", local=True)
-#
-#         db.add(add_org_body)
-#         db.commit()
-#         db.refresh(add_org_body)
-#
-#         org_id = add_org_body.id
-#
-#         add_event_body = Event(
-#             org_id=org_id,
-#             orgc_id=org_id,
-#             info="test event",
-#             date="2024-02-13",
-#             analysis="test analysis",
-#             event_creator_email="test@mail.de",
-#         )
-#
-#         db.add(add_event_body)
-#         db.commit()
-#         db.refresh(add_event_body)
-#
-#         event_id = add_event_body.id
-#
-#         headers = {"authorization": environment.site_admin_user_token}
-#         response = client.post(
-#             f"/events/freeTextImport/{event_id}", json=add_attribute_via_free_text_import_valid_data, headers=headers
-#         )
-#
-#         print(response.json())
-#
-#         assert response.status_code == 501
+class TestAddAttributeViaFreeTextImport:
+    @respx.mock
+    def test_add_attribute_via_free_text_import_valid_data(
+        self: "TestAddAttributeViaFreeTextImport",
+        db: Session,
+        add_attribute_via_free_text_import_valid_data: Dict[str, Any],
+    ) -> None:
+        add_org_body = Organisation(name="test", local=True)
+
+        db.add(add_org_body)
+        db.commit()
+        db.refresh(add_org_body)
+
+        org_id = add_org_body.id
+
+        add_event_body = Event(
+            org_id=org_id,
+            orgc_id=org_id,
+            info="test event",
+            date="2024-02-13",
+            analysis="test analysis",
+            event_creator_email="test@mail.de",
+        )
+
+        db.add(add_event_body)
+        db.commit()
+        db.refresh(add_event_body)
+
+        event_id = add_event_body.id
+
+        items = {}
+        items["value"] = "1.2.3.4"
+        items["default_type"] = "ip-src"
+
+        attributes = {}
+        attributes["Items"] = items
+
+        dictionary = {}
+        dictionary["attributes"] = attributes
+
+        route = respx.post(f"{config.WORKER_URL}/job/processFreeText").mock(return_value=Response(200, json=dictionary))
+        headers = {"authorization": environment.site_admin_user_token}
+        response = client.post(
+            f"/events/freeTextImport/{event_id}", json=add_attribute_via_free_text_import_valid_data, headers=headers
+        )
+
+        assert response.status_code == 501
+        assert route.called
