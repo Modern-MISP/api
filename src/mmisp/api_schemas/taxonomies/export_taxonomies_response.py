@@ -2,12 +2,12 @@ from pydantic import BaseModel
 
 
 class TaxonomyPredicateSchema(BaseModel):
-    description: str
     value: str
     expanded: str
+    description: str
 
 
-class Entry(BaseModel):
+class ExportTaxonomyEntry(BaseModel):
     value: str
     expanded: str
     description: str
@@ -15,7 +15,7 @@ class Entry(BaseModel):
 
 class TaxonomyValueSchema(BaseModel):
     predicate: str
-    entries: list[Entry]
+    entry: list[ExportTaxonomyEntry]
 
 
 class ExportTaxonomyResponse(BaseModel):
