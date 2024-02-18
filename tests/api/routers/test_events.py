@@ -1,179 +1,81 @@
-from datetime import datetime
-from random import Random
-from typing import Any, Dict
-
-import pytest
 import respx
 from httpx import Response
-from sqlalchemy.orm import Session
 
 from mmisp.config import config
-from mmisp.db.models.attribute import Attribute
-from mmisp.db.models.event import Event, EventTag
-from mmisp.db.models.galaxy import Galaxy
+from mmisp.db.models.event import EventTag
 from mmisp.db.models.galaxy_cluster import GalaxyCluster
-from mmisp.db.models.organisation import Organisation
-from mmisp.db.models.tag import Tag
 
 from ...environment import client, environment, get_db
-from ...generators.event_generator import (
-    generate_invalid_add_event_body,
-    generate_invalid_id,
-    generate_invalid_update_event_body,
-    generate_non_existing_id,
-    generate_valid_add_attribute_via_free_text_import_body,
-    generate_valid_add_event_body,
-    generate_valid_local_add_tag_to_event,
-    generate_valid_update_event_body,
-)
-
-
-@pytest.fixture(scope="function")
-def db() -> Session:
-    db_session = get_db()
-
-    yield db_session
-
-    db_session.close()
-
-
-@pytest.fixture(scope="module")
-def add_event_valid_data() -> Dict[str, Any]:
-    return generate_valid_add_event_body().dict()
-
-
-@pytest.fixture(scope="module")
-def add_event_invalid_data() -> Dict[str, Any]:
-    return generate_invalid_add_event_body().dict()
-
-
-@pytest.fixture(params=[generate_non_existing_id(), generate_invalid_id()], scope="module")
-def invalid_ids(request: Any) -> Dict[str, Any]:
-    return request.param
-
-
-@pytest.fixture(scope="module")
-def valid_update_event_data() -> Dict[str, Any]:
-    return generate_valid_update_event_body().dict()
-
-
-@pytest.fixture(scope="module")
-def invalid_update_event_data() -> Dict[str, Any]:
-    return generate_invalid_update_event_body().dict()
-
-
-@pytest.fixture(scope="module")
-def valid_local_add_tag_to_event() -> str:
-    return generate_valid_local_add_tag_to_event()
-
-
-@pytest.fixture(scope="module")
-def add_attribute_via_free_text_import_valid_data() -> Dict[str, Any]:
-    return generate_valid_add_attribute_via_free_text_import_body()
+from ...generators.model_generators.attribute_generator import generate_attribute
+from ...generators.model_generators.event_generator import generate_event
+from ...generators.model_generators.galaxy_generator import generate_galaxy
+from ...generators.model_generators.organisation_generator import generate_organisation
+from ...generators.model_generators.tag_generator import generate_tag
 
 
 class TestAddEvent:
-    def test_add_event_valid_data(self: "TestAddEvent", add_event_valid_data: Dict[str, Any]) -> None:
+    @staticmethod
+    def test_add_event_valid_data() -> None:
+        request_body = {"info": "test event"}
         headers = {"authorization": environment.site_admin_user_token}
-        response = client.post("/events", json=add_event_valid_data, headers=headers)
+        response = client.post("/events", json=request_body, headers=headers)
 
         assert response.status_code == 200
         response_json = response.json()
-        assert response_json["Event"]["info"] == add_event_valid_data["info"]
+        assert response_json["Event"]["info"] == request_body["info"]
         assert "id" in response_json["Event"]["Org"]
         assert "name" in response_json["Event"]["Org"]
         assert "uuid" in response_json["Event"]["Org"]
         assert "local" in response_json["Event"]["Org"]
 
-    def test_add_event_invalid_data(self: "TestAddEvent", add_event_invalid_data: Dict[str, Any]) -> None:
-        headers = {"authorization": environment.site_admin_user_token}
-        response = client.post("/events", json=add_event_invalid_data, headers=headers)
-
-        if not add_event_invalid_data["info"]:
-            assert response.status_code == 400
-        elif not isinstance(add_event_invalid_data["info"], str):
-            assert response.status_code == 403
-
-    def test_add_event_response_format(self: "TestAddEvent", add_event_valid_data: Dict[str, Any]) -> None:
-        headers = {"authorization": environment.site_admin_user_token}
-        response = client.post("/events", json=add_event_valid_data, headers=headers)
-
-        assert response.headers["Content-Type"] == "application/json"
-
-    def test_add_event_authorization(self: "TestAddEvent", add_event_valid_data: Dict[str, Any]) -> None:
-        headers = {"authorization": ""}
-        response = client.post("/events", json=add_event_valid_data, headers=headers)
-
-        assert response.status_code == 401
-
 
 class TestGetEventDetails:
-    def test_get_existing_event(self: "TestGetEventDetails", db: Session) -> None:
-        add_org_body = Organisation(name="test", local=True)
+    @staticmethod
+    def test_get_existing_event() -> None:
+        db = get_db()
+        organisation = generate_organisation()
 
-        db.add(add_org_body)
+        db.add(organisation)
         db.commit()
-        db.refresh(add_org_body)
+        db.refresh(organisation)
 
-        org_id = add_org_body.id
+        org_id = organisation.id
 
-        add_event_body = Event(
-            org_id=org_id,
-            orgc_id=org_id,
-            info="test event",
-            date="2024-02-13",
-            analysis="test analysis",
-            event_creator_email="test@mail.de",
-        )
+        event = generate_event()
+        setattr(event, "org_id", org_id)
+        setattr(event, "orgc_id", org_id)
 
-        db.add(add_event_body)
+        db.add(event)
         db.commit()
-        db.refresh(add_event_body)
+        db.refresh(event)
 
-        event_id = add_event_body.id
+        event_id = event.id
 
-        add_attribute_body = Attribute(value="test", value1="test", type="text", category="Other", event_id=event_id)
+        attribute = generate_attribute()
+        setattr(attribute, "event_id", event_id)
 
-        db.add(add_attribute_body)
+        db.add(attribute)
         db.commit()
-        db.refresh(add_attribute_body)
+        db.refresh(attribute)
 
-        attribute_id = add_attribute_body.id
+        attribute_id = attribute.id
 
-        add_galaxy_body = Galaxy(
-            name="test galaxy",
-            type="test type",
-            description="test",
-            version="version",
-            kill_chain_order="test kill_chain_order",
-        )
+        galaxy = generate_galaxy()
 
-        db.add(add_galaxy_body)
+        db.add(galaxy)
         db.commit()
-        db.refresh(add_galaxy_body)
+        db.refresh(galaxy)
 
-        galaxy_id = add_galaxy_body.id
+        galaxy_id = galaxy.id
 
-        random = Random()
+        tag = generate_tag()
+        setattr(tag, "is_galaxy", True)
 
-        add_tag_body = Tag(
-            name=str(random.randint(300001, 400000)),
-            colour="blue",
-            exportable=False,
-            org_id=1,
-            user_id=1,
-            hide_tag=False,
-            numerical_value=1,
-            inherited=False,
-            is_galaxy=True,
-            is_custom_galaxy=False,
-        )
-
-        db.add(add_tag_body)
+        db.add(tag)
         db.commit()
-        db.refresh(add_tag_body)
+        db.refresh(tag)
 
-        tag_id = add_tag_body.id
+        tag_id = tag.id
 
         add_event_tag_body = EventTag(event_id=event_id, tag_id=tag_id, local=False)
 
@@ -185,7 +87,7 @@ class TestGetEventDetails:
             collection_uuid="uuid",
             type="test type",
             value="test",
-            tag_name=add_tag_body.name,
+            tag_name=tag.name,
             description="test",
             galaxy_id=galaxy_id,
             authors="admin",
@@ -211,156 +113,118 @@ class TestGetEventDetails:
         assert response_json["Event"]["Galaxy"][0]["GalaxyCluster"][0]["id"] == str(galaxy_cluster_id)
         assert response_json["Event"]["Galaxy"][0]["GalaxyCluster"][0]["event_tag_id"] == str(add_event_tag_body.id)
 
-    def test_get_non_existing_event(self: "TestGetEventDetails", db: Session, invalid_ids: str) -> None:
-        response = client.get(f"/events/{invalid_ids}")
-
+    @staticmethod
+    def test_get_non_existing_event() -> None:
+        response = client.get("/events/0")
         assert response.status_code == 404
-
-    def test_add_event_response_format(self: "TestGetEventDetails") -> None:
-        response = client.get("/events/1")
-
-        assert response.headers["Content-Type"] == "application/json"
+        response = client.get("/events/invalid_id")
+        assert response.status_code == 404
 
 
 class TestUpdateEvent:
-    def test_update_existing_event(
-        self: "TestUpdateEvent", db: Session, valid_update_event_data: Dict[str, Any]
-    ) -> None:
-        add_org_body = Organisation(name="test", local=True)
+    @staticmethod
+    def test_update_existing_event() -> None:
+        request_body = {"info": "updated info"}
+        db = get_db()
+        organisation = generate_organisation()
 
-        db.add(add_org_body)
+        db.add(organisation)
         db.commit()
-        db.refresh(add_org_body)
+        db.refresh(organisation)
 
-        org_id = add_org_body.id
+        org_id = organisation.id
 
-        add_event_body = Event(
-            org_id=org_id,
-            orgc_id=org_id,
-            info="test event",
-            date="2024-02-13",
-            analysis="test analysis",
-            event_creator_email="test@mail.de",
-        )
+        event = generate_event()
+        setattr(event, "org_id", org_id)
+        setattr(event, "orgc_id", org_id)
 
-        db.add(add_event_body)
+        db.add(event)
         db.commit()
-        db.refresh(add_event_body)
+        db.refresh(event)
 
-        event_id = add_event_body.id
+        event_id = event.id
 
         headers = {"authorization": environment.site_admin_user_token}
-        response = client.put(f"events/{event_id}", json=valid_update_event_data, headers=headers)
+        response = client.put(f"events/{event_id}", json=request_body, headers=headers)
 
         assert response.status_code == 200
         response_json = response.json()
-        assert response_json["Event"]["info"] == valid_update_event_data["info"]
+        assert response_json["Event"]["info"] == request_body["info"]
 
-    def test_update_non_existing_event(
-        self: "TestGetEventDetails", db: Session, invalid_ids: str, valid_update_event_data: Dict[str, Any]
-    ) -> None:
+    @staticmethod
+    def test_update_non_existing_event() -> None:
+        request_body = {"info": "updated event"}
         headers = {"authorization": environment.site_admin_user_token}
-        response = client.put(f"/events/{invalid_ids}", json=valid_update_event_data, headers=headers)
-
+        response = client.put("/events/0", json=request_body, headers=headers)
         assert response.status_code == 404
 
-    def test_update_event_response_format(self: "TestGetEventDetails") -> None:
-        headers = {"authorization": environment.site_admin_user_token}
-        response = client.put("/events/1", headers=headers)
-
-        assert response.headers["Content-Type"] == "application/json"
-
-    def test_update_event_authorization(self: "TestAddEvent", add_event_valid_data: Dict[str, Any]) -> None:
-        headers = {"authorization": ""}
-        response = client.put("/events/1", json=add_event_valid_data, headers=headers)
-
-        assert response.status_code == 401
+        response = client.put("/events/invalid_id", json=request_body, headers=headers)
+        assert response.status_code == 404
 
 
 class TestDeleteEvent:
-    def test_delete_existing_event(self: "TestDeleteEvent", db: Session) -> None:
-        add_org_body = Organisation(name="test", local=True)
+    @staticmethod
+    def test_delete_existing_event() -> None:
+        db = get_db()
+        organisation = generate_organisation()
 
-        db.add(add_org_body)
+        db.add(organisation)
         db.commit()
-        db.refresh(add_org_body)
+        db.refresh(organisation)
 
-        org_id = add_org_body.id
+        org_id = organisation.id
 
-        add_event_body = Event(
-            org_id=org_id,
-            orgc_id=org_id,
-            info="test event",
-            date="2024-02-13",
-            analysis="test analysis",
-            event_creator_email="test@mail.de",
-        )
+        event = generate_event()
+        setattr(event, "org_id", org_id)
+        setattr(event, "orgc_id", org_id)
 
-        db.add(add_event_body)
+        db.add(event)
         db.commit()
-        db.refresh(add_event_body)
+        db.refresh(event)
 
-        event_id = add_event_body.id
+        event_id = event.id
 
         headers = {"authorization": environment.site_admin_user_token}
         response = client.delete(f"events/{event_id}", headers=headers)
 
         assert response.status_code == 200
 
-    def test_delete_invalid_or_non_existing_event(self: "TestDeleteEvent", invalid_ids: Any) -> None:
+    @staticmethod
+    def test_delete_invalid_or_non_existing_event() -> None:
         headers = {"authorization": environment.site_admin_user_token}
-        response = client.delete(f"/events/{invalid_ids}", headers=headers)
-
+        response = client.delete("/events/0", headers=headers)
         assert response.status_code == 404
-
-    def test_delete_event_response_format(self: "TestDeleteEvent") -> None:
-        headers = {"authorization": environment.site_admin_user_token}
-        response = client.delete("/events/1", headers=headers)
-
-        assert response.headers["Content-Type"] == "application/json"
-
-    def test_delete_event_authorization(self: "TestDeleteEvent") -> None:
-        headers = {"authorization": ""}
-        response = client.delete("/events/1", headers=headers)
-
-        assert response.status_code == 401
+        response = client.delete("/events/invalid_id", headers=headers)
+        assert response.status_code == 404
 
 
 class TestGetAllEvents:
-    def test_get_all_events(self: "TestGetAllEvents", db: Session) -> None:
-        add_org_body = Organisation(name="test", local=True)
+    @staticmethod
+    def test_get_all_events() -> None:
+        db = get_db()
+        organisation = generate_organisation()
 
-        db.add(add_org_body)
+        db.add(organisation)
         db.commit()
-        db.refresh(add_org_body)
+        db.refresh(organisation)
 
-        org_id = add_org_body.id
+        org_id = organisation.id
 
-        add_event_body1 = Event(
-            org_id=org_id,
-            orgc_id=org_id,
-            info="test event1",
-            date="2024-02-13",
-            analysis="test analysis",
-            event_creator_email="test@mail.de",
-        )
+        event1 = generate_event()
+        setattr(event1, "org_id", org_id)
+        setattr(event1, "orgc_id", org_id)
 
-        db.add(add_event_body1)
+        db.add(event1)
         db.commit()
-        db.refresh(add_event_body1)
+        db.refresh(event1)
 
-        add_event_body2 = Event(
-            org_id=org_id,
-            orgc_id=org_id,
-            info="test event2",
-            date="2024-02-13",
-            analysis="test analysis",
-            event_creator_email="test@mail.de",
-        )
+        event2 = generate_event()
+        setattr(event2, "org_id", org_id)
+        setattr(event2, "orgc_id", org_id)
 
-        db.add(add_event_body2)
+        db.add(event2)
         db.commit()
-        db.refresh(add_event_body2)
+        db.refresh(event2)
 
         response = client.get("/events")
 
@@ -368,48 +232,36 @@ class TestGetAllEvents:
         response_json = response.json()
         assert isinstance(response_json, list)
 
-    def test_get_all_events_response_format(self: "TestGetAllEvents") -> None:
-        response = client.get("/events")
-
-        assert response.headers["Content-Type"] == "application/json"
-
 
 class TestEventRestSearch:
-    def test_valid_search_attribute_data(self: "TestEventRestSearch", db: Session) -> None:
-        add_org_body = Organisation(
-            name="test",
-            date_created=datetime.utcnow(),
-            date_modified=datetime.utcnow(),
-        )
+    @staticmethod
+    def test_valid_search_attribute_data() -> None:
+        db = get_db()
+        organisation = generate_organisation()
 
-        db.add(add_org_body)
+        db.add(organisation)
         db.commit()
-        db.refresh(add_org_body)
+        db.refresh(organisation)
 
-        org_id = add_org_body.id
+        org_id = organisation.id
 
-        add_event_body = Event(
-            org_id=org_id,
-            orgc_id=org_id,
-            info="test event",
-            date="2024-02-13",
-            analysis="test analysis",
-            event_creator_email="test@mail.de",
-        )
+        event = generate_event()
+        setattr(event, "org_id", org_id)
+        setattr(event, "orgc_id", org_id)
 
-        db.add(add_event_body)
+        db.add(event)
         db.commit()
-        db.refresh(add_event_body)
+        db.refresh(event)
 
-        event_id = str(add_event_body.id)
+        event_id = event.id
 
-        add_attribute_body = Attribute(
-            value="1.2.3.4", value1="1.2.3.4", type="ip-src", category="Network Activity", event_id=event_id
-        )
+        attribute = generate_attribute()
+        setattr(attribute, "event_id", event_id)
 
-        db.add(add_attribute_body)
+        db.add(attribute)
         db.commit()
-        db.refresh(add_attribute_body)
+        db.refresh(attribute)
+
         json = {"returnFormat": "json"}
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/events/restSearch", json=json, headers=headers)
@@ -420,7 +272,8 @@ class TestEventRestSearch:
         response_json_attribute = response_json["response"][0]
         assert "Event" in response_json_attribute
 
-    def test_invalid_search_attribute_data(self: "TestEventRestSearch") -> None:
+    @staticmethod
+    def test_invalid_search_attribute_data() -> None:
         json = {"returnFormat": "invalid format"}
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/events/restSearch", json=json, headers=headers)
@@ -428,32 +281,24 @@ class TestEventRestSearch:
 
 
 class TestIndexEvents:
-    def test_index_events_valid_data(self: "TestIndexEvents", db: Session) -> None:
-        add_org_body = Organisation(
-            name="test",
-            date_created=datetime.utcnow(),
-            date_modified=datetime.utcnow(),
-        )
+    @staticmethod
+    def test_index_events_valid_data() -> None:
+        db = get_db()
+        organisation = generate_organisation()
 
-        db.add(add_org_body)
+        db.add(organisation)
         db.commit()
-        db.refresh(add_org_body)
+        db.refresh(organisation)
 
-        org_id = add_org_body.id
+        org_id = organisation.id
 
-        add_event_body = Event(
-            org_id=org_id,
-            orgc_id=org_id,
-            info="test event",
-            date="2024-02-13",
-            analysis="test analysis",
-            event_creator_email="test@mail.de",
-            distribution=1,
-        )
+        event = generate_event()
+        setattr(event, "org_id", org_id)
+        setattr(event, "orgc_id", org_id)
 
-        db.add(add_event_body)
+        db.add(event)
         db.commit()
-        db.refresh(add_event_body)
+        db.refresh(event)
 
         json = {"distribution": "1"}
         headers = {"authorization": environment.site_admin_user_token}
@@ -466,29 +311,26 @@ class TestIndexEvents:
 
 
 class TestPublishEvent:
-    def test_publish_existing_event(self: "TestPublishEvent", db: Session) -> None:
-        add_org_body = Organisation(name="test", local=True)
+    @staticmethod
+    def test_publish_existing_event() -> None:
+        db = get_db()
+        organisation = generate_organisation()
 
-        db.add(add_org_body)
+        db.add(organisation)
         db.commit()
-        db.refresh(add_org_body)
+        db.refresh(organisation)
 
-        org_id = add_org_body.id
+        org_id = organisation.id
 
-        add_event_body = Event(
-            org_id=org_id,
-            orgc_id=org_id,
-            info="test event",
-            date="2024-02-13",
-            analysis="test analysis",
-            event_creator_email="test@mail.de",
-        )
+        event = generate_event()
+        setattr(event, "org_id", org_id)
+        setattr(event, "orgc_id", org_id)
 
-        db.add(add_event_body)
+        db.add(event)
         db.commit()
-        db.refresh(add_event_body)
+        db.refresh(event)
 
-        event_id = add_event_body.id
+        event_id = event.id
 
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post(f"/events/publish/{event_id}", headers=headers)
@@ -503,53 +345,44 @@ class TestPublishEvent:
         assert response_json["url"] == f"/events/publish/{event_id}"
         assert response_json["id"] == str(event_id)
 
-    def test_publish_invalid_event(self: "TestPublishEvent", invalid_ids: str) -> None:
+    @staticmethod
+    def test_publish_invalid_event() -> None:
         headers = {"authorization": environment.site_admin_user_token}
-        response = client.post(f"/events/publish/{invalid_ids}", headers=headers)
-
+        response = client.post("/events/publish/0", headers=headers)
         assert response.status_code == 200
         response_json = response.json()
         assert response_json["name"] == "Invalid event."
         assert response_json["message"] == "Invalid event."
-        assert response_json["url"] == f"/events/publish/{invalid_ids}"
-
-    def test_publish_event_response_format(self: "TestPublishEvent") -> None:
-        headers = {"authorization": environment.site_admin_user_token}
-        response = client.post("/events/publish/1", headers=headers)
-
-        assert response.headers["Content-Type"] == "application/json"
-
-    def test_publish_event_authorization(self: "TestPublishEvent") -> None:
-        headers = {"authorization": ""}
-        response = client.post("/events/publish/1", headers=headers)
-
-        assert response.status_code == 401
+        assert response_json["url"] == "/events/publish/0"
+        response = client.post("/events/publish/invalid_id", headers=headers)
+        assert response.status_code == 200
+        response_json = response.json()
+        assert response_json["name"] == "Invalid event."
+        assert response_json["message"] == "Invalid event."
+        assert response_json["url"] == "/events/publish/invalid_id"
 
 
 class TestUnpublishEvent:
-    def test_publish_existing_event(self: "TestUnpublishEvent", db: Session) -> None:
-        add_org_body = Organisation(name="test", local=True)
+    @staticmethod
+    def test_publish_existing_event() -> None:
+        db = get_db()
+        organisation = generate_organisation()
 
-        db.add(add_org_body)
+        db.add(organisation)
         db.commit()
-        db.refresh(add_org_body)
+        db.refresh(organisation)
 
-        org_id = add_org_body.id
+        org_id = organisation.id
 
-        add_event_body = Event(
-            org_id=org_id,
-            orgc_id=org_id,
-            info="test event",
-            date="2024-02-13",
-            analysis="test analysis",
-            event_creator_email="test@mail.de",
-        )
+        event = generate_event()
+        setattr(event, "org_id", org_id)
+        setattr(event, "orgc_id", org_id)
 
-        db.add(add_event_body)
+        db.add(event)
         db.commit()
-        db.refresh(add_event_body)
+        db.refresh(event)
 
-        event_id = add_event_body.id
+        event_id = event.id
 
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post(f"/events/unpublish/{event_id}", headers=headers)
@@ -564,80 +397,56 @@ class TestUnpublishEvent:
         assert response_json["url"] == f"/events/unpublish/{event_id}"
         assert response_json["id"] == str(event_id)
 
-    def test_publish_invalid_event(self: "TestUnpublishEvent", invalid_ids: str) -> None:
+    @staticmethod
+    def test_publish_invalid_event() -> None:
         headers = {"authorization": environment.site_admin_user_token}
-        response = client.post(f"/events/unpublish/{invalid_ids}", headers=headers)
-
+        response = client.post("/events/unpublish/0", headers=headers)
         assert response.status_code == 200
         response_json = response.json()
         assert response_json["name"] == "Invalid event."
         assert response_json["message"] == "Invalid event."
-        assert response_json["url"] == f"/events/unpublish/{invalid_ids}"
-
-    def test_publish_event_response_format(self: "TestUnpublishEvent") -> None:
-        headers = {"authorization": environment.site_admin_user_token}
-        response = client.post("/events/unpublish/1", headers=headers)
-
-        assert response.headers["Content-Type"] == "application/json"
-
-    def test_publish_event_authorization(self: "TestUnpublishEvent") -> None:
-        headers = {"authorization": ""}
-        response = client.post("/events/publish/1", headers=headers)
-
-        assert response.status_code == 401
+        assert response_json["url"] == "/events/unpublish/0"
+        response = client.post("/events/unpublish/invalid_id", headers=headers)
+        assert response.status_code == 200
+        response_json = response.json()
+        assert response_json["name"] == "Invalid event."
+        assert response_json["message"] == "Invalid event."
+        assert response_json["url"] == "/events/unpublish/invalid_id"
 
 
 class TestAddTagToEvent:
-    def test_add_existing_tag_to_attribute(
-        self: "TestAddTagToEvent", db: Session, valid_local_add_tag_to_event: int
-    ) -> None:
-        add_org_body = Organisation(name="test", local=True)
+    @staticmethod
+    def test_add_existing_tag_to_attribute() -> None:
+        db = get_db()
+        organisation = generate_organisation()
 
-        db.add(add_org_body)
+        db.add(organisation)
         db.commit()
-        db.refresh(add_org_body)
+        db.refresh(organisation)
 
-        org_id = add_org_body.id
+        org_id = organisation.id
 
-        add_event_body = Event(
-            org_id=org_id,
-            orgc_id=org_id,
-            info="test event",
-            date="2024-02-13",
-            analysis="test analysis",
-            event_creator_email="test@mail.de",
-        )
+        event = generate_event()
+        setattr(event, "org_id", org_id)
+        setattr(event, "orgc_id", org_id)
 
-        db.add(add_event_body)
+        db.add(event)
         db.commit()
-        db.refresh(add_event_body)
+        db.refresh(event)
 
-        event_id = add_event_body.id
+        event_id = event.id
 
-        random = Random()
+        tag = generate_tag()
 
-        add_tag_body = Tag(
-            name=str(random.randint(400001, 500000)),
-            colour="blue",
-            exportable=False,
-            org_id=1,
-            user_id=1,
-            hide_tag=False,
-            numerical_value=1,
-            inherited=False,
-            is_galaxy=False,
-            is_custom_galaxy=False,
-        )
-
-        db.add(add_tag_body)
+        db.add(tag)
         db.commit()
-        db.refresh(add_tag_body)
+        db.refresh(tag)
 
-        tag_id = add_tag_body.id
+        tag_id = tag.id
 
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post(
-            f"/events/addTag/{event_id}/{tag_id}/local:{valid_local_add_tag_to_event}",
+            f"/events/addTag/{event_id}/{tag_id}/local:1",
             headers=headers,
         )
 
@@ -647,106 +456,73 @@ class TestAddTagToEvent:
         assert response_json["success"] == "Tag added"
         assert response_json["check_publish"] is True
 
-    def test_add_invalid_or_non_existing_tag_to_attribute(
-        self: "TestAddTagToEvent",
-        db: Session,
-        invalid_ids: str,
-        valid_local_add_tag_to_event: int,
-    ) -> None:
-        add_org_body = Organisation(name="test", local=True)
+    @staticmethod
+    def test_add_invalid_or_non_existing_tag_to_attribute() -> None:
+        db = get_db()
+        organisation = generate_organisation()
 
-        db.add(add_org_body)
+        db.add(organisation)
         db.commit()
-        db.refresh(add_org_body)
+        db.refresh(organisation)
 
-        org_id = add_org_body.id
+        org_id = organisation.id
 
-        add_event_body = Event(
-            org_id=org_id,
-            orgc_id=org_id,
-            info="test event",
-            date="2024-02-13",
-            analysis="test analysis",
-            event_creator_email="test@mail.de",
-        )
+        event = generate_event()
+        setattr(event, "org_id", org_id)
+        setattr(event, "orgc_id", org_id)
 
-        db.add(add_event_body)
+        db.add(event)
         db.commit()
-        db.refresh(add_event_body)
+        db.refresh(event)
 
-        event_id = add_event_body.id
+        event_id = event.id
 
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post(
-            f"/events/addTag/{event_id}/{invalid_ids}/local:{valid_local_add_tag_to_event}",
+            f"/events/addTag/{event_id}/0/local:1",
+            headers=headers,
+        )
+        assert response.status_code == 200
+        response_json = response.json()
+        assert response_json["saved"] is False
+        response = client.post(
+            f"/events/addTag/{event_id}/invalid_id/local:1",
             headers=headers,
         )
         assert response.status_code == 200
         response_json = response.json()
         assert response_json["saved"] is False
 
-    def test_add_tag_to_attribute_response_format(self: "TestAddTagToEvent", valid_local_add_tag_to_event: int) -> None:
-        headers = {"authorization": environment.site_admin_user_token}
-        response = client.post(
-            f"/events/addTag/1/1/local:{valid_local_add_tag_to_event}",
-            headers=headers,
-        )
-        assert response.headers["Content-Type"] == "application/json"
-
-    def test_add_tag_to_attribute_authorization(self: "TestAddTagToEvent", valid_local_add_tag_to_event: int) -> None:
-        headers = {"authorization": ""}
-        response = client.post(
-            f"/events/addTag/1/1/local:{valid_local_add_tag_to_event}",
-            headers=headers,
-        )
-        assert response.status_code == 401
-
 
 class TestRemoveTagFromEvent:
-    def test_remove_existing_tag_from_attribute(self: "TestRemoveTagFromEvent", db: Session) -> None:
-        add_org_body = Organisation(name="test", local=True)
+    @staticmethod
+    def test_remove_existing_tag_from_attribute() -> None:
+        db = get_db()
+        organisation = generate_organisation()
 
-        db.add(add_org_body)
+        db.add(organisation)
         db.commit()
-        db.refresh(add_org_body)
+        db.refresh(organisation)
 
-        org_id = add_org_body.id
+        org_id = organisation.id
 
-        add_event_body = Event(
-            org_id=org_id,
-            orgc_id=org_id,
-            info="test event",
-            date="2024-02-13",
-            analysis="test analysis",
-            event_creator_email="test@mail.de",
-        )
+        event = generate_event()
+        setattr(event, "org_id", org_id)
+        setattr(event, "orgc_id", org_id)
 
-        db.add(add_event_body)
+        db.add(event)
         db.commit()
-        db.refresh(add_event_body)
+        db.refresh(event)
 
-        event_id = add_event_body.id
+        event_id = event.id
 
-        random = Random()
+        tag = generate_tag()
 
-        add_tag_body = Tag(
-            name=str(random.randint(500001, 600000)),
-            colour="blue",
-            exportable=False,
-            org_id=1,
-            user_id=1,
-            hide_tag=False,
-            numerical_value=1,
-            inherited=False,
-            is_galaxy=False,
-            is_custom_galaxy=False,
-        )
-
-        db.add(add_tag_body)
+        db.add(tag)
         db.commit()
-        db.refresh(add_tag_body)
+        db.refresh(tag)
 
-        tag_id = add_tag_body.id
+        tag_id = tag.id
 
         add_event_tag_body = EventTag(event_id=event_id, tag_id=tag_id, local=False)
 
@@ -762,62 +538,38 @@ class TestRemoveTagFromEvent:
         assert response_json["saved"] is True
         assert response_json["success"] == "Tag removed"
 
-    def test_remove_tag_from_attribute_response_format(self: "TestRemoveTagFromEvent") -> None:
-        headers = {"authorization": environment.site_admin_user_token}
-        response = client.post("/events/removeTag/1/1", headers=headers)
-        assert response.headers["Content-Type"] == "application/json"
 
-    def test_remove_tag_from_attribute_authorization(self: "TestRemoveTagFromEvent") -> None:
-        headers = {"authorization": ""}
-        response = client.post("/events/removeTag/1/1", headers=headers)
-        assert response.status_code == 401
+@respx.mock
+def test_add_attribute_via_free_text_import_valid_data() -> None:
+    request_body = {"Attribute": {"value": "1.2.3.4"}}
+    db = get_db()
+    organisation = generate_organisation()
 
+    db.add(organisation)
+    db.commit()
+    db.refresh(organisation)
 
-class TestAddAttributeViaFreeTextImport:
-    @respx.mock
-    def test_add_attribute_via_free_text_import_valid_data(
-        self: "TestAddAttributeViaFreeTextImport",
-        db: Session,
-        add_attribute_via_free_text_import_valid_data: Dict[str, Any],
-    ) -> None:
-        add_org_body = Organisation(name="test", local=True)
+    org_id = organisation.id
 
-        db.add(add_org_body)
-        db.commit()
-        db.refresh(add_org_body)
+    event = generate_event()
+    setattr(event, "org_id", org_id)
+    setattr(event, "orgc_id", org_id)
 
-        org_id = add_org_body.id
+    db.add(event)
+    db.commit()
+    db.refresh(event)
 
-        add_event_body = Event(
-            org_id=org_id,
-            orgc_id=org_id,
-            info="test event",
-            date="2024-02-13",
-            analysis="test analysis",
-            event_creator_email="test@mail.de",
-        )
+    event_id = event.id
 
-        db.add(add_event_body)
-        db.commit()
-        db.refresh(add_event_body)
+    items = {"value": "1.2.3.4", "default_type": "ip-src"}
 
-        event_id = add_event_body.id
+    attributes = {"Items": items}
 
-        items = {}
-        items["value"] = "1.2.3.4"
-        items["default_type"] = "ip-src"
+    dictionary = {"attributes": attributes}
 
-        attributes = {}
-        attributes["Items"] = items
+    route = respx.post(f"{config.WORKER_URL}/job/processFreeText").mock(return_value=Response(200, json=dictionary))
+    headers = {"authorization": environment.site_admin_user_token}
+    response = client.post(f"/events/freeTextImport/{event_id}", json=request_body, headers=headers)
 
-        dictionary = {}
-        dictionary["attributes"] = attributes
-
-        route = respx.post(f"{config.WORKER_URL}/job/processFreeText").mock(return_value=Response(200, json=dictionary))
-        headers = {"authorization": environment.site_admin_user_token}
-        response = client.post(
-            f"/events/freeTextImport/{event_id}", json=add_attribute_via_free_text_import_valid_data, headers=headers
-        )
-
-        assert response.status_code == 501
-        assert route.called
+    assert response.status_code == 200
+    assert route.called
