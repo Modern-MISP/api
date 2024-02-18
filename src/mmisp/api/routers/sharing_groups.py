@@ -79,7 +79,7 @@ async def create_sharing_group(
 async def get_sharing_group(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
-    id: str,
+    id: int,
 ) -> dict:
     sharing_group: SharingGroup | None = db.get(SharingGroup, id)
 
@@ -124,7 +124,7 @@ async def get_sharing_group(
 async def update_sharing_group(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
-    id: str,
+    id: int,
     body: UpdateSharingGroupBody,
 ) -> dict:
     sharing_group: SharingGroup | None = db.get(SharingGroup, id)
@@ -149,7 +149,7 @@ async def update_sharing_group(
 async def delete_sharing_group(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
-    id: str,
+    id: int,
 ) -> dict:
     sharing_group: SharingGroup | None = db.get(SharingGroup, id)
 
@@ -261,7 +261,7 @@ async def get_all_sharing_groups(
 async def get_sharing_group_info(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
-    id: str,
+    id: int,
 ) -> dict:
     sharing_group: SharingGroup | None = db.get(SharingGroup, id)
 
@@ -332,7 +332,7 @@ async def get_sharing_group_info(
 async def add_org_to_sharing_group(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
-    id: str,
+    id: int,
     body: AddOrgToSharingGroupBody,
 ) -> dict:
     sharing_group: SharingGroup | None = db.get(SharingGroup, id)
@@ -372,8 +372,8 @@ async def add_org_to_sharing_group(
 async def remove_org_from_sharing_group(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
-    id: str,
-    organisation_id: Annotated[str, Path(alias="organisationId")],
+    id: int,
+    organisation_id: Annotated[int, Path(alias="organisationId")],
 ) -> dict:
     sharing_group: SharingGroup | None = db.get(SharingGroup, id)
 
@@ -401,7 +401,7 @@ async def remove_org_from_sharing_group(
 async def add_server_to_sharing_group(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
-    id: str,
+    id: int,
     body: AddServerToSharingGroupBody,
 ) -> dict:
     sharing_group: SharingGroup | None = db.get(SharingGroup, id)
@@ -441,8 +441,8 @@ async def add_server_to_sharing_group(
 async def remove_server_from_sharing_group(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
-    id: str,
-    server_id: Annotated[str, Path(alias="serverId")],
+    id: int,
+    server_id: Annotated[int, Path(alias="serverId")],
 ) -> dict:
     sharing_group: SharingGroup | None = db.get(SharingGroup, id)
 
@@ -537,7 +537,7 @@ async def create_sharing_group_legacy(
 async def view_sharing_group_legacy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
-    id: Annotated[str, Path(alias="sharingGroupId")],
+    id: Annotated[int, Path(alias="sharingGroupId")],
 ) -> dict:
     sharing_group: SharingGroup | None = db.get(SharingGroup, id)
 
@@ -611,7 +611,7 @@ async def view_sharing_group_legacy(
 async def update_sharing_group_legacy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
-    id: Annotated[str, Path(alias="sharingGroupId")],
+    id: Annotated[int, Path(alias="sharingGroupId")],
     body: UpdateSharingGroupLegacyBody,
 ) -> dict:
     sharing_group: SharingGroup | None = db.get(SharingGroup, id)
@@ -672,7 +672,7 @@ async def update_sharing_group_legacy(
 async def delete_sharing_group_legacy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
-    id: Annotated[str, Path(alias="sharingGroupId")],
+    id: Annotated[int, Path(alias="sharingGroupId")],
 ) -> dict:
     sharing_group: SharingGroup | None = db.get(SharingGroup, id)
 
@@ -708,8 +708,8 @@ async def delete_sharing_group_legacy(
 async def add_org_to_sharing_group_legacy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
-    id: Annotated[str, Path(alias="sharingGroupId")],
-    organisation_id: Annotated[str, Path(alias="organisationId")],
+    id: Annotated[int, Path(alias="sharingGroupId")],
+    organisation_id: Annotated[int, Path(alias="organisationId")],
     body: AddOrgToSharingGroupLegacyBody = AddOrgToSharingGroupLegacyBody(),
 ) -> dict:
     sharing_group: SharingGroup | None = db.get(SharingGroup, id)
@@ -756,8 +756,8 @@ async def add_org_to_sharing_group_legacy(
 async def remove_org_from_sharing_group_legacy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
-    id: Annotated[str, Path(alias="sharingGroupId")],
-    organisation_id: Annotated[str, Path(alias="organisationId")],
+    id: Annotated[int, Path(alias="sharingGroupId")],
+    organisation_id: Annotated[int, Path(alias="organisationId")],
 ) -> dict:
     sharing_group: SharingGroup | None = db.get(SharingGroup, id)
 
@@ -795,8 +795,8 @@ async def remove_org_from_sharing_group_legacy(
 async def add_server_to_sharing_group_legacy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
-    id: Annotated[str, Path(alias="sharingGroupId")],
-    server_id: Annotated[str, Path(alias="serverId")],
+    id: Annotated[int, Path(alias="sharingGroupId")],
+    server_id: Annotated[int, Path(alias="serverId")],
     body: AddServerToSharingGroupLegacyBody = AddServerToSharingGroupLegacyBody(),
 ) -> dict:
     sharing_group: SharingGroup | None = db.get(SharingGroup, id)
@@ -843,8 +843,8 @@ async def add_server_to_sharing_group_legacy(
 async def remove_server_from_sharing_group_legacy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
-    id: Annotated[str, Path(alias="sharingGroupId")],
-    server_id: Annotated[str, Path(alias="serverId")],
+    id: Annotated[int, Path(alias="sharingGroupId")],
+    server_id: Annotated[int, Path(alias="serverId")],
 ) -> dict:
     sharing_group: SharingGroup | None = db.get(SharingGroup, id)
 
