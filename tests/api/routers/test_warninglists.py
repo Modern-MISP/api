@@ -214,10 +214,12 @@ class TestGetWarninglistByValue:
         remove_warninglists([warninglist_id])
 
     @staticmethod
-    def test_get_warninglist_response_format() -> None:
+    def test_get_warninglist_by_value_response_format() -> None:
         db: Session = get_db()
         warninglist_ids = add_warninglists(1)
-        warninglist_entry = db.get(WarninglistEntry, warninglist_ids[0]).value
+        warninglist_entry = (
+            db.query(WarninglistEntry).filter(WarninglistEntry.warninglist_id == warninglist_ids[0]).first().value
+        )
 
         headers = {"authorization": environment.site_admin_user_token}
         value_data = CheckValueWarninglistsBody(value=[warninglist_entry]).dict()

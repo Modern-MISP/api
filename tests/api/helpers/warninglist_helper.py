@@ -33,7 +33,6 @@ def add_warninglists(number: int = 10) -> list[int]:
         for j in range(new_warninglist.warninglist_entry_count):
             entry = generate_warninglist_entry()
             entry.warninglist_id = new_warninglist.id
-
             db.add(entry)
 
         db.commit()
