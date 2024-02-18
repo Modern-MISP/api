@@ -31,7 +31,7 @@ router = APIRouter(tags=["tags"])
     description="Add a new tag with given details.",
 )
 async def add_tag(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, Permission.TAG_EDITOR))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.TAG_EDITOR]))],
     db: Annotated[Session, Depends(get_db)],
     body: TagCreateBody,
 ) -> dict:
@@ -76,7 +76,7 @@ async def search_tags(
     description="Edit details of a specific tag.",
 )
 async def update_tag(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, Permission.SITE_ADMIN))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     body: TagUpdateBody,
     tag_id: str = Path(..., alias="tagId"),
@@ -92,7 +92,7 @@ async def update_tag(
     description="Delete a specific tag.",
 )
 async def delete_tag(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, Permission.SITE_ADMIN))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     tag_id: str = Path(..., alias="tagId"),
 ) -> dict:
@@ -122,7 +122,7 @@ async def get_tags(
     description="Deprecated. Add a new tag using the old route.",
 )
 async def add_tag_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, Permission.TAG_EDITOR))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.TAG_EDITOR]))],
     db: Annotated[Session, Depends(get_db)],
     body: TagCreateBody,
 ) -> dict:
@@ -154,7 +154,7 @@ async def view_tag_depr(
     description="Deprecated. Edit a specific tag using the old route.",
 )
 async def update_tag_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, Permission.SITE_ADMIN))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     body: TagCreateBody,
     tag_id: str = Path(..., alias="tagId"),
@@ -171,7 +171,7 @@ async def update_tag_depr(
     description="Deprecated. Delete a specific tag using the old route.",
 )
 async def delete_tag_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, Permission.SITE_ADMIN))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     tag_id: str = Path(..., alias="tagId"),
 ) -> dict:
