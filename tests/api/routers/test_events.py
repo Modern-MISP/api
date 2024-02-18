@@ -69,6 +69,8 @@ class TestGetEventDetails:
         galaxy_id = galaxy.id
 
         tag = generate_tag()
+        setattr(tag, "user_id", 1)
+        setattr(tag, "org_id", 1)
         setattr(tag, "is_galaxy", True)
 
         db.add(tag)
@@ -437,6 +439,8 @@ class TestAddTagToEvent:
         event_id = event.id
 
         tag = generate_tag()
+        setattr(tag, "user_id", 1)
+        setattr(tag, "org_id", 1)
 
         db.add(tag)
         db.commit()
@@ -517,6 +521,8 @@ class TestRemoveTagFromEvent:
         event_id = event.id
 
         tag = generate_tag()
+        setattr(tag, "user_id", 1)
+        setattr(tag, "org_id", 1)
 
         db.add(tag)
         db.commit()
