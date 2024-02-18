@@ -1,9 +1,7 @@
-import logging
 from enum import Enum
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Request, status
-from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
@@ -46,23 +44,6 @@ from mmisp.util.partial import partial
 from mmisp.util.request_validations import check_existence_and_raise
 
 router = APIRouter(tags=["attributes"])
-logging.basicConfig(level=logging.INFO)
-
-info_format = "%(asctime)s - %(message)s"
-error_format = "%(asctime)s - %(filename)s:%(lineno)d - %(message)s"
-
-info_handler = logging.StreamHandler()
-info_handler.setLevel(logging.INFO)
-info_handler.setFormatter(logging.Formatter(info_format))
-
-error_handler = logging.StreamHandler()
-error_handler.setLevel(logging.ERROR)
-error_handler.setFormatter(logging.Formatter(error_format))
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-logger.addHandler(info_handler)
-logger.addHandler(error_handler)
 
 
 # Sorted according to CRUD
@@ -328,17 +309,13 @@ async def _add_attribute(db: Session, event_id: str, body: AddAttributeBody) -> 
     event = check_existence_and_raise(db, Event, event_id, "id", "Event not found.")
     if not body.value:
         if not body.value1:
-            logger.error("Attribute creation failed: attribute 'value' or 'value1' is required.")
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="'value' or 'value1' is required")
     if not body.type:
-        logger.error("Attribute creation failed: attribute 'type' is required.")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="'type' is required")
     if body.type not in GetDescribeTypesAttributes().types:
-        logger.error("Attribute creation failed: attribute 'type' is invalid.")
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid 'type'")
     if body.category:
         if body.category not in GetDescribeTypesAttributes().categories:
-            logger.error("Attribute creation failed: attribute 'category' is invalid.")
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid 'category'")
 
     new_attribute = Attribute(
@@ -354,19 +331,11 @@ async def _add_attribute(db: Session, event_id: str, body: AddAttributeBody) -> 
         }
     )
 
-    try:
-        db.add(new_attribute)
-        db.commit()
-    except SQLAlchemyError as e:
-        db.rollback()
-        logger.exception(f"Failed to add new attribute: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred."
-        )
+    db.add(new_attribute)
+    db.commit()
 
     db.refresh(new_attribute)
     setattr(event, "attribute_count", event.attribute_count + 1)
-    logger.info(f"New attribute with id = {new_attribute.id} added.")
 
     attribute_data = _prepare_attribute_response(new_attribute, "add")
 
@@ -390,17 +359,9 @@ async def _update_attribute(db: Session, attribute_id: str, body: EditAttributeB
         if value is not None:
             setattr(existing_attribute, key, value if not isinstance(value, Enum) else value.value)
 
-    try:
-        db.commit()
-    except SQLAlchemyError as e:
-        db.rollback()
-        logger.exception(f"Failed to update attribute: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred."
-        )
+    db.commit()
 
     db.refresh(existing_attribute)
-    logger.info(f"Attribute with id '{existing_attribute.id}' updated.")
 
     attribute_data = _prepare_edit_attribute_response(db, attribute_id, existing_attribute)
 
@@ -409,17 +370,8 @@ async def _update_attribute(db: Session, attribute_id: str, body: EditAttributeB
 
 async def _delete_attribute(db: Session, attribute_id: str) -> DeleteAttributeResponse:
     attribute = check_existence_and_raise(db, Attribute, attribute_id, "id", "Attribute not found.")
-    try:
-        db.delete(attribute)
-        db.commit()
-    except SQLAlchemyError as e:
-        db.rollback()
-        logger.exception(f"Failed to delete attribute: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred."
-        )
-
-    logger.info(f"Attribute with id '{attribute_id}' deleted.")
+    db.delete(attribute)
+    db.commit()
 
     return DeleteAttributeResponse(message="Attribute deleted.")
 
@@ -428,7 +380,6 @@ async def _get_attributes(db: Session) -> dict:
     attributes = db.query(Attribute).all()
 
     if not attributes:
-        logger.error("No attributes found.")
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No attributes found.")
 
     attribute_responses = [_prepare_attribute_response(attribute, "get all") for attribute in attributes]
@@ -449,37 +400,19 @@ async def _delete_selected_attributes(
         check_existence_and_raise(db, Attribute, attribute_id, "id", f"Attribute with id '{attribute_id}' not found.")
 
         if not attribute.event.id == int(event_id):
-            logger.error("Failed to delete attribute: Attribute does exist, but not in the given event.")
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"No attribute with id '{attribute_id}' found in the given event.",
             )
 
         if body.allow_hard_delete:
-            try:
-                db.delete(attribute)
-                db.commit()
-            except SQLAlchemyError as e:
-                db.rollback()
-                logger.exception(f"Failed to delete attribute: {e}")
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred."
-                )
+            db.delete(attribute)
+            db.commit()
         else:
             setattr(attribute, "deleted", True)
-
-            try:
-                db.commit()
-            except SQLAlchemyError as e:
-                db.rollback()
-                logger.exception(f"Failed to delete attribute: {e}")
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred."
-                )
+            db.commit()
 
             db.refresh(attribute)
-
-    logger.info(f"Attributes with ids '{attribute_ids}' deleted.")
 
     if len(attribute_ids) == 1:
         return DeleteSelectedAttributeResponse(
@@ -539,10 +472,8 @@ async def _rest_search_attributes(db: Session, body: SearchAttributesBody) -> di
 
 async def _get_attribute_statistics(db: Session, context: str, percentage: int) -> dict:
     if context not in ["type", "category"]:
-        logger.exception("Get attribute statistics failed: parameter 'context' is invalid")
         raise HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED, detail="Invalid 'context'")
     if int(percentage) not in [0, 1]:
-        logger.exception("Get attribute statistics failed: parameter 'percentage' is invalid")
         raise HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED, detail="Invalid 'percentage'")
 
     total_count_of_attributes = db.query(Attribute).count()
@@ -558,17 +489,9 @@ async def _restore_attribute(db: Session, attribute_id: str) -> dict:
 
     setattr(attribute, "deleted", False)
 
-    try:
-        db.commit()
-    except SQLAlchemyError as e:
-        db.rollback()
-        logger.exception(f"Failed to restore attribute: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred."
-        )
+    db.commit()
 
     db.refresh(attribute)
-    logger.info(f"Attribute with id '{attribute.id}' restored.")
 
     attribute_data = _prepare_get_attribute_details_response(db, attribute.id, attribute)
 
@@ -583,17 +506,13 @@ async def _add_tag_to_attribute(
     try:
         int(tag_id)
     except ValueError:
-        logger.error("Failed to add tag to attribute: Invalid 'tag_id'")
         return AddRemoveTagAttributeResponse(saved=False, errors="Invalid Tag")
     if not db.get(Tag, tag_id):
-        logger.error("Failed to add tag to attribute: Tag not found.")
         return AddRemoveTagAttributeResponse(saved=False, errors="Tag could not be added.")
-    # tag = check_existence_and_raise(db, Tag, tag_id, "tag_id", "Tag not found.")
 
     tag = db.get(Tag, tag_id)
 
     if int(local) not in [0, 1]:
-        logger.exception("Failed to add tag to attribute: parameter 'local' is invalid")
         return AddRemoveTagAttributeResponse(saved=False, errors="Invalid 'local'")
     if local == "0":
         local = False
@@ -602,18 +521,10 @@ async def _add_tag_to_attribute(
 
     new_attribute_tag = AttributeTag(attribute_id=attribute.id, event_id=attribute.event_id, tag_id=tag.id, local=local)
 
-    try:
-        db.add(new_attribute_tag)
-        db.commit()
-    except SQLAlchemyError as e:
-        db.rollback()
-        logger.exception(f"Failed to add tag to attribute: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred."
-        )
+    db.add(new_attribute_tag)
+    db.commit()
 
     db.refresh(new_attribute_tag)
-    logger.info(f"Tag with id '{tag_id}' added to attribute with id '{attribute_id}'")
 
     return AddRemoveTagAttributeResponse(saved=True, success="Tag added", check_publish=True)
 
@@ -624,10 +535,8 @@ async def _remove_tag_from_attribute(db: Session, attribute_id: str, tag_id: str
     try:
         int(tag_id)
     except ValueError:
-        logger.error("Failed to add tag to attribute: Invalid parameter tag")
         return AddRemoveTagAttributeResponse(saved=False, errors="Invalid Tag")
     if not db.get(Tag, tag_id):
-        logger.error("Failed to add tag to attribute: Tag not found.")
         return AddRemoveTagAttributeResponse(saved=False, errors="Tag could not be removed.")
 
     attribute_tag = db.query(AttributeTag).filter(AttributeTag.attribute_id == attribute_id).first()
@@ -635,17 +544,8 @@ async def _remove_tag_from_attribute(db: Session, attribute_id: str, tag_id: str
     if not attribute_tag:
         return AddRemoveTagAttributeResponse(saved=False, errors="Invalid attribute - tag combination.")
 
-    try:
-        db.delete(attribute_tag)
-        db.commit()
-    except SQLAlchemyError as e:
-        db.rollback()
-        logger.exception(f"Failed to add tag to attribute: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred."
-        )
-
-    logger.info(f"Tag with id '{tag_id}' removed from attribute with id '{attribute_id}'")
+    db.delete(attribute_tag)
+    db.commit()
 
     return AddRemoveTagAttributeResponse(saved=True, success="Tag removed", check_publish=True)
 
