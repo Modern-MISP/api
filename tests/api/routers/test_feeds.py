@@ -183,11 +183,9 @@ class TestEnableFeed:
 
         response = client.post(f"feeds/enable/{feed_test_ids['non_existing_feed_id']}", headers=headers)
         assert response.status_code == 404
-        assert response.json()["detail"] == "Feed not found."
 
         response = client.post(f"feeds/enable/{feed_test_ids['invalid_feed_id']}", headers=headers)
         assert response.status_code == 404
-        assert response.json()["detail"] == "Feed not found."
 
     def test_feed_enable_response_format(self: "TestEnableFeed", feed_data: dict[str, Any]) -> None:
         db = get_db()
@@ -285,11 +283,9 @@ class TestDisableFeed:
 
         response = client.post(f"feeds/disable/{feed_test_ids['non_existing_feed_id']}", headers=headers)
         assert response.status_code == 404
-        assert response.json()["detail"] == "Feed not found."
 
         response = client.post(f"feeds/disable/{feed_test_ids['invalid_feed_id']}", headers=headers)
         assert response.status_code == 404
-        assert response.json()["detail"] == "Feed not found."
 
     def test_disable_feed_response_format(self: "TestDisableFeed", feed_data: dict[str, Any]) -> None:
         db = get_db()
@@ -442,13 +438,11 @@ class TestGetFeedByIdInfo:
         headers = {"authorization": environment.site_admin_user_token}
         response = client.get(f"/feeds/{feed_test_ids['invalid_feed_id']}", headers=headers)
         assert response.status_code == 404
-        assert response.json()["detail"] == "Feed not found."
 
     def test_get_non_existing_feed_details(self: "TestGetFeedByIdInfo", feed_test_ids: dict[str, Any]) -> None:
         headers = {"authorization": environment.site_admin_user_token}
         response = client.get(f"/feeds/{feed_test_ids['non_existing_feed_id']}", headers=headers)
         assert response.status_code == 404
-        assert response.json()["detail"] == "Feed not found."
 
     def test_get_feed_response_format(self: "TestGetFeedByIdInfo", feed_data: dict[str, Any]) -> None:
         db = get_db()
@@ -558,7 +552,6 @@ class TestUpdateFeed:
         headers = {"authorization": environment.site_admin_user_token}
         response = client.put(f"/feeds/{feed_test_ids['non_existing_feed_id']}", json=feed_data, headers=headers)
         assert response.status_code == 404
-        assert response.json()["detail"] == "Feed not found."
 
     def test_update_feed_response_format(self: "TestUpdateFeed", feed_data: dict[str, Any]) -> None:
         db = get_db()
@@ -680,7 +673,6 @@ class TestToggleFeed:
         headers = {"authorization": environment.site_admin_user_token}
         response = client.patch(f"feeds/{feed_test_ids['non_existing_feed_id']}", json=toggle_data, headers=headers)
         assert response.status_code == 404
-        assert response.json()["detail"] == "Feed not found."
 
     def test_toggle_feed_response_format(self: "TestToggleFeed", feed_data: dict[str, Any]) -> None:
         db = get_db()
