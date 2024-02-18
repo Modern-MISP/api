@@ -294,19 +294,19 @@ async def _fetch_from_feed(db: Session, feed_id: str) -> dict[str, Any]:
 
 
 async def _get_feed_details(db: Session, feed_id: str) -> dict[str, Any]:
-    feed: Feed = db.get(Feed, feed_id)
+    feed: Feed | None = db.get(Feed, feed_id)
 
     if not feed:
-        raise HTTPException(status.HTTP_404_NOT_FOUND)
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Feed not found.")
 
     return FeedResponse(feed=feed.__dict__)
 
 
 async def _update_feed(db: Session, feed_id: str, body: FeedUpdateBody) -> dict[str, Any]:
-    feed: Feed = db.get(Feed, feed_id)
+    feed: Feed | None = db.get(Feed, feed_id)
 
     if not feed:
-        raise HTTPException(status.HTTP_404_NOT_FOUND)
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Feed not found.")
 
     update_record(feed, body.dict())
 
@@ -317,10 +317,10 @@ async def _update_feed(db: Session, feed_id: str, body: FeedUpdateBody) -> dict[
 
 
 async def _toggle_feed(db: Session, feed_id: str, body: FeedToggleBody) -> dict[str, Any]:
-    feed: Feed = db.get(Feed, feed_id)
+    feed: Feed | None = db.get(Feed, feed_id)
 
     if not feed:
-        raise HTTPException(status.HTTP_404_NOT_FOUND)
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Feed not found.")
 
     enable_status: bool = body.enable
 
@@ -347,10 +347,10 @@ async def _get_feeds(db: Session) -> list[dict[str, Any]]:
 
 
 async def _enable_feed(db: Session, feed_id: str) -> dict[str, Any]:
-    feed: Feed = db.get(Feed, feed_id)
+    feed: Feed | None = db.get(Feed, feed_id)
 
     if not feed:
-        raise HTTPException(status.HTTP_404_NOT_FOUND)
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Feed not found.")
 
     if feed.enabled:
         message = "Feed already enabled."
@@ -363,10 +363,10 @@ async def _enable_feed(db: Session, feed_id: str) -> dict[str, Any]:
 
 
 async def _disable_feed(db: Session, feed_id: str) -> dict[str, Any]:
-    feed: Feed = db.get(Feed, feed_id)
+    feed: Feed | None = db.get(Feed, feed_id)
 
     if not feed:
-        raise HTTPException(status.HTTP_404_NOT_FOUND)
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Feed not found.")
 
     if not feed.enabled:
         message = "Feed already disabled."
