@@ -1,5 +1,4 @@
-from fastapi import FastAPI, status
-from fastapi.responses import RedirectResponse
+from fastapi import FastAPI
 
 from mmisp.db.database import Base, engine
 
@@ -63,8 +62,3 @@ app.include_router(authentication.router)
 app.include_router(jobs.router)
 app.include_router(warninglists.router)
 app.include_router(noticelists.router)
-
-
-@app.get("/")
-async def root() -> RedirectResponse:
-    return RedirectResponse(url="/docs", status_code=status.HTTP_307_TEMPORARY_REDIRECT)
