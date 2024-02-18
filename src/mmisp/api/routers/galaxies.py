@@ -68,7 +68,7 @@ logger.addHandler(error_handler)
 )
 @with_session_management
 async def import_galaxy_cluster(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.ADD]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS]))],
     db: Annotated[Session, Depends(get_db)],
     body: list[ImportGalaxyBody],
     request: Request,
@@ -117,7 +117,7 @@ async def update_galaxy(
 )  # new
 @with_session_management
 async def delete_galaxy(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS]))],
     db: Annotated[Session, Depends(get_db)],
     galaxy_id: Annotated[str, Path(..., alias="galaxyId")],
     request: Request,
@@ -165,7 +165,7 @@ async def export_galaxy(
 @with_session_management
 async def galaxies_attachCluster(
     local: str,
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.ADD]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS]))],
     db: Annotated[Session, Depends(get_db)],
     attach_target_id: Annotated[str, Path(..., alias="attachTargetId")],
     attach_target_type: Annotated[str, Path(..., alias="attachTargetType")],

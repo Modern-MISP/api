@@ -82,7 +82,7 @@ router = APIRouter(tags=["events"])
 )  # new
 @with_session_management
 async def add_event(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.ADD]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS]))],
     db: Annotated[Session, Depends(get_db)],
     body: AddEventBody,
 ) -> dict:
@@ -118,7 +118,7 @@ async def get_event_details(
 )  # new
 @with_session_management
 async def update_event(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS]))],
     db: Annotated[Session, Depends(get_db)],
     event_id: Annotated[str, Path(..., alias="eventId")],
     body: EditEventBody,
@@ -138,7 +138,7 @@ async def update_event(
 )  # new
 @with_session_management
 async def delete_event(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS]))],
     db: Annotated[Session, Depends(get_db)],
     event_id: Annotated[str, Path(..., alias="eventId")],
 ) -> dict:
@@ -216,7 +216,7 @@ async def publish_event(
 )
 @with_session_management
 async def unpublish_event(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS]))],
     db: Annotated[Session, Depends(get_db)],
     event_id: Annotated[str, Path(..., alias="eventId")],
     request: Request,
@@ -234,7 +234,7 @@ async def unpublish_event(
 @with_session_management
 async def add_tag_to_event(
     local: str,
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.ADD]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS]))],
     db: Annotated[Session, Depends(get_db)],
     event_id: Annotated[str, Path(..., alias="eventId")],
     tag_id: Annotated[str, Path(..., alias="tagId")],
@@ -251,7 +251,7 @@ async def add_tag_to_event(
 )
 @with_session_management
 async def remove_tag_from_event(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS]))],
     db: Annotated[Session, Depends(get_db)],
     event_id: Annotated[str, Path(..., alias="eventId")],
     tag_id: Annotated[str, Path(..., alias="tagId")],
@@ -298,7 +298,7 @@ async def add_attribute_via_free_text_import(
 )
 @with_session_management
 async def add_event_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.ADD]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS]))],
     db: Annotated[Session, Depends(get_db)],
     body: AddEventBody,
 ) -> dict:
@@ -330,7 +330,7 @@ async def get_event_details_depr(
 )  # new
 @with_session_management
 async def update_event_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS]))],
     db: Annotated[Session, Depends(get_db)],
     event_id: Annotated[str, Path(..., alias="eventId")],
 ) -> dict:
@@ -347,7 +347,7 @@ async def update_event_depr(
 )  # new
 @with_session_management
 async def delete_event_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.MODIFY]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS]))],
     db: Annotated[Session, Depends(get_db)],
     event_id: Annotated[str, Path(..., alias="eventId")],
 ) -> dict:
