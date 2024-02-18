@@ -364,9 +364,11 @@ def _search_warninglist(
     query = db.query(Warninglist)
 
     if enabled is not None:
-        query.filter(Warninglist.enabled.is_(enabled))
+        query = query.filter(Warninglist.enabled.is_(enabled))
     if value is not None:
-        query.filter(or_(Warninglist.name == value, Warninglist.description == value, Warninglist.type == value))
+        query = query.filter(
+            or_(Warninglist.name == value, Warninglist.description == value, Warninglist.type == value)
+        )
 
     warninglists: list[Warninglist] = query.all()
 
