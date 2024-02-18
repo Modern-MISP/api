@@ -33,7 +33,6 @@ from mmisp.db.models.galaxy_cluster import GalaxyCluster, GalaxyElement, GalaxyR
 from mmisp.db.models.organisation import Organisation
 from mmisp.db.models.tag import Tag
 from mmisp.util.partial import partial
-from mmisp.util.request_validations import check_existence_and_raise
 
 router = APIRouter(tags=["galaxies"])
 logging.basicConfig(level=logging.INFO)
@@ -288,7 +287,10 @@ async def _import_galaxy_cluster(
 
 
 async def _get_galaxy_details(db: Session, galaxy_id: str) -> dict:
-    galaxy = check_existence_and_raise(db, Galaxy, galaxy_id, "id", "Galaxy not found")
+    galaxy: Galaxy | None = db.get(Galaxy, galaxy_id)
+
+    if not galaxy:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     galaxy_data = _prepare_galaxy_response(db, galaxy)
     galaxy_cluster_data = _prepare_galaxy_cluster_response(db, galaxy)
@@ -320,7 +322,6 @@ async def _delete_galaxy(db: Session, galaxy_id: str, request: Request) -> Delet
 
 async def _get_galaxies(db: Session) -> list[GetAllSearchGalaxiesResponse]:
     galaxies = db.query(Galaxy).all()
-    logger.info(len(galaxies))
     response_list = []
 
     if not galaxies:
@@ -333,7 +334,10 @@ async def _get_galaxies(db: Session) -> list[GetAllSearchGalaxiesResponse]:
 
 
 async def _export_galaxy(db: Session, galaxy_id: str, body: ExportGalaxyBody) -> dict:
-    check_existence_and_raise(db, Galaxy, galaxy_id, "id", "Galaxy not found")
+    galaxy: Galaxy | None = db.get(Galaxy, galaxy_id)
+
+    if not galaxy:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     body_dict = body.dict()
 
@@ -361,7 +365,10 @@ async def _attach_cluster_to_galaxy(
     db: Session, attach_target_id: str, attach_target_type: str, local: str, body: AttachClusterGalaxyBody
 ) -> AttachClusterGalaxyResponse:
     galaxy_cluster_id = body.Galaxy.target_id
-    galaxy_cluster = check_existence_and_raise(db, GalaxyCluster, galaxy_cluster_id, "id", "Invalid Galaxy cluster.")
+    galaxy_cluster: GalaxyCluster | None = db.get(GalaxyCluster, galaxy_cluster_id)
+
+    if not galaxy_cluster:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Invalid Galaxy cluster.")
 
     if local not in ["0", "1"]:
         local = 0
@@ -369,12 +376,18 @@ async def _attach_cluster_to_galaxy(
     tag_id = db.query(Tag).filter(Tag.name == galaxy_cluster.tag_name).first().id
 
     if attach_target_type == "event":
-        event = check_existence_and_raise(db, Event, attach_target_id, "id", "Invalid event.")
+        event: Event | None = db.get(Event, attach_target_id)
+
+        if not event:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "Invalid event.")
         new_event_tag = EventTag(event_id=event.id, tag_id=tag_id, local=True if int(local) == 1 else False)
         db.add(new_event_tag)
         db.commit()
     elif attach_target_type == "attribute":
-        attribute = check_existence_and_raise(db, Attribute, attach_target_id, "id", "Invalid attribute.")
+        attribute: Attribute | None = db.get(Attribute, attach_target_id)
+
+        if not attribute:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "Invalid attribute.")
         new_attribute_tag = AttributeTag(
             attribute_id=attribute.id,
             event_id=attribute.event_id,
@@ -524,6 +537,8 @@ def _prepare_tag_response(tag_list: list[Any]) -> list[AddEditGetEventGalaxyClus
         tag_dict = tag.__dict__.copy()
         del tag_dict["inherited"]
         tag_dict["local_only"] = tag.inherited
+        tag_dict["org_id"] = tag.org_id if tag.org_id is not None else "0"
+        tag_dict["user_id"] = tag.user_id if tag.user_id is not None else "0"
         tag_response_list.append(AddEditGetEventGalaxyClusterRelationTag(**tag_dict))
 
     return tag_response_list
