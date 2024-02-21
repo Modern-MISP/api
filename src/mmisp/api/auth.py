@@ -1,10 +1,11 @@
 from datetime import datetime, timedelta
 from enum import Enum
 from time import time
-from typing import Callable
+from typing import Annotated, Callable
 
 import jwt
-from fastapi import Depends, Header, HTTPException, status
+from fastapi import Depends, HTTPException, status
+from fastapi.security import APIKeyHeader
 from sqlalchemy.orm import Session
 
 from mmisp.config import config
@@ -97,7 +98,9 @@ class Auth:
 
 
 def authorize(strategy: AuthStrategy, permissions: list[Permission] = []) -> Callable[[Session, str], Auth]:
-    def authorizer(db: Session = Depends(get_db), authorization: str = Header("")) -> Auth:
+    def authorizer(
+        db: Session = Depends(get_db), authorization: Annotated[str, Depends(APIKeyHeader(name="authorization"))] = ""
+    ) -> Auth:
         authorization = authorization.replace("Bearer ", "")
 
         if not authorization:
