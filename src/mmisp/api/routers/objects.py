@@ -187,7 +187,7 @@ async def _add_object(db: Session, event_id: int, object_template_id: int, body:
     db.refresh(object)
     attributes: list[Attribute] = db.query(Attribute).filter(Attribute.object_id == object.id).all()
     attributes_response: list[GetAllAttributesResponse] = [
-        GetAllAttributesResponse(**attribute.__dict__) for attribute in attributes
+        GetAllAttributesResponse(**attribute.asdict()) for attribute in attributes
     ]
 
     object_response: ObjectWithAttributesResponse = ObjectWithAttributesResponse(
@@ -228,7 +228,7 @@ async def _get_object_details(db: Session, object_id: int) -> dict[str, Any]:
     )
 
     attributes_response: list[GetAllAttributesResponse] = [
-        GetAllAttributesResponse(**attribute.__dict__) for attribute in attributes
+        GetAllAttributesResponse(**attribute.asdict()) for attribute in attributes
     ]
     object_data: ObjectWithAttributesResponse = ObjectWithAttributesResponse(
         **object.__dict__, attributes=attributes_response, event=event_response

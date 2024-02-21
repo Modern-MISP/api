@@ -421,7 +421,9 @@ def _prepare_galaxy_response(db: Session, galaxy: Galaxy) -> GetAllSearchGalaxie
     if galaxy_cluster is None:
         galaxy_dict["local_only"] = True
     else:
+        print(galaxy_cluster.id)
         tag = db.query(Tag).filter(Tag.name == galaxy_cluster.tag_name).first()
+        print("Tag is", tag)
         galaxy_dict["local_only"] = tag.inherited
 
     return GetAllSearchGalaxiesAttributes(**galaxy_dict)

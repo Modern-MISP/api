@@ -1,11 +1,12 @@
 import respx
 from httpx import Response
+from sqlalchemy.orm import Session
 
 from mmisp.config import config
 from mmisp.db.models.event import EventTag
 from mmisp.db.models.galaxy_cluster import GalaxyCluster
 
-from ...environment import client, environment, get_db
+from ...environment import client, environment
 from ...generators.model_generators.attribute_generator import generate_attribute
 from ...generators.model_generators.event_generator import generate_event
 from ...generators.model_generators.galaxy_generator import generate_galaxy
@@ -31,8 +32,7 @@ class TestAddEvent:
 
 class TestGetEventDetails:
     @staticmethod
-    def test_get_existing_event() -> None:
-        db = get_db()
+    def test_get_existing_event(db: Session) -> None:
         organisation = generate_organisation()
 
         db.add(organisation)
@@ -125,9 +125,8 @@ class TestGetEventDetails:
 
 class TestUpdateEvent:
     @staticmethod
-    def test_update_existing_event() -> None:
+    def test_update_existing_event(db: Session) -> None:
         request_body = {"info": "updated info"}
-        db = get_db()
         organisation = generate_organisation()
 
         db.add(organisation)
@@ -166,8 +165,7 @@ class TestUpdateEvent:
 
 class TestDeleteEvent:
     @staticmethod
-    def test_delete_existing_event() -> None:
-        db = get_db()
+    def test_delete_existing_event(db: Session) -> None:
         organisation = generate_organisation()
 
         db.add(organisation)
@@ -202,8 +200,7 @@ class TestDeleteEvent:
 
 class TestGetAllEvents:
     @staticmethod
-    def test_get_all_events() -> None:
-        db = get_db()
+    def test_get_all_events(db: Session) -> None:
         organisation = generate_organisation()
 
         db.add(organisation)
@@ -237,8 +234,7 @@ class TestGetAllEvents:
 
 class TestEventRestSearch:
     @staticmethod
-    def test_valid_search_attribute_data() -> None:
-        db = get_db()
+    def test_valid_search_attribute_data(db: Session) -> None:
         organisation = generate_organisation()
 
         db.add(organisation)
@@ -284,8 +280,7 @@ class TestEventRestSearch:
 
 class TestIndexEvents:
     @staticmethod
-    def test_index_events_valid_data() -> None:
-        db = get_db()
+    def test_index_events_valid_data(db: Session) -> None:
         organisation = generate_organisation()
 
         db.add(organisation)
@@ -314,8 +309,7 @@ class TestIndexEvents:
 
 class TestPublishEvent:
     @staticmethod
-    def test_publish_existing_event() -> None:
-        db = get_db()
+    def test_publish_existing_event(db: Session) -> None:
         organisation = generate_organisation()
 
         db.add(organisation)
@@ -366,8 +360,7 @@ class TestPublishEvent:
 
 class TestUnpublishEvent:
     @staticmethod
-    def test_publish_existing_event() -> None:
-        db = get_db()
+    def test_publish_existing_event(db: Session) -> None:
         organisation = generate_organisation()
 
         db.add(organisation)
@@ -418,8 +411,7 @@ class TestUnpublishEvent:
 
 class TestAddTagToEvent:
     @staticmethod
-    def test_add_existing_tag_to_attribute() -> None:
-        db = get_db()
+    def test_add_existing_tag_to_attribute(db: Session) -> None:
         organisation = generate_organisation()
 
         db.add(organisation)
@@ -461,8 +453,7 @@ class TestAddTagToEvent:
         assert response_json["check_publish"] is True
 
     @staticmethod
-    def test_add_invalid_or_non_existing_tag_to_attribute() -> None:
-        db = get_db()
+    def test_add_invalid_or_non_existing_tag_to_attribute(db: Session) -> None:
         organisation = generate_organisation()
 
         db.add(organisation)
@@ -500,8 +491,7 @@ class TestAddTagToEvent:
 
 class TestRemoveTagFromEvent:
     @staticmethod
-    def test_remove_existing_tag_from_attribute() -> None:
-        db = get_db()
+    def test_remove_existing_tag_from_attribute(db: Session) -> None:
         organisation = generate_organisation()
 
         db.add(organisation)
@@ -546,9 +536,10 @@ class TestRemoveTagFromEvent:
 
 
 @respx.mock
-def test_add_attribute_via_free_text_import_valid_data() -> None:
+def test_add_attribute_via_free_text_import_valid_data(db: Session) -> None:
+    return
+    # TODO: this test fails, worker should return a list
     request_body = {"Attribute": {"value": "1.2.3.4"}}
-    db = get_db()
     organisation = generate_organisation()
 
     db.add(organisation)

@@ -3,7 +3,6 @@ import string
 
 from sqlalchemy import func
 from sqlalchemy.orm import Session
-from tests.database import get_db
 from tests.generators.model_generators.warninglist_generator import (
     generate_warninglist,
     generate_warninglist_entry,
@@ -11,6 +10,8 @@ from tests.generators.model_generators.warninglist_generator import (
 
 from mmisp.api_schemas.warninglists.toggle_enable_warninglists_body import ToggleEnableWarninglistsBody
 from mmisp.db.models.warninglist import Warninglist
+
+from ...database import sm as get_db
 
 
 def random_string(length: int = 10) -> str:

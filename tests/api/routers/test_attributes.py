@@ -1,7 +1,9 @@
+from sqlalchemy.orm import Session
+
 from mmisp.api_schemas.attributes.get_describe_types_response import GetDescribeTypesAttributes
 from mmisp.db.models.attribute import AttributeTag
 
-from ...environment import client, environment, get_db
+from ...environment import client, environment
 from ...generators.model_generators.attribute_generator import generate_attribute
 from ...generators.model_generators.event_generator import generate_event
 from ...generators.model_generators.organisation_generator import generate_organisation
@@ -15,8 +17,7 @@ from ...generators.model_generators.tag_generator import generate_tag
 
 class TestAddAttribute:
     @staticmethod
-    def test_add_attribute_valid_data() -> None:
-        db = get_db()
+    def test_add_attribute_valid_data(db: Session) -> None:
         request_body = {
             "value": "1.2.3.4",
             "type": "ip-src",
@@ -78,8 +79,7 @@ class TestAddAttribute:
         assert response.status_code == 404
 
     @staticmethod
-    def test_add_attribute_invalid_data() -> None:
-        db = get_db()
+    def test_add_attribute_invalid_data(db: Session) -> None:
         request_body = {"value": "1.2.3.4", "type": "invalid type"}
         organisation = generate_organisation()
 
@@ -109,8 +109,7 @@ class TestAddAttribute:
 
 class TestGetAttributeDetails:
     @staticmethod
-    def test_get_existing_attribute() -> None:
-        db = get_db()
+    def test_get_existing_attribute(db: Session) -> None:
         organisation = generate_organisation()
 
         db.add(organisation)
@@ -195,8 +194,7 @@ class TestGetAttributeDetails:
 
 class TestEditAttribute:
     @staticmethod
-    def test_edit_existing_attribute() -> None:
-        db = get_db()
+    def test_edit_existing_attribute(db: Session) -> None:
         request_body = {
             "category": "Payload delivery",
             "value": "2.3.4.5",
@@ -281,8 +279,7 @@ class TestEditAttribute:
 
 class TestDeleteAttribute:
     @staticmethod
-    def test_delete_existing_attribute() -> None:
-        db = get_db()
+    def test_delete_existing_attribute(db: Session) -> None:
         organisation = generate_organisation()
 
         db.add(organisation)
@@ -329,8 +326,7 @@ class TestDeleteAttribute:
 
 class TestGetAllAttributes:
     @staticmethod
-    def test_get_all_attributes() -> None:
-        db = get_db()
+    def test_get_all_attributes(db: Session) -> None:
         organisation = generate_organisation()
 
         db.add(organisation)
@@ -395,8 +391,7 @@ class TestGetAllAttributes:
 
 class TestDeleteSelectedAttributes:
     @staticmethod
-    def test_delete_selected_attributes_from_existing_event() -> None:
-        db = get_db()
+    def test_delete_selected_attributes_from_existing_event(db: Session) -> None:
         request_body = {"id": "1 2 3", "allow_hard_delete": False}
         organisation = generate_organisation()
 
@@ -453,8 +448,7 @@ class TestDeleteSelectedAttributes:
 
 class TestAttributesRestSearch:
     @staticmethod
-    def test_valid_search_attribute_data() -> None:
-        db = get_db()
+    def test_valid_search_attribute_data(db: Session) -> None:
         request_body = {"returnFormat": "json"}
         organisation = generate_organisation()
 
@@ -547,8 +541,7 @@ class TestAttributeDescribeTypes:
 
 class TestRestoreAttribute:
     @staticmethod
-    def test_restore_existing_attribute() -> None:
-        db = get_db()
+    def test_restore_existing_attribute(db: Session) -> None:
         organisation = generate_organisation()
 
         db.add(organisation)
@@ -566,13 +559,18 @@ class TestRestoreAttribute:
         db.refresh(event)
 
         event_id = event.id
+        print(event_id)
+        print(event.uuid)
 
         attribute = generate_attribute()
-        setattr(attribute, "event_id", event_id)
+        attribute.event_id = event_id
+        #        setattr(attribute, "event_id", event_id)
 
         db.add(attribute)
         db.commit()
         db.refresh(attribute)
+
+        print(attribute.id, attribute.event_uuid)
 
         attribute_id = attribute.id
 
@@ -594,8 +592,7 @@ class TestRestoreAttribute:
 
 class TestAddTagToAttribute:
     @staticmethod
-    def test_add_existing_tag_to_attribute() -> None:
-        db = get_db()
+    def test_add_existing_tag_to_attribute(db: Session) -> None:
         organisation = generate_organisation()
 
         db.add(organisation)
@@ -646,8 +643,7 @@ class TestAddTagToAttribute:
         assert response_json["check_publish"] is True
 
     @staticmethod
-    def test_add_invalid_or_non_existing_tag_to_attribute() -> None:
-        db = get_db()
+    def test_add_invalid_or_non_existing_tag_to_attribute(db: Session) -> None:
         organisation = generate_organisation()
 
         db.add(organisation)
@@ -694,8 +690,7 @@ class TestAddTagToAttribute:
 
 class TestRemoveTagFromAttribute:
     @staticmethod
-    def test_remove_existing_tag_from_attribute() -> None:
-        db = get_db()
+    def test_remove_existing_tag_from_attribute(db: Session) -> None:
         organisation = generate_organisation()
 
         db.add(organisation)

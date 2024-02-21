@@ -1,6 +1,7 @@
 from time import time
 
-from tests.database import get_db
+from sqlalchemy.orm import Session
+
 from tests.environment import client, environment
 from tests.generators.model_generators.auth_key_generator import generate_auth_key
 
@@ -54,9 +55,7 @@ class TestSearchAuthKeys:
 
 class TestViewAuthKey:
     @staticmethod
-    def test_get_existing_auth_key_details() -> None:
-        db = get_db()
-
+    def test_get_existing_auth_key_details(db: Session) -> None:
         auth_key = generate_auth_key()
         auth_key.user_id = environment.instance_owner_org_admin_user.id
 
@@ -82,9 +81,7 @@ class TestViewAuthKey:
 
 class TestEditAuthKey:
     @staticmethod
-    def test_edit_auth_key() -> None:
-        db = get_db()
-
+    def test_edit_auth_key(db: Session) -> None:
         auth_key = generate_auth_key()
         auth_key.user_id = environment.instance_owner_org_admin_user.id
 
@@ -104,9 +101,7 @@ class TestEditAuthKey:
         assert json["AuthKey"]["comment"] == body["comment"]
 
     @staticmethod
-    def test_edit_auth_key_depr() -> None:
-        db = get_db()
-
+    def test_edit_auth_key_depr(db: Session) -> None:
         auth_key = generate_auth_key()
         auth_key.user_id = environment.instance_owner_org_admin_user.id
 
@@ -138,9 +133,7 @@ class TestGetAuthKeys:
 
 class TestDeleteAuthKeys:
     @staticmethod
-    def test_delete_auth_key() -> None:
-        db = get_db()
-
+    def test_delete_auth_key(db: Session) -> None:
         auth_key = generate_auth_key()
         auth_key.user_id = environment.instance_owner_org_admin_user.id
 
@@ -160,9 +153,7 @@ class TestDeleteAuthKeys:
         assert json["id"] == str(auth_key.id)
 
     @staticmethod
-    def test_delete_auth_key_depr() -> None:
-        db = get_db()
-
+    def test_delete_auth_key_depr(db: Session) -> None:
         auth_key = generate_auth_key()
         auth_key.user_id = environment.instance_owner_org_admin_user.id
 
