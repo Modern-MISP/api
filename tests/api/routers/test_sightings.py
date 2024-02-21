@@ -7,12 +7,11 @@ import pytest
 
 from mmisp.db.models.attribute import Attribute
 from mmisp.db.models.event import Event
+from tests.database import get_db
 from tests.environment import client, environment
 from tests.generators.sighting_generator import (
     generate_valid_random_sighting_data,
 )
-
-from ...database import sm as get_db
 
 
 @pytest.fixture(

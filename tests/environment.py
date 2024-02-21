@@ -7,13 +7,13 @@ from mmisp.db.models.organisation import Organisation
 from mmisp.db.models.role import Role
 from mmisp.db.models.server import Server
 from mmisp.db.models.user import User
-from tests.database import sm
+from tests.database import get_db
 
 from .generators.model_generators.organisation_generator import generate_organisation
 from .generators.model_generators.role_generator import generate_org_admin_role, generate_site_admin_role
 from .generators.model_generators.user_generator import generate_user
 
-db: Session = sm()
+db: Session = get_db()
 
 instance_owner_org = generate_organisation()
 instance_org_two = generate_organisation()

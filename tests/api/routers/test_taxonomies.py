@@ -1,14 +1,13 @@
 import random
 import string
 
+from tests.database import get_db
 from tests.environment import client, environment
 from tests.generators.model_generators.taxonomy_generator import (
     generate_taxonomy,
     generate_taxonomy_entry,
     generate_taxonomy_predicate,
 )
-
-from ...database import sm as get_db
 
 
 def random_string(length: int = 10) -> str:
