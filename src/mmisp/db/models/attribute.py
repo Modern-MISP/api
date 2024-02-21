@@ -5,7 +5,7 @@ from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, inspect
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship
 
-from mmisp.util.uuid import uuid as generate_uuid
+from mmisp.util.uuid import uuid
 
 from ..database import Base
 from .event import Event
@@ -29,7 +29,7 @@ class Attribute(Base, DictMixin):
     __tablename__ = "attributes"
 
     id = Column(Integer, primary_key=True)
-    uuid = Column(String(255), unique=True, default=generate_uuid, index=True)
+    uuid = Column(String(255), unique=True, default=uuid, index=True)
     event_id = Column(Integer, ForeignKey("events.id", ondelete="CASCADE"), index=True)
     object_id = Column(Integer, ForeignKey("objects.id", ondelete="CASCADE"), index=True, nullable=True, default=None)
     object_relation = Column(String(255), nullable=True, index=True)
@@ -73,7 +73,7 @@ class AttributeTag(Base):
     __tablename__ = "attribute_tags"
 
     id = Column(Integer, primary_key=True)
-    uuid = Column(String(255), unique=True, default=generate_uuid)
+    uuid = Column(String(255), unique=True, default=uuid)
     attribute_id = Column(Integer, ForeignKey(Attribute.id, ondelete="CASCADE"), nullable=False, index=True)
     event_id = Column(Integer, ForeignKey(Event.id, ondelete="CASCADE"), nullable=False, index=True)
     tag_id = Column(Integer, ForeignKey(Tag.id, ondelete="CASCADE"), nullable=False, index=True)

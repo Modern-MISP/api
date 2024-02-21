@@ -4,6 +4,7 @@ from typing import Any
 
 from sqlalchemy import func
 from sqlalchemy.orm import Session
+from tests.database import get_db
 from tests.generators.model_generators.organisation_generator import generate_organisation
 from tests.generators.model_generators.user_generator import generate_user
 
@@ -11,8 +12,6 @@ from mmisp.api_schemas.tags.create_tag_body import TagCreateBody
 from mmisp.db.models.organisation import Organisation
 from mmisp.db.models.tag import Tag
 from mmisp.db.models.user import User
-
-from ...database import sm as get_db
 
 
 def generate_number() -> int:

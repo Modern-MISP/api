@@ -504,7 +504,7 @@ class TestAttributeStatistics:
         response = client.get(f"/attributes/attributeStatistics/{context}/{percentage}")
         assert response.status_code == 200
         response_json = response.json()
-        print(response_json)
+
         if context == "category":
             for category in GetDescribeTypesAttributes().categories:
                 assert category in response_json
@@ -531,8 +531,6 @@ class TestAttributeDescribeTypes:
     @staticmethod
     def test_attribute_describe_types() -> None:
         response = client.get("/attributes/describeTypes")
-        response_json = response.json()
-        print(response_json)
         assert response.status_code == 200
 
 
@@ -559,8 +557,6 @@ class TestRestoreAttribute:
         db.refresh(event)
 
         event_id = event.id
-        print(event_id)
-        print(event.uuid)
 
         attribute = generate_attribute()
         attribute.event_id = event_id
@@ -569,8 +565,6 @@ class TestRestoreAttribute:
         db.add(attribute)
         db.commit()
         db.refresh(attribute)
-
-        print(attribute.id, attribute.event_uuid)
 
         attribute_id = attribute.id
 

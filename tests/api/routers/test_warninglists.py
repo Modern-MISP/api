@@ -6,15 +6,14 @@ from mmisp.api_schemas.warninglists.check_value_warninglists_body import CheckVa
 from mmisp.api_schemas.warninglists.create_warninglist_body import CreateWarninglistBody
 from mmisp.api_schemas.warninglists.toggle_enable_warninglists_body import ToggleEnableWarninglistsBody
 from mmisp.db.models.warninglist import Warninglist, WarninglistCategory, WarninglistEntry, WarninglistType
-
-from ...database import sm as get_db
-from ...environment import client, environment
-from ..helpers.warninglist_helper import (
+from tests.api.helpers.warninglist_helper import (
     add_warninglists,
     generate_enable_warning_lists_body,
     get_largest_id,
     remove_warninglists,
 )
+from tests.database import get_db
+from tests.environment import client, environment
 
 
 class TestAddWarninglist:

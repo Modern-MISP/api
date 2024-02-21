@@ -1,10 +1,8 @@
 from datetime import datetime
 from uuid import uuid4
 
-import pytest
 from fastapi import status
 from sqlalchemy.orm import Session
-from sqlalchemy.orm.exc import ObjectDeletedError
 
 from mmisp.db.models.sharing_group import SharingGroup, SharingGroupOrg, SharingGroupServer
 from tests.generators.model_generators.sharing_group_generator import generate_sharing_group
@@ -285,7 +283,6 @@ class TestDeleteSharingGroup:
 
         sharing_group_org = SharingGroupOrg(sharing_group_id=sharing_group.id, org_id=environment.instance_owner_org.id)
         sharing_group_server = SharingGroupServer(sharing_group_id=sharing_group.id, server_id=0)
-        sharing_group_server_id = sharing_group_server.id
 
         db.add_all([sharing_group_org, sharing_group_server])
         db.commit()
@@ -304,13 +301,15 @@ class TestDeleteSharingGroup:
         json = response.json()
         assert json["id"] == str(sharing_group_id)
 
-        # db.close()
-        # db = get_db()
-        db.expire_all()
+        db.invalidate()
 
-        assert db.get(SharingGroup, sharing_group_id) is None
-        assert db.get(SharingGroupOrg, sharing_group_org_id) is None
-        assert db.get(SharingGroupServer, sharing_group_server_id) is None
+        db_sharing_group: SharingGroup | None = db.get(SharingGroup, sharing_group_id)
+        db_sharing_group_org: SharingGroupOrg | None = db.get(SharingGroupOrg, sharing_group_org_id)
+        db_sharing_group_server: SharingGroupServer | None = db.get(SharingGroupServer, sharing_group_server_id)
+
+        assert not db_sharing_group
+        assert not db_sharing_group_org
+        assert not db_sharing_group_server
 
         second_response = client.delete(
             f"/sharing_groups/{sharing_group_id}",
@@ -329,8 +328,6 @@ class TestDeleteSharingGroup:
         db.commit()
         db.refresh(sharing_group)
 
-        sharing_group_id = sharing_group.id
-
         response = client.delete(
             f"/sharing_groups/{sharing_group.id}",
             headers={"authorization": environment.site_admin_user_token},
@@ -341,7 +338,7 @@ class TestDeleteSharingGroup:
         assert json["id"] == str(sharing_group.id)
 
         second_response = client.delete(
-            f"/sharing_groups/{sharing_group_id}",
+            f"/sharing_groups/{sharing_group.id}",
             headers={"authorization": environment.site_admin_user_token},
         )
 
@@ -730,11 +727,11 @@ class TestRemoveOrgFromSharingGroup:
 
         assert response.status_code == status.HTTP_200_OK
 
-        # db.close()
-        # db = get_db()
-        db.expire_all()
+        db.invalidate()
 
-        assert db.get(SharingGroupOrg, sharing_group_org_id) is None
+        db_sharing_group_org = db.get(SharingGroupOrg, sharing_group_org_id)
+
+        assert not db_sharing_group_org
 
 
 class TestAddServerToSharingGroup:
@@ -851,6 +848,8 @@ class TestRemoveServerFromSharingGroup:
         db.commit()
         db.refresh(sharing_group_server)
 
+        sharing_group_server_id = sharing_group_server.id
+
         response = client.delete(
             f"/sharing_groups/{sharing_group.id}/servers/999",
             headers={"authorization": environment.instance_owner_org_admin_user_token},
@@ -858,12 +857,11 @@ class TestRemoveServerFromSharingGroup:
 
         assert response.status_code == status.HTTP_200_OK
 
-        # db.close()
-        # db = get_db()
-        db.expire_all()
+        db.invalidate()
 
-        with pytest.raises(ObjectDeletedError):
-            db.get(SharingGroupServer, sharing_group_server.id)
+        db_sharing_group_server = db.get(SharingGroupServer, sharing_group_server_id)
+
+        assert not db_sharing_group_server
 
 
 class TestCreateSharingGroupLegacy:
@@ -1137,14 +1135,15 @@ class TestDeleteSharingGroupLegacy:
         sharing_group_id = sharing_group.id
 
         sharing_group_org = SharingGroupOrg(sharing_group_id=sharing_group.id, org_id=environment.instance_owner_org.id)
-        sharing_group_org_id = sharing_group_org.id
         sharing_group_server = SharingGroupServer(sharing_group_id=sharing_group.id, server_id=0)
-        sharing_group_server_id = sharing_group_server.id
 
         db.add_all([sharing_group_org, sharing_group_server])
         db.commit()
         db.refresh(sharing_group_org)
         db.refresh(sharing_group_server)
+
+        sharing_group_org_id = sharing_group_org.id
+        sharing_group_server_id = sharing_group_server.id
 
         response = client.delete(
             f"/sharing_groups/delete/{sharing_group_id}",
@@ -1157,11 +1156,15 @@ class TestDeleteSharingGroupLegacy:
         assert json["saved"]
         assert json["success"]
 
-        db.expire_all()
+        db.invalidate()
 
-        assert db.get(SharingGroup, sharing_group_id) is None
-        assert db.get(SharingGroupOrg, sharing_group_org_id) is None
-        assert db.get(SharingGroupServer, sharing_group_server_id) is None
+        db_sharing_group: SharingGroup | None = db.get(SharingGroup, sharing_group_id)
+        db_sharing_group_org: SharingGroupOrg | None = db.get(SharingGroupOrg, sharing_group_org_id)
+        db_sharing_group_server: SharingGroupServer | None = db.get(SharingGroupServer, sharing_group_server_id)
+
+        assert not db_sharing_group
+        assert not db_sharing_group_org
+        assert not db_sharing_group_server
 
         second_response = client.delete(
             f"/sharing_groups/delete/{sharing_group_id}",
@@ -1258,6 +1261,8 @@ class TestAddOrgToSharingGroupLegacy:
         db.commit()
         db.refresh(sharing_group_org)
 
+        sharing_group_org_id = sharing_group_org.id
+
         response = client.post(
             f"/sharing_groups/addOrg/{sharing_group.id}/999",
             headers={"authorization": environment.instance_owner_org_admin_user_token},
@@ -1269,11 +1274,9 @@ class TestAddOrgToSharingGroupLegacy:
         assert json["saved"]
         assert json["success"]
 
-        #        db.close()
-        #        db = get_db()
-        db.expire_all()
+        db.invalidate()
 
-        db_sharing_group_org = db.get(SharingGroupOrg, sharing_group_org.id)
+        db_sharing_group_org: SharingGroupOrg = db.get(SharingGroupOrg, sharing_group_org_id)
 
         assert db_sharing_group_org.extend
 
@@ -1331,8 +1334,6 @@ class TestRemoveOrgFromSharingGroupLegacy:
         db.commit()
         db.refresh(sharing_group)
 
-        sharing_group_id = sharing_group.id
-
         sharing_group_org = SharingGroupOrg(sharing_group_id=sharing_group.id, org_id=999)
 
         db.add(sharing_group_org)
@@ -1342,7 +1343,7 @@ class TestRemoveOrgFromSharingGroupLegacy:
         sharing_group_org_id = sharing_group_org.id
 
         response = client.post(
-            f"/sharing_groups/removeOrg/{sharing_group_id}/999",
+            f"/sharing_groups/removeOrg/{sharing_group.id}/999",
             headers={"authorization": environment.instance_owner_org_admin_user_token},
         )
 
@@ -1351,11 +1352,11 @@ class TestRemoveOrgFromSharingGroupLegacy:
         assert json["saved"]
         assert json["success"]
 
-        #        db.close()
-        #        db = get_db()
-        db.expire_all()
+        db.invalidate()
 
-        assert db.get(SharingGroupOrg, sharing_group_org_id) is None
+        db_sharing_group_org = db.get(SharingGroupOrg, sharing_group_org_id)
+
+        assert not db_sharing_group_org
 
 
 class TestAddServerToSharingGroupLegacy:
@@ -1395,6 +1396,8 @@ class TestAddServerToSharingGroupLegacy:
         db.commit()
         db.refresh(sharing_group_server)
 
+        sharing_group_server_id = sharing_group_server.id
+
         response = client.post(
             f"/sharing_groups/addServer/{sharing_group.id}/999",
             headers={"authorization": environment.instance_owner_org_admin_user_token},
@@ -1406,11 +1409,10 @@ class TestAddServerToSharingGroupLegacy:
         assert json["saved"]
         assert json["success"]
 
-        #        db.close()
-        #        db = get_db()
-        db.expire_all()
+        db.invalidate()
 
-        db_sharing_group_server: SharingGroupServer = db.get(SharingGroupServer, sharing_group_server.id)
+        db_sharing_group_server: SharingGroupServer = db.get(SharingGroupServer, sharing_group_server_id)
+
         assert db_sharing_group_server.all_orgs
 
     @staticmethod
@@ -1483,8 +1485,8 @@ class TestRemoveServerFromSharingGroupLegacy:
 
         assert response.status_code == status.HTTP_200_OK
 
-        #        db.close()
-        #        db = get_db()
-        db.expire_all()
+        db.invalidate()
 
-        assert db.get(SharingGroupServer, sharing_group_server_id) is None
+        db_sharing_group_server = db.get(SharingGroupServer, sharing_group_server_id)
+
+        assert not db_sharing_group_server

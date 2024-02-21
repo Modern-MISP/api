@@ -99,7 +99,8 @@ class Auth:
 
 def authorize(strategy: AuthStrategy, permissions: list[Permission] = []) -> Callable[[Session, str], Auth]:
     def authorizer(
-        db: Session = Depends(get_db), authorization: Annotated[str, Depends(APIKeyHeader(name="authorization"))] = ""
+        db: Annotated[Session, Depends(get_db)],
+        authorization: Annotated[str, Depends(APIKeyHeader(name="authorization"))],
     ) -> Auth:
         authorization = authorization.replace("Bearer ", "")
 

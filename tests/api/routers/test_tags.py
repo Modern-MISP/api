@@ -16,9 +16,8 @@ from tests.api.helpers.tags_helper import (
     random_string_with_punctuation,
     remove_tags,
 )
+from tests.database import get_db
 from tests.environment import client, environment
-
-from ...database import sm as get_db
 
 
 @pytest.fixture(
