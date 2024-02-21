@@ -4,10 +4,11 @@ from typing import Any
 from uuid import uuid4
 
 import pytest
+from sqlalchemy.orm import Session
 
 from mmisp.db.models.event import Event
 from mmisp.db.models.object import ObjectTemplate
-from tests.environment import client, environment, get_db
+from tests.environment import client, environment
 from tests.generators.model_generators.sharing_group_generator import generate_sharing_group
 from tests.generators.object_generator import (
     generate_random_search_query,
@@ -33,9 +34,7 @@ def object_data(request: Any) -> dict[str, Any]:
 
 class TestAddObject:
     @staticmethod
-    def test_add_object_to_event(object_data: dict[str, Any]) -> None:
-        db = get_db()
-
+    def test_add_object_to_event(object_data: dict[str, Any], db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_owner_org.uuid
         sharing_group.org_id = environment.instance_owner_org.id
@@ -79,9 +78,7 @@ class TestAddObject:
         assert int(response_data["object"]["template_id"]) == object_template_id
 
     @staticmethod
-    def test_add_object_response_format(object_data: dict[str, Any]) -> None:
-        db = get_db()
-
+    def test_add_object_response_format(object_data: dict[str, Any], db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_owner_org.uuid
         sharing_group.org_id = environment.instance_owner_org.id
@@ -174,9 +171,7 @@ class TestSearchObject:
 
 class TestGetObjectInfo:
     @staticmethod
-    def test_get_object_details_valid_id(object_data: dict[str, Any]) -> None:
-        db = get_db()
-
+    def test_get_object_details_valid_id(object_data: dict[str, Any], db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_owner_org.uuid
         sharing_group.org_id = environment.instance_owner_org.id
@@ -230,9 +225,7 @@ class TestGetObjectInfo:
         assert "sharing_group_id" in object_data
 
     @staticmethod
-    def test_get_object_details_response_format(object_data: dict[str, Any]) -> None:
-        db = get_db()
-
+    def test_get_object_details_response_format(object_data: dict[str, Any], db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_owner_org.uuid
         sharing_group.org_id = environment.instance_owner_org.id
@@ -285,9 +278,7 @@ class TestGetObjectInfo:
         assert response.status_code == 422
 
     @staticmethod
-    def test_get_object_details_data_integrity(object_data: dict[str, Any]) -> None:
-        db = get_db()
-
+    def test_get_object_details_data_integrity(object_data: dict[str, Any], db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_owner_org.uuid
         sharing_group.org_id = environment.instance_owner_org.id
@@ -336,9 +327,7 @@ class TestGetObjectInfo:
 
 class TestDeleteObject:
     @staticmethod
-    def test_delete_object_hard_delete(object_data: dict[str, Any]) -> None:
-        db = get_db()
-
+    def test_delete_object_hard_delete(object_data: dict[str, Any], db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_owner_org.uuid
         sharing_group.org_id = environment.instance_owner_org.id
@@ -388,9 +377,7 @@ class TestDeleteObject:
         assert response_data["success"] is True
 
     @staticmethod
-    def test_delete_object_soft_delete(object_data: dict[str, Any]) -> None:
-        db = get_db()
-
+    def test_delete_object_soft_delete(object_data: dict[str, Any], db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_owner_org.uuid
         sharing_group.org_id = environment.instance_owner_org.id
@@ -448,9 +435,7 @@ class TestDeleteObject:
         assert "detail" in response_delete.json()
 
     @staticmethod
-    def test_delete_object_invalid_hard_delete(object_data: dict[str, Any]) -> None:
-        db = get_db()
-
+    def test_delete_object_invalid_hard_delete(object_data: dict[str, Any], db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_owner_org.uuid
         sharing_group.org_id = environment.instance_owner_org.id

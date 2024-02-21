@@ -476,7 +476,7 @@ async def _rest_search_attributes(db: Session, body: SearchAttributesBody) -> di
 
     response_list = []
     for attribute in attributes:
-        attribute_dict = attribute.__dict__.copy()
+        attribute_dict = attribute.asdict().copy()
         if attribute.event_id is not None:
             event = db.get(Event, attribute.event_id)
             event_dict = event.__dict__.copy()
@@ -589,7 +589,7 @@ async def _remove_tag_from_attribute(db: Session, attribute_id: str, tag_id: str
 
 
 def _prepare_attribute_response(attribute: Attribute, request_type: str) -> dict:
-    attribute_dict = attribute.__dict__.copy()
+    attribute_dict = attribute.asdict().copy()
 
     fields_to_convert = ["object_id", "sharing_group_id"]
     for field in fields_to_convert:
@@ -607,10 +607,9 @@ def _prepare_attribute_response(attribute: Attribute, request_type: str) -> dict
 def _prepare_get_attribute_details_response(
     db: Session, attribute_id: str, attribute: Attribute
 ) -> GetAttributeAttributes:
-    attribute_dict = attribute.__dict__.copy()
-
-    # Don't know why, but 'event_uuid' is not in attribute_dict
-    attribute_dict.update({"event_uuid": attribute.event_uuid})
+    attribute_dict = attribute.asdict().copy()
+    if "event_uuid" not in attribute_dict.keys():  # should not occur, perhaps sqlalchemy caching?
+        attribute_dict["event_uuid"] = attribute.event_uuid
 
     fields_to_convert = ["object_id", "sharing_group_id", "timestamp"]
     for field in fields_to_convert:
@@ -639,7 +638,7 @@ def _prepare_get_attribute_details_response(
 
 
 def _prepare_edit_attribute_response(db: Session, attribute_id: str, attribute: Attribute) -> EditAttributeAttributes:
-    attribute_dict = attribute.__dict__.copy()
+    attribute_dict = attribute.asdict().copy()
 
     fields_to_convert = ["object_id", "sharing_group_id", "timestamp"]
     for field in fields_to_convert:

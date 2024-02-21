@@ -4,10 +4,11 @@ from typing import Any, Generator
 from uuid import uuid4
 
 import pytest
+from sqlalchemy.orm import Session
 
 from mmisp.db.models.event import Event
 from mmisp.db.models.tag import Tag
-from tests.environment import client, environment, get_db
+from tests.environment import client, environment
 from tests.generators.feed_generator import (
     generate_random_valid_feed_data,
     generate_valid_feed_data,
@@ -31,9 +32,7 @@ def feed_data(request: Any) -> dict[str, Any]:
 
 class TestAddFeed:
     @staticmethod
-    def test_add_feed(feed_data: dict[str, Any]) -> None:
-        db = get_db()
-
+    def test_add_feed(feed_data: dict[str, Any], db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_owner_org.uuid
         sharing_group.org_id = environment.instance_owner_org.id
@@ -85,9 +84,7 @@ class TestAddFeed:
         assert response.json()["detail"][0]["type"] == "value_error.missing"
 
     @staticmethod
-    def test_feed_response_format(feed_data: dict[str, Any]) -> None:
-        db = get_db()
-
+    def test_feed_response_format(feed_data: dict[str, Any], db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_owner_org.uuid
         sharing_group.org_id = environment.instance_owner_org.id
@@ -140,9 +137,7 @@ def feed_test_ids() -> Generator:
 
 class TestEnableFeed:
     @staticmethod
-    def test_enable_feed(feed_test_ids: dict[str, Any], feed_data: dict[str, Any]) -> None:
-        db = get_db()
-
+    def test_enable_feed(feed_test_ids: dict[str, Any], feed_data: dict[str, Any], db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_owner_org.uuid
         sharing_group.org_id = environment.instance_owner_org.id
@@ -193,9 +188,7 @@ class TestEnableFeed:
         assert response.status_code == 422
 
     @staticmethod
-    def test_feed_enable_response_format(feed_data: dict[str, Any]) -> None:
-        db = get_db()
-
+    def test_feed_enable_response_format(feed_data: dict[str, Any], db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_owner_org.uuid
         sharing_group.org_id = environment.instance_owner_org.id
@@ -242,9 +235,7 @@ class TestEnableFeed:
 
 class TestDisableFeed:
     @staticmethod
-    def test_disable_feed(feed_test_ids: dict[str, Any], feed_data: dict[str, Any]) -> None:
-        db = get_db()
-
+    def test_disable_feed(feed_test_ids: dict[str, Any], feed_data: dict[str, Any], db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_owner_org.uuid
         sharing_group.org_id = environment.instance_owner_org.id
@@ -295,9 +286,7 @@ class TestDisableFeed:
         assert response.status_code == 422
 
     @staticmethod
-    def test_disable_feed_response_format(feed_data: dict[str, Any]) -> None:
-        db = get_db()
-
+    def test_disable_feed_response_format(feed_data: dict[str, Any], db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_owner_org.uuid
         sharing_group.org_id = environment.instance_owner_org.id
@@ -402,9 +391,7 @@ class TestFetchFeeds:
 
 class TestGetFeedByIdInfo:
     @staticmethod
-    def test_get_existing_feed_details(feed_data: dict[str, Any]) -> None:
-        db = get_db()
-
+    def test_get_existing_feed_details(feed_data: dict[str, Any], db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_owner_org.uuid
         sharing_group.org_id = environment.instance_owner_org.id
@@ -463,9 +450,7 @@ class TestGetFeedByIdInfo:
         assert response.status_code == 404
 
     @staticmethod
-    def test_get_feed_response_format(feed_data: dict[str, Any]) -> None:
-        db = get_db()
-
+    def test_get_feed_response_format(feed_data: dict[str, Any], db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_owner_org.uuid
         sharing_group.org_id = environment.instance_owner_org.id
@@ -516,9 +501,7 @@ class TestGetFeedByIdInfo:
 
 class TestUpdateFeed:
     @staticmethod
-    def test_update_existing_feed(feed_data: dict[str, Any]) -> None:
-        db = get_db()
-
+    def test_update_existing_feed(feed_data: dict[str, Any], db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_owner_org.uuid
         sharing_group.org_id = environment.instance_owner_org.id
@@ -573,9 +556,7 @@ class TestUpdateFeed:
         assert response.status_code == 404
 
     @staticmethod
-    def test_update_feed_response_format(feed_data: dict[str, Any]) -> None:
-        db = get_db()
-
+    def test_update_feed_response_format(feed_data: dict[str, Any], db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_owner_org.uuid
         sharing_group.org_id = environment.instance_owner_org.id
@@ -626,9 +607,7 @@ class TestUpdateFeed:
 
 class TestToggleFeed:
     @staticmethod
-    def test_toggle_existing_feed(feed_data: dict[str, Any]) -> None:
-        db = get_db()
-
+    def test_toggle_existing_feed(feed_data: dict[str, Any], db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_owner_org.uuid
         sharing_group.org_id = environment.instance_owner_org.id
@@ -697,9 +676,7 @@ class TestToggleFeed:
         assert response.status_code == 404
 
     @staticmethod
-    def test_toggle_feed_response_format(feed_data: dict[str, Any]) -> None:
-        db = get_db()
-
+    def test_toggle_feed_response_format(feed_data: dict[str, Any], db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_owner_org.uuid
         sharing_group.org_id = environment.instance_owner_org.id
@@ -807,9 +784,7 @@ class TestFetschFromAllFeeds:
 
 class TestGetAllFeeds:
     @staticmethod
-    def test_get_all_feeds(feed_data: dict[str, Any]) -> None:
-        db = get_db()
-
+    def test_get_all_feeds(feed_data: dict[str, Any], db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_owner_org.uuid
         sharing_group.org_id = environment.instance_owner_org.id
@@ -854,9 +829,7 @@ class TestGetAllFeeds:
         assert isinstance(response.json()["feeds"], list)
 
     @staticmethod
-    def test_get_feeds_response_format(feed_data: dict[str, Any]) -> None:
-        db = get_db()
-
+    def test_get_feeds_response_format(feed_data: dict[str, Any], db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_owner_org.uuid
         sharing_group.org_id = environment.instance_owner_org.id

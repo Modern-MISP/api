@@ -370,7 +370,7 @@ async def _add_event(auth: Auth, db: Session, body: AddEventBody) -> dict:
             **body.dict(),
             "org_id": int(body.org_id) if body.org_id is not None else auth.org_id,
             "orgc_id": int(body.orgc_id) if body.orgc_id is not None else auth.org_id,
-            "date": body.date if body.date is not None else str(date.today()),
+            "date": body.date if body.date is not None else date.today(),
             "analysis": body.analysis if body.analysis is not None else "0",
             "timestamp": int(body.timestamp) if body.timestamp is not None else timegm(gmtime()),
             "threat_level_id": int(body.threat_level_id) if body.threat_level_id is not None else 4,
@@ -589,8 +589,8 @@ async def _add_attribute_via_free_text_import(db: Session, event_id: str, respon
     response_list = []
 
     for attribute in response_json["attributes"]:
-        value = response_json["attributes"]["Items"]["value"]
-        attribute_type = response_json["attributes"]["Items"]["default_type"]
+        value = attribute["Items"]["value"]
+        attribute_type = attribute["Items"]["default_type"]
         category = GetDescribeTypesAttributes().sane_defaults[attribute_type]["default_category"].value
 
         new_attribute = Attribute(event_id=event_id, value=value, type=attribute_type, category=category)
@@ -665,7 +665,7 @@ def _prepare_attribute_response(db: Session, attribute_list: list[Attribute]) ->
     attribute_tag_list = []
 
     for attribute in attribute_list:
-        attribute_dict = attribute.__dict__.copy()
+        attribute_dict = attribute.asdict().copy()
         attribute_tag_list = db.query(AttributeTag).filter(AttributeTag.attribute_id == attribute.id).all()
 
         if len(attribute_tag_list) > 0:

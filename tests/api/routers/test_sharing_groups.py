@@ -1,10 +1,12 @@
 from datetime import datetime
 from uuid import uuid4
 
+import pytest
 from fastapi import status
+from sqlalchemy.orm import Session
+from sqlalchemy.orm.exc import ObjectDeletedError
 
 from mmisp.db.models.sharing_group import SharingGroup, SharingGroupOrg, SharingGroupServer
-from tests.database import get_db
 from tests.generators.model_generators.sharing_group_generator import generate_sharing_group
 
 from ...environment import client, environment
@@ -12,7 +14,7 @@ from ...environment import client, environment
 
 class TestCreateSharingGroup:
     @staticmethod
-    def test_create_valid_sharing_group() -> None:
+    def test_create_valid_sharing_group(db: Session) -> None:
         body = {"name": "Test Sharing Group", "description": "description", "releasability": "yes"}
 
         response = client.post(
@@ -24,7 +26,6 @@ class TestCreateSharingGroup:
         assert json["org_id"] == str(environment.instance_owner_org.id)
         assert json["organisation_uuid"] == environment.instance_owner_org.uuid
 
-        db = get_db()
         db_sharing_group_org: SharingGroupOrg | None = (
             db.query(SharingGroupOrg).filter(SharingGroupOrg.sharing_group_id == json["id"]).first()
         )
@@ -36,7 +37,7 @@ class TestCreateSharingGroup:
         assert db_sharing_group_server
 
     @staticmethod
-    def test_create_valid_sharing_group_with_org_id_overwrite() -> None:
+    def test_create_valid_sharing_group_with_org_id_overwrite(db: Session) -> None:
         body = {
             "name": "Test Sharing Group",
             "description": "description",
@@ -53,7 +54,6 @@ class TestCreateSharingGroup:
         assert json["org_id"] == str(environment.instance_two_owner_org.id)
         assert json["organisation_uuid"] == environment.instance_two_owner_org.uuid
 
-        db = get_db()
         db_sharing_group_org: SharingGroupOrg | None = (
             db.query(SharingGroupOrg).filter(SharingGroupOrg.sharing_group_id == json["id"]).first()
         )
@@ -85,9 +85,7 @@ class TestCreateSharingGroup:
 
 class TestGetSharingGroup:
     @staticmethod
-    def test_get_own_created_sharing_group() -> None:
-        db = get_db()
-
+    def test_get_own_created_sharing_group(db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_owner_org.uuid
         sharing_group.org_id = environment.instance_owner_org.id
@@ -106,9 +104,7 @@ class TestGetSharingGroup:
         assert json["id"] == str(sharing_group.id)
 
     @staticmethod
-    def test_get_sharing_group_with_access_through_sharing_group_org() -> None:
-        db = get_db()
-
+    def test_get_sharing_group_with_access_through_sharing_group_org(db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_owner_org.uuid
         sharing_group.org_id = environment.instance_owner_org.id
@@ -132,9 +128,7 @@ class TestGetSharingGroup:
         assert json["id"] == str(sharing_group.id)
 
     @staticmethod
-    def test_get_sharing_group_with_access_through_sharing_group_server() -> None:
-        db = get_db()
-
+    def test_get_sharing_group_with_access_through_sharing_group_server(db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_owner_org.uuid
         sharing_group.org_id = environment.instance_owner_org.id
@@ -158,9 +152,7 @@ class TestGetSharingGroup:
         assert json["id"] == str(sharing_group.id)
 
     @staticmethod
-    def test_get_sharing_group_with_access_through_site_admin() -> None:
-        db = get_db()
-
+    def test_get_sharing_group_with_access_through_site_admin(db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_org_two.uuid
         sharing_group.org_id = environment.instance_org_two.id
@@ -179,9 +171,7 @@ class TestGetSharingGroup:
         assert json["id"] == str(sharing_group.id)
 
     @staticmethod
-    def test_get_sharing_group_with_no_access() -> None:
-        db = get_db()
-
+    def test_get_sharing_group_with_no_access(db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_org_two.uuid
         sharing_group.org_id = environment.instance_org_two.id
@@ -205,9 +195,7 @@ class TestGetSharingGroup:
 
 class TestUpdateSharingGroup:
     @staticmethod
-    def test_update_own_sharing_group() -> None:
-        db = get_db()
-
+    def test_update_own_sharing_group(db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_org_two.uuid
         sharing_group.org_id = environment.instance_org_two.id
@@ -232,9 +220,7 @@ class TestUpdateSharingGroup:
         assert json["description"] == new_description
 
     @staticmethod
-    def test_update_sharing_group_with_access_through_site_admin() -> None:
-        db = get_db()
-
+    def test_update_sharing_group_with_access_through_site_admin(db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_org_two.uuid
         sharing_group.org_id = environment.instance_org_two.id
@@ -259,9 +245,7 @@ class TestUpdateSharingGroup:
         assert json["description"] == new_description
 
     @staticmethod
-    def test_update_sharing_group_no_access_although_sharing_group_org_exists() -> None:
-        db = get_db()
-
+    def test_update_sharing_group_no_access_although_sharing_group_org_exists(db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_org_two.uuid
         sharing_group.org_id = environment.instance_org_two.id
@@ -288,9 +272,7 @@ class TestUpdateSharingGroup:
 
 class TestDeleteSharingGroup:
     @staticmethod
-    def test_delete_own_sharing_group() -> None:
-        db = get_db()
-
+    def test_delete_own_sharing_group(db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_org_two.uuid
         sharing_group.org_id = environment.instance_org_two.id
@@ -299,45 +281,46 @@ class TestDeleteSharingGroup:
         db.commit()
         db.refresh(sharing_group)
 
+        sharing_group_id = sharing_group.id
+
         sharing_group_org = SharingGroupOrg(sharing_group_id=sharing_group.id, org_id=environment.instance_owner_org.id)
         sharing_group_server = SharingGroupServer(sharing_group_id=sharing_group.id, server_id=0)
+        sharing_group_server_id = sharing_group_server.id
 
         db.add_all([sharing_group_org, sharing_group_server])
         db.commit()
         db.refresh(sharing_group_org)
         db.refresh(sharing_group_server)
 
+        sharing_group_org_id = sharing_group_org.id
+        sharing_group_server_id = sharing_group_server.id
+
         response = client.delete(
-            f"/sharing_groups/{sharing_group.id}",
+            f"/sharing_groups/{sharing_group_id}",
             headers={"authorization": environment.instance_org_two_admin_user_token},
         )
 
         assert response.status_code == status.HTTP_200_OK
         json = response.json()
-        assert json["id"] == str(sharing_group.id)
+        assert json["id"] == str(sharing_group_id)
 
-        db.close()
-        db = get_db()
+        # db.close()
+        # db = get_db()
+        db.expire_all()
 
-        db_sharing_group: SharingGroup | None = db.get(SharingGroup, sharing_group.id)
-        db_sharing_group_org: SharingGroupOrg | None = db.get(SharingGroupOrg, sharing_group_org.id)
-        db_sharing_group_server: SharingGroupServer | None = db.get(SharingGroupServer, sharing_group_server.id)
-
-        assert not db_sharing_group
-        assert not db_sharing_group_org
-        assert not db_sharing_group_server
+        assert db.get(SharingGroup, sharing_group_id) is None
+        assert db.get(SharingGroupOrg, sharing_group_org_id) is None
+        assert db.get(SharingGroupServer, sharing_group_server_id) is None
 
         second_response = client.delete(
-            f"/sharing_groups/{sharing_group.id}",
+            f"/sharing_groups/{sharing_group_id}",
             headers={"authorization": environment.instance_org_two_admin_user_token},
         )
 
         assert second_response.status_code == status.HTTP_404_NOT_FOUND
 
     @staticmethod
-    def test_delete_sharing_group_with_access_through_site_admin() -> None:
-        db = get_db()
-
+    def test_delete_sharing_group_with_access_through_site_admin(db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_org_two.uuid
         sharing_group.org_id = environment.instance_org_two.id
@@ -346,6 +329,8 @@ class TestDeleteSharingGroup:
         db.commit()
         db.refresh(sharing_group)
 
+        sharing_group_id = sharing_group.id
+
         response = client.delete(
             f"/sharing_groups/{sharing_group.id}",
             headers={"authorization": environment.site_admin_user_token},
@@ -356,16 +341,14 @@ class TestDeleteSharingGroup:
         assert json["id"] == str(sharing_group.id)
 
         second_response = client.delete(
-            f"/sharing_groups/{sharing_group.id}",
+            f"/sharing_groups/{sharing_group_id}",
             headers={"authorization": environment.site_admin_user_token},
         )
 
         assert second_response.status_code == status.HTTP_404_NOT_FOUND
 
     @staticmethod
-    def test_delete_sharing_group_no_access_although_sharing_group_org_exists() -> None:
-        db = get_db()
-
+    def test_delete_sharing_group_no_access_although_sharing_group_org_exists(db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_org_two.uuid
         sharing_group.org_id = environment.instance_org_two.id
@@ -389,9 +372,7 @@ class TestDeleteSharingGroup:
 
 class TestListSharingGroups:
     @staticmethod
-    def test_list_own_sharing_group() -> None:
-        db = get_db()
-
+    def test_list_own_sharing_group(db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_owner_org.uuid
         sharing_group.org_id = environment.instance_owner_org.id
@@ -417,9 +398,7 @@ class TestListSharingGroups:
         assert sharing_group_item["deletable"]
 
     @staticmethod
-    def test_list_sharing_group_with_access_through_sharing_group_org() -> None:
-        db = get_db()
-
+    def test_list_sharing_group_with_access_through_sharing_group_org(db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_org_two.uuid
         sharing_group.org_id = environment.instance_org_two.id
@@ -451,9 +430,7 @@ class TestListSharingGroups:
         assert not sharing_group_item["deletable"]
 
     @staticmethod
-    def test_list_sharing_group_with_access_through_sharing_group_server() -> None:
-        db = get_db()
-
+    def test_list_sharing_group_with_access_through_sharing_group_server(db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_org_two.uuid
         sharing_group.org_id = environment.instance_org_two.id
@@ -485,9 +462,7 @@ class TestListSharingGroups:
         assert not sharing_group_item["deletable"]
 
     @staticmethod
-    def test_list_sharing_group_with_no_access() -> None:
-        db = get_db()
-
+    def test_list_sharing_group_with_no_access(db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_org_two.uuid
         sharing_group.org_id = environment.instance_org_two.id
@@ -518,9 +493,7 @@ class TestListSharingGroups:
 
 class TestGetSharingGroupInfo:
     @staticmethod
-    def test_get_own_created_sharing_group_info() -> None:
-        db = get_db()
-
+    def test_get_own_created_sharing_group_info(db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_owner_org.uuid
         sharing_group.org_id = environment.instance_owner_org.id
@@ -541,9 +514,7 @@ class TestGetSharingGroupInfo:
         assert json["SharingGroup"]["org_count"] == 0
 
     @staticmethod
-    def test_get_sharing_group_info_with_access_through_sharing_group_org() -> None:
-        db = get_db()
-
+    def test_get_sharing_group_info_with_access_through_sharing_group_org(db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_owner_org.uuid
         sharing_group.org_id = environment.instance_owner_org.id
@@ -569,9 +540,7 @@ class TestGetSharingGroupInfo:
         assert json["SharingGroup"]["org_count"] == 1
 
     @staticmethod
-    def test_get_sharing_group_info_with_access_through_sharing_group_server() -> None:
-        db = get_db()
-
+    def test_get_sharing_group_info_with_access_through_sharing_group_server(db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_owner_org.uuid
         sharing_group.org_id = environment.instance_owner_org.id
@@ -597,9 +566,7 @@ class TestGetSharingGroupInfo:
         assert json["SharingGroup"]["org_count"] == 0
 
     @staticmethod
-    def test_get_sharing_group_info_with_access_through_site_admin() -> None:
-        db = get_db()
-
+    def test_get_sharing_group_info_with_access_through_site_admin(db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_org_two.uuid
         sharing_group.org_id = environment.instance_org_two.id
@@ -620,9 +587,7 @@ class TestGetSharingGroupInfo:
         assert json["SharingGroup"]["org_count"] == 0
 
     @staticmethod
-    def test_get_sharing_group_info_with_no_access() -> None:
-        db = get_db()
-
+    def test_get_sharing_group_info_with_no_access(db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_org_two.uuid
         sharing_group.org_id = environment.instance_org_two.id
@@ -646,9 +611,7 @@ class TestGetSharingGroupInfo:
 
 class TestAddOrgToSharingGroup:
     @staticmethod
-    def test_add_org_to_own_sharing_group() -> None:
-        db = get_db()
-
+    def test_add_org_to_own_sharing_group(db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_owner_org.uuid
         sharing_group.org_id = environment.instance_owner_org.id
@@ -668,9 +631,7 @@ class TestAddOrgToSharingGroup:
         assert json["sharing_group_id"] == str(sharing_group.id)
 
     @staticmethod
-    def test_patch_org_to_own_sharing_group() -> None:
-        db = get_db()
-
+    def test_patch_org_to_own_sharing_group(db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_owner_org.uuid
         sharing_group.org_id = environment.instance_owner_org.id
@@ -701,9 +662,7 @@ class TestAddOrgToSharingGroup:
         assert json["extend"]
 
     @staticmethod
-    def test_add_org_to_sharing_group_using_site_admin() -> None:
-        db = get_db()
-
+    def test_add_org_to_sharing_group_using_site_admin(db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_org_two.uuid
         sharing_group.org_id = environment.instance_org_two.id
@@ -723,9 +682,7 @@ class TestAddOrgToSharingGroup:
         assert json["sharing_group_id"] == str(sharing_group.id)
 
     @staticmethod
-    def test_add_org_to_sharing_group_with_no_access() -> None:
-        db = get_db()
-
+    def test_add_org_to_sharing_group_with_no_access(db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_org_two.uuid
         sharing_group.org_id = environment.instance_org_two.id
@@ -750,9 +707,7 @@ class TestAddOrgToSharingGroup:
 
 class TestRemoveOrgFromSharingGroup:
     @staticmethod
-    def test_remove_org_from_own_sharing_group() -> None:
-        db = get_db()
-
+    def test_remove_org_from_own_sharing_group(db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_owner_org.uuid
         sharing_group.org_id = environment.instance_owner_org.id
@@ -762,6 +717,7 @@ class TestRemoveOrgFromSharingGroup:
         db.refresh(sharing_group)
 
         sharing_group_org = SharingGroupOrg(sharing_group_id=sharing_group.id, org_id=999)
+        sharing_group_org_id = sharing_group_org.id
 
         db.add(sharing_group_org)
         db.commit()
@@ -774,19 +730,16 @@ class TestRemoveOrgFromSharingGroup:
 
         assert response.status_code == status.HTTP_200_OK
 
-        db.close()
-        db = get_db()
+        # db.close()
+        # db = get_db()
+        db.expire_all()
 
-        db_sharing_group_org = db.get(SharingGroupOrg, sharing_group_org.id)
-
-        assert not db_sharing_group_org
+        assert db.get(SharingGroupOrg, sharing_group_org_id) is None
 
 
 class TestAddServerToSharingGroup:
     @staticmethod
-    def test_add_server_to_own_sharing_group() -> None:
-        db = get_db()
-
+    def test_add_server_to_own_sharing_group(db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_owner_org.uuid
         sharing_group.org_id = environment.instance_owner_org.id
@@ -806,9 +759,7 @@ class TestAddServerToSharingGroup:
         assert json["sharing_group_id"] == str(sharing_group.id)
 
     @staticmethod
-    def test_patch_server_to_own_sharing_group() -> None:
-        db = get_db()
-
+    def test_patch_server_to_own_sharing_group(db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_owner_org.uuid
         sharing_group.org_id = environment.instance_owner_org.id
@@ -839,9 +790,7 @@ class TestAddServerToSharingGroup:
         assert json["all_orgs"]
 
     @staticmethod
-    def test_add_server_to_sharing_group_using_site_admin() -> None:
-        db = get_db()
-
+    def test_add_server_to_sharing_group_using_site_admin(db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_org_two.uuid
         sharing_group.org_id = environment.instance_org_two.id
@@ -861,9 +810,7 @@ class TestAddServerToSharingGroup:
         assert json["sharing_group_id"] == str(sharing_group.id)
 
     @staticmethod
-    def test_add_server_to_sharing_group_with_no_access() -> None:
-        db = get_db()
-
+    def test_add_server_to_sharing_group_with_no_access(db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_org_two.uuid
         sharing_group.org_id = environment.instance_org_two.id
@@ -889,9 +836,7 @@ class TestAddServerToSharingGroup:
 
 class TestRemoveServerFromSharingGroup:
     @staticmethod
-    def test_remove_server_from_own_sharing_group() -> None:
-        db = get_db()
-
+    def test_remove_server_from_own_sharing_group(db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_owner_org.uuid
         sharing_group.org_id = environment.instance_owner_org.id
@@ -913,12 +858,12 @@ class TestRemoveServerFromSharingGroup:
 
         assert response.status_code == status.HTTP_200_OK
 
-        db.close()
-        db = get_db()
+        # db.close()
+        # db = get_db()
+        db.expire_all()
 
-        db_sharing_group_server = db.get(SharingGroupServer, sharing_group_server.id)
-
-        assert not db_sharing_group_server
+        with pytest.raises(ObjectDeletedError):
+            db.get(SharingGroupServer, sharing_group_server.id)
 
 
 class TestCreateSharingGroupLegacy:
@@ -980,9 +925,7 @@ class TestCreateSharingGroupLegacy:
 
 class TestGetSharingGroupLegacy:
     @staticmethod
-    def test_get_own_created_sharing_group_legacy() -> None:
-        db = get_db()
-
+    def test_get_own_created_sharing_group_legacy(db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_owner_org.uuid
         sharing_group.org_id = environment.instance_owner_org.id
@@ -1001,9 +944,7 @@ class TestGetSharingGroupLegacy:
         assert json["SharingGroup"]["id"] == str(sharing_group.id)
 
     @staticmethod
-    def test_get_sharing_group_legacy_with_access_through_sharing_group_org() -> None:
-        db = get_db()
-
+    def test_get_sharing_group_legacy_with_access_through_sharing_group_org(db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_owner_org.uuid
         sharing_group.org_id = environment.instance_owner_org.id
@@ -1027,9 +968,7 @@ class TestGetSharingGroupLegacy:
         assert json["SharingGroup"]["id"] == str(sharing_group.id)
 
     @staticmethod
-    def test_get_sharing_group_legacy_with_access_through_sharing_group_server() -> None:
-        db = get_db()
-
+    def test_get_sharing_group_legacy_with_access_through_sharing_group_server(db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_owner_org.uuid
         sharing_group.org_id = environment.instance_owner_org.id
@@ -1053,9 +992,7 @@ class TestGetSharingGroupLegacy:
         assert json["SharingGroup"]["id"] == str(sharing_group.id)
 
     @staticmethod
-    def test_get_sharing_group_legacy_with_access_through_site_admin() -> None:
-        db = get_db()
-
+    def test_get_sharing_group_legacy_with_access_through_site_admin(db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_org_two.uuid
         sharing_group.org_id = environment.instance_org_two.id
@@ -1074,9 +1011,7 @@ class TestGetSharingGroupLegacy:
         assert json["SharingGroup"]["id"] == str(sharing_group.id)
 
     @staticmethod
-    def test_get_sharing_group_legacy_with_no_access() -> None:
-        db = get_db()
-
+    def test_get_sharing_group_legacy_with_no_access(db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_org_two.uuid
         sharing_group.org_id = environment.instance_org_two.id
@@ -1100,9 +1035,7 @@ class TestGetSharingGroupLegacy:
 
 class TestUpdateSharingGroupLegacy:
     @staticmethod
-    def test_update_own_sharing_group_legacy() -> None:
-        db = get_db()
-
+    def test_update_own_sharing_group_legacy(db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_org_two.uuid
         sharing_group.org_id = environment.instance_org_two.id
@@ -1131,9 +1064,7 @@ class TestUpdateSharingGroupLegacy:
         assert json["SharingGroup"]["description"] == new_description
 
     @staticmethod
-    def test_update_sharing_group_legacy_with_access_through_site_admin() -> None:
-        db = get_db()
-
+    def test_update_sharing_group_legacy_with_access_through_site_admin(db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_org_two.uuid
         sharing_group.org_id = environment.instance_org_two.id
@@ -1163,9 +1094,7 @@ class TestUpdateSharingGroupLegacy:
         assert json["SharingGroup"]["description"] == new_description
 
     @staticmethod
-    def test_update_sharing_group_legacy_no_access_although_sharing_group_org_exists() -> None:
-        db = get_db()
-
+    def test_update_sharing_group_legacy_no_access_although_sharing_group_org_exists(db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_org_two.uuid
         sharing_group.org_id = environment.instance_org_two.id
@@ -1196,9 +1125,7 @@ class TestUpdateSharingGroupLegacy:
 
 class TestDeleteSharingGroupLegacy:
     @staticmethod
-    def test_delete_own_sharing_group_legacy() -> None:
-        db = get_db()
-
+    def test_delete_own_sharing_group_legacy(db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_org_two.uuid
         sharing_group.org_id = environment.instance_org_two.id
@@ -1207,8 +1134,12 @@ class TestDeleteSharingGroupLegacy:
         db.commit()
         db.refresh(sharing_group)
 
+        sharing_group_id = sharing_group.id
+
         sharing_group_org = SharingGroupOrg(sharing_group_id=sharing_group.id, org_id=environment.instance_owner_org.id)
+        sharing_group_org_id = sharing_group_org.id
         sharing_group_server = SharingGroupServer(sharing_group_id=sharing_group.id, server_id=0)
+        sharing_group_server_id = sharing_group_server.id
 
         db.add_all([sharing_group_org, sharing_group_server])
         db.commit()
@@ -1216,7 +1147,7 @@ class TestDeleteSharingGroupLegacy:
         db.refresh(sharing_group_server)
 
         response = client.delete(
-            f"/sharing_groups/delete/{sharing_group.id}",
+            f"/sharing_groups/delete/{sharing_group_id}",
             headers={"authorization": environment.instance_org_two_admin_user_token},
         )
 
@@ -1226,28 +1157,21 @@ class TestDeleteSharingGroupLegacy:
         assert json["saved"]
         assert json["success"]
 
-        db.close()
-        db = get_db()
+        db.expire_all()
 
-        db_sharing_group: SharingGroup | None = db.get(SharingGroup, sharing_group.id)
-        db_sharing_group_org: SharingGroupOrg | None = db.get(SharingGroupOrg, sharing_group_org.id)
-        db_sharing_group_server: SharingGroupServer | None = db.get(SharingGroupServer, sharing_group_server.id)
-
-        assert not db_sharing_group
-        assert not db_sharing_group_org
-        assert not db_sharing_group_server
+        assert db.get(SharingGroup, sharing_group_id) is None
+        assert db.get(SharingGroupOrg, sharing_group_org_id) is None
+        assert db.get(SharingGroupServer, sharing_group_server_id) is None
 
         second_response = client.delete(
-            f"/sharing_groups/delete/{sharing_group.id}",
+            f"/sharing_groups/delete/{sharing_group_id}",
             headers={"authorization": environment.instance_org_two_admin_user_token},
         )
 
         assert second_response.status_code == status.HTTP_404_NOT_FOUND
 
     @staticmethod
-    def test_delete_sharing_group_legacy_with_access_through_site_admin() -> None:
-        db = get_db()
-
+    def test_delete_sharing_group_legacy_with_access_through_site_admin(db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_org_two.uuid
         sharing_group.org_id = environment.instance_org_two.id
@@ -1275,9 +1199,7 @@ class TestDeleteSharingGroupLegacy:
         assert second_response.status_code == status.HTTP_404_NOT_FOUND
 
     @staticmethod
-    def test_delete_sharing_group_legacy_no_access_although_sharing_group_org_exists() -> None:
-        db = get_db()
-
+    def test_delete_sharing_group_legacy_no_access_although_sharing_group_org_exists(db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_org_two.uuid
         sharing_group.org_id = environment.instance_org_two.id
@@ -1301,9 +1223,7 @@ class TestDeleteSharingGroupLegacy:
 
 class TestAddOrgToSharingGroupLegacy:
     @staticmethod
-    def test_add_org_to_own_sharing_group_legacy() -> None:
-        db = get_db()
-
+    def test_add_org_to_own_sharing_group_legacy(db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_owner_org.uuid
         sharing_group.org_id = environment.instance_owner_org.id
@@ -1323,9 +1243,7 @@ class TestAddOrgToSharingGroupLegacy:
         assert json["success"]
 
     @staticmethod
-    def test_patch_org_to_own_sharing_group_legacy() -> None:
-        db = get_db()
-
+    def test_patch_org_to_own_sharing_group_legacy(db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_owner_org.uuid
         sharing_group.org_id = environment.instance_owner_org.id
@@ -1351,17 +1269,16 @@ class TestAddOrgToSharingGroupLegacy:
         assert json["saved"]
         assert json["success"]
 
-        db.close()
-        db = get_db()
+        #        db.close()
+        #        db = get_db()
+        db.expire_all()
 
-        db_sharing_group_org: SharingGroupOrg = db.get(SharingGroupOrg, sharing_group_org.id)
+        db_sharing_group_org = db.get(SharingGroupOrg, sharing_group_org.id)
 
         assert db_sharing_group_org.extend
 
     @staticmethod
-    def test_add_org_to_sharing_group_legacy_using_site_admin() -> None:
-        db = get_db()
-
+    def test_add_org_to_sharing_group_legacy_using_site_admin(db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_org_two.uuid
         sharing_group.org_id = environment.instance_org_two.id
@@ -1381,9 +1298,7 @@ class TestAddOrgToSharingGroupLegacy:
         assert json["success"]
 
     @staticmethod
-    def test_add_org_to_sharing_group_legacy_with_no_access() -> None:
-        db = get_db()
-
+    def test_add_org_to_sharing_group_legacy_with_no_access(db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_org_two.uuid
         sharing_group.org_id = environment.instance_org_two.id
@@ -1407,9 +1322,7 @@ class TestAddOrgToSharingGroupLegacy:
 
 class TestRemoveOrgFromSharingGroupLegacy:
     @staticmethod
-    def test_remove_org_from_own_sharing_group_legacy() -> None:
-        db = get_db()
-
+    def test_remove_org_from_own_sharing_group_legacy(db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_owner_org.uuid
         sharing_group.org_id = environment.instance_owner_org.id
@@ -1418,14 +1331,18 @@ class TestRemoveOrgFromSharingGroupLegacy:
         db.commit()
         db.refresh(sharing_group)
 
+        sharing_group_id = sharing_group.id
+
         sharing_group_org = SharingGroupOrg(sharing_group_id=sharing_group.id, org_id=999)
 
         db.add(sharing_group_org)
         db.commit()
         db.refresh(sharing_group_org)
 
+        sharing_group_org_id = sharing_group_org.id
+
         response = client.post(
-            f"/sharing_groups/removeOrg/{sharing_group.id}/999",
+            f"/sharing_groups/removeOrg/{sharing_group_id}/999",
             headers={"authorization": environment.instance_owner_org_admin_user_token},
         )
 
@@ -1434,19 +1351,16 @@ class TestRemoveOrgFromSharingGroupLegacy:
         assert json["saved"]
         assert json["success"]
 
-        db.close()
-        db = get_db()
+        #        db.close()
+        #        db = get_db()
+        db.expire_all()
 
-        db_sharing_group_org = db.get(SharingGroupOrg, sharing_group_org.id)
-
-        assert not db_sharing_group_org
+        assert db.get(SharingGroupOrg, sharing_group_org_id) is None
 
 
 class TestAddServerToSharingGroupLegacy:
     @staticmethod
-    def test_add_server_to_own_sharing_group_legacy() -> None:
-        db = get_db()
-
+    def test_add_server_to_own_sharing_group_legacy(db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_owner_org.uuid
         sharing_group.org_id = environment.instance_owner_org.id
@@ -1466,9 +1380,7 @@ class TestAddServerToSharingGroupLegacy:
         assert json["success"]
 
     @staticmethod
-    def test_patch_server_to_own_sharing_group_legacy() -> None:
-        db = get_db()
-
+    def test_patch_server_to_own_sharing_group_legacy(db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_owner_org.uuid
         sharing_group.org_id = environment.instance_owner_org.id
@@ -1494,16 +1406,15 @@ class TestAddServerToSharingGroupLegacy:
         assert json["saved"]
         assert json["success"]
 
-        db.close()
-        db = get_db()
+        #        db.close()
+        #        db = get_db()
+        db.expire_all()
 
         db_sharing_group_server: SharingGroupServer = db.get(SharingGroupServer, sharing_group_server.id)
         assert db_sharing_group_server.all_orgs
 
     @staticmethod
-    def test_add_server_to_sharing_group_legeacy_using_site_admin() -> None:
-        db = get_db()
-
+    def test_add_server_to_sharing_group_legeacy_using_site_admin(db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_org_two.uuid
         sharing_group.org_id = environment.instance_org_two.id
@@ -1523,9 +1434,7 @@ class TestAddServerToSharingGroupLegacy:
         assert json["success"]
 
     @staticmethod
-    def test_add_server_to_sharing_group_legacy_with_no_access() -> None:
-        db = get_db()
-
+    def test_add_server_to_sharing_group_legacy_with_no_access(db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_org_two.uuid
         sharing_group.org_id = environment.instance_org_two.id
@@ -1550,9 +1459,7 @@ class TestAddServerToSharingGroupLegacy:
 
 class TestRemoveServerFromSharingGroupLegacy:
     @staticmethod
-    def test_remove_server_from_own_sharing_group_legacy() -> None:
-        db = get_db()
-
+    def test_remove_server_from_own_sharing_group_legacy(db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_owner_org.uuid
         sharing_group.org_id = environment.instance_owner_org.id
@@ -1567,6 +1474,8 @@ class TestRemoveServerFromSharingGroupLegacy:
         db.commit()
         db.refresh(sharing_group_server)
 
+        sharing_group_server_id = sharing_group_server.id
+
         response = client.post(
             f"/sharing_groups/removeServer/{sharing_group.id}/999",
             headers={"authorization": environment.instance_owner_org_admin_user_token},
@@ -1574,9 +1483,8 @@ class TestRemoveServerFromSharingGroupLegacy:
 
         assert response.status_code == status.HTTP_200_OK
 
-        db.close()
-        db = get_db()
+        #        db.close()
+        #        db = get_db()
+        db.expire_all()
 
-        db_sharing_group_server = db.get(SharingGroupServer, sharing_group_server.id)
-
-        assert not db_sharing_group_server
+        assert db.get(SharingGroupServer, sharing_group_server_id) is None

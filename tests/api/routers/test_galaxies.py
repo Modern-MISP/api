@@ -1,8 +1,12 @@
+import datetime
+
+from sqlalchemy.orm import Session
+
 from mmisp.api_schemas.galaxies.export_galaxies_body import ExportGalaxyAttributes, ExportGalaxyBody
 from mmisp.db.models.event import Event
 from mmisp.db.models.galaxy_cluster import GalaxyCluster, GalaxyElement, GalaxyReference
 
-from ...environment import client, environment, get_db
+from ...environment import client, environment
 from ...generators.model_generators.galaxy_generator import generate_galaxy
 from ...generators.model_generators.organisation_generator import generate_organisation
 from ...generators.model_generators.tag_generator import generate_tag
@@ -11,8 +15,7 @@ from ..helpers.galaxy_helper import get_invalid_import_galaxy_body, get_valid_im
 
 class TestImportGalaxyCluster:
     @staticmethod
-    def test_import_galaxy_cluster_valid_data() -> None:
-        db = get_db()
+    def test_import_galaxy_cluster_valid_data(db: Session) -> None:
         organisation = generate_organisation()
 
         db.add(organisation)
@@ -48,8 +51,7 @@ class TestImportGalaxyCluster:
         assert response_json["name"] == "Galaxy clusters imported. 1 imported, 0 ignored, 0 failed."
 
     @staticmethod
-    def test_import_galaxy_cluster_invalid_data() -> None:
-        db = get_db()
+    def test_import_galaxy_cluster_invalid_data(db: Session) -> None:
         organisation = generate_organisation()
 
         db.add(organisation)
@@ -86,8 +88,7 @@ class TestImportGalaxyCluster:
 
 class TestGetGalaxyDetails:
     @staticmethod
-    def test_get_existing_galaxy_details() -> None:
-        db = get_db()
+    def test_get_existing_galaxy_details(db: Session) -> None:
         tag = generate_tag()
         setattr(tag, "user_id", 1)
         setattr(tag, "org_id", 1)
@@ -145,8 +146,7 @@ class TestGetGalaxyDetails:
 
 class TestDeleteGalaxy:
     @staticmethod
-    def test_delete_existing_galaxy() -> None:
-        db = get_db()
+    def test_delete_existing_galaxy(db: Session) -> None:
         tag = generate_tag()
         setattr(tag, "user_id", 1)
         setattr(tag, "org_id", 1)
@@ -202,8 +202,7 @@ class TestDeleteGalaxy:
 
 class TestGetAllGalaxies:
     @staticmethod
-    def test_get_all_galaxies() -> None:
-        db = get_db()
+    def test_get_all_galaxies(db: Session) -> None:
         tag = generate_tag()
         setattr(tag, "user_id", 1)
         setattr(tag, "org_id", 1)
@@ -213,6 +212,7 @@ class TestGetAllGalaxies:
         db.refresh(tag)
 
         tag_name = tag.name
+        print(tag.name)
 
         galaxy1 = generate_galaxy()
 
@@ -233,10 +233,12 @@ class TestGetAllGalaxies:
         add_galaxy_cluster_body1 = GalaxyCluster(
             type="test", value="test", tag_name=tag_name, description="", galaxy_id=galaxy1_id, authors="Me"
         )
+        print(add_galaxy_cluster_body1.tag_name)
 
         add_galaxy_cluster_body2 = GalaxyCluster(
             type="test", value="test", tag_name=tag_name, description="", galaxy_id=galaxy2_id, authors="Me"
         )
+        print(add_galaxy_cluster_body2.tag_name)
 
         db.add(add_galaxy_cluster_body1)
         db.commit()
@@ -255,8 +257,7 @@ class TestGetAllGalaxies:
 
 class TestExportGalaxy:
     @staticmethod
-    def test_export_existing_galaxy() -> None:
-        db = get_db()
+    def test_export_existing_galaxy(db: Session) -> None:
         organisation = generate_organisation()
 
         db.add(organisation)
@@ -348,8 +349,7 @@ class TestExportGalaxy:
         assert response.status_code == 200
 
     @staticmethod
-    def test_export_non_existing_galaxy() -> None:
-        db = get_db()
+    def test_export_non_existing_galaxy(db: Session) -> None:
         organisation = generate_organisation()
 
         db.add(organisation)
@@ -442,8 +442,7 @@ class TestExportGalaxy:
 
 class TestAttachCluster:
     @staticmethod
-    def test_attach_cluster() -> None:
-        db = get_db()
+    def test_attach_cluster(db: Session) -> None:
         organisation = generate_organisation()
 
         db.add(organisation)
@@ -493,7 +492,7 @@ class TestAttachCluster:
             org_id=org_id,
             orgc_id=org_id,
             info="test event",
-            date="2024-02-13",
+            date=datetime.date(year=2024, month=2, day=13),
             analysis="test analysis",
             event_creator_email="test@mail.de",
         )

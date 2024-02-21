@@ -12,7 +12,7 @@ from mmisp.db.models.identity_provider import OIDCIdentityProvider
 from mmisp.db.models.user import User
 from mmisp.util.crypto import hash_password
 from mmisp.util.uuid import uuid
-from tests.database import get_db
+from tests.database import sm
 from tests.environment import client, environment
 from tests.generators.model_generators.identity_provider_generator import generate_oidc_identity_provider
 from tests.generators.model_generators.user_generator import generate_user
@@ -36,6 +36,7 @@ class AuthEnvironment:
 
 @pytest.fixture(scope="module")
 def auth_environment() -> AuthEnvironment:
+    db = sm()
     password = uuid()
     hashed_password = hash_password(password)
 
@@ -56,7 +57,6 @@ def auth_environment() -> AuthEnvironment:
     identity_provider = generate_oidc_identity_provider()
     identity_provider.org_id = environment.instance_owner_org.id
 
-    db = get_db()
     db.add_all([password_auth_user, external_auth_user, identity_provider])
     db.commit()
 

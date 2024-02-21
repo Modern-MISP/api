@@ -1,27 +1,42 @@
 from enum import Enum
+from typing import Self
 
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, inspect
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship
 
-from mmisp.util.uuid import uuid
+from mmisp.util.uuid import uuid as generate_uuid
 
 from ..database import Base
 from .event import Event
 from .tag import Tag
 
 
-class Attribute(Base):
+class DictMixin:
+    def asdict(self: Self) -> dict:
+        d = {}
+        for key in self.__mapper__.c.keys():
+            if not key.startswith("_"):
+                d[key] = getattr(self, key)
+
+        for key, prop in inspect(self.__class__).all_orm_descriptors.items():
+            if isinstance(prop, hybrid_property):
+                d[key] = getattr(self, key)
+        return d
+
+
+class Attribute(Base, DictMixin):
     __tablename__ = "attributes"
 
     id = Column(Integer, primary_key=True)
-    uuid = Column(String(255), unique=True, default=uuid, index=True)
+    uuid = Column(String(255), unique=True, default=generate_uuid, index=True)
     event_id = Column(Integer, ForeignKey("events.id", ondelete="CASCADE"), index=True)
     object_id = Column(Integer, ForeignKey("objects.id", ondelete="CASCADE"), index=True, nullable=True, default=None)
     object_relation = Column(String(255), nullable=True, index=True)
     category = Column(String(255), nullable=False, index=True)
     type = Column(String(255), nullable=False, index=True)
-    value = Column(String(255), nullable=False, index=True)
-    value1 = Column(String(255), nullable=False, index=True, default=value)
+    #    value = Column(String(255), nullable=False, index=True)
+    value1 = Column(String(255), nullable=False, index=True)
     value2 = Column(String(255), nullable=False, index=True, default="")
     to_ids = Column(Boolean, default=True)
     timestamp = Column(Integer, default=0)
@@ -40,12 +55,25 @@ class Attribute(Base):
     def event_uuid(self: "Attribute") -> str:
         return self.event.uuid
 
+    @hybrid_property
+    def value(self: Self) -> str:
+        if self.value2 == "":
+            return self.value1
+        return f"{self.value1}|{self.value2}"
+
+    @value.setter
+    def value(self: Self, value: str) -> None:
+        split = value.split("|", 1)
+        self.value1 = split[0]
+        if len(split) == 2:
+            self.value2 = split[1]
+
 
 class AttributeTag(Base):
     __tablename__ = "attribute_tags"
 
     id = Column(Integer, primary_key=True)
-    uuid = Column(String(255), unique=True, default=uuid)
+    uuid = Column(String(255), unique=True, default=generate_uuid)
     attribute_id = Column(Integer, ForeignKey(Attribute.id, ondelete="CASCADE"), nullable=False, index=True)
     event_id = Column(Integer, ForeignKey(Event.id, ondelete="CASCADE"), nullable=False, index=True)
     tag_id = Column(Integer, ForeignKey(Tag.id, ondelete="CASCADE"), nullable=False, index=True)
