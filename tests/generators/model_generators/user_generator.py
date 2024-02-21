@@ -5,7 +5,7 @@ from mmisp.util.crypto import hash_password
 
 
 def generate_user() -> User:
-    """These fields need to be set manually: org_id, server_id, role_id"""
+    """These fields need to be set manually: org_id, role_id"""
     return User(
         password=hash_password("test"),
         email=f"generated-user+{time_ns()}@test.com",
