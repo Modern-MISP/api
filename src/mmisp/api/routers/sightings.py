@@ -180,6 +180,11 @@ async def _add_sighting(db: Session, body: SightingCreateBody) -> list[dict[str,
     filters: SightingFiltersBody | None = body.filters.dict(exclude_unset=True) if body.filters else None
     responses: list[SightingsGetResponse] = []
 
+    if body.filters.return_format is None:
+        body.filters.return_format = "json"
+    else:
+        _check_valid_return_format(return_format=body.filters.return_format)
+
     for value in body.values:
         value_specific_filters = {"value": value}
         if filters:
@@ -198,7 +203,7 @@ async def _add_sighting(db: Session, body: SightingCreateBody) -> list[dict[str,
                 type=int(body.filters.type) if body.filters and body.filters.type else None,
             )
             db.add(sighting)
-            db.commit()
+            db.flush()
             db.refresh(sighting)
 
             organisation: Organisation = db.get(Organisation, sighting.org_id)
@@ -215,6 +220,8 @@ async def _add_sighting(db: Session, body: SightingCreateBody) -> list[dict[str,
                     organisation=organisation_response,
                 )
             )
+
+    db.commit()
 
     return SightingsGetResponse(sightings=[response.__dict__ for response in responses])
 
@@ -319,6 +326,11 @@ async def _get_sightings(db: Session) -> list[dict[str, Any]]:
 
 def _create_timestamp() -> int:
     return int(time())
+
+
+def _check_valid_return_format(return_format: str) -> None:
+    if return_format not in ["json"]:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid return format.")
 
 
 def _build_query(db: Session, filters: SightingFiltersBody) -> list[Attribute]:
