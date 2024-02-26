@@ -27,7 +27,7 @@ router = APIRouter(tags=["noticelists"])
 async def get_noticelist(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    tag_id: int = Path(..., alias="noticelistId"),
+    tag_id: Annotated[int, Path(alias="noticelistId")],
 ) -> dict:
     return await _get_noticelist(db, tag_id)
 
@@ -43,7 +43,7 @@ async def get_noticelist(
 async def post_toggleEnable_noticelist(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
-    tag_id: int = Path(..., alias="noticelistId"),
+    tag_id: Annotated[int, Path(alias="noticelistId")],
 ) -> dict:
     return await _toggleEnable_noticelists(db, tag_id)
 
@@ -90,7 +90,7 @@ async def get_all_noticelists(
 async def get_noticelist_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    noticelist_id: int = Path(..., alias="noticelistId"),
+    noticelist_id: Annotated[int, Path(alias="noticelistId")],
 ) -> dict:
     return await _get_noticelist(db, noticelist_id)
 
@@ -114,7 +114,7 @@ async def update_noticelist_depr(
 # --- endpoint logic ---
 
 
-async def _get_noticelist(db: Session, noticelist_id: str) -> dict:
+async def _get_noticelist(db: Session, noticelist_id: int) -> dict:
     noticelist: Noticelist | None = db.get(Noticelist, noticelist_id)
 
     if not noticelist:
@@ -125,7 +125,7 @@ async def _get_noticelist(db: Session, noticelist_id: str) -> dict:
     return _prepare_noticelist_response(noticelist, noticelist_entries)
 
 
-async def _toggleEnable_noticelists(db: Session, noticelist_id: str) -> dict:
+async def _toggleEnable_noticelists(db: Session, noticelist_id: int) -> dict:
     noticelist: Noticelist | None = db.get(Noticelist, noticelist_id)
 
     if not noticelist:
