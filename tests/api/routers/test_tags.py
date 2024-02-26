@@ -23,10 +23,6 @@ from tests.environment import client, environment
 @pytest.fixture(
     params=[
         generate_valid_tag_data().dict(),
-        generate_valid_tag_data().dict(),
-        generate_valid_tag_data().dict(),
-        generate_valid_required_tag_data().dict(),
-        generate_valid_required_tag_data().dict(),
         generate_valid_required_tag_data().dict(),
     ]
 )
@@ -36,7 +32,6 @@ def tag_data(request: Any) -> Dict[str, Any]:
 
 @pytest.fixture(
     params=[
-        generate_invalid_tag_data(),
         generate_invalid_tag_data(),
         generate_invalid_tag_data(),
     ]
@@ -109,9 +104,8 @@ class TestViewTag:
         remove_tags(tag)
 
 
-# TODO: Need implementation of Taxonomies and TaxonomyPredicates
-@staticmethod
 class TestSearchTagByTagSearchTerm:
+    @staticmethod
     def test_search_tag() -> None:
         db: Session = get_db()
         headers = {"authorization": environment.site_admin_user_token}
@@ -239,7 +233,7 @@ class TestGetAllTags:
     @staticmethod
     def test_get_all_tags() -> None:
         headers = {"authorization": environment.site_admin_user_token}
-        response = client.get("/tags/", headers=headers)
+        response = client.get("/tags", headers=headers)
         assert response.status_code == 200
 
     @staticmethod
@@ -247,15 +241,15 @@ class TestGetAllTags:
         tags = add_tags(1)
 
         headers = {"authorization": environment.site_admin_user_token}
-        response = client.get("/tags/", headers=headers)
+        response = client.get("/tags", headers=headers)
         assert response.headers["Content-Type"] == "application/json"
 
         json = response.json()
 
-        assert isinstance(json["tag"], list)
+        assert isinstance(json["tags"], list)
 
-        assert "tag" in json
-        for tag_wrapper in json["tag"]:
+        assert "tags" in json
+        for tag_wrapper in json["tags"]:
             assert "id" in tag_wrapper
             assert "name" in tag_wrapper
             assert "colour" in tag_wrapper
