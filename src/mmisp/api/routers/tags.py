@@ -49,7 +49,7 @@ async def add_tag(
 async def view_tag(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    tag_id: int = Path(..., alias="tagId"),
+    tag_id: Annotated[int, Path(alias="tagId")],
 ) -> dict:
     return await _view_tag(db, tag_id)
 
@@ -65,7 +65,7 @@ async def view_tag(
 async def search_tags(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    tag_search_term: str = Path(..., alias="tagSearchTerm"),
+    tag_search_term: Annotated[str, Path(alias="tagSearchTerm")],
 ) -> dict:
     return await _search_tags(db, tag_search_term)
 
@@ -82,7 +82,7 @@ async def update_tag(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     body: TagUpdateBody,
-    tag_id: int = Path(..., alias="tagId"),
+    tag_id: Annotated[int, Path(alias="tagId")],
 ) -> dict:
     return await _update_tag(db, body, tag_id)
 
@@ -98,7 +98,7 @@ async def update_tag(
 async def delete_tag(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
-    tag_id: int = Path(..., alias="tagId"),
+    tag_id: Annotated[int, Path(alias="tagId")],
 ) -> dict:
     return await _delete_tag(db, tag_id)
 
@@ -147,7 +147,7 @@ async def add_tag_depr(
 async def view_tag_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    tag_id: int = Path(..., alias="tagId"),
+    tag_id: Annotated[int, Path(alias="tagId")],
 ) -> dict:
     return await _view_tag(db, tag_id)
 
@@ -165,7 +165,7 @@ async def update_tag_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     body: TagCreateBody,
-    tag_id: int = Path(..., alias="tagId"),
+    tag_id: Annotated[int, Path(alias="tagId")],
 ) -> dict:
     return await _update_tag(db, body, tag_id)
 
@@ -182,7 +182,7 @@ async def update_tag_depr(
 async def delete_tag_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
-    tag_id: int = Path(..., alias="tagId"),
+    tag_id: Annotated[int, Path(alias="tagId")],
 ) -> dict:
     return await _delete_tag(db, tag_id)
 
@@ -198,7 +198,7 @@ async def _add_tag(db: Session, body: TagCreateBody) -> dict:
     return tag.__dict__
 
 
-async def _view_tag(db: Session, tag_id: str) -> dict:
+async def _view_tag(db: Session, tag_id: int) -> dict:
     tag: Tag | None = db.get(Tag, tag_id)
 
     if not tag:
@@ -208,11 +208,11 @@ async def _view_tag(db: Session, tag_id: str) -> dict:
 
 
 async def _search_tags(db: Session, tag_search_term: str) -> dict:
-    tags = db.query(Tag).filter(Tag.name.contains(tag_search_term)).all()
+    tags: list[Tag] = db.query(Tag).filter(Tag.name.contains(tag_search_term)).all()
 
     tag_datas = []
     for tag in tags:
-        taxonomies = db.query(Taxonomy).filter_by(tag=tag.name).all()
+        taxonomies = db.query(Taxonomy).filter(Taxonomy.namespace == tag.name.split(":", 1)[0]).all()
         for taxonomy in taxonomies:
             taxonomy_predicate = db.query(TaxonomyPredicate).filter_by(taxonomy_id=taxonomy.id).first()
             tag_datas.append(
@@ -226,7 +226,7 @@ async def _search_tags(db: Session, tag_search_term: str) -> dict:
     return TagSearchResponse(root=[tag_data.__dict__ for tag_data in tag_datas])
 
 
-async def _update_tag(db: Session, body: TagCreateBody, tag_id: str) -> dict:
+async def _update_tag(db: Session, body: TagCreateBody, tag_id: int) -> dict:
     tag: Tag | None = db.get(Tag, tag_id)
 
     if not tag:
@@ -244,7 +244,7 @@ async def _update_tag(db: Session, body: TagCreateBody, tag_id: str) -> dict:
     return tag.__dict__
 
 
-async def _delete_tag(db: Session, tag_id: str) -> dict:
+async def _delete_tag(db: Session, tag_id: int) -> dict:
     deleted_tag: Tag | None = db.get(Tag, tag_id)
 
     if not deleted_tag:
@@ -266,9 +266,9 @@ async def _delete_tag(db: Session, tag_id: str) -> dict:
 
 
 async def _get_tags(db: Session) -> dict:
-    tags: list[Tag] | None = db.query(Tag).all()
+    tags: list[Tag] = db.query(Tag).all()
 
-    return TagGetResponse(tag=[tag.__dict__ for tag in tags])
+    return TagGetResponse(tags=[tag.__dict__ for tag in tags])
 
 
 def _check_type_hex_color(colour: Any) -> None:

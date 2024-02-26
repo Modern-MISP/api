@@ -1,7 +1,6 @@
 from pydantic import BaseModel, Field
 
 
-# TODO: int or str, ids?
 class WarninglistEntryResponse(BaseModel):
     id: str
     value: str = Field(max_length=65535)
@@ -10,15 +9,15 @@ class WarninglistEntryResponse(BaseModel):
 
 
 class WarninglistResponse(BaseModel):
-    id: int
+    id: str
     name: str = Field(max_length=255)
     type: str
     description: str = Field(max_length=65535)
-    version: int
+    version: str
     enabled: bool
     default: bool
     category: str
-    warninglist_entry_count: int
+    warninglist_entry_count: str
     WarninglistEntry: list[WarninglistEntryResponse] | None = None
 
     class Config:

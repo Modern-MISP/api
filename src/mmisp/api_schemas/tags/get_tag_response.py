@@ -16,7 +16,7 @@ class TagAttributesResponse(BaseModel):
 
 
 class TagGetResponse(BaseModel):
-    tag: list[TagAttributesResponse]
+    tags: list[TagAttributesResponse]
 
     class Config:
         orm_mode = True
