@@ -51,7 +51,7 @@ async def add_warninglist(
 async def get_warninglist_details(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    warninglist_id: int = Path(..., alias="warninglistId"),
+    warninglist_id: Annotated[int, Path(alias="warninglistId")],
 ) -> dict:
     return await _get_warninglist_details(db, warninglist_id)
 
@@ -83,7 +83,7 @@ async def post_toggleEnable(
 async def delete_warninglist(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
-    warninglist_id: int = Path(..., alias="id"),
+    warninglist_id: Annotated[int, Path(alias="id")],
 ) -> dict:
     return await _delete_warninglist(db, warninglist_id)
 
@@ -164,7 +164,7 @@ async def update_all_warninglists_depr(
 async def get_warninglist_details_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    warninglist_id: int = Path(..., alias="warninglistId"),
+    warninglist_id: Annotated[int, Path(alias="warninglistId")],
 ) -> dict:
     return await _get_warninglist_details(db, warninglist_id)
 
@@ -253,14 +253,14 @@ async def _toggleEnable(
 
 async def _get_warninglist_details(
     db: Session,
-    warninglist_id: str,
+    warninglist_id: int,
 ) -> dict:
     warninglist: Warninglist | None = db.get(Warninglist, warninglist_id)
 
     if not warninglist:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Warninglist not found.")
 
-    warninglist_entries = _get_warninglist_entries(db, int(warninglist_id))
+    warninglist_entries = _get_warninglist_entries(db, warninglist_id)
 
     warninglist_data = _prepare_warninglist_response(warninglist, warninglist_entries)
 
@@ -269,14 +269,14 @@ async def _get_warninglist_details(
 
 async def _delete_warninglist(
     db: Session,
-    warninglist_id: str,
+    warninglist_id: int,
 ) -> dict:
     warninglist: Warninglist | None = db.get(Warninglist, warninglist_id)
 
     if not warninglist:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Warninglist not found.")
 
-    warninglist_entries = _get_warninglist_entries(db, int(warninglist_id))
+    warninglist_entries = _get_warninglist_entries(db, warninglist_id)
 
     for warninglist_entry in warninglist_entries:
         db.delete(warninglist_entry)
@@ -290,8 +290,8 @@ async def _delete_warninglist(
 
 async def _get_all_or_selected_warninglists(
     db: Session,
-    value: str = None,
-    enabled: bool = None,
+    value: str | None = None,
+    enabled: bool | None = None,
 ) -> dict:
     warninglists = _search_warninglist(db, value, enabled)
 
@@ -369,8 +369,8 @@ async def _get_selected_warninglists(
 
 def _search_warninglist(
     db: Session,
-    value: str = None,
-    enabled: bool = None,
+    value: str | None = None,
+    enabled: bool | None = None,
 ) -> list[Warninglist]:
     query = db.query(Warninglist)
 

@@ -74,7 +74,7 @@ class TestGetWarninglistById:
             response = client.get(f"/warninglists/{warninglist_id}", headers=headers)
 
             assert response.status_code == 200
-            assert response.json()["id"] == warninglist_id
+            assert response.json()["id"] == str(warninglist_id)
 
         remove_warninglists(warninglist_test_ids)
 
@@ -102,7 +102,7 @@ class TestGetWarninglistById:
         assert response.status_code == 200
         data = response.json()
 
-        assert data["id"] == warninglist_id[0]
+        assert data["id"] == str(warninglist_id[0])
         assert isinstance(data["WarninglistEntry"], list)
 
         remove_warninglists(warninglist_id)
@@ -144,7 +144,7 @@ class TestDeleteWarninglist:
             data = response.json()
 
             assert isinstance(data["WarninglistEntry"], list)
-            assert data["id"] == warninglist_id
+            assert data["id"] == str(warninglist_id)
 
 
 class TestGetAllOrSelectedWarninglists:
@@ -159,7 +159,7 @@ class TestGetAllOrSelectedWarninglists:
     @staticmethod
     def test_get_all_warninglists() -> None:
         db: Session = get_db()
-        warninglist_id, *_ = add_warninglists(1)
+        warninglist_id = add_warninglists(1)
         warninglist: Warninglist = db.get(Warninglist, warninglist_id)
 
         headers = {"authorization": environment.site_admin_user_token}
@@ -175,7 +175,7 @@ class TestGetAllOrSelectedWarninglists:
         response = client.get("/warninglists?enabled=False", headers=headers)
         assert response.status_code == 200
 
-        remove_warninglists([warninglist_id])
+        remove_warninglists(warninglist_id)
 
     @staticmethod
     def test_get_all_warninglist_response_format() -> None:
