@@ -11,7 +11,7 @@ class Noticelist(Base):
     expanded_name = Column(String(255), nullable=False)
     ref = Column(String(255))  # data must be serialized as json
     geographical_area = Column(String(255), index=True)  # data must be serialized as json
-    version = Column(Integer, nullable=False, defaul=1)
+    version = Column(Integer, nullable=False, default=1)
     enabled = Column(Boolean, nullable=False, default=False)
 
 

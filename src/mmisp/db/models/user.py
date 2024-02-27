@@ -18,7 +18,7 @@ class User(Base):
     certif_public = Column(String(255))
     nids_sid = Column(Integer, default=0, nullable=False)
     termsaccepted = Column(Boolean, default=False)
-    newsread = Column(Integer, unsigned=True, default=0)
+    newsread = Column(Integer, default=0)
     role_id = Column(Integer, ForeignKey("roles.id"), nullable=False, default=0)
     change_pw = Column(Integer, default=0, nullable=False)
     contactalert = Column(Boolean, default=False, nullable=False)

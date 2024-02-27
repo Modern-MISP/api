@@ -33,7 +33,7 @@ class Event(Base):
     publish_timestamp = Column(Integer, nullable=False, default=0)
     sighting_timestamp = Column(Integer, nullable=False, default=0)
     disable_correlation = Column(Boolean, nullable=False, default=False)
-    extends_uuid = Column(String(255), default="", inded=True)
+    extends_uuid = Column(String(255), default="", index=True)
     protected = Column(Boolean, nullable=True, default=None)
 
     attributes = relationship("Attribute", back_populates="event")
