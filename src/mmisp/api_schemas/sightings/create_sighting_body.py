@@ -22,7 +22,7 @@ class SightingFiltersBody(BaseModel):
     first_seen: str | None = None
     last_seen: str | None = None
     requested_attributes: list[str]
-    object_relation: str | None = None
+    # object_relation: str | None = None
     return_format: str | None = "json"
     limit: str | None = None
 

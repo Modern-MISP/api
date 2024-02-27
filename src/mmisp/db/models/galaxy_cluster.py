@@ -11,7 +11,7 @@ from .sharing_group import SharingGroup
 class GalaxyCluster(Base):
     __tablename__ = "galaxy_clusters"
 
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True, nullable=False)
     uuid = Column(String(255), unique=True, default=uuid, index=True)
     collection_uuid = Column(String(255), nullable=True, index=True)
     type = Column(String(255), nullable=False, index=True)
@@ -35,18 +35,18 @@ class GalaxyCluster(Base):
 
 
 class GalaxyElement(Base):
-    __tablename__ = "galaxy elements"
+    __tablename__ = "galaxy_elements"
 
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True, nullable=False)
     galaxy_cluster_id = Column(Integer, ForeignKey(GalaxyCluster.id, ondelete="CASCADE"), nullable=False, index=True)
     key = Column(String(255), nullable=False, default="", index=True)
     value = Column(String(255), nullable=False, index=True)
 
 
 class GalaxyReference(Base):
-    __tablename__ = "galaxy references"
+    __tablename__ = "galaxy_references"
 
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True, nullable=False)
     galaxy_cluster_id = Column(Integer, ForeignKey(GalaxyCluster.id, ondelete="CASCADE"), nullable=False, index=True)
     referenced_galaxy_cluster_id = Column(Integer, nullable=False, index=True)
     referenced_galaxy_cluster_uuid = Column(String(255), nullable=False, index=True)

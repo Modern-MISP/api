@@ -20,22 +20,21 @@ class WarninglistCategory(Enum):
 
 class Warninglist(Base):
     __tablename__ = "warninglists"
-    id = Column(Integer, primary_key=True)
-    name = Column(String(255))
-    type = Column(String(255))
-    description = Column(String(255))
+
+    id = Column(Integer, primary_key=True, nullable=False)
+    name = Column(String(255), nullable=False)
+    type = Column(String(255), nullable=False, default="string")
+    description = Column(String(255), nullable=False)
     version = Column(Integer, nullable=False, default=1)
-    enabled = Column(Boolean, default=True)
+    enabled = Column(Boolean, default=False, nullable=False)
     default = Column(Boolean)
     category = Column(String(255))
-    warninglist_entry_count = Column(Integer)
-    valid_attributes = Column(String(255))
-    # warninglistEntry = relationship("WarninglistEntries")
 
 
 class WarninglistEntry(Base):
     __tablename__ = "warninglist_entries"
-    id = Column(Integer, primary_key=True)
-    value = Column(String(255))
-    warninglist_id = Column(Integer)
+
+    id = Column(Integer, primary_key=True, nullable=False)
+    value = Column(String(255), nullable=False)
+    warninglist_id = Column(Integer, nullable=False)
     comment = Column(String(255), nullable=True)
