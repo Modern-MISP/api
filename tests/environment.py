@@ -8,6 +8,7 @@ from mmisp.db.models.role import Role
 from mmisp.db.models.server import Server
 from mmisp.db.models.user import User
 from tests.database import get_db
+from tests.generators.model_generators.server_generator import generate_server
 
 from .generators.model_generators.organisation_generator import generate_organisation
 from .generators.model_generators.role_generator import generate_org_admin_role, generate_site_admin_role
@@ -23,7 +24,10 @@ instance_two_owner_org.local = False
 db.add_all([instance_owner_org, instance_org_two, instance_two_owner_org])
 db.flush()
 
-instance_two_server = Server(name="Instance Two Server", org_id=instance_two_owner_org.id)
+instance_two_server = generate_server()
+instance_two_server.name = "Instance Two Server"
+instance_two_server.org_id = instance_two_owner_org.id
+instance_two_server.url = "http://instance-two.mmisp.service"
 
 site_admin_role = generate_site_admin_role()
 org_admin_role = generate_org_admin_role()

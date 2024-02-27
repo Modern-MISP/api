@@ -1,9 +1,12 @@
+from time import time
+
 from mmisp.db.models.organisation import Organisation
+from mmisp.util.uuid import uuid
 
 
 def generate_organisation() -> Organisation:
     return Organisation(
-        name="ORGNAME",
+        name=f"unique-{time()}-{uuid()}",
         description="auto-generated org",
         type="another free text description",
         nationality="earthian",
