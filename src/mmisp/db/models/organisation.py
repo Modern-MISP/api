@@ -8,7 +8,7 @@ from ..database import Base
 
 
 class Organisation(Base):
-    __tablename__ = "organizations"
+    __tablename__ = "organisations"
 
     id = Column(Integer, primary_key=True, nullable=False)
     uuid = Column(String(255), unique=True, default=uuid)
