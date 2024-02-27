@@ -67,7 +67,7 @@ def generate_random_filter() -> SightingFiltersBody:
         headerless=random_bool(),
         include_warninglist_hits=random_bool(),
         attack_galaxy=random_string() if random_bool() else None,
-        object_relation=random_string() if random_bool() else None,
+        # object_relation=random_string() if random_bool() else None,
         include_sightings=random_bool(),
         include_correlations=random_bool(),
         model_overrides=None,

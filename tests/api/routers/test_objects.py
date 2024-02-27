@@ -75,7 +75,6 @@ class TestAddObject:
         response_data = response.json()
         assert "object" in response_data
         assert int(response_data["object"]["event_id"]) == event_id
-        assert int(response_data["object"]["template_id"]) == object_template_id
 
     @staticmethod
     def test_add_object_response_format(object_data: dict[str, Any], db: Session) -> None:

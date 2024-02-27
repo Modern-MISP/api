@@ -165,11 +165,11 @@ async def _add_object(db: Session, event_id: int, object_template_id: int, body:
 
     object: Object = Object(
         **body.dict(exclude={"attributes"}),
-        template_id=object_template_id,
-        template_name=template.name,
+        # template_id=object_template_id,
+        # template_name=template.name,
         template_uuid=template.uuid,
         template_version=template.version,
-        template_description=template.description,
+        # template_description=template.description,
         event_id=int(event_id),
         timestamp=_create_timestamp(),
     )
@@ -282,8 +282,8 @@ def _build_query(db: Session, filters: ObjectSearchBody) -> list[Object]:
     if search_body.object_name:
         query = query.filter(Object.name == search_body.object_name)
 
-    if search_body.object_template_uuid:
-        query = query.filter(str(Object.template_id) == search_body.object_template_uuid)
+    # if search_body.object_template_uuid:
+    #     query = query.filter(str(Object.template_id) == search_body.object_template_uuid)
 
     if search_body.object_template_version:
         query = query.filter(str(Object.template_version) == search_body.object_template_version)
@@ -371,8 +371,8 @@ def _build_query(db: Session, filters: ObjectSearchBody) -> list[Object]:
         for attribute in attributes:
             query = query.filter(Object.id == attribute.object_id)
 
-    if search_body.object_relation:
-        query = query.filter(Object.object_relation == search_body.object_relation)
+    # if search_body.object_relation:
+    #     query = query.filter(Object.object_relation == search_body.object_relation)
 
     if search_body.attribute_timestamp:
         attributes = db.query(Attribute).filter(Attribute.timestamp == search_body.attribute_timestamp).all()
