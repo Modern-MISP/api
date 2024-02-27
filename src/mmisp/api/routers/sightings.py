@@ -15,7 +15,6 @@ from mmisp.api_schemas.standard_status_response import StandardStatusResponse
 from mmisp.db.database import get_db, with_session_management
 from mmisp.db.models.attribute import Attribute
 from mmisp.db.models.event import Event
-from mmisp.db.models.object import Object
 from mmisp.db.models.organisation import Organisation
 from mmisp.db.models.sighting import Sighting
 from mmisp.util.partial import partial
@@ -405,11 +404,11 @@ def _build_query(db: Session, filters: SightingFiltersBody) -> list[Attribute]:
         for attribute in search_body.requested_attributes:
             query = query.filter(Attribute.id == attribute)
 
-    if search_body.object_relation:
-        objects = db.query(Object).filter(Object.object_relation == search_body.object_relation).all()
+    # if search_body.object_relation:
+    #     objects = db.query(Object).filter(Object.object_relation == search_body.object_relation).all()
 
-        for object in objects:
-            query = query.filter(Attribute.object_id == object.id)
+    # for object in objects:
+    #     query = query.filter(Attribute.object_id == object.id)
 
     if search_body.limit:
         query = query.limit(int(search_body.limit))
