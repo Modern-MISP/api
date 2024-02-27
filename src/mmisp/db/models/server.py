@@ -1,7 +1,6 @@
 from sqlalchemy import VARBINARY, Boolean, Column, Integer, String
 
-from mmisp.util.uuid import uuid
-
+# from mmisp.util.uuid import uuid
 from ..database import Base
 
 
@@ -9,29 +8,29 @@ class Server(Base):
     __tablename__ = "servers"
 
     id = Column(Integer, primary_key=True)
-    uuid = Column(String(255), unique=True, default=uuid)
-    name = Column(String(255))
-    url = Column(String(255))
-    authkey = Column(VARBINARY(255))
-    org_id = Column(Integer)
-    push = Column(Boolean)
-    pull = Column(Boolean)
-    push_sightings = Column(Boolean)
+    # uuid = Column(String(255), unique=True, default=uuid) # TODO
+    name = Column(String(255), nullable=False)
+    url = Column(String(255), nullable=False)
+    authkey = Column(VARBINARY(255), nullable=False)
+    org_id = Column(Integer, nullable=False)
+    push = Column(Boolean, nullable=False)
+    pull = Column(Boolean, nullable=False)
+    push_sightings = Column(Boolean, nullable=False)
     push_galaxy_clusters = Column(Boolean)
     pull_galaxy_clusters = Column(Boolean)
     lastpulledid = Column(Integer)
     lastpushedid = Column(Integer)
     organization = Column(String(255))
-    remote_org_id = Column(Integer)
-    publish_without_email = Column(Boolean)
-    unpublish_event = Column(Boolean)
-    self_signed = Column(Boolean)
-    pull_rules = Column(String(255))
-    push_rules = Column(String(255))
+    remote_org_id = Column(Integer, nullable=False)
+    publish_without_email = Column(Boolean, nullable=False, default=False)
+    unpublish_event = Column(Boolean, nullable=False, default=False)
+    self_signed = Column(Boolean, nullable=False)
+    pull_rules = Column(String(255), nullable=False)
+    push_rules = Column(String(255), nullable=False)
     cert_file = Column(String(255))
     client_cert_file = Column(String(255))
-    internal = Column(Boolean)
-    skip_proxy = Column(Boolean)
-    remove_missing_tags = Column(Boolean)
-    caching_enabled = Column(Boolean)
-    priority = Column(Integer)
+    internal = Column(Boolean, nullable=False, default=False)
+    skip_proxy = Column(Boolean, nullable=False, default=False)
+    caching_enabled = Column(Boolean, nullable=False, default=False)
+    priority = Column(Integer, nullable=False, default=False)
+    # remove_missing_tags = Column(Boolean) # TODO
