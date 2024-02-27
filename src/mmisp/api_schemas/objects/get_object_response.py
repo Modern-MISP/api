@@ -12,7 +12,7 @@ class ObjectWithAttributesResponse(BaseModel):
     name: str
     meta_category: str | None = None
     description: str | None = None
-    template_id: str | None = None
+    # template_id: str | None = None
     template_uuid: str | None = None
     template_version: str
     event_id: str
@@ -37,7 +37,7 @@ class ObjectWithAttributesResponse(BaseModel):
         return None
 
     @validator(
-        "template_id",
+        # "template_id",
         "template_version",
         "event_id",
         "timestamp",

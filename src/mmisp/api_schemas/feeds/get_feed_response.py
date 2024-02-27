@@ -5,7 +5,7 @@ from pydantic import BaseModel, validator
 
 class FeedAttributesResponse(BaseModel):
     id: str
-    uuid: str
+    # uuid: str
     name: str
     provider: str
     url: str
@@ -29,9 +29,9 @@ class FeedAttributesResponse(BaseModel):
     caching_enabled: bool
     force_to_ids: bool
     orgc_id: str
-    cache_timestamp: str | None = None
-    cached_elements: str | None = None  # new
-    coverage_by_other_feeds: str | None = None  # new
+    # cache_timestamp: str | None = None
+    # cached_elements: str | None = None  # new
+    # coverage_by_other_feeds: str | None = None  # new
 
     @validator("sharing_group_id", always=True)
     def check_sharing_group_id(cls, value: Any, values: Dict[str, Any]) -> Optional[int]:  # noqa: ANN101

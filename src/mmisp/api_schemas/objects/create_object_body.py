@@ -7,8 +7,8 @@ class ObjectCreateBody(BaseModel):
     name: str = Field(min_length=1)
     meta_category: str | None = None
     description: str | None = None
-    action: str | None = None
-    update_template_available: bool | None = None
+    # action: str | None = None
+    # update_template_available: bool | None = None
     distribution: str | None = None
     sharing_group_id: str = Field(min_length=1)
     comment: str = Field(min_length=1)

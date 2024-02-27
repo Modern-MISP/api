@@ -10,34 +10,34 @@ from ..database import Base
 class SharingGroup(Base):
     __tablename__ = "sharing_groups"
 
-    id = Column(Integer, primary_key=True)
-    uuid = Column(String(255), unique=True, default=uuid)
-    name = Column(String(255))
-    releasability = Column(String(255))
-    description = Column(String(255), default="")
-    organisation_uuid = Column(String(255))
-    org_id = Column(Integer)
-    sync_user_id = Column(Integer)
-    active = Column(Boolean, default=True)
-    created = Column(DateTime, default=datetime.utcnow)
-    modified = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    local = Column(Boolean, default=False)
-    roaming = Column(Boolean, default=False)
+    id = Column(Integer, primary_key=True, nullable=False)
+    uuid = Column(String(255), unique=True, default=uuid, nullable=False)
+    name = Column(String(255), nullable=False)
+    releasability = Column(String(255), nullable=False)
+    description = Column(String(255), nullable=False)
+    organisation_uuid = Column(String(255), nullable=False)
+    org_id = Column(Integer, nullable=False)
+    sync_user_id = Column(Integer, nullable=False)
+    active = Column(Boolean, nullable=False)
+    created = Column(DateTime, default=datetime.utcnow, nullable=False)
+    modified = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    local = Column(Boolean, nullable=False)
+    roaming = Column(Boolean, default=False, nullable=False)
 
 
 class SharingGroupOrg(Base):
     __tablename__ = "sharing_group_orgs"
 
-    id = Column(Integer, primary_key=True)
-    sharing_group_id = Column(Integer)
-    org_id = Column(Integer)
-    extend = Column(Boolean, default=False)
+    id = Column(Integer, primary_key=True, nullable=False)
+    sharing_group_id = Column(Integer, index=True, nullable=False)
+    org_id = Column(Integer, index=True, nullable=False)
+    extend = Column(Boolean, default=False, nullable=False)
 
 
 class SharingGroupServer(Base):
     __tablename__ = "sharing_group_servers"
 
-    id = Column(Integer, primary_key=True)
-    sharing_group_id = Column(Integer)
-    server_id = Column(Integer)
-    all_orgs = Column(Boolean, default=False)
+    id = Column(Integer, primary_key=True, nullable=False)
+    sharing_group_id = Column(Integer, nullable=False)
+    server_id = Column(Integer, index=True, nullable=False)
+    all_orgs = Column(Boolean, default=False, index=True, nullable=False)

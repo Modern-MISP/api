@@ -8,7 +8,7 @@ from ..database import Base
 class Galaxy(Base):
     __tablename__ = "galaxies"
 
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True, nullable=False)
     uuid = Column(String(255), unique=True, default=uuid)
     name = Column(String(255), nullable=False, default="", index=True)
     type = Column(String(255), nullable=False, index=True)

@@ -7,8 +7,7 @@ from ..database import Base
 class Server(Base):
     __tablename__ = "servers"
 
-    id = Column(Integer, primary_key=True)
-    # uuid = Column(String(255), unique=True, default=uuid) # TODO
+    id = Column(Integer, primary_key=True, nullable=False)
     name = Column(String(255), nullable=False)
     url = Column(String(255), nullable=False)
     authkey = Column(VARBINARY(255), nullable=False)
@@ -32,5 +31,4 @@ class Server(Base):
     internal = Column(Boolean, nullable=False, default=False)
     skip_proxy = Column(Boolean, nullable=False, default=False)
     caching_enabled = Column(Boolean, nullable=False, default=False)
-    priority = Column(Integer, nullable=False, default=False)
-    # remove_missing_tags = Column(Boolean) # TODO
+    priority = Column(Integer, nullable=False, default=0)
