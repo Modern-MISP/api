@@ -5,10 +5,16 @@ class WarninglistEntryResponse(BaseModel):
     id: str
     value: str = Field(max_length=65535)
     warninglist_id: str
-    comment: str = Field(max_length=65535)
+    comment: str | None = None
 
 
-class WarninglistResponse(BaseModel):
+class WarninglistTypeResponse(BaseModel):
+    id: str
+    type: str
+    warninglist_id: str
+
+
+class WarninglistAttributes(BaseModel):
     id: str
     name: str = Field(max_length=255)
     type: str
@@ -18,7 +24,16 @@ class WarninglistResponse(BaseModel):
     default: bool
     category: str
     warninglist_entry_count: str
+    valid_attributes: str
+
+
+class WarninglistAttributesResponse(WarninglistAttributes):
     WarninglistEntry: list[WarninglistEntryResponse] | None = None
+    WarninglistType: list[WarninglistTypeResponse] | None = None
+
+
+class WarninglistResponse(BaseModel):
+    Warninglist: WarninglistAttributesResponse
 
     class Config:
         orm_mode = True

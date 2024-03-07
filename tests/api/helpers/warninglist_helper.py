@@ -7,6 +7,7 @@ from tests.database import get_db
 from tests.generators.model_generators.warninglist_generator import (
     generate_warninglist,
     generate_warninglist_entry,
+    generate_warninglist_type,
 )
 
 from mmisp.api_schemas.warninglists.toggle_enable_warninglists_body import ToggleEnableWarninglistsBody
@@ -30,10 +31,15 @@ def add_warninglists(number: int = 10) -> list[int]:
         db.flush()
         db.refresh(new_warninglist)
 
-        for j in range(new_warninglist.warninglist_entry_count):
+        for j in range(random.randint(1, 10)):
             entry = generate_warninglist_entry()
             entry.warninglist_id = new_warninglist.id
             db.add(entry)
+
+        for j in range(random.randint(1, 10)):
+            type = generate_warninglist_type()
+            type.warninglist_id = new_warninglist.id
+            db.add(type)
 
         db.commit()
 

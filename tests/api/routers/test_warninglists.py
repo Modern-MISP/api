@@ -3,16 +3,20 @@ from time import time
 from sqlalchemy.orm import Session
 
 from mmisp.api_schemas.warninglists.check_value_warninglists_body import CheckValueWarninglistsBody
-from mmisp.api_schemas.warninglists.create_warninglist_body import CreateWarninglistBody
+from mmisp.api_schemas.warninglists.create_warninglist_body import (
+    CreateWarninglistBody,
+    WarninglistCategory,
+    WarninglistListType,
+)
 from mmisp.api_schemas.warninglists.toggle_enable_warninglists_body import ToggleEnableWarninglistsBody
-from mmisp.db.models.warninglist import Warninglist, WarninglistCategory, WarninglistEntry, WarninglistType
+from mmisp.db.database import get_db
+from mmisp.db.models.warninglist import Warninglist, WarninglistEntry
 from tests.api.helpers.warninglist_helper import (
     add_warninglists,
     generate_enable_warning_lists_body,
     get_largest_id,
     remove_warninglists,
 )
-from tests.database import get_db
 from tests.environment import client, environment
 
 
@@ -21,11 +25,12 @@ class TestAddWarninglist:
     def test_add_warninglists() -> None:
         data = CreateWarninglistBody(
             name=f"test warninglist{time()}",
-            type=WarninglistType.CIDR.value,
+            type=WarninglistListType.CIDR.value,
             description="test description",
+            enabled=False,
             default=False,
             category=WarninglistCategory.KNOWN_IDENTIFIER.value,
-            valid_attributes="abc",
+            valid_attributes=["md5"],
             values="a b c",
         ).dict()
 
@@ -74,7 +79,7 @@ class TestGetWarninglistById:
             response = client.get(f"/warninglists/{warninglist_id}", headers=headers)
 
             assert response.status_code == 200
-            assert response.json()["id"] == str(warninglist_id)
+            assert response.json()["Warninglist"]["id"] == str(warninglist_id)
 
         remove_warninglists(warninglist_test_ids)
 
@@ -100,10 +105,10 @@ class TestGetWarninglistById:
         response = client.get(f"/warninglists/{warninglist_id[0]}", headers=headers)
 
         assert response.status_code == 200
-        data = response.json()
+        json = response.json()
 
-        assert data["id"] == str(warninglist_id[0])
-        assert isinstance(data["WarninglistEntry"], list)
+        assert json["Warninglist"]["id"] == str(warninglist_id[0])
+        assert isinstance(json["Warninglist"]["WarninglistEntry"], list)
 
         remove_warninglists(warninglist_id)
 
@@ -141,10 +146,10 @@ class TestDeleteWarninglist:
             response = client.delete(f"/warninglists/{warninglist_id}", headers=headers)
 
             assert response.status_code == 200
-            data = response.json()
+            json = response.json()
 
-            assert isinstance(data["WarninglistEntry"], list)
-            assert data["id"] == str(warninglist_id)
+            assert isinstance(json["Warninglist"]["WarninglistEntry"], list)
+            assert json["Warninglist"]["id"] == str(warninglist_id)
 
 
 class TestGetAllOrSelectedWarninglists:
@@ -160,6 +165,7 @@ class TestGetAllOrSelectedWarninglists:
     def test_get_all_warninglists() -> None:
         db: Session = get_db()
         warninglist_id = add_warninglists(1)
+
         warninglist: Warninglist = db.get(Warninglist, warninglist_id)
 
         headers = {"authorization": environment.site_admin_user_token}
@@ -181,6 +187,7 @@ class TestGetAllOrSelectedWarninglists:
     def test_get_all_warninglist_response_format() -> None:
         db: Session = get_db()
         warninglist_ids = add_warninglists(1)
+
         warninglist_name = db.get(Warninglist, warninglist_ids[0]).name
 
         headers = {"authorization": environment.site_admin_user_token}
@@ -195,9 +202,10 @@ class TestGetWarninglistByValue:
     @staticmethod
     def test_get_warninglist_by_value() -> None:
         db: Session = get_db()
-        warninglist_id, *_ = add_warninglists(1)
+        warninglist_id = add_warninglists(1)
+
         warninglist_entry: WarninglistEntry = (
-            db.query(WarninglistEntry).filter(WarninglistEntry.warninglist_id == warninglist_id).first()
+            db.query(WarninglistEntry).filter(WarninglistEntry.warninglist_id == warninglist_id[0]).first()
         )
 
         headers = {"authorization": environment.site_admin_user_token}
@@ -210,12 +218,13 @@ class TestGetWarninglistByValue:
 
         assert next((entry for entry in json["response"] if entry["value"] == warninglist_entry.value), None)
 
-        remove_warninglists([warninglist_id])
+        remove_warninglists(warninglist_id)
 
     @staticmethod
     def test_get_warninglist_by_value_response_format() -> None:
         db: Session = get_db()
         warninglist_ids = add_warninglists(1)
+
         warninglist_entry = (
             db.query(WarninglistEntry).filter(WarninglistEntry.warninglist_id == warninglist_ids[0]).first().value
         )
