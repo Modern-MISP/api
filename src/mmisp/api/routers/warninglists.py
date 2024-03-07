@@ -5,6 +5,7 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
+from mmisp.api_schemas.standard_status_response import StandardStatusResponse
 from mmisp.api_schemas.warninglists.check_value_warninglists_body import CheckValueWarninglistsBody
 from mmisp.api_schemas.warninglists.check_value_warninglists_response import (
     CheckValueWarninglistsResponse,
@@ -16,10 +17,11 @@ from mmisp.api_schemas.warninglists.get_selected_all_warninglists_response impor
 from mmisp.api_schemas.warninglists.get_selected_warninglists_body import GetSelectedWarninglistsBody
 from mmisp.api_schemas.warninglists.toggle_enable_warninglists_body import ToggleEnableWarninglistsBody
 from mmisp.api_schemas.warninglists.toggle_enable_warninglists_response import ToggleEnableWarninglistsResponse
-from mmisp.api_schemas.warninglists.update_all_warninglists_response import UpdateAllWarninglistsResponse
-from mmisp.api_schemas.warninglists.warninglist_response import WarninglistEntryResponse, WarninglistResponse
+from mmisp.api_schemas.warninglists.warninglist_response import (
+    WarninglistResponse,
+)
 from mmisp.db.database import get_db, with_session_management
-from mmisp.db.models.warninglist import Warninglist, WarninglistEntry
+from mmisp.db.models.warninglist import Warninglist, WarninglistEntry, WarninglistType
 
 router = APIRouter(tags=["warninglists"])
 
@@ -60,6 +62,7 @@ async def get_warninglist_details(
     "/warninglists/toggleEnable",
     status_code=status.HTTP_200_OK,
     response_model=ToggleEnableWarninglistsResponse,
+    response_model_exclude_unset=True,
     summary="Disable/Enable warninglist",
     description="Disable/Enable a specific warninglist by its ID or name.",
 )
@@ -124,7 +127,7 @@ async def get_warninglists_by_value(
 @router.put(
     "/warninglists",
     status_code=status.HTTP_200_OK,
-    response_model=UpdateAllWarninglistsResponse,
+    response_model=StandardStatusResponse,
     summary="Update warninglists",
     description="Update all warninglists.",
 )
@@ -132,15 +135,18 @@ async def get_warninglists_by_value(
 async def update_all_warninglists(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
-) -> dict:
+) -> StandardStatusResponse:
     return await _update_all_warninglists(db, False)
+
+
+# --- deprecated ---
 
 
 @router.post(
     "/warninglists/update",
     deprecated=True,
     status_code=status.HTTP_200_OK,
-    response_model=UpdateAllWarninglistsResponse,
+    response_model=StandardStatusResponse,
     summary="Update warninglists (Deprecated)",
     description="Deprecated. Update all warninglists.",
 )
@@ -148,7 +154,7 @@ async def update_all_warninglists(
 async def update_all_warninglists_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
-) -> dict:
+) -> StandardStatusResponse:
     return await _update_all_warninglists(db, True)
 
 
@@ -191,28 +197,25 @@ async def _add_warninglist(
     db: Session,
     body: CreateWarninglistBody,
 ) -> dict:
-    warninglist_entry_count = len(body.values.splitlines())
     create = body.dict()
     create.pop("values")
-    new_warninglist = Warninglist(
-        **{
-            **create,
-            "warninglist_entry_count": warninglist_entry_count,
-        }
-    )
+    create.pop("valid_attributes")
+    new_warninglist = Warninglist(**{**create})
 
     db.add(new_warninglist)
     db.flush()
     db.refresh(new_warninglist)
 
     new_warninglist_entries = _create_warninglist_entries(body.values, new_warninglist.id)
+    new_warninglist_types = _create_warninglist_types(body.valid_attributes, new_warninglist.id)
 
     db.add_all(new_warninglist_entries)
+    db.add_all(new_warninglist_types)
     db.commit()
 
-    warninglist_data = _prepare_warninglist_response(new_warninglist, new_warninglist_entries)
+    warninglist_data = _prepare_warninglist_details_response(db, new_warninglist)
 
-    return warninglist_data
+    return WarninglistResponse(Warninglist=warninglist_data)
 
 
 async def _toggleEnable(
@@ -234,21 +237,14 @@ async def _toggleEnable(
 
     db.commit()
 
-    errors = ""
-    success = ""
-    if not len(warninglists):
-        status = False
-        errors = "Warninglist(s) not found"
-    else:
-        action = "enabled"
+    if not warninglists:
+        return ToggleEnableWarninglistsResponse(saved=False, errors="Warninglist(s) not found")
 
-        if not body.enabled:
-            action = "disabled"
+    action = "enabled"
+    if not body.enabled:
+        action = "disabled"
 
-        status = True
-        success = f"{len(warninglists)} warninglist(s) {action}"
-
-    return ToggleEnableWarninglistsResponse(saved=status, success=success, errors=errors)
+    return ToggleEnableWarninglistsResponse(saved=True, success=f"{len(warninglists)} warninglist(s) {action}")
 
 
 async def _get_warninglist_details(
@@ -260,11 +256,9 @@ async def _get_warninglist_details(
     if not warninglist:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Warninglist not found.")
 
-    warninglist_entries = _get_warninglist_entries(db, warninglist_id)
+    warninglist_response = _prepare_warninglist_details_response(db, warninglist)
 
-    warninglist_data = _prepare_warninglist_response(warninglist, warninglist_entries)
-
-    return warninglist_data
+    return WarninglistResponse(Warninglist=warninglist_response)
 
 
 async def _delete_warninglist(
@@ -276,16 +270,32 @@ async def _delete_warninglist(
     if not warninglist:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Warninglist not found.")
 
-    warninglist_entries = _get_warninglist_entries(db, warninglist_id)
+    warninglist_entry_count = (
+        db.query(WarninglistEntry).filter(WarninglistEntry.warninglist_id == warninglist_id).count()
+    )
+    warninglist_entries = db.query(WarninglistEntry).filter(WarninglistEntry.warninglist_id == warninglist_id).all()
+    warninglist_types = db.query(WarninglistType).filter(WarninglistType.warninglist_id == warninglist_id).all()
 
-    for warninglist_entry in warninglist_entries:
-        db.delete(warninglist_entry)
+    attributes = [warninglist_type.type for warninglist_type in warninglist_types]
+    valid_attributes: str = ", ".join(attributes)
+
+    warninglist_response = warninglist.__dict__
+    warninglist_response["warninglist_entry_count"] = warninglist_entry_count
+    warninglist_response["valid_attributes"] = valid_attributes
+    warninglist_response["WarninglistEntry"] = [warninglist_entry.__dict__ for warninglist_entry in warninglist_entries]
+    warninglist_response["WarninglistType"] = [warninglist_type.__dict__ for warninglist_type in warninglist_types]
+
+    # for warninglist_entry in warninglist_entries:
+    #     db.delete(warninglist_entry)
+
+    # for warninglist_type in warninglist_types:
+    #     db.delete(warninglist_type)
 
     db.delete(warninglist)
 
     db.commit()
 
-    return _prepare_warninglist_response(warninglist, warninglist_entries)
+    return WarninglistResponse(Warninglist=warninglist_response)
 
 
 async def _get_all_or_selected_warninglists(
@@ -297,8 +307,7 @@ async def _get_all_or_selected_warninglists(
 
     warninglists_data = []
     for warninglist in warninglists:
-        warninglist_entries = _get_warninglist_entries(db, warninglist.id)
-        warninglists_data.append(_prepare_warninglist_response(warninglist, warninglist_entries))
+        warninglists_data.append(_prepare_warninglist_response(db, warninglist))
 
     return GetSelectedAllWarninglistsResponse(response=warninglists_data)
 
@@ -335,15 +344,15 @@ async def _get_warninglists_by_value(
 async def _update_all_warninglists(
     db: Session,
     deprecated: bool,
-) -> dict:
+) -> StandardStatusResponse:
     number_updated_lists = db.query(Warninglist).count()
     saved = True
     success = True
-    name = "Succesfully updated " + str(number_updated_lists) + "warninglists."
-    message = "Succesfully updated " + str(number_updated_lists) + "warninglists."
+    name = "Successfully updated " + str(number_updated_lists) + " warninglists."
+    message = "Successfully updated " + str(number_updated_lists) + " warninglists."
     url = "/warninglists/update" if deprecated else "/warninglists"
 
-    return UpdateAllWarninglistsResponse(
+    return StandardStatusResponse(
         saved=saved,
         success=success,
         name=name,
@@ -361,8 +370,7 @@ async def _get_selected_warninglists(
     warninglists_data = []
 
     for warninglist in warninglists:
-        warninglist_entries = _get_warninglist_entries(db, int(warninglist.id))
-        warninglists_data.append(_prepare_warninglist_response(warninglist, warninglist_entries))
+        warninglists_data.append(_prepare_warninglist_response(db, warninglist))
 
     return GetSelectedAllWarninglistsResponse(response=warninglists_data)
 
@@ -386,10 +394,7 @@ def _search_warninglist(
     return warninglists
 
 
-def _create_warninglist_entries(
-    values: str,
-    warninglist_id: int,
-) -> list[WarninglistEntry]:
+def _create_warninglist_entries(values: str, warninglist_id: int) -> list[WarninglistEntry]:
     raw_text = values.splitlines()
     new_warninglist_entries = []
 
@@ -414,56 +419,56 @@ def _create_warninglist_entries(
     return new_warninglist_entries
 
 
+def _create_warninglist_types(valid_attributes: list[str], warninglist_id: int) -> list[WarninglistType]:
+    new_warninglist_types: list[WarninglistType] = []
+    for valid_attribute in valid_attributes:
+        new_warninglist_type = WarninglistType(type=valid_attribute, warninglist_id=warninglist_id)
+        new_warninglist_types.append(new_warninglist_type)
+
+    return new_warninglist_types
+
+
 def _convert_to_list(value: Any) -> list[str]:
     if not isinstance(value, list):
         return [value]
     return value
 
 
-def _prepare_warninglistEntry_response(warninglist_entry: WarninglistEntry) -> WarninglistEntryResponse:
-    if not warninglist_entry:
-        return None
+def _prepare_warninglist_response(db: Session, warninglist: Warninglist) -> dict:
+    warninglist_response = warninglist.__dict__
+    warninglist_response["warninglist_entry_count"] = _get_warninglist_entry_count(db, warninglist.id)
+    warninglist_response["valid_attributes"] = _get_valid_attributes(db, warninglist.id)
 
-    return WarninglistEntryResponse(
-        id=str(warninglist_entry.id),
-        value=warninglist_entry.value,
-        warninglist_id=warninglist_entry.warninglist_id,
-        comment=warninglist_entry.comment,
+    return warninglist_response
+
+
+def _prepare_warninglist_details_response(db: Session, warninglist: Warninglist) -> dict:
+    warninglist_response = _prepare_warninglist_response(db, warninglist)
+    warninglist_response["WarninglistEntry"] = _get_warninglist_entries(db, warninglist.id)
+    warninglist_response["WarninglistType"] = _get_warninglist_types(db, warninglist.id)
+
+    return warninglist_response
+
+
+def _get_warninglist_types(db: Session, warninglist_id: int) -> list[dict]:
+    warninglist_types = db.query(WarninglistType).filter(WarninglistType.warninglist_id == warninglist_id).all()
+    return [warninglist_type.__dict__ for warninglist_type in warninglist_types]
+
+
+def _get_warninglist_entries(db: Session, warninglist_id: int) -> list[dict]:
+    warninglist_entries = db.query(WarninglistEntry).filter(WarninglistEntry.warninglist_id == warninglist_id).all()
+    return [warninglist_entry.__dict__ for warninglist_entry in warninglist_entries]
+
+
+def _get_warninglist_entry_count(db: Session, warninglist_id: int) -> int:
+    return db.query(WarninglistEntry).filter(WarninglistEntry.warninglist_id == warninglist_id).count()
+
+
+def _get_valid_attributes(db: Session, warninglist_id: int) -> str:
+    warninglist_types: list[WarninglistType] = (
+        db.query(WarninglistType).filter(WarninglistType.warninglist_id == warninglist_id).all()
     )
+    attributes = [warninglist_type.type for warninglist_type in warninglist_types]
+    valid_attributes: str = ", ".join(attributes)
 
-
-def _prepare_warninglist_response(
-    warninglist: Warninglist,
-    warninglist_entries: list[WarninglistEntry] | None,
-) -> WarninglistResponse:
-    warninglist_entries_response = []
-
-    if warninglist_entries:
-        for warninglist_entry in warninglist_entries:
-            warninglist_entries_response.append(_prepare_warninglistEntry_response(warninglist_entry))
-
-    warninglist_data = WarninglistResponse(
-        id=str(warninglist.id),
-        name=warninglist.name,
-        type=warninglist.type,
-        description=warninglist.description,
-        version=warninglist.version,
-        enabled=warninglist.enabled,
-        default=warninglist.default,
-        category=warninglist.category,
-        warninglist_entry_count=warninglist.warninglist_entry_count,
-        WarninglistEntry=warninglist_entries_response,
-    )
-
-    return warninglist_data
-
-
-def _get_warninglist_entries(
-    db: Session,
-    warninglist_id: int,
-) -> list[WarninglistEntry]:
-    warninglist_entries: list[WarninglistEntry] = (
-        db.query(WarninglistEntry).filter(WarninglistEntry.warninglist_id == str(warninglist_id)).all()
-    )
-
-    return warninglist_entries
+    return valid_attributes

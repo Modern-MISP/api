@@ -1,21 +1,6 @@
-from enum import Enum
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
 
-from sqlalchemy import Boolean, Column, Integer, String
-
-from ..database import Base
-
-
-class WarninglistType(Enum):
-    CIDR = "cidr"
-    HOSTNAME = "hostname"
-    STRING = "string"
-    SUBSTRING = "substring"
-    REGEX = "regex"
-
-
-class WarninglistCategory(Enum):
-    FALSE_POSITIVE = "False positive"
-    KNOWN_IDENTIFIER = "Known identifier"
+from mmisp.db.database import Base
 
 
 class Warninglist(Base):
@@ -36,5 +21,13 @@ class WarninglistEntry(Base):
 
     id = Column(Integer, primary_key=True, nullable=False)
     value = Column(String(255), nullable=False)
-    warninglist_id = Column(Integer, nullable=False)
+    warninglist_id = Column(Integer, ForeignKey(Warninglist.id, ondelete="CASCADE"), nullable=False)
     comment = Column(String(255), nullable=True)
+
+
+class WarninglistType(Base):
+    __tablename__ = "warninglist_types"
+
+    id = Column(Integer, primary_key=True, nullable=False)
+    type = Column(String(255), nullable=False)
+    warninglist_id = Column(Integer, ForeignKey(Warninglist.id, ondelete="CASCADE"), nullable=False)
