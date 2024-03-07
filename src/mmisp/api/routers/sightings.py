@@ -178,19 +178,23 @@ async def get_sightings_at_index_depr(
 async def _add_sighting(db: Session, body: SightingCreateBody) -> list[dict[str, Any]]:
     filters: SightingFiltersBody | None = body.filters.dict(exclude_unset=True) if body.filters else None
     responses: list[SightingsGetResponse] = []
+    attributes: list[Attribute] = []
 
-    if body.filters.return_format is None:
+    if filters and body.filters.return_format is None:
         body.filters.return_format = "json"
-    else:
+    elif filters:
         _check_valid_return_format(return_format=body.filters.return_format)
 
     for value in body.values:
         value_specific_filters = {"value": value}
         if filters:
             value_specific_filters.update(filters)
-            attributes: list[Attribute] = _build_query(db=db, filters=value_specific_filters)
+            attributes = _build_query(db=db, filters=value_specific_filters)
         else:
-            attributes = db.query(Attribute).filter(Attribute.value == value).all()
+            attributes = db.query(Attribute).filter(Attribute.value1 == value).all()
+
+        if not attributes:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, detail="No Attributes with given values found.")
 
         for attribute in attributes:
             sighting: Sighting = Sighting(
@@ -336,8 +340,8 @@ def _build_query(db: Session, filters: SightingFiltersBody) -> list[Attribute]:
     search_body: SightingFiltersBody = SightingFiltersBody(**filters)
     query: Attribute = db.query(Attribute)
 
-    if search_body.value:
-        query = query.filter(Attribute.value == search_body.value)
+    if search_body.value1:
+        query = query.filter(Attribute.value1 == search_body.value1)
 
     if search_body.value1:
         query = query.filter(Attribute.value1 == search_body.value1)
@@ -403,12 +407,6 @@ def _build_query(db: Session, filters: SightingFiltersBody) -> list[Attribute]:
     if search_body.requested_attributes:
         for attribute in search_body.requested_attributes:
             query = query.filter(Attribute.id == attribute)
-
-    # if search_body.object_relation:
-    #     objects = db.query(Object).filter(Object.object_relation == search_body.object_relation).all()
-
-    # for object in objects:
-    #     query = query.filter(Attribute.object_id == object.id)
 
     if search_body.limit:
         query = query.limit(int(search_body.limit))

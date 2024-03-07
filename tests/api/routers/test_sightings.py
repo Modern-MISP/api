@@ -1,14 +1,13 @@
 from datetime import datetime
-from time import time
 from typing import Any
-from uuid import uuid4
 
 import pytest
+from sqlalchemy.orm import Session
 
 from mmisp.db.models.attribute import Attribute
 from mmisp.db.models.event import Event
-from tests.database import get_db
 from tests.environment import client, environment
+from tests.generators.model_generators.sharing_group_generator import generate_sharing_group
 from tests.generators.sighting_generator import (
     generate_valid_random_sighting_data,
 )
@@ -16,8 +15,6 @@ from tests.generators.sighting_generator import (
 
 @pytest.fixture(
     params=[
-        generate_valid_random_sighting_data().dict(),
-        generate_valid_random_sighting_data().dict(),
         generate_valid_random_sighting_data().dict(),
         generate_valid_random_sighting_data().dict(),
         generate_valid_random_sighting_data().dict(),
@@ -29,16 +26,22 @@ def sighting_data(request: Any) -> dict[str, Any]:
 
 class TestAddSighting:
     @staticmethod
-    def test_add_sighting(sighting_data: dict[str, Any]) -> None:
-        db = get_db()
-
+    def test_add_sighting(sighting_data: dict[str, Any], db: Session) -> None:
+        sharing_group = generate_sharing_group()
+        sharing_group.organisation_uuid = environment.instance_owner_org.uuid
+        sharing_group.org_id = environment.instance_owner_org.id
+        db.add(sharing_group)
+        db.flush()
+        db.refresh(sharing_group)
         event = Event(
+            user_id=environment.instance_owner_org_admin_user.id,
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
             date=datetime.utcnow(),
-            analysis="test",
-            event_creator_email=generate_unique_email(),
+            analysis=0,
+            sharing_group_id=sharing_group.id,
+            threat_level_id=0,
         )
         db.add(event)
         db.flush()
@@ -49,7 +52,8 @@ class TestAddSighting:
                 event_id=event.id,
                 category="test",
                 type="test",
-                value=val,
+                value1=val,
+                sharing_group_id=sharing_group.id,
             )
 
             db.add(attributes)
@@ -62,16 +66,22 @@ class TestAddSighting:
         assert "sightings" in response.json()
 
     @staticmethod
-    def test_add_sighting_with_invalid_data(sighting_data: dict[str, Any]) -> None:
-        db = get_db()
-
+    def test_add_sighting_with_invalid_data(sighting_data: dict[str, Any], db: Session) -> None:
+        sharing_group = generate_sharing_group()
+        sharing_group.organisation_uuid = environment.instance_owner_org.uuid
+        sharing_group.org_id = environment.instance_owner_org.id
+        db.add(sharing_group)
+        db.flush()
+        db.refresh(sharing_group)
         event = Event(
+            user_id=environment.instance_owner_org_admin_user.id,
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
             date=datetime.utcnow(),
-            analysis="test",
-            event_creator_email=generate_unique_email(),
+            analysis=0,
+            sharing_group_id=sharing_group.id,
+            threat_level_id=0,
         )
         db.add(event)
         db.flush()
@@ -82,7 +92,8 @@ class TestAddSighting:
                 event_id=event.id,
                 category="test",
                 type="test",
-                value=val,
+                value1=val,
+                sharing_group_id=sharing_group.id,
             )
 
             db.add(attributes)
@@ -98,16 +109,22 @@ class TestAddSighting:
         assert response_second.status_code == 201
 
     @staticmethod
-    def test_add_sighting_missing_required_fields(sighting_data: dict[str, Any]) -> None:
-        db = get_db()
-
+    def test_add_sighting_missing_required_fields(sighting_data: dict[str, Any], db: Session) -> None:
+        sharing_group = generate_sharing_group()
+        sharing_group.organisation_uuid = environment.instance_owner_org.uuid
+        sharing_group.org_id = environment.instance_owner_org.id
+        db.add(sharing_group)
+        db.flush()
+        db.refresh(sharing_group)
         event = Event(
+            user_id=environment.instance_owner_org_admin_user.id,
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
             date=datetime.utcnow(),
-            analysis="test",
-            event_creator_email=generate_unique_email(),
+            analysis=0,
+            sharing_group_id=sharing_group.id,
+            threat_level_id=0,
         )
         db.add(event)
         db.flush()
@@ -118,7 +135,8 @@ class TestAddSighting:
                 event_id=event.id,
                 category="test",
                 type="test",
-                value=val,
+                value1=val,
+                sharing_group_id=sharing_group.id,
             )
 
             db.add(attributes)
@@ -135,16 +153,22 @@ class TestAddSighting:
 
 class TestAddSightingAtIndex:
     @staticmethod
-    def test_add_sightings_at_index_success(sighting_data: dict[str, Any]) -> None:
-        db = get_db()
-
+    def test_add_sightings_at_index_success(sighting_data: dict[str, Any], db: Session) -> None:
+        sharing_group = generate_sharing_group()
+        sharing_group.organisation_uuid = environment.instance_owner_org.uuid
+        sharing_group.org_id = environment.instance_owner_org.id
+        db.add(sharing_group)
+        db.flush()
+        db.refresh(sharing_group)
         event = Event(
+            user_id=environment.instance_owner_org_admin_user.id,
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
             date=datetime.utcnow(),
-            analysis="test",
-            event_creator_email=generate_unique_email(),
+            analysis=0,
+            sharing_group_id=sharing_group.id,
+            threat_level_id=0,
         )
         db.add(event)
         db.flush()
@@ -154,7 +178,8 @@ class TestAddSightingAtIndex:
             event_id=event.id,
             category="test",
             type="test",
-            value=sighting_data["values"][0],
+            value1=sighting_data["values"][0],
+            sharing_group_id=sharing_group.id,
         )
 
         db.add(attribute)
@@ -170,16 +195,22 @@ class TestAddSightingAtIndex:
         assert "attribute_id" in response.json()["sightings"][0]
 
     @staticmethod
-    def test_add_sighting_at_index_invalid_attribute(sighting_data: dict[str, Any]) -> None:
-        db = get_db()
-
+    def test_add_sighting_at_index_invalid_attribute(sighting_data: dict[str, Any], db: Session) -> None:
+        sharing_group = generate_sharing_group()
+        sharing_group.organisation_uuid = environment.instance_owner_org.uuid
+        sharing_group.org_id = environment.instance_owner_org.id
+        db.add(sharing_group)
+        db.flush()
+        db.refresh(sharing_group)
         event = Event(
+            user_id=environment.instance_owner_org_admin_user.id,
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
             date=datetime.utcnow(),
-            analysis="test",
-            event_creator_email=generate_unique_email(),
+            analysis=0,
+            sharing_group_id=sharing_group.id,
+            threat_level_id=0,
         )
         db.add(event)
         db.flush()
@@ -189,7 +220,8 @@ class TestAddSightingAtIndex:
             event_id=event.id,
             category="test",
             type="test",
-            value=sighting_data["values"][0],
+            value1=sighting_data["values"][0],
+            sharing_group_id=sharing_group.id,
         )
 
         db.add(attribute)
@@ -204,16 +236,22 @@ class TestAddSightingAtIndex:
 
 class TestGetSighting:
     @staticmethod
-    def test_get_sighting_success(sighting_data: dict[str, Any]) -> None:
-        db = get_db()
-
+    def test_get_sighting_success(sighting_data: dict[str, Any], db: Session) -> None:
+        sharing_group = generate_sharing_group()
+        sharing_group.organisation_uuid = environment.instance_owner_org.uuid
+        sharing_group.org_id = environment.instance_owner_org.id
+        db.add(sharing_group)
+        db.flush()
+        db.refresh(sharing_group)
         event = Event(
+            user_id=environment.instance_owner_org_admin_user.id,
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
             date=datetime.utcnow(),
-            analysis="test",
-            event_creator_email=generate_unique_email(),
+            analysis=0,
+            sharing_group_id=sharing_group.id,
+            threat_level_id=0,
         )
         db.add(event)
         db.flush()
@@ -223,7 +261,8 @@ class TestGetSighting:
             event_id=event.id,
             category="test",
             type="test",
-            value=sighting_data["values"][0],
+            value1=sighting_data["values"][0],
+            sharing_group_id=sharing_group.id,
         )
 
         db.add(attribute)
@@ -237,16 +276,22 @@ class TestGetSighting:
 
 class TestDeleteSighting:
     @staticmethod
-    def test_delete_sighting_success(sighting_data: dict[str, Any]) -> None:
-        db = get_db()
-
+    def test_delete_sighting_success(sighting_data: dict[str, Any], db: Session) -> None:
+        sharing_group = generate_sharing_group()
+        sharing_group.organisation_uuid = environment.instance_owner_org.uuid
+        sharing_group.org_id = environment.instance_owner_org.id
+        db.add(sharing_group)
+        db.flush()
+        db.refresh(sharing_group)
         event = Event(
+            user_id=environment.instance_owner_org_admin_user.id,
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
             date=datetime.utcnow(),
-            analysis="test",
-            event_creator_email=generate_unique_email(),
+            analysis=0,
+            sharing_group_id=sharing_group.id,
+            threat_level_id=0,
         )
         db.add(event)
         db.flush()
@@ -256,7 +301,8 @@ class TestDeleteSighting:
             event_id=event.id,
             category="test",
             type="test",
-            value=sighting_data["values"][0],
+            value1=sighting_data["values"][0],
+            sharing_group_id=sharing_group.id,
         )
 
         db.add(attribute)
@@ -279,16 +325,22 @@ class TestDeleteSighting:
         assert response_data["name"] == "Sighting successfully deleted."
 
     @staticmethod
-    def test_delete_sighting_invalid_id(sighting_data: dict[str, Any]) -> None:
-        db = get_db()
-
+    def test_delete_sighting_invalid_id(sighting_data: dict[str, Any], db: Session) -> None:
+        sharing_group = generate_sharing_group()
+        sharing_group.organisation_uuid = environment.instance_owner_org.uuid
+        sharing_group.org_id = environment.instance_owner_org.id
+        db.add(sharing_group)
+        db.flush()
+        db.refresh(sharing_group)
         event = Event(
+            user_id=environment.instance_owner_org_admin_user.id,
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
             date=datetime.utcnow(),
-            analysis="test",
-            event_creator_email=generate_unique_email(),
+            analysis=0,
+            sharing_group_id=sharing_group.id,
+            threat_level_id=0,
         )
         db.add(event)
         db.flush()
@@ -298,7 +350,8 @@ class TestDeleteSighting:
             event_id=event.id,
             category="test",
             type="test",
-            value=sighting_data["values"][0],
+            value1=sighting_data["values"][0],
+            sharing_group_id=sharing_group.id,
         )
 
         db.add(attribute)
@@ -320,16 +373,22 @@ class TestDeleteSighting:
 
 class TestGetAllSightings:
     @staticmethod
-    def test_get_all_sightings_success(sighting_data: dict[str, Any]) -> None:
-        db = get_db()
-
+    def test_get_all_sightings_success(sighting_data: dict[str, Any], db: Session) -> None:
+        sharing_group = generate_sharing_group()
+        sharing_group.organisation_uuid = environment.instance_owner_org.uuid
+        sharing_group.org_id = environment.instance_owner_org.id
+        db.add(sharing_group)
+        db.flush()
+        db.refresh(sharing_group)
         event = Event(
+            user_id=environment.instance_owner_org_admin_user.id,
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
             date=datetime.utcnow(),
-            analysis="test",
-            event_creator_email=generate_unique_email(),
+            analysis=0,
+            sharing_group_id=sharing_group.id,
+            threat_level_id=0,
         )
         db.add(event)
         db.flush()
@@ -339,7 +398,8 @@ class TestGetAllSightings:
             event_id=event.id,
             category="test",
             type="test",
-            value=sighting_data["values"][0],
+            value1=sighting_data["values"][0],
+            sharing_group_id=sharing_group.id,
         )
 
         db.add(attribute)
@@ -355,16 +415,22 @@ class TestGetAllSightings:
         assert isinstance(response.json()["sightings"], list)
 
     @staticmethod
-    def test_get_sightings_response_format(sighting_data: dict[str, Any]) -> None:
-        db = get_db()
-
+    def test_get_sightings_response_format(sighting_data: dict[str, Any], db: Session) -> None:
+        sharing_group = generate_sharing_group()
+        sharing_group.organisation_uuid = environment.instance_owner_org.uuid
+        sharing_group.org_id = environment.instance_owner_org.id
+        db.add(sharing_group)
+        db.flush()
+        db.refresh(sharing_group)
         event = Event(
+            user_id=environment.instance_owner_org_admin_user.id,
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
             date=datetime.utcnow(),
-            analysis="test",
-            event_creator_email=generate_unique_email(),
+            analysis=0,
+            sharing_group_id=sharing_group.id,
+            threat_level_id=0,
         )
         db.add(event)
         db.flush()
@@ -374,7 +440,8 @@ class TestGetAllSightings:
             event_id=event.id,
             category="test",
             type="test",
-            value=sighting_data["values"][0],
+            value1=sighting_data["values"][0],
+            sharing_group_id=sharing_group.id,
         )
 
         db.add(attribute)
@@ -400,10 +467,3 @@ class TestGetAllSightings:
             assert "org_id" in sighting_wrapper
             assert "date_sighting" in sighting_wrapper
             assert "organisation" in sighting_wrapper
-
-
-def generate_unique_email() -> str:
-    timestamp = int(time())
-    random_str = uuid4().hex
-    email = f"unique-{timestamp}-{random_str}@test"
-    return email

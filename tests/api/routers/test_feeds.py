@@ -22,8 +22,6 @@ from tests.generators.model_generators.sharing_group_generator import generate_s
         generate_valid_required_feed_data().dict(),
         generate_valid_feed_data().dict(),
         generate_random_valid_feed_data().dict(),
-        generate_random_valid_feed_data().dict(),
-        generate_random_valid_feed_data().dict(),
     ]
 )
 def feed_data(request: Any) -> dict[str, Any]:
@@ -47,6 +45,7 @@ class TestAddFeed:
             exportable=False,
             org_id=environment.instance_owner_org.id,
             user_id=environment.instance_owner_org_admin_user.id,
+            local_only=True,
         )
         db.add(tag)
         db.flush()
@@ -54,12 +53,14 @@ class TestAddFeed:
         feed_data["tag_id"] = tag.id
 
         event = Event(
+            user_id=environment.instance_owner_org_admin_user.id,
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
             date=datetime.utcnow(),
-            analysis="test",
-            event_creator_email=generate_unique_email(),
+            analysis=0,
+            sharing_group_id=feed_data["sharing_group_id"],
+            threat_level_id=0,
         )
         db.add(event)
         db.flush()
@@ -99,6 +100,7 @@ class TestAddFeed:
             exportable=False,
             org_id=environment.instance_owner_org.id,
             user_id=environment.instance_owner_org_admin_user.id,
+            local_only=True,
         )
         db.add(tag)
         db.flush()
@@ -106,12 +108,14 @@ class TestAddFeed:
         feed_data["tag_id"] = tag.id
 
         event = Event(
+            user_id=environment.instance_owner_org_admin_user.id,
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
             date=datetime.utcnow(),
-            analysis="test",
-            event_creator_email=generate_unique_email(),
+            analysis=0,
+            sharing_group_id=feed_data["sharing_group_id"],
+            threat_level_id=0,
         )
         db.add(event)
         db.flush()
@@ -152,6 +156,7 @@ class TestEnableFeed:
             exportable=False,
             org_id=environment.instance_owner_org.id,
             user_id=environment.instance_owner_org_admin_user.id,
+            local_only=True,
         )
         db.add(tag)
         db.flush()
@@ -159,12 +164,14 @@ class TestEnableFeed:
         feed_data["tag_id"] = tag.id
 
         event = Event(
+            user_id=environment.instance_owner_org_admin_user.id,
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
             date=datetime.utcnow(),
-            analysis="test",
-            event_creator_email=generate_unique_email(),
+            analysis=0,
+            sharing_group_id=feed_data["sharing_group_id"],
+            threat_level_id=0,
         )
         db.add(event)
         db.flush()
@@ -203,6 +210,7 @@ class TestEnableFeed:
             exportable=False,
             org_id=environment.instance_owner_org.id,
             user_id=environment.instance_owner_org_admin_user.id,
+            local_only=True,
         )
         db.add(tag)
         db.flush()
@@ -210,12 +218,14 @@ class TestEnableFeed:
         feed_data["tag_id"] = tag.id
 
         event = Event(
+            user_id=environment.instance_owner_org_admin_user.id,
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
             date=datetime.utcnow(),
-            analysis="test",
-            event_creator_email=generate_unique_email(),
+            analysis=0,
+            sharing_group_id=feed_data["sharing_group_id"],
+            threat_level_id=0,
         )
         db.add(event)
         db.flush()
@@ -250,6 +260,7 @@ class TestDisableFeed:
             exportable=False,
             org_id=environment.instance_owner_org.id,
             user_id=environment.instance_owner_org_admin_user.id,
+            local_only=True,
         )
         db.add(tag)
         db.flush()
@@ -257,12 +268,14 @@ class TestDisableFeed:
         feed_data["tag_id"] = tag.id
 
         event = Event(
+            user_id=environment.instance_owner_org_admin_user.id,
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
             date=datetime.utcnow(),
-            analysis="test",
-            event_creator_email=generate_unique_email(),
+            analysis=0,
+            sharing_group_id=feed_data["sharing_group_id"],
+            threat_level_id=0,
         )
         db.add(event)
         db.flush()
@@ -301,6 +314,7 @@ class TestDisableFeed:
             exportable=False,
             org_id=environment.instance_owner_org.id,
             user_id=environment.instance_owner_org_admin_user.id,
+            local_only=True,
         )
         db.add(tag)
         db.flush()
@@ -308,12 +322,14 @@ class TestDisableFeed:
         feed_data["tag_id"] = tag.id
 
         event = Event(
+            user_id=environment.instance_owner_org_admin_user.id,
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
             date=datetime.utcnow(),
-            analysis="test",
-            event_creator_email=generate_unique_email(),
+            analysis=0,
+            sharing_group_id=feed_data["sharing_group_id"],
+            threat_level_id=0,
         )
         db.add(event)
         db.flush()
@@ -406,6 +422,7 @@ class TestGetFeedByIdInfo:
             exportable=False,
             org_id=environment.instance_owner_org.id,
             user_id=environment.instance_owner_org_admin_user.id,
+            local_only=True,
         )
         db.add(tag)
         db.flush()
@@ -413,12 +430,14 @@ class TestGetFeedByIdInfo:
         feed_data["tag_id"] = tag.id
 
         event = Event(
+            user_id=environment.instance_owner_org_admin_user.id,
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
             date=datetime.utcnow(),
-            analysis="test",
-            event_creator_email=generate_unique_email(),
+            analysis=0,
+            sharing_group_id=feed_data["sharing_group_id"],
+            threat_level_id=0,
         )
         db.add(event)
         db.flush()
@@ -465,6 +484,7 @@ class TestGetFeedByIdInfo:
             exportable=False,
             org_id=environment.instance_owner_org.id,
             user_id=environment.instance_owner_org_admin_user.id,
+            local_only=True,
         )
         db.add(tag)
         db.flush()
@@ -472,12 +492,14 @@ class TestGetFeedByIdInfo:
         feed_data["tag_id"] = tag.id
 
         event = Event(
+            user_id=environment.instance_owner_org_admin_user.id,
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
             date=datetime.utcnow(),
-            analysis="test",
-            event_creator_email=generate_unique_email(),
+            analysis=0,
+            sharing_group_id=feed_data["sharing_group_id"],
+            threat_level_id=0,
         )
         db.add(event)
         db.flush()
@@ -516,6 +538,7 @@ class TestUpdateFeed:
             exportable=False,
             org_id=environment.instance_owner_org.id,
             user_id=environment.instance_owner_org_admin_user.id,
+            local_only=True,
         )
         db.add(tag)
         db.flush()
@@ -523,12 +546,14 @@ class TestUpdateFeed:
         feed_data["tag_id"] = tag.id
 
         event = Event(
+            user_id=environment.instance_owner_org_admin_user.id,
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
             date=datetime.utcnow(),
-            analysis="test",
-            event_creator_email=generate_unique_email(),
+            analysis=0,
+            sharing_group_id=feed_data["sharing_group_id"],
+            threat_level_id=0,
         )
         db.add(event)
         db.flush()
@@ -571,6 +596,7 @@ class TestUpdateFeed:
             exportable=False,
             org_id=environment.instance_owner_org.id,
             user_id=environment.instance_owner_org_admin_user.id,
+            local_only=True,
         )
         db.add(tag)
         db.flush()
@@ -578,12 +604,14 @@ class TestUpdateFeed:
         feed_data["tag_id"] = tag.id
 
         event = Event(
+            user_id=environment.instance_owner_org_admin_user.id,
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
             date=datetime.utcnow(),
-            analysis="test",
-            event_creator_email=generate_unique_email(),
+            analysis=0,
+            sharing_group_id=feed_data["sharing_group_id"],
+            threat_level_id=0,
         )
         db.add(event)
         db.flush()
@@ -622,6 +650,7 @@ class TestToggleFeed:
             exportable=False,
             org_id=environment.instance_owner_org.id,
             user_id=environment.instance_owner_org_admin_user.id,
+            local_only=True,
         )
         db.add(tag)
         db.flush()
@@ -629,12 +658,14 @@ class TestToggleFeed:
         feed_data["tag_id"] = tag.id
 
         event = Event(
+            user_id=environment.instance_owner_org_admin_user.id,
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
             date=datetime.utcnow(),
-            analysis="test",
-            event_creator_email=generate_unique_email(),
+            analysis=0,
+            sharing_group_id=feed_data["sharing_group_id"],
+            threat_level_id=0,
         )
         db.add(event)
         db.flush()
@@ -691,6 +722,7 @@ class TestToggleFeed:
             exportable=False,
             org_id=environment.instance_owner_org.id,
             user_id=environment.instance_owner_org_admin_user.id,
+            local_only=True,
         )
         db.add(tag)
         db.flush()
@@ -698,12 +730,14 @@ class TestToggleFeed:
         feed_data["tag_id"] = tag.id
 
         event = Event(
+            user_id=environment.instance_owner_org_admin_user.id,
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
             date=datetime.utcnow(),
-            analysis="test",
-            event_creator_email=generate_unique_email(),
+            analysis=0,
+            sharing_group_id=feed_data["sharing_group_id"],
+            threat_level_id=0,
         )
         db.add(event)
         db.flush()
@@ -799,6 +833,7 @@ class TestGetAllFeeds:
             exportable=False,
             org_id=environment.instance_owner_org.id,
             user_id=environment.instance_owner_org_admin_user.id,
+            local_only=True,
         )
         db.add(tag)
         db.flush()
@@ -806,12 +841,14 @@ class TestGetAllFeeds:
         feed_data["tag_id"] = tag.id
 
         event = Event(
+            user_id=environment.instance_owner_org_admin_user.id,
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
             date=datetime.utcnow(),
-            analysis="test",
-            event_creator_email=generate_unique_email(),
+            analysis=0,
+            sharing_group_id=feed_data["sharing_group_id"],
+            threat_level_id=0,
         )
         db.add(event)
         db.flush()
@@ -844,6 +881,7 @@ class TestGetAllFeeds:
             exportable=False,
             org_id=environment.instance_owner_org.id,
             user_id=environment.instance_owner_org_admin_user.id,
+            local_only=True,
         )
         db.add(tag)
         db.flush()
@@ -851,12 +889,14 @@ class TestGetAllFeeds:
         feed_data["tag_id"] = tag.id
 
         event = Event(
+            user_id=environment.instance_owner_org_admin_user.id,
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
             date=datetime.utcnow(),
-            analysis="test",
-            event_creator_email=generate_unique_email(),
+            analysis=0,
+            sharing_group_id=feed_data["sharing_group_id"],
+            threat_level_id=0,
         )
         db.add(event)
         db.flush()
@@ -881,10 +921,3 @@ class TestGetAllFeeds:
             assert "name" in feed_wrapper
             assert "provider" in feed_wrapper
             assert "url" in feed_wrapper
-
-
-def generate_unique_email() -> str:
-    timestamp = int(time())
-    random_str = uuid4().hex
-    email = f"unique-{timestamp}-{random_str}@test"
-    return email
