@@ -35,7 +35,6 @@ class ObjectTemplate(Base):
     name = Column(String(255), index=True)
     user_id = Column(Integer, ForeignKey("users.id"), index=True, nullable=False)
     org_id = Column(Integer, ForeignKey("organisations.id"), index=True, nullable=False)
-    meta_category = Column(String(255), index=True)
     description = Column(String(255))
     version = Column(Integer, nullable=False)
     requirements = Column(String(255))

@@ -2,8 +2,6 @@ from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
 
 from mmisp.db.database import Base
 
-# from mmisp.util.uuid import uuid
-
 
 class Feed(Base):
     __tablename__ = "feeds"

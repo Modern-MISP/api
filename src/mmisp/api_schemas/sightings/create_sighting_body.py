@@ -2,7 +2,6 @@ from pydantic import BaseModel
 
 
 class SightingFiltersBody(BaseModel):
-    value: str | None = None
     value1: str | None = None
     value2: str | None = None
     type: str | None = None
@@ -22,8 +21,7 @@ class SightingFiltersBody(BaseModel):
     first_seen: str | None = None
     last_seen: str | None = None
     requested_attributes: list[str]
-    # object_relation: str | None = None
-    return_format: str | None = "json"
+    return_format: str | None = None
     limit: str | None = None
 
 
