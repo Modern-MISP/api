@@ -1,7 +1,5 @@
 from datetime import datetime
-from time import time
 from typing import Any
-from uuid import uuid4
 
 import pytest
 from sqlalchemy.orm import Session
@@ -51,12 +49,14 @@ class TestAddObject:
         db.refresh(object_template)
 
         event = Event(
+            user_id=environment.instance_owner_org_admin_user.id,
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
             date=datetime.utcnow(),
-            analysis="test",
-            event_creator_email=generate_unique_email(),
+            analysis=0,
+            sharing_group_id=object_data["sharing_group_id"],
+            threat_level_id=0,
         )
         db.add(event)
         db.flush()
@@ -94,12 +94,14 @@ class TestAddObject:
         db.refresh(object_template)
 
         event = Event(
+            user_id=environment.instance_owner_org_admin_user.id,
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
             date=datetime.utcnow(),
-            analysis="test",
-            event_creator_email=generate_unique_email(),
+            analysis=0,
+            sharing_group_id=object_data["sharing_group_id"],
+            threat_level_id=0,
         )
         db.add(event)
         db.flush()
@@ -121,8 +123,6 @@ class TestAddObject:
     params=[
         generate_specific_search_query().dict(),
         generate_search_query().dict(),
-        generate_random_search_query().dict(),
-        generate_random_search_query().dict(),
         generate_random_search_query().dict(),
     ]
 )
@@ -187,12 +187,14 @@ class TestGetObjectInfo:
         db.refresh(object_template)
 
         event = Event(
+            user_id=environment.instance_owner_org_admin_user.id,
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
             date=datetime.utcnow(),
-            analysis="test",
-            event_creator_email=generate_unique_email(),
+            analysis=0,
+            sharing_group_id=object_data["sharing_group_id"],
+            threat_level_id=0,
         )
         db.add(event)
         db.flush()
@@ -241,12 +243,14 @@ class TestGetObjectInfo:
         db.refresh(object_template)
 
         event = Event(
+            user_id=environment.instance_owner_org_admin_user.id,
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
             date=datetime.utcnow(),
-            analysis="test",
-            event_creator_email=generate_unique_email(),
+            analysis=0,
+            sharing_group_id=object_data["sharing_group_id"],
+            threat_level_id=0,
         )
         db.add(event)
         db.flush()
@@ -294,12 +298,14 @@ class TestGetObjectInfo:
         db.refresh(object_template)
 
         event = Event(
+            user_id=environment.instance_owner_org_admin_user.id,
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
             date=datetime.utcnow(),
-            analysis="test",
-            event_creator_email=generate_unique_email(),
+            analysis=0,
+            sharing_group_id=object_data["sharing_group_id"],
+            threat_level_id=0,
         )
         db.add(event)
         db.flush()
@@ -343,12 +349,14 @@ class TestDeleteObject:
         db.refresh(object_template)
 
         event = Event(
+            user_id=environment.instance_owner_org_admin_user.id,
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
             date=datetime.utcnow(),
-            analysis="test",
-            event_creator_email=generate_unique_email(),
+            analysis=0,
+            sharing_group_id=object_data["sharing_group_id"],
+            threat_level_id=0,
         )
         db.add(event)
         db.flush()
@@ -393,12 +401,14 @@ class TestDeleteObject:
         db.refresh(object_template)
 
         event = Event(
+            user_id=environment.instance_owner_org_admin_user.id,
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
             date=datetime.utcnow(),
-            analysis="test",
-            event_creator_email=generate_unique_email(),
+            analysis=0,
+            sharing_group_id=object_data["sharing_group_id"],
+            threat_level_id=0,
         )
         db.add(event)
         db.flush()
@@ -451,12 +461,14 @@ class TestDeleteObject:
         db.refresh(object_template)
 
         event = Event(
+            user_id=environment.instance_owner_org_admin_user.id,
             org_id=environment.instance_owner_org.id,
             orgc_id=environment.instance_owner_org.id,
             info="test",
             date=datetime.utcnow(),
-            analysis="test",
-            event_creator_email=generate_unique_email(),
+            analysis=0,
+            sharing_group_id=object_data["sharing_group_id"],
+            threat_level_id=0,
         )
         db.add(event)
         db.flush()
@@ -477,10 +489,3 @@ class TestDeleteObject:
         response_delete = client.delete(f"/objects/{object_id}/invalid_value", headers=headers)
         assert response_delete.status_code == 422
         assert "detail" in response_delete.json()
-
-
-def generate_unique_email() -> str:
-    timestamp = int(time())
-    random_str = uuid4().hex
-    email = f"unique-{timestamp}-{random_str}@test"
-    return email
