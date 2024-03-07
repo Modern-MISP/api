@@ -9,7 +9,7 @@ class User(Base):
     id = Column(Integer, primary_key=True, nullable=False)
     password = Column(String(255), nullable=False)
     org_id = Column(Integer, ForeignKey("organisations.id"), nullable=False)
-    server_id = Column(Integer, ForeignKey("servers.id"), nullable=False, default=0)
+    server_id = Column(Integer, nullable=False, default=0)
     email = Column(String(255), nullable=False, unique=True)
     autoalert = Column(Boolean, default=False, nullable=False)
     authkey = Column(String(255), nullable=True, default=None)
