@@ -1,17 +1,21 @@
-from mmisp.db.models.warninglist import Warninglist, WarninglistEntry
+from datetime import datetime
+
+from mmisp.api_schemas.warninglists.create_warninglist_body import (
+    ValidAttribute,
+    WarninglistCategory,
+    WarninglistListType,
+)
+from mmisp.db.models.warninglist import Warninglist, WarninglistEntry, WarninglistType
 
 
 def generate_warninglist() -> Warninglist:
     return Warninglist(
-        name="test warning list",
-        type="test type",
+        name=f"test warninglist {datetime.utcnow()}",
+        type=WarninglistListType.CIDR.value,
         description="test description",
-        version=1,
         enabled=True,
         default=False,
-        category="test category",
-        warninglist_entry_count=0,
-        valid_attributes="test attributes",
+        category=WarninglistCategory.KNOWN_IDENTIFIER.value,
     )
 
 
@@ -21,3 +25,8 @@ def generate_warninglist_entry() -> WarninglistEntry:
         value="test value",
         comment=" test comment",
     )
+
+
+def generate_warninglist_type() -> WarninglistType:
+    """These fields need to be set manually: warninglist_id"""
+    return WarninglistType(type=ValidAttribute.MD5)
