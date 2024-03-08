@@ -341,12 +341,6 @@ def _build_query(db: Session, filters: ObjectSearchBody) -> list[Object]:
     if search_body.uuid:
         query = query.filter(Object.uuid == search_body.uuid)
 
-    if search_body.value:
-        attributes = db.query(Attribute).filter(Attribute.value == search_body.value).all()
-
-        for attribute in attributes:
-            query = query.filter(Object.id == attribute.object_id)
-
     if search_body.value1:
         attributes = db.query(Attribute).filter(Attribute.value1 == search_body.value1).all()
 

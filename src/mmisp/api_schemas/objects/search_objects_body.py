@@ -20,7 +20,6 @@ class ObjectSearchBody(BaseModel):
     event_timestamp: str | None = None
     org_id: str | None = None
     uuid: str | None = None
-    value: str | None = None
     value1: str | None = None  # new
     value2: str | None = None  # new
     type: str | None = None
