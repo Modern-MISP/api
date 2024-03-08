@@ -343,9 +343,6 @@ def _build_query(db: Session, filters: SightingFiltersBody) -> list[Attribute]:
     if search_body.value1:
         query = query.filter(Attribute.value1 == search_body.value1)
 
-    if search_body.value1:
-        query = query.filter(Attribute.value1 == search_body.value1)
-
     if search_body.value2:
         query = query.filter(Attribute.value2 == search_body.value2)
 
