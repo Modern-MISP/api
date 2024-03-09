@@ -6,7 +6,7 @@ from fastapi import HTTPException
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize, check_permissions, encode_exchange_token
 from mmisp.config import config
 from mmisp.db.database import get_db
-from mmisp.util.crypto import hash_auth_key
+from mmisp.util.crypto import hash_secret
 from tests.environment import environment
 from tests.generators.model_generators.auth_key_generator import generate_auth_key
 
@@ -54,7 +54,9 @@ class TestAuthorize:
 
         auth_key = generate_auth_key()
         auth_key.user_id = environment.site_admin_user.id
-        auth_key.authkey = hash_auth_key(clear_key)
+        auth_key.authkey = hash_secret(clear_key)
+        auth_key.authkey_start = clear_key[:4]
+        auth_key.authkey_end = clear_key[-4:]
 
         db.add(auth_key)
         db.commit()
@@ -76,7 +78,9 @@ class TestAuthorize:
 
         auth_key = generate_auth_key()
         auth_key.user_id = environment.site_admin_user.id
-        auth_key.authkey = hash_auth_key(clear_key)
+        auth_key.authkey = hash_secret(clear_key)
+        auth_key.authkey_start = clear_key[:4]
+        auth_key.authkey_end = clear_key[-4:]
         auth_key.expiration = time() - 10
 
         db.add(auth_key)
