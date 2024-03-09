@@ -73,7 +73,7 @@ class TestToggleEnableNoticelist:
     def test_toggleEnable_noticelist() -> None:
         headers = {"authorization": environment.site_admin_user_token}
 
-        noticelist_ids = add_noticelists(1)
+        noticelist_ids = add_noticelists(3)
 
         for noticelist_id in noticelist_ids:
             response = client.post(f"/noticelists/toggleEnable/{noticelist_id}", headers=headers)
