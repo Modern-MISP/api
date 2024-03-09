@@ -12,7 +12,6 @@ from tests.api.helpers.tags_helper import (
     generate_valid_tag_data,
     get_invalid_tags,
     get_non_existing_tags,
-    random_string,
     random_string_with_punctuation,
     remove_tags,
 )
@@ -44,28 +43,49 @@ class TestAddTag:
     @staticmethod
     def test_add_tag(tag_data: Dict[str, Any]) -> None:
         headers = {"authorization": environment.site_admin_user_token}
-        response = client.post("/tags/", json=tag_data, headers=headers)
+        response = client.post("/tags", json=tag_data, headers=headers)
         assert response.status_code == 201
 
-        remove_tags([response.json()["id"]])
+        remove_tags([response.json()["Tag"]["id"]])
+
+    @staticmethod
+    def test_add_tag_with_existing_name() -> None:
+        db: Session = get_db()
+        tag_id = add_tags(1)
+        tag_data = generate_valid_required_tag_data()
+        tag_data.name = db.get(Tag, tag_id[0]).name
+        headers = {"authorization": environment.site_admin_user_token}
+        response = client.post("/tags", json=tag_data.dict(), headers=headers)
+        assert response.status_code == 403
+
+        remove_tags(tag_id)
+
+    @staticmethod
+    def test_add_tag_with_invalid_colour() -> None:
+        tag_data = generate_valid_required_tag_data()
+        tag_data.colour = "#12345,"
+        headers = {"authorization": environment.site_admin_user_token}
+        response = client.post("/tags", json=tag_data.dict(), headers=headers)
+        assert response.status_code == 400
 
     @staticmethod
     def test_add_tag_invalid_data(invalid_tag_data: Any) -> None:
         headers = {"authorization": environment.site_admin_user_token}
-        response = client.post("/tags/", json=invalid_tag_data, headers=headers)
+        response = client.post("/tags", json=invalid_tag_data, headers=headers)
         assert response.status_code == 422
         assert response.json()["detail"][0]["msg"] == "field required" or "none is not an allowed value"
 
     @staticmethod
     def test_tag_response_format(tag_data: Dict[str, Any]) -> None:
-        tag_data.pop("name")
-        tag_data["name"] = random_string()
         headers = {"authorization": environment.site_admin_user_token}
-        response = client.post("/tags/", json=tag_data, headers=headers)
-        json = response.json()
-        json["name"] == tag_data["name"]
+        response = client.post("/tags", json=tag_data, headers=headers)
 
-        remove_tags([response.json()["id"]])
+        json = response.json()
+        json["Tag"]["name"] == tag_data["name"]
+        json["Tag"]["colour"] == tag_data["colour"]
+        json["Tag"]["exportable"] == tag_data["exportable"]
+
+        remove_tags([response.json()["Tag"]["id"]])
 
 
 class TestViewTag:
@@ -178,8 +198,8 @@ class TestEditTag:
         tags = add_tags(2)
         name = db.get(Tag, tags[0]).name
 
-        response = client.put(f"/tags/{tags[0]}", json={"name": name}, headers=headers)
-        assert response.status_code == 400
+        response = client.put(f"/tags/{tags[1]}", json={"name": name}, headers=headers)
+        assert response.status_code == 403
 
         remove_tags(tags)
 
@@ -193,7 +213,7 @@ class TestEditTag:
         assert response.headers["Content-Type"] == "application/json"
         json = response.json()
         print(json)
-        assert json["id"] == str(tag[0])
+        assert json["Tag"]["id"] == str(tag[0])
 
         remove_tags(tag)
 

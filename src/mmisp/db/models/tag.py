@@ -7,15 +7,13 @@ class Tag(Base):
     __tablename__ = "tags"
 
     id = Column(Integer, primary_key=True, nullable=False)
-    # uuid = Column(String(255), unique=True, default=uuid, nullable=False)
     name = Column(String(255), unique=True, nullable=False)
     colour = Column(String(255), nullable=False)
     exportable = Column(Boolean, nullable=False)
-    org_id = Column(Integer, ForeignKey("organisations.id"), nullable=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    org_id = Column(Integer, ForeignKey("organisations.id"), nullable=True, default=None)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True, default=None)
     hide_tag = Column(Boolean, default=False, nullable=False)
     numerical_value = Column(Integer, index=True)
-
-    local_only = Column(Integer, nullable=False)
     is_galaxy = Column(Boolean, default=False)
     is_custom_galaxy = Column(Boolean, default=False)
+    local_only = Column(Boolean, default=False)

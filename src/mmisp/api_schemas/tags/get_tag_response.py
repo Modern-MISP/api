@@ -6,13 +6,17 @@ class TagAttributesResponse(BaseModel):
     name: str
     colour: str
     exportable: bool
-    org_id: str
-    user_id: str
-    hide_tag: bool
+    org_id: str | None = None
+    user_id: str | None = None
+    hide_tag: bool | None = None
     numerical_value: str | None = None
-    is_galaxy: bool
-    is_custom_galaxy: bool
-    inherited: bool | None = None
+    is_galaxy: bool | None = None
+    is_custom_galaxy: bool | None = None
+    local_only: bool | None = None
+
+
+class TagResponse(BaseModel):
+    Tag: TagAttributesResponse
 
 
 class TagGetResponse(BaseModel):

@@ -7,10 +7,9 @@ from sqlalchemy.orm import Session
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
 from mmisp.api_schemas.tags.create_tag_body import TagCreateBody
 from mmisp.api_schemas.tags.delete_tag_response import TagDeleteResponse
-from mmisp.api_schemas.tags.get_tag_response import TagAttributesResponse, TagGetResponse
-from mmisp.api_schemas.tags.search_tags_response import TagCombinedModel, TagSearchResponse, TaxonomyPredicateResponse
+from mmisp.api_schemas.tags.get_tag_response import TagAttributesResponse, TagGetResponse, TagResponse
+from mmisp.api_schemas.tags.search_tags_response import TagSearchResponse
 from mmisp.api_schemas.tags.update_tag_body import TagUpdateBody
-from mmisp.api_schemas.taxonomies.get_taxonomy_response import TaxonomyView
 from mmisp.db.database import get_db, with_session_management
 from mmisp.db.models.attribute import AttributeTag
 from mmisp.db.models.feed import Feed
@@ -25,7 +24,7 @@ router = APIRouter(tags=["tags"])
 @router.post(
     "/tags",
     status_code=status.HTTP_201_CREATED,
-    response_model=partial(TagAttributesResponse),
+    response_model=TagResponse,
     summary="Add new tag",
     description="Add a new tag with given details.",
 )
@@ -73,7 +72,7 @@ async def search_tags(
 @router.put(
     "/tags/{tagId}",
     status_code=status.HTTP_200_OK,
-    response_model=TagAttributesResponse,
+    response_model=TagResponse,
     summary="Edit tag",
     description="Edit details of a specific tag.",
 )
@@ -118,10 +117,13 @@ async def get_tags(
     return await _get_tags(db)
 
 
+# --- deprecated ---
+
+
 @router.post(
     "/tags/add",
     status_code=status.HTTP_201_CREATED,
-    response_model=partial(TagAttributesResponse),
+    response_model=TagResponse,
     deprecated=True,
     summary="Add new tag (Deprecated)",
     description="Deprecated. Add a new tag using the old route.",
@@ -138,7 +140,7 @@ async def add_tag_depr(
 @router.get(
     "/tags/view/{tagId}",
     status_code=status.HTTP_200_OK,
-    response_model=partial(TagAttributesResponse),
+    response_model=TagAttributesResponse,
     deprecated=True,
     summary="View tag details (Deprecated)",
     description="Deprecated. View details of a specific tag using the old route.",
@@ -155,7 +157,7 @@ async def view_tag_depr(
 @router.post(
     "/tags/edit/{tagId}",
     status_code=status.HTTP_200_OK,
-    response_model=partial(TagAttributesResponse),
+    response_model=TagResponse,
     deprecated=True,
     summary="Edit tag (Deprecated)",
     description="Deprecated. Edit a specific tag using the old route.",
@@ -164,7 +166,7 @@ async def view_tag_depr(
 async def update_tag_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
-    body: TagCreateBody,
+    body: TagUpdateBody,
     tag_id: Annotated[int, Path(alias="tagId")],
 ) -> dict:
     return await _update_tag(db, body, tag_id)
@@ -188,14 +190,19 @@ async def delete_tag_depr(
 
 
 # --- endpoint logic ---
+# TODO: Edit/update and add Tag, set "is_galaxy", "is_custom_galaxy" always false
 async def _add_tag(db: Session, body: TagCreateBody) -> dict:
-    _check_type_hex_color(body.colour)
+    _check_type_hex_colour(body.colour)
     tag: Tag = Tag(**body.dict())
+
+    existing_tag = db.query(Tag).filter(Tag.name == body.name).first()
+    if existing_tag:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, detail="This tag name already exists.")
 
     db.add(tag)
     db.commit()
 
-    return tag.__dict__
+    return {"Tag": tag.__dict__}
 
 
 async def _view_tag(db: Session, tag_id: int) -> dict:
@@ -214,25 +221,33 @@ async def _search_tags(db: Session, tag_search_term: str) -> dict:
     for tag in tags:
         taxonomies = db.query(Taxonomy).filter(Taxonomy.namespace == tag.name.split(":", 1)[0]).all()
         for taxonomy in taxonomies:
-            taxonomy_predicate = db.query(TaxonomyPredicate).filter_by(taxonomy_id=taxonomy.id).first()
-            tag_datas.append(
-                TagCombinedModel(
-                    Tag(tag=tag.__dict__),
-                    TaxonomyView(taxonomy=taxonomy.__dict__),
-                    TaxonomyPredicateResponse(taxonomy_predicate=taxonomy_predicate.__dict__),
+            taxonomy_predicates = db.query(TaxonomyPredicate).filter_by(taxonomy_id=taxonomy.id).all()
+            for taxonomy_predicate in taxonomy_predicates:
+                tag_datas.append(
+                    {
+                        "Tag": tag.__dict__,
+                        "Taxonomy": taxonomy.__dict__,
+                        "TaxonomyPredicate": taxonomy_predicate.__dict__,
+                    }
                 )
-            )
 
-    return TagSearchResponse(root=[tag_data.__dict__ for tag_data in tag_datas])
+    return {"root": tag_datas}
 
 
-async def _update_tag(db: Session, body: TagCreateBody, tag_id: int) -> dict:
+async def _update_tag(db: Session, body: TagUpdateBody, tag_id: int) -> dict:
     tag: Tag | None = db.get(Tag, tag_id)
 
     if not tag:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Tag not found.")
 
-    _check_type_hex_color(body.colour)
+    if body.name:
+        existing_tag = db.query(Tag).filter(Tag.name == body.name).filter(Tag.id != tag_id).first()
+        if existing_tag:
+            raise HTTPException(status.HTTP_403_FORBIDDEN, detail="This tag name already exists.")
+
+    if body.colour:
+        _check_type_hex_colour(body.colour)
+
     update_data = body.dict()
 
     update_record(tag, update_data)
@@ -241,7 +256,7 @@ async def _update_tag(db: Session, body: TagCreateBody, tag_id: int) -> dict:
 
     db.refresh(tag)
 
-    return tag.__dict__
+    return {"Tag": tag.__dict__}
 
 
 async def _delete_tag(db: Session, tag_id: int) -> dict:
@@ -251,6 +266,7 @@ async def _delete_tag(db: Session, tag_id: int) -> dict:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Tag not found.")
     feeds = db.query(Feed).filter(Feed.tag_id == deleted_tag.id).all()
 
+    # TODO: check appearence of tags
     for feed in feeds:
         feed.tag_id = None
     attribute_tags = db.query(AttributeTag).filter(AttributeTag.tag_id == deleted_tag.id).all()
@@ -262,7 +278,7 @@ async def _delete_tag(db: Session, tag_id: int) -> dict:
 
     message = "Tag deleted."
 
-    return TagDeleteResponse(name=message, message=message, url=f"/tags/{tag_id}")
+    return {"name": message, "message": message, "url": f"/tags/{tag_id}"}
 
 
 async def _get_tags(db: Session) -> dict:
@@ -271,7 +287,7 @@ async def _get_tags(db: Session) -> dict:
     return TagGetResponse(tags=[tag.__dict__ for tag in tags])
 
 
-def _check_type_hex_color(colour: Any) -> None:
+def _check_type_hex_colour(colour: Any) -> None:
     _hex_string = re.compile(r"#[a-fA-F0-9]{6}$")
     if colour is None or not _hex_string.match(colour):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid colour code.")
