@@ -6,6 +6,7 @@ from typing import Annotated, Callable
 import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import APIKeyHeader
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from mmisp.config import config
@@ -13,7 +14,7 @@ from mmisp.db.database import get_db
 from mmisp.db.models.auth_key import AuthKey
 from mmisp.db.models.role import Role
 from mmisp.db.models.user import User
-from mmisp.util.crypto import hash_auth_key
+from mmisp.util.crypto import verify_secret
 
 
 class AuthStrategy(Enum):
@@ -245,9 +246,22 @@ def _decode_token(token: str) -> str | None:
 
 
 def _check_api_key(db: Session, authorization: str) -> tuple[int, int] | None:
-    hashed = hash_auth_key(authorization)
+    potential_auth_keys: list[AuthKey] = (
+        db.query(AuthKey)
+        .filter(
+            AuthKey.authkey_start == authorization[:4],
+            AuthKey.authkey_end == authorization[-4:],
+            or_(AuthKey.expiration == 0, AuthKey.expiration < int(time())),
+        )
+        .all()
+    )
 
-    auth_key: AuthKey | None = db.query(AuthKey).filter(AuthKey.authkey == hashed).first()
+    auth_key: AuthKey | None = None
+
+    for potential_auth_key in potential_auth_keys:
+        if verify_secret(authorization, potential_auth_key.authkey):
+            auth_key = potential_auth_key
+            break
 
     if not auth_key or (auth_key.expiration and auth_key.expiration < time()):
         return None

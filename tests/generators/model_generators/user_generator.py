@@ -1,13 +1,13 @@
 from time import time, time_ns
 
 from mmisp.db.models.user import User
-from mmisp.util.crypto import hash_password
+from mmisp.util.crypto import hash_secret
 
 
 def generate_user() -> User:
     """These fields need to be set manually: org_id, role_id"""
     return User(
-        password=hash_password("test"),
+        password=hash_secret("test"),
         email=f"generated-user+{time_ns()}@test.com",
         autoalert=False,
         authkey="auth key",
