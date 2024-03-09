@@ -1,3 +1,5 @@
+from typing import Any
+
 from pydantic import BaseModel
 
 
@@ -6,7 +8,7 @@ class Data(BaseModel):
     field: str | list[str] | None
     value: str | list[str] | None
     tags: str | list[str] | None
-    message: str
+    message: str | Any  # TODO: right format??
 
 
 class NoticelistEntryResponse(BaseModel):
@@ -15,14 +17,17 @@ class NoticelistEntryResponse(BaseModel):
     data: Data
 
 
-class NoticelistResponse(BaseModel):
+class NoticelistAttributesResponse(BaseModel):
     id: int
     name: str
     expanded_name: str
-    ref: str
-    geographical_area: str
+    ref: list[str]
+    geographical_area: list[str]
     version: int
     enabled: bool
+
+
+class NoticelistResponse(NoticelistAttributesResponse):
     NoticelistEntry: list[NoticelistEntryResponse]
 
     class Config:

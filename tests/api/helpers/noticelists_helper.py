@@ -37,22 +37,23 @@ def generate_random_noticelist_input() -> Noticelist:
     return Noticelist(
         name=random_string(),
         expanded_name=random_string(),
-        ref=json.dumps(random_string()),
-        geographical_area=json.dumps(random_string()),
+        ref=json.dumps([random_string()]),
+        geographical_area=json.dumps([random_string()]),
         version=random.randint(1, 10),
-        # At creation always on true for TestToggleEnableNoticelist
         enabled=True,
     )
 
 
 def generate_random_noticelistentry_input(noticelist_id: int) -> NoticelistEntry:
+    scope = [random_string(), random_string(), random_string()]
+    field = [random_string(), random_string(), random_string()]
+    value = [random_string(), random_string(), random_string()]
+    tags = [random_string(), random_string(), random_string()]
+    message = json.dumps({"en": random_string()})
+
     return NoticelistEntry(
-        noticelist_id=str(noticelist_id),
-        scope=json.dumps([random_string(), random_string(), random_string()]),
-        field=json.dumps([random_string(), random_string(), random_string()]),
-        value=json.dumps([random_string(), random_string(), random_string()]),
-        tags=json.dumps([random_string(), random_string(), random_string()]),
-        message=random_string(),
+        noticelist_id=noticelist_id,
+        data=json.dumps({"scope": scope, "field": field, "value": value, "tags": tags, "message": message}),
     )
 
 
