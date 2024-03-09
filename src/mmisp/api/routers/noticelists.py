@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
 from mmisp.api_schemas.noticelists.get_all_noticelist_response import GetAllNoticelistResponse
-from mmisp.api_schemas.noticelists.get_noticelist_response import Data, NoticelistEntryResponse, NoticelistResponse
+from mmisp.api_schemas.noticelists.get_noticelist_response import NoticelistEntryResponse, NoticelistResponse
 from mmisp.api_schemas.noticelists.toggle_enable_noticelist_response import ToggleEnableNoticelist
 from mmisp.api_schemas.standard_status_response import StandardStatusResponse
 from mmisp.db.database import get_db, with_session_management
@@ -177,15 +177,8 @@ async def _get_all_noticelists(db: Session) -> dict:
 def _prepare_noticelist_entries(noticelist_entries: list[NoticelistEntry]) -> list[NoticelistEntryResponse]:
     noticelist_entry_response = []
     for noticelist_entry in noticelist_entries:
-        data = Data(
-            scope=json.loads(noticelist_entry.scope),
-            field=json.loads(noticelist_entry.field),
-            value=json.loads(noticelist_entry.value),
-            tags=json.loads(noticelist_entry.tags),
-            message=noticelist_entry.message,
-        )
         noticelist_entry_response_attribute = NoticelistEntryResponse(
-            id=noticelist_entry.id, noticelistId=noticelist_entry.noticelist_id, data=data
+            id=noticelist_entry.id, noticelistId=noticelist_entry.noticelist_id, data=json.loads(noticelist_entry.data)
         )
         noticelist_entry_response.append(noticelist_entry_response_attribute)
 
