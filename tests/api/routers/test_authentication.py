@@ -10,7 +10,7 @@ from mmisp.api_schemas.authentication.start_login_response import LoginType
 from mmisp.config import config
 from mmisp.db.models.identity_provider import OIDCIdentityProvider
 from mmisp.db.models.user import User
-from mmisp.util.crypto import hash_password
+from mmisp.util.crypto import hash_secret
 from mmisp.util.uuid import uuid
 from tests.database import get_db
 from tests.environment import client, environment
@@ -38,7 +38,7 @@ class AuthEnvironment:
 def auth_environment() -> AuthEnvironment:
     db = get_db()
     password = uuid()
-    hashed_password = hash_password(password)
+    hashed_password = hash_secret(password)
 
     password_auth_user = generate_user()
     password_auth_user.org_id = environment.instance_owner_org.id
