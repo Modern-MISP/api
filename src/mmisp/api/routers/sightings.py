@@ -2,6 +2,7 @@ from time import time
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Path, status
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
@@ -27,7 +28,7 @@ router = APIRouter(tags=["sightings"])
     status_code=status.HTTP_201_CREATED,
     response_model=partial(SightingsGetResponse),
     summary="Add sighting",
-    description="Add a new sighting.",
+    description="Add a new sighting for each given value.",
 )
 @with_session_management
 async def add_sighting(
@@ -41,7 +42,7 @@ async def add_sighting(
 @router.post(
     "/sightings/{attributeId}",
     status_code=status.HTTP_201_CREATED,
-    response_model=partial(SightingsGetResponse),
+    response_model=SightingsGetResponse,
     summary="Add sighting at index",
     description="Add a new sighting for a specific attribute.",
 )
@@ -50,7 +51,7 @@ async def add_sightings_at_index(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SIGHTING]))],
     db: Annotated[Session, Depends(get_db)],
     attribute_id: Annotated[int, Path(alias="attributeId")],
-) -> dict[str, Any]:
+) -> SightingsGetResponse:
     return await _add_sightings_at_index(db, attribute_id)
 
 
@@ -73,7 +74,7 @@ async def get_sightings_at_index(
 @router.delete(
     "/sightings/{sightingId}",
     status_code=status.HTTP_200_OK,
-    response_model=partial(StandardStatusResponse),
+    response_model=StandardStatusResponse,
     summary="Delete sighting",
     description="Delete a specific sighting.",
 )
@@ -82,7 +83,7 @@ async def delete_sighting(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SIGHTING]))],
     db: Annotated[Session, Depends(get_db)],
     sighting_id: Annotated[int, Path(alias="sightingId")],
-) -> dict[str, Any]:
+) -> StandardStatusResponse:
     return await _delete_sighting(db, sighting_id)
 
 
@@ -125,7 +126,7 @@ async def add_sighting_depr(
     "/sightings/add/{attributeId}",
     deprecated=True,
     status_code=status.HTTP_201_CREATED,
-    response_model=partial(SightingsGetResponse),
+    response_model=SightingsGetResponse,
     summary="Add sighting at index (Deprecated)",
     description="Deprecated. Add a new sighting for a specific attribute using the old route.",
 )
@@ -134,7 +135,7 @@ async def add_sightings_at_index_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SIGHTING]))],
     db: Annotated[Session, Depends(get_db)],
     attribute_id: Annotated[int, Path(alias="attributeId")],
-) -> dict[str, Any]:
+) -> SightingsGetResponse:
     return await _add_sightings_at_index(db, attribute_id)
 
 
@@ -142,7 +143,7 @@ async def add_sightings_at_index_depr(
     "/sightings/delete/{sightingId}",
     deprecated=True,
     status_code=status.HTTP_200_OK,
-    response_model=partial(StandardStatusResponse),
+    response_model=StandardStatusResponse,
     summary="Delete sighting (Deprecated)",
     description="Deprecated. Delete a specific sighting using the old route.",
 )
@@ -151,7 +152,7 @@ async def delete_sighting_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SIGHTING]))],
     db: Annotated[Session, Depends(get_db)],
     sighting_id: Annotated[int, Path(alias="sightingId")],
-) -> dict[str, Any]:
+) -> StandardStatusResponse:
     return await _delete_sighting(db, sighting_id)
 
 
@@ -201,7 +202,7 @@ async def _add_sighting(db: Session, body: SightingCreateBody) -> list[dict[str,
                 attribute_id=int(attribute.id),
                 event_id=int(attribute.event_id),
                 org_id=int(db.get(Event, attribute.event_id).org_id),
-                date_sighting=_create_timestamp(),
+                date_sighting=int(time()),
                 source=body.source if body.source else None,
                 type=int(body.filters.type) if body.filters and body.filters.type else None,
             )
@@ -239,7 +240,7 @@ async def _add_sightings_at_index(db: Session, attribute_id: int) -> dict[str, A
         attribute_id=int(attribute_id),
         event_id=int(attribute.event_id),
         org_id=int(db.get(Event, attribute.event_id).org_id),
-        date_sighting=_create_timestamp(),
+        date_sighting=int(time()),
     )
     db.add(sighting)
     db.commit()
@@ -327,10 +328,6 @@ async def _get_sightings(db: Session) -> list[dict[str, Any]]:
     return SightingsGetResponse(sightings=[response.__dict__ for response in responses])
 
 
-def _create_timestamp() -> int:
-    return int(time())
-
-
 def _check_valid_return_format(return_format: str) -> None:
     if return_format not in ["json"]:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid return format.")
@@ -380,20 +377,15 @@ def _build_query(db: Session, filters: SightingFiltersBody) -> list[Attribute]:
         query = query.filter(Attribute.deleted == search_body.deleted)
 
     if search_body.event_timestamp:
-        events = db.query(Event).filter(Event.timestamp == search_body.event_timestamp).all()
-
-        for event in events:
-            query = query.filter(Attribute.event_id == event.id)
+        event_subquery = select([Event]).where(Event.timestamp == search_body.event_timestamp)
+        query = query.filter(Attribute.event_id.in_(event_subquery))
 
     if search_body.event_info:
-        events = db.query(Event).filter(Event.info.like(f"%{search_body.event_info}%"))
-
-        for event in events:
-            query = query.filter(Attribute.event_id == event.id)
+        event_subquery = select([Event]).where(Event.info.like(f"%{search_body.event_info}%"))
+        query = query.filter(Attribute.event_id.in_(event_subquery))
 
     if search_body.sharing_group:
-        for sharing_group in search_body.sharing_group:
-            query = query.filter(Attribute.sharing_group_id == sharing_group)
+        query = query.filter(Attribute.sharing_group_id.in_(search_body.sharing_group))
 
     if search_body.first_seen:
         query = query.filter(Attribute.first_seen == search_body.first_seen)
@@ -402,8 +394,7 @@ def _build_query(db: Session, filters: SightingFiltersBody) -> list[Attribute]:
         query = query.filter(Attribute.last_seen == search_body.last_seen)
 
     if search_body.requested_attributes:
-        for attribute in search_body.requested_attributes:
-            query = query.filter(Attribute.id == attribute)
+        query = query.filter(Attribute.id.in_(search_body.requested_attributes))
 
     if search_body.limit:
         query = query.limit(int(search_body.limit))
