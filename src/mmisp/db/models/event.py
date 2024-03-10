@@ -17,7 +17,7 @@ class Event(Base):
     id = Column(Integer, primary_key=True, nullable=False)
     uuid = Column(String(255), unique=True, default=uuid, index=True)
     org_id = Column(Integer, ForeignKey(Organisation.id), nullable=False, index=True)
-    user_id = Column(Integer, ForeignKey(Organisation.id), nullable=False)
+    user_id = Column(Integer, nullable=False)
     orgc_id = Column(Integer, ForeignKey(Organisation.id), nullable=False, index=True)
     info = Column(String(255), nullable=False, index=True)
     distribution = Column(Integer, nullable=False, default=0)

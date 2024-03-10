@@ -12,7 +12,6 @@ class ObjectWithAttributesResponse(BaseModel):
     name: str
     meta_category: str | None = None
     description: str | None = None
-    # template_id: str | None = None
     template_uuid: str | None = None
     template_version: str
     event_id: str
@@ -35,23 +34,6 @@ class ObjectWithAttributesResponse(BaseModel):
         if distribution == "4" and value is not None:
             return value
         return None
-
-    @validator(
-        # "template_id",
-        "template_version",
-        "event_id",
-        "timestamp",
-        "sharing_group_id",
-        "distribution",
-        "sharing_group_id",
-        "comment",
-        "first_seen",
-        "last_seen",
-        pre=True,
-        allow_reuse=True,
-    )
-    def convert_to_string(cls, value: Optional[str]) -> Optional[str]:  # noqa: ANN101
-        return str(value) if value is not None else None
 
 
 class ObjectResponse(BaseModel):

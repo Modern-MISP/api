@@ -31,7 +31,7 @@ class Attribute(Base, DictMixin):
     id = Column(Integer, primary_key=True, nullable=False)
     uuid = Column(String(255), unique=True, default=uuid, index=True)
     event_id = Column(Integer, ForeignKey("events.id", ondelete="CASCADE"), index=True, nullable=False)
-    object_id = Column(Integer, ForeignKey("objects.id", ondelete="CASCADE"), index=True, nullable=True)
+    object_id = Column(Integer, index=True, nullable=False, default=0)
     object_relation = Column(String(255), nullable=True, index=True)
     category = Column(String(255), nullable=False, index=True)
     type = Column(String(255), nullable=False, index=True)
@@ -48,7 +48,6 @@ class Attribute(Base, DictMixin):
     last_seen = Column(Integer, nullable=True, index=True, default=None)
 
     event = relationship("Event", back_populates="attributes")
-    object = relationship("Object", back_populates="attributes")
 
     @property
     def event_uuid(self: "Attribute") -> str:

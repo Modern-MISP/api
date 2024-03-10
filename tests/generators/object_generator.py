@@ -54,11 +54,7 @@ def generate_valid_object_data() -> ObjectCreateBody:
         name=generate_random_str(),
         meta_category=generate_random_str(),
         description=generate_random_str(),
-        # action=generate_random_str(),
-        # template_name=generate_random_str(),
         template_version="100",
-        # template_description=generate_random_str(),
-        # update_template_available=random.choice([True, False]),
         timestamp=generate_random_date_str(),
         distribution=generate_number_as_str(),
         sharing_group_id=generate_ids_as_str(),
@@ -92,7 +88,6 @@ def generate_valid_random_object_create_attributes() -> AddAttributeBody:
 def generate_valid_random_object_data() -> ObjectCreateBody:
     return ObjectCreateBody(
         name=generate_random_str(),
-        # meta_category=generate_random_str() if random.choice([True, False]) else None,  # todo
         meta_category=generate_random_str(),
         description=generate_random_str(),
         action=generate_random_str(),
@@ -144,7 +139,6 @@ def generate_search_query() -> ObjectSearchBody:
         value1=val,
         value2="",
         type=generate_random_str(),
-        # object_relation=generate_random_str(),
         attribute_timestamp=generate_random_date_str(),
         to_ids=random.choice([True, False]),
         published=random.choice([True, False]),
