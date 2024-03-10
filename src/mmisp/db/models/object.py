@@ -1,5 +1,4 @@
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
-from sqlalchemy.orm import relationship
 
 from mmisp.db.database import Base
 from mmisp.util.uuid import uuid
@@ -23,8 +22,6 @@ class Object(Base):
     deleted = Column(Boolean, nullable=False, default=False)
     first_seen = Column(Integer, index=True, default=None)
     last_seen = Column(Integer, index=True, default=None)
-
-    attributes = relationship("Attribute", back_populates="object")
 
 
 class ObjectTemplate(Base):

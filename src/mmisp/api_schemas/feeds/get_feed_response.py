@@ -5,14 +5,13 @@ from pydantic import BaseModel, validator
 
 class FeedAttributesResponse(BaseModel):
     id: str
-    # uuid: str
     name: str
     provider: str
     url: str
     rules: str | None = None
     enabled: bool | None = None
     distribution: str
-    sharing_group_id: str
+    sharing_group_id: str | None = None
     tag_id: str
     default: bool | None = None
     source_format: str | None = None
@@ -29,9 +28,6 @@ class FeedAttributesResponse(BaseModel):
     caching_enabled: bool
     force_to_ids: bool
     orgc_id: str
-    # cache_timestamp: str | None = None
-    # cached_elements: str | None = None  # new
-    # coverage_by_other_feeds: str | None = None  # new
 
     @validator("sharing_group_id", always=True)
     def check_sharing_group_id(cls, value: Any, values: Dict[str, Any]) -> Optional[int]:  # noqa: ANN101
@@ -42,10 +38,6 @@ class FeedAttributesResponse(BaseModel):
         if distribution == "4" and value is not None:
             return value
         return None
-
-    @validator("distribution", "sharing_group_id", "tag_id", "event_id", "orgc_id", pre=True, allow_reuse=True)
-    def convert_to_string(cls, value: Optional[str]) -> Optional[str]:  # noqa: ANN101
-        return str(value) if value is not None else None
 
 
 class FeedResponse(BaseModel):
