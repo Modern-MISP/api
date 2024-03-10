@@ -3,7 +3,7 @@ from time import time
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Path, status
-from sqlalchemy import or_
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
@@ -29,7 +29,7 @@ router = APIRouter(tags=["objects"])
 @router.post(
     "/objects/{eventId}/{objectTemplateId}",
     status_code=status.HTTP_201_CREATED,
-    response_model=partial(ObjectResponse),
+    response_model=ObjectResponse,
     summary="Add object to event",
     description="Add a new object to a specific event using a template.",
 )
@@ -40,7 +40,7 @@ async def add_object(
     event_id: Annotated[int, Path(alias="eventId")],
     object_template_id: Annotated[int, Path(alias="objectTemplateId")],
     body: ObjectCreateBody,
-) -> dict[str, Any]:
+) -> ObjectResponse:
     return await _add_object(db, event_id, object_template_id, body)
 
 
@@ -63,7 +63,7 @@ async def restsearch(
 @router.get(
     "/objects/{objectId}",
     status_code=status.HTTP_200_OK,
-    response_model=partial(ObjectResponse),
+    response_model=ObjectResponse,
     summary="View object details",
     description="View details of a specific object including its attributes and related event.",
 )
@@ -72,14 +72,14 @@ async def get_object_details(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     object_id: Annotated[int, Path(alias="objectId")],
-) -> dict[str, Any]:
+) -> ObjectResponse:
     return await _get_object_details(db, object_id)
 
 
 @router.delete(
     "/objects/{objectId}/{hardDelete}",
     status_code=status.HTTP_200_OK,
-    response_model=partial(StandardStatusResponse),
+    response_model=StandardStatusResponse,
     summary="Delete object",
     description="Delete a specific object. The hardDelete parameter determines if it's a hard or soft delete.",
 )
@@ -89,7 +89,7 @@ async def delete_object(
     db: Annotated[Session, Depends(get_db)],
     object_id: Annotated[int, Path(alias="objectId")],
     hard_delete: Annotated[bool, Path(alias="hardDelete")],
-) -> dict[str, Any]:
+) -> StandardStatusResponse:
     return await _delete_object(db, object_id, hard_delete)
 
 
@@ -100,7 +100,7 @@ async def delete_object(
     "/objects/add/{eventId}/{objectTemplateId}",
     deprecated=True,
     status_code=status.HTTP_201_CREATED,
-    response_model=partial(ObjectResponse),
+    response_model=ObjectResponse,
     summary="Add object to event (Deprecated)",
     description="Deprecated. Add an object to an event using the old route.",
 )
@@ -111,7 +111,7 @@ async def add_object_depr(
     event_id: Annotated[int, Path(alias="eventId")],
     object_template_id: Annotated[int, Path(alias="objectTemplateId")],
     body: ObjectCreateBody,
-) -> dict[str, Any]:
+) -> ObjectResponse:
     return await _add_object(db, event_id, object_template_id, body)
 
 
@@ -119,7 +119,7 @@ async def add_object_depr(
     "/objects/view/{objectId}",
     deprecated=True,
     status_code=status.HTTP_200_OK,
-    response_model=partial(ObjectResponse),
+    response_model=ObjectResponse,
     summary="View object details (Deprecated)",
     description="Deprecated. View details of a specific object using the old route.",
 )
@@ -128,7 +128,7 @@ async def get_object_details_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     object_id: Annotated[int, Path(alias="objectId")],
-) -> dict[str, Any]:
+) -> ObjectResponse:
     return await _get_object_details(db, object_id)
 
 
@@ -136,7 +136,7 @@ async def get_object_details_depr(
     "/objects/delete/{objectId}/{hardDelete}",
     deprecated=True,
     status_code=status.HTTP_200_OK,
-    response_model=partial(StandardStatusResponse),
+    response_model=StandardStatusResponse,
     summary="Delete object (Deprecated)",
     description="""
     Deprecated. Delete a specific object using the old route.
@@ -148,7 +148,7 @@ async def delete_object_depr(
     db: Annotated[Session, Depends(get_db)],
     object_id: Annotated[int, Path(alias="objectId")],
     hard_delete: Annotated[bool, Path(alias="hardDelete")],
-) -> dict[str, Any]:
+) -> StandardStatusResponse:
     return await _delete_object(db, object_id, hard_delete)
 
 
@@ -168,18 +168,22 @@ async def _add_object(db: Session, event_id: int, object_template_id: int, body:
         template_uuid=template.uuid,
         template_version=template.version,
         event_id=int(event_id),
-        timestamp=_create_timestamp(),
+        timestamp=int(time()),
     )
+
+    db.add(object)
+    db.flush()
+    db.refresh(object)
 
     for attr in body.attributes:
         attribute: Attribute = Attribute(
-            **attr.dict(exclude={"timestamp", "event_id"}),
-            timestamp=_create_timestamp() if not attr.timestamp else attr.timestamp,
+            **attr.dict(exclude={"event_id", "object_id", "timestamp"}),
             event_id=int(event_id),
+            object_id=object.id,
+            timestamp=int(time()) if not attr.timestamp else attr.timestamp,
         )
-        object.attributes.append(attribute)
+        db.add(attribute)
 
-    db.add(object)
     db.commit()
     db.refresh(object)
     attributes: list[Attribute] = db.query(Attribute).filter(Attribute.object_id == object.id).all()
@@ -205,8 +209,17 @@ async def _restsearch(db: Session, body: ObjectSearchBody) -> dict[str, Any]:
     filters = body.dict(exclude_unset=True)
     objects: list[Object] = _build_query(db=db, filters=filters)
 
+    all_attributes: list[Attribute] = (
+        db.query(Attribute).filter(Attribute.object_id.in_([object.id for object in objects])).all()
+    )
+
+    attributes_mapping: dict = {object_id: [] for object_id in [object.id for object in objects]}
+    for attribute in all_attributes:
+        attributes_mapping[attribute.object_id].append(attribute)
+
     objects_data: list[ObjectWithAttributesResponse] = [
-        ObjectWithAttributesResponse(**object.__dict__, attributes=object.attributes, event=None) for object in objects
+        ObjectWithAttributesResponse(**object.__dict__, attributes=attributes_mapping[object.id], event=None)
+        for object in objects
     ]
 
     return ObjectSearchResponse(response=[{"object": object_data} for object_data in objects_data])
@@ -261,10 +274,6 @@ async def _delete_object(db: Session, object_id: int, hard_delete: bool) -> dict
         message=message,
         url=f"/objects/{object_id}",
     )
-
-
-def _create_timestamp() -> int:
-    return int(time())
 
 
 def _check_valid_return_format(return_format: str) -> None:
@@ -327,55 +336,39 @@ def _build_query(db: Session, filters: ObjectSearchBody) -> list[Object]:
         query = query.filter(Object.last_seen > search_body.last)
 
     if search_body.event_timestamp:
-        events = db.query(Event).filter(Event.timestamp == search_body.event_timestamp).all()
-
-        for event in events:
-            query = query.filter(Object.event_id == event.id)
+        event_subquery = select([Event]).where(Event.timestamp == search_body.event_timestamp)
+        query = query.filter(Object.id.in_(event_subquery))
 
     if search_body.org_id:
-        events = db.query(Event).filter(Event.org_id == search_body.org_id).all()
-
-        for event in events:
-            query = query.filter(Object.event_id == event.id)
+        event_subquery = select([Event]).where(Event.org_id == search_body.org_id)
+        query = query.filter(Object.id.in_(event_subquery))
 
     if search_body.uuid:
         query = query.filter(Object.uuid == search_body.uuid)
 
     if search_body.value1:
-        attributes = db.query(Attribute).filter(Attribute.value1 == search_body.value1).all()
-
-        for attribute in attributes:
-            query = query.filter(Object.id == attribute.object_id)
+        attribute_subquery = select([Attribute.object_id]).where(Attribute.value1 == search_body.value1)
+        query = query.filter(Object.id.in_(attribute_subquery))
 
     if search_body.value2:
-        attributes = db.query(Attribute).filter(Attribute.value2 == search_body.value2).all()
-
-        for attribute in attributes:
-            query = query.filter(Object.id == attribute.object_id)
+        attribute_subquery = select([Attribute.object_id]).where(Attribute.value2 == search_body.value2)
+        query = query.filter(Object.id.in_(attribute_subquery))
 
     if search_body.type:
-        attributes = db.query(Attribute).filter(Attribute.type == search_body.type).all()
-
-        for attribute in attributes:
-            query = query.filter(Object.id == attribute.object_id)
+        attribute_subquery = select([Attribute.object_id]).where(Attribute.type == search_body.type)
+        query = query.filter(Object.id.in_(attribute_subquery))
 
     if search_body.attribute_timestamp:
-        attributes = db.query(Attribute).filter(Attribute.timestamp == search_body.attribute_timestamp).all()
-
-        for attribute in attributes:
-            query = query.filter(Object.id == attribute.object_id)
+        attribute_subquery = select([Attribute.object_id]).where(Attribute.timestamp == search_body.attribute_timestamp)
+        query = query.filter(Object.id.in_(attribute_subquery))
 
     if search_body.to_ids:
-        attributes = db.query(Attribute).filter(Attribute.to_ids == search_body.to_ids).all()
-
-        for attribute in attributes:
-            query = query.filter(Object.id == attribute.object_id)
+        attribute_subquery = select([Attribute.object_id]).where(Attribute.to_ids == search_body.to_ids)
+        query = query.filter(Object.id.in_(attribute_subquery))
 
     if search_body.published:
-        events = db.query(Event).filter(Event.published == search_body.published).all()
-
-        for event in events:
-            query = query.filter(Object.event_id == event.id)
+        event_subquery = select([Event]).where(Event.published == search_body.published)
+        query = query.filter(Object.id.in_(event_subquery))
 
     if search_body.deleted:
         query = query.filter(Object.deleted == search_body.deleted)
