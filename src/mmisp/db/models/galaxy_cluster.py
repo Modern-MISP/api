@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Text
 
 from mmisp.util.uuid import uuid
 
@@ -13,25 +13,25 @@ class GalaxyCluster(Base):
 
     id = Column(Integer, primary_key=True, nullable=False)
     uuid = Column(String(255), unique=True, default=uuid, index=True)
-    collection_uuid = Column(String(255), nullable=True, index=True)
+    collection_uuid = Column(String(255), nullable=False, index=True)
     type = Column(String(255), nullable=False, index=True)
-    value = Column(String(255), nullable=False, index=True)
+    value = Column(Text, nullable=False)  # index=True
     tag_name = Column(String(255), nullable=False, default="", index=True)
-    description = Column(String(255), nullable=False)
+    description = Column(Text, nullable=False)
     galaxy_id = Column(Integer, ForeignKey(Galaxy.id, ondelete="CASCADE"), nullable=False, index=True)
     source = Column(String(255), nullable=False, default="")
-    authors = Column(String(255), nullable=False)
-    version = Column(Integer, default=0)
-    distribution = Column(Integer)
-    sharing_group_id = Column(Integer, ForeignKey(SharingGroup.id), nullable=True)
-    org_id = Column(Integer, ForeignKey(Organisation.id), nullable=True)
-    orgc_id = Column(Integer, ForeignKey(Organisation.id), nullable=True)
-    default = Column(Boolean)
-    locked = Column(Boolean)
-    extends_uuid = Column(String(255))
-    extends_version = Column(Integer)
-    published = Column(Boolean)
-    deleted = Column(Boolean)
+    authors = Column(Text, nullable=False)
+    version = Column(Integer, default=0, index=True)
+    distribution = Column(Integer, nullable=False, default=0)
+    sharing_group_id = Column(Integer, ForeignKey(SharingGroup.id), index=True)
+    org_id = Column(Integer, ForeignKey(Organisation.id), nullable=False, index=True)
+    orgc_id = Column(Integer, ForeignKey(Organisation.id), nullable=False, index=True)
+    default = Column(Boolean, nullable=False, default=False, index=True)
+    locked = Column(Boolean, nullable=False, default=False)
+    extends_uuid = Column(String(40), index=True)
+    extends_version = Column(Integer, default=0, index=True)
+    published = Column(Boolean, nullable=False, default=False)
+    deleted = Column(Boolean, nullable=False, default=False)
 
 
 class GalaxyElement(Base):
@@ -40,15 +40,16 @@ class GalaxyElement(Base):
     id = Column(Integer, primary_key=True, nullable=False)
     galaxy_cluster_id = Column(Integer, ForeignKey(GalaxyCluster.id, ondelete="CASCADE"), nullable=False, index=True)
     key = Column(String(255), nullable=False, default="", index=True)
-    value = Column(String(255), nullable=False, index=True)
+    value = Column(Text, nullable=False)  # index=True
 
 
 class GalaxyReference(Base):
-    __tablename__ = "galaxy_references"
+    # table name is unfortunately this way in legacy misp
+    __tablename__ = "galaxy_reference"
 
     id = Column(Integer, primary_key=True, nullable=False)
     galaxy_cluster_id = Column(Integer, ForeignKey(GalaxyCluster.id, ondelete="CASCADE"), nullable=False, index=True)
     referenced_galaxy_cluster_id = Column(Integer, nullable=False, index=True)
     referenced_galaxy_cluster_uuid = Column(String(255), nullable=False, index=True)
-    referenced_galaxy_cluster_type = Column(String(255), nullable=False, index=True)
-    referenced_galaxy_cluster_value = Column(String(255), nullable=False, index=True)
+    referenced_galaxy_cluster_type = Column(Text, nullable=False)  # index=True
+    referenced_galaxy_cluster_value = Column(Text, nullable=False)  # index=True

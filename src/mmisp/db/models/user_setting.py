@@ -1,7 +1,7 @@
 from enum import Enum
 from time import time
 
-from sqlalchemy import Column, ForeignKey, Integer, String
+from sqlalchemy import Column, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
 
 from mmisp.db.database import Base
@@ -24,9 +24,9 @@ class UserSetting(Base):
     __tablename__ = "user_settings"
 
     id = Column(Integer, primary_key=True, nullable=False)
-    setting = Column(String(255), nullable=False)
-    value = Column(String(255), nullable=False)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    timestamp = Column(Integer, default=time, onupdate=time, nullable=False)
+    setting = Column(String(255), nullable=False, index=True)
+    value = Column(Text, nullable=False)
+    user_id = Column(Integer, ForeignKey(User.id), nullable=False, index=True)
+    timestamp = Column(Integer, default=time, onupdate=time, nullable=False, index=True)
 
     user = relationship(User, primaryjoin=user_id == User.id)

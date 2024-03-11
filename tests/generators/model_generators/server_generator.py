@@ -7,7 +7,7 @@ from mmisp.util.uuid import uuid
 
 
 def generate_server() -> Server:
-    """These fields need to be set manually: org_id, [sync_user_id]"""
+    """These fields need to be set manually: org_id"""
     return Server(
         name=f"test server {time()}-{uuid()}",
         url=f"http://{time()}-{uuid()}.server.mmisp.service",
