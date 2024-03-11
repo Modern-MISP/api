@@ -53,6 +53,7 @@ class TestAddSighting:
                 category="test",
                 type="test",
                 value1=val,
+                value2="",
                 sharing_group_id=sharing_group.id,
             )
 
@@ -93,6 +94,7 @@ class TestAddSighting:
                 category="test",
                 type="test",
                 value1=val,
+                value2="",
                 sharing_group_id=sharing_group.id,
             )
 
@@ -136,6 +138,7 @@ class TestAddSighting:
                 category="test",
                 type="test",
                 value1=val,
+                value2="",
                 sharing_group_id=sharing_group.id,
             )
 
@@ -179,6 +182,7 @@ class TestAddSightingAtIndex:
             category="test",
             type="test",
             value1=sighting_data["values"][0],
+            value2="",
             sharing_group_id=sharing_group.id,
         )
 
@@ -221,6 +225,7 @@ class TestAddSightingAtIndex:
             category="test",
             type="test",
             value1=sighting_data["values"][0],
+            value2="",
             sharing_group_id=sharing_group.id,
         )
 
@@ -262,6 +267,7 @@ class TestGetSighting:
             category="test",
             type="test",
             value1=sighting_data["values"][0],
+            value2="",
             sharing_group_id=sharing_group.id,
         )
 
@@ -302,6 +308,7 @@ class TestDeleteSighting:
             category="test",
             type="test",
             value1=sighting_data["values"][0],
+            value2="",
             sharing_group_id=sharing_group.id,
         )
 
@@ -351,6 +358,7 @@ class TestDeleteSighting:
             category="test",
             type="test",
             value1=sighting_data["values"][0],
+            value2="",
             sharing_group_id=sharing_group.id,
         )
 
@@ -399,6 +407,7 @@ class TestGetAllSightings:
             category="test",
             type="test",
             value1=sighting_data["values"][0],
+            value2="",
             sharing_group_id=sharing_group.id,
         )
 
@@ -441,6 +450,7 @@ class TestGetAllSightings:
             category="test",
             type="test",
             value1=sighting_data["values"][0],
+            value2="",
             sharing_group_id=sharing_group.id,
         )
 
