@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, Integer, String
+from sqlalchemy import Boolean, Column, Integer, String, Text
 
 from ..database import Base
 
@@ -19,4 +19,9 @@ class NoticelistEntry(Base):
     __tablename__ = "noticelist_entries"
     id = Column(Integer, primary_key=True, nullable=False)
     noticelist_id = Column(Integer, nullable=False)
+    scope = Column(Text)  # data must be serialized as json
+    field = Column(Text)  # data must be serialized as json
+    value = Column(Text)  # data must be serialized as json
+    tags = Column(Text)  # data must be serialized as json
+    message = Column(String(255))
     data = Column(String(255), nullable=False)

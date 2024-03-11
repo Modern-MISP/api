@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Self
 
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, inspect
+from sqlalchemy import BigInteger, Boolean, Column, ForeignKey, Integer, String, Text, inspect
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship
 
@@ -29,23 +29,23 @@ class Attribute(Base, DictMixin):
     __tablename__ = "attributes"
 
     id = Column(Integer, primary_key=True, nullable=False)
-    uuid = Column(String(255), unique=True, default=uuid, index=True)
-    event_id = Column(Integer, ForeignKey("events.id", ondelete="CASCADE"), index=True, nullable=False)
-    object_id = Column(Integer, index=True, nullable=False, default=0)
-    object_relation = Column(String(255), nullable=True, index=True)
+    uuid = Column(String(40), unique=True, default=uuid, index=True)
+    event_id = Column(Integer, ForeignKey("events.id", ondelete="CASCADE"), nullable=False, index=True)
+    object_id = Column(Integer, nullable=False, default=0, index=True)
+    object_relation = Column(String(255), index=True)
     category = Column(String(255), nullable=False, index=True)
-    type = Column(String(255), nullable=False, index=True)
-    value1 = Column(String(255), nullable=False, index=True)
-    value2 = Column(String(255), nullable=False, index=True, default="")
+    type = Column(String(100), nullable=False, index=True)
+    value1 = Column(Text, nullable=False)  # index=True
+    value2 = Column(Text, nullable=False)  # index=True
     to_ids = Column(Boolean, default=True, nullable=False)
-    timestamp = Column(Integer, default=0, nullable=False)
-    distribution = Column(Integer, default=0)
-    sharing_group_id = Column(Integer, ForeignKey("sharing_groups.id"), index=True, nullable=False)
-    comment = Column(String(255))
-    deleted = Column(Boolean, default=False, nullable=False)
-    disable_correlation = Column(Boolean, default=False, nullable=False)
-    first_seen = Column(Integer, nullable=True, index=True, default=None)
-    last_seen = Column(Integer, nullable=True, index=True, default=None)
+    timestamp = Column(Integer, nullable=False, default=0)
+    distribution = Column(Integer, nullable=False, default=0)
+    sharing_group_id = Column(Integer, ForeignKey("sharing_groups.id"), index=True)
+    comment = Column(Text)
+    deleted = Column(Boolean, nullable=False, default=False)
+    disable_correlation = Column(Boolean, nullable=False, default=False)
+    first_seen = Column(BigInteger, index=True)
+    last_seen = Column(BigInteger, index=True)
 
     event = relationship("Event", back_populates="attributes")
 
@@ -70,11 +70,7 @@ class Attribute(Base, DictMixin):
 class AttributeTag(Base):
     __tablename__ = "attribute_tags"
 
-    id = Column(
-        Integer,
-        primary_key=True,
-        nullable=False,
-    )
+    id = Column(Integer, primary_key=True, nullable=False)
     attribute_id = Column(Integer, ForeignKey(Attribute.id, ondelete="CASCADE"), nullable=False, index=True)
     event_id = Column(Integer, ForeignKey(Event.id, ondelete="CASCADE"), nullable=False, index=True)
     tag_id = Column(Integer, ForeignKey(Tag.id, ondelete="CASCADE"), nullable=False, index=True)

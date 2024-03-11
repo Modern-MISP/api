@@ -161,7 +161,7 @@ async def _auth_key_add(auth: Auth, db: Session, user_id: int, body: AddAuthKeyB
     if auth.user_id != user_id and not check_permissions(auth, [Permission.SITE_ADMIN]):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
-    auth_key_string = generate(size=42)
+    auth_key_string = generate(size=40)
     hashed_auth_key = hash_secret(auth_key_string)
 
     auth_key = AuthKey(
