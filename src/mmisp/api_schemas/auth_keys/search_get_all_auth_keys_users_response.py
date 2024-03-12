@@ -16,8 +16,8 @@ class SearchGetAuthKeysResponseItemAuthKey(BaseModel):
     read_only: bool
     user_id: str
     comment: str
-    allowed_ips: list[str]
-    unique_ips: list[str]
+    allowed_ips: list[str] | None = None
+    unique_ips: list[str] | None = []
 
 
 class SearchGetAuthKeysResponseItem(BaseModel):

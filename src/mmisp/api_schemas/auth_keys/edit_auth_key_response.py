@@ -16,7 +16,7 @@ class EditAuthKeyResponseAuthKey(BaseModel):
     read_only: bool
     user_id: str
     comment: str
-    allowed_ips: str
+    allowed_ips: str | None = None
 
 
 class EditAuthKeyResponse(BaseModel):
