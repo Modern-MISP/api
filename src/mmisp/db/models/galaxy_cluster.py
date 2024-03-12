@@ -4,8 +4,6 @@ from mmisp.util.uuid import uuid
 
 from ..database import Base
 from .galaxy import Galaxy
-from .organisation import Organisation
-from .sharing_group import SharingGroup
 
 
 class GalaxyCluster(Base):
@@ -13,7 +11,7 @@ class GalaxyCluster(Base):
 
     id = Column(Integer, primary_key=True, nullable=False)
     uuid = Column(String(255), unique=True, default=uuid, index=True)
-    collection_uuid = Column(String(255), nullable=False, index=True)
+    collection_uuid = Column(String(255), nullable=False, index=True, default="0")
     type = Column(String(255), nullable=False, index=True)
     value = Column(Text, nullable=False)  # index=True
     tag_name = Column(String(255), nullable=False, default="", index=True)
@@ -23,9 +21,9 @@ class GalaxyCluster(Base):
     authors = Column(Text, nullable=False)
     version = Column(Integer, default=0, index=True)
     distribution = Column(Integer, nullable=False, default=0)
-    sharing_group_id = Column(Integer, ForeignKey(SharingGroup.id), index=True)
-    org_id = Column(Integer, ForeignKey(Organisation.id), nullable=False, index=True)
-    orgc_id = Column(Integer, ForeignKey(Organisation.id), nullable=False, index=True)
+    sharing_group_id = Column(Integer, index=True, default=0)
+    org_id = Column(Integer, nullable=False, index=True, default=0)
+    orgc_id = Column(Integer, nullable=False, index=True, default=0)
     default = Column(Boolean, nullable=False, default=False, index=True)
     locked = Column(Boolean, nullable=False, default=False)
     extends_uuid = Column(String(40), index=True)

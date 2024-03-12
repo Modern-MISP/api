@@ -2,7 +2,6 @@ import logging
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Path
-from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from starlette import status
 from starlette.requests import Request
@@ -244,18 +243,8 @@ async def _import_galaxy_cluster(
                 deleted=galaxy_cluster.deleted,
             )
 
-            try:
-                db.add(new_galaxy_cluster)
-                db.commit()
-            except SQLAlchemyError:
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail=DeleteForceUpdateImportGalaxyResponse(
-                        name="An Internal Error Has Occurred.",
-                        message="An Internal Error Has Occurred.",
-                        url=str(request.url.path),
-                    ).dict(),
-                )
+            db.add(new_galaxy_cluster)
+            db.commit()
             for galaxy_element in galaxy_elements:
                 galaxy_element["galaxy_cluster_id"] = new_galaxy_cluster.id
 
@@ -263,18 +252,8 @@ async def _import_galaxy_cluster(
 
                 new_galaxy_element = GalaxyElement(**{**galaxy_element})
 
-                try:
-                    db.add(new_galaxy_element)
-                    db.commit()
-                except SQLAlchemyError:
-                    raise HTTPException(
-                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                        detail=DeleteForceUpdateImportGalaxyResponse(
-                            name="An Internal Error Has Occurred.",
-                            message="An Internal Error Has Occurred.",
-                            url=str(request.url.path),
-                        ).dict(),
-                    )
+                db.add(new_galaxy_element)
+                db.commit()
         successfully_imported_counter += 1
 
     if failed_imports_counter > 0:
@@ -420,9 +399,6 @@ def _prepare_galaxy_response(db: Session, galaxy: Galaxy) -> GetAllSearchGalaxie
 
     if galaxy_cluster is None:
         galaxy_dict["local_only"] = True
-    else:
-        tag = db.query(Tag).filter(Tag.name == galaxy_cluster.tag_name).first()
-        galaxy_dict["local_only"] = tag.inherited
 
     return GetAllSearchGalaxiesAttributes(**galaxy_dict)
 
@@ -543,8 +519,6 @@ def _prepare_tag_response(tag_list: list[Any]) -> list[AddEditGetEventGalaxyClus
 
     for tag in tag_list:
         tag_dict = tag.__dict__.copy()
-        del tag_dict["inherited"]
-        tag_dict["local_only"] = tag.inherited
         tag_dict["org_id"] = tag.org_id if tag.org_id is not None else "0"
         tag_dict["user_id"] = tag.user_id if tag.user_id is not None else "0"
         tag_response_list.append(AddEditGetEventGalaxyClusterRelationTag(**tag_dict))

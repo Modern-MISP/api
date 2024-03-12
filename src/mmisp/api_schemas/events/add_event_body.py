@@ -26,9 +26,10 @@ class AddEventBody(BaseModel):
     sighting_timestamp: str | None = None
     disable_correlation: bool | None = None
     extends_uuid: str | None = None
-    event_creator_email: str | None = None
+    # event_creator_email: str | None = None
     protected: str | None = None
-    cryptographic_key: str | None = None
+
+    # cryptographic_key: str | None = None
     # Attribute: list[AddAttributeBody] | None = None
     # Tag: list[AddEventTag] | None = None
 

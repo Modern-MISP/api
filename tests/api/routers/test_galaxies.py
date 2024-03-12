@@ -1,12 +1,10 @@
-import datetime
-
 from sqlalchemy.orm import Session
 
 from mmisp.api_schemas.galaxies.export_galaxies_body import ExportGalaxyAttributes, ExportGalaxyBody
-from mmisp.db.models.event import Event
 from mmisp.db.models.galaxy_cluster import GalaxyCluster, GalaxyElement, GalaxyReference
 
 from ...environment import client, environment
+from ...generators.model_generators.event_generator import generate_event
 from ...generators.model_generators.galaxy_generator import generate_galaxy
 from ...generators.model_generators.organisation_generator import generate_organisation
 from ...generators.model_generators.tag_generator import generate_tag
@@ -47,6 +45,7 @@ class TestImportGalaxyCluster:
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/galaxies/import", json=request_body, headers=headers)
         response_json = response.json()
+        print(response_json)
         assert response.status_code == 200
         assert response_json["name"] == "Galaxy clusters imported. 1 imported, 0 ignored, 0 failed."
 
@@ -488,20 +487,16 @@ class TestAttachCluster:
 
         galaxy_cluster_id1 = add_galaxy_cluster_body1.id
 
-        add_event_body = Event(
-            org_id=org_id,
-            orgc_id=org_id,
-            info="test event",
-            date=datetime.date(year=2024, month=2, day=13),
-            analysis="test analysis",
-            event_creator_email="test@mail.de",
-        )
+        event = generate_event()
 
-        db.add(add_event_body)
+        db.add(event)
         db.commit()
-        db.refresh(add_event_body)
+        db.refresh(event)
 
-        event_id = add_event_body.id
+        event_id = event.id
+
+        setattr(event, "org_id", org_id)
+        setattr(event, "orgc_id", org_id)
 
         headers = {"authorization": environment.site_admin_user_token}
 

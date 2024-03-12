@@ -7,7 +7,7 @@ class GetAttributeTag(BaseModel):
     id: str
     name: str
     colour: str
-    numerical_value: int
+    numerical_value: int | None = None
     is_galaxy: bool
     local: bool
 
@@ -25,7 +25,7 @@ class GetAttributeAttributes(BaseModel):
     timestamp: str
     distribution: str
     sharing_group_id: str
-    comment: str
+    comment: str | None = None
     deleted: bool
     disable_correlation: bool
     first_seen: Optional[str] = Field(..., nullable=True)

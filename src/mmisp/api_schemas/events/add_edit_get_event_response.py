@@ -80,7 +80,7 @@ class AddEditGetEventGalaxy(BaseModel):
     namespace: str
     enabled: bool
     local_only: bool
-    kill_chain_order: str
+    kill_chain_order: str | None = None
     GalaxyCluster: list[AddEditGetEventGalaxyCluster] = []
 
 
@@ -152,7 +152,7 @@ class AddEditGetEventAttribute(BaseModel):
     timestamp: str
     distribution: str
     sharing_group_id: str
-    comment: str
+    comment: str | None = None
     deleted: bool
     disable_correlation: bool
     first_seen: str | None = None
