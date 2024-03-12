@@ -1,13 +1,13 @@
 from pydantic import BaseModel
 
 
-class UserSetting(BaseModel):
+class UserSettingSchema(BaseModel):
     id: str
     setting: str
-    value: dict
+    value: dict | list
     user_id: str
     timestamp: str
 
 
 class UserSettingResponse(BaseModel):
-    UserSetting: UserSetting
+    UserSetting: UserSettingSchema

@@ -7,8 +7,7 @@ from sqlalchemy.orm import Session
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize, check_permissions
 from mmisp.api_schemas.standard_status_response import StandardStatusIdentifiedResponse
 from mmisp.api_schemas.user_settings.get_uid_user_setting_response import GetUserSettingResponse
-from mmisp.api_schemas.user_settings.get_user_settings_response import UserSetting as UserSettingSchema
-from mmisp.api_schemas.user_settings.get_user_settings_response import UserSettingResponse
+from mmisp.api_schemas.user_settings.get_user_settings_response import UserSettingResponse, UserSettingSchema
 from mmisp.api_schemas.user_settings.search_user_setting_body import SearchUserSettingBody
 from mmisp.api_schemas.user_settings.set_user_setting_body import SetUserSettingBody
 from mmisp.api_schemas.user_settings.set_user_setting_response import (
@@ -292,7 +291,7 @@ async def _search_user_settings(
 
     user_settings: list[UserSetting] = query.all()
 
-    user_settings_out: list[UserSettingSchema] = []
+    user_settings_out: list[UserSettingResponse] = []
 
     for user_setting in user_settings:
         user_settings_out.append(
@@ -319,9 +318,9 @@ async def _get_user_settings(
     if not check_permissions(auth, [Permission.SITE_ADMIN]):
         query.filter(UserSetting.user_id == auth.user_id)
 
-    user_settings: list[UserSetting] = db.query(UserSetting).all()
+    user_settings: list[UserSetting] = query.all()
 
-    user_settings_out: list[UserSettingSchema] = []
+    user_settings_out: list[UserSettingResponse] = []
 
     for user_setting in user_settings:
         user_settings_out.append(

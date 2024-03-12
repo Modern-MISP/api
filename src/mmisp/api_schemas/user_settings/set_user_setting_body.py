@@ -2,4 +2,4 @@ from pydantic import BaseModel
 
 
 class SetUserSettingBody(BaseModel):
-    value: dict
+    value: dict | list
