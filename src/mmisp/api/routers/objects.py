@@ -200,6 +200,30 @@ async def _add_object(db: Session, event_id: int, object_template_id: int, body:
     return ObjectResponse(object=object_response)
 
 
+# async def _restsearch(db: Session, body: ObjectSearchBody) -> dict[str, Any]:
+#     if body.return_format is None:
+#         body.return_format = "json"
+#     else:
+#         _check_valid_return_format(return_format=body.return_format)
+
+#     filters = body.dict(exclude_unset=True)
+#     objects = _get_objects_with_filters(db=db, filters=filters)
+#     obj_ids: list = [object.id for object in objects]
+
+#     all_attributes: list[Attribute] = db.query(Attribute).filter(Attribute.object_id.in_(obj_ids)).all()
+
+#     attributes_mapping: dict = {object_id: [] for object_id in obj_ids}
+#     for attribute in all_attributes:
+#         attributes_mapping[attribute.object_id].append(attribute)
+
+#     objects_data: list[ObjectWithAttributesResponse] = [
+#         ObjectWithAttributesResponse(**object.__dict__, attributes=attributes_mapping[object.id], event=None)
+#         for object in objects
+#     ]
+
+#     return ObjectSearchResponse(response=[{"object": object_data} for object_data in objects_data])
+
+
 async def _restsearch(db: Session, body: ObjectSearchBody) -> dict[str, Any]:
     if body.return_format is None:
         body.return_format = "json"
@@ -207,22 +231,25 @@ async def _restsearch(db: Session, body: ObjectSearchBody) -> dict[str, Any]:
         _check_valid_return_format(return_format=body.return_format)
 
     filters = body.dict(exclude_unset=True)
-    objects: list[Object] = _build_query(db=db, filters=filters)
+    objects = _get_objects_with_filters(db=db, filters=filters)
 
-    all_attributes: list[Attribute] = (
-        db.query(Attribute).filter(Attribute.object_id.in_([object.id for object in objects])).all()
-    )
+    obj_ids: list[int] = [obj.id for obj in objects]
+    all_attributes: list[Attribute] = db.query(Attribute).filter(Attribute.object_id.in_(obj_ids)).all()
 
-    attributes_mapping: dict = {object_id: [] for object_id in [object.id for object in objects]}
-    for attribute in all_attributes:
-        attributes_mapping[attribute.object_id].append(attribute)
+    attributes_mapping: dict[int, list[GetAllAttributesResponse]] = {}
+    for attr in all_attributes:
+        attributes_mapping.setdefault(attr.object_id, []).append(GetAllAttributesResponse(**attr.__dict__))
 
     objects_data: list[ObjectWithAttributesResponse] = [
-        ObjectWithAttributesResponse(**object.__dict__, attributes=attributes_mapping[object.id], event=None)
-        for object in objects
+        ObjectWithAttributesResponse(
+            id=obj.id,
+            attributes=attributes_mapping.get(obj.id, []),
+            **{k: v for k, v in obj.__dict__.items() if k != "id"},
+        )
+        for obj in objects
     ]
 
-    return ObjectSearchResponse(response=[{"object": object_data} for object_data in objects_data])
+    return ObjectSearchResponse(response=[{"object": obj_data.dict()} for obj_data in objects_data])
 
 
 async def _get_object_details(db: Session, object_id: int) -> dict[str, Any]:
@@ -256,16 +283,16 @@ async def _delete_object(db: Session, object_id: int, hard_delete: bool) -> dict
     if hard_delete:
         db.query(Attribute).filter(Attribute.object_id == object_id).delete(synchronize_session="fetch")
         db.delete(object)
-        db.commit()
         saved = True
         success = True
         message = "Object has been permanently deleted."
     else:
         object.deleted = True
-        db.commit()
         saved = True
         success = True
         message = "Object has been soft deleted."
+
+    db.commit()
 
     return StandardStatusResponse(
         saved=saved,
@@ -281,7 +308,7 @@ def _check_valid_return_format(return_format: str) -> None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid return format.")
 
 
-def _build_query(db: Session, filters: ObjectSearchBody) -> list[Object]:
+def _get_objects_with_filters(db: Session, filters: ObjectSearchBody) -> list[Object]:
     search_body: ObjectSearchBody = ObjectSearchBody(**filters)
     query: Object = db.query(Object)
 
@@ -336,39 +363,39 @@ def _build_query(db: Session, filters: ObjectSearchBody) -> list[Object]:
         query = query.filter(Object.last_seen > search_body.last)
 
     if search_body.event_timestamp:
-        event_subquery = select([Event]).where(Event.timestamp == search_body.event_timestamp)
-        query = query.filter(Object.id.in_(event_subquery))
+        subquery = select(Event.id).filter(Event.timestamp == search_body.event_timestamp)
+        query = query.filter(Object.event_id.in_(subquery))
 
     if search_body.org_id:
-        event_subquery = select([Event]).where(Event.org_id == search_body.org_id)
-        query = query.filter(Object.id.in_(event_subquery))
+        subquery = select(Event.id).filter(Event.org_id == search_body.org_id)
+        query = query.filter(Object.event_id.in_(subquery))
 
     if search_body.uuid:
         query = query.filter(Object.uuid == search_body.uuid)
 
     if search_body.value1:
-        attribute_subquery = select([Attribute.object_id]).where(Attribute.value1 == search_body.value1)
-        query = query.filter(Object.id.in_(attribute_subquery))
+        subquery = select(Attribute.object_id).filter(Attribute.value1 == search_body.value1)
+        query = query.filter(Object.id.in_(subquery))
 
     if search_body.value2:
-        attribute_subquery = select([Attribute.object_id]).where(Attribute.value2 == search_body.value2)
-        query = query.filter(Object.id.in_(attribute_subquery))
+        subquery = select(Attribute.object_id).filter(Attribute.value2 == search_body.value2)
+        query = query.filter(Object.id.in_(subquery))
 
     if search_body.type:
-        attribute_subquery = select([Attribute.object_id]).where(Attribute.type == search_body.type)
-        query = query.filter(Object.id.in_(attribute_subquery))
+        subquery = select(Attribute.object_id).filter(Attribute.type == search_body.type)
+        query = query.filter(Object.id.in_(subquery))
 
     if search_body.attribute_timestamp:
-        attribute_subquery = select([Attribute.object_id]).where(Attribute.timestamp == search_body.attribute_timestamp)
-        query = query.filter(Object.id.in_(attribute_subquery))
+        subquery = select(Attribute.object_id).filter(Attribute.timestamp == search_body.attribute_timestamp)
+        query = query.filter(Object.id.in_(subquery))
 
     if search_body.to_ids:
-        attribute_subquery = select([Attribute.object_id]).where(Attribute.to_ids == search_body.to_ids)
-        query = query.filter(Object.id.in_(attribute_subquery))
+        subquery = select(Attribute.object_id).filter(Attribute.to_ids == search_body.to_ids)
+        query = query.filter(Object.id.in_(subquery))
 
     if search_body.published:
-        event_subquery = select([Event]).where(Event.published == search_body.published)
-        query = query.filter(Object.id.in_(event_subquery))
+        subquery = select(Event.id).filter(Event.published == search_body.published)
+        query = query.filter(Object.event_id.in_(subquery))
 
     if search_body.deleted:
         query = query.filter(Object.deleted == search_body.deleted)

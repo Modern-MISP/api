@@ -190,7 +190,7 @@ async def _add_sighting(db: Session, body: SightingCreateBody) -> list[dict[str,
         value_specific_filters = {"value": value}
         if filters:
             value_specific_filters.update(filters)
-            attributes = _build_query(db=db, filters=value_specific_filters)
+            attributes = _get_attributes_with_filters(db=db, filters=value_specific_filters)
         else:
             attributes = db.query(Attribute).filter(Attribute.value1 == value).all()
 
@@ -333,7 +333,7 @@ def _check_valid_return_format(return_format: str) -> None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid return format.")
 
 
-def _build_query(db: Session, filters: SightingFiltersBody) -> list[Attribute]:
+def _get_attributes_with_filters(db: Session, filters: SightingFiltersBody) -> list[Attribute]:
     search_body: SightingFiltersBody = SightingFiltersBody(**filters)
     query: Attribute = db.query(Attribute)
 
@@ -377,12 +377,12 @@ def _build_query(db: Session, filters: SightingFiltersBody) -> list[Attribute]:
         query = query.filter(Attribute.deleted == search_body.deleted)
 
     if search_body.event_timestamp:
-        event_subquery = select([Event]).where(Event.timestamp == search_body.event_timestamp)
-        query = query.filter(Attribute.event_id.in_(event_subquery))
+        subquery = select(Event.id).filter(Event.timestamp == search_body.event_timestamp)
+        query = query.filter(Attribute.event_id.in_(subquery))
 
     if search_body.event_info:
-        event_subquery = select([Event]).where(Event.info.like(f"%{search_body.event_info}%"))
-        query = query.filter(Attribute.event_id.in_(event_subquery))
+        subquery = select(Event.id).filter(Event.info.like(f"%{search_body.event_info}%"))
+        query = query.filter(Attribute.event_id.in_(subquery))
 
     if search_body.sharing_group:
         query = query.filter(Attribute.sharing_group_id.in_(search_body.sharing_group))
@@ -394,7 +394,7 @@ def _build_query(db: Session, filters: SightingFiltersBody) -> list[Attribute]:
         query = query.filter(Attribute.last_seen == search_body.last_seen)
 
     if search_body.requested_attributes:
-        query = query.filter(Attribute.id.in_(search_body.requested_attributes))
+        query = query.filter(Attribute.sharing_group_id.in_(search_body.requested_attributes))
 
     if search_body.limit:
         query = query.limit(int(search_body.limit))
