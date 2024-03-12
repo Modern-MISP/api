@@ -7,6 +7,7 @@ from ...environment import client, environment
 from ...generators.model_generators.attribute_generator import generate_attribute
 from ...generators.model_generators.event_generator import generate_event
 from ...generators.model_generators.organisation_generator import generate_organisation
+from ...generators.model_generators.sharing_group_generator import generate_sharing_group
 from ...generators.model_generators.tag_generator import generate_tag
 
 # --- Test cases ---
@@ -28,6 +29,14 @@ class TestAddAttribute:
             "disable_correlation": False,
         }
 
+        sharing_group = generate_sharing_group()
+        sharing_group.organisation_uuid = environment.instance_org_two.uuid
+        sharing_group.org_id = environment.instance_org_two.id
+
+        db.add(sharing_group)
+        db.commit()
+        db.refresh(sharing_group)
+
         organisation = generate_organisation()
 
         db.add(organisation)
@@ -39,6 +48,7 @@ class TestAddAttribute:
         event = generate_event()
         setattr(event, "org_id", org_id)
         setattr(event, "orgc_id", org_id)
+        setattr(event, "sharing_group_id", sharing_group.id)
 
         db.add(event)
         db.commit()
@@ -81,6 +91,14 @@ class TestAddAttribute:
     @staticmethod
     def test_add_attribute_invalid_data(db: Session) -> None:
         request_body = {"value": "1.2.3.4", "type": "invalid type"}
+        sharing_group = generate_sharing_group()
+        sharing_group.organisation_uuid = environment.instance_org_two.uuid
+        sharing_group.org_id = environment.instance_org_two.id
+
+        db.add(sharing_group)
+        db.commit()
+        db.refresh(sharing_group)
+
         organisation = generate_organisation()
 
         db.add(organisation)
@@ -92,6 +110,7 @@ class TestAddAttribute:
         event = generate_event()
         setattr(event, "org_id", org_id)
         setattr(event, "orgc_id", org_id)
+        setattr(event, "sharing_group_id", sharing_group.id)
 
         db.add(event)
         db.commit()
@@ -110,6 +129,14 @@ class TestAddAttribute:
 class TestGetAttributeDetails:
     @staticmethod
     def test_get_existing_attribute(db: Session) -> None:
+        sharing_group = generate_sharing_group()
+        sharing_group.organisation_uuid = environment.instance_org_two.uuid
+        sharing_group.org_id = environment.instance_org_two.id
+
+        db.add(sharing_group)
+        db.commit()
+        db.refresh(sharing_group)
+
         organisation = generate_organisation()
 
         db.add(organisation)
@@ -121,6 +148,7 @@ class TestGetAttributeDetails:
         event = generate_event()
         setattr(event, "org_id", org_id)
         setattr(event, "orgc_id", org_id)
+        setattr(event, "sharing_group_id", sharing_group.id)
 
         db.add(event)
         db.commit()
@@ -130,6 +158,7 @@ class TestGetAttributeDetails:
 
         attribute = generate_attribute()
         setattr(attribute, "event_id", event_id)
+        setattr(attribute, "sharing_group_id", sharing_group.id)
 
         db.add(attribute)
         db.commit()
@@ -203,6 +232,14 @@ class TestEditAttribute:
             "comment": "new comment",
             "disable_correlation": False,
         }
+        sharing_group = generate_sharing_group()
+        sharing_group.organisation_uuid = environment.instance_org_two.uuid
+        sharing_group.org_id = environment.instance_org_two.id
+
+        db.add(sharing_group)
+        db.commit()
+        db.refresh(sharing_group)
+
         organisation = generate_organisation()
 
         db.add(organisation)
@@ -214,6 +251,7 @@ class TestEditAttribute:
         event = generate_event()
         setattr(event, "org_id", org_id)
         setattr(event, "orgc_id", org_id)
+        setattr(event, "sharing_group_id", sharing_group.id)
 
         db.add(event)
         db.commit()
@@ -223,6 +261,7 @@ class TestEditAttribute:
 
         attribute = generate_attribute()
         setattr(attribute, "event_id", event_id)
+        setattr(attribute, "sharing_group_id", sharing_group.id)
 
         db.add(attribute)
         db.commit()
@@ -280,6 +319,14 @@ class TestEditAttribute:
 class TestDeleteAttribute:
     @staticmethod
     def test_delete_existing_attribute(db: Session) -> None:
+        sharing_group = generate_sharing_group()
+        sharing_group.organisation_uuid = environment.instance_org_two.uuid
+        sharing_group.org_id = environment.instance_org_two.id
+
+        db.add(sharing_group)
+        db.commit()
+        db.refresh(sharing_group)
+
         organisation = generate_organisation()
 
         db.add(organisation)
@@ -291,6 +338,7 @@ class TestDeleteAttribute:
         event = generate_event()
         setattr(event, "org_id", org_id)
         setattr(event, "orgc_id", org_id)
+        setattr(event, "sharing_group_id", sharing_group.id)
 
         db.add(event)
         db.commit()
@@ -300,6 +348,7 @@ class TestDeleteAttribute:
 
         attribute = generate_attribute()
         setattr(attribute, "event_id", event_id)
+        setattr(attribute, "sharing_group_id", sharing_group.id)
 
         db.add(attribute)
         db.commit()
@@ -327,6 +376,14 @@ class TestDeleteAttribute:
 class TestGetAllAttributes:
     @staticmethod
     def test_get_all_attributes(db: Session) -> None:
+        sharing_group = generate_sharing_group()
+        sharing_group.organisation_uuid = environment.instance_org_two.uuid
+        sharing_group.org_id = environment.instance_org_two.id
+
+        db.add(sharing_group)
+        db.commit()
+        db.refresh(sharing_group)
+
         organisation = generate_organisation()
 
         db.add(organisation)
@@ -338,6 +395,7 @@ class TestGetAllAttributes:
         event = generate_event()
         setattr(event, "org_id", org_id)
         setattr(event, "orgc_id", org_id)
+        setattr(event, "sharing_group_id", sharing_group.id)
 
         db.add(event)
         db.commit()
@@ -347,6 +405,7 @@ class TestGetAllAttributes:
 
         attribute1 = generate_attribute()
         setattr(attribute1, "event_id", event_id)
+        setattr(attribute1, "sharing_group_id", sharing_group.id)
 
         db.add(attribute1)
         db.commit()
@@ -354,6 +413,7 @@ class TestGetAllAttributes:
 
         attribute2 = generate_attribute()
         setattr(attribute2, "event_id", event_id)
+        setattr(attribute2, "sharing_group_id", sharing_group.id)
 
         db.add(attribute2)
         db.commit()
@@ -393,6 +453,14 @@ class TestDeleteSelectedAttributes:
     @staticmethod
     def test_delete_selected_attributes_from_existing_event(db: Session) -> None:
         request_body = {"id": "1 2 3", "allow_hard_delete": False}
+        sharing_group = generate_sharing_group()
+        sharing_group.organisation_uuid = environment.instance_org_two.uuid
+        sharing_group.org_id = environment.instance_org_two.id
+
+        db.add(sharing_group)
+        db.commit()
+        db.refresh(sharing_group)
+
         organisation = generate_organisation()
 
         db.add(organisation)
@@ -404,6 +472,7 @@ class TestDeleteSelectedAttributes:
         event = generate_event()
         setattr(event, "org_id", org_id)
         setattr(event, "orgc_id", org_id)
+        setattr(event, "sharing_group_id", sharing_group.id)
 
         db.add(event)
         db.commit()
@@ -413,6 +482,7 @@ class TestDeleteSelectedAttributes:
 
         attribute1 = generate_attribute()
         setattr(attribute1, "event_id", event_id)
+        setattr(attribute1, "sharing_group_id", sharing_group.id)
 
         db.add(attribute1)
         db.commit()
@@ -422,6 +492,7 @@ class TestDeleteSelectedAttributes:
 
         attribute2 = generate_attribute()
         setattr(attribute2, "event_id", event_id)
+        setattr(attribute2, "sharing_group_id", sharing_group.id)
 
         db.add(attribute2)
         db.commit()
@@ -449,7 +520,15 @@ class TestDeleteSelectedAttributes:
 class TestAttributesRestSearch:
     @staticmethod
     def test_valid_search_attribute_data(db: Session) -> None:
-        request_body = {"returnFormat": "json"}
+        request_body = {"returnFormat": "json", "limit": 100}
+        sharing_group = generate_sharing_group()
+        sharing_group.organisation_uuid = environment.instance_org_two.uuid
+        sharing_group.org_id = environment.instance_org_two.id
+
+        db.add(sharing_group)
+        db.commit()
+        db.refresh(sharing_group)
+
         organisation = generate_organisation()
 
         db.add(organisation)
@@ -461,6 +540,7 @@ class TestAttributesRestSearch:
         event = generate_event()
         setattr(event, "org_id", org_id)
         setattr(event, "orgc_id", org_id)
+        setattr(event, "sharing_group_id", sharing_group.id)
 
         db.add(event)
         db.commit()
@@ -470,6 +550,7 @@ class TestAttributesRestSearch:
 
         attribute = generate_attribute()
         setattr(attribute, "event_id", event_id)
+        setattr(attribute, "sharing_group_id", sharing_group.id)
 
         db.add(attribute)
         db.commit()
@@ -540,6 +621,14 @@ class TestAttributeDescribeTypes:
 class TestRestoreAttribute:
     @staticmethod
     def test_restore_existing_attribute(db: Session) -> None:
+        sharing_group = generate_sharing_group()
+        sharing_group.organisation_uuid = environment.instance_org_two.uuid
+        sharing_group.org_id = environment.instance_org_two.id
+
+        db.add(sharing_group)
+        db.commit()
+        db.refresh(sharing_group)
+
         organisation = generate_organisation()
 
         db.add(organisation)
@@ -551,6 +640,7 @@ class TestRestoreAttribute:
         event = generate_event()
         setattr(event, "org_id", org_id)
         setattr(event, "orgc_id", org_id)
+        setattr(event, "sharing_group_id", sharing_group.id)
 
         db.add(event)
         db.commit()
@@ -560,7 +650,8 @@ class TestRestoreAttribute:
 
         attribute = generate_attribute()
         attribute.event_id = event_id
-        #        setattr(attribute, "event_id", event_id)
+        setattr(attribute, "event_id", event_id)
+        setattr(attribute, "sharing_group_id", sharing_group.id)
 
         db.add(attribute)
         db.commit()
@@ -587,6 +678,14 @@ class TestRestoreAttribute:
 class TestAddTagToAttribute:
     @staticmethod
     def test_add_existing_tag_to_attribute(db: Session) -> None:
+        sharing_group = generate_sharing_group()
+        sharing_group.organisation_uuid = environment.instance_org_two.uuid
+        sharing_group.org_id = environment.instance_org_two.id
+
+        db.add(sharing_group)
+        db.commit()
+        db.refresh(sharing_group)
+
         organisation = generate_organisation()
 
         db.add(organisation)
@@ -598,6 +697,7 @@ class TestAddTagToAttribute:
         event = generate_event()
         setattr(event, "org_id", org_id)
         setattr(event, "orgc_id", org_id)
+        setattr(event, "sharing_group_id", sharing_group.id)
 
         db.add(event)
         db.commit()
@@ -607,6 +707,7 @@ class TestAddTagToAttribute:
 
         attribute = generate_attribute()
         setattr(attribute, "event_id", event_id)
+        setattr(attribute, "sharing_group_id", sharing_group.id)
 
         db.add(attribute)
         db.commit()
@@ -638,6 +739,14 @@ class TestAddTagToAttribute:
 
     @staticmethod
     def test_add_invalid_or_non_existing_tag_to_attribute(db: Session) -> None:
+        sharing_group = generate_sharing_group()
+        sharing_group.organisation_uuid = environment.instance_org_two.uuid
+        sharing_group.org_id = environment.instance_org_two.id
+
+        db.add(sharing_group)
+        db.commit()
+        db.refresh(sharing_group)
+
         organisation = generate_organisation()
 
         db.add(organisation)
@@ -649,6 +758,7 @@ class TestAddTagToAttribute:
         event = generate_event()
         setattr(event, "org_id", org_id)
         setattr(event, "orgc_id", org_id)
+        setattr(event, "sharing_group_id", sharing_group.id)
 
         db.add(event)
         db.commit()
@@ -658,6 +768,7 @@ class TestAddTagToAttribute:
 
         attribute = generate_attribute()
         setattr(attribute, "event_id", event_id)
+        setattr(attribute, "sharing_group_id", sharing_group.id)
 
         db.add(attribute)
         db.commit()
@@ -685,6 +796,14 @@ class TestAddTagToAttribute:
 class TestRemoveTagFromAttribute:
     @staticmethod
     def test_remove_existing_tag_from_attribute(db: Session) -> None:
+        sharing_group = generate_sharing_group()
+        sharing_group.organisation_uuid = environment.instance_org_two.uuid
+        sharing_group.org_id = environment.instance_org_two.id
+
+        db.add(sharing_group)
+        db.commit()
+        db.refresh(sharing_group)
+
         organisation = generate_organisation()
 
         db.add(organisation)
@@ -696,6 +815,7 @@ class TestRemoveTagFromAttribute:
         event = generate_event()
         setattr(event, "org_id", org_id)
         setattr(event, "orgc_id", org_id)
+        setattr(event, "sharing_group_id", sharing_group.id)
 
         db.add(event)
         db.commit()
@@ -705,6 +825,7 @@ class TestRemoveTagFromAttribute:
 
         attribute = generate_attribute()
         setattr(attribute, "event_id", event_id)
+        setattr(attribute, "sharing_group_id", sharing_group.id)
 
         db.add(attribute)
         db.commit()
