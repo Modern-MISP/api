@@ -18,10 +18,10 @@ class SharingGroup(Base):
     organisation_uuid = Column(String(40), nullable=False)
     org_id = Column(Integer, nullable=False, index=True)
     sync_user_id = Column(Integer, nullable=False, default=0, index=True)
-    active = Column(Boolean, nullable=False)
+    active = Column(Boolean, nullable=False, default=False)
     created = Column(DateTime, default=datetime.utcnow, nullable=False)
     modified = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
-    local = Column(Boolean, nullable=False)
+    local = Column(Boolean, nullable=False, default=True)
     roaming = Column(Boolean, default=False, nullable=False)
 
 
