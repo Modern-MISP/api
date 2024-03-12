@@ -1,10 +1,12 @@
 from datetime import datetime
+from time import time_ns
 from uuid import uuid4
 
 from fastapi import status
 from sqlalchemy.orm import Session
 
 from mmisp.db.models.sharing_group import SharingGroup, SharingGroupOrg, SharingGroupServer
+from mmisp.util.uuid import uuid
 from tests.generators.model_generators.sharing_group_generator import generate_sharing_group
 
 from ...environment import client, environment
@@ -13,7 +15,7 @@ from ...environment import client, environment
 class TestCreateSharingGroup:
     @staticmethod
     def test_create_valid_sharing_group(db: Session) -> None:
-        body = {"name": "Test Sharing Group", "description": "description", "releasability": "yes"}
+        body = {"name": f"Test Sharing Group {uuid()}{time_ns()}", "description": "description", "releasability": "yes"}
 
         response = client.post(
             "/sharing_groups", headers={"authorization": environment.site_admin_user_token}, json=body
@@ -37,7 +39,7 @@ class TestCreateSharingGroup:
     @staticmethod
     def test_create_valid_sharing_group_with_org_id_overwrite(db: Session) -> None:
         body = {
-            "name": "Test Sharing Group",
+            "name": f"Test Sharing Group {uuid()}{time_ns()}",
             "description": "description",
             "releasability": "yes",
             "organisation_uuid": environment.instance_two_owner_org.uuid,
@@ -65,7 +67,7 @@ class TestCreateSharingGroup:
     @staticmethod
     def test_create_sharing_group_with_org_id_overwrite_but_not_enough_permissions() -> None:
         body = {
-            "name": "Test Sharing Group",
+            "name": f"Test Sharing Group {uuid()}{time_ns()}",
             "description": "description",
             "releasability": "yes",
             "organisation_uuid": environment.instance_two_owner_org.uuid,
@@ -867,7 +869,7 @@ class TestRemoveServerFromSharingGroup:
 class TestCreateSharingGroupLegacy:
     @staticmethod
     def test_create_valid_sharing_group_legacy() -> None:
-        body = {"name": "Test Sharing Group", "description": "description", "releasability": "yes"}
+        body = {"name": f"Test Sharing Group {uuid()}{time_ns()}", "description": "description", "releasability": "yes"}
 
         response = client.post(
             "/sharing_groups/add", headers={"authorization": environment.site_admin_user_token}, json=body
@@ -883,7 +885,7 @@ class TestCreateSharingGroupLegacy:
     @staticmethod
     def test_create_valid_sharing_group_legacy_with_org_id_overwrite() -> None:
         body = {
-            "name": "Test Sharing Group",
+            "name": f"Test Sharing Group {uuid()}{time_ns()}",
             "description": "description",
             "releasability": "yes",
             "organisation_uuid": environment.instance_two_owner_org.uuid,
@@ -903,7 +905,7 @@ class TestCreateSharingGroupLegacy:
     @staticmethod
     def test_create_sharing_group_legacy_with_org_id_overwrite_but_not_enough_permissions() -> None:
         body = {
-            "name": "Test Sharing Group",
+            "name": f"Test Sharing Group {uuid()}{time_ns()}",
             "description": "description",
             "releasability": "yes",
             "organisation_uuid": environment.instance_two_owner_org.uuid,
