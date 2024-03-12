@@ -11,5 +11,5 @@ def generate_tag() -> Tag:
         exportable=False,
         hide_tag=False,
         numerical_value=1,
-        inherited=False,
+        local_only=False,
     )

@@ -374,7 +374,7 @@ async def _add_event(auth: Auth, db: Session, body: AddEventBody) -> dict:
             "analysis": body.analysis if body.analysis is not None else "0",
             "timestamp": int(body.timestamp) if body.timestamp is not None else timegm(gmtime()),
             "threat_level_id": int(body.threat_level_id) if body.threat_level_id is not None else 4,
-            "event_creator_email": body.event_creator_email if body.event_creator_email is not None else user.email,
+            "user_id": user.id,
         }
     )
 
@@ -466,6 +466,8 @@ async def _rest_search_events(db: Session, body: SearchEventsBody) -> dict:
 
         # todo: not all fields in 'SearchAttributesBody' are taken into account yet
 
+    if body.limit is not None:
+        events = events[: body.limit]
     response_list = []
     for event in events:
         response_list.append(AddEditGetEventResponse(Event=_prepare_event_response(db, event)))
@@ -647,22 +649,30 @@ def _prepare_event_response(db: Session, event: Event) -> AddEditGetEventDetails
 
     event_dict["Galaxy"] = []
 
+    galaxy_cluster_list = []
+
     for event_tag in event_tag_list:
         tag = db.get(Tag, event_tag.tag_id)
-        if tag.is_galaxy is True:
-            event_dict["Galaxy"].append(
-                db.get(Galaxy, db.query(GalaxyCluster).filter(GalaxyCluster.tag_name == tag.name).first().galaxy_id)
-            )
+        if tag.is_galaxy is False:
+            continue
+        galaxy_clusters = db.query(GalaxyCluster).filter(GalaxyCluster.tag_name == tag.name).all()
+        for galaxy_cluster in galaxy_clusters:
+            galaxy_cluster_list.append(galaxy_cluster)
+            galaxy = db.get(Galaxy, galaxy_cluster.galaxy_id)
+            if galaxy in event_dict["Galaxy"]:
+                continue
+            event_dict["Galaxy"].append(galaxy)
 
-    event_dict["Galaxy"] = _prepare_galaxy_response(db, event_dict["Galaxy"], event)
+    event_dict["Galaxy"] = _prepare_galaxy_response(db, event_dict["Galaxy"], event, galaxy_cluster_list)
     event_dict["date"] = str(event_dict["date"])
+
+    event_dict["event_creator_email"] = db.get(User, event.user_id).email
 
     return AddEditGetEventDetails(**event_dict)
 
 
 def _prepare_attribute_response(db: Session, attribute_list: list[Attribute]) -> list[AddEditGetEventAttribute]:
     attribute_response_list = []
-    attribute_tag_list = []
 
     for attribute in attribute_list:
         attribute_dict = attribute.asdict().copy()
@@ -679,15 +689,23 @@ def _prepare_attribute_response(db: Session, attribute_list: list[Attribute]) ->
                 attribute_dict[field] = "0"
 
         attribute_dict["Galaxy"] = []
+        galaxy_cluster_list = []
 
         for attribute_tag in attribute_tag_list:
             tag = db.get(Tag, attribute_tag.tag_id)
-            if tag.is_galaxy is True:
-                attribute_dict["Galaxy"].append(
-                    db.get(Galaxy, db.query(GalaxyCluster).filter(GalaxyCluster.tag_name == tag.name).first().galaxy_id)
-                )
+            if tag.is_galaxy is False:
+                continue
+            galaxy_clusters = db.query(GalaxyCluster).filter(GalaxyCluster.tag_name == tag.name).all()
+            for galaxy_cluster in galaxy_clusters:
+                galaxy_cluster_list.append(galaxy_cluster)
+                galaxy = db.get(Galaxy, galaxy_cluster.galaxy_id)
+                if galaxy in attribute_dict["Galaxy"]:
+                    continue
+                attribute_dict["Galaxy"].append(galaxy)
 
-        attribute_dict["Galaxy"] = _prepare_galaxy_response(db, attribute_dict["Galaxy"], attribute)
+        attribute_dict["Galaxy"] = _prepare_galaxy_response(
+            db, attribute_dict["Galaxy"], attribute, galaxy_cluster_list
+        )
 
         attribute_response_list.append(AddEditGetEventAttribute(**attribute_dict))
 
@@ -702,7 +720,7 @@ def _prepare_tag_response(db: Session, tag_list: list[Any]) -> list[AddEditGetEv
         attribute_or_event_tag_dict = tag.__dict__.copy()
 
         attribute_or_event_tag_dict["local"] = attribute_or_event_tag.local
-        attribute_or_event_tag_dict["local_only"] = tag.inherited
+        attribute_or_event_tag_dict["local_only"] = tag.local_only
         attribute_or_event_tag_dict["user_id"] = tag.user_id if tag.user_id is not None else "0"
         tag_response_list.append(AddEditGetEventTag(**attribute_or_event_tag_dict))
 
@@ -710,18 +728,17 @@ def _prepare_tag_response(db: Session, tag_list: list[Any]) -> list[AddEditGetEv
 
 
 def _prepare_galaxy_response(
-    db: Session, galaxy_list: list[Galaxy], attribute: Attribute
+    db: Session, galaxy_list: list[Galaxy], data_object: Any, galaxy_cluster_list: list[GalaxyCluster]
 ) -> list[AddEditGetEventGalaxy]:
     galaxy_response_list = []
 
     for galaxy in galaxy_list:
         galaxy_dict = galaxy.__dict__.copy()
-        galaxy_cluster_list = db.query(GalaxyCluster).filter(GalaxyCluster.galaxy_id == galaxy.id).all()
 
         if len(galaxy_cluster_list) > 0:
-            galaxy_dict["GalaxyCluster"] = _prepare_galaxy_cluster_response(db, galaxy_cluster_list, attribute)
-
-        galaxy_dict["local_only"] = db.query(Tag).filter(Tag.name == galaxy_cluster_list[0].tag_name).first().inherited
+            galaxy_dict["GalaxyCluster"] = _prepare_galaxy_cluster_response(
+                db, galaxy_cluster_list, data_object, galaxy.id
+            )
 
         galaxy_response_list.append(AddEditGetEventGalaxy(**galaxy_dict))
 
@@ -729,56 +746,58 @@ def _prepare_galaxy_response(
 
 
 def _prepare_galaxy_cluster_response(
-    db: Session, galaxy_cluster_list: list[GalaxyCluster], data_object: Any
+    db: Session, galaxy_cluster_list: list[GalaxyCluster], data_object: Any, galaxy_id: int
 ) -> list[AddEditGetEventGalaxyCluster]:
     galaxy_cluster_response_list = []
 
     for galaxy_cluster in galaxy_cluster_list:
-        galaxy_cluster_dict = galaxy_cluster.__dict__.copy()
-        galaxy_cluster_dict["authors"] = galaxy_cluster.authors.split(" ")
-        tag = db.query(Tag).filter(Tag.name == galaxy_cluster.tag_name).first()
-        fields_to_convert = ["org_id", "orgc_id", "extends_version"]
-        for field in fields_to_convert:
-            if galaxy_cluster_dict.get(field) is not None:
-                galaxy_cluster_dict[field] = str(galaxy_cluster_dict[field])
-            else:
-                galaxy_cluster_dict[field] = "0"
-
-        galaxy_cluster_dict["tag_id"] = tag.id
-        galaxy_cluster_dict["extends_uuid"] = (
-            galaxy_cluster.extends_uuid if galaxy_cluster.extends_uuid is not None else ""
-        )
-        galaxy_cluster_dict["collection_uuid"] = (
-            galaxy_cluster.collection_uuid if galaxy_cluster.collection_uuid is not None else ""
-        )
-
-        if isinstance(data_object, Attribute):
-            galaxy_cluster_dict["attribute_tag_id"] = (
-                db.query(AttributeTag)
-                .filter(AttributeTag.tag_id == tag.id)
-                .filter(AttributeTag.attribute_id == data_object.id)
-                .first()
-                .id
+        if galaxy_cluster.galaxy_id == galaxy_id:
+            galaxy_cluster_dict = galaxy_cluster.__dict__.copy()
+            galaxy_cluster_dict["authors"] = galaxy_cluster.authors.split(" ")
+            tag = db.query(Tag).filter(Tag.name == galaxy_cluster.tag_name).first()
+            fields_to_convert = ["org_id", "orgc_id", "extends_version"]
+            for field in fields_to_convert:
+                if galaxy_cluster_dict.get(field) is not None:
+                    galaxy_cluster_dict[field] = str(galaxy_cluster_dict[field])
+                else:
+                    galaxy_cluster_dict[field] = "0"
+            galaxy_cluster_dict["extends_uuid"] = (
+                galaxy_cluster.extends_uuid if galaxy_cluster.extends_uuid is not None else ""
             )
-        elif isinstance(data_object, Event):
-            galaxy_cluster_dict["event_tag_id"] = (
-                db.query(EventTag)
-                .filter(EventTag.tag_id == tag.id)
-                .filter(EventTag.event_id == data_object.id)
-                .first()
-                .id
+            galaxy_cluster_dict["collection_uuid"] = (
+                galaxy_cluster.collection_uuid if galaxy_cluster.collection_uuid is not None else ""
             )
 
-        galaxy_cluster_relation_list = (
-            db.query(GalaxyReference).filter(GalaxyReference.galaxy_cluster_id == galaxy_cluster.id).all()
-        )
+            if tag is None:
+                continue
+            galaxy_cluster_dict["tag_id"] = tag.id
 
-        if len(galaxy_cluster_relation_list) > 0:
-            galaxy_cluster_dict["GalaxyClusterRelation"] = _prepare_galaxy_cluster_relation_response(
-                db, galaxy_cluster_relation_list
+            if isinstance(data_object, Attribute):
+                galaxy_cluster_dict["attribute_tag_id"] = (
+                    db.query(AttributeTag)
+                    .filter(AttributeTag.tag_id == tag.id)
+                    .filter(AttributeTag.attribute_id == data_object.id)
+                    .first()
+                    .id
+                )
+            elif isinstance(data_object, Event):
+                galaxy_cluster_dict["event_tag_id"] = (
+                    db.query(EventTag)
+                    .filter(EventTag.tag_id == tag.id and EventTag.event_id == data_object.id)
+                    .first()
+                    .id
+                )
+
+            galaxy_cluster_relation_list = (
+                db.query(GalaxyReference).filter(GalaxyReference.galaxy_cluster_id == galaxy_cluster.id).all()
             )
 
-        galaxy_cluster_response_list.append(AddEditGetEventGalaxyCluster(**galaxy_cluster_dict))
+            if len(galaxy_cluster_relation_list) > 0:
+                galaxy_cluster_dict["GalaxyClusterRelation"] = _prepare_galaxy_cluster_relation_response(
+                    db, galaxy_cluster_relation_list
+                )
+
+            galaxy_cluster_response_list.append(AddEditGetEventGalaxyCluster(**galaxy_cluster_dict))
 
     return galaxy_cluster_response_list
 
@@ -849,6 +868,7 @@ def _prepare_all_events_response(db: Session, event: Event) -> GetAllEventsRespo
 
     event_dict["GalaxyCluster"] = _prepare_all_events_galaxy_cluster_response(db, event_tag_list)
     event_dict["date"] = str(event_dict["date"])
+    event_dict["event_creator_email"] = db.get(User, event.user_id).email
 
     return GetAllEventsResponse(**event_dict)
 
@@ -869,16 +889,17 @@ def _prepare_all_events_galaxy_cluster_response(
 
                 galaxy = db.get(Galaxy, galaxy_cluster.galaxy_id)
                 galaxy_dict = galaxy.__dict__.copy()
-                galaxy_dict["local_only"] = tag.inherited
+                galaxy_dict["local_only"] = tag.local_only
 
                 galaxy_cluster_dict["authors"] = galaxy_cluster.authors.split(" ")
                 tag = db.query(Tag).filter(Tag.name == galaxy_cluster.tag_name).first()
-                galaxy_cluster_dict["org_id"] = tag.org_id if tag.org_id is not None else "0"
-                galaxy_cluster_dict["orgc_id"] = tag.org_id if tag.org_id is not None else "0"
-                galaxy_cluster_dict["tag_id"] = tag.id
+                galaxy_cluster_dict["tag_id"] = 0
                 galaxy_cluster_dict["extends_uuid"] = ""
-                galaxy_cluster_dict["extends_version"] = "0"
                 galaxy_cluster_dict["collection_uuid"] = ""
+                if tag is not None:
+                    galaxy_cluster_dict["tag_id"] = tag.id
+                    galaxy_cluster_dict["extends_uuid"] = ""
+                    galaxy_cluster_dict["collection_uuid"] = ""
 
                 galaxy_cluster_dict["Galaxy"] = GetAllEventsGalaxyClusterGalaxy(**galaxy_dict)
 
