@@ -1,0 +1,18 @@
+default:
+  tags:
+      - any-image-allowed
+
+stages:
+  - test
+
+test_job:
+  stage: test
+  image: python:3.11-slim
+  before_script:
+    - apt-get update && apt-get install -y zsh make
+    - python --version
+    - zsh --version
+    - which zsh
+  script:
+    - make setup/ci
+    - make test/lite

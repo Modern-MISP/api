@@ -4,7 +4,7 @@ from sqlalchemy.exc import ProgrammingError
 
 from mmisp.config import config
 
-url = make_url(config.DATABASE_URL).set(drivername="mysql+mysqlconnector", database="")
+url = make_url(config.DATABASE_URL).set(database="")
 database = make_url(config.DATABASE_URL).database
 engine = create_engine(url)
 
