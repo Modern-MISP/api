@@ -34,19 +34,5 @@ class GetAllAttributesResponse(BaseModel):
             return value
         return None
 
-    @validator(
-        "event_id",
-        "object_id",
-        "timestamp",
-        "distribution",
-        "sharing_group_id",
-        "first_seen",
-        "last_seen",
-        pre=True,
-        allow_reuse=True,
-    )
-    def convert_to_string(cls, value: Optional[str]) -> Optional[str]:  # noqa: ANN101
-        return str(value) if value is not None else None
-
     class Config:
         orm_mode = True

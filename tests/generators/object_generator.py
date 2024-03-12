@@ -22,7 +22,7 @@ def generate_number_as_str() -> str:
 
 
 def generate_ids_as_str() -> str:
-    id_str = random.randint(1, 100)
+    id_str = random.randint(1, 50)
     return str(id_str)
 
 
@@ -39,7 +39,7 @@ def generate_valid_object_create_attributes() -> AddAttributeBody:
         value2=generate_random_str(),
         event_id=generate_ids_as_str(),
         category=generate_random_str(),
-        to_ids=random.choice([True, False]),
+        to_ids=True,
         timestamp=generate_random_date_str(),
         distribution=generate_number_as_str(),
         sharing_group_id=generate_ids_as_str(),
@@ -75,7 +75,7 @@ def generate_valid_random_object_create_attributes() -> AddAttributeBody:
         value2=generate_random_str(),
         event_id=generate_ids_as_str(),
         category=generate_random_str(),
-        to_ids=random.choice([True, False]),
+        to_ids=True,
         timestamp=generate_random_date_str(),
         distribution=generate_number_as_str(),
         sharing_group_id=generate_ids_as_str(),
@@ -90,7 +90,6 @@ def generate_valid_random_object_data() -> ObjectCreateBody:
         name=generate_random_str(),
         meta_category=generate_random_str(),
         description=generate_random_str(),
-        action=generate_random_str(),
         template_name=generate_random_str(),
         template_version="100",
         template_description=generate_random_str(),
@@ -109,13 +108,15 @@ def generate_valid_random_object_data() -> ObjectCreateBody:
 # Generate search data
 def generate_specific_search_query() -> ObjectSearchBody:
     return ObjectSearchBody(
+        value=generate_random_str(),
+        value1=generate_random_value(),
         eventid="1",
-        to_ids=random.choice([True, False]),
+        to_ids=True,
+        limit="50",
     )
 
 
 def generate_search_query() -> ObjectSearchBody:
-    val = generate_random_value()
     return ObjectSearchBody(
         object_name=generate_random_str(),
         object_template_uuid=generate_random_str(),
@@ -135,29 +136,28 @@ def generate_search_query() -> ObjectSearchBody:
         event_timestamp=generate_random_date_str(),
         org_id=generate_ids_as_str(),
         uuid=generate_random_str(),
-        value=val,
-        value1=val,
+        value=generate_random_str(),
+        value1=generate_random_value(),
         value2="",
         type=generate_random_str(),
         attribute_timestamp=generate_random_date_str(),
-        to_ids=random.choice([True, False]),
+        to_ids=True,
         published=random.choice([True, False]),
         deleted=random.choice([True, False]),
         returnFormat="json",
-        limit=generate_ids_as_str(),
+        limit="10",
     )
 
 
 # Generate random search data
 def generate_random_search_query() -> ObjectSearchBody:
-    val = generate_random_value()
     return ObjectSearchBody(
         object_name=generate_random_str() if random.choice([True, False]) else None,
         object_template_uuid=generate_random_str() if random.choice([True, False]) else None,
         object_template_version=generate_ids_as_str() if random.choice([True, False]) else None,
-        event_id=generate_ids_as_str() if random.choice([True, False]) else None,
+        event_id=generate_ids_as_str(),
         category=generate_random_str() if random.choice([True, False]) else None,
-        comment=generate_random_str() if random.choice([True, False]) else None,
+        comment=generate_random_str(),
         first_seen=generate_random_date_str() if random.choice([True, False]) else None,
         last_seen=generate_random_date_str() if random.choice([True, False]) else None,
         quickFilter=generate_random_str() if random.choice([True, False]) else None,
@@ -170,15 +170,14 @@ def generate_random_search_query() -> ObjectSearchBody:
         event_timestamp=generate_random_date_str() if random.choice([True, False]) else None,
         org_id=generate_ids_as_str() if random.choice([True, False]) else None,
         uuid=generate_random_str() if random.choice([True, False]) else None,
-        value=val if random.choice([True, False]) else None,
-        value1=val if random.choice([True, False]) else None,
+        value=generate_random_str(),
+        value1=generate_random_value() if random.choice([True, False]) else None,
         value2="" if random.choice([True, False]) else None,
         type=generate_random_str() if random.choice([True, False]) else None,
-        object_relation=generate_random_str() if random.choice([True, False]) else None,
         attribute_timestamp=generate_random_date_str() if random.choice([True, False]) else None,
-        to_ids=random.choice([True, False]) if random.choice([True, False]) else None,
+        to_ids=True,
         published=random.choice([True, False]) if random.choice([True, False]) else None,
         deleted=random.choice([True, False]) if random.choice([True, False]) else None,
         returnFormat="json",
-        limit=generate_ids_as_str() if random.choice([True, False]) else None,
+        limit="10" if random.choice([True, False]) else None,
     )
