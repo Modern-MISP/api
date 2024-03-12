@@ -1,3 +1,5 @@
+SHELL := $(shell which zsh)
+
 install:
 	pip install -e ".[dev]"
 
@@ -10,6 +12,12 @@ setup:
 	source venv/bin/activate; \
 	pip install -e ".[dev]"; \
 	pre-commit install --install-hooks
+
+setup/ci:
+	pip install virtualenv; \
+	virtualenv venv; \
+	source venv/bin/activate; \
+	pip install -e ".[dev]"
 
 up:
 	docker-compose up -d
@@ -25,6 +33,11 @@ test:
 	source venv/bin/activate; \
 	ENV_FILE=.env.test python tests/prepare.py; \
 	ENV_FILE=.env.test pytest tests
+
+test/lite:
+	rm -f mmisp-tests.db; \
+	source venv/bin/activate; \
+	ENV_FILE=.env.test.lite pytest tests
 
 test/plain:
 	pytest tests
