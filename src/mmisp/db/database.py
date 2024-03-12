@@ -8,7 +8,13 @@ from sqlalchemy.orm import Session, declarative_base, sessionmaker
 from mmisp.config import config
 
 url = make_url(config.DATABASE_URL)
-engine = create_engine(url, pool_size=100, max_overflow=20)
+
+create_engine_kwargs = {}
+
+if url.drivername != "sqlite":
+    create_engine_kwargs = {"pool_size": 100, "max_overflow": 20}
+
+engine = create_engine(url, **create_engine_kwargs)
 
 session = sessionmaker(autocommit=False, autoflush=False, expire_on_commit=False, bind=engine)
 Base = declarative_base()
