@@ -158,7 +158,7 @@ async def delete_attribute(
     description="Retrieve a list of all attributes.",
 )
 @with_session_management
-async def get_attributes(db: Annotated[Session, Depends(get_db)]) -> dict:
+async def get_attributes(db: Annotated[Session, Depends(get_db)]) -> list[dict]:
     return await _get_attributes(db)
 
 
@@ -190,7 +190,9 @@ async def delete_selected_attributes(
     description="Get the count/percentage of attributes per category/type.",
 )
 @with_session_management
-async def get_attributes_statistics(db: Annotated[Session, Depends(get_db)], context: str, percentage: int) -> dict:
+async def get_attributes_statistics(
+    db: Annotated[Session, Depends(get_db)], context: str, percentage: int
+) -> GetAttributeStatisticsCategoriesResponse:
     return await _get_attribute_statistics(db, context, percentage)
 
 
@@ -356,7 +358,7 @@ async def _add_attribute(db: Session, event_id: str, body: AddAttributeBody) -> 
 
     attribute_data = _prepare_attribute_response(new_attribute, "add")
 
-    return AddAttributeResponse(Attribute=attribute_data)
+    return AddAttributeResponse(Attribute=attribute_data).__dict__
 
 
 async def _get_attribute_details(db: Session, attribute_id: str) -> dict:
@@ -367,7 +369,7 @@ async def _get_attribute_details(db: Session, attribute_id: str) -> dict:
 
     attribute_data = _prepare_get_attribute_details_response(db, attribute_id, attribute)
 
-    return GetAttributeResponse(Attribute=attribute_data)
+    return GetAttributeResponse(Attribute=attribute_data).__dict__
 
 
 async def _update_attribute(db: Session, attribute_id: str, body: EditAttributeBody) -> dict:
@@ -383,10 +385,10 @@ async def _update_attribute(db: Session, attribute_id: str, body: EditAttributeB
 
     attribute_data = _prepare_edit_attribute_response(db, attribute_id, attribute)
 
-    return EditAttributeResponse(Attribute=attribute_data)
+    return EditAttributeResponse(Attribute=attribute_data).__dict__
 
 
-async def _delete_attribute(db: Session, attribute_id: str) -> DeleteAttributeResponse:
+async def _delete_attribute(db: Session, attribute_id: str) -> dict:
     attribute: Attribute | None = db.get(Attribute, attribute_id)
 
     if not attribute:
@@ -395,10 +397,10 @@ async def _delete_attribute(db: Session, attribute_id: str) -> DeleteAttributeRe
     db.delete(attribute)
     db.commit()
 
-    return DeleteAttributeResponse(message="Attribute deleted.")
+    return DeleteAttributeResponse(message="Attribute deleted.").__dict__
 
 
-async def _get_attributes(db: Session) -> dict:
+async def _get_attributes(db: Session) -> list[dict]:
     attributes = db.query(Attribute).all()
 
     if not attributes:
@@ -411,7 +413,7 @@ async def _get_attributes(db: Session) -> dict:
 
 async def _delete_selected_attributes(
     db: Session, event_id: str, body: DeleteSelectedAttributeBody, request: Request
-) -> DeleteSelectedAttributeResponse:
+) -> dict:
     event: Event | None = db.get(Event, event_id)
 
     if not event:
@@ -420,8 +422,6 @@ async def _delete_selected_attributes(
     attribute_ids = body.id.split(" ")
 
     for attribute_id in attribute_ids:
-        attribute = db.get(Attribute, attribute_id)
-
         attribute: Attribute | None = db.get(Attribute, attribute_id)
 
         if not attribute:
@@ -442,24 +442,17 @@ async def _delete_selected_attributes(
 
             db.refresh(attribute)
 
-    if len(attribute_ids) == 1:
-        return DeleteSelectedAttributeResponse(
-            saved=True,
-            success=True,
-            name="1 attribute deleted.",
-            message="1 attribute deleted.",
-            url=str(request.url.path),
-            id=str(event_id),
-        )
-    else:
-        return DeleteSelectedAttributeResponse(
-            saved=True,
-            success=True,
-            name=f"{len(attribute_ids)} attributes deleted.",
-            message=f"{len(attribute_ids)} attributes deleted.",
-            url=str(request.url.path),
-            id=str(event_id),
-        )
+    attribute_count = len(attribute_ids)
+    attribute_str = "attribute" if attribute_count == 1 else "attributes"
+
+    return DeleteSelectedAttributeResponse(
+        saved=True,
+        success=True,
+        name=f"{attribute_count} {attribute_str} deleted.",
+        message=f"{attribute_count} {attribute_str} deleted.",
+        url=str(request.url.path),
+        id=str(event_id),
+    ).__dict__
 
 
 async def _rest_search_attributes(db: Session, body: SearchAttributesBody) -> dict:
@@ -473,7 +466,8 @@ async def _rest_search_attributes(db: Session, body: SearchAttributesBody) -> di
         attributes = db.query(Attribute).filter(getattr(Attribute, field) == value).all()
 
         # todo: not all fields in 'SearchAttributesBody' are taken into account yet
-
+    if body.limit is not None:
+        attributes = attributes[: body.limit]
     response_list = []
     for attribute in attributes:
         attribute_dict = attribute.asdict().copy()
@@ -482,7 +476,7 @@ async def _rest_search_attributes(db: Session, body: SearchAttributesBody) -> di
             event_dict = event.__dict__.copy()
             event_dict["date"] = str(event_dict["date"])
             attribute_dict["Event"] = SearchAttributesEvent(**event_dict)
-        if attribute.object_id is not None:
+        if attribute.object_id != 0:
             object = db.get(Object, attribute.object_id)
             object_dict = object.__dict__.copy()
             attribute_dict["Object"] = SearchAttributesObject(**object_dict)
@@ -496,10 +490,12 @@ async def _rest_search_attributes(db: Session, body: SearchAttributesBody) -> di
 
         response_list.append(SearchAttributesAttributes(Attribute=SearchAttributesAttributesDetails(**attribute_dict)))
 
-    return SearchAttributesResponse(response=response_list)
+    return SearchAttributesResponse(response=response_list).__dict__
 
 
-async def _get_attribute_statistics(db: Session, context: str, percentage: int) -> dict:
+async def _get_attribute_statistics(
+    db: Session, context: str, percentage: int
+) -> GetAttributeStatisticsTypesResponse | GetAttributeStatisticsCategoriesResponse:
     if context not in ["type", "category"]:
         raise HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED, detail="Invalid 'context'")
     if int(percentage) not in [0, 1]:
@@ -525,14 +521,12 @@ async def _restore_attribute(db: Session, attribute_id: str) -> dict:
 
     db.refresh(attribute)
 
-    attribute_data = _prepare_get_attribute_details_response(db, attribute.id, attribute)
+    attribute_data = _prepare_get_attribute_details_response(db, str(attribute.id), attribute)
 
-    return GetAttributeResponse(Attribute=attribute_data)
+    return GetAttributeResponse(Attribute=attribute_data).__dict__
 
 
-async def _add_tag_to_attribute(
-    db: Session, attribute_id: str, tag_id: str, local: str
-) -> AddRemoveTagAttributeResponse:
+async def _add_tag_to_attribute(db: Session, attribute_id: str, tag_id: str, local: str) -> dict:
     attribute: Attribute | None = db.get(Attribute, attribute_id)
 
     if not attribute:
@@ -541,14 +535,14 @@ async def _add_tag_to_attribute(
     try:
         int(tag_id)
     except ValueError:
-        return AddRemoveTagAttributeResponse(saved=False, errors="Invalid Tag")
+        return AddRemoveTagAttributeResponse(saved=False, errors="Invalid Tag").__dict__
     if not db.get(Tag, tag_id):
-        return AddRemoveTagAttributeResponse(saved=False, errors="Tag could not be added.")
+        return AddRemoveTagAttributeResponse(saved=False, errors="Tag could not be added.").__dict__
 
     tag = db.get(Tag, tag_id)
 
     if int(local) not in [0, 1]:
-        return AddRemoveTagAttributeResponse(saved=False, errors="Invalid 'local'")
+        return AddRemoveTagAttributeResponse(saved=False, errors="Invalid 'local'").__dict__
     if local == "0":
         local = False
     else:
@@ -561,10 +555,10 @@ async def _add_tag_to_attribute(
 
     db.refresh(new_attribute_tag)
 
-    return AddRemoveTagAttributeResponse(saved=True, success="Tag added", check_publish=True)
+    return AddRemoveTagAttributeResponse(saved=True, success="Tag added", check_publish=True).__dict__
 
 
-async def _remove_tag_from_attribute(db: Session, attribute_id: str, tag_id: str) -> AddRemoveTagAttributeResponse:
+async def _remove_tag_from_attribute(db: Session, attribute_id: str, tag_id: str) -> dict:
     attribute: Attribute | None = db.get(Attribute, attribute_id)
 
     if not attribute:
@@ -573,19 +567,19 @@ async def _remove_tag_from_attribute(db: Session, attribute_id: str, tag_id: str
     try:
         int(tag_id)
     except ValueError:
-        return AddRemoveTagAttributeResponse(saved=False, errors="Invalid Tag")
+        return AddRemoveTagAttributeResponse(saved=False, errors="Invalid Tag").__dict__
     if not db.get(Tag, tag_id):
-        return AddRemoveTagAttributeResponse(saved=False, errors="Tag could not be removed.")
+        return AddRemoveTagAttributeResponse(saved=False, errors="Tag could not be removed.").__dict__
 
     attribute_tag = db.query(AttributeTag).filter(AttributeTag.attribute_id == attribute_id).first()
 
     if not attribute_tag:
-        return AddRemoveTagAttributeResponse(saved=False, errors="Invalid attribute - tag combination.")
+        return AddRemoveTagAttributeResponse(saved=False, errors="Invalid attribute - tag combination.").__dict__
 
     db.delete(attribute_tag)
     db.commit()
 
-    return AddRemoveTagAttributeResponse(saved=True, success="Tag removed", check_publish=True)
+    return AddRemoveTagAttributeResponse(saved=True, success="Tag removed", check_publish=True).__dict__
 
 
 def _prepare_attribute_response(attribute: Attribute, request_type: str) -> dict:
@@ -599,9 +593,9 @@ def _prepare_attribute_response(attribute: Attribute, request_type: str) -> dict
             attribute_dict[field] = "0"
 
     if request_type == "add":
-        return AddAttributeAttributes(**attribute_dict)
+        return AddAttributeAttributes(**attribute_dict).__dict__
     elif request_type == "get all":
-        return GetAllAttributesResponse(**attribute_dict)
+        return GetAllAttributesResponse(**attribute_dict).__dict__
 
 
 def _prepare_get_attribute_details_response(

@@ -36,11 +36,11 @@ class Attribute(Base, DictMixin):
     category = Column(String(255), nullable=False, index=True)
     type = Column(String(100), nullable=False, index=True)
     value1 = Column(Text, nullable=False)  # index=True
-    value2 = Column(Text, nullable=False)  # index=True
+    value2 = Column(Text, nullable=False, default="")  # index=True
     to_ids = Column(Boolean, default=True, nullable=False)
     timestamp = Column(Integer, nullable=False, default=0)
     distribution = Column(Integer, nullable=False, default=0)
-    sharing_group_id = Column(Integer, ForeignKey("sharing_groups.id"), index=True)
+    sharing_group_id = Column(Integer, index=True, default=0)
     comment = Column(Text)
     deleted = Column(Boolean, nullable=False, default=False)
     disable_correlation = Column(Boolean, nullable=False, default=False)

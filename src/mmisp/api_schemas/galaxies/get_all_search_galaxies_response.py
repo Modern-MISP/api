@@ -10,7 +10,7 @@ class GetAllSearchGalaxiesAttributes(BaseModel):
     version: str
     icon: str
     namespace: str
-    kill_chain_order: str
+    kill_chain_order: str | None = None
     enabled: bool
     local_only: bool
 

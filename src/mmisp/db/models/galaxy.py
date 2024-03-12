@@ -19,3 +19,4 @@ class Galaxy(Base):
     kill_chain_order = Column(String(255))
     """must be serialized"""
     enabled = Column(Boolean, nullable=False, default=True)
+    local_only = Column(Boolean, default=False)

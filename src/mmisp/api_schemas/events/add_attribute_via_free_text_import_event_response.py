@@ -2,7 +2,7 @@ from pydantic import BaseModel
 
 
 class AddAttributeViaFreeTextImportEventResponse(BaseModel):
-    comment: str
+    comment: str | None = None
     value: str
     original_value: str
     to_ids: str

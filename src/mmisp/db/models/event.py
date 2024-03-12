@@ -7,7 +7,6 @@ from mmisp.util.uuid import uuid
 
 from ..database import Base
 from .organisation import Organisation
-from .sharing_group import SharingGroup
 from .tag import Tag
 from .user import User
 
@@ -27,7 +26,7 @@ class Event(Base):
     orgc_id = Column(Integer, ForeignKey(Organisation.id), nullable=False, index=True)
     timestamp = Column(Integer, nullable=False, default=0)
     distribution = Column(Integer, nullable=False, default=0)
-    sharing_group_id = Column(Integer, ForeignKey(SharingGroup.id), nullable=False, index=True)
+    sharing_group_id = Column(Integer, nullable=False, index=True, default=0)
     proposal_email_lock = Column(Boolean, nullable=False, default=False)
     locked = Column(Boolean, nullable=False, default=False)
     threat_level_id = Column(Integer, nullable=False)
@@ -58,6 +57,6 @@ class EventTag(Base):
     __tablename__ = "event_tags"
 
     id = Column(Integer, primary_key=True, nullable=False)
-    event_id = Column(Integer, ForeignKey(Event.id), nullable=False, index=True)
-    tag_id = Column(Integer, ForeignKey(Tag.id), nullable=False, index=True)
+    event_id = Column(Integer, ForeignKey(Event.id, ondelete="CASCADE"), nullable=False, index=True)
+    tag_id = Column(Integer, ForeignKey(Tag.id, ondelete="CASCADE"), nullable=False, index=True)
     local = Column(Boolean, nullable=False, default=False)

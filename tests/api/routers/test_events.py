@@ -260,7 +260,7 @@ class TestEventRestSearch:
         db.commit()
         db.refresh(attribute)
 
-        json = {"returnFormat": "json"}
+        json = {"returnFormat": "json", "limit": 100}
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/events/restSearch", json=json, headers=headers)
         assert response.status_code == 200
