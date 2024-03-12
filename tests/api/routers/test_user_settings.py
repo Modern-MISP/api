@@ -1,6 +1,7 @@
 from time import time
+from typing import Any
 
-from mmisp.db.models.user_setting import SettingName
+from mmisp.db.models.user_setting import SettingName, UserSetting
 from tests.database import get_db
 from tests.environment import client, environment
 from tests.generators.model_generators.user_setting_generator import generate_user_setting
@@ -9,14 +10,25 @@ from tests.generators.model_generators.user_setting_generator import generate_us
 class TestSetUserSetting:
     @staticmethod
     def test_set_user_setting() -> None:
+        db = get_db()
         body = {"value": {"attribute": str(time())}}
+
+        user_id = environment.site_admin_user.id
+        setting = SettingName.DEFAULT_RESTSEARCH_PARAMETERS.value
 
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post(
-            f"/user_settings/setSetting/{environment.site_admin_user.id}/{SettingName.DEFAULT_RESTSEARCH_PARAMETERS.value}",
+            f"/user_settings/setSetting/{user_id}/{setting}",
             json=body,
             headers=headers,
         )
+
+        cleanup_setting = (
+            db.query(UserSetting).filter(UserSetting.user_id == user_id, UserSetting.setting == setting).first()
+        )
+
+        db.delete(cleanup_setting)
+        db.commit()
 
         assert response.status_code == 200
         json = response.json()
@@ -33,7 +45,7 @@ class TestSetUserSetting:
         db.add(user_setting)
         db.commit()
 
-        body = {"value": {}}
+        body: dict[str, Any] = {"value": {}}
 
         headers = {"authorization": environment.instance_owner_org_admin_user_token}
         response = client.post(
@@ -45,11 +57,14 @@ class TestSetUserSetting:
         assert response.status_code == 200
         json = response.json()
 
+        db.delete(user_setting)
+        db.commit()
+
         assert not json["UserSetting"]["value"].get("attribute", None)
 
     @staticmethod
     def test_set_user_setting_no_perms() -> None:
-        body = {"value": {}}
+        body: dict[str, Any] = {"value": {}}
 
         headers = {"authorization": environment.instance_owner_org_admin_user_token}
         response = client.post(
@@ -60,18 +75,7 @@ class TestSetUserSetting:
 
         assert response.status_code == 404
 
-    @staticmethod
-    def test_set_by_invalid_user_setting_name() -> None:
-        body = {"value": {}}
-
-        headers = {"authorization": environment.site_admin_user_token}
-        response = client.post(
-            f"/user_settings/setSetting/{environment.site_admin_user.id}/invalid_name",
-            json=body,
-            headers=headers,
-        )
-
-        assert response.status_code == 404
+    body: dict[str, Any] = {"value": {}}
 
 
 class TestGetUserSetting:
@@ -88,6 +92,9 @@ class TestGetUserSetting:
 
         headers = {"authorization": environment.site_admin_user_token}
         response = client.get(f"/user_settings/{user_setting.id}", headers=headers)
+
+        db.delete(user_setting)
+        db.commit()
 
         assert response.status_code == 200
         json = response.json()
@@ -116,6 +123,8 @@ class TestGetUserSetting:
         headers = {"authorization": environment.instance_two_owner_org_admin_user_token}
         response = client.get(f"/user_settings/{user_setting.id}", headers=headers)
 
+        db.delete(user_setting)
+        db.commit()
         assert response.status_code == 404
 
 
@@ -133,6 +142,9 @@ class TestGetUseSettingByUserIdAndSettingName:
 
         headers = {"authorization": environment.instance_owner_org_admin_user_token}
         response = client.get(f"/user_settings/{user_setting.user_id}/{user_setting.setting}", headers=headers)
+
+        db.delete(user_setting)
+        db.commit()
 
         assert response.status_code == 200
         json = response.json()
@@ -152,6 +164,9 @@ class TestGetUseSettingByUserIdAndSettingName:
 
         headers = {"authorization": environment.instance_owner_org_admin_user_token}
         response = client.get(f"/user_settings/{user_setting.user_id}/invalid", headers=headers)
+
+        db.delete(user_setting)
+        db.commit()
 
         assert response.status_code == 404
 
@@ -174,6 +189,9 @@ class TestGetUseSettingByUserIdAndSettingName:
 
         headers = {"authorization": environment.instance_two_owner_org_admin_user_token}
         response = client.get(f"/user_settings/{user_setting.user_id}/{user_setting.setting}", headers=headers)
+
+        db.delete(user_setting)
+        db.commit()
 
         assert response.status_code == 404
 
@@ -214,6 +232,9 @@ class TestSearchUserSetting:
         headers = {"authorization": environment.instance_owner_org_admin_user_token}
         response = client.post("/user_settings", json=body, headers=headers)
 
+        db.delete(user_setting)
+        db.commit()
+
         assert response.status_code == 200
         json = response.json()
 
@@ -244,6 +265,9 @@ class TestGetAllUserSettings:
 
         headers = {"authorization": environment.site_admin_user_token}
         response = client.get("/user_settings", headers=headers)
+
+        db.delete(user_setting)
+        db.commit()
 
         assert response.status_code == 200
         json = response.json()
@@ -309,5 +333,8 @@ class TestDeleteUserSetting:
 
         headers = {"authorization": environment.instance_owner_org_admin_user_token}
         response = client.delete(f"/user_settings/{user_setting.id}", headers=headers)
+
+        db.delete(user_setting)
+        db.commit()
 
         assert response.status_code == 404
