@@ -1,3 +1,5 @@
+from time import time
+
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
@@ -15,7 +17,7 @@ class AuthKey(Base):
     authkey = Column(String(255), nullable=False)
     authkey_start = Column(String(255), nullable=False)
     authkey_end = Column(String(255), nullable=False)
-    created = Column(Integer, nullable=False)
+    created = Column(Integer, nullable=False, default=int(time()))
     expiration = Column(Integer, nullable=False, default=0)
     read_only = Column(Boolean, nullable=False, default=0)
     comment = Column(String(255))
