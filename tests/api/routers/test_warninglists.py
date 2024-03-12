@@ -39,6 +39,9 @@ class TestAddWarninglist:
 
         assert response.status_code == 201
 
+        json = response.json()
+        remove_warninglists([int(json["Warninglist"]["id"])])
+
 
 class TestToggleEnableWarninglist:
     @staticmethod
