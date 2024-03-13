@@ -18,7 +18,7 @@ def random_string(length: int = 10) -> str:
     return "".join(random.choices(string.ascii_letters + string.digits, k=length))
 
 
-def add_warninglists(number: int = 10) -> list[int]:
+def add_warninglists(number: int = 5) -> list[int]:
     db = get_db()
 
     warninglist_ids = []

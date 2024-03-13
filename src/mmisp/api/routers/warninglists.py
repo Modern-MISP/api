@@ -14,7 +14,10 @@ from mmisp.api_schemas.warninglists.check_value_warninglists_response import (
     ValueWarninglistsResponse,
 )
 from mmisp.api_schemas.warninglists.create_warninglist_body import CreateWarninglistBody
-from mmisp.api_schemas.warninglists.get_selected_all_warninglists_response import GetSelectedAllWarninglistsResponse
+from mmisp.api_schemas.warninglists.get_selected_all_warninglists_response import (
+    GetSelectedAllWarninglistsResponse,
+    WarninglistsResponse,
+)
 from mmisp.api_schemas.warninglists.get_selected_warninglists_body import GetSelectedWarninglistsBody
 from mmisp.api_schemas.warninglists.toggle_enable_warninglists_body import ToggleEnableWarninglistsBody
 from mmisp.api_schemas.warninglists.toggle_enable_warninglists_response import ToggleEnableWarninglistsResponse
@@ -304,11 +307,11 @@ async def _get_all_or_selected_warninglists(
     value: str | None = None,
     enabled: bool | None = None,
 ) -> dict:
-    warninglists = _search_warninglist(db, value, enabled)
+    warninglists: list[Warninglist] = _search_warninglist(db, value, enabled)
 
-    warninglists_data = []
+    warninglists_data: list[WarninglistsResponse] = []
     for warninglist in warninglists:
-        warninglists_data.append(_prepare_warninglist_response(db, warninglist))
+        warninglists_data.append(WarninglistsResponse(Warninglist=_prepare_warninglist_response(db, warninglist)))
 
     return GetSelectedAllWarninglistsResponse(response=warninglists_data)
 
@@ -367,12 +370,11 @@ async def _get_selected_warninglists(
     db: Session,
     body: GetSelectedWarninglistsBody,
 ) -> dict:
-    warninglists = _search_warninglist(db, body.value, body.enabled)
+    warninglists: list[Warninglist] = _search_warninglist(db, body.value, body.enabled)
 
-    warninglists_data = []
-
+    warninglists_data: list[WarninglistsResponse] = []
     for warninglist in warninglists:
-        warninglists_data.append(_prepare_warninglist_response(db, warninglist))
+        warninglists_data.append(WarninglistsResponse(Warninglist=_prepare_warninglist_response(db, warninglist)))
 
     return GetSelectedAllWarninglistsResponse(response=warninglists_data)
 
@@ -463,8 +465,7 @@ def _get_warninglist_entries(db: Session, warninglist_id: int) -> list[dict]:
 
 
 def _get_warninglist_entry_count(db: Session, warninglist_id: int) -> int:
-    query = select(func.count()).filter(WarninglistEntry.warninglist_id == warninglist_id)
-    return db.execute(query).scalar()
+    return db.execute(select(func.count()).filter(WarninglistEntry.warninglist_id == warninglist_id)).scalar()
 
 
 def _get_valid_attributes(db: Session, warninglist_id: int) -> str:

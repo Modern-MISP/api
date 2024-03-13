@@ -11,7 +11,7 @@ from mmisp.api_schemas.warninglists.create_warninglist_body import (
 from mmisp.api_schemas.warninglists.toggle_enable_warninglists_body import ToggleEnableWarninglistsBody
 from mmisp.db.database import get_db
 from mmisp.db.models.warninglist import Warninglist, WarninglistEntry
-from tests.api.helpers.warninglist_helper import (
+from tests.api.helpers.warninglists_helper import (
     add_warninglists,
     generate_enable_warning_lists_body,
     get_largest_id,
