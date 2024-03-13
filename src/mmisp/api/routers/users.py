@@ -15,6 +15,7 @@ from ..auth import Auth, AuthStrategy, authorize
 router = APIRouter(tags=["users"])
 
 
+@router.get("/users/view/me.json", response_model=partial(UsersViewMeResponse))
 @router.get("/users/view/me", response_model=partial(UsersViewMeResponse))
 @with_session_management
 async def get_logged_in_user_info(

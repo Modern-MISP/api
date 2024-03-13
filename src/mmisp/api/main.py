@@ -34,6 +34,7 @@ from .routers import (
     jobs,
     noticelists,
     objects,
+    servers,
     sharing_groups,
     sightings,
     tags,
@@ -58,6 +59,7 @@ app.include_router(objects.router)
 app.include_router(sightings.router)
 app.include_router(tags.router)
 app.include_router(taxonomies.router)
+app.include_router(servers.router)
 app.include_router(sharing_groups.router)
 app.include_router(users.router)
 app.include_router(authentication.router)
