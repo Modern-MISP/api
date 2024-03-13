@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Request, status
 from sqlalchemy.orm import Session
@@ -45,12 +45,6 @@ from mmisp.util.partial import partial
 router = APIRouter(tags=["attributes"])
 
 
-# Sorted according to CRUD
-
-
-# - Create a {resource}
-
-
 @router.post(
     "/attributes/restSearch",
     status_code=status.HTTP_200_OK,
@@ -80,9 +74,6 @@ async def add_attribute(
     return await _add_attribute(db, event_id, body)
 
 
-# - Read / Get a {resource}
-
-
 @router.get(
     "/attributes/describeTypes",
     status_code=status.HTTP_200_OK,
@@ -100,15 +91,12 @@ async def get_attributes_describe_types() -> GetDescribeTypesResponse:
     response_model=partial(GetAttributeResponse),
     summary="Get attribute details",
     description="Retrieve details of a specific attribute by its ID.",
-)  # new
+)
 @with_session_management
 async def get_attribute_details(
     db: Annotated[Session, Depends(get_db)], attribute_id: Annotated[str, Path(..., alias="attributeId")]
 ) -> dict:
     return await _get_attribute_details(db, attribute_id)
-
-
-# - Updating a {resource}
 
 
 @router.put(
@@ -117,7 +105,7 @@ async def get_attribute_details(
     response_model=partial(EditAttributeResponse),
     summary="Update an attribute",
     description="Update an existing attribute by its ID.",
-)  # new
+)
 @with_session_management
 async def update_attribute(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS]))],
@@ -128,16 +116,13 @@ async def update_attribute(
     return await _update_attribute(db, attribute_id, body)
 
 
-# - Deleting a {resource}
-
-
 @router.delete(
     "/attributes/{attributeId}",
     status_code=status.HTTP_200_OK,
     response_model=DeleteAttributeResponse,
     summary="Delete an Attribute",
     description="Delete an attribute by its ID.",
-)  # new
+)
 @with_session_management
 async def delete_attribute(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS]))],
@@ -147,22 +132,16 @@ async def delete_attribute(
     return await _delete_attribute(db, attribute_id)
 
 
-# - Get all {resource}s
-
-
 @router.get(
     "/attributes",
     status_code=status.HTTP_200_OK,
-    response_model=list[partial(GetAllAttributesResponse)],
+    response_model=list[GetAllAttributesResponse],
     summary="Get all Attributes",
     description="Retrieve a list of all attributes.",
 )
 @with_session_management
 async def get_attributes(db: Annotated[Session, Depends(get_db)]) -> list[dict]:
     return await _get_attributes(db)
-
-
-# - More niche endpoints
 
 
 @router.post(
@@ -247,7 +226,7 @@ async def remove_tag_from_attribute(
     return await _remove_tag_from_attribute(db, attribute_id, tag_id)
 
 
-# - Deprecated endpoints
+# - deprecated endpoints
 
 
 @router.post(
@@ -308,7 +287,7 @@ async def update_attribute_depr(
     response_model=DeleteAttributeResponse,
     summary="Delete an Attribute (Deprecated)",
     description="Deprecated. Delete an attribute by its ID using the old route.",
-)  # deprecated
+)
 @with_session_management
 async def delete_attribute_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS]))],
@@ -465,7 +444,7 @@ async def _rest_search_attributes(db: Session, body: SearchAttributesBody) -> di
             continue
         attributes = db.query(Attribute).filter(getattr(Attribute, field) == value).all()
 
-        # todo: not all fields in 'SearchAttributesBody' are taken into account yet
+        #! todo: not all fields in 'SearchAttributesBody' are taken into account yet
     if body.limit is not None:
         attributes = attributes[: body.limit]
     response_list = []
@@ -543,12 +522,11 @@ async def _add_tag_to_attribute(db: Session, attribute_id: str, tag_id: str, loc
 
     if int(local) not in [0, 1]:
         return AddRemoveTagAttributeResponse(saved=False, errors="Invalid 'local'").__dict__
-    if local == "0":
-        local = False
-    else:
-        local = True
+    local_output = local != "0"
 
-    new_attribute_tag = AttributeTag(attribute_id=attribute.id, event_id=attribute.event_id, tag_id=tag.id, local=local)
+    new_attribute_tag = AttributeTag(
+        attribute_id=attribute.id, event_id=attribute.event_id, tag_id=tag.id, local=local_output
+    )
 
     db.add(new_attribute_tag)
     db.commit()
@@ -582,27 +560,28 @@ async def _remove_tag_from_attribute(db: Session, attribute_id: str, tag_id: str
     return AddRemoveTagAttributeResponse(saved=True, success="Tag removed", check_publish=True).__dict__
 
 
-def _prepare_attribute_response(attribute: Attribute, request_type: str) -> dict:
+def _prepare_attribute_response(attribute: Attribute, request_type: str) -> dict[str, Any]:
     attribute_dict = attribute.asdict().copy()
 
     fields_to_convert = ["object_id", "sharing_group_id"]
     for field in fields_to_convert:
-        if attribute_dict.get(field) is not None:
-            attribute_dict[field] = str(attribute_dict[field])
-        else:
-            attribute_dict[field] = "0"
+        attribute_dict[field] = str(attribute_dict.get(field, "0"))
 
-    if request_type == "add":
-        return AddAttributeAttributes(**attribute_dict).__dict__
-    elif request_type == "get all":
-        return GetAllAttributesResponse(**attribute_dict).__dict__
+    response_strategy = {"add": AddAttributeAttributes, "get all": GetAllAttributesResponse}
+
+    response_class = response_strategy.get(request_type)
+
+    if response_class:
+        return response_class(**attribute_dict).dict()
+
+    raise ValueError(f"Unknown request_type: {request_type}")
 
 
 def _prepare_get_attribute_details_response(
     db: Session, attribute_id: str, attribute: Attribute
 ) -> GetAttributeAttributes:
     attribute_dict = attribute.asdict().copy()
-    if "event_uuid" not in attribute_dict.keys():  # should not occur, perhaps sqlalchemy caching?
+    if "event_uuid" not in attribute_dict.keys():  #! should not occur, perhaps sqlalchemy caching?
         attribute_dict["event_uuid"] = attribute.event_uuid
 
     fields_to_convert = ["object_id", "sharing_group_id", "timestamp"]
@@ -678,7 +657,7 @@ def _category_statistics(
                 + "%"
             )
         else:
-            response_dict[category] = _count_of_attributes_with_given_category(db, category)
+            response_dict[category] = str(_count_of_attributes_with_given_category(db, category))
 
     return GetAttributeStatisticsCategoriesResponse(**response_dict)
 
@@ -694,7 +673,7 @@ def _type_statistics(
                 str(round((_count_of_attributes_with_given_type(db, type) / total_count_of_attributes) * 100, 2)) + "%"
             )
         else:
-            response_dict[type] = _count_of_attributes_with_given_type(db, type)
+            response_dict[type] = str(_count_of_attributes_with_given_type(db, type))
 
     return GetAttributeStatisticsTypesResponse(**response_dict)
 
