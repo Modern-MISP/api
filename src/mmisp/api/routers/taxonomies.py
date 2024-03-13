@@ -213,9 +213,13 @@ async def _get_taxonomy_details(db: Session, taxonomy_id: int) -> dict:
         )
         for taxonomy_entry_of_taxonomy_predicate in taxonomy_entries_of_taxonomy_predicate:
             tag_name = _get_tag_name(db, taxonomy_entry_of_taxonomy_predicate)
-            existing_tag = _get_tag(db, taxonomy_entry_of_taxonomy_predicate)
-            if existing_tag is not False:
-                existing_tag = existing_tag.__dict__
+
+            tag = db.query(Tag).filter(Tag.name == tag_name).first()
+            if tag:
+                existing_tag = tag.__dict__
+            else:
+                existing_tag = False
+
             taxonomy_entries.append(
                 TaxonomyEntrySchema(
                     tag=tag_name,
@@ -250,7 +254,9 @@ async def _get_all_taxonomies(db: Session) -> dict:
 
         current_count = 0
         for taxonomy_entry in query.all():
-            if _get_tag(db, taxonomy_entry):
+            tag_name = _get_tag_name(db, taxonomy_entry)
+            tag = db.query(Tag).filter(Tag.name == tag_name).first()
+            if tag:
                 current_count += 1
 
         taxonomy_response = ViewTaxonomyResponse(
@@ -272,7 +278,7 @@ async def _get_all_taxonomies(db: Session) -> dict:
     return ViewTaxonomyResponseWrapper(taxonomies=response)
 
 
-async def _get_taxonomy_details_extended(db: Session, taxonomy_id: str) -> dict:
+async def _get_taxonomy_details_extended(db: Session, taxonomy_id: int) -> dict:
     taxonomy: Taxonomy | None = db.get(Taxonomy, taxonomy_id)
 
     if not taxonomy:
@@ -286,11 +292,14 @@ async def _get_taxonomy_details_extended(db: Session, taxonomy_id: str) -> dict:
         )
         for taxonomy_entry_of_taxonomy_predicate in taxonomy_entries_of_taxonomy_predicate:
             tag_name = _get_tag_name(db, taxonomy_entry_of_taxonomy_predicate)
-            existing_tag = _get_tag(db, taxonomy_entry_of_taxonomy_predicate)
-            if existing_tag is not False:
-                events = db.query(EventTag).filter(EventTag.tag_id == existing_tag.id).count()
-                attributes = db.query(AttributeTag).filter(AttributeTag.tag_id == existing_tag.id).count()
-                existing_tag = existing_tag.__dict__
+            tag = db.query(Tag).filter(Tag.name == tag_name).first()
+            if tag:
+                events = db.query(EventTag).filter(EventTag.tag_id == tag.id).count()
+                attributes = db.query(AttributeTag).filter(AttributeTag.tag_id == tag.id).count()
+                existing_tag = tag.__dict__
+            else:
+                existing_tag = False
+
             taxonomy_entries.append(
                 TaxonomyTagEntrySchema(
                     tag=tag_name,
@@ -331,7 +340,7 @@ async def _export_taxonomy(db: Session, taxonomy_id: int) -> dict:
 async def _enable_taxonomy(db: Session, taxonomy_id: int) -> dict:
     taxonomy: Taxonomy | None = db.get(Taxonomy, taxonomy_id)
 
-    if not Taxonomy:
+    if not taxonomy:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Taxonomy not found.")
 
     taxonomy.enabled = True
@@ -351,7 +360,7 @@ async def _enable_taxonomy(db: Session, taxonomy_id: int) -> dict:
 async def _disable_taxonomy(db: Session, taxonomy_id: int) -> dict:
     taxonomy: Taxonomy | None = db.get(Taxonomy, taxonomy_id)
 
-    if not Taxonomy:
+    if not taxonomy:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Taxonomy not found.")
 
     taxonomy.enabled = False
@@ -374,12 +383,3 @@ def _get_tag_name(db: Session, taxonomy_entry: TaxonomyEntry) -> str:
     )
     taxonomy = db.query(Taxonomy).filter(Taxonomy.id == taxonomy_predicate.taxonomy_id).first()
     return taxonomy.namespace + ":" + taxonomy_predicate.value + '="' + taxonomy_entry.value + '"'
-
-
-def _get_tag(db: Session, taxonomy_entry: TaxonomyEntry) -> Tag | bool:
-    tag_name = _get_tag_name(db, taxonomy_entry)
-    tag = db.query(Tag).filter(Tag.name == tag_name).first()
-    if not tag:
-        tag = False
-
-    return tag
