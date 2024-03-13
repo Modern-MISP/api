@@ -53,11 +53,6 @@ logger.addHandler(info_handler)
 logger.addHandler(error_handler)
 
 
-# Sorted according to CRUD
-
-# - Create a {resource}
-
-
 @router.post(
     "/galaxies/import",
     status_code=status.HTTP_200_OK,
@@ -75,19 +70,13 @@ async def import_galaxy_cluster(
     return await _import_galaxy_cluster(db, body, request)
 
 
-# - Read / Get a {resource}
-
-
-@router.get("/galaxies/view/{galaxyId}", deprecated=True)  # deprecated
-@router.get("/galaxies/{galaxyId}", status_code=status.HTTP_200_OK, response_model=partial(GetGalaxyResponse))  # new
+@router.get("/galaxies/view/{galaxyId}", deprecated=True)
+@router.get("/galaxies/{galaxyId}", status_code=status.HTTP_200_OK, response_model=partial(GetGalaxyResponse))
 @with_session_management
 async def get_galaxy_details(
     db: Annotated[Session, Depends(get_db)], galaxy_id: Annotated[str, Path(..., alias="galaxyId")]
 ) -> dict:
     return await _get_galaxy_details(db, galaxy_id)
-
-
-# - Updating a {resource}
 
 
 @router.post(
@@ -105,15 +94,12 @@ async def update_galaxy(
     return DeleteForceUpdateImportGalaxyResponse()
 
 
-# - Deleting a {resource}
-
-
-@router.delete("/galaxies/delete/{galaxyId}", deprecated=True)  # deprecated
+@router.delete("/galaxies/delete/{galaxyId}", deprecated=True)
 @router.delete(
     "/galaxies/{galaxyId}",
     status_code=status.HTTP_200_OK,
     response_model=partial(DeleteForceUpdateImportGalaxyResponse),
-)  # new
+)
 @with_session_management
 async def delete_galaxy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS]))],
@@ -124,35 +110,28 @@ async def delete_galaxy(
     return await _delete_galaxy(db, galaxy_id, request)
 
 
-# - Get all {resource}s
-
-
-@router.get("/galaxies", status_code=status.HTTP_200_OK, response_model=list[partial(GetAllSearchGalaxiesResponse)])
+@router.get("/galaxies", status_code=status.HTTP_200_OK)
 @with_session_management
-async def get_galaxies(db: Annotated[Session, Depends(get_db)]) -> dict:
+async def get_galaxies(db: Annotated[Session, Depends(get_db)]) -> list[GetAllSearchGalaxiesResponse]:
     return await _get_galaxies(db)
 
 
-# - More niche endpoints
-
-
-@router.post("/galaxies", status_code=status.HTTP_200_OK, response_model=list[partial(GetAllSearchGalaxiesResponse)])
+@router.post("/galaxies", status_code=status.HTTP_200_OK)
 @with_session_management
-async def search_galaxies(db: Annotated[Session, Depends(get_db)]) -> dict:
+async def search_galaxies(db: Annotated[Session, Depends(get_db)]) -> list[GetAllSearchGalaxiesResponse]:
     return await _get_galaxies(db)
 
 
 @router.post(
     "/galaxies/export/{galaxyId}",
-    status_code=status.HTTP_200_OK,
-    response_model=list[partial(ExportGalaxyClusterResponse)],
+    status_code=status.HTTP_200_OK
 )
 @with_session_management
 async def export_galaxy(
     db: Annotated[Session, Depends(get_db)],
     galaxy_id: Annotated[str, Path(..., alias="galaxyId")],
     body: ExportGalaxyBody,
-) -> dict:
+) -> list[ExportGalaxyClusterResponse]:
     return await _export_galaxy(db, galaxy_id, body)
 
 
@@ -320,7 +299,7 @@ async def _get_galaxies(db: Session) -> list[GetAllSearchGalaxiesResponse]:
     return response_list
 
 
-async def _export_galaxy(db: Session, galaxy_id: str, body: ExportGalaxyBody) -> dict:
+async def _export_galaxy(db: Session, galaxy_id: str, body: ExportGalaxyBody) -> list[dict]:
     galaxy: Galaxy | None = db.get(Galaxy, galaxy_id)
 
     if not galaxy:
@@ -358,7 +337,7 @@ async def _attach_cluster_to_galaxy(
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Invalid Galaxy cluster.")
 
     if local not in ["0", "1"]:
-        local = 0
+        local = "0"
 
     tag_id = db.query(Tag).filter(Tag.name == galaxy_cluster.tag_name).first().id
 
