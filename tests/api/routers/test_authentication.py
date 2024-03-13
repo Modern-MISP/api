@@ -51,7 +51,7 @@ def auth_environment() -> AuthEnvironment:
     external_auth_user.role_id = environment.org_admin_role.id
     external_auth_user.server_id = 0
     external_auth_user.password = hashed_password
-    external_auth_user.sub = "test-idp|1"
+    external_auth_user.sub = f"test-idp|{uuid()}-{time_ns()}"
     external_auth_user.external_auth_required = True
 
     identity_provider = generate_oidc_identity_provider()
