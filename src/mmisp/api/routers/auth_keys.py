@@ -50,7 +50,7 @@ async def auth_keys_view_auth_key(
     return await _auth_keys_view(auth=auth, db=db, auth_key_id=auth_key_id)
 
 
-@router.post("/auth_keys", response_model=list[partial(SearchGetAuthKeysResponseItem)])
+@router.post("/auth_keys", response_model=list[SearchGetAuthKeysResponseItem])
 @with_session_management
 async def search_auth_keys(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
@@ -90,7 +90,7 @@ async def auth_keys_delete_auth_key(
     )
 
 
-@router.get("/auth_keys", response_model=list[partial(SearchGetAuthKeysResponseItem)])
+@router.get("/auth_keys", response_model=list[SearchGetAuthKeysResponseItem])
 @with_session_management
 async def auth_keys_get(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
@@ -166,7 +166,7 @@ async def _auth_key_add(auth: Auth, db: Session, user_id: int, body: AddAuthKeyB
 
     auth_key = AuthKey(
         uuid=body.uuid,
-        read_only=body.read_only,  # TODO auth refactoring
+        read_only=body.read_only,
         user_id=user_id,
         comment=body.comment,
         allowed_ips=json.dumps(body.allowed_ips) if body.allowed_ips else None,
