@@ -1,7 +1,9 @@
 from time import time
+from typing import Any
 
 import pytest
 from fastapi import HTTPException
+from nanoid import generate
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize, check_permissions, encode_exchange_token
 from mmisp.config import config
@@ -26,7 +28,7 @@ class TestAuthorize:
     def test_authorize_valid_token() -> None:
         db = get_db()
 
-        auth: Auth | None = authorize(AuthStrategy.JWT)(db, environment.site_admin_user_token)
+        auth: Auth | Any = authorize(AuthStrategy.JWT)(db, environment.site_admin_user_token)
 
         assert auth.user_id == environment.site_admin_user.id
         assert auth.role_id == environment.site_admin_user.role_id
@@ -48,7 +50,7 @@ class TestAuthorize:
 
     @staticmethod
     def test_authorize_valid_auth_key() -> None:
-        clear_key = f"test key {time()}"
+        clear_key = generate(size=40)
 
         db = get_db()
 
@@ -62,7 +64,7 @@ class TestAuthorize:
         db.commit()
         db.refresh(auth_key)
 
-        auth: Auth | None = authorize(AuthStrategy.API_KEY)(db, clear_key)
+        auth: Auth | Any = authorize(AuthStrategy.API_KEY)(db, clear_key)
 
         assert auth.user_id == environment.site_admin_user.id
         assert auth.role_id == environment.site_admin_user.role_id
@@ -72,7 +74,7 @@ class TestAuthorize:
 
     @staticmethod
     def test_authorize_expired_auth_key() -> None:
-        clear_key = f"test key {time()}"
+        clear_key = generate(size=40)
 
         db = get_db()
 
@@ -97,7 +99,7 @@ class TestAuthorize:
     def test_authorize_using_worker_key() -> None:
         db = get_db()
 
-        auth: Auth | None = authorize(AuthStrategy.WORKER_KEY)(db, config.WORKER_KEY)
+        auth: Auth | Any = authorize(AuthStrategy.WORKER_KEY)(db, config.WORKER_KEY)
 
         assert not auth.user_id
         assert not auth.role_id
