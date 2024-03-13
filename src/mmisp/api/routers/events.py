@@ -68,18 +68,13 @@ from mmisp.util.partial import partial
 router = APIRouter(tags=["events"])
 
 
-# Sorted according to CRUD
-
-# - Create a {resource}
-
-
 @router.post(
     "/events",
     status_code=status.HTTP_200_OK,
     response_model=partial(AddEditGetEventResponse),
     summary="Add new event",
     description="Add a new event with the given details.",
-)  # new
+)
 @with_session_management
 async def add_event(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS]))],
@@ -89,24 +84,18 @@ async def add_event(
     return await _add_event(auth, db, body)
 
 
-# - Read / Get a {resource}
-
-
 @router.get(
     "/events/{eventId}",
     status_code=status.HTTP_200_OK,
     response_model=partial(AddEditGetEventResponse),
     summary="Get event details",
     description="Retrieve details of a specific attribute by ist ID.",
-)  # new
+)
 @with_session_management
 async def get_event_details(
     db: Annotated[Session, Depends(get_db)], event_id: Annotated[str, Path(..., alias="eventId")]
 ) -> dict:
     return await _get_event_details(db, event_id)
-
-
-# - Updating a {resource}
 
 
 @router.put(
@@ -115,7 +104,7 @@ async def get_event_details(
     response_model=partial(AddEditGetEventResponse),
     summary="Update an event",
     description="Update an existing event by its ID.",
-)  # new
+)
 @with_session_management
 async def update_event(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS]))],
@@ -126,16 +115,13 @@ async def update_event(
     return await _update_event(db, event_id, body)
 
 
-# - Deleting a {resource}
-
-
 @router.delete(
     "/events/{eventId}",
     status_code=status.HTTP_200_OK,
     response_model=partial(DeleteEventResponse),
     summary="Delete an event",
     description="Delete an attribute by its ID.",
-)  # new
+)
 @with_session_management
 async def delete_event(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS]))],
@@ -145,22 +131,16 @@ async def delete_event(
     return await _delete_event(db, event_id)
 
 
-# - Get all {resource}s
-
-
 @router.get(
     "/events",
     status_code=status.HTTP_200_OK,
-    response_model=list[partial(GetAllEventsResponse)],
+    response_model=list[GetAllEventsResponse],
     summary="Get all events",
     description="Retrieve a list of all events.",
 )
 @with_session_management
-async def get_all_events(db: Annotated[Session, Depends(get_db)]) -> dict:
+async def get_all_events(db: Annotated[Session, Depends(get_db)]) -> list[dict]:
     return await _get_events(db)
-
-
-# - More niche endpoints
 
 
 @router.post(
@@ -181,7 +161,7 @@ async def rest_search_events(
 @router.post(
     "/events/index",
     status_code=status.HTTP_200_OK,
-    response_model=list[partial(GetAllEventsResponse)],
+    response_model=list[GetAllEventsResponse],
     summary="Search events",
     description="Search for events based on various filters, which are more general than the ones in 'rest search'.",
 )
@@ -262,7 +242,7 @@ async def remove_tag_from_event(
 @router.post(
     "/events/freeTextImport/{eventId}",
     status_code=status.HTTP_200_OK,
-    response_model=list[partial(AddAttributeViaFreeTextImportEventResponse)],
+    response_model=list[AddAttributeViaFreeTextImportEventResponse],
     summary="Add attribute to event",
     description="Add attribute to event via free text import.",
 )
@@ -272,7 +252,7 @@ async def add_attribute_via_free_text_import(
     db: Annotated[Session, Depends(get_db)],
     event_id: Annotated[str, Path(..., alias="eventId")],
     body: AddAttributeViaFreeTextImportEventBody,
-) -> dict:
+) -> list[dict]:
     body_dict = body.dict()
     user = FreeTextImportWorkerUser(user_id=auth.user_id)
     data = FreeTextImportWorkerData(data=body_dict["Attribute"]["value"])
@@ -285,7 +265,7 @@ async def add_attribute_via_free_text_import(
     return await _add_attribute_via_free_text_import(db, event_id, response_json)
 
 
-# - Deprecated endpoints
+# - deprecated endpoints
 
 
 @router.post(
@@ -302,7 +282,7 @@ async def add_event_depr(
     db: Annotated[Session, Depends(get_db)],
     body: AddEventBody,
 ) -> dict:
-    return await _add_event(db, body)
+    return await _add_event(auth, db, body)
 
 
 @router.get(
@@ -327,14 +307,15 @@ async def get_event_details_depr(
     response_model=partial(AddEditGetEventResponse),
     summary="Update an event (Deprecated)",
     description="Deprecated. Update an existing event by its ID. NOT YET AVAILABLE!",
-)  # new
+)
 @with_session_management
 async def update_event_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS]))],
     db: Annotated[Session, Depends(get_db)],
     event_id: Annotated[str, Path(..., alias="eventId")],
+    body: EditEventBody,
 ) -> dict:
-    return await _update_event(db, event_id)
+    return await _update_event(db, event_id, body=body)
 
 
 @router.delete(
@@ -344,13 +325,13 @@ async def update_event_depr(
     response_model=partial(AddEditGetEventResponse),
     summary="Delete an event (Deprecated)",
     description="Deprecated. Delete an existing event by its ID. NOT YET AVAILABLE!",
-)  # new
+)
 @with_session_management
 async def delete_event_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS]))],
     db: Annotated[Session, Depends(get_db)],
     event_id: Annotated[str, Path(..., alias="eventId")],
-) -> dict:
+) -> DeleteEventResponse:
     return _delete_event(db, event_id)
 
 
@@ -443,7 +424,7 @@ async def _delete_event(db: Session, event_id: str) -> DeleteEventResponse:
     )
 
 
-async def _get_events(db: Session) -> dict:
+async def _get_events(db: Session) -> list[dict]:
     events = db.query(Event).all()
 
     if not events:
@@ -464,7 +445,7 @@ async def _rest_search_events(db: Session, body: SearchEventsBody) -> dict:
             continue
         events = db.query(Event).filter(getattr(Event, field) == value).all()
 
-        # todo: not all fields in 'SearchAttributesBody' are taken into account yet
+        #! todo: not all fields in 'SearchAttributesBody' are taken into account yet
 
     if body.limit is not None:
         events = events[: body.limit]
@@ -475,7 +456,7 @@ async def _rest_search_events(db: Session, body: SearchEventsBody) -> dict:
     return SearchEventsResponse(response=response_list)
 
 
-async def _index_events(db: Session, body: IndexEventsBody) -> dict:
+async def _index_events(db: Session, body: IndexEventsBody) -> list[IndexEventsAttributes]:
     events = db.query(Event).all()
     for field, value in body.dict().items():
         event_dict = db.query(Event).__dict__.copy()
@@ -483,7 +464,7 @@ async def _index_events(db: Session, body: IndexEventsBody) -> dict:
             continue
         events = db.query(Event).filter(getattr(Event, field) == value).all()
 
-        # todo: not all fields in 'IndexEventsBody' are taken into account yet
+        #! todo: not all fields in 'IndexEventsBody' are taken into account yet
 
     response_list = [_prepare_all_events_response(db, event) for event in events]
 
@@ -547,7 +528,7 @@ async def _add_tag_to_event(db: Session, event_id: str, tag_id: str, local: str)
     tag = db.get(Tag, tag_id)
 
     if local not in ["0", "1"]:
-        local = 0
+        local = "0"
 
     new_event_tag = EventTag(event_id=event_id, tag_id=tag.id, local=True if int(local) == 1 else False)
 
@@ -583,7 +564,7 @@ async def _remove_tag_from_event(db: Session, event_id: str, tag_id: str) -> dic
     return AddRemoveTagEventsResponse(saved=True, success="Tag removed", check_publish=True)
 
 
-async def _add_attribute_via_free_text_import(db: Session, event_id: str, response_json: Any) -> dict:
+async def _add_attribute_via_free_text_import(db: Session, event_id: str, response_json: Any) -> list[dict]:
     event: Event | None = db.get(Event, event_id)
 
     if not event:
