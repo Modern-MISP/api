@@ -5,7 +5,7 @@ from typing import Annotated, Any
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Path
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Query, Session
 from starlette import status
 from starlette.requests import Request
 
@@ -456,15 +456,21 @@ async def _rest_search_events(db: Session, body: SearchEventsBody) -> dict:
     return SearchEventsResponse(response=response_list)
 
 
-async def _index_events(db: Session, body: IndexEventsBody) -> list[IndexEventsAttributes]:
-    events = db.query(Event).all()
-    for field, value in body.dict().items():
-        event_dict = db.query(Event).__dict__.copy()
-        if field not in event_dict:
-            continue
-        events = db.query(Event).filter(getattr(Event, field) == value).all()
+async def _index_events(db: Session, body: IndexEventsBody) -> list[dict]:
+    query: Query = db.query(Event)
 
-        #! todo: not all fields in 'IndexEventsBody' are taken into account yet
+    limit = 25
+    offset = 0
+
+    if body.limit and body.limit < 500 and body.limit > 0:
+        limit = body.limit
+    if body.page:
+        offset = limit * body.page
+
+    query = query.limit(limit).offset(offset)
+
+    events = query.all()
+    # todo: not all fields in 'IndexEventsBody' are taken into account yet
 
     response_list = [_prepare_all_events_response(db, event) for event in events]
 
