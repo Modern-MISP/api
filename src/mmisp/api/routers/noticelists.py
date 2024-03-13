@@ -28,9 +28,9 @@ router = APIRouter(tags=["noticelists"])
 async def get_noticelist(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    tag_id: Annotated[int, Path(alias="noticelistId")],
+    noticelist_id: Annotated[int, Path(alias="noticelistId")],
 ) -> NoticelistResponse:
-    return await _get_noticelist(db, tag_id)
+    return await _get_noticelist(db, noticelist_id)
 
 
 @router.post(
@@ -44,9 +44,9 @@ async def get_noticelist(
 async def post_toggleEnable_noticelist(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
-    tag_id: Annotated[int, Path(alias="noticelistId")],
+    noticelist_id: Annotated[int, Path(alias="noticelistId")],
 ) -> StandardStatusIdentifiedResponse:
-    return await _toggleEnable_noticelists(db, tag_id)
+    return await _toggleEnable_noticelists(db, noticelist_id)
 
 
 @router.put(
