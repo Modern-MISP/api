@@ -44,7 +44,7 @@ router = APIRouter(tags=["taxonomies"])
 )
 @with_session_management
 async def update_taxonomies(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
 ) -> dict:
     return await _update_taxonomies(db, False)
@@ -59,7 +59,7 @@ async def update_taxonomies(
 )
 @with_session_management
 async def get_taxonomy_details(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     taxonomy_id: Annotated[int, Path(alias="taxonomyId")],
 ) -> dict:
@@ -75,7 +75,7 @@ async def get_taxonomy_details(
 )
 @with_session_management
 async def get_taxonomies(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
 ) -> dict:
     return await _get_all_taxonomies(db)
@@ -90,7 +90,7 @@ async def get_taxonomies(
 )
 @with_session_management
 async def get_taxonomy_details_extended(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     taxonomy_id: Annotated[int, Path(alias="taxonomyId")],
 ) -> dict:
@@ -106,7 +106,7 @@ async def get_taxonomy_details_extended(
 )
 @with_session_management
 async def export_taxonomy(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     taxonomy_id: Annotated[int, Path(alias="taxonomyId")],
 ) -> dict:
@@ -122,7 +122,7 @@ async def export_taxonomy(
 )
 @with_session_management
 async def enable_taxonomy(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     taxonomy_id: Annotated[int, Path(alias="taxonomyId")],
 ) -> dict:
@@ -138,7 +138,7 @@ async def enable_taxonomy(
 )
 @with_session_management
 async def disable_taxonomies(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     taxonomy_id: Annotated[int, Path(alias="taxonomyId")],
 ) -> dict:
@@ -155,7 +155,7 @@ async def disable_taxonomies(
 )
 @with_session_management
 async def update_taxonomies_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
 ) -> dict:
     return await _update_taxonomies(db, True)
@@ -172,7 +172,7 @@ async def update_taxonomies_depr(
 @with_session_management
 async def get_taxonomy_by_id_depr(
     db: Annotated[Session, Depends(get_db)],
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     taxonomy_id: Annotated[int, Path(..., alias="taxonomyId")],
 ) -> GetIdTaxonomyResponseWrapper:
     return await _get_taxonomy_details(db, taxonomy_id)
