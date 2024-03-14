@@ -1,4 +1,6 @@
-from pydantic import BaseModel
+from typing import Any
+
+from pydantic import BaseModel, validator
 
 
 class SightingFiltersBody(BaseModel):
@@ -20,9 +22,21 @@ class SightingFiltersBody(BaseModel):
     sharing_group: list[str] | None = None
     first_seen: str | None = None
     last_seen: str | None = None
-    requested_attributes: list[str]
+    requested_attributes: list[str] | None = None
     return_format: str | None = None
-    limit: str | None = None
+    limit: str | None = "25"
+
+    @validator("limit")
+    def check_limit(cls, value: Any) -> str:  # noqa: ANN101
+        if value is not None:
+            try:
+                limit_int = int(value)
+            except ValueError:
+                raise ValueError("limit must be a valid integer")
+
+            if not 1 <= limit_int <= 500:
+                raise ValueError("limit must be between 1 and 500")
+        return value
 
 
 class SightingCreateBody(BaseModel):

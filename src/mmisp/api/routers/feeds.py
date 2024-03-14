@@ -1,6 +1,7 @@
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Path, status
+from sqlalchemy.future import select
 from sqlalchemy.orm import Session
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
@@ -301,7 +302,7 @@ async def update_feed_depr(
 # --- endpoint logic ---
 
 
-async def _add_feed(db: Session, body: FeedCreateBody) -> dict[str, Any]:
+async def _add_feed(db: Session, body: FeedCreateBody) -> FeedResponse:
     feed: Feed = Feed(**body.dict())
 
     db.add(feed)
@@ -311,17 +312,17 @@ async def _add_feed(db: Session, body: FeedCreateBody) -> dict[str, Any]:
     return FeedResponse(feed=feed.__dict__)
 
 
-async def _cache_feeds(db: Session, cache_feeds_scope: str) -> dict[str, Any]:
+async def _cache_feeds(db: Session, cache_feeds_scope: str) -> FeedCacheResponse:
     # logic to save 'feeds_to_cache' in cache (worker)
     raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Endpoint not yet supported.")
 
 
-async def _fetch_from_feed(db: Session, feed_id: int) -> dict[str, Any]:
+async def _fetch_from_feed(db: Session, feed_id: int) -> FeedFetchResponse:
     # logic to start the pull process (worker)
     raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Endpoint not yet supported.")
 
 
-async def _get_feed_details(db: Session, feed_id: int) -> dict[str, Any]:
+async def _get_feed_details(db: Session, feed_id: int) -> FeedResponse:
     feed: Feed | None = db.get(Feed, feed_id)
 
     if not feed:
@@ -330,7 +331,7 @@ async def _get_feed_details(db: Session, feed_id: int) -> dict[str, Any]:
     return FeedResponse(feed=feed.__dict__)
 
 
-async def _update_feed(db: Session, feed_id: int, body: FeedUpdateBody) -> dict[str, Any]:
+async def _update_feed(db: Session, feed_id: int, body: FeedUpdateBody) -> FeedResponse:
     feed: Feed | None = db.get(Feed, feed_id)
 
     if not feed:
@@ -344,7 +345,7 @@ async def _update_feed(db: Session, feed_id: int, body: FeedUpdateBody) -> dict[
     return FeedResponse(feed=feed.__dict__)
 
 
-async def _toggle_feed(db: Session, feed_id: int, body: FeedToggleBody) -> dict[str, Any]:
+async def _toggle_feed(db: Session, feed_id: int, body: FeedToggleBody) -> FeedEnableDisableResponse:
     feed: Feed | None = db.get(Feed, feed_id)
 
     if not feed:
@@ -364,17 +365,18 @@ async def _toggle_feed(db: Session, feed_id: int, body: FeedToggleBody) -> dict[
     return FeedEnableDisableResponse(name=feed.name, message=message, url=feed.url)
 
 
-async def _fetch_data_from_all_feeds(db: Session) -> dict[str, Any]:
+async def _fetch_data_from_all_feeds(db: Session) -> FeedFetchResponse:
     # logic to start the pull process for all feeds
     raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Endpoint not yet supported.")
 
 
 async def _get_feeds(db: Session) -> list[dict[str, Any]]:
-    feeds: list[Feed] = db.query(Feed).all()
+    feeds: list[Feed] = db.execute(select(Feed)).scalars().all()
+
     return FeedsResponse(feeds=[feed.__dict__ for feed in feeds])
 
 
-async def _enable_feed(db: Session, feed_id: int) -> dict[str, Any]:
+async def _enable_feed(db: Session, feed_id: int) -> FeedEnableDisableResponse:
     feed: Feed | None = db.get(Feed, feed_id)
 
     if not feed:
@@ -390,7 +392,7 @@ async def _enable_feed(db: Session, feed_id: int) -> dict[str, Any]:
     return FeedEnableDisableResponse(name=feed.name, message=message, url=feed.url)
 
 
-async def _disable_feed(db: Session, feed_id: int) -> dict[str, Any]:
+async def _disable_feed(db: Session, feed_id: int) -> FeedEnableDisableResponse:
     feed: Feed | None = db.get(Feed, feed_id)
 
     if not feed:

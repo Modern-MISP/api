@@ -1,4 +1,6 @@
-from pydantic import BaseModel
+from typing import Any
+
+from pydantic import BaseModel, validator
 
 
 class ObjectSearchBody(BaseModel):
@@ -29,19 +31,19 @@ class ObjectSearchBody(BaseModel):
     published: bool | None = None
     deleted: bool | None = None
     return_format: str | None = "json"
-    limit: str | None = "19"
+    limit: str | None = "25"
 
-    # @validator("limit")
-    # def check_limit(cls, value: Any) -> str:  # noqa: ANN101
-    #     if value is not None:
-    #         try:
-    #             limit_int = int(value)
-    #         except ValueError:
-    #             raise ValueError("limit must be a valid integer")
+    @validator("limit")
+    def check_limit(cls, value: Any) -> str:  # noqa: ANN101
+        if value:
+            try:
+                limit_int = int(value)
+            except ValueError:
+                raise ValueError("'limit' must be a valid integer")
 
-    #         if not 1 <= limit_int <= 500:
-    #             raise ValueError("limit must be between 1 and 500")
-    #     return value
+            if not 1 <= limit_int <= 500:
+                raise ValueError("'limit' must be between 1 and 500")
+        return value
 
     class Config:
         orm_mode = True

@@ -3,7 +3,6 @@ from sqlalchemy import Boolean, Column, Integer, String, Text
 from mmisp.db.database import Base
 
 
-# some attributes are not modeled using ForeignKey since fake 0 values are being used
 class Feed(Base):
     __tablename__ = "feeds"
 

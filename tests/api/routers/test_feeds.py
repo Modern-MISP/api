@@ -22,6 +22,7 @@ from tests.generators.model_generators.sharing_group_generator import generate_s
         generate_valid_required_feed_data().dict(),
         generate_valid_feed_data().dict(),
         generate_random_valid_feed_data().dict(),
+        generate_random_valid_feed_data().dict(),
     ]
 )
 def feed_data(request: Any) -> dict[str, Any]:

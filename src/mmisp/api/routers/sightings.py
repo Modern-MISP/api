@@ -187,12 +187,11 @@ async def _add_sighting(db: Session, body: SightingCreateBody) -> list[dict[str,
         _check_valid_return_format(return_format=body.filters.return_format)
 
     for value in body.values:
-        value_specific_filters = {"value": value}
         if filters:
-            value_specific_filters.update(filters)
-            attributes = _get_attributes_with_filters(db=db, filters=value_specific_filters)
+            filters = body.dict(exclude_unset=True)
+            attributes = _get_attributes_with_filters(db=db, filters=filters)
         else:
-            attributes = db.query(Attribute).filter(Attribute.value1 == value).all()
+            attributes = db.execute(select(Attribute).filter(Attribute.value1 == value)).scalars().all()
 
         if not attributes:
             raise HTTPException(status.HTTP_404_NOT_FOUND, detail="No Attributes with given values found.")
@@ -230,7 +229,7 @@ async def _add_sighting(db: Session, body: SightingCreateBody) -> list[dict[str,
     return SightingsGetResponse(sightings=[response.__dict__ for response in responses])
 
 
-async def _add_sightings_at_index(db: Session, attribute_id: int) -> dict[str, Any]:
+async def _add_sightings_at_index(db: Session, attribute_id: int) -> SightingsGetResponse:
     attribute: Attribute | None = db.get(Attribute, attribute_id)
 
     if not attribute:
@@ -265,7 +264,7 @@ async def _get_sightings_at_index(db: Session, event_id: int) -> dict[str, Any]:
     if not db.get(Event, event_id):
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Event not found.")
 
-    sightings: list[Sighting] = db.query(Sighting).filter(Sighting.event_id == event_id).all()
+    sightings: list[Sighting] = db.execute(select(Sighting).filter(Sighting.event_id == event_id)).scalars().all()
 
     for sighting in sightings:
         organisation: Organisation = db.get(Organisation, sighting.org_id)
@@ -281,7 +280,7 @@ async def _get_sightings_at_index(db: Session, event_id: int) -> dict[str, Any]:
     return SightingsGetResponse(sightings=[sighting.__dict__ for sighting in sightings])
 
 
-async def _delete_sighting(db: Session, sighting_id: int) -> dict[str, Any]:
+async def _delete_sighting(db: Session, sighting_id: int) -> StandardStatusResponse:
     sighting: Sighting | None = db.get(Sighting, sighting_id)
 
     if not sighting:
@@ -304,7 +303,7 @@ async def _delete_sighting(db: Session, sighting_id: int) -> dict[str, Any]:
 
 async def _get_sightings(db: Session) -> list[dict[str, Any]]:
     responses: list[SightingsGetResponse] = []
-    sightings: list[Sighting] = db.query(Sighting).all()
+    sightings: list[Sighting] = db.execute(select(Sighting)).scalars().all()
 
     if not sightings:
         return SightingsGetResponse(sightings=[])
@@ -335,7 +334,7 @@ def _check_valid_return_format(return_format: str) -> None:
 
 def _get_attributes_with_filters(db: Session, filters: SightingFiltersBody) -> list[Attribute]:
     search_body: SightingFiltersBody = SightingFiltersBody(**filters)
-    query: Attribute = db.query(Attribute)
+    query: Attribute = select(Attribute)
 
     if search_body.value1:
         query = query.filter(Attribute.value1 == search_body.value1)
@@ -399,4 +398,4 @@ def _get_attributes_with_filters(db: Session, filters: SightingFiltersBody) -> l
     if search_body.limit:
         query = query.limit(int(search_body.limit))
 
-    return query.all()
+    return db.execute(query).scalars().all()
