@@ -2,7 +2,7 @@ import random
 import string
 import time
 
-from mmisp.api_schemas.sightings.create_sighting_body import SightingCreateBody
+from mmisp.api_schemas.sightings.create_sighting_body import SightingCreateBody, SightingFiltersBody
 
 
 def generate_random_value() -> str:
@@ -18,10 +18,6 @@ def generate_number_as_str() -> str:
     return str(random.randint(1, 100))
 
 
-def random_bool() -> bool:
-    return random.choice([True, False])
-
-
 def random_list_of_strings() -> list[str]:
     return [random_string() for _ in range(random.randint(1, 5))]
 
@@ -32,4 +28,20 @@ def generate_valid_random_sighting_data() -> SightingCreateBody:
         source=None,
         timestamp=int(time.time()),
         filters=None,
+    )
+
+
+def generate_random_search_query() -> SightingFiltersBody:
+    return SightingFiltersBody(
+        value1=None,  # Fields are set in the test
+        value2="",
+    )
+
+
+def generate_valid_random_sighting_with_filter_data() -> SightingCreateBody:
+    return SightingCreateBody(
+        values=[generate_random_value() for _ in range(random.randint(1, 2))],
+        source=None,
+        timestamp=int(time.time()),
+        filters=generate_random_search_query(),
     )
