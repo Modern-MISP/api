@@ -143,7 +143,7 @@ async def delete_attribute(
 @router.get(
     "/attributes",
     status_code=status.HTTP_200_OK,
-    response_model=list[partial(GetAllAttributesResponse)],
+    response_model=list[GetAllAttributesResponse],
     summary="Get all Attributes",
     description="Retrieve a list of all attributes.",
 )

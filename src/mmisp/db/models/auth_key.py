@@ -25,4 +25,4 @@ class AuthKey(Base):
     unique_ips = Column(String(255))
     user_id = Column(Integer, ForeignKey(User.id), nullable=False)
 
-    user = relationship(User, primaryjoin=user_id == User.id)
+    user = relationship(User, primaryjoin=user_id == User.id, lazy="joined")

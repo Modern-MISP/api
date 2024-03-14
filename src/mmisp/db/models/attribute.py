@@ -47,7 +47,7 @@ class Attribute(Base, DictMixin):
     first_seen = Column(BigInteger, index=True)
     last_seen = Column(BigInteger, index=True)
 
-    event = relationship("Event", back_populates="attributes")
+    event = relationship("Event", back_populates="attributes", lazy="joined")
 
     @property
     def event_uuid(self: "Attribute") -> str:
