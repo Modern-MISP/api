@@ -2,15 +2,13 @@ from time import time
 from typing import Any
 
 from mmisp.db.models.user_setting import SettingName, UserSetting
-from tests.database import get_db
-from tests.environment import client, environment
+from tests.environment import Session, client, environment
 from tests.generators.model_generators.user_setting_generator import generate_user_setting
 
 
 class TestSetUserSetting:
     @staticmethod
-    def test_set_user_setting() -> None:
-        db = get_db()
+    def test_set_user_setting(db: Session) -> None:
         body = {"value": {"attribute": str(time())}}
 
         user_id = environment.site_admin_user.id
@@ -36,9 +34,7 @@ class TestSetUserSetting:
         assert json["UserSetting"]["value"] == body["value"]
 
     @staticmethod
-    def test_set_user_setting_override_existing() -> None:
-        db = get_db()
-
+    def test_set_user_setting_override_existing(db: Session) -> None:
         user_setting = generate_user_setting()
         user_setting.user_id = environment.instance_owner_org_admin_user.id
 
@@ -80,9 +76,7 @@ class TestSetUserSetting:
 
 class TestGetUserSetting:
     @staticmethod
-    def test_get_existing_user_setting_details() -> None:
-        db = get_db()
-
+    def test_get_existing_user_setting_details(db: Session) -> None:
         user_setting = generate_user_setting()
         user_setting.user_id = environment.instance_owner_org_admin_user.id
 
@@ -110,9 +104,7 @@ class TestGetUserSetting:
         assert response.status_code == 404
 
     @staticmethod
-    def test_get_user_setting_without_perms() -> None:
-        db = get_db()
-
+    def test_get_user_setting_without_perms(db: Session) -> None:
         user_setting = generate_user_setting()
         user_setting.user_id = environment.instance_owner_org_admin_user.id
 
@@ -130,9 +122,7 @@ class TestGetUserSetting:
 
 class TestGetUseSettingByUserIdAndSettingName:
     @staticmethod
-    def test_get_existing_user_setting_details() -> None:
-        db = get_db()
-
+    def test_get_existing_user_setting_details(db: Session) -> None:
         user_setting = generate_user_setting()
         user_setting.user_id = environment.instance_owner_org_admin_user.id
 
@@ -153,9 +143,7 @@ class TestGetUseSettingByUserIdAndSettingName:
         assert json["UserSetting"]["setting"] == user_setting.setting
 
     @staticmethod
-    def test_get_user_setting_by_invalid_us_name_uid() -> None:
-        db = get_db()
-
+    def test_get_user_setting_by_invalid_us_name_uid(db: Session) -> None:
         user_setting = generate_user_setting()
         user_setting.user_id = environment.instance_owner_org_admin_user.id
 
@@ -178,9 +166,7 @@ class TestGetUseSettingByUserIdAndSettingName:
         assert response.status_code == 404
 
     @staticmethod
-    def test_get_user_setting_without_perms() -> None:
-        db = get_db()
-
+    def test_get_user_setting_without_perms(db: Session) -> None:
         user_setting = generate_user_setting()
         user_setting.user_id = environment.instance_owner_org_admin_user.id
 
@@ -217,9 +203,7 @@ class TestSearchUserSetting:
         assert len(json) == 0
 
     @staticmethod
-    def test_search_user_setting_using_ids() -> None:
-        db = get_db()
-
+    def test_search_user_setting_using_ids(db: Session) -> None:
         user_setting = generate_user_setting()
         user_setting.user_id = environment.instance_owner_org_admin_user.id
 
@@ -253,9 +237,7 @@ class TestGetAllUserSettings:
         assert isinstance(json, list)
 
     @staticmethod
-    def test_get_all_user_settings_using_site_admin() -> None:
-        db = get_db()
-
+    def test_get_all_user_settings_using_site_admin(db: Session) -> None:
         user_setting = generate_user_setting()
         user_setting.user_id = environment.instance_two_owner_org_admin_user.id
 
@@ -277,9 +259,7 @@ class TestGetAllUserSettings:
 
 class TestDeleteUserSetting:
     @staticmethod
-    def test_delete_user_setting() -> None:
-        db = get_db()
-
+    def test_delete_user_setting(db: Session) -> None:
         user_setting = generate_user_setting()
         user_setting.user_id = environment.instance_owner_org_admin_user.id
 
@@ -299,9 +279,7 @@ class TestDeleteUserSetting:
         assert json["id"] == str(user_setting.id)
 
     @staticmethod
-    def test_delete_user_setting_depr() -> None:
-        db = get_db()
-
+    def test_delete_user_setting_depr(db: Session) -> None:
         user_setting = generate_user_setting()
         user_setting.user_id = environment.instance_owner_org_admin_user.id
 
@@ -321,9 +299,7 @@ class TestDeleteUserSetting:
         assert json["id"] == str(user_setting.id)
 
     @staticmethod
-    def test_delete_user_setting_lesser_perms() -> None:
-        db = get_db()
-
+    def test_delete_user_setting_lesser_perms(db: Session) -> None:
         user_setting = generate_user_setting()
         user_setting.user_id = environment.instance_two_owner_org_admin_user.id
 

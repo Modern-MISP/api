@@ -9,7 +9,6 @@ from mmisp.api_schemas.warninglists.create_warninglist_body import (
     WarninglistListType,
 )
 from mmisp.api_schemas.warninglists.toggle_enable_warninglists_body import ToggleEnableWarninglistsBody
-from mmisp.db.database import get_db
 from mmisp.db.models.warninglist import Warninglist, WarninglistEntry
 from tests.api.helpers.warninglists_helper import (
     add_warninglists,
@@ -165,8 +164,7 @@ class TestGetAllOrSelectedWarninglists:
         assert response.status_code == 200
 
     @staticmethod
-    def test_get_all_warninglists() -> None:
-        db: Session = get_db()
+    def test_get_all_warninglists(db: Session) -> None:
         warninglist_id = add_warninglists(1)
 
         warninglist: Warninglist = db.get(Warninglist, warninglist_id)
@@ -187,8 +185,7 @@ class TestGetAllOrSelectedWarninglists:
         remove_warninglists(warninglist_id)
 
     @staticmethod
-    def test_get_all_warninglist_response_format() -> None:
-        db: Session = get_db()
+    def test_get_all_warninglist_response_format(db: Session) -> None:
         warninglist_ids = add_warninglists(1)
 
         warninglist_name = db.get(Warninglist, warninglist_ids[0]).name
@@ -203,8 +200,7 @@ class TestGetAllOrSelectedWarninglists:
 
 class TestGetWarninglistByValue:
     @staticmethod
-    def test_get_warninglist_by_value() -> None:
-        db: Session = get_db()
+    def test_get_warninglist_by_value(db: Session) -> None:
         warninglist_id = add_warninglists(1)
 
         warninglist_entry: WarninglistEntry = (
@@ -224,8 +220,7 @@ class TestGetWarninglistByValue:
         remove_warninglists(warninglist_id)
 
     @staticmethod
-    def test_get_warninglist_by_value_response_format() -> None:
-        db: Session = get_db()
+    def test_get_warninglist_by_value_response_format(db: Session) -> None:
         warninglist_ids = add_warninglists(1)
 
         warninglist_entry = (

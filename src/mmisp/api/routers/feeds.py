@@ -306,8 +306,8 @@ async def _add_feed(db: Session, body: FeedCreateBody) -> FeedResponse:
     feed: Feed = Feed(**body.dict())
 
     db.add(feed)
-    db.commit()
-    db.refresh(feed)
+    await db.commit()
+    await db.refresh(feed)
 
     return FeedResponse(feed=feed.__dict__)
 
@@ -323,7 +323,7 @@ async def _fetch_from_feed(db: Session, feed_id: int) -> FeedFetchResponse:
 
 
 async def _get_feed_details(db: Session, feed_id: int) -> FeedResponse:
-    feed: Feed | None = db.get(Feed, feed_id)
+    feed: Feed | None = await db.get(Feed, feed_id)
 
     if not feed:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Feed not found.")
@@ -332,21 +332,21 @@ async def _get_feed_details(db: Session, feed_id: int) -> FeedResponse:
 
 
 async def _update_feed(db: Session, feed_id: int, body: FeedUpdateBody) -> FeedResponse:
-    feed: Feed | None = db.get(Feed, feed_id)
+    feed: Feed | None = await db.get(Feed, feed_id)
 
     if not feed:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Feed not found.")
 
     update_record(feed, body.dict())
 
-    db.commit()
-    db.refresh(feed)
+    await db.commit()
+    await db.refresh(feed)
 
     return FeedResponse(feed=feed.__dict__)
 
 
 async def _toggle_feed(db: Session, feed_id: int, body: FeedToggleBody) -> FeedEnableDisableResponse:
-    feed: Feed | None = db.get(Feed, feed_id)
+    feed: Feed | None = await db.get(Feed, feed_id)
 
     if not feed:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Feed not found.")
@@ -360,7 +360,7 @@ async def _toggle_feed(db: Session, feed_id: int, body: FeedToggleBody) -> FeedE
         feed.enabled = enable_status
         message = f"Feed {target_status} successfully."
 
-    db.commit()
+    await db.commit()
 
     return FeedEnableDisableResponse(name=feed.name, message=message, url=feed.url)
 
@@ -371,13 +371,14 @@ async def _fetch_data_from_all_feeds(db: Session) -> FeedFetchResponse:
 
 
 async def _get_feeds(db: Session) -> list[dict[str, Any]]:
-    feeds: list[Feed] = db.execute(select(Feed)).scalars().all()
+    result = await db.execute(select(Feed))
+    feeds: list[Feed] = result.scalars().all()
 
     return FeedsResponse(feeds=[feed.__dict__ for feed in feeds])
 
 
 async def _enable_feed(db: Session, feed_id: int) -> FeedEnableDisableResponse:
-    feed: Feed | None = db.get(Feed, feed_id)
+    feed: Feed | None = await db.get(Feed, feed_id)
 
     if not feed:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Feed not found.")
@@ -386,14 +387,14 @@ async def _enable_feed(db: Session, feed_id: int) -> FeedEnableDisableResponse:
         message = "Feed already enabled."
     else:
         feed.enabled = True
-        db.commit()
+        await db.commit()
         message = "Feed enabled successfully."
 
     return FeedEnableDisableResponse(name=feed.name, message=message, url=feed.url)
 
 
 async def _disable_feed(db: Session, feed_id: int) -> FeedEnableDisableResponse:
-    feed: Feed | None = db.get(Feed, feed_id)
+    feed: Feed | None = await db.get(Feed, feed_id)
 
     if not feed:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Feed not found.")
@@ -402,7 +403,7 @@ async def _disable_feed(db: Session, feed_id: int) -> FeedEnableDisableResponse:
         message = "Feed already disabled."
     else:
         feed.enabled = False
-        db.commit()
+        await db.commit()
         message = "Feed disabled successfully."
 
     return FeedEnableDisableResponse(name=feed.name, message=message, url=feed.url)

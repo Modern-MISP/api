@@ -133,22 +133,20 @@ class TestGetAttributeDetails:
         sharing_group.organisation_uuid = environment.instance_org_two.uuid
         sharing_group.org_id = environment.instance_org_two.id
 
-        db.add(sharing_group)
-        db.commit()
-        db.refresh(sharing_group)
-
         organisation = generate_organisation()
 
-        db.add(organisation)
+        db.add_all([sharing_group, organisation])
         db.commit()
+        db.refresh(sharing_group)
         db.refresh(organisation)
 
+        sharing_group_id = sharing_group.id
         org_id = organisation.id
 
         event = generate_event()
-        setattr(event, "org_id", org_id)
-        setattr(event, "orgc_id", org_id)
-        setattr(event, "sharing_group_id", sharing_group.id)
+        event.org_id = org_id
+        event.orgc_id = org_id
+        event.sharing_group_id = sharing_group_id
 
         db.add(event)
         db.commit()
@@ -157,23 +155,19 @@ class TestGetAttributeDetails:
         event_id = event.id
 
         attribute = generate_attribute()
-        setattr(attribute, "event_id", event_id)
-        setattr(attribute, "sharing_group_id", sharing_group.id)
-
-        db.add(attribute)
-        db.commit()
-        db.refresh(attribute)
-
-        attribute_id = attribute.id
+        attribute.event_id = event_id
+        attribute.sharing_group_id = sharing_group_id
 
         tag = generate_tag()
-        setattr(tag, "user_id", 1)
-        setattr(tag, "org_id", 1)
+        tag.user_id = 1
+        tag.org_id = 1
 
-        db.add(tag)
+        db.add_all([attribute, tag])
         db.commit()
+        db.refresh(attribute)
         db.refresh(tag)
 
+        attribute_id = attribute.id
         tag_id = tag.id
 
         add_attribute_tag_body = AttributeTag(attribute_id=attribute_id, event_id=event_id, tag_id=tag_id, local=False)

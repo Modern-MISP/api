@@ -1,6 +1,7 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Path, status
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
@@ -182,8 +183,8 @@ async def get_taxonomy_by_id_depr(
 
 
 async def _update_taxonomies(db: Session, deprecated: bool) -> dict:
-    db.query(Taxonomy).all()
-    number_updated_taxonomies = db.query(Taxonomy).count()
+    result = await db.execute(select(func.count()).select_from(Taxonomy))
+    number_updated_taxonomies = result.scalar()
     saved = True
     success = True
     name = "Succesfully updated " + str(number_updated_taxonomies) + "taxonomies."
@@ -200,21 +201,26 @@ async def _update_taxonomies(db: Session, deprecated: bool) -> dict:
 
 
 async def _get_taxonomy_details(db: Session, taxonomy_id: int) -> dict:
-    taxonomy: Taxonomy | None = db.get(Taxonomy, taxonomy_id)
+    taxonomy: Taxonomy | None = await db.get(Taxonomy, taxonomy_id)
 
     if not taxonomy:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Taxonomy not found.")
 
-    taxonomy_predicates = db.query(TaxonomyPredicate).filter(TaxonomyPredicate.taxonomy_id == taxonomy.id).all()
+    result = await db.execute(select(TaxonomyPredicate).filter(TaxonomyPredicate.taxonomy_id == taxonomy.id))
+    taxonomy_predicates = result.scalars().all()
+
     taxonomy_entries: list[TaxonomyEntry] = []
     for taxonomy_predicate in taxonomy_predicates:
-        taxonomy_entries_of_taxonomy_predicate = (
-            db.query(TaxonomyEntry).filter(TaxonomyEntry.taxonomy_predicate_id == taxonomy_predicate.id).all()
+        result = await db.execute(
+            select(TaxonomyEntry).filter(TaxonomyEntry.taxonomy_predicate_id == taxonomy_predicate.id)
         )
-        for taxonomy_entry_of_taxonomy_predicate in taxonomy_entries_of_taxonomy_predicate:
-            tag_name = _get_tag_name(db, taxonomy_entry_of_taxonomy_predicate)
+        taxonomy_entries_of_taxonomy_predicate = result.scalars().all()
 
-            tag = db.query(Tag).filter(Tag.name == tag_name).first()
+        for taxonomy_entry_of_taxonomy_predicate in taxonomy_entries_of_taxonomy_predicate:
+            tag_name = await _get_tag_name(db, taxonomy_entry_of_taxonomy_predicate)
+
+            result = await db.execute(select(Tag).filter(Tag.name == tag_name).limit(1))
+            tag = result.scalars().first()
             if tag:
                 existing_tag = tag.__dict__
             else:
@@ -234,28 +240,41 @@ async def _get_taxonomy_details(db: Session, taxonomy_id: int) -> dict:
 
 
 async def _get_all_taxonomies(db: Session) -> dict:
-    taxonomies = db.query(Taxonomy).all()
+    result = await db.execute(select(Taxonomy))
+    taxonomies = result.scalars().all()
     response = []
 
     for taxonomy in taxonomies:
-        query = (
-            db.query(TaxonomyEntry)
+        result = await db.execute(
+            select(func.count())
+            .select_from(TaxonomyEntry)
             .join(TaxonomyPredicate, TaxonomyPredicate.id == TaxonomyEntry.taxonomy_predicate_id)
             .filter(TaxonomyPredicate.taxonomy_id == taxonomy.id)
         )
-        total_count = query.count()
-        taxonomy_predicates = db.query(TaxonomyPredicate).all()
+        total_count = result.scalar()
+
+        result = await db.execute(
+            select(TaxonomyEntry)
+            .join(TaxonomyPredicate, TaxonomyPredicate.id == TaxonomyEntry.taxonomy_predicate_id)
+            .filter(TaxonomyPredicate.taxonomy_id == taxonomy.id)
+        )
+        taxonomy_entries = result.scalars().all()
+
+        result = await db.execute(select(TaxonomyPredicate))
+        taxonomy_predicates = result.scalars().all()
+
         for taxonomy_predicate in taxonomy_predicates:
-            if (
-                db.query(TaxonomyEntry).filter(TaxonomyEntry.taxonomy_predicate_id == taxonomy_predicate.id).first()
-                is None
-            ):
+            result = await db.execute(
+                select(TaxonomyEntry).filter(TaxonomyEntry.taxonomy_predicate_id == taxonomy_predicate.id).limit(1)
+            )
+            if result.scalars().first() is None:
                 total_count += 1
 
         current_count = 0
-        for taxonomy_entry in query.all():
-            tag_name = _get_tag_name(db, taxonomy_entry)
-            tag = db.query(Tag).filter(Tag.name == tag_name).first()
+        for taxonomy_entry in taxonomy_entries:
+            tag_name = await _get_tag_name(db, taxonomy_entry)
+            result = await db.execute(select(Tag).filter(Tag.name == tag_name).limit(1))
+            tag = result.scalars().first()
             if tag:
                 current_count += 1
 
@@ -279,23 +298,37 @@ async def _get_all_taxonomies(db: Session) -> dict:
 
 
 async def _get_taxonomy_details_extended(db: Session, taxonomy_id: int) -> dict:
-    taxonomy: Taxonomy | None = db.get(Taxonomy, taxonomy_id)
+    taxonomy: Taxonomy | None = await db.get(Taxonomy, taxonomy_id)
 
     if not taxonomy:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Taxonomy not found.")
 
-    taxonomy_predicates = db.query(TaxonomyPredicate).filter(TaxonomyPredicate.taxonomy_id == taxonomy.id).all()
+    result = await db.execute(select(TaxonomyPredicate).filter(TaxonomyPredicate.taxonomy_id == taxonomy.id))
+    taxonomy_predicates = result.scalars().all()
+
     taxonomy_entries: list[TaxonomyTagEntrySchema] = []
+
     for taxonomy_predicate in taxonomy_predicates:
-        taxonomy_entries_of_taxonomy_predicate = (
-            db.query(TaxonomyEntry).filter(TaxonomyEntry.taxonomy_predicate_id == taxonomy_predicate).all()
+        result = await db.execute(
+            select(TaxonomyEntry).filter(TaxonomyEntry.taxonomy_predicate_id == taxonomy_predicate)
         )
+        taxonomy_entries_of_taxonomy_predicate = result.scalars().all()
+
         for taxonomy_entry_of_taxonomy_predicate in taxonomy_entries_of_taxonomy_predicate:
-            tag_name = _get_tag_name(db, taxonomy_entry_of_taxonomy_predicate)
-            tag = db.query(Tag).filter(Tag.name == tag_name).first()
+            tag_name = await _get_tag_name(db, taxonomy_entry_of_taxonomy_predicate)
+
+            result = await db.execute(select(Tag).filter(Tag.name == tag_name).limit(1))
+            tag = result.scalars().first()
+
             if tag:
-                events = db.query(EventTag).filter(EventTag.tag_id == tag.id).count()
-                attributes = db.query(AttributeTag).filter(AttributeTag.tag_id == tag.id).count()
+                result = await db.execute(select(func.count()).select_from(EventTag).filter(EventTag.tag_id == tag.id))
+                events = result.scalar()
+
+                result = await db.execute(
+                    select(func.count()).select_from(AttributeTag).filter(AttributeTag.tag_id == tag.id)
+                )
+                attributes = result.scalar()
+
                 existing_tag = tag.__dict__
             else:
                 existing_tag = False
@@ -317,7 +350,7 @@ async def _get_taxonomy_details_extended(db: Session, taxonomy_id: int) -> dict:
 
 
 async def _export_taxonomy(db: Session, taxonomy_id: int) -> dict:
-    taxonomy: Taxonomy | None = db.get(Taxonomy, taxonomy_id)
+    taxonomy: Taxonomy | None = await db.get(Taxonomy, taxonomy_id)
 
     if not Taxonomy:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Taxonomy not found.")
@@ -325,12 +358,17 @@ async def _export_taxonomy(db: Session, taxonomy_id: int) -> dict:
     predicates: list[TaxonomyPredicateSchema] = []
     values: list[TaxonomyValueSchema] = []
 
-    taxonomy_predicates = db.query(TaxonomyPredicate).filter(TaxonomyPredicate.taxonomy_id == taxonomy_id)
+    result = await db.execute(select(TaxonomyPredicate).filter(TaxonomyPredicate.taxonomy_id == taxonomy_id))
+    taxonomy_predicates = result.scalars().all()
+
     for taxonomy_predicate in taxonomy_predicates:
         predicates.append(TaxonomyPredicateSchema(**taxonomy_predicate.__dict__))
-        taxonomy_entries = (
-            db.query(TaxonomyEntry).filter(TaxonomyEntry.taxonomy_predicate_id == taxonomy_predicate.id).all()
+
+        result = await db.execute(
+            select(TaxonomyEntry).filter(TaxonomyEntry.taxonomy_predicate_id == taxonomy_predicate.id)
         )
+        taxonomy_entries = result.scalars().all()
+
         for taxonomy_entry in taxonomy_entries:
             values.append(ExportTaxonomyEntry(**taxonomy_entry.__dict__))
 
@@ -338,14 +376,14 @@ async def _export_taxonomy(db: Session, taxonomy_id: int) -> dict:
 
 
 async def _enable_taxonomy(db: Session, taxonomy_id: int) -> dict:
-    taxonomy: Taxonomy | None = db.get(Taxonomy, taxonomy_id)
+    taxonomy: Taxonomy | None = await db.get(Taxonomy, taxonomy_id)
 
     if not taxonomy:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Taxonomy not found.")
 
     taxonomy.enabled = True
 
-    db.commit()
+    await db.commit()
 
     return StandardStatusIdentifiedResponse(
         saved=True,
@@ -358,14 +396,14 @@ async def _enable_taxonomy(db: Session, taxonomy_id: int) -> dict:
 
 
 async def _disable_taxonomy(db: Session, taxonomy_id: int) -> dict:
-    taxonomy: Taxonomy | None = db.get(Taxonomy, taxonomy_id)
+    taxonomy: Taxonomy | None = await db.get(Taxonomy, taxonomy_id)
 
     if not taxonomy:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Taxonomy not found.")
 
     taxonomy.enabled = False
 
-    db.commit()
+    await db.commit()
 
     return StandardStatusIdentifiedResponse(
         saved=True,
@@ -377,9 +415,13 @@ async def _disable_taxonomy(db: Session, taxonomy_id: int) -> dict:
     )
 
 
-def _get_tag_name(db: Session, taxonomy_entry: TaxonomyEntry) -> str:
-    taxonomy_predicate = (
-        db.query(TaxonomyPredicate).filter(TaxonomyPredicate.id == taxonomy_entry.taxonomy_predicate_id).first()
+async def _get_tag_name(db: Session, taxonomy_entry: TaxonomyEntry) -> str:
+    result = await db.execute(
+        select(TaxonomyPredicate).filter(TaxonomyPredicate.id == taxonomy_entry.taxonomy_predicate_id).limit(1)
     )
-    taxonomy = db.query(Taxonomy).filter(Taxonomy.id == taxonomy_predicate.taxonomy_id).first()
+    taxonomy_predicate = result.scalars().first()
+
+    result = await db.execute(select(Taxonomy).filter(Taxonomy.id == taxonomy_predicate.taxonomy_id).limit(1))
+    taxonomy = result.scalars().first()
+
     return taxonomy.namespace + ":" + taxonomy_predicate.value + '="' + taxonomy_entry.value + '"'

@@ -2,6 +2,7 @@ import logging
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Path
+from sqlalchemy.future import select
 from sqlalchemy.orm import Session
 from starlette import status
 from starlette.requests import Request
@@ -228,7 +229,8 @@ async def _import_galaxy_cluster(
 
         galaxy_cluster_type = galaxy_cluster_dict["type"]
 
-        galaxies_with_given_type = db.query(Galaxy).filter(Galaxy.type == galaxy_cluster_type).all()
+        result = await db.execute(select(Galaxy).filter(Galaxy.type == galaxy_cluster_type))
+        galaxies_with_given_type = result.scalars().all()
 
         if galaxy_cluster_dict["default"] is True:
             raise HTTPException(
@@ -280,7 +282,8 @@ async def _import_galaxy_cluster(
             )
 
             db.add(new_galaxy_cluster)
-            db.commit()
+            await db.commit()
+
             for galaxy_element in galaxy_elements:
                 galaxy_element["galaxy_cluster_id"] = new_galaxy_cluster.id
 
@@ -289,7 +292,8 @@ async def _import_galaxy_cluster(
                 new_galaxy_element = GalaxyElement(**{**galaxy_element})
 
                 db.add(new_galaxy_element)
-                db.commit()
+                await db.commit()
+
         successfully_imported_counter += 1
 
     if failed_imports_counter > 0:
@@ -300,6 +304,7 @@ async def _import_galaxy_cluster(
             url=str(request.url.path),
             errors=f"Could not import galaxy clusters. 0 imported, 0 ignored, {failed_imports_counter} failed.",
         )
+
     return DeleteForceUpdateImportGalaxyResponse(
         saved=True,
         success=True,
@@ -310,19 +315,19 @@ async def _import_galaxy_cluster(
 
 
 async def _get_galaxy_details(db: Session, galaxy_id: str) -> dict:
-    galaxy: Galaxy | None = db.get(Galaxy, galaxy_id)
+    galaxy: Galaxy | None = await db.get(Galaxy, galaxy_id)
 
     if not galaxy:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
-    galaxy_data = _prepare_galaxy_response(db, galaxy)
-    galaxy_cluster_data = _prepare_galaxy_cluster_response(db, galaxy)
+    galaxy_data = await _prepare_galaxy_response(db, galaxy)
+    galaxy_cluster_data = await _prepare_galaxy_cluster_response(db, galaxy)
 
     return GetGalaxyResponse(Galaxy=galaxy_data, GalaxyCluster=galaxy_cluster_data)
 
 
 async def _delete_galaxy(db: Session, galaxy_id: str, request: Request) -> DeleteForceUpdateImportGalaxyResponse:
-    galaxy = db.get(Galaxy, galaxy_id)
+    galaxy = await db.get(Galaxy, galaxy_id)
 
     if not galaxy:
         raise HTTPException(
@@ -331,12 +336,16 @@ async def _delete_galaxy(db: Session, galaxy_id: str, request: Request) -> Delet
                 saved=False, success=False, name="Invalid galaxy.", message="Invalid galaxy.", url=str(request.url.path)
             ).dict(),
         )
-    connected_tag_name = db.query(GalaxyCluster).filter(GalaxyCluster.galaxy_id == galaxy.id).first().tag_name
-    connected_tag = db.query(Tag).filter(Tag.name == connected_tag_name).first()
 
-    db.delete(galaxy)
-    db.delete(connected_tag)
-    db.commit()
+    result = await db.execute(select(GalaxyCluster).filter(GalaxyCluster.galaxy_id == galaxy.id).limit(1))
+    connected_tag_name = result.scalars().first().tag_name
+
+    result = await db.execute(select(Tag).filter(Tag.name == connected_tag_name))
+    connected_tag = result.scalars().first()
+
+    await db.delete(galaxy)
+    await db.delete(connected_tag)
+    await db.commit()
 
     return DeleteForceUpdateImportGalaxyResponse(
         saved=True, success=True, name="Galaxy deleted", message="Galaxy deleted", url=str(request.url.path)
@@ -344,20 +353,21 @@ async def _delete_galaxy(db: Session, galaxy_id: str, request: Request) -> Delet
 
 
 async def _get_galaxies(db: Session) -> list[GetAllSearchGalaxiesResponse]:
-    galaxies = db.query(Galaxy).all()
+    result = await db.execute(select(Galaxy))
+    galaxies = result.scalars().all()
     response_list = []
 
     if not galaxies:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No galaxies found.")
 
     for galaxy in galaxies:
-        response_list.append(GetAllSearchGalaxiesResponse(Galaxy=_prepare_galaxy_response(db, galaxy)))
+        response_list.append(GetAllSearchGalaxiesResponse(Galaxy=await _prepare_galaxy_response(db, galaxy)))
 
     return response_list
 
 
 async def _export_galaxy(db: Session, galaxy_id: str, body: ExportGalaxyBody) -> list[dict]:
-    galaxy: Galaxy | None = db.get(Galaxy, galaxy_id)
+    galaxy: Galaxy | None = await db.get(Galaxy, galaxy_id)
 
     if not galaxy:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
@@ -379,7 +389,7 @@ async def _export_galaxy(db: Session, galaxy_id: str, body: ExportGalaxyBody) ->
     if missing_information_in_body is True:
         return []
 
-    response_list = _prepare_export_galaxy_response(db, galaxy_id, body_dict_information)
+    response_list = await _prepare_export_galaxy_response(db, galaxy_id, body_dict_information)
 
     return response_list
 
@@ -388,7 +398,7 @@ async def _attach_cluster_to_galaxy(
     db: Session, attach_target_id: str, attach_target_type: str, local: str, body: AttachClusterGalaxyBody
 ) -> AttachClusterGalaxyResponse:
     galaxy_cluster_id = body.Galaxy.target_id
-    galaxy_cluster: GalaxyCluster | None = db.get(GalaxyCluster, galaxy_cluster_id)
+    galaxy_cluster: GalaxyCluster | None = await db.get(GalaxyCluster, galaxy_cluster_id)
 
     if not galaxy_cluster:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Invalid Galaxy cluster.")
@@ -396,18 +406,19 @@ async def _attach_cluster_to_galaxy(
     if local not in ["0", "1"]:
         local = "0"
 
-    tag_id = db.query(Tag).filter(Tag.name == galaxy_cluster.tag_name).first().id
+    result = await db.execute(select(Tag).filter(Tag.name == galaxy_cluster.tag_name).limit(1))
+    tag_id = result.scalars().first().id
 
     if attach_target_type == "event":
-        event: Event | None = db.get(Event, attach_target_id)
+        event: Event | None = await db.get(Event, attach_target_id)
 
         if not event:
             raise HTTPException(status.HTTP_404_NOT_FOUND, "Invalid event.")
         new_event_tag = EventTag(event_id=event.id, tag_id=tag_id, local=True if int(local) == 1 else False)
         db.add(new_event_tag)
-        db.commit()
+        await db.commit()
     elif attach_target_type == "attribute":
-        attribute: Attribute | None = db.get(Attribute, attach_target_id)
+        attribute: Attribute | None = await db.get(Attribute, attach_target_id)
 
         if not attribute:
             raise HTTPException(status.HTTP_404_NOT_FOUND, "Invalid attribute.")
@@ -418,7 +429,7 @@ async def _attach_cluster_to_galaxy(
             local=True if int(local) == 1 else False,
         )
         db.add(new_attribute_tag)
-        db.commit()
+        await db.commit()
     elif attach_target_type == "tag_collection":
         raise HTTPException(
             status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Attachment to tag_collection is not available yet."
@@ -429,9 +440,11 @@ async def _attach_cluster_to_galaxy(
     return AttachClusterGalaxyResponse(saved=True, success="Cluster attached.", check_publish=True)
 
 
-def _prepare_galaxy_response(db: Session, galaxy: Galaxy) -> GetAllSearchGalaxiesAttributes:
+async def _prepare_galaxy_response(db: Session, galaxy: Galaxy) -> GetAllSearchGalaxiesAttributes:
     galaxy_dict = galaxy.__dict__.copy()
-    galaxy_cluster = db.query(GalaxyCluster).filter(GalaxyCluster.galaxy_id == galaxy.id).first()
+
+    result = await db.execute(select(GalaxyCluster).filter(GalaxyCluster.galaxy_id == galaxy.id).limit(1))
+    galaxy_cluster = result.scalars().first()
 
     if galaxy_cluster is None:
         galaxy_dict["local_only"] = True
@@ -439,10 +452,11 @@ def _prepare_galaxy_response(db: Session, galaxy: Galaxy) -> GetAllSearchGalaxie
     return GetAllSearchGalaxiesAttributes(**galaxy_dict)
 
 
-def _prepare_galaxy_cluster_response(db: Session, galaxy: Galaxy) -> list[GetGalaxyClusterResponse]:
+async def _prepare_galaxy_cluster_response(db: Session, galaxy: Galaxy) -> list[GetGalaxyClusterResponse]:
     response_list = []
 
-    galaxy_cluster_list = db.query(GalaxyCluster).filter(GalaxyCluster.galaxy_id == galaxy.id).all()
+    result = await db.execute(select(GalaxyCluster).filter(GalaxyCluster.galaxy_id == galaxy.id))
+    galaxy_cluster_list = result.scalars().all()
 
     if len(galaxy_cluster_list) > 0:
         for galaxy_cluster in galaxy_cluster_list:
@@ -471,9 +485,10 @@ def _prepare_galaxy_cluster_response(db: Session, galaxy: Galaxy) -> list[GetGal
                 if galaxy_cluster_dict.get(field) is None:
                     galaxy_cluster_dict[field] = False
 
-            galaxy_element_list = (
-                db.query(GalaxyElement).filter(GalaxyElement.galaxy_cluster_id == galaxy_cluster.id).all()
+            result = await db.execute(
+                select(GalaxyElement).filter(GalaxyElement.galaxy_cluster_id == galaxy_cluster.id)
             )
+            galaxy_element_list = result.scalars().all()
             galaxy_cluster_dict["GalaxyElement"] = []
 
             if len(galaxy_element_list) > 0:
@@ -486,29 +501,31 @@ def _prepare_galaxy_cluster_response(db: Session, galaxy: Galaxy) -> list[GetGal
     return response_list
 
 
-def _prepare_export_galaxy_response(
+async def _prepare_export_galaxy_response(
     db: Session, galaxy_id: str, body_dict_information: dict
 ) -> list[ExportGalaxyClusterResponse]:
     response_list = []
-    galaxy = db.get(Galaxy, galaxy_id)
-    galaxy_response = _prepare_galaxy_response(db, galaxy)
-    galaxy_cluster_response_list = _prepare_galaxy_cluster_response(db, galaxy)
+    galaxy = await db.get(Galaxy, galaxy_id)
+    galaxy_response = await _prepare_galaxy_response(db, galaxy)
+    galaxy_cluster_response_list = await _prepare_galaxy_cluster_response(db, galaxy)
     for galaxy_cluster in galaxy_cluster_response_list:
         if galaxy_cluster.distribution != body_dict_information["distribution"]:
             continue
         elif galaxy_cluster.default != body_dict_information["default"]:
             continue
-        org = db.get(Organisation, galaxy_cluster.org_id)
-        orgc = db.get(Organisation, galaxy_cluster.orgc_id)
+        org = await db.get(Organisation, galaxy_cluster.org_id)
+        orgc = await db.get(Organisation, galaxy_cluster.orgc_id)
         galaxy_cluster_dict = galaxy_cluster.dict()
         galaxy_cluster_dict["Org"] = OrganisationSchema(**org.__dict__.copy())
         galaxy_cluster_dict["Orgc"] = OrganisationSchema(**orgc.__dict__.copy())
         galaxy_cluster_dict["Galaxy"] = GetAllEventsGalaxyClusterGalaxy(**galaxy_response.__dict__.copy())
-        galaxy_cluster_relation_list = (
-            db.query(GalaxyReference).filter(GalaxyReference.galaxy_cluster_id == galaxy_cluster.id).all()
-        )
 
-        galaxy_cluster_dict["GalaxyClusterRelation"] = _prepare_galaxy_cluster_relation_response(
+        result = await db.execute(
+            select(GalaxyReference).filter(GalaxyReference.galaxy_cluster_id == galaxy_cluster.id)
+        )
+        galaxy_cluster_relation_list = result.scalars().all()
+
+        galaxy_cluster_dict["GalaxyClusterRelation"] = await _prepare_galaxy_cluster_relation_response(
             db, galaxy_cluster_relation_list
         )
         response_list.append(ExportGalaxyClusterResponse(**galaxy_cluster_dict))
@@ -516,32 +533,31 @@ def _prepare_export_galaxy_response(
     return response_list
 
 
-def _prepare_galaxy_cluster_relation_response(
+async def _prepare_galaxy_cluster_relation_response(
     db: Session, galaxy_cluster_relation_list: list[GalaxyReference]
 ) -> list[AddEditGetEventGalaxyClusterRelation]:
     galaxy_cluster_relation_response_list = []
 
     for galaxy_cluster_relation in galaxy_cluster_relation_list:
         galaxy_cluster_relation_dict = galaxy_cluster_relation.__dict__.copy()
-        related_galaxy_cluster = (
-            db.query(GalaxyCluster).filter(GalaxyCluster.id == galaxy_cluster_relation.galaxy_cluster_id).first()
+
+        result = await db.execute(
+            select(GalaxyCluster).filter(GalaxyCluster.id == galaxy_cluster_relation.galaxy_cluster_id).limit(1)
         )
-        tag_list = db.query(Tag).filter(Tag.name == related_galaxy_cluster.tag_name).all()
+        related_galaxy_cluster = result.scalars().first()
+
+        result = await db.execute(select(Tag).filter(Tag.name == related_galaxy_cluster.tag_name))
+        tag_list = result.scalars().all()
+
         if len(tag_list) > 0:
             galaxy_cluster_relation_dict["Tag"] = _prepare_tag_response(tag_list)
 
-        galaxy_cluster_relation_dict["galaxy_cluster_uuid"] = db.get(
-            GalaxyCluster, galaxy_cluster_relation.galaxy_cluster_id
-        ).uuid
-        galaxy_cluster_relation_dict["distribution"] = db.get(
-            GalaxyCluster, galaxy_cluster_relation.galaxy_cluster_id
-        ).distribution
-        galaxy_cluster_relation_dict["default"] = db.get(
-            GalaxyCluster, galaxy_cluster_relation.galaxy_cluster_id
-        ).default
-        galaxy_cluster_relation_dict["sharing_group_id"] = db.get(
-            GalaxyCluster, galaxy_cluster_relation.galaxy_cluster_id
-        ).sharing_group_id
+        galaxy_cluster_relation_galaxy_cluster = await db.get(GalaxyCluster, galaxy_cluster_relation.galaxy_cluster_id)
+
+        galaxy_cluster_relation_dict["galaxy_cluster_uuid"] = galaxy_cluster_relation_galaxy_cluster.uuid
+        galaxy_cluster_relation_dict["distribution"] = galaxy_cluster_relation_galaxy_cluster.distribution
+        galaxy_cluster_relation_dict["default"] = galaxy_cluster_relation_galaxy_cluster.default
+        galaxy_cluster_relation_dict["sharing_group_id"] = galaxy_cluster_relation_galaxy_cluster.sharing_group_id
 
         galaxy_cluster_relation_response_list.append(
             AddEditGetEventGalaxyClusterRelation(**galaxy_cluster_relation_dict)

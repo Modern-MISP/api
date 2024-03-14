@@ -13,22 +13,24 @@ from tests.environment import environment
 from tests.generators.model_generators.auth_key_generator import generate_auth_key
 
 
-class TestAuthorize:
+class TestAuth:
     @staticmethod
-    def test_authorize_no_token() -> None:
+    @pytest.mark.asyncio
+    async def test_authorize_no_token() -> None:
         db = get_db()
 
         try:
-            authorize(AuthStrategy.JWT)(db, "")
+            await authorize(AuthStrategy.JWT)(db=db, authorization="")
             pytest.fail()
         except HTTPException:
             pass
 
     @staticmethod
-    def test_authorize_valid_token() -> None:
+    @pytest.mark.asyncio
+    async def test_authorize_valid_token() -> None:
         db = get_db()
 
-        auth: Auth | Any = authorize(AuthStrategy.JWT)(db, environment.site_admin_user_token)
+        auth: Auth | Any = await authorize(AuthStrategy.JWT)(db=db, authorization=environment.site_admin_user_token)
 
         assert auth.user_id == environment.site_admin_user.id
         assert auth.role_id == environment.site_admin_user.role_id
@@ -37,19 +39,21 @@ class TestAuthorize:
         assert not auth.is_worker
 
     @staticmethod
-    def test_authorize_using_exchange_token() -> None:
+    @pytest.mark.asyncio
+    async def test_authorize_using_exchange_token() -> None:
         db = get_db()
 
         exchange_token = encode_exchange_token(environment.site_admin_user.id)
 
         try:
-            authorize(AuthStrategy.JWT)(db, exchange_token)
+            await authorize(AuthStrategy.JWT)(db=db, authorization=exchange_token)
             pytest.fail()
         except HTTPException:
             pass
 
     @staticmethod
-    def test_authorize_valid_auth_key() -> None:
+    @pytest.mark.asyncio
+    async def test_authorize_valid_auth_key() -> None:
         clear_key = generate(size=40)
 
         db = get_db()
@@ -61,10 +65,11 @@ class TestAuthorize:
         auth_key.authkey_end = clear_key[-4:]
 
         db.add(auth_key)
-        db.commit()
-        db.refresh(auth_key)
 
-        auth: Auth | Any = authorize(AuthStrategy.API_KEY)(db, clear_key)
+        await db.commit()
+        await db.refresh(auth_key)
+
+        auth: Auth | Any = await authorize(AuthStrategy.API_KEY)(db=db, authorization=clear_key)
 
         assert auth.user_id == environment.site_admin_user.id
         assert auth.role_id == environment.site_admin_user.role_id
@@ -73,7 +78,8 @@ class TestAuthorize:
         assert not auth.is_worker
 
     @staticmethod
-    def test_authorize_expired_auth_key() -> None:
+    @pytest.mark.asyncio
+    async def test_authorize_expired_auth_key() -> None:
         clear_key = generate(size=40)
 
         db = get_db()
@@ -86,20 +92,22 @@ class TestAuthorize:
         auth_key.expiration = time() - 10
 
         db.add(auth_key)
-        db.commit()
-        db.refresh(auth_key)
+
+        await db.commit()
+        await db.refresh(auth_key)
 
         try:
-            authorize(AuthStrategy.API_KEY)(db, clear_key)
+            await authorize(AuthStrategy.API_KEY)(db=db, authorization=clear_key)
             pytest.fail()
         except HTTPException:
             pass
 
     @staticmethod
-    def test_authorize_using_worker_key() -> None:
+    @pytest.mark.asyncio
+    async def test_authorize_using_worker_key() -> None:
         db = get_db()
 
-        auth: Auth | Any = authorize(AuthStrategy.WORKER_KEY)(db, config.WORKER_KEY)
+        auth: Auth | Any = await authorize(AuthStrategy.WORKER_KEY)(db=db, authorization=config.WORKER_KEY)
 
         assert not auth.user_id
         assert not auth.role_id
@@ -110,14 +118,15 @@ class TestAuthorize:
 
 class TestCheckPermissions:
     @staticmethod
-    def test_check_permissions_site_admin() -> None:
+    @pytest.mark.asyncio
+    async def test_check_permissions_site_admin() -> None:
         auth = Auth(
             user_id=environment.site_admin_user.id,
             org_id=environment.site_admin_user.org_id,
             role_id=environment.site_admin_user.role_id,
         )
 
-        assert check_permissions(
+        assert await check_permissions(
             auth,
             [
                 Permission.ADD,
@@ -130,7 +139,8 @@ class TestCheckPermissions:
         )
 
     @staticmethod
-    def test_check_permissions_no_write_access() -> None:
+    @pytest.mark.asyncio
+    async def test_check_permissions_no_write_access() -> None:
         db = get_db()
 
         auth_key = generate_auth_key()
@@ -138,8 +148,9 @@ class TestCheckPermissions:
         auth_key.read_only = True
 
         db.add(auth_key)
-        db.commit()
-        db.refresh(auth_key)
+
+        await db.commit()
+        await db.refresh(auth_key)
 
         auth = Auth(
             user_id=environment.site_admin_user.id,
@@ -148,4 +159,4 @@ class TestCheckPermissions:
             auth_key_id=auth_key.id,
         )
 
-        assert not check_permissions(auth, [Permission.WRITE_ACCESS])
+        assert not await check_permissions(auth, [Permission.WRITE_ACCESS])
