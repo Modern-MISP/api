@@ -71,65 +71,65 @@ router = APIRouter(tags=["events"])
 @router.post(
     "/events",
     status_code=status.HTTP_200_OK,
-    response_model=partial(AddEditGetEventResponse),
+    response_model=AddEditGetEventResponse,
     summary="Add new event",
     description="Add a new event with the given details.",
 )
 @with_session_management
 async def add_event(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS]))],
     db: Annotated[Session, Depends(get_db)],
     body: AddEventBody,
-) -> dict:
+) -> AddEditGetEventResponse:
     return await _add_event(auth, db, body)
 
 
 @router.get(
     "/events/{eventId}",
     status_code=status.HTTP_200_OK,
-    response_model=partial(AddEditGetEventResponse),
+    response_model=AddEditGetEventResponse,
     summary="Get event details",
     description="Retrieve details of a specific attribute by ist ID.",
 )
 @with_session_management
 async def get_event_details(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     event_id: Annotated[str, Path(alias="eventId")],
-) -> dict:
+) -> AddEditGetEventResponse:
     return await _get_event_details(db, event_id)
 
 
 @router.put(
     "/events/{eventId}",
     status_code=status.HTTP_200_OK,
-    response_model=partial(AddEditGetEventResponse),
+    response_model=AddEditGetEventResponse,
     summary="Update an event",
     description="Update an existing event by its ID.",
 )
 @with_session_management
 async def update_event(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS]))],
     db: Annotated[Session, Depends(get_db)],
     event_id: Annotated[str, Path(alias="eventId")],
     body: EditEventBody,
-) -> dict:
+) -> AddEditGetEventResponse:
     return await _update_event(db, event_id, body)
 
 
 @router.delete(
     "/events/{eventId}",
     status_code=status.HTTP_200_OK,
-    response_model=partial(DeleteEventResponse),
+    response_model=DeleteEventResponse,
     summary="Delete an event",
     description="Delete an attribute by its ID.",
 )
 @with_session_management
 async def delete_event(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS]))],
     db: Annotated[Session, Depends(get_db)],
     event_id: Annotated[str, Path(alias="eventId")],
-) -> dict:
+) -> DeleteEventResponse:
     return await _delete_event(db, event_id)
 
 
@@ -142,7 +142,7 @@ async def delete_event(
 )
 @with_session_management
 async def get_all_events(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL))], db: Annotated[Session, Depends(get_db)]
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))], db: Annotated[Session, Depends(get_db)]
 ) -> list[dict]:
     return await _get_events(db)
 
@@ -156,7 +156,7 @@ async def get_all_events(
 )
 @with_session_management
 async def rest_search_events(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     body: SearchEventsBody,
 ) -> dict:
@@ -172,7 +172,7 @@ async def rest_search_events(
 )
 @with_session_management
 async def index_events(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     body: IndexEventsBody,
 ) -> list[IndexEventsAttributes]:
@@ -182,69 +182,69 @@ async def index_events(
 @router.post(
     "/events/publish/{eventId}",
     status_code=status.HTTP_200_OK,
-    response_model=partial(PublishEventResponse),
+    response_model=PublishEventResponse,
     summary="Publish an event",
     description="Publish an event by ist ID.",
 )
 @with_session_management
 async def publish_event(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS, Permission.PUBLISH]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.PUBLISH]))],
     db: Annotated[Session, Depends(get_db)],
     event_id: Annotated[str, Path(alias="eventId")],
     request: Request,
-) -> dict:
+) -> PublishEventResponse:
     return await _publish_event(db, event_id, request)
 
 
 @router.post(
     "/events/unpublish/{eventId}",
     status_code=status.HTTP_200_OK,
-    response_model=partial(UnpublishEventResponse),
+    response_model=UnpublishEventResponse,
     summary="Unpublish an event",
     description="Unpublish an event by its ID.",
 )
 @with_session_management
 async def unpublish_event(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS]))],
     db: Annotated[Session, Depends(get_db)],
     event_id: Annotated[str, Path(alias="eventId")],
     request: Request,
-) -> dict:
+) -> UnpublishEventResponse:
     return await _unpublish_event(db, event_id, request)
 
 
 @router.post(
     "/events/addTag/{eventId}/{tagId}/local:{local}",
     status_code=status.HTTP_200_OK,
-    response_model=partial(AddRemoveTagEventsResponse),
+    response_model=AddRemoveTagEventsResponse,
     summary="Add tag to event",
     description="Add a tag to an attribute by their ids.",
 )
 @with_session_management
 async def add_tag_to_event(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS]))],
     db: Annotated[Session, Depends(get_db)],
     event_id: Annotated[str, Path(alias="eventId")],
     tag_id: Annotated[str, Path(alias="tagId")],
     local: str,
-) -> dict:
+) -> AddRemoveTagEventsResponse:
     return await _add_tag_to_event(db, event_id, tag_id, local)
 
 
 @router.post(
     "/events/removeTag/{eventId}/{tagId}",
     status_code=status.HTTP_200_OK,
-    response_model=partial(AddRemoveTagEventsResponse),
+    response_model=AddRemoveTagEventsResponse,
     summary="Add tag to event",
     description="Add a tag to an event by their ids.",
 )
 @with_session_management
 async def remove_tag_from_event(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS]))],
     db: Annotated[Session, Depends(get_db)],
     event_id: Annotated[str, Path(alias="eventId")],
     tag_id: Annotated[str, Path(alias="tagId")],
-) -> dict:
+) -> AddRemoveTagEventsResponse:
     return await _remove_tag_from_event(db, event_id, tag_id)
 
 
@@ -281,13 +281,13 @@ async def add_attribute_via_free_text_import(
     "/events/add",
     deprecated=True,
     status_code=status.HTTP_200_OK,
-    response_model=partial(AddEditGetEventResponse),
+    response_model=AddEditGetEventResponse,
     summary="Add new event (Deprecated)",
     description="Deprecated. Add a new event with the given details.",
 )
 @with_session_management
 async def add_event_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS]))],
     db: Annotated[Session, Depends(get_db)],
     body: AddEventBody,
 ) -> dict:
@@ -298,13 +298,13 @@ async def add_event_depr(
     "/events/view/{eventId}",
     deprecated=True,
     status_code=status.HTTP_200_OK,
-    response_model=partial(AddEditGetEventResponse),
+    response_model=AddEditGetEventResponse,
     summary="Get event details (Deprecated)",
-    description="Deprecated. Retrieve details of a specific attribute by ist ID. NOT YET AVAILABLE!",
+    description="Deprecated. Retrieve details of a specific attribute by its ID. NOT YET AVAILABLE!",
 )
 @with_session_management
 async def get_event_details_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     event_id: Annotated[str, Path(alias="eventId")],
 ) -> dict:
@@ -315,17 +315,17 @@ async def get_event_details_depr(
     "/events/edit/{eventId}",
     deprecated=True,
     status_code=status.HTTP_200_OK,
-    response_model=partial(AddEditGetEventResponse),
+    response_model=AddEditGetEventResponse,
     summary="Update an event (Deprecated)",
     description="Deprecated. Update an existing event by its ID. NOT YET AVAILABLE!",
 )
 @with_session_management
 async def update_event_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS]))],
     db: Annotated[Session, Depends(get_db)],
     event_id: Annotated[str, Path(alias="eventId")],
     body: EditEventBody,
-) -> dict:
+) -> AddEditGetEventResponse:
     return await _update_event(db, event_id, body=body)
 
 
@@ -333,13 +333,13 @@ async def update_event_depr(
     "/events/delete/{eventId}",
     deprecated=True,
     status_code=status.HTTP_200_OK,
-    response_model=partial(AddEditGetEventResponse),
+    response_model=AddEditGetEventResponse,
     summary="Delete an event (Deprecated)",
     description="Deprecated. Delete an existing event by its ID. NOT YET AVAILABLE!",
 )
 @with_session_management
 async def delete_event_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS]))],
     db: Annotated[Session, Depends(get_db)],
     event_id: Annotated[str, Path(..., alias="eventId")],
 ) -> DeleteEventResponse:
@@ -349,7 +349,7 @@ async def delete_event_depr(
 # --- endpoint logic ---
 
 
-async def _add_event(auth: Auth, db: Session, body: AddEventBody) -> dict:
+async def _add_event(auth: Auth, db: Session, body: AddEventBody) -> AddEditGetEventResponse:
     if not body.info:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="value 'info' is required")
     if not isinstance(body.info, str):
@@ -380,7 +380,7 @@ async def _add_event(auth: Auth, db: Session, body: AddEventBody) -> dict:
     return AddEditGetEventResponse(Event=event_data)
 
 
-async def _get_event_details(db: Session, event_id: str) -> dict:
+async def _get_event_details(db: Session, event_id: str) -> AddEditGetEventResponse:
     event: Event | None = db.get(Event, event_id)
 
     if not event:
@@ -391,7 +391,7 @@ async def _get_event_details(db: Session, event_id: str) -> dict:
     return AddEditGetEventResponse(Event=event_data)
 
 
-async def _update_event(db: Session, event_id: str, body: EditEventBody) -> dict:
+async def _update_event(db: Session, event_id: str, body: EditEventBody) -> AddEditGetEventResponse:
     event: Event | None = db.get(Event, event_id)
 
     if not event:
@@ -529,7 +529,7 @@ async def _unpublish_event(db: Session, event_id: str, request: Request) -> Unpu
     )
 
 
-async def _add_tag_to_event(db: Session, event_id: str, tag_id: str, local: str) -> dict:
+async def _add_tag_to_event(db: Session, event_id: str, tag_id: str, local: str) -> AddRemoveTagEventsResponse:
     event: Event | None = db.get(Event, event_id)
 
     if not event:
@@ -557,7 +557,7 @@ async def _add_tag_to_event(db: Session, event_id: str, tag_id: str, local: str)
     return AddRemoveTagEventsResponse(saved=True, success="Tag added", check_publish=True)
 
 
-async def _remove_tag_from_event(db: Session, event_id: str, tag_id: str) -> dict:
+async def _remove_tag_from_event(db: Session, event_id: str, tag_id: str) -> AddRemoveTagEventsResponse:
     event: Event | None = db.get(Event, event_id)
 
     if not event:
