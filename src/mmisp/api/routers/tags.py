@@ -2,6 +2,8 @@ import re
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Path, status
+from sqlalchemy import and_
+from sqlalchemy.future import select
 from sqlalchemy.orm import Session
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
@@ -11,8 +13,8 @@ from mmisp.api_schemas.tags.get_tag_response import TagAttributesResponse, TagGe
 from mmisp.api_schemas.tags.search_tags_response import TagSearchResponse
 from mmisp.api_schemas.tags.update_tag_body import TagUpdateBody
 from mmisp.db.database import get_db, with_session_management
-from mmisp.db.models.attribute import AttributeTag
 from mmisp.db.models.feed import Feed
+from mmisp.db.models.galaxy_cluster import GalaxyCluster
 from mmisp.db.models.tag import Tag
 from mmisp.db.models.taxonomy import Taxonomy, TaxonomyPredicate
 from mmisp.util.models import update_record
@@ -33,14 +35,14 @@ async def add_tag(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.TAG_EDITOR]))],
     db: Annotated[Session, Depends(get_db)],
     body: TagCreateBody,
-) -> dict:
+) -> TagResponse:
     return await _add_tag(db, body)
 
 
 @router.get(
     "/tags/{tagId}",
     status_code=status.HTTP_200_OK,
-    response_model=partial(TagAttributesResponse),
+    response_model=TagAttributesResponse,
     summary="View tag details",
     description="View details of a specific tag.",
 )
@@ -49,7 +51,7 @@ async def view_tag(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     tag_id: Annotated[int, Path(alias="tagId")],
-) -> dict:
+) -> TagAttributesResponse:
     return await _view_tag(db, tag_id)
 
 
@@ -82,7 +84,7 @@ async def update_tag(
     db: Annotated[Session, Depends(get_db)],
     body: TagUpdateBody,
     tag_id: Annotated[int, Path(alias="tagId")],
-) -> dict:
+) -> TagResponse:
     return await _update_tag(db, body, tag_id)
 
 
@@ -98,7 +100,7 @@ async def delete_tag(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     tag_id: Annotated[int, Path(alias="tagId")],
-) -> dict:
+) -> TagDeleteResponse:
     return await _delete_tag(db, tag_id)
 
 
@@ -133,7 +135,7 @@ async def add_tag_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.TAG_EDITOR]))],
     db: Annotated[Session, Depends(get_db)],
     body: TagCreateBody,
-) -> dict:
+) -> TagResponse:
     return await _add_tag(db, body)
 
 
@@ -150,7 +152,7 @@ async def view_tag_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     tag_id: Annotated[int, Path(alias="tagId")],
-) -> dict:
+) -> TagAttributesResponse:
     return await _view_tag(db, tag_id)
 
 
@@ -168,7 +170,7 @@ async def update_tag_depr(
     db: Annotated[Session, Depends(get_db)],
     body: TagUpdateBody,
     tag_id: Annotated[int, Path(alias="tagId")],
-) -> dict:
+) -> TagResponse:
     return await _update_tag(db, body, tag_id)
 
 
@@ -185,17 +187,18 @@ async def delete_tag_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     tag_id: Annotated[int, Path(alias="tagId")],
-) -> dict:
+) -> TagDeleteResponse:
     return await _delete_tag(db, tag_id)
 
 
 # --- endpoint logic ---
-# TODO: Edit/update and add Tag, set "is_galaxy", "is_custom_galaxy" always false
-async def _add_tag(db: Session, body: TagCreateBody) -> dict:
+
+
+async def _add_tag(db: Session, body: TagCreateBody) -> TagResponse:
     _check_type_hex_colour(body.colour)
     tag: Tag = Tag(**body.dict())
 
-    existing_tag = db.query(Tag).filter(Tag.name == body.name).first()
+    existing_tag = db.execute(select(Tag).filter(Tag.name == body.name).limit(1)).scalars().first()
     if existing_tag:
         raise HTTPException(status.HTTP_403_FORBIDDEN, detail="This tag name already exists.")
 
@@ -205,7 +208,7 @@ async def _add_tag(db: Session, body: TagCreateBody) -> dict:
     return {"Tag": tag.__dict__}
 
 
-async def _view_tag(db: Session, tag_id: int) -> dict:
+async def _view_tag(db: Session, tag_id: int) -> TagAttributesResponse:
     tag: Tag | None = db.get(Tag, tag_id)
 
     if not tag:
@@ -215,13 +218,17 @@ async def _view_tag(db: Session, tag_id: int) -> dict:
 
 
 async def _search_tags(db: Session, tag_search_term: str) -> dict:
-    tags: list[Tag] = db.query(Tag).filter(Tag.name.contains(tag_search_term)).all()
+    tags: list[Tag] = db.execute(select(Tag).filter(Tag.name.contains(tag_search_term))).scalars().all()
 
     tag_datas = []
     for tag in tags:
-        taxonomies = db.query(Taxonomy).filter(Taxonomy.namespace == tag.name.split(":", 1)[0]).all()
+        taxonomies: list[Taxonomy] = (
+            db.execute(select(Taxonomy).filter(Taxonomy.namespace == tag.name.split(":", 1)[0])).scalars().all()
+        )
         for taxonomy in taxonomies:
-            taxonomy_predicates = db.query(TaxonomyPredicate).filter_by(taxonomy_id=taxonomy.id).all()
+            taxonomy_predicates: list[TaxonomyPredicate] = (
+                db.execute(select(TaxonomyPredicate).filter_by(taxonomy_id=taxonomy.id)).scalars().all()
+            )
             for taxonomy_predicate in taxonomy_predicates:
                 tag_datas.append(
                     {
@@ -234,14 +241,16 @@ async def _search_tags(db: Session, tag_search_term: str) -> dict:
     return {"root": tag_datas}
 
 
-async def _update_tag(db: Session, body: TagUpdateBody, tag_id: int) -> dict:
+async def _update_tag(db: Session, body: TagUpdateBody, tag_id: int) -> TagResponse:
     tag: Tag | None = db.get(Tag, tag_id)
 
     if not tag:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Tag not found.")
 
     if body.name:
-        existing_tag = db.query(Tag).filter(Tag.name == body.name).filter(Tag.id != tag_id).first()
+        existing_tag = (
+            db.execute(select(Tag).filter(and_(Tag.name == body.name, Tag.id != tag_id)).limit(1)).scalars().first()
+        )
         if existing_tag:
             raise HTTPException(status.HTTP_403_FORBIDDEN, detail="This tag name already exists.")
 
@@ -259,19 +268,21 @@ async def _update_tag(db: Session, body: TagUpdateBody, tag_id: int) -> dict:
     return {"Tag": tag.__dict__}
 
 
-async def _delete_tag(db: Session, tag_id: int) -> dict:
+async def _delete_tag(db: Session, tag_id: int) -> TagDeleteResponse:
     deleted_tag: Tag | None = db.get(Tag, tag_id)
 
     if not deleted_tag:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Tag not found.")
-    feeds = db.query(Feed).filter(Feed.tag_id == deleted_tag.id).all()
 
-    # TODO: check appearence of tags
+    feeds: list[Feed] = db.execute(select(Feed).filter(Feed.tag_id == deleted_tag.id)).scalars().all()
     for feed in feeds:
-        feed.tag_id = None
-    attribute_tags = db.query(AttributeTag).filter(AttributeTag.tag_id == deleted_tag.id).all()
-    for attribute_tag in attribute_tags:
-        attribute_tag.tag_id = None
+        feed.tag_id = 0
+
+    galaxy_clusters: list[GalaxyCluster] = (
+        db.execute(select(GalaxyCluster).filter(GalaxyCluster.tag_name == deleted_tag.name)).scalars().all()
+    )
+    for galaxy_cluster in galaxy_clusters:
+        galaxy_cluster.tag_name = ""
 
     db.delete(deleted_tag)
     db.commit()
@@ -282,7 +293,7 @@ async def _delete_tag(db: Session, tag_id: int) -> dict:
 
 
 async def _get_tags(db: Session) -> dict:
-    tags: list[Tag] = db.query(Tag).all()
+    tags: list[Tag] = db.execute(select(Tag)).scalars().all()
 
     return TagGetResponse(tags=[tag.__dict__ for tag in tags])
 
