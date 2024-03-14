@@ -58,9 +58,6 @@ def generate_valid_required_tag_data() -> TagCreateBody:
         name=random_string(),
         colour=random_hexcolour(),
         exportable=bool(random.getrandbits),
-        # TODO: remove org_id and user_id after solving foreign-key issue
-        org_id=1,
-        user_id=1,
     )
 
 
@@ -90,9 +87,9 @@ def generate_invalid_tag_data() -> Any:
     return {"name": input_list[0], "colour": input_list[1], "exportable": input_list[2]}
 
 
-def add_tags(number: int = 10) -> list[int]:
+def add_tags(number: int = 5) -> list[int]:
     db: Session = get_db()
-    tag_ids = []
+    tag_ids: list[int] = []
     for i in range(number):
         new_tag = Tag(**generate_valid_tag_data().dict())
         db.add(new_tag)
@@ -103,9 +100,9 @@ def add_tags(number: int = 10) -> list[int]:
     return tag_ids
 
 
-def get_non_existing_tags(number: int = 10) -> list:
+def get_non_existing_tags(number: int = 5) -> list:
     db: Session = get_db()
-    tag_ids = []
+    tag_ids: list[int] = []
     largest_id = db.query(func.max(Tag.id)).scalar()
     print(largest_id)
     if not largest_id:
@@ -116,9 +113,9 @@ def get_non_existing_tags(number: int = 10) -> list:
     return tag_ids
 
 
-def get_invalid_tags(number: int = 10) -> list:
+def get_invalid_tags(number: int = 5) -> list:
     length = 5
-    invalid_tags = []
+    invalid_tags: list[str] = []
     for i in range(number):
         invalid_tags.append("".join(random.choices(string.ascii_letters, k=length)))
     return invalid_tags

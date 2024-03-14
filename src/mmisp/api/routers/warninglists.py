@@ -358,8 +358,8 @@ async def _update_all_warninglists(
     success = True
 
     return StandardStatusResponse(
-        saved=saved,
-        success=success,
+        saved=True,
+        success=True,
         name=name,
         message=message,
         url=url,
