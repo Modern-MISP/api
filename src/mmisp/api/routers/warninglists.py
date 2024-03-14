@@ -209,20 +209,23 @@ async def _add_warninglist(
     create = body.dict()
     create.pop("values")
     create.pop("valid_attributes")
+
     new_warninglist = Warninglist(**{**create})
 
     db.add(new_warninglist)
-    db.flush()
-    db.refresh(new_warninglist)
+
+    await db.flush()
+    await db.refresh(new_warninglist)
 
     new_warninglist_entries = _create_warninglist_entries(body.values, new_warninglist.id)
     new_warninglist_types = _create_warninglist_types(body.valid_attributes, new_warninglist.id)
 
     db.add_all(new_warninglist_entries)
     db.add_all(new_warninglist_types)
-    db.commit()
 
-    warninglist_data = _prepare_warninglist_details_response(db, new_warninglist)
+    await db.commit()
+
+    warninglist_data = await _prepare_warninglist_details_response(db, new_warninglist)
 
     return WarninglistResponse(Warninglist=warninglist_data)
 
@@ -235,15 +238,17 @@ async def _toggleEnable(
     warninglist_id_list = [int(id_str) for id_str in warninglist_id_str_list]
     warninglist_name_list = _convert_to_list(body.name)
 
-    toggle_warninglists_query = select(Warninglist).filter(
-        or_(Warninglist.id.in_(warninglist_id_list), Warninglist.name.in_(warninglist_name_list))
+    result = await db.execute(
+        select(Warninglist).filter(
+            or_(Warninglist.id.in_(warninglist_id_list), Warninglist.name.in_(warninglist_name_list))
+        )
     )
-    warninglists: list[Warninglist] = db.execute(toggle_warninglists_query).scalars().all()
+    warninglists: list[Warninglist] = result.scalars().all()
 
     for warninglist in warninglists:
         warninglist.enabled = body.enabled
 
-    db.commit()
+    await db.commit()
 
     if not warninglists:
         return ToggleEnableWarninglistsResponse(saved=False, errors="Warninglist(s) not found")
@@ -259,12 +264,12 @@ async def _get_warninglist_details(
     db: Session,
     warninglist_id: int,
 ) -> dict:
-    warninglist: Warninglist | None = db.get(Warninglist, warninglist_id)
+    warninglist: Warninglist | None = await db.get(Warninglist, warninglist_id)
 
     if not warninglist:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Warninglist not found.")
 
-    warninglist_response = _prepare_warninglist_details_response(db, warninglist)
+    warninglist_response = await _prepare_warninglist_details_response(db, warninglist)
 
     return WarninglistResponse(Warninglist=warninglist_response)
 
@@ -273,18 +278,18 @@ async def _delete_warninglist(
     db: Session,
     warninglist_id: int,
 ) -> dict:
-    warninglist: Warninglist | None = db.get(Warninglist, warninglist_id)
+    warninglist: Warninglist | None = await db.get(Warninglist, warninglist_id)
 
     if not warninglist:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Warninglist not found.")
 
-    warninglist_entry_count = _get_warninglist_entry_count(db, warninglist_id)
-    warninglist_entries = (
-        db.execute(select(WarninglistEntry).filter(WarninglistEntry.warninglist_id == warninglist_id)).scalars().all()
-    )
-    warninglist_types = (
-        db.execute(select(WarninglistType).filter(WarninglistType.warninglist_id == warninglist_id)).scalars().all()
-    )
+    warninglist_entry_count = await _get_warninglist_entry_count(db, warninglist_id)
+
+    result = await db.execute(select(WarninglistEntry).filter(WarninglistEntry.warninglist_id == warninglist_id))
+    warninglist_entries = result.scalars().all()
+
+    result = await db.execute(select(WarninglistType).filter(WarninglistType.warninglist_id == warninglist_id))
+    warninglist_types = result.scalars().all()
 
     attributes = [warninglist_type.type for warninglist_type in warninglist_types]
     valid_attributes: str = ", ".join(attributes)
@@ -295,9 +300,8 @@ async def _delete_warninglist(
     warninglist_response["WarninglistEntry"] = [warninglist_entry.__dict__ for warninglist_entry in warninglist_entries]
     warninglist_response["WarninglistType"] = [warninglist_type.__dict__ for warninglist_type in warninglist_types]
 
-    db.delete(warninglist)
-
-    db.commit()
+    await db.delete(warninglist)
+    await db.commit()
 
     return WarninglistResponse(Warninglist=warninglist_response)
 
@@ -307,11 +311,11 @@ async def _get_all_or_selected_warninglists(
     value: str | None = None,
     enabled: bool | None = None,
 ) -> dict:
-    warninglists: list[Warninglist] = _search_warninglist(db, value, enabled)
+    warninglists: list[Warninglist] = await _search_warninglist(db, value, enabled)
 
     warninglists_data: list[WarninglistsResponse] = []
     for warninglist in warninglists:
-        warninglists_data.append(WarninglistsResponse(Warninglist=_prepare_warninglist_response(db, warninglist)))
+        warninglists_data.append(WarninglistsResponse(Warninglist=await _prepare_warninglist_response(db, warninglist)))
 
     return GetSelectedAllWarninglistsResponse(response=warninglists_data)
 
@@ -325,13 +329,14 @@ async def _get_warninglists_by_value(
     response: list[ValueWarninglistsResponse] = []
 
     for value in values:
-        warninglist_entries: list[WarninglistEntry] = (
-            db.execute(select(WarninglistEntry).filter(WarninglistEntry.value == value)).scalars().all()
-        )
+        result = await db.execute(select(WarninglistEntry).filter(WarninglistEntry.value == value))
+        warninglist_entries: list[WarninglistEntry] = result.scalars().all()
 
         warninglists: list[NameWarninglist] = []
+
         for warninglist_entry in warninglist_entries:
-            warninglist: Warninglist = db.get(Warninglist, warninglist_entry.warninglist_id)
+            warninglist: Warninglist = await db.get(Warninglist, warninglist_entry.warninglist_id)
+
             if warninglist:
                 warninglists.append(NameWarninglist(id=warninglist.id, name=warninglist.name))
 
@@ -349,13 +354,12 @@ async def _update_all_warninglists(
     db: Session,
     deprecated: bool,
 ) -> StandardStatusResponse:
-    number_updated_lists = db.execute(select(func.count()).select_from(Warninglist)).scalar()
+    result = await db.execute(select(func.count()).select_from(Warninglist))
+    number_updated_lists = result.scalar()
+
     name = "Successfully updated " + str(number_updated_lists) + " warninglists."
     message = "Successfully updated " + str(number_updated_lists) + " warninglists."
     url = "/warninglists/update" if deprecated else "/warninglists"
-
-    saved = True
-    success = True
 
     return StandardStatusResponse(
         saved=True,
@@ -370,16 +374,16 @@ async def _get_selected_warninglists(
     db: Session,
     body: GetSelectedWarninglistsBody,
 ) -> dict:
-    warninglists: list[Warninglist] = _search_warninglist(db, body.value, body.enabled)
+    warninglists: list[Warninglist] = await _search_warninglist(db, body.value, body.enabled)
 
     warninglists_data: list[WarninglistsResponse] = []
     for warninglist in warninglists:
-        warninglists_data.append(WarninglistsResponse(Warninglist=_prepare_warninglist_response(db, warninglist)))
+        warninglists_data.append(WarninglistsResponse(Warninglist=await _prepare_warninglist_response(db, warninglist)))
 
     return GetSelectedAllWarninglistsResponse(response=warninglists_data)
 
 
-def _search_warninglist(db: Session, value: str | None = None, enabled: bool | None = None) -> list[Warninglist]:
+async def _search_warninglist(db: Session, value: str | None = None, enabled: bool | None = None) -> list[Warninglist]:
     query = select(Warninglist)
 
     if enabled is not None:
@@ -389,7 +393,8 @@ def _search_warninglist(db: Session, value: str | None = None, enabled: bool | N
             or_(Warninglist.name == value, Warninglist.description == value, Warninglist.type == value)
         )
 
-    warninglists: list[Warninglist] = db.execute(query).scalars().all()
+    result = await db.execute(query)
+    warninglists: list[Warninglist] = result.scalars().all()
 
     return warninglists
 
@@ -434,44 +439,43 @@ def _convert_to_list(value: Any) -> list[str]:
     return value
 
 
-def _prepare_warninglist_response(db: Session, warninglist: Warninglist) -> dict:
+async def _prepare_warninglist_response(db: Session, warninglist: Warninglist) -> dict:
     warninglist_response = warninglist.__dict__
-    warninglist_response["warninglist_entry_count"] = _get_warninglist_entry_count(db, warninglist.id)
-    warninglist_response["valid_attributes"] = _get_valid_attributes(db, warninglist.id)
+    warninglist_response["warninglist_entry_count"] = await _get_warninglist_entry_count(db, warninglist.id)
+    warninglist_response["valid_attributes"] = await _get_valid_attributes(db, warninglist.id)
 
     return warninglist_response
 
 
-def _prepare_warninglist_details_response(db: Session, warninglist: Warninglist) -> dict:
-    warninglist_response = _prepare_warninglist_response(db, warninglist)
-    warninglist_response["WarninglistEntry"] = _get_warninglist_entries(db, warninglist.id)
-    warninglist_response["WarninglistType"] = _get_warninglist_types(db, warninglist.id)
+async def _prepare_warninglist_details_response(db: Session, warninglist: Warninglist) -> dict:
+    warninglist_response = await _prepare_warninglist_response(db, warninglist)
+    warninglist_response["WarninglistEntry"] = await _get_warninglist_entries(db, warninglist.id)
+    warninglist_response["WarninglistType"] = await _get_warninglist_types(db, warninglist.id)
 
     return warninglist_response
 
 
-def _get_warninglist_types(db: Session, warninglist_id: int) -> list[dict]:
-    warninglist_types = (
-        db.execute(select(WarninglistType).filter(WarninglistType.warninglist_id == warninglist_id)).scalars().all()
-    )
+async def _get_warninglist_types(db: Session, warninglist_id: int) -> list[dict]:
+    result = await db.execute(select(WarninglistType).filter(WarninglistType.warninglist_id == warninglist_id))
+    warninglist_types = result.scalars().all()
     return [warninglist_type.__dict__ for warninglist_type in warninglist_types]
 
 
-def _get_warninglist_entries(db: Session, warninglist_id: int) -> list[dict]:
-    warninglist_entries = (
-        db.execute(select(WarninglistEntry).filter(WarninglistEntry.warninglist_id == warninglist_id)).scalars().all()
-    )
+async def _get_warninglist_entries(db: Session, warninglist_id: int) -> list[dict]:
+    result = await db.execute(select(WarninglistEntry).filter(WarninglistEntry.warninglist_id == warninglist_id))
+    warninglist_entries = result.scalars().all()
     return [warninglist_entry.__dict__ for warninglist_entry in warninglist_entries]
 
 
-def _get_warninglist_entry_count(db: Session, warninglist_id: int) -> int:
-    return db.execute(select(func.count()).filter(WarninglistEntry.warninglist_id == warninglist_id)).scalar()
+async def _get_warninglist_entry_count(db: Session, warninglist_id: int) -> int:
+    result = await db.execute(select(func.count()).filter(WarninglistEntry.warninglist_id == warninglist_id))
+    return result.scalar()
 
 
-def _get_valid_attributes(db: Session, warninglist_id: int) -> str:
-    warninglist_types: list[WarninglistType] = (
-        db.execute(select(WarninglistType).filter(WarninglistType.warninglist_id == warninglist_id)).scalars().all()
-    )
+async def _get_valid_attributes(db: Session, warninglist_id: int) -> str:
+    result = await db.execute(select(WarninglistType).filter(WarninglistType.warninglist_id == warninglist_id))
+    warninglist_types: list[WarninglistType] = result.scalars().all()
+
     attributes = [warninglist_type.type for warninglist_type in warninglist_types]
     valid_attributes: str = ", ".join(attributes)
 

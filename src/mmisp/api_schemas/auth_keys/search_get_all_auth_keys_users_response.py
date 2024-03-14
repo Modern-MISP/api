@@ -15,7 +15,7 @@ class SearchGetAuthKeysResponseItemAuthKey(BaseModel):
     expiration: str
     read_only: bool
     user_id: str
-    comment: str
+    comment: str | None
     allowed_ips: list[str] | None = None
     unique_ips: list[str] | None = []
 

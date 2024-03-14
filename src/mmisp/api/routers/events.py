@@ -5,6 +5,7 @@ from typing import Annotated, Any
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Path
+from sqlalchemy.future import select
 from sqlalchemy.orm import Query, Session
 from starlette import status
 from starlette.requests import Request
@@ -355,7 +356,7 @@ async def _add_event(auth: Auth, db: Session, body: AddEventBody) -> AddEditGetE
     if not isinstance(body.info, str):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN_BAD_REQUEST, detail="invalid 'info'")
 
-    user = db.get(User, auth.user_id)
+    user = await db.get(User, auth.user_id)
 
     new_event = Event(
         **{
@@ -371,44 +372,43 @@ async def _add_event(auth: Auth, db: Session, body: AddEventBody) -> AddEditGetE
     )
 
     db.add(new_event)
-    db.commit()
+    await db.commit()
+    await db.refresh(new_event)
 
-    db.refresh(new_event)
-
-    event_data = _prepare_event_response(db, new_event)
+    event_data = await _prepare_event_response(db, new_event)
 
     return AddEditGetEventResponse(Event=event_data)
 
 
 async def _get_event_details(db: Session, event_id: str) -> AddEditGetEventResponse:
-    event: Event | None = db.get(Event, event_id)
+    event: Event | None = await db.get(Event, event_id)
 
     if not event:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
-    event_data = _prepare_event_response(db, event)
+    event_data = await _prepare_event_response(db, event)
 
     return AddEditGetEventResponse(Event=event_data)
 
 
 async def _update_event(db: Session, event_id: str, body: EditEventBody) -> AddEditGetEventResponse:
-    event: Event | None = db.get(Event, event_id)
+    event: Event | None = await db.get(Event, event_id)
 
     if not event:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     update_record(event, body.dict())
 
-    db.commit()
-    db.refresh(event)
+    await db.commit()
+    await db.refresh(event)
 
-    event_data = _prepare_event_response(db, event)
+    event_data = await _prepare_event_response(db, event)
 
     return AddEditGetEventResponse(Event=event_data)
 
 
 async def _delete_event(db: Session, event_id: str) -> DeleteEventResponse:
-    event = db.get(Event, event_id)
+    event = await db.get(Event, event_id)
 
     if event is None:
         raise HTTPException(
@@ -422,8 +422,8 @@ async def _delete_event(db: Session, event_id: str) -> DeleteEventResponse:
             ).dict(),
         )
 
-    db.delete(event)
-    db.commit()
+    await db.delete(event)
+    await db.commit()
 
     return DeleteEventResponse(
         saved=True,
@@ -436,12 +436,13 @@ async def _delete_event(db: Session, event_id: str) -> DeleteEventResponse:
 
 
 async def _get_events(db: Session) -> list[dict]:
-    events = db.query(Event).all()
+    result = await db.execute(select(Event))
+    events: list[Event] = result.scalars().all()
 
     if not events:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No events found.")
 
-    event_responses = [_prepare_all_events_response(db, event) for event in events]
+    event_responses = [await _prepare_all_events_response(db, event) for event in events]
 
     return event_responses
 
@@ -449,26 +450,29 @@ async def _get_events(db: Session) -> list[dict]:
 async def _rest_search_events(db: Session, body: SearchEventsBody) -> dict:
     if body.returnFormat != "json":
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid output format.")
-    events = db.query(Event).all()
-    for field, value in body.dict().items():
-        event_dict = db.query(Event).__dict__.copy()
-        if field not in event_dict:
-            continue
-        events = db.query(Event).filter(getattr(Event, field) == value).all()
 
-        #! todo: not all fields in 'SearchAttributesBody' are taken into account yet
+    result = await db.execute(select(Event))
+    events: list[Event] = result.scalars().all()
+
+    # for field, value in body.dict().items():
+    #     event_dict = db.query(Event).__dict__.copy()
+    #     if field not in event_dict:
+    #         continue
+    #     events = db.query(Event).filter(getattr(Event, field) == value).all()
+
+    #! todo: not all fields in 'SearchAttributesBody' are taken into account yet
 
     if body.limit is not None:
         events = events[: body.limit]
     response_list = []
     for event in events:
-        response_list.append(AddEditGetEventResponse(Event=_prepare_event_response(db, event)))
+        response_list.append(AddEditGetEventResponse(Event=await _prepare_event_response(db, event)))
 
     return SearchEventsResponse(response=response_list)
 
 
 async def _index_events(db: Session, body: IndexEventsBody) -> list[dict]:
-    query: Query = db.query(Event)
+    query: Query = select(Event)
 
     limit = 25
     offset = 0
@@ -480,26 +484,26 @@ async def _index_events(db: Session, body: IndexEventsBody) -> list[dict]:
 
     query = query.limit(limit).offset(offset)
 
-    events = query.all()
+    result = await db.execute(query)
+    events: list[Event] = result.scalars().all()
     # todo: not all fields in 'IndexEventsBody' are taken into account yet
 
-    response_list = [_prepare_all_events_response(db, event) for event in events]
+    response_list = [await _prepare_all_events_response(db, event) for event in events]
 
     return response_list
 
 
 async def _publish_event(db: Session, event_id: str, request: Request) -> PublishEventResponse:
-    event = db.get(Event, event_id)
+    event = await db.get(Event, event_id)
+
     if not event:
         return PublishEventResponse(name="Invalid event.", message="Invalid event.", url=str(request.url.path))
-    timegm(gmtime())
 
     setattr(event, "published", True)
     setattr(event, "publish_timestamp", timegm(gmtime()))
 
-    db.commit()
-
-    db.refresh(event)
+    await db.commit()
+    await db.refresh(event)
 
     return PublishEventResponse(
         saved=True, success=True, name="Job queued", message="Job queued", url=str(request.url.path), id=str(event_id)
@@ -507,17 +511,16 @@ async def _publish_event(db: Session, event_id: str, request: Request) -> Publis
 
 
 async def _unpublish_event(db: Session, event_id: str, request: Request) -> UnpublishEventResponse:
-    event = db.get(Event, event_id)
+    event = await db.get(Event, event_id)
+
     if not event:
         return UnpublishEventResponse(name="Invalid event.", message="Invalid event.", url=str(request.url.path))
-    timegm(gmtime())
 
     setattr(event, "published", False)
     setattr(event, "publish_timestamp", 0)
 
-    db.commit()
-
-    db.refresh(event)
+    await db.commit()
+    await db.refresh(event)
 
     return UnpublishEventResponse(
         saved=True,
@@ -530,7 +533,7 @@ async def _unpublish_event(db: Session, event_id: str, request: Request) -> Unpu
 
 
 async def _add_tag_to_event(db: Session, event_id: str, tag_id: str, local: str) -> AddRemoveTagEventsResponse:
-    event: Event | None = db.get(Event, event_id)
+    event: Event | None = await db.get(Event, event_id)
 
     if not event:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
@@ -539,10 +542,11 @@ async def _add_tag_to_event(db: Session, event_id: str, tag_id: str, local: str)
         int(tag_id)
     except ValueError:
         return AddRemoveTagEventsResponse(saved=False, errors="Invalid Tag")
-    if not db.get(Tag, tag_id):
-        return AddRemoveTagEventsResponse(saved=False, errors="Tag could not be added.")
 
-    tag = db.get(Tag, tag_id)
+    tag = await db.get(Tag, tag_id)
+
+    if not tag:
+        return AddRemoveTagEventsResponse(saved=False, errors="Tag could not be added.")
 
     if local not in ["0", "1"]:
         local = "0"
@@ -550,15 +554,14 @@ async def _add_tag_to_event(db: Session, event_id: str, tag_id: str, local: str)
     new_event_tag = EventTag(event_id=event_id, tag_id=tag.id, local=True if int(local) == 1 else False)
 
     db.add(new_event_tag)
-    db.commit()
-
-    db.refresh(new_event_tag)
+    await db.commit()
+    await db.refresh(new_event_tag)
 
     return AddRemoveTagEventsResponse(saved=True, success="Tag added", check_publish=True)
 
 
 async def _remove_tag_from_event(db: Session, event_id: str, tag_id: str) -> AddRemoveTagEventsResponse:
-    event: Event | None = db.get(Event, event_id)
+    event: Event | None = await db.get(Event, event_id)
 
     if not event:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
@@ -567,25 +570,28 @@ async def _remove_tag_from_event(db: Session, event_id: str, tag_id: str) -> Add
         int(tag_id)
     except ValueError:
         return AddRemoveTagEventsResponse(saved=False, errors="Invalid Tag")
-    if not db.get(Tag, tag_id):
+
+    if not await db.get(Tag, tag_id):
         return AddRemoveTagEventsResponse(saved=False, errors="Tag could not be removed.")
 
-    event_tag = db.query(EventTag).filter(EventTag.event_id == event_id).first()
+    result = await db.execute(select(EventTag).filter(EventTag.event_id == event_id).limit(1))
+    event_tag = result.scalars().first()
 
     if not event_tag:
         return AddRemoveTagEventsResponse(saved=False, errors="Invalid event - tag combination.")
 
-    db.delete(event_tag)
-    db.commit()
+    await db.delete(event_tag)
+    await db.commit()
 
     return AddRemoveTagEventsResponse(saved=True, success="Tag removed", check_publish=True)
 
 
 async def _add_attribute_via_free_text_import(db: Session, event_id: str, response_json: Any) -> list[dict]:
-    event: Event | None = db.get(Event, event_id)
+    event: Event | None = await db.get(Event, event_id)
 
     if not event:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
+
     response_list = []
 
     for attribute in response_json["attributes"]:
@@ -596,7 +602,8 @@ async def _add_attribute_via_free_text_import(db: Session, event_id: str, respon
         new_attribute = Attribute(event_id=event_id, value=value, type=attribute_type, category=category)
 
         db.add(new_attribute)
-        db.commit()
+
+        await db.commit()
 
         attribute_response_dict = new_attribute.__dict__.copy()
         attribute_response_dict["original_value"] = new_attribute.value
@@ -605,7 +612,7 @@ async def _add_attribute_via_free_text_import(db: Session, event_id: str, respon
     return response_list
 
 
-def _prepare_event_response(db: Session, event: Event) -> AddEditGetEventDetails:
+async def _prepare_event_response(db: Session, event: Event) -> AddEditGetEventDetails:
     event_dict = event.__dict__.copy()
 
     fields_to_convert = ["sharing_group_id", "timestamp", "publish_timestamp"]
@@ -617,30 +624,34 @@ def _prepare_event_response(db: Session, event: Event) -> AddEditGetEventDetails
 
     event_dict["date"] = str(event_dict["date"])
 
-    org = db.get(Organisation, event.org_id)
-    orgc = db.get(Organisation, event.orgc_id)
+    org: Organisation = await db.get(Organisation, event.org_id)
+    orgc: Organisation = await db.get(Organisation, event.orgc_id)
 
     event_dict["Org"] = AddEditGetEventOrg(id=org.id, name=org.name, uuid=org.uuid, local=org.local)
     event_dict["Orgc"] = AddEditGetEventOrg(id=orgc.id, name=orgc.name, uuid=orgc.uuid, local=orgc.local)
 
-    attribute_list = db.query(Attribute).filter(Attribute.event_id == event.id).all()
+    result = await db.execute(select(Attribute).filter(Attribute.event_id == event.id))
+    attribute_list = result.scalars().all()
 
     event_dict["attribute_count"] = len(attribute_list)
 
     if len(attribute_list) > 0:
-        event_dict["Attribute"] = _prepare_attribute_response(db, attribute_list)
+        event_dict["Attribute"] = await _prepare_attribute_response(db, attribute_list)
 
-    event_tag_list = db.query(EventTag).filter(EventTag.event_id == event.id).all()
+    result = await db.execute(select(EventTag).filter(EventTag.event_id == event.id))
+    event_tag_list = result.scalars().all()
 
     if len(event_tag_list) > 0:
-        event_dict["Tag"] = _prepare_tag_response(db, event_tag_list)
+        event_dict["Tag"] = await _prepare_tag_response(db, event_tag_list)
 
-    object_list = db.query(Object).filter(Object.event_id == event.id).all()
+    result = await db.execute(select(Object).filter(Object.event_id == event.id))
+    object_list = result.scalars().all()
 
     if len(object_list) > 0:
-        event_dict["Object"] = _prepare_object_response(db, object_list)
+        event_dict["Object"] = await _prepare_object_response(db, object_list)
 
-    event_report_list = db.query(EventReport).filter(EventReport.event_id == event.id).all()
+    result = await db.execute(select(EventReport).filter(EventReport.event_id == event.id))
+    event_report_list = result.scalars().all()
 
     if len(event_report_list) > 0:
         event_dict["EventReport"] = _prepare_event_report_response(event_report_list)
@@ -650,34 +661,43 @@ def _prepare_event_response(db: Session, event: Event) -> AddEditGetEventDetails
     galaxy_cluster_list = []
 
     for event_tag in event_tag_list:
-        tag = db.get(Tag, event_tag.tag_id)
+        tag = await db.get(Tag, event_tag.tag_id)
+
         if tag.is_galaxy is False:
             continue
-        galaxy_clusters = db.query(GalaxyCluster).filter(GalaxyCluster.tag_name == tag.name).all()
+
+        result = await db.execute(select(GalaxyCluster).filter(GalaxyCluster.tag_name == tag.name))
+        galaxy_clusters = result.scalars().all()
+
         for galaxy_cluster in galaxy_clusters:
             galaxy_cluster_list.append(galaxy_cluster)
-            galaxy = db.get(Galaxy, galaxy_cluster.galaxy_id)
+
+            galaxy = await db.get(Galaxy, galaxy_cluster.galaxy_id)
+
             if galaxy in event_dict["Galaxy"]:
                 continue
+
             event_dict["Galaxy"].append(galaxy)
 
-    event_dict["Galaxy"] = _prepare_galaxy_response(db, event_dict["Galaxy"], event, galaxy_cluster_list)
+    event_dict["Galaxy"] = await _prepare_galaxy_response(db, event_dict["Galaxy"], event, galaxy_cluster_list)
     event_dict["date"] = str(event_dict["date"])
 
-    event_dict["event_creator_email"] = db.get(User, event.user_id).email
+    event_dict["event_creator_email"] = (await db.get(User, event.user_id)).email
 
     return AddEditGetEventDetails(**event_dict)
 
 
-def _prepare_attribute_response(db: Session, attribute_list: list[Attribute]) -> list[AddEditGetEventAttribute]:
+async def _prepare_attribute_response(db: Session, attribute_list: list[Attribute]) -> list[AddEditGetEventAttribute]:
     attribute_response_list = []
 
     for attribute in attribute_list:
         attribute_dict = attribute.asdict().copy()
-        attribute_tag_list = db.query(AttributeTag).filter(AttributeTag.attribute_id == attribute.id).all()
+
+        result = await db.execute(select(AttributeTag).filter(AttributeTag.attribute_id == attribute.id))
+        attribute_tag_list = result.scalars().all()
 
         if len(attribute_tag_list) > 0:
-            attribute_dict["Tag"] = _prepare_tag_response(db, attribute_tag_list)
+            attribute_dict["Tag"] = await _prepare_tag_response(db, attribute_tag_list)
 
         fields_to_convert = ["object_id", "sharing_group_id"]
         for field in fields_to_convert:
@@ -690,18 +710,25 @@ def _prepare_attribute_response(db: Session, attribute_list: list[Attribute]) ->
         galaxy_cluster_list = []
 
         for attribute_tag in attribute_tag_list:
-            tag = db.get(Tag, attribute_tag.tag_id)
+            tag = await db.get(Tag, attribute_tag.tag_id)
+
             if tag.is_galaxy is False:
                 continue
-            galaxy_clusters = db.query(GalaxyCluster).filter(GalaxyCluster.tag_name == tag.name).all()
+
+            result = await db.execute(select(GalaxyCluster).filter(GalaxyCluster.tag_name == tag.name))
+            galaxy_clusters = result.scalars().all()
+
             for galaxy_cluster in galaxy_clusters:
                 galaxy_cluster_list.append(galaxy_cluster)
-                galaxy = db.get(Galaxy, galaxy_cluster.galaxy_id)
+
+                galaxy = await db.get(Galaxy, galaxy_cluster.galaxy_id)
+
                 if galaxy in attribute_dict["Galaxy"]:
                     continue
+
                 attribute_dict["Galaxy"].append(galaxy)
 
-        attribute_dict["Galaxy"] = _prepare_galaxy_response(
+        attribute_dict["Galaxy"] = await _prepare_galaxy_response(
             db, attribute_dict["Galaxy"], attribute, galaxy_cluster_list
         )
 
@@ -710,22 +737,24 @@ def _prepare_attribute_response(db: Session, attribute_list: list[Attribute]) ->
     return attribute_response_list
 
 
-def _prepare_tag_response(db: Session, tag_list: list[Any]) -> list[AddEditGetEventTag]:
+async def _prepare_tag_response(db: Session, tag_list: list[Any]) -> list[AddEditGetEventTag]:
     tag_response_list = []
 
     for attribute_or_event_tag in tag_list:
-        tag = db.get(Tag, int(attribute_or_event_tag.tag_id))
+        tag = await db.get(Tag, int(attribute_or_event_tag.tag_id))
+
         attribute_or_event_tag_dict = tag.__dict__.copy()
 
         attribute_or_event_tag_dict["local"] = attribute_or_event_tag.local
         attribute_or_event_tag_dict["local_only"] = tag.local_only
         attribute_or_event_tag_dict["user_id"] = tag.user_id if tag.user_id is not None else "0"
+
         tag_response_list.append(AddEditGetEventTag(**attribute_or_event_tag_dict))
 
     return tag_response_list
 
 
-def _prepare_galaxy_response(
+async def _prepare_galaxy_response(
     db: Session, galaxy_list: list[Galaxy], data_object: Any, galaxy_cluster_list: list[GalaxyCluster]
 ) -> list[AddEditGetEventGalaxy]:
     galaxy_response_list = []
@@ -734,7 +763,7 @@ def _prepare_galaxy_response(
         galaxy_dict = galaxy.__dict__.copy()
 
         if len(galaxy_cluster_list) > 0:
-            galaxy_dict["GalaxyCluster"] = _prepare_galaxy_cluster_response(
+            galaxy_dict["GalaxyCluster"] = await _prepare_galaxy_cluster_response(
                 db, galaxy_cluster_list, data_object, galaxy.id
             )
 
@@ -743,77 +772,83 @@ def _prepare_galaxy_response(
     return galaxy_response_list
 
 
-def _prepare_galaxy_cluster_response(
+async def _prepare_galaxy_cluster_response(
     db: Session, galaxy_cluster_list: list[GalaxyCluster], data_object: Any, galaxy_id: int
 ) -> list[AddEditGetEventGalaxyCluster]:
     galaxy_cluster_response_list = []
 
     for galaxy_cluster in galaxy_cluster_list:
-        if galaxy_cluster.galaxy_id == galaxy_id:
-            galaxy_cluster_dict = galaxy_cluster.__dict__.copy()
-            galaxy_cluster_dict["authors"] = galaxy_cluster.authors.split(" ")
-            tag = db.query(Tag).filter(Tag.name == galaxy_cluster.tag_name).first()
-            fields_to_convert = ["org_id", "orgc_id", "extends_version"]
-            for field in fields_to_convert:
-                if galaxy_cluster_dict.get(field) is not None:
-                    galaxy_cluster_dict[field] = str(galaxy_cluster_dict[field])
-                else:
-                    galaxy_cluster_dict[field] = "0"
-            galaxy_cluster_dict["extends_uuid"] = (
-                galaxy_cluster.extends_uuid if galaxy_cluster.extends_uuid is not None else ""
+        if galaxy_cluster.galaxy_id != galaxy_id:
+            continue
+
+        galaxy_cluster_dict = galaxy_cluster.__dict__.copy()
+        galaxy_cluster_dict["authors"] = galaxy_cluster.authors.split(" ")
+
+        result = await db.execute(select(Tag).filter(Tag.name == galaxy_cluster.tag_name).limit(1))
+        tag = result.scalars().first()
+
+        fields_to_convert = ["org_id", "orgc_id", "extends_version"]
+
+        for field in fields_to_convert:
+            if galaxy_cluster_dict.get(field) is not None:
+                galaxy_cluster_dict[field] = str(galaxy_cluster_dict[field])
+            else:
+                galaxy_cluster_dict[field] = "0"
+        galaxy_cluster_dict["extends_uuid"] = (
+            galaxy_cluster.extends_uuid if galaxy_cluster.extends_uuid is not None else ""
+        )
+        galaxy_cluster_dict["collection_uuid"] = (
+            galaxy_cluster.collection_uuid if galaxy_cluster.collection_uuid is not None else ""
+        )
+
+        if tag is None:
+            continue
+
+        galaxy_cluster_dict["tag_id"] = tag.id
+
+        if isinstance(data_object, Attribute):
+            result = await db.execute(
+                select(AttributeTag)
+                .filter(AttributeTag.tag_id == tag.id, AttributeTag.attribute_id == data_object.id)
+                .limit(1)
             )
-            galaxy_cluster_dict["collection_uuid"] = (
-                galaxy_cluster.collection_uuid if galaxy_cluster.collection_uuid is not None else ""
+            galaxy_cluster_dict["attribute_tag_id"] = result.scalars().first().id
+        elif isinstance(data_object, Event):
+            result = await db.execute(
+                select(EventTag).filter(EventTag.tag_id == tag.id, EventTag.event_id == data_object.id).limit(1)
+            )
+            galaxy_cluster_dict["event_tag_id"] = result.scalars().first().id
+
+        result = await db.execute(
+            select(GalaxyReference).filter(GalaxyReference.galaxy_cluster_id == galaxy_cluster.id)
+        )
+        galaxy_cluster_relation_list = result.scalars().all()
+
+        if len(galaxy_cluster_relation_list) > 0:
+            galaxy_cluster_dict["GalaxyClusterRelation"] = await _prepare_galaxy_cluster_relation_response(
+                db, galaxy_cluster_relation_list
             )
 
-            if tag is None:
-                continue
-            galaxy_cluster_dict["tag_id"] = tag.id
-
-            if isinstance(data_object, Attribute):
-                galaxy_cluster_dict["attribute_tag_id"] = (
-                    db.query(AttributeTag)
-                    .filter(AttributeTag.tag_id == tag.id)
-                    .filter(AttributeTag.attribute_id == data_object.id)
-                    .first()
-                    .id
-                )
-            elif isinstance(data_object, Event):
-                galaxy_cluster_dict["event_tag_id"] = (
-                    db.query(EventTag)
-                    .filter(EventTag.tag_id == tag.id and EventTag.event_id == data_object.id)
-                    .first()
-                    .id
-                )
-
-            galaxy_cluster_relation_list = (
-                db.query(GalaxyReference).filter(GalaxyReference.galaxy_cluster_id == galaxy_cluster.id).all()
-            )
-
-            if len(galaxy_cluster_relation_list) > 0:
-                galaxy_cluster_dict["GalaxyClusterRelation"] = _prepare_galaxy_cluster_relation_response(
-                    db, galaxy_cluster_relation_list
-                )
-
-            galaxy_cluster_response_list.append(AddEditGetEventGalaxyCluster(**galaxy_cluster_dict))
+        galaxy_cluster_response_list.append(AddEditGetEventGalaxyCluster(**galaxy_cluster_dict))
 
     return galaxy_cluster_response_list
 
 
-def _prepare_galaxy_cluster_relation_response(
+async def _prepare_galaxy_cluster_relation_response(
     db: Session, galaxy_cluster_relation_list: list[GalaxyReference]
 ) -> list[AddEditGetEventGalaxyClusterRelation]:
     galaxy_cluster_relation_response_list = []
 
     for galaxy_cluster_relation in galaxy_cluster_relation_list:
         galaxy_cluster_relation_dict = galaxy_cluster_relation.__dict__.copy()
-        related_galaxy_cluster = (
-            db.query(GalaxyCluster).filter(GalaxyCluster.id == galaxy_cluster_relation.galaxy_cluster_id).first()
-        )
-        tag_list = db.query(Tag).filter(Tag.name == related_galaxy_cluster.tag_name)
+
+        related_galaxy_cluster = await db.get(GalaxyCluster, galaxy_cluster_relation.galaxy_cluster_id)
+
+        result = await db.execute(select(Tag).filter(Tag.name == related_galaxy_cluster.tag_name))
+        tag_list = result.scalars().all()
 
         if len(tag_list) > 0:
-            galaxy_cluster_relation_dict["Tag"] = _prepare_tag_response(db, tag_list)
+            galaxy_cluster_relation_dict["Tag"] = await _prepare_tag_response(db, tag_list)
             del galaxy_cluster_relation_dict["Tag"]["relationship_type"]
 
         galaxy_cluster_relation_response_list.append(
@@ -823,15 +858,17 @@ def _prepare_galaxy_cluster_relation_response(
     return galaxy_cluster_relation_response_list
 
 
-def _prepare_object_response(db: Session, object_list: list[Object]) -> list[AddEditGetEventObject]:
+async def _prepare_object_response(db: Session, object_list: list[Object]) -> list[AddEditGetEventObject]:
     response_object_list = []
 
     for object in object_list:
         object_dict = object.__dict__.copy()
-        object_attribute_list = db.query(Attribute).filter(Attribute.object_id == object.id).all()
+
+        result = await db.execute(select(Attribute).filter(Attribute.object_id == object.id))
+        object_attribute_list = result.scalars().all()
 
         if len(object_attribute_list) > 0:
-            object_dict["Attribute"] = _prepare_attribute_response(db, object_attribute_list)
+            object_dict["Attribute"] = await _prepare_attribute_response(db, object_attribute_list)
 
         response_object_list.append(AddEditGetEventObject(**object_dict))
 
@@ -848,53 +885,59 @@ def _prepare_event_report_response(event_report_list: list[EventReport]) -> AddE
     return response_event_report_list
 
 
-def _prepare_all_events_response(db: Session, event: Event) -> GetAllEventsResponse:
+async def _prepare_all_events_response(db: Session, event: Event) -> GetAllEventsResponse:
     event_dict = event.__dict__.copy()
     event_dict["sharing_group_id"] = "0"
 
-    org = db.get(Organisation, event.org_id)
+    org = await db.get(Organisation, event.org_id)
     org_dict = org.__dict__.copy()
 
-    orgc = db.get(Organisation, event.orgc_id)
+    orgc = await db.get(Organisation, event.orgc_id)
     orgc_dict = orgc.__dict__.copy()
 
     event_dict["Org"] = GetAllEventsOrg(**org_dict)
     event_dict["Orgc"] = GetAllEventsOrg(**orgc_dict)
 
-    event_tag_list = db.query(EventTag).filter(EventTag.event_id == event.id).all()
-    event_dict["EventTag"] = _prepare_all_events_event_tag_response(db, event_tag_list)
+    result = await db.execute(select(EventTag).filter(EventTag.event_id == event.id))
+    event_tag_list = result.scalars().all()
+    event_dict["EventTag"] = await _prepare_all_events_event_tag_response(db, event_tag_list)
 
-    event_dict["GalaxyCluster"] = _prepare_all_events_galaxy_cluster_response(db, event_tag_list)
+    event_dict["GalaxyCluster"] = await _prepare_all_events_galaxy_cluster_response(db, event_tag_list)
     event_dict["date"] = str(event_dict["date"])
-    event_dict["event_creator_email"] = db.get(User, event.user_id).email
+    event_dict["event_creator_email"] = (await db.get(User, event.user_id)).email
 
     return GetAllEventsResponse(**event_dict)
 
 
-def _prepare_all_events_galaxy_cluster_response(
+async def _prepare_all_events_galaxy_cluster_response(
     db: Session, event_tag_list: list[EventTag]
 ) -> list[GetAllEventsGalaxyCluster]:
     galaxy_cluster_response_list = []
 
     for event_tag in event_tag_list:
-        tag = db.get(Tag, event_tag.tag_id)
+        tag = await db.get(Tag, event_tag.tag_id)
 
-        if tag.is_galaxy is True:
-            galaxy_cluster_list = db.query(GalaxyCluster).filter(GalaxyCluster.tag_name == tag.name).all()
+        if tag.is_galaxy:
+            result = await db.execute(select(GalaxyCluster).filter(GalaxyCluster.tag_name == tag.name))
+            galaxy_cluster_list = result.scalars().all()
 
             for galaxy_cluster in galaxy_cluster_list:
                 galaxy_cluster_dict = galaxy_cluster.__dict__.copy()
 
-                galaxy = db.get(Galaxy, galaxy_cluster.galaxy_id)
+                galaxy = await db.get(Galaxy, galaxy_cluster.galaxy_id)
                 galaxy_dict = galaxy.__dict__.copy()
                 galaxy_dict["local_only"] = tag.local_only
 
                 galaxy_cluster_dict["authors"] = galaxy_cluster.authors.split(" ")
-                tag = db.query(Tag).filter(Tag.name == galaxy_cluster.tag_name).first()
+
+                result = await db.execute(select(Tag).filter(Tag.name == galaxy_cluster.tag_name).limit(1))
+                tag = result.scalars().first()
+
                 galaxy_cluster_dict["tag_id"] = 0
                 galaxy_cluster_dict["extends_uuid"] = ""
                 galaxy_cluster_dict["collection_uuid"] = ""
-                if tag is not None:
+
+                if tag:
                     galaxy_cluster_dict["tag_id"] = tag.id
                     galaxy_cluster_dict["extends_uuid"] = ""
                     galaxy_cluster_dict["collection_uuid"] = ""
@@ -906,13 +949,15 @@ def _prepare_all_events_galaxy_cluster_response(
     return galaxy_cluster_response_list
 
 
-def _prepare_all_events_event_tag_response(db: Session, event_tag_list: list[EventTag]) -> list[GetAllEventsEventTag]:
+async def _prepare_all_events_event_tag_response(
+    db: Session, event_tag_list: list[EventTag]
+) -> list[GetAllEventsEventTag]:
     event_tag_response_list = []
 
     for event_tag in event_tag_list:
         event_tag_dict = event_tag.__dict__.copy()
         event_tag_dict["relationship_type"] = ""
-        tag = db.get(Tag, event_tag.tag_id)
+        tag = await db.get(Tag, event_tag.tag_id)
         tag_dict = tag.__dict__.copy()
         event_tag_dict["Tag"] = GetAllEventsEventTagTag(**tag_dict)
         event_tag_response_list.append(GetAllEventsEventTag(**event_tag_dict))

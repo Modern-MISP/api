@@ -1,27 +1,24 @@
 from functools import wraps
-from typing import Any, Callable
+from typing import Any, Callable, TypeAlias
 
-from sqlalchemy import create_engine
 from sqlalchemy.engine.url import make_url
-from sqlalchemy.orm import Session, declarative_base, sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy.pool import NullPool
 
 from mmisp.config import config
 
+Session: TypeAlias = AsyncSession
+
 url = make_url(config.DATABASE_URL)
+engine = create_async_engine(url, poolclass=NullPool)
+async_session = sessionmaker(autoflush=False, expire_on_commit=False, class_=AsyncSession, bind=engine)
 
-create_engine_kwargs = {}
-
-if url.drivername != "sqlite":
-    create_engine_kwargs = {"pool_size": 100, "max_overflow": 20}
-
-engine = create_engine(url, **create_engine_kwargs)
-
-session = sessionmaker(autocommit=False, autoflush=False, expire_on_commit=False, bind=engine)
 Base = declarative_base()
 
 
 def get_db() -> Session:
-    return session()
+    return async_session()
 
 
 def with_session_management(fn: Callable) -> Callable:
@@ -30,9 +27,16 @@ def with_session_management(fn: Callable) -> Callable:
         db: Session = kwargs.pop("db")
         output: Any = None
 
-        with db:
+        try:
             output = await fn(*args, **kwargs, db=db)
+        finally:
+            await db.close()
 
         return output
 
     return wrapper
+
+
+async def create_all_models() -> None:
+    async with engine.begin() as db:
+        await db.run_sync(Base.metadata.create_all)

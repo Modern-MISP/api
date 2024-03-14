@@ -2,6 +2,7 @@ import json
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Path, status
+from sqlalchemy.future import select
 from sqlalchemy.orm import Session
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize, check_permissions
@@ -105,10 +106,10 @@ async def view_user_settings_depr(
     db: Annotated[Session, Depends(get_db)],
     user_setting_id: Annotated[int, Path(alias="userSettingId")],
 ) -> ViewUserSettingResponse:
-    user_setting: UserSetting | None = db.get(UserSetting, user_setting_id)
+    user_setting: UserSetting | None = await db.get(UserSetting, user_setting_id)
 
     if not user_setting or (
-        user_setting.user_id != auth.user_id and not check_permissions(auth, [Permission.SITE_ADMIN])
+        user_setting.user_id != auth.user_id and not await check_permissions(auth, [Permission.SITE_ADMIN])
     ):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
@@ -130,12 +131,13 @@ async def get_user_setting_by_ids(
     user_id: Annotated[int, Path(alias="userId")],
     user_setting_name: Annotated[str, Path(alias="userSettingName")],
 ) -> GetUserSettingResponse:
-    user_setting: UserSetting | None = (
-        db.query(UserSetting).filter(UserSetting.user_id == user_id, UserSetting.setting == user_setting_name).first()
+    result = await db.execute(
+        select(UserSetting).filter(UserSetting.user_id == user_id, UserSetting.setting == user_setting_name).limit(1)
     )
+    user_setting: UserSetting | None = result.scalars().first()
 
     if not user_setting or (
-        user_setting.user_id != auth.user_id and not check_permissions(auth, [Permission.SITE_ADMIN])
+        user_setting.user_id != auth.user_id and not await check_permissions(auth, [Permission.SITE_ADMIN])
     ):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
@@ -185,12 +187,13 @@ async def _set_user_settings(
             detail=f"User Setting not found. Defined user Settings are: {', '.join(possible_names)}",
         )
 
-    if user_id != auth.user_id and not check_permissions(auth, [Permission.SITE_ADMIN]):
+    if user_id != auth.user_id and not await check_permissions(auth, [Permission.SITE_ADMIN]):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
-    user_setting: UserSetting | None = (
-        db.query(UserSetting).filter(UserSetting.user_id == user_id, UserSetting.setting == user_setting_name).first()
+    result = await db.execute(
+        select(UserSetting).filter(UserSetting.user_id == user_id, UserSetting.setting == user_setting_name).limit(1)
     )
+    user_setting: UserSetting | None = result.scalars().first()
 
     if not user_setting:
         user_setting = UserSetting(
@@ -205,8 +208,8 @@ async def _set_user_settings(
     user_setting.value = json.dumps(body.value)
     user_setting.user_id = user_id
 
-    db.commit()
-    db.refresh(user_setting)
+    await db.commit()
+    await db.refresh(user_setting)
 
     user_setting_out = SetUserSettingResponseUserSetting(
         id=user_setting.id,
@@ -224,10 +227,10 @@ async def _view_user_settings(
     db: Session,
     user_setting_id: int,
 ) -> ViewUserSettingResponse:
-    user_setting: UserSetting | None = db.get(UserSetting, user_setting_id)
+    user_setting: UserSetting | None = await db.get(UserSetting, user_setting_id)
 
     if not user_setting or (
-        user_setting.user_id != auth.user_id and not check_permissions(auth, [Permission.SITE_ADMIN])
+        user_setting.user_id != auth.user_id and not await check_permissions(auth, [Permission.SITE_ADMIN])
     ):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
@@ -248,12 +251,13 @@ async def _get_user_setting_by_id(
     user_id: int,
     user_setting_name: str,
 ) -> ViewUserSettingResponse:
-    if user_id != auth.user_id and not check_permissions(auth, [Permission.SITE_ADMIN]):
+    if user_id != auth.user_id and not await check_permissions(auth, [Permission.SITE_ADMIN]):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
-    user_setting: UserSetting | None = (
-        db.query(UserSetting).filter(UserSetting.user_id == user_id, UserSetting.setting == user_setting_name).first()
+    result = await db.execute(
+        select(UserSetting).filter(UserSetting.user_id == user_id, UserSetting.setting == user_setting_name).limit(1)
     )
+    user_setting: UserSetting | None = result.scalars().first()
 
     if not user_setting:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
@@ -277,9 +281,9 @@ async def _search_user_settings(
     id: int | None = int(body.id) if body.id else None
     user_id: int | None = int(body.user_id) if body.user_id else None
 
-    query = db.query(UserSetting)
+    query = select(UserSetting)
 
-    if not check_permissions(auth, [Permission.SITE_ADMIN]):
+    if not await check_permissions(auth, [Permission.SITE_ADMIN]):
         query = query.filter(UserSetting.user_id == auth.user_id)
 
     if id:
@@ -289,7 +293,8 @@ async def _search_user_settings(
     if user_id:
         query = query.filter(UserSetting.user_id == user_id)
 
-    user_settings: list[UserSetting] = query.all()
+    result = await db.execute(query)
+    user_settings: list[UserSetting] = result.scalars().all()
 
     user_settings_out: list[UserSettingResponse] = []
 
@@ -313,12 +318,13 @@ async def _get_user_settings(
     auth: Auth,
     db: Session,
 ) -> list[UserSettingResponse]:
-    query = db.query(UserSetting)
+    query = select(UserSetting)
 
-    if not check_permissions(auth, [Permission.SITE_ADMIN]):
-        query.filter(UserSetting.user_id == auth.user_id)
+    if not await check_permissions(auth, [Permission.SITE_ADMIN]):
+        query = query.filter(UserSetting.user_id == auth.user_id)
 
-    user_settings: list[UserSetting] = query.all()
+    result = await db.execute(query)
+    user_settings: list[UserSetting] = result.scalars().all()
 
     user_settings_out: list[UserSettingResponse] = []
 
@@ -343,12 +349,12 @@ async def _delete_user_settings(
     db: Session,
     user_setting_id: int,
 ) -> None:
-    user_setting: UserSetting | None = db.get(UserSetting, user_setting_id)
+    user_setting: UserSetting | None = await db.get(UserSetting, user_setting_id)
 
     if not user_setting or (
-        user_setting.user_id != auth.user_id and not check_permissions(auth, [Permission.SITE_ADMIN])
+        user_setting.user_id != auth.user_id and not await check_permissions(auth, [Permission.SITE_ADMIN])
     ):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
-    db.delete(user_setting)
-    db.commit()
+    await db.delete(user_setting)
+    await db.commit()

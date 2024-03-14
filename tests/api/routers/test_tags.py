@@ -15,7 +15,6 @@ from tests.api.helpers.tags_helper import (
     random_string_with_punctuation,
     remove_tags,
 )
-from tests.database import get_db
 from tests.environment import client, environment
 
 
@@ -49,8 +48,7 @@ class TestAddTag:
         remove_tags([response.json()["Tag"]["id"]])
 
     @staticmethod
-    def test_add_tag_with_existing_name() -> None:
-        db: Session = get_db()
+    def test_add_tag_with_existing_name(db: Session) -> None:
         tag_id = add_tags(1)
         tag_data = generate_valid_required_tag_data()
         tag_data.name = db.get(Tag, tag_id[0]).name
@@ -126,8 +124,7 @@ class TestViewTag:
 
 class TestSearchTagByTagSearchTerm:
     @staticmethod
-    def test_search_tag() -> None:
-        db: Session = get_db()
+    def test_search_tag(db: Session) -> None:
         headers = {"authorization": environment.site_admin_user_token}
 
         tags = add_tags()
@@ -150,9 +147,8 @@ class TestSearchTagByTagSearchTerm:
         remove_tags(tags)
 
     @staticmethod
-    def test_search_tag_response_format() -> None:
+    def test_search_tag_response_format(db: Session) -> None:
         headers = {"authorization": environment.site_admin_user_token}
-        db: Session = get_db()
         tag = add_tags(1)
         tag_name = db.get(Tag, tag[0]).name
         substring_start = random.randint(0, len(tag_name) - 1)
@@ -191,9 +187,8 @@ class TestEditTag:
         remove_tags(tags)
 
     @staticmethod
-    def test_edit_tag_same_name() -> None:
+    def test_edit_tag_same_name(db: Session) -> None:
         headers = {"authorization": environment.site_admin_user_token}
-        db: Session = get_db()
 
         tags = add_tags(2)
         name = db.get(Tag, tags[0]).name
