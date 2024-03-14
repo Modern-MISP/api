@@ -93,7 +93,9 @@ async def add_event(
 )
 @with_session_management
 async def get_event_details(
-    db: Annotated[Session, Depends(get_db)], event_id: Annotated[str, Path(..., alias="eventId")]
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL))],
+    db: Annotated[Session, Depends(get_db)],
+    event_id: Annotated[str, Path(alias="eventId")],
 ) -> dict:
     return await _get_event_details(db, event_id)
 
@@ -109,7 +111,7 @@ async def get_event_details(
 async def update_event(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS]))],
     db: Annotated[Session, Depends(get_db)],
-    event_id: Annotated[str, Path(..., alias="eventId")],
+    event_id: Annotated[str, Path(alias="eventId")],
     body: EditEventBody,
 ) -> dict:
     return await _update_event(db, event_id, body)
@@ -126,7 +128,7 @@ async def update_event(
 async def delete_event(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS]))],
     db: Annotated[Session, Depends(get_db)],
-    event_id: Annotated[str, Path(..., alias="eventId")],
+    event_id: Annotated[str, Path(alias="eventId")],
 ) -> dict:
     return await _delete_event(db, event_id)
 
@@ -139,7 +141,9 @@ async def delete_event(
     description="Retrieve a list of all events.",
 )
 @with_session_management
-async def get_all_events(db: Annotated[Session, Depends(get_db)]) -> list[dict]:
+async def get_all_events(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL))], db: Annotated[Session, Depends(get_db)]
+) -> list[dict]:
     return await _get_events(db)
 
 
@@ -152,6 +156,7 @@ async def get_all_events(db: Annotated[Session, Depends(get_db)]) -> list[dict]:
 )
 @with_session_management
 async def rest_search_events(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL))],
     db: Annotated[Session, Depends(get_db)],
     body: SearchEventsBody,
 ) -> dict:
@@ -166,7 +171,11 @@ async def rest_search_events(
     description="Search for events based on various filters, which are more general than the ones in 'rest search'.",
 )
 @with_session_management
-async def index_events(db: Annotated[Session, Depends(get_db)], body: IndexEventsBody) -> list[IndexEventsAttributes]:
+async def index_events(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL))],
+    db: Annotated[Session, Depends(get_db)],
+    body: IndexEventsBody,
+) -> list[IndexEventsAttributes]:
     return await _index_events(db, body)
 
 
@@ -179,9 +188,9 @@ async def index_events(db: Annotated[Session, Depends(get_db)], body: IndexEvent
 )
 @with_session_management
 async def publish_event(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.PUBLISH]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS, Permission.PUBLISH]))],
     db: Annotated[Session, Depends(get_db)],
-    event_id: Annotated[str, Path(..., alias="eventId")],
+    event_id: Annotated[str, Path(alias="eventId")],
     request: Request,
 ) -> dict:
     return await _publish_event(db, event_id, request)
@@ -198,7 +207,7 @@ async def publish_event(
 async def unpublish_event(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS]))],
     db: Annotated[Session, Depends(get_db)],
-    event_id: Annotated[str, Path(..., alias="eventId")],
+    event_id: Annotated[str, Path(alias="eventId")],
     request: Request,
 ) -> dict:
     return await _unpublish_event(db, event_id, request)
@@ -213,11 +222,11 @@ async def unpublish_event(
 )
 @with_session_management
 async def add_tag_to_event(
-    local: str,
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS]))],
     db: Annotated[Session, Depends(get_db)],
-    event_id: Annotated[str, Path(..., alias="eventId")],
-    tag_id: Annotated[str, Path(..., alias="tagId")],
+    event_id: Annotated[str, Path(alias="eventId")],
+    tag_id: Annotated[str, Path(alias="tagId")],
+    local: str,
 ) -> dict:
     return await _add_tag_to_event(db, event_id, tag_id, local)
 
@@ -233,8 +242,8 @@ async def add_tag_to_event(
 async def remove_tag_from_event(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS]))],
     db: Annotated[Session, Depends(get_db)],
-    event_id: Annotated[str, Path(..., alias="eventId")],
-    tag_id: Annotated[str, Path(..., alias="tagId")],
+    event_id: Annotated[str, Path(alias="eventId")],
+    tag_id: Annotated[str, Path(alias="tagId")],
 ) -> dict:
     return await _remove_tag_from_event(db, event_id, tag_id)
 
@@ -250,7 +259,7 @@ async def remove_tag_from_event(
 async def add_attribute_via_free_text_import(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
-    event_id: Annotated[str, Path(..., alias="eventId")],
+    event_id: Annotated[str, Path(alias="eventId")],
     body: AddAttributeViaFreeTextImportEventBody,
 ) -> list[dict]:
     body_dict = body.dict()
@@ -265,7 +274,7 @@ async def add_attribute_via_free_text_import(
     return await _add_attribute_via_free_text_import(db, event_id, response_json)
 
 
-# - deprecated endpoints
+# --- deprecated ---
 
 
 @router.post(
@@ -295,7 +304,9 @@ async def add_event_depr(
 )
 @with_session_management
 async def get_event_details_depr(
-    db: Annotated[Session, Depends(get_db)], event_id: Annotated[str, Path(..., alias="eventId")]
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL))],
+    db: Annotated[Session, Depends(get_db)],
+    event_id: Annotated[str, Path(alias="eventId")],
 ) -> dict:
     return await _get_event_details(db, event_id)
 
@@ -312,7 +323,7 @@ async def get_event_details_depr(
 async def update_event_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS]))],
     db: Annotated[Session, Depends(get_db)],
-    event_id: Annotated[str, Path(..., alias="eventId")],
+    event_id: Annotated[str, Path(alias="eventId")],
     body: EditEventBody,
 ) -> dict:
     return await _update_event(db, event_id, body=body)

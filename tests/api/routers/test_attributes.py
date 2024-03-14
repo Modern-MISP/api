@@ -182,7 +182,8 @@ class TestGetAttributeDetails:
         db.commit()
         db.refresh(add_attribute_tag_body)
 
-        response = client.get(f"/attributes/{attribute_id}")
+        headers = {"authorization": environment.site_admin_user_token}
+        response = client.get(f"/attributes/{attribute_id}", headers=headers)
 
         assert response.status_code == 200
         response_json = response.json()
@@ -212,9 +213,10 @@ class TestGetAttributeDetails:
 
     @staticmethod
     def test_get_invalid_or_non_existing_attribute() -> None:
-        response = client.get("/attributes/0")
+        headers = {"authorization": environment.site_admin_user_token}
+        response = client.get("/attributes/0", headers=headers)
         assert response.status_code == 404
-        response = client.get("/attributes/invalid_id")
+        response = client.get("/attributes/invalid_id", headers=headers)
         assert response.status_code == 404
 
 
@@ -419,7 +421,8 @@ class TestGetAllAttributes:
         db.commit()
         db.refresh(attribute2)
 
-        response = client.get("/attributes")
+        headers = {"authorization": environment.site_admin_user_token}
+        response = client.get("/attributes", headers=headers)
 
         assert response.status_code == 200
         response_json = response.json()
@@ -582,7 +585,8 @@ class TestAttributeStatistics:
         request_body = {"context": "category", "percentage": "1"}
         context = request_body["context"]
         percentage = request_body["percentage"]
-        response = client.get(f"/attributes/attributeStatistics/{context}/{percentage}")
+        headers = {"authorization": environment.site_admin_user_token}
+        response = client.get(f"/attributes/attributeStatistics/{context}/{percentage}", headers=headers)
         assert response.status_code == 200
         response_json = response.json()
 
@@ -601,7 +605,8 @@ class TestAttributeStatistics:
         request_body = {"context": "invalid context", "percentage": 2}
         context = request_body["context"]
         percentage = request_body["percentage"]
-        response = client.get(f"/attributes/attributeStatistics/{context}/{percentage}")
+        headers = {"authorization": environment.site_admin_user_token}
+        response = client.get(f"/attributes/attributeStatistics/{context}/{percentage}", headers=headers)
         assert response.status_code == 405
 
 
@@ -611,7 +616,8 @@ class TestAttributeStatistics:
 class TestAttributeDescribeTypes:
     @staticmethod
     def test_attribute_describe_types() -> None:
-        response = client.get("/attributes/describeTypes")
+        headers = {"authorization": environment.site_admin_user_token}
+        response = client.get("/attributes/describeTypes", headers=headers)
         assert response.status_code == 200
 
 
