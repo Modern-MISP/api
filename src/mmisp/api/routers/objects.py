@@ -3,7 +3,7 @@ from time import time
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Path, status
-from sqlalchemy import or_, select
+from sqlalchemy import delete, or_, select
 from sqlalchemy.orm import Session
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
@@ -155,7 +155,7 @@ async def delete_object_depr(
 # --- endpoint logic ---
 
 
-async def _add_object(db: Session, event_id: int, object_template_id: int, body: ObjectCreateBody) -> dict[str, Any]:
+async def _add_object(db: Session, event_id: int, object_template_id: int, body: ObjectCreateBody) -> ObjectResponse:
     template: ObjectTemplate | None = db.get(ObjectTemplate, object_template_id)
 
     if not template:
@@ -186,7 +186,7 @@ async def _add_object(db: Session, event_id: int, object_template_id: int, body:
 
     db.commit()
     db.refresh(object)
-    attributes: list[Attribute] = db.query(Attribute).filter(Attribute.object_id == object.id).all()
+    attributes: list[Attribute] = db.execute(select(Attribute).filter(Attribute.object_id == object.id)).scalars().all()
     attributes_response: list[GetAllAttributesResponse] = [
         GetAllAttributesResponse(**attribute.asdict()) for attribute in attributes
     ]
@@ -200,30 +200,6 @@ async def _add_object(db: Session, event_id: int, object_template_id: int, body:
     return ObjectResponse(object=object_response)
 
 
-# async def _restsearch(db: Session, body: ObjectSearchBody) -> dict[str, Any]:
-#     if body.return_format is None:
-#         body.return_format = "json"
-#     else:
-#         _check_valid_return_format(return_format=body.return_format)
-
-#     filters = body.dict(exclude_unset=True)
-#     objects = _get_objects_with_filters(db=db, filters=filters)
-#     obj_ids: list = [object.id for object in objects]
-
-#     all_attributes: list[Attribute] = db.query(Attribute).filter(Attribute.object_id.in_(obj_ids)).all()
-
-#     attributes_mapping: dict = {object_id: [] for object_id in obj_ids}
-#     for attribute in all_attributes:
-#         attributes_mapping[attribute.object_id].append(attribute)
-
-#     objects_data: list[ObjectWithAttributesResponse] = [
-#         ObjectWithAttributesResponse(**object.__dict__, attributes=attributes_mapping[object.id], event=None)
-#         for object in objects
-#     ]
-
-#     return ObjectSearchResponse(response=[{"object": object_data} for object_data in objects_data])
-
-
 async def _restsearch(db: Session, body: ObjectSearchBody) -> dict[str, Any]:
     if body.return_format is None:
         body.return_format = "json"
@@ -233,33 +209,33 @@ async def _restsearch(db: Session, body: ObjectSearchBody) -> dict[str, Any]:
     filters = body.dict(exclude_unset=True)
     objects = _get_objects_with_filters(db=db, filters=filters)
 
-    obj_ids: list[int] = [obj.id for obj in objects]
-    all_attributes: list[Attribute] = db.query(Attribute).filter(Attribute.object_id.in_(obj_ids)).all()
+    objects_data = []
+    for obj in objects:
+        attributes = db.execute(select(Attribute).filter(Attribute.object_id == obj.id)).scalars().all()
+        attributes_data = [GetAllAttributesResponse.from_orm(attr) for attr in attributes]
 
-    attributes_mapping: dict[int, list[GetAllAttributesResponse]] = {}
-    for attr in all_attributes:
-        attributes_mapping.setdefault(attr.object_id, []).append(GetAllAttributesResponse(**attr.__dict__))
-
-    objects_data: list[ObjectWithAttributesResponse] = [
-        ObjectWithAttributesResponse(
-            id=obj.id,
-            attributes=attributes_mapping.get(obj.id, []),
-            **{k: v for k, v in obj.__dict__.items() if k != "id"},
+        obj_data = ObjectWithAttributesResponse(
+            **obj.__dict__,
+            attributes=attributes_data,
+            event=None,
         )
-        for obj in objects
-    ]
+        objects_data.append(obj_data)
 
-    return ObjectSearchResponse(response=[{"object": obj_data.dict()} for obj_data in objects_data])
+    return ObjectSearchResponse(response=[{"object": obj.dict()} for obj in objects_data])
 
 
-async def _get_object_details(db: Session, object_id: int) -> dict[str, Any]:
+async def _get_object_details(db: Session, object_id: int) -> ObjectResponse:
     object: Object | None = db.get(Object, object_id)
 
     if not object:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Object not found.")
 
-    attributes: list[Attribute] = db.query(Attribute).filter(Attribute.object_id == object.id).all()
-    event: Event = db.query(Event).join(Object, Event.id == Object.event_id).filter(Object.id == object_id).first()
+    attributes: list[Attribute] = db.execute(select(Attribute).filter(Attribute.object_id == object.id)).scalars().all()
+    event: Event = (
+        db.execute(select(Event).join(Object, Event.id == Object.event_id).filter(Object.id == object_id).limit(1))
+        .scalars()
+        .first()
+    )
     event_response: ObjectEventResponse = ObjectEventResponse(
         id=str(event.id), info=event.info, org_id=str(event.org_id), orgc_id=str(event.orgc_id)
     )
@@ -274,14 +250,14 @@ async def _get_object_details(db: Session, object_id: int) -> dict[str, Any]:
     return ObjectResponse(object=object_data)
 
 
-async def _delete_object(db: Session, object_id: int, hard_delete: bool) -> dict[str, Any]:
+async def _delete_object(db: Session, object_id: int, hard_delete: bool) -> StandardStatusResponse:
     object: Object | None = db.get(Object, object_id)
 
     if not object:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Object not found.")
 
     if hard_delete:
-        db.query(Attribute).filter(Attribute.object_id == object_id).delete(synchronize_session="fetch")
+        db.execute(delete(Attribute).filter(Attribute.object_id == object_id))
         db.delete(object)
         saved = True
         success = True
@@ -310,7 +286,7 @@ def _check_valid_return_format(return_format: str) -> None:
 
 def _get_objects_with_filters(db: Session, filters: ObjectSearchBody) -> list[Object]:
     search_body: ObjectSearchBody = ObjectSearchBody(**filters)
-    query: Object = db.query(Object)
+    query: Object = select(Object)
 
     if search_body.object_name:
         query = query.filter(Object.name == search_body.object_name)
@@ -403,4 +379,4 @@ def _get_objects_with_filters(db: Session, filters: ObjectSearchBody) -> list[Ob
     if search_body.limit:
         query = query.limit(int(search_body.limit))
 
-    return query.all()
+    return db.execute(query).scalars().all()
