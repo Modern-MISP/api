@@ -53,7 +53,11 @@ router = APIRouter(tags=["attributes"])
     description="Search for attributes based on various filters.",
 )
 @with_session_management
-async def rest_search_attributes(db: Annotated[Session, Depends(get_db)], body: SearchAttributesBody) -> dict:
+async def rest_search_attributes(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL))],
+    db: Annotated[Session, Depends(get_db)],
+    body: SearchAttributesBody,
+) -> dict:
     return await _rest_search_attributes(db, body)
 
 
@@ -81,7 +85,9 @@ async def add_attribute(
     summary="Get all attribute describe types",
     description="Retrieve a list of all available attribute types and categories.",
 )
-async def get_attributes_describe_types() -> GetDescribeTypesResponse:
+async def get_attributes_describe_types(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL))],
+) -> GetDescribeTypesResponse:
     return GetDescribeTypesResponse(result=GetDescribeTypesAttributes())
 
 
@@ -94,7 +100,9 @@ async def get_attributes_describe_types() -> GetDescribeTypesResponse:
 )
 @with_session_management
 async def get_attribute_details(
-    db: Annotated[Session, Depends(get_db)], attribute_id: Annotated[str, Path(..., alias="attributeId")]
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL))],
+    db: Annotated[Session, Depends(get_db)],
+    attribute_id: Annotated[str, Path(..., alias="attributeId")],
 ) -> dict:
     return await _get_attribute_details(db, attribute_id)
 
@@ -140,7 +148,9 @@ async def delete_attribute(
     description="Retrieve a list of all attributes.",
 )
 @with_session_management
-async def get_attributes(db: Annotated[Session, Depends(get_db)]) -> list[dict]:
+async def get_attributes(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL))], db: Annotated[Session, Depends(get_db)]
+) -> list[dict]:
     return await _get_attributes(db)
 
 
@@ -170,7 +180,10 @@ async def delete_selected_attributes(
 )
 @with_session_management
 async def get_attributes_statistics(
-    db: Annotated[Session, Depends(get_db)], context: str, percentage: int
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL))],
+    db: Annotated[Session, Depends(get_db)],
+    context: str,
+    percentage: int,
 ) -> GetAttributeStatisticsCategoriesResponse:
     return await _get_attribute_statistics(db, context, percentage)
 
@@ -200,11 +213,11 @@ async def restore_attribute(
 )
 @with_session_management
 async def add_tag_to_attribute(
-    local: str,
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS]))],
     db: Annotated[Session, Depends(get_db)],
     attribute_id: Annotated[str, Path(..., alias="attributeId")],
     tag_id: Annotated[str, Path(..., alias="tagId")],
+    local: str,
 ) -> dict:
     return await _add_tag_to_attribute(db, attribute_id, tag_id, local)
 
@@ -257,7 +270,9 @@ async def add_attribute_depr(
 )
 @with_session_management
 async def get_attribute_details_depr(
-    db: Annotated[Session, Depends(get_db)], attribute_id: Annotated[str, Path(..., alias="attributeId")]
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL))],
+    db: Annotated[Session, Depends(get_db)],
+    attribute_id: Annotated[str, Path(..., alias="attributeId")],
 ) -> dict:
     return await _get_attribute_details(db, attribute_id)
 
