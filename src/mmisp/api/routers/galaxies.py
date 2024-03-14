@@ -70,11 +70,13 @@ async def import_galaxy_cluster(
     return await _import_galaxy_cluster(db, body, request)
 
 
-@router.get("/galaxies/view/{galaxyId}", deprecated=True)
+@router.get("/galaxies/view/{galaxyId}", deprecated=True)  #! todo: list deprecated route at 'deprecated'
 @router.get("/galaxies/{galaxyId}", status_code=status.HTTP_200_OK, response_model=partial(GetGalaxyResponse))
 @with_session_management
 async def get_galaxy_details(
-    db: Annotated[Session, Depends(get_db)], galaxy_id: Annotated[str, Path(..., alias="galaxyId")]
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL))],
+    db: Annotated[Session, Depends(get_db)],
+    galaxy_id: Annotated[str, Path(..., alias="galaxyId")],
 ) -> dict:
     return await _get_galaxy_details(db, galaxy_id)
 
@@ -88,13 +90,13 @@ async def get_galaxy_details(
 )
 @with_session_management
 async def update_galaxy(
-    dauth: Annotated[Auth, Depends(authorize(AuthStrategy.WORKER_KEY, [Permission.SYNC]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.WORKER_KEY, [Permission.SYNC]))],
     db: Annotated[Session, Depends(get_db)],
 ) -> dict:
     return DeleteForceUpdateImportGalaxyResponse()
 
 
-@router.delete("/galaxies/delete/{galaxyId}", deprecated=True)
+@router.delete("/galaxies/delete/{galaxyId}", deprecated=True)  #! todo: list deprecated route at 'deprecated'
 @router.delete(
     "/galaxies/{galaxyId}",
     status_code=status.HTTP_200_OK,
@@ -112,22 +114,24 @@ async def delete_galaxy(
 
 @router.get("/galaxies", status_code=status.HTTP_200_OK)
 @with_session_management
-async def get_galaxies(db: Annotated[Session, Depends(get_db)]) -> list[GetAllSearchGalaxiesResponse]:
+async def get_galaxies(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL))], db: Annotated[Session, Depends(get_db)]
+) -> list[GetAllSearchGalaxiesResponse]:
     return await _get_galaxies(db)
 
 
 @router.post("/galaxies", status_code=status.HTTP_200_OK)
 @with_session_management
-async def search_galaxies(db: Annotated[Session, Depends(get_db)]) -> list[GetAllSearchGalaxiesResponse]:
+async def search_galaxies(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL))], db: Annotated[Session, Depends(get_db)]
+) -> list[GetAllSearchGalaxiesResponse]:
     return await _get_galaxies(db)
 
 
-@router.post(
-    "/galaxies/export/{galaxyId}",
-    status_code=status.HTTP_200_OK
-)
+@router.post("/galaxies/export/{galaxyId}", status_code=status.HTTP_200_OK)
 @with_session_management
 async def export_galaxy(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL))],
     db: Annotated[Session, Depends(get_db)],
     galaxy_id: Annotated[str, Path(..., alias="galaxyId")],
     body: ExportGalaxyBody,
@@ -142,12 +146,12 @@ async def export_galaxy(
 )
 @with_session_management
 async def galaxies_attachCluster(
-    local: str,
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS]))],
     db: Annotated[Session, Depends(get_db)],
     attach_target_id: Annotated[str, Path(..., alias="attachTargetId")],
     attach_target_type: Annotated[str, Path(..., alias="attachTargetType")],
     body: AttachClusterGalaxyBody,
+    local: str,
 ) -> dict:
     return await _attach_cluster_to_galaxy(db, attach_target_id, attach_target_type, local, body)
 

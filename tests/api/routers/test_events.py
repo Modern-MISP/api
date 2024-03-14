@@ -101,7 +101,8 @@ class TestGetEventDetails:
 
         galaxy_cluster_id = add_galaxy_cluster_body.id
 
-        response = client.get(f"/events/{event_id}")
+        headers = {"authorization": environment.site_admin_user_token}
+        response = client.get(f"/events/{event_id}", headers=headers)
 
         assert response.status_code == 200
         response_json = response.json()
@@ -117,9 +118,10 @@ class TestGetEventDetails:
 
     @staticmethod
     def test_get_non_existing_event() -> None:
-        response = client.get("/events/0")
+        headers = {"authorization": environment.site_admin_user_token}
+        response = client.get("/events/0", headers=headers)
         assert response.status_code == 404
-        response = client.get("/events/invalid_id")
+        response = client.get("/events/invalid_id", headers=headers)
         assert response.status_code == 404
 
 
@@ -225,7 +227,8 @@ class TestGetAllEvents:
         db.commit()
         db.refresh(event2)
 
-        response = client.get("/events")
+        headers = {"authorization": environment.site_admin_user_token}
+        response = client.get("/events", headers=headers)
 
         assert response.status_code == 200
         response_json = response.json()
@@ -538,7 +541,7 @@ class TestRemoveTagFromEvent:
 @respx.mock
 def test_add_attribute_via_free_text_import_valid_data(db: Session) -> None:
     return
-    # TODO: this test fails, worker should return a list
+    #! TODO: this test fails, worker should return a list
     request_body = {"Attribute": {"value": "1.2.3.4"}}
     organisation = generate_organisation()
 
