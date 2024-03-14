@@ -54,7 +54,7 @@ router = APIRouter(tags=["attributes"])
 )
 @with_session_management
 async def rest_search_attributes(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     body: SearchAttributesBody,
 ) -> dict:
@@ -64,17 +64,17 @@ async def rest_search_attributes(
 @router.post(
     "/attributes/{eventId}",
     status_code=status.HTTP_200_OK,
-    response_model=partial(AddAttributeResponse),
+    response_model=AddAttributeResponse,
     summary="Add new attribute",
     description="Add a new attribute with the given details.",
 )
 @with_session_management
 async def add_attribute(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS]))],
     db: Annotated[Session, Depends(get_db)],
-    event_id: Annotated[str, Path(..., alias="eventId")],
+    event_id: Annotated[str, Path(alias="eventId")],
     body: AddAttributeBody,
-) -> dict:
+) -> AddAttributeResponse:
     return await _add_attribute(db, event_id, body)
 
 
@@ -86,7 +86,7 @@ async def add_attribute(
     description="Retrieve a list of all available attribute types and categories.",
 )
 async def get_attributes_describe_types(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
 ) -> GetDescribeTypesResponse:
     return GetDescribeTypesResponse(result=GetDescribeTypesAttributes())
 
@@ -100,9 +100,9 @@ async def get_attributes_describe_types(
 )
 @with_session_management
 async def get_attribute_details(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    attribute_id: Annotated[str, Path(..., alias="attributeId")],
+    attribute_id: Annotated[str, Path(alias="attributeId")],
 ) -> dict:
     return await _get_attribute_details(db, attribute_id)
 
@@ -116,9 +116,9 @@ async def get_attribute_details(
 )
 @with_session_management
 async def update_attribute(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS]))],
     db: Annotated[Session, Depends(get_db)],
-    attribute_id: Annotated[str, Path(..., alias="attributeId")],
+    attribute_id: Annotated[str, Path(alias="attributeId")],
     body: EditAttributeBody,
 ) -> dict:
     return await _update_attribute(db, attribute_id, body)
@@ -133,9 +133,9 @@ async def update_attribute(
 )
 @with_session_management
 async def delete_attribute(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS]))],
     db: Annotated[Session, Depends(get_db)],
-    attribute_id: Annotated[str, Path(..., alias="attributeId")],
+    attribute_id: Annotated[str, Path(alias="attributeId")],
 ) -> dict:
     return await _delete_attribute(db, attribute_id)
 
@@ -143,13 +143,13 @@ async def delete_attribute(
 @router.get(
     "/attributes",
     status_code=status.HTTP_200_OK,
-    response_model=list[GetAllAttributesResponse],
+    response_model=list[partial(GetAllAttributesResponse)],
     summary="Get all Attributes",
     description="Retrieve a list of all attributes.",
 )
 @with_session_management
 async def get_attributes(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL))], db: Annotated[Session, Depends(get_db)]
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))], db: Annotated[Session, Depends(get_db)]
 ) -> list[dict]:
     return await _get_attributes(db)
 
@@ -157,17 +157,18 @@ async def get_attributes(
 @router.post(
     "/attributes/deleteSelected/{eventId}",
     status_code=status.HTTP_200_OK,
-    response_model=partial(DeleteSelectedAttributeResponse),
+    response_model=DeleteSelectedAttributeResponse,
     summary="Delete the selected attributes",
+    description="Deletes the attributes associated with the event from the list in the body.",
 )
 @with_session_management
 async def delete_selected_attributes(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS]))],
     db: Annotated[Session, Depends(get_db)],
-    event_id: Annotated[str, Path(..., alias="eventId")],
+    event_id: Annotated[str, Path(alias="eventId")],
     body: DeleteSelectedAttributeBody,
     request: Request,
-) -> dict:
+) -> DeleteSelectedAttributeResponse:
     return await _delete_selected_attributes(db, event_id, body, request)
 
 
@@ -180,7 +181,7 @@ async def delete_selected_attributes(
 )
 @with_session_management
 async def get_attributes_statistics(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     context: str,
     percentage: int,
@@ -197,9 +198,9 @@ async def get_attributes_statistics(
 )
 @with_session_management
 async def restore_attribute(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS]))],
     db: Annotated[Session, Depends(get_db)],
-    attribute_id: Annotated[str, Path(..., alias="attributeId")],
+    attribute_id: Annotated[str, Path(alias="attributeId")],
 ) -> dict:
     return await _restore_attribute(db, attribute_id)
 
@@ -207,56 +208,56 @@ async def restore_attribute(
 @router.post(
     "/attributes/addTag/{attributeId}/{tagId}/local:{local}",
     status_code=status.HTTP_200_OK,
-    response_model=partial(AddRemoveTagAttributeResponse),
+    response_model=AddRemoveTagAttributeResponse,
     summary="Add tag to attribute",
     description="Add a tag to an attribute by there ids.",
 )
 @with_session_management
 async def add_tag_to_attribute(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.TAGGER]))],
     db: Annotated[Session, Depends(get_db)],
-    attribute_id: Annotated[str, Path(..., alias="attributeId")],
-    tag_id: Annotated[str, Path(..., alias="tagId")],
+    attribute_id: Annotated[str, Path(alias="attributeId")],
+    tag_id: Annotated[str, Path(alias="tagId")],
     local: str,
-) -> dict:
+) -> AddRemoveTagAttributeResponse:
     return await _add_tag_to_attribute(db, attribute_id, tag_id, local)
 
 
 @router.post(
     "/attributes/removeTag/{attributeId}/{tagId}",
     status_code=status.HTTP_200_OK,
-    response_model=partial(AddRemoveTagAttributeResponse),
+    response_model=AddRemoveTagAttributeResponse,
     summary="Remove tag from attribute",
     description="Remove a tag from an attribute by there ids.",
 )
 @with_session_management
 async def remove_tag_from_attribute(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.TAGGER]))],
     db: Annotated[Session, Depends(get_db)],
-    attribute_id: Annotated[str, Path(..., alias="attributeId")],
-    tag_id: Annotated[str, Path(..., alias="tagId")],
-) -> dict:
+    attribute_id: Annotated[str, Path(alias="attributeId")],
+    tag_id: Annotated[str, Path(alias="tagId")],
+) -> AddRemoveTagAttributeResponse:
     return await _remove_tag_from_attribute(db, attribute_id, tag_id)
 
 
-# - deprecated endpoints
+# --- deprecated ---
 
 
 @router.post(
     "/attributes/add/{eventId}",
     deprecated=True,
     status_code=status.HTTP_200_OK,
-    response_model=partial(AddAttributeResponse),
+    response_model=AddAttributeResponse,
     summary="Add new attribute (Deprecated)",
     description="Deprecated. Add a new attribute with the given details using the old route.",
 )
 @with_session_management
 async def add_attribute_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS]))],
     db: Annotated[Session, Depends(get_db)],
-    event_id: Annotated[str, Path(..., alias="eventId")],
+    event_id: Annotated[str, Path(alias="eventId")],
     body: AddAttributeBody,
-) -> dict:
+) -> AddAttributeResponse:
     return await _add_attribute(db, event_id, body)
 
 
@@ -264,16 +265,16 @@ async def add_attribute_depr(
     "/attributes/view/{attributeId}",
     deprecated=True,
     status_code=status.HTTP_200_OK,
-    response_model=partial(GetAttributeResponse),
+    response_model=GetAttributeResponse,
     summary="Get attribute details (Deprecated)",
     description="Deprecated. Retrieve details of a specific attribute by its ID using the old route.",
 )
 @with_session_management
 async def get_attribute_details_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    attribute_id: Annotated[str, Path(..., alias="attributeId")],
-) -> dict:
+    attribute_id: Annotated[str, Path(alias="attributeId")],
+) -> GetAttributeResponse:
     return await _get_attribute_details(db, attribute_id)
 
 
@@ -281,17 +282,17 @@ async def get_attribute_details_depr(
     "/attributes/edit/{attributeId}",
     deprecated=True,
     status_code=status.HTTP_200_OK,
-    response_model=partial(EditAttributeResponse),
+    response_model=EditAttributeResponse,
     summary="Update an attribute (Deprecated)",
     description="Deprecated. Update an existing attribute by its ID using the old route.",
 )
 @with_session_management
 async def update_attribute_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS]))],
     db: Annotated[Session, Depends(get_db)],
-    attribute_id: Annotated[str, Path(..., alias="attributeId")],
+    attribute_id: Annotated[str, Path(alias="attributeId")],
     body: EditAttributeBody,
-) -> dict:
+) -> EditAttributeResponse:
     return await _update_attribute(db, attribute_id, body)
 
 
@@ -305,9 +306,9 @@ async def update_attribute_depr(
 )
 @with_session_management
 async def delete_attribute_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS]))],
     db: Annotated[Session, Depends(get_db)],
-    attribute_id: Annotated[str, Path(..., alias="attributeId")],
+    attribute_id: Annotated[str, Path(alias="attributeId")],
 ) -> dict:
     return await _delete_attribute(db, attribute_id)
 
@@ -315,7 +316,7 @@ async def delete_attribute_depr(
 # --- endpoint logic ---
 
 
-async def _add_attribute(db: Session, event_id: str, body: AddAttributeBody) -> dict:
+async def _add_attribute(db: Session, event_id: str, body: AddAttributeBody) -> AddAttributeResponse:
     event: Event | None = db.get(Event, event_id)
 
     if not event:
@@ -355,7 +356,7 @@ async def _add_attribute(db: Session, event_id: str, body: AddAttributeBody) -> 
     return AddAttributeResponse(Attribute=attribute_data).__dict__
 
 
-async def _get_attribute_details(db: Session, attribute_id: str) -> dict:
+async def _get_attribute_details(db: Session, attribute_id: str) -> GetAttributeResponse:
     attribute: Attribute | None = db.get(Attribute, attribute_id)
 
     if not attribute:
@@ -366,7 +367,7 @@ async def _get_attribute_details(db: Session, attribute_id: str) -> dict:
     return GetAttributeResponse(Attribute=attribute_data).__dict__
 
 
-async def _update_attribute(db: Session, attribute_id: str, body: EditAttributeBody) -> dict:
+async def _update_attribute(db: Session, attribute_id: str, body: EditAttributeBody) -> EditAttributeResponse:
     attribute: Attribute | None = db.get(Attribute, attribute_id)
 
     if not attribute:
@@ -407,7 +408,7 @@ async def _get_attributes(db: Session) -> list[dict]:
 
 async def _delete_selected_attributes(
     db: Session, event_id: str, body: DeleteSelectedAttributeBody, request: Request
-) -> dict:
+) -> DeleteSelectedAttributeResponse:
     event: Event | None = db.get(Event, event_id)
 
     if not event:
@@ -520,7 +521,9 @@ async def _restore_attribute(db: Session, attribute_id: str) -> dict:
     return GetAttributeResponse(Attribute=attribute_data).__dict__
 
 
-async def _add_tag_to_attribute(db: Session, attribute_id: str, tag_id: str, local: str) -> dict:
+async def _add_tag_to_attribute(
+    db: Session, attribute_id: str, tag_id: str, local: str
+) -> AddRemoveTagAttributeResponse:
     attribute: Attribute | None = db.get(Attribute, attribute_id)
 
     if not attribute:
