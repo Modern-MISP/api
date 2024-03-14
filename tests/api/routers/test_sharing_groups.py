@@ -1,5 +1,6 @@
 from datetime import datetime
 from time import time_ns
+from typing import Any
 from uuid import uuid4
 
 from fastapi import status
@@ -26,7 +27,7 @@ class TestCreateSharingGroup:
         assert json["org_id"] == str(environment.instance_owner_org.id)
         assert json["organisation_uuid"] == environment.instance_owner_org.uuid
 
-        db_sharing_group_org: SharingGroupOrg | None = (
+        db_sharing_group_org: SharingGroupOrg | Any = (
             db.query(SharingGroupOrg).filter(SharingGroupOrg.sharing_group_id == json["id"]).first()
         )
         db_sharing_group_server: SharingGroupServer | None = (
@@ -54,7 +55,7 @@ class TestCreateSharingGroup:
         assert json["org_id"] == str(environment.instance_two_owner_org.id)
         assert json["organisation_uuid"] == environment.instance_two_owner_org.uuid
 
-        db_sharing_group_org: SharingGroupOrg | None = (
+        db_sharing_group_org: SharingGroupOrg | Any = (
             db.query(SharingGroupOrg).filter(SharingGroupOrg.sharing_group_id == json["id"]).first()
         )
         db_sharing_group_server: SharingGroupServer | None = (
@@ -716,11 +717,12 @@ class TestRemoveOrgFromSharingGroup:
         db.refresh(sharing_group)
 
         sharing_group_org = SharingGroupOrg(sharing_group_id=sharing_group.id, org_id=999)
-        sharing_group_org_id = sharing_group_org.id
 
         db.add(sharing_group_org)
         db.commit()
         db.refresh(sharing_group_org)
+
+        sharing_group_org_id = sharing_group_org.id
 
         response = client.delete(
             f"/sharing_groups/{sharing_group.id}/organisations/999",

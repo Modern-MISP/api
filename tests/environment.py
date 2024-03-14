@@ -3,16 +3,19 @@ from sqlalchemy.orm import Session
 
 from mmisp.api.auth import encode_token
 from mmisp.api.main import app
+from mmisp.db.database import Base
 from mmisp.db.models.organisation import Organisation
 from mmisp.db.models.role import Role
 from mmisp.db.models.server import Server
 from mmisp.db.models.user import User
-from tests.database import get_db
+from tests.database import engine, get_db
 from tests.generators.model_generators.server_generator import generate_server
 
 from .generators.model_generators.organisation_generator import generate_organisation
 from .generators.model_generators.role_generator import generate_org_admin_role, generate_site_admin_role
 from .generators.model_generators.user_generator import generate_user
+
+Base.metadata.create_all(bind=engine)
 
 db: Session = get_db()
 
@@ -59,6 +62,7 @@ db.add_all(
     [site_admin_user, instance_owner_org_admin_user, instance_org_two_admin_user, instance_two_owner_org_admin_user]
 )
 db.commit()
+db.close()
 
 
 class EnvironmentType:

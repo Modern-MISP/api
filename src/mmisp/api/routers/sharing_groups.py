@@ -1,8 +1,8 @@
 from typing import Annotated, Any, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Path, status
-from sqlalchemy import and_, or_
-from sqlalchemy.orm import Session
+from sqlalchemy import and_, delete, or_
+from sqlalchemy.future import select
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize, check_permissions
 from mmisp.api_schemas.sharing_groups.add_org_to_sharing_group_body import AddOrgToSharingGroupBody
@@ -25,7 +25,7 @@ from mmisp.api_schemas.sharing_groups.view_update_sharing_group_legacy_response 
 )
 from mmisp.api_schemas.standard_status_response import StandardStatusResponse
 from mmisp.config import config
-from mmisp.db.database import get_db, with_session_management
+from mmisp.db.database import Session, get_db, with_session_management
 from mmisp.db.models.organisation import Organisation
 from mmisp.db.models.server import Server
 from mmisp.db.models.sharing_group import SharingGroup, SharingGroupOrg, SharingGroupServer
@@ -46,11 +46,12 @@ async def create_sharing_group(
 ) -> dict:
     organisation: Organisation | None = None
 
-    if body.organisation_uuid and check_permissions(auth, [Permission.SITE_ADMIN]):
-        organisation = db.query(Organisation).filter(Organisation.uuid == body.organisation_uuid).first()
+    if body.organisation_uuid and await check_permissions(auth, [Permission.SITE_ADMIN]):
+        result = await db.execute(select(Organisation).filter(Organisation.uuid == body.organisation_uuid).limit(1))
+        organisation = result.scalars().first()
 
     if not organisation:
-        organisation = db.get(Organisation, auth.org_id)
+        organisation = await db.get(Organisation, auth.org_id)
 
     sharing_group = SharingGroup(
         **{
@@ -62,15 +63,15 @@ async def create_sharing_group(
     )
 
     db.add(sharing_group)
-    db.flush()
-    db.refresh(sharing_group)
+    await db.flush()
+    await db.refresh(sharing_group)
 
     sharing_group_org = SharingGroupOrg(sharing_group_id=sharing_group.id, org_id=organisation.id, extend=True)
     sharing_group_server = SharingGroupServer(sharing_group_id=sharing_group.id, server_id=0, all_orgs=False)
 
     db.add_all([sharing_group_org, sharing_group_server])
-    db.commit()
-    db.refresh(sharing_group)
+    await db.commit()
+    await db.refresh(sharing_group)
 
     return sharing_group.__dict__
 
@@ -82,38 +83,40 @@ async def get_sharing_group(
     db: Annotated[Session, Depends(get_db)],
     id: int,
 ) -> dict:
-    sharing_group: SharingGroup | None = db.get(SharingGroup, id)
+    sharing_group: SharingGroup | None = await db.get(SharingGroup, id)
 
     if not sharing_group:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     sharing_group = cast(SharingGroup, sharing_group)
 
-    if sharing_group.org_id == auth.org_id or check_permissions(auth, [Permission.SITE_ADMIN]):
+    if sharing_group.org_id == auth.org_id or await check_permissions(auth, [Permission.SITE_ADMIN]):
         return sharing_group.__dict__
 
-    sharing_group_org: SharingGroupOrg | None = (
-        db.query(SharingGroupOrg)
+    result = await db.execute(
+        select(SharingGroupOrg)
         .filter(SharingGroupOrg.sharing_group_id == sharing_group.id, SharingGroupOrg.org_id == auth.org_id)
-        .first()
+        .limit(1)
     )
+    sharing_group_org: SharingGroupOrg | None = result.scalars().first()
 
     if sharing_group_org:
         return sharing_group.__dict__
 
     sharing_group_server: SharingGroupServer | None = None
-    user_org: Organisation | None = db.get(Organisation, auth.org_id)
+    user_org: Organisation | None = await db.get(Organisation, auth.org_id)
 
     if user_org and user_org.local:
-        sharing_group_server = (
-            db.query(SharingGroupServer)
+        result = await db.execute(
+            select(SharingGroupServer)
             .filter(
                 SharingGroupServer.sharing_group_id == id,
                 SharingGroupServer.server_id == 0,
                 SharingGroupServer.all_orgs.is_(True),
             )
-            .first()
+            .limit(1)
         )
+        sharing_group_server = result.scalars().first()
 
     if sharing_group_server:
         return sharing_group.__dict__
@@ -129,20 +132,20 @@ async def update_sharing_group(
     id: int,
     body: UpdateSharingGroupBody,
 ) -> dict:
-    sharing_group: SharingGroup | None = db.get(SharingGroup, id)
+    sharing_group: SharingGroup | None = await db.get(SharingGroup, id)
 
     if not sharing_group:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     sharing_group = cast(SharingGroup, sharing_group)
 
-    if sharing_group.org_id != auth.org_id and not check_permissions(auth, [Permission.SITE_ADMIN]):
+    if sharing_group.org_id != auth.org_id and not await check_permissions(auth, [Permission.SITE_ADMIN]):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     update_record(sharing_group, body.dict())
 
-    db.commit()
-    db.refresh(sharing_group)
+    await db.commit()
+    await db.refresh(sharing_group)
 
     return sharing_group.__dict__
 
@@ -154,21 +157,21 @@ async def delete_sharing_group(
     db: Annotated[Session, Depends(get_db)],
     id: int,
 ) -> dict:
-    sharing_group: SharingGroup | None = db.get(SharingGroup, id)
+    sharing_group: SharingGroup | None = await db.get(SharingGroup, id)
 
     if not sharing_group:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     sharing_group = cast(SharingGroup, sharing_group)
 
-    if sharing_group.org_id != auth.org_id and not check_permissions(auth, [Permission.SITE_ADMIN]):
+    if sharing_group.org_id != auth.org_id and not await check_permissions(auth, [Permission.SITE_ADMIN]):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
-    db.query(SharingGroupOrg).filter(SharingGroupOrg.sharing_group_id == sharing_group.id).delete(False)
-    db.query(SharingGroupServer).filter(SharingGroupServer.sharing_group_id == sharing_group.id).delete(False)
+    await db.execute(delete(SharingGroupOrg).filter(SharingGroupOrg.sharing_group_id == sharing_group.id))
+    await db.execute(delete(SharingGroupServer).filter(SharingGroupServer.sharing_group_id == sharing_group.id))
 
-    db.delete(sharing_group)
-    db.commit()
+    await db.delete(sharing_group)
+    await db.commit()
 
     return sharing_group.__dict__
 
@@ -181,14 +184,14 @@ async def get_all_sharing_groups(
 ) -> dict:
     sharing_groups: list[SharingGroup] = []
 
-    is_site_admin: bool = check_permissions(auth, [Permission.SITE_ADMIN])
+    is_site_admin: bool = await check_permissions(auth, [Permission.SITE_ADMIN])
 
     if is_site_admin:
-        sharing_groups = db.query(SharingGroup).all()
+        sharing_groups = await db.execute(select(SharingGroup)).scalars().all()
     else:
-        user_org: Organisation | None = db.get(Organisation, auth.org_id)
-        sharing_groups = (
-            db.query(SharingGroup)
+        user_org: Organisation | None = await db.get(Organisation, auth.org_id)
+        result = await db.execute(
+            select(SharingGroup)
             .join(
                 SharingGroupOrg,
                 SharingGroup.id == SharingGroupOrg.sharing_group_id,
@@ -208,24 +211,26 @@ async def get_all_sharing_groups(
                     else None,
                 )
             )
-            .all()
         )
+        sharing_groups = result.scalars().all()
 
     sharing_groups_computed: list[dict] = []
 
     for sharing_group in sharing_groups:
-        organisation: Organisation = db.get(Organisation, sharing_group.org_id)
-        sharing_group_orgs: list[SharingGroupOrg] = (
-            db.query(SharingGroupOrg).filter(SharingGroupOrg.sharing_group_id == sharing_group.id).all()
+        organisation: Organisation = await db.get(Organisation, sharing_group.org_id)
+
+        result = await db.execute(select(SharingGroupOrg).filter(SharingGroupOrg.sharing_group_id == sharing_group.id))
+        sharing_group_orgs: list[SharingGroupOrg] = result.scalars().all()
+
+        result = await db.execute(
+            select(SharingGroupServer).filter(SharingGroupServer.sharing_group_id == sharing_group.id)
         )
-        sharing_group_servers: list[SharingGroupServer] = (
-            db.query(SharingGroupServer).filter(SharingGroupServer.sharing_group_id == sharing_group.id).all()
-        )
+        sharing_group_servers: list[SharingGroupServer] = result.scalars().all()
 
         sharing_group_orgs_computed: list[dict] = []
 
         for sharing_group_org in sharing_group_orgs:
-            sharing_group_org_organisation: Organisation = db.get(Organisation, sharing_group_org.org_id)
+            sharing_group_org_organisation: Organisation = await db.get(Organisation, sharing_group_org.org_id)
 
             sharing_group_orgs_computed.append(
                 {
@@ -242,7 +247,7 @@ async def get_all_sharing_groups(
             if sharing_group_server.server_id == 0:
                 sharing_group_server_server = LOCAL_INSTANCE_SERVER
             else:
-                sharing_group_server_server = db.get(Server, sharing_group_server.server_id)
+                sharing_group_server_server = await db.get(Server, sharing_group_server.server_id)
                 sharing_group_server_server = getattr(sharing_group_server_server, "__dict__", None)
 
             sharing_group_servers_computed.append(
@@ -270,47 +275,49 @@ async def get_sharing_group_info(
     db: Annotated[Session, Depends(get_db)],
     id: int,
 ) -> dict:
-    sharing_group: SharingGroup | None = db.get(SharingGroup, id)
+    sharing_group: SharingGroup | None = await db.get(SharingGroup, id)
 
     if not sharing_group:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
-    if sharing_group.org_id != auth.org_id and not check_permissions(auth, [Permission.SITE_ADMIN]):
-        sharing_group_org: SharingGroupOrg | None = (
-            db.query(SharingGroupOrg)
+    if sharing_group.org_id != auth.org_id and not await check_permissions(auth, [Permission.SITE_ADMIN]):
+        result = await db.execute(
+            select(SharingGroupOrg)
             .filter(SharingGroupOrg.sharing_group_id == id, SharingGroupOrg.org_id == auth.org_id)
-            .first()
+            .limit(1)
         )
+        sharing_group_org: SharingGroupOrg | None = result.scalars().first()
 
         sharing_group_server: SharingGroupServer | None = None
-        user_org: Organisation | None = db.get(Organisation, auth.org_id)
+        user_org: Organisation | None = await db.get(Organisation, auth.org_id)
 
         if user_org and user_org.local:
-            sharing_group_server = (
-                db.query(SharingGroupServer)
+            result = await db.execute(
+                select(SharingGroupServer)
                 .filter(
                     SharingGroupServer.sharing_group_id == id,
                     SharingGroupServer.server_id == 0,
                     SharingGroupServer.all_orgs.is_(True),
                 )
-                .first()
+                .limit(1)
             )
+            sharing_group_server = result.scalars().first()
 
         if not sharing_group_org and not sharing_group_server:
             raise HTTPException(status.HTTP_404_NOT_FOUND)
 
-    organisation: Organisation = db.get(Organisation, sharing_group.org_id)
-    sharing_group_orgs: list[SharingGroupOrg] = (
-        db.query(SharingGroupOrg).filter(SharingGroupOrg.sharing_group_id == sharing_group.id).all()
-    )
-    sharing_group_servers: list[SharingGroupServer] = (
-        db.query(SharingGroupServer).filter(SharingGroupServer.sharing_group_id == sharing_group.id).all()
-    )
+    organisation: Organisation = await db.get(Organisation, sharing_group.org_id)
+
+    result = await db.execute(select(SharingGroupOrg).filter(SharingGroupOrg.sharing_group_id == sharing_group.id))
+    sharing_group_orgs: list[SharingGroupOrg] = result.scalars().all()
+
+    await db.execute(select(SharingGroupServer).filter(SharingGroupServer.sharing_group_id == sharing_group.id))
+    sharing_group_servers: list[SharingGroupServer] = result.scalars().all()
 
     sharing_group_orgs_computed: list[dict] = []
 
     for sharing_group_org in sharing_group_orgs:
-        sharing_group_org_organisation: Organisation = db.get(Organisation, sharing_group_org.org_id)
+        sharing_group_org_organisation: Organisation = await db.get(Organisation, sharing_group_org.org_id)
 
         sharing_group_orgs_computed.append(
             {**sharing_group_org.__dict__, "Organisation": getattr(sharing_group_org_organisation, "__dict__", None)}
@@ -324,7 +331,7 @@ async def get_sharing_group_info(
         if sharing_group_server.server_id == 0:
             sharing_group_server_server = LOCAL_INSTANCE_SERVER
         else:
-            sharing_group_server_server = db.get(Server, sharing_group_server.server_id)
+            sharing_group_server_server = await db.get(Server, sharing_group_server.server_id)
             sharing_group_server_server = getattr(sharing_group_server_server, "__dict__", None)
 
         sharing_group_servers_computed.append({**sharing_group_server.__dict__, "Server": sharing_group_server_server})
@@ -345,18 +352,19 @@ async def add_org_to_sharing_group(
     id: int,
     body: AddOrgToSharingGroupBody,
 ) -> dict:
-    sharing_group: SharingGroup | None = db.get(SharingGroup, id)
+    sharing_group: SharingGroup | None = await db.get(SharingGroup, id)
 
     if not sharing_group or (
-        sharing_group.org_id != auth.org_id and not check_permissions(auth, [Permission.SITE_ADMIN])
+        sharing_group.org_id != auth.org_id and not await check_permissions(auth, [Permission.SITE_ADMIN])
     ):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
-    sharing_group_org: SharingGroupOrg | None = (
-        db.query(SharingGroupOrg)
+    result = await db.execute(
+        select(SharingGroupOrg)
         .filter(SharingGroupOrg.sharing_group_id == id, SharingGroupOrg.org_id == body.organisationId)
-        .first()
+        .limit(1)
     )
+    sharing_group_org: SharingGroupOrg | None = result.scalars().first()
 
     if not sharing_group_org:
         sharing_group_org = SharingGroupOrg(
@@ -372,8 +380,8 @@ async def add_org_to_sharing_group(
 
     update_record(sharing_group_org, update)
 
-    db.commit()
-    db.refresh(sharing_group_org)
+    await db.commit()
+    await db.refresh(sharing_group_org)
 
     return sharing_group_org.__dict__
 
@@ -386,24 +394,25 @@ async def remove_org_from_sharing_group(
     id: int,
     organisation_id: Annotated[int, Path(alias="organisationId")],
 ) -> dict:
-    sharing_group: SharingGroup | None = db.get(SharingGroup, id)
+    sharing_group: SharingGroup | None = await db.get(SharingGroup, id)
 
     if not sharing_group or (
-        sharing_group.org_id != auth.org_id and not check_permissions(auth, [Permission.SITE_ADMIN])
+        sharing_group.org_id != auth.org_id and not await check_permissions(auth, [Permission.SITE_ADMIN])
     ):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
-    sharing_group_org: SharingGroupOrg | None = (
-        db.query(SharingGroupOrg)
+    result = await db.execute(
+        select(SharingGroupOrg)
         .filter(SharingGroupOrg.sharing_group_id == id, SharingGroupOrg.org_id == organisation_id)
-        .first()
+        .limit(1)
     )
+    sharing_group_org: SharingGroupOrg | None = result.scalars().first()
 
     if not sharing_group_org:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
-    db.delete(sharing_group_org)
-    db.commit()
+    await db.delete(sharing_group_org)
+    await db.commit()
 
     return sharing_group_org.__dict__
 
@@ -416,18 +425,19 @@ async def add_server_to_sharing_group(
     id: int,
     body: AddServerToSharingGroupBody,
 ) -> dict:
-    sharing_group: SharingGroup | None = db.get(SharingGroup, id)
+    sharing_group: SharingGroup | None = await db.get(SharingGroup, id)
 
     if not sharing_group or (
-        sharing_group.org_id != auth.org_id and not check_permissions(auth, [Permission.SITE_ADMIN])
+        sharing_group.org_id != auth.org_id and not await check_permissions(auth, [Permission.SITE_ADMIN])
     ):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
-    sharing_group_server: SharingGroupServer | None = (
-        db.query(SharingGroupServer)
+    result = await db.execute(
+        select(SharingGroupServer)
         .filter(SharingGroupServer.sharing_group_id == id, SharingGroupServer.server_id == body.serverId)
-        .first()
+        .limit(1)
     )
+    sharing_group_server: SharingGroupServer | None = result.scalars().first()
 
     if not sharing_group_server:
         sharing_group_server = SharingGroupServer(
@@ -443,8 +453,8 @@ async def add_server_to_sharing_group(
 
     update_record(sharing_group_server, update)
 
-    db.commit()
-    db.refresh(sharing_group_server)
+    await db.commit()
+    await db.refresh(sharing_group_server)
 
     return sharing_group_server.__dict__
 
@@ -457,24 +467,25 @@ async def remove_server_from_sharing_group(
     id: int,
     server_id: Annotated[int, Path(alias="serverId")],
 ) -> dict:
-    sharing_group: SharingGroup | None = db.get(SharingGroup, id)
+    sharing_group: SharingGroup | None = await db.get(SharingGroup, id)
 
     if not sharing_group or (
-        sharing_group.org_id != auth.org_id and not check_permissions(auth, [Permission.SITE_ADMIN])
+        sharing_group.org_id != auth.org_id and not await check_permissions(auth, [Permission.SITE_ADMIN])
     ):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
-    sharing_group_server: SharingGroupServer | None = (
-        db.query(SharingGroupServer)
+    result = await db.execute(
+        select(SharingGroupServer)
         .filter(SharingGroupServer.sharing_group_id == id, SharingGroupServer.server_id == server_id)
-        .first()
+        .limit(1)
     )
+    sharing_group_server: SharingGroupServer | None = result.scalars().first()
 
     if not sharing_group_server:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
-    db.delete(sharing_group_server)
-    db.commit()
+    await db.delete(sharing_group_server)
+    await db.commit()
 
     return sharing_group_server.__dict__
 
@@ -496,15 +507,16 @@ async def create_sharing_group_legacy(
 ) -> dict:
     organisation: Organisation | None = None
 
-    is_site_admin = check_permissions(auth, [Permission.SITE_ADMIN])
+    is_site_admin = await check_permissions(auth, [Permission.SITE_ADMIN])
 
     if body.organisation_uuid and is_site_admin:
-        organisation = db.query(Organisation).filter(Organisation.uuid == body.organisation_uuid).first()
+        result = await db.execute(select(Organisation).filter(Organisation.uuid == body.organisation_uuid).limit(1))
+        organisation = result.scalars().first()
     elif body.org_id and is_site_admin:
-        organisation = db.get(Organisation, body.org_id)
+        organisation = await db.get(Organisation, body.org_id)
 
     if not organisation:
-        organisation = db.get(Organisation, auth.org_id)
+        organisation = await db.get(Organisation, auth.org_id)
 
     create = body.dict(exclude={"org_count", "created", "modified", "sync_user_id"})
 
@@ -518,18 +530,18 @@ async def create_sharing_group_legacy(
     )
 
     db.add(sharing_group)
-    db.flush()
-    db.refresh(sharing_group)
+    await db.flush()
+    await db.refresh(sharing_group)
 
     sharing_group_org = SharingGroupOrg(sharing_group_id=sharing_group.id, org_id=organisation.id, extend=True)
     sharing_group_server = SharingGroupServer(sharing_group_id=sharing_group.id, server_id=0, all_orgs=False)
 
     db.add_all([sharing_group_org, sharing_group_server])
-    db.commit()
-    db.refresh(sharing_group_org)
-    db.refresh(sharing_group_server)
-    db.refresh(sharing_group)
-    db.refresh(organisation)
+    await db.commit()
+    await db.refresh(sharing_group_org)
+    await db.refresh(sharing_group_server)
+    await db.refresh(sharing_group)
+    await db.refresh(organisation)
 
     return {
         "SharingGroup": sharing_group.__dict__,
@@ -550,47 +562,51 @@ async def view_sharing_group_legacy(
     db: Annotated[Session, Depends(get_db)],
     id: Annotated[int, Path(alias="sharingGroupId")],
 ) -> dict:
-    sharing_group: SharingGroup | None = db.get(SharingGroup, id)
+    sharing_group: SharingGroup | None = await db.get(SharingGroup, id)
 
     if not sharing_group:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
-    if sharing_group.org_id != auth.org_id and not check_permissions(auth, [Permission.SITE_ADMIN]):
-        sharing_group_org: SharingGroupOrg | None = (
-            db.query(SharingGroupOrg)
+    if sharing_group.org_id != auth.org_id and not await check_permissions(auth, [Permission.SITE_ADMIN]):
+        result = await db.execute(
+            select(SharingGroupOrg)
             .filter(SharingGroupOrg.sharing_group_id == id, SharingGroupOrg.org_id == auth.org_id)
-            .first()
+            .limit(1)
         )
+        sharing_group_org: SharingGroupOrg | None = result.scalars().first()
 
         sharing_group_server: SharingGroupServer | None = None
-        user_org: Organisation | None = db.get(Organisation, auth.org_id)
+        user_org: Organisation | None = await db.get(Organisation, auth.org_id)
 
         if user_org and user_org.local:
-            sharing_group_server = (
-                db.query(SharingGroupServer)
+            result = await db.execute(
+                select(SharingGroupServer)
                 .filter(
                     SharingGroupServer.sharing_group_id == id,
                     SharingGroupServer.server_id == 0,
                     SharingGroupServer.all_orgs.is_(True),
                 )
-                .first()
+                .limit(1)
             )
+            sharing_group_server = result.scalars().first()
 
         if not sharing_group_org and not sharing_group_server:
             raise HTTPException(status.HTTP_404_NOT_FOUND)
 
-    organisation: Organisation = db.get(Organisation, sharing_group.org_id)
-    sharing_group_orgs: list[SharingGroupOrg] = (
-        db.query(SharingGroupOrg).filter(SharingGroupOrg.sharing_group_id == sharing_group.id).all()
+    organisation: Organisation = await db.get(Organisation, sharing_group.org_id)
+
+    result = await db.execute(select(SharingGroupOrg).filter(SharingGroupOrg.sharing_group_id == sharing_group.id))
+    sharing_group_orgs: list[SharingGroupOrg] = result.scalars().all()
+
+    result = await db.execute(
+        select(SharingGroupServer).filter(SharingGroupServer.sharing_group_id == sharing_group.id)
     )
-    sharing_group_servers: list[SharingGroupServer] = (
-        db.query(SharingGroupServer).filter(SharingGroupServer.sharing_group_id == sharing_group.id).all()
-    )
+    sharing_group_servers: list[SharingGroupServer] = result.scalars().all()
 
     sharing_group_orgs_computed: list[dict] = []
 
     for sharing_group_org in sharing_group_orgs:
-        sharing_group_org_organisation: Organisation = db.get(Organisation, sharing_group_org.org_id)
+        sharing_group_org_organisation: Organisation = await db.get(Organisation, sharing_group_org.org_id)
 
         sharing_group_orgs_computed.append(
             {**sharing_group_org.__dict__, "Organisation": getattr(sharing_group_org_organisation, "__dict__", None)}
@@ -604,7 +620,7 @@ async def view_sharing_group_legacy(
         if sharing_group_server.server_id == 0:
             sharing_group_server_server = LOCAL_INSTANCE_SERVER
         else:
-            sharing_group_server_server = db.get(Server, sharing_group_server.server_id)
+            sharing_group_server_server = await db.get(Server, sharing_group_server.server_id)
             sharing_group_server_server = getattr(sharing_group_server_server, "__dict__", None)
 
         sharing_group_servers_computed.append({**sharing_group_server.__dict__, "Server": sharing_group_server_server})
@@ -629,34 +645,36 @@ async def update_sharing_group_legacy(
     id: Annotated[int, Path(alias="sharingGroupId")],
     body: UpdateSharingGroupLegacyBody,
 ) -> dict:
-    sharing_group: SharingGroup | None = db.get(SharingGroup, id)
+    sharing_group: SharingGroup | None = await db.get(SharingGroup, id)
 
     if not sharing_group:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     sharing_group = cast(SharingGroup, sharing_group)
 
-    if sharing_group.org_id != auth.org_id and not check_permissions(auth, [Permission.SITE_ADMIN]):
+    if sharing_group.org_id != auth.org_id and not await check_permissions(auth, [Permission.SITE_ADMIN]):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     update = body.dict(include={"name", "description", "releasability", "local", "active", "roaming"})
     update_record(sharing_group, update)
 
-    db.commit()
-    db.refresh(sharing_group)
+    await db.commit()
+    await db.refresh(sharing_group)
 
-    organisation = db.get(Organisation, sharing_group.org_id)
-    sharing_group_orgs: list[SharingGroupOrg] = (
-        db.query(SharingGroupOrg).filter(SharingGroupOrg.sharing_group_id == sharing_group.id).all()
+    organisation = await db.get(Organisation, sharing_group.org_id)
+
+    result = await db.execute(select(SharingGroupOrg).filter(SharingGroupOrg.sharing_group_id == sharing_group.id))
+    sharing_group_orgs: list[SharingGroupOrg] = result.scalars().all()
+
+    result = await db.execute(
+        select(SharingGroupServer).filter(SharingGroupServer.sharing_group_id == sharing_group.id)
     )
-    sharing_group_servers: list[SharingGroupServer] = (
-        db.query(SharingGroupServer).filter(SharingGroupServer.sharing_group_id == sharing_group.id).all()
-    )
+    sharing_group_servers: list[SharingGroupServer] = result.scalars().all()
 
     sharing_group_orgs_computed: list[dict] = []
 
     for sharing_group_org in sharing_group_orgs:
-        sharing_group_org_organisation: Organisation = db.get(Organisation, sharing_group_org.org_id)
+        sharing_group_org_organisation: Organisation = await db.get(Organisation, sharing_group_org.org_id)
 
         sharing_group_orgs_computed.append(
             {**sharing_group_org.__dict__, "Organisation": getattr(sharing_group_org_organisation, "__dict__", None)}
@@ -670,7 +688,7 @@ async def update_sharing_group_legacy(
         if sharing_group_server.server_id == 0:
             sharing_group_server_server = LOCAL_INSTANCE_SERVER
         else:
-            sharing_group_server_server = db.get(Server, sharing_group_server.server_id)
+            sharing_group_server_server = await db.get(Server, sharing_group_server.server_id)
             sharing_group_server_server = getattr(sharing_group_server_server, "__dict__", None)
 
         sharing_group_servers_computed.append({**sharing_group_server.__dict__, "Server": sharing_group_server_server})
@@ -692,21 +710,21 @@ async def delete_sharing_group_legacy(
     db: Annotated[Session, Depends(get_db)],
     id: Annotated[int, Path(alias="sharingGroupId")],
 ) -> dict:
-    sharing_group: SharingGroup | None = db.get(SharingGroup, id)
+    sharing_group: SharingGroup | None = await db.get(SharingGroup, id)
 
     if not sharing_group:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     sharing_group = cast(SharingGroup, sharing_group)
 
-    if sharing_group.org_id != auth.org_id and not check_permissions(auth, [Permission.SITE_ADMIN]):
+    if sharing_group.org_id != auth.org_id and not await check_permissions(auth, [Permission.SITE_ADMIN]):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
-    db.query(SharingGroupOrg).filter(SharingGroupOrg.sharing_group_id == sharing_group.id).delete(False)
-    db.query(SharingGroupServer).filter(SharingGroupServer.sharing_group_id == sharing_group.id).delete(False)
+    await db.execute(delete(SharingGroupOrg).filter(SharingGroupOrg.sharing_group_id == sharing_group.id))
+    await db.execute(delete(SharingGroupServer).filter(SharingGroupServer.sharing_group_id == sharing_group.id))
 
-    db.delete(sharing_group)
-    db.commit()
+    await db.delete(sharing_group)
+    await db.commit()
 
     return {
         "id": sharing_group.id,
@@ -731,18 +749,19 @@ async def add_org_to_sharing_group_legacy(
     organisation_id: Annotated[int, Path(alias="organisationId")],
     body: AddOrgToSharingGroupLegacyBody = AddOrgToSharingGroupLegacyBody(),
 ) -> dict:
-    sharing_group: SharingGroup | None = db.get(SharingGroup, id)
+    sharing_group: SharingGroup | None = await db.get(SharingGroup, id)
 
     if not sharing_group or (
-        sharing_group.org_id != auth.org_id and not check_permissions(auth, [Permission.SITE_ADMIN])
+        sharing_group.org_id != auth.org_id and not await check_permissions(auth, [Permission.SITE_ADMIN])
     ):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
-    sharing_group_org: SharingGroupOrg | None = (
-        db.query(SharingGroupOrg)
+    result = await db.execute(
+        select(SharingGroupOrg)
         .filter(SharingGroupOrg.sharing_group_id == id, SharingGroupOrg.org_id == organisation_id)
-        .first()
+        .limit(1)
     )
+    sharing_group_org: SharingGroupOrg | None = result.scalars().first()
 
     if not sharing_group_org:
         sharing_group_org = SharingGroupOrg(
@@ -755,8 +774,8 @@ async def add_org_to_sharing_group_legacy(
 
     update_record(sharing_group_org, body.dict())
 
-    db.commit()
-    db.refresh(sharing_group_org)
+    await db.commit()
+    await db.refresh(sharing_group_org)
 
     return StandardStatusResponse(
         saved=True,
@@ -779,24 +798,25 @@ async def remove_org_from_sharing_group_legacy(
     id: Annotated[int, Path(alias="sharingGroupId")],
     organisation_id: Annotated[int, Path(alias="organisationId")],
 ) -> dict:
-    sharing_group: SharingGroup | None = db.get(SharingGroup, id)
+    sharing_group: SharingGroup | None = await db.get(SharingGroup, id)
 
     if not sharing_group or (
-        sharing_group.org_id != auth.org_id and not check_permissions(auth, [Permission.SITE_ADMIN])
+        sharing_group.org_id != auth.org_id and not await check_permissions(auth, [Permission.SITE_ADMIN])
     ):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
-    sharing_group_org: SharingGroupOrg | None = (
-        db.query(SharingGroupOrg)
+    result = await db.execute(
+        select(SharingGroupOrg)
         .filter(SharingGroupOrg.sharing_group_id == id, SharingGroupOrg.org_id == organisation_id)
-        .first()
+        .limit(1)
     )
+    sharing_group_org: SharingGroupOrg | None = result.scalars().first()
 
     if not sharing_group_org:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
-    db.delete(sharing_group_org)
-    db.commit()
+    await db.delete(sharing_group_org)
+    await db.commit()
 
     return StandardStatusResponse(
         saved=True,
@@ -820,18 +840,19 @@ async def add_server_to_sharing_group_legacy(
     server_id: Annotated[int, Path(alias="serverId")],
     body: AddServerToSharingGroupLegacyBody = AddServerToSharingGroupLegacyBody(),
 ) -> dict:
-    sharing_group: SharingGroup | None = db.get(SharingGroup, id)
+    sharing_group: SharingGroup | None = await db.get(SharingGroup, id)
 
     if not sharing_group or (
-        sharing_group.org_id != auth.org_id and not check_permissions(auth, [Permission.SITE_ADMIN])
+        sharing_group.org_id != auth.org_id and not await check_permissions(auth, [Permission.SITE_ADMIN])
     ):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
-    sharing_group_server: SharingGroupServer | None = (
-        db.query(SharingGroupServer)
+    result = await db.execute(
+        select(SharingGroupServer)
         .filter(SharingGroupServer.sharing_group_id == id, SharingGroupServer.server_id == server_id)
-        .first()
+        .limit(1)
     )
+    sharing_group_server: SharingGroupServer | None = result.scalars().first()
 
     if not sharing_group_server:
         sharing_group_server = SharingGroupServer(
@@ -844,8 +865,8 @@ async def add_server_to_sharing_group_legacy(
 
     update_record(sharing_group_server, body.dict())
 
-    db.commit()
-    db.refresh(sharing_group_server)
+    await db.commit()
+    await db.refresh(sharing_group_server)
 
     return StandardStatusResponse(
         saved=True,
@@ -868,24 +889,25 @@ async def remove_server_from_sharing_group_legacy(
     id: Annotated[int, Path(alias="sharingGroupId")],
     server_id: Annotated[int, Path(alias="serverId")],
 ) -> dict:
-    sharing_group: SharingGroup | None = db.get(SharingGroup, id)
+    sharing_group: SharingGroup | None = await db.get(SharingGroup, id)
 
     if not sharing_group or (
-        sharing_group.org_id != auth.org_id and not check_permissions(auth, [Permission.SITE_ADMIN])
+        sharing_group.org_id != auth.org_id and not await check_permissions(auth, [Permission.SITE_ADMIN])
     ):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
-    sharing_group_server: SharingGroupServer | None = (
-        db.query(SharingGroupServer)
+    result = await db.execute(
+        select(SharingGroupServer)
         .filter(SharingGroupServer.sharing_group_id == id, SharingGroupServer.server_id == server_id)
-        .first()
+        .limit(1)
     )
+    sharing_group_server: SharingGroupServer | None = result.scalars().first()
 
     if not sharing_group_server:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
-    db.delete(sharing_group_server)
-    db.commit()
+    await db.delete(sharing_group_server)
+    await db.commit()
 
     return StandardStatusResponse(
         saved=True,

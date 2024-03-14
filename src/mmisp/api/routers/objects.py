@@ -156,11 +156,11 @@ async def delete_object_depr(
 
 
 async def _add_object(db: Session, event_id: int, object_template_id: int, body: ObjectCreateBody) -> ObjectResponse:
-    template: ObjectTemplate | None = db.get(ObjectTemplate, object_template_id)
+    template: ObjectTemplate | None = await db.get(ObjectTemplate, object_template_id)
 
     if not template:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Object template not found.")
-    if not db.get(Event, event_id):
+    if not await db.get(Event, event_id):
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Event not found.")
 
     object: Object = Object(
@@ -172,8 +172,8 @@ async def _add_object(db: Session, event_id: int, object_template_id: int, body:
     )
 
     db.add(object)
-    db.flush()
-    db.refresh(object)
+    await db.flush()
+    await db.refresh(object)
 
     for attr in body.attributes:
         attribute: Attribute = Attribute(
@@ -184,9 +184,12 @@ async def _add_object(db: Session, event_id: int, object_template_id: int, body:
         )
         db.add(attribute)
 
-    db.commit()
-    db.refresh(object)
-    attributes: list[Attribute] = db.execute(select(Attribute).filter(Attribute.object_id == object.id)).scalars().all()
+    await db.commit()
+    await db.refresh(object)
+
+    result = await db.execute(select(Attribute).filter(Attribute.object_id == object.id))
+    attributes: list[Attribute] = result.scalars().all()
+
     attributes_response: list[GetAllAttributesResponse] = [
         GetAllAttributesResponse(**attribute.asdict()) for attribute in attributes
     ]
@@ -207,11 +210,13 @@ async def _restsearch(db: Session, body: ObjectSearchBody) -> dict[str, Any]:
         _check_valid_return_format(return_format=body.return_format)
 
     filters = body.dict(exclude_unset=True)
-    objects = _get_objects_with_filters(db=db, filters=filters)
+    objects = await _get_objects_with_filters(db=db, filters=filters)
 
     objects_data = []
     for obj in objects:
-        attributes = db.execute(select(Attribute).filter(Attribute.object_id == obj.id)).scalars().all()
+        result = await db.execute(select(Attribute).filter(Attribute.object_id == obj.id))
+        attributes = result.scalars().all()
+
         attributes_data = [GetAllAttributesResponse.from_orm(attr) for attr in attributes]
 
         obj_data = ObjectWithAttributesResponse(
@@ -225,17 +230,19 @@ async def _restsearch(db: Session, body: ObjectSearchBody) -> dict[str, Any]:
 
 
 async def _get_object_details(db: Session, object_id: int) -> ObjectResponse:
-    object: Object | None = db.get(Object, object_id)
+    object: Object | None = await db.get(Object, object_id)
 
     if not object:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Object not found.")
 
-    attributes: list[Attribute] = db.execute(select(Attribute).filter(Attribute.object_id == object.id)).scalars().all()
-    event: Event = (
-        db.execute(select(Event).join(Object, Event.id == Object.event_id).filter(Object.id == object_id).limit(1))
-        .scalars()
-        .first()
+    result = await db.execute(select(Attribute).filter(Attribute.object_id == object.id))
+    attributes: list[Attribute] = result.scalars().all()
+
+    result = await db.execute(
+        select(Event).join(Object, Event.id == Object.event_id).filter(Object.id == object_id).limit(1)
     )
+    event: Event = result.scalars().first()
+
     event_response: ObjectEventResponse = ObjectEventResponse(
         id=str(event.id), info=event.info, org_id=str(event.org_id), orgc_id=str(event.orgc_id)
     )
@@ -251,14 +258,14 @@ async def _get_object_details(db: Session, object_id: int) -> ObjectResponse:
 
 
 async def _delete_object(db: Session, object_id: int, hard_delete: bool) -> StandardStatusResponse:
-    object: Object | None = db.get(Object, object_id)
+    object: Object | None = await db.get(Object, object_id)
 
     if not object:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Object not found.")
 
     if hard_delete:
-        db.execute(delete(Attribute).filter(Attribute.object_id == object_id))
-        db.delete(object)
+        await db.execute(delete(Attribute).filter(Attribute.object_id == object_id))
+        await db.delete(object)
         saved = True
         success = True
         message = "Object has been permanently deleted."
@@ -268,7 +275,7 @@ async def _delete_object(db: Session, object_id: int, hard_delete: bool) -> Stan
         success = True
         message = "Object has been soft deleted."
 
-    db.commit()
+    await db.commit()
 
     return StandardStatusResponse(
         saved=saved,
@@ -284,7 +291,7 @@ def _check_valid_return_format(return_format: str) -> None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid return format.")
 
 
-def _get_objects_with_filters(db: Session, filters: ObjectSearchBody) -> list[Object]:
+async def _get_objects_with_filters(db: Session, filters: ObjectSearchBody) -> list[Object]:
     search_body: ObjectSearchBody = ObjectSearchBody(**filters)
     query: Object = select(Object)
 
@@ -379,4 +386,5 @@ def _get_objects_with_filters(db: Session, filters: ObjectSearchBody) -> list[Ob
     if search_body.limit:
         query = query.limit(int(search_body.limit))
 
-    return db.execute(query).scalars().all()
+    result = await db.execute(query)
+    return result.scalars().all()
