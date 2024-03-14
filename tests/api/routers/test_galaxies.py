@@ -247,7 +247,8 @@ class TestGetAllGalaxies:
         db.commit()
         db.refresh(add_galaxy_cluster_body2)
 
-        response = client.get("/galaxies")
+        headers = {"authorization": environment.site_admin_user_token}
+        response = client.get("/galaxies", headers=headers)
 
         assert response.status_code == 200
         response_json = response.json()
