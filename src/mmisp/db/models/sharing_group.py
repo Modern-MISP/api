@@ -13,7 +13,7 @@ class SharingGroup(Base):
     id = Column(Integer, primary_key=True, nullable=False)
     name = Column(String(255), nullable=False, unique=True)
     releasability = Column(Text, nullable=False)
-    description = Column(Text, nullable=False)
+    description = Column(Text, nullable=False, default="")
     uuid = Column(String(40), unique=True, default=uuid, nullable=False)
     organisation_uuid = Column(String(40), nullable=False)
     org_id = Column(Integer, nullable=False, index=True)

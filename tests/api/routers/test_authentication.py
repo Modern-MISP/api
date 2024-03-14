@@ -63,6 +63,7 @@ def auth_environment() -> AuthEnvironment:
     db.refresh(password_auth_user)
     db.refresh(external_auth_user)
     db.refresh(identity_provider)
+    db.close()
 
     well_known_oidc_config = {
         "authorization_endpoint": f"{identity_provider.base_url}/authorize",
@@ -122,7 +123,7 @@ class TestPasswordLogin:
         json: dict = response.json()
 
         user_id = _decode_token(json["token"])
-        assert user_id == str(auth_environment.password_auth_user.id)
+        assert user_id == auth_environment.password_auth_user.id
 
     @staticmethod
     def test_password_login_wrong_email(auth_environment: AuthEnvironment) -> None:
@@ -270,7 +271,7 @@ class TestExchangeTokenLogin:
 
         assert response.status_code == status.HTTP_200_OK
         json = response.json()
-        assert _decode_token(json["token"]) == str(auth_environment.external_auth_user.id)
+        assert _decode_token(json["token"]) == auth_environment.external_auth_user.id
 
     @staticmethod
     def test_exchange_token_login_regular_token(auth_environment: AuthEnvironment) -> None:

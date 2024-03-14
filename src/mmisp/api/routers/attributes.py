@@ -1,7 +1,7 @@
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Request, status
-from sqlalchemy.orm import Session
+from sqlalchemy import func, select
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
 from mmisp.api_schemas.attributes.add_attribute_body import AddAttributeBody
@@ -34,7 +34,7 @@ from mmisp.api_schemas.attributes.search_attributes_response import (
     SearchAttributesObject,
     SearchAttributesResponse,
 )
-from mmisp.db.database import get_db, with_session_management
+from mmisp.db.database import Session, get_db, with_session_management
 from mmisp.db.models.attribute import Attribute, AttributeTag
 from mmisp.db.models.event import Event
 from mmisp.db.models.object import Object
@@ -317,7 +317,7 @@ async def delete_attribute_depr(
 
 
 async def _add_attribute(db: Session, event_id: str, body: AddAttributeBody) -> AddAttributeResponse:
-    event: Event | None = db.get(Event, event_id)
+    event: Event | None = await db.get(Event, event_id)
 
     if not event:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
@@ -346,9 +346,9 @@ async def _add_attribute(db: Session, event_id: str, body: AddAttributeBody) -> 
     )
 
     db.add(new_attribute)
-    db.commit()
+    await db.commit()
 
-    db.refresh(new_attribute)
+    await db.refresh(new_attribute)
     setattr(event, "attribute_count", event.attribute_count + 1)
 
     attribute_data = _prepare_attribute_response(new_attribute, "add")
@@ -357,46 +357,47 @@ async def _add_attribute(db: Session, event_id: str, body: AddAttributeBody) -> 
 
 
 async def _get_attribute_details(db: Session, attribute_id: str) -> GetAttributeResponse:
-    attribute: Attribute | None = db.get(Attribute, attribute_id)
+    attribute: Attribute | None = await db.get(Attribute, attribute_id)
 
     if not attribute:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
-    attribute_data = _prepare_get_attribute_details_response(db, attribute_id, attribute)
+    attribute_data = await _prepare_get_attribute_details_response(db, attribute_id, attribute)
 
     return GetAttributeResponse(Attribute=attribute_data).__dict__
 
 
 async def _update_attribute(db: Session, attribute_id: str, body: EditAttributeBody) -> EditAttributeResponse:
-    attribute: Attribute | None = db.get(Attribute, attribute_id)
+    attribute: Attribute | None = await db.get(Attribute, attribute_id)
 
     if not attribute:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     update_record(attribute, body.dict())
 
-    db.commit()
-    db.refresh(attribute)
+    await db.commit()
+    await db.refresh(attribute)
 
-    attribute_data = _prepare_edit_attribute_response(db, attribute_id, attribute)
+    attribute_data = await _prepare_edit_attribute_response(db, attribute_id, attribute)
 
     return EditAttributeResponse(Attribute=attribute_data).__dict__
 
 
 async def _delete_attribute(db: Session, attribute_id: str) -> dict:
-    attribute: Attribute | None = db.get(Attribute, attribute_id)
+    attribute: Attribute | None = await db.get(Attribute, attribute_id)
 
     if not attribute:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
-    db.delete(attribute)
-    db.commit()
+    await db.delete(attribute)
+    await db.commit()
 
     return DeleteAttributeResponse(message="Attribute deleted.").__dict__
 
 
 async def _get_attributes(db: Session) -> list[dict]:
-    attributes = db.query(Attribute).all()
+    result = await db.execute(select(Attribute))
+    attributes = result.scalars().all()
 
     if not attributes:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No attributes found.")
@@ -409,7 +410,7 @@ async def _get_attributes(db: Session) -> list[dict]:
 async def _delete_selected_attributes(
     db: Session, event_id: str, body: DeleteSelectedAttributeBody, request: Request
 ) -> DeleteSelectedAttributeResponse:
-    event: Event | None = db.get(Event, event_id)
+    event: Event | None = await db.get(Event, event_id)
 
     if not event:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
@@ -417,7 +418,7 @@ async def _delete_selected_attributes(
     attribute_ids = body.id.split(" ")
 
     for attribute_id in attribute_ids:
-        attribute: Attribute | None = db.get(Attribute, attribute_id)
+        attribute: Attribute | None = await db.get(Attribute, attribute_id)
 
         if not attribute:
             raise HTTPException(status.HTTP_404_NOT_FOUND)
@@ -429,13 +430,13 @@ async def _delete_selected_attributes(
             )
 
         if body.allow_hard_delete:
-            db.delete(attribute)
-            db.commit()
+            await db.delete(attribute)
+            await db.commit()
         else:
             setattr(attribute, "deleted", True)
-            db.commit()
+            await db.commit()
 
-            db.refresh(attribute)
+            await db.refresh(attribute)
 
     attribute_count = len(attribute_ids)
     attribute_str = "attribute" if attribute_count == 1 else "attributes"
@@ -453,32 +454,36 @@ async def _delete_selected_attributes(
 async def _rest_search_attributes(db: Session, body: SearchAttributesBody) -> dict:
     if body.returnFormat != "json":
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid output format.")
-    attributes: list[Attribute] = db.query(Attribute).all()
-    for field, value in body.dict().items():
-        attribute_dict = db.query(Attribute).__dict__.copy()
-        if field not in attribute_dict:
-            continue
-        attributes = db.query(Attribute).filter(getattr(Attribute, field) == value).all()
 
-        #! todo: not all fields in 'SearchAttributesBody' are taken into account yet
+    result = await db.execute(select(Attribute))
+    attributes: list[Attribute] = result.scalars().all()
+    # for field, value in body.dict().items():
+    #     attribute_dict = db.query(Attribute).__dict__.copy()
+    #     if field not in attribute_dict:
+    #         continue
+    #     attributes = db.query(Attribute).filter(getattr(Attribute, field) == value).all()
+
+    #! todo: not all fields in 'SearchAttributesBody' are taken into account yet
     if body.limit is not None:
         attributes = attributes[: body.limit]
     response_list = []
     for attribute in attributes:
         attribute_dict = attribute.asdict().copy()
         if attribute.event_id is not None:
-            event = db.get(Event, attribute.event_id)
+            event = await db.get(Event, attribute.event_id)
             event_dict = event.__dict__.copy()
             event_dict["date"] = str(event_dict["date"])
             attribute_dict["Event"] = SearchAttributesEvent(**event_dict)
         if attribute.object_id != 0:
-            object = db.get(Object, attribute.object_id)
+            object = await db.get(Object, attribute.object_id)
             object_dict = object.__dict__.copy()
             attribute_dict["Object"] = SearchAttributesObject(**object_dict)
-        attribute_tags = db.query(AttributeTag).filter(AttributeTag.attribute_id == attribute.id).all()
+
+        result = await db.execute(select(AttributeTag).filter(AttributeTag.attribute_id == attribute.id))
+        attribute_tags = result.scalars().all()
         attribute_dict["Tag"] = []
         for attribute_tag in attribute_tags:
-            tag = db.get(Tag, attribute_tag.tag_id)
+            tag = await db.get(Tag, attribute_tag.tag_id)
             tag_dict = tag.__dict__.copy()
             tag_dict["local"] = attribute_tag.local
             attribute_dict["Tag"].append(GetAttributeTag(**tag_dict))
@@ -496,27 +501,27 @@ async def _get_attribute_statistics(
     if int(percentage) not in [0, 1]:
         raise HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED, detail="Invalid 'percentage'")
 
-    total_count_of_attributes = db.query(Attribute).count()
+    result = await db.execute(select(func.count()).select_from(Attribute))
+    total_count_of_attributes = result.scalar()
 
     if context == "category":
-        return _category_statistics(db, percentage, total_count_of_attributes)
+        return await _category_statistics(db, percentage, total_count_of_attributes)
     else:
-        return _type_statistics(db, percentage, total_count_of_attributes)
+        return await _type_statistics(db, percentage, total_count_of_attributes)
 
 
 async def _restore_attribute(db: Session, attribute_id: str) -> dict:
-    attribute: Attribute | None = db.get(Attribute, attribute_id)
+    attribute: Attribute | None = await db.get(Attribute, attribute_id)
 
     if not attribute:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     setattr(attribute, "deleted", False)
 
-    db.commit()
+    await db.commit()
+    await db.refresh(attribute)
 
-    db.refresh(attribute)
-
-    attribute_data = _prepare_get_attribute_details_response(db, str(attribute.id), attribute)
+    attribute_data = await _prepare_get_attribute_details_response(db, str(attribute.id), attribute)
 
     return GetAttributeResponse(Attribute=attribute_data).__dict__
 
@@ -524,7 +529,7 @@ async def _restore_attribute(db: Session, attribute_id: str) -> dict:
 async def _add_tag_to_attribute(
     db: Session, attribute_id: str, tag_id: str, local: str
 ) -> AddRemoveTagAttributeResponse:
-    attribute: Attribute | None = db.get(Attribute, attribute_id)
+    attribute: Attribute | None = await db.get(Attribute, attribute_id)
 
     if not attribute:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
@@ -533,10 +538,11 @@ async def _add_tag_to_attribute(
         int(tag_id)
     except ValueError:
         return AddRemoveTagAttributeResponse(saved=False, errors="Invalid Tag").__dict__
-    if not db.get(Tag, tag_id):
-        return AddRemoveTagAttributeResponse(saved=False, errors="Tag could not be added.").__dict__
 
-    tag = db.get(Tag, tag_id)
+    tag = await db.get(Tag, tag_id)
+
+    if not tag:
+        return AddRemoveTagAttributeResponse(saved=False, errors="Tag could not be added.").__dict__
 
     if int(local) not in [0, 1]:
         return AddRemoveTagAttributeResponse(saved=False, errors="Invalid 'local'").__dict__
@@ -547,15 +553,15 @@ async def _add_tag_to_attribute(
     )
 
     db.add(new_attribute_tag)
-    db.commit()
 
-    db.refresh(new_attribute_tag)
+    await db.commit()
+    await db.refresh(new_attribute_tag)
 
     return AddRemoveTagAttributeResponse(saved=True, success="Tag added", check_publish=True).__dict__
 
 
 async def _remove_tag_from_attribute(db: Session, attribute_id: str, tag_id: str) -> dict:
-    attribute: Attribute | None = db.get(Attribute, attribute_id)
+    attribute: Attribute | None = await db.get(Attribute, attribute_id)
 
     if not attribute:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
@@ -564,16 +570,17 @@ async def _remove_tag_from_attribute(db: Session, attribute_id: str, tag_id: str
         int(tag_id)
     except ValueError:
         return AddRemoveTagAttributeResponse(saved=False, errors="Invalid Tag").__dict__
-    if not db.get(Tag, tag_id):
+    if not await db.get(Tag, tag_id):
         return AddRemoveTagAttributeResponse(saved=False, errors="Tag could not be removed.").__dict__
 
-    attribute_tag = db.query(AttributeTag).filter(AttributeTag.attribute_id == attribute_id).first()
+    result = await db.execute(select(AttributeTag).filter(AttributeTag.attribute_id == attribute_id).limit(1))
+    attribute_tag = result.scalars().first()
 
     if not attribute_tag:
         return AddRemoveTagAttributeResponse(saved=False, errors="Invalid attribute - tag combination.").__dict__
 
-    db.delete(attribute_tag)
-    db.commit()
+    await db.delete(attribute_tag)
+    await db.commit()
 
     return AddRemoveTagAttributeResponse(saved=True, success="Tag removed", check_publish=True).__dict__
 
@@ -595,26 +602,32 @@ def _prepare_attribute_response(attribute: Attribute, request_type: str) -> dict
     raise ValueError(f"Unknown request_type: {request_type}")
 
 
-def _prepare_get_attribute_details_response(
+async def _prepare_get_attribute_details_response(
     db: Session, attribute_id: str, attribute: Attribute
 ) -> GetAttributeAttributes:
     attribute_dict = attribute.asdict().copy()
+
     if "event_uuid" not in attribute_dict.keys():  #! should not occur, perhaps sqlalchemy caching?
         attribute_dict["event_uuid"] = attribute.event_uuid
 
     fields_to_convert = ["object_id", "sharing_group_id", "timestamp"]
+
     for field in fields_to_convert:
         if attribute_dict.get(field) is not None:
             attribute_dict[field] = str(attribute_dict[field])
         else:
             attribute_dict[field] = "0"
 
-    db_attribute_tags = db.query(AttributeTag).filter(AttributeTag.attribute_id == attribute_id).all()
+    result = await db.execute(select(AttributeTag).filter(AttributeTag.attribute_id == attribute_id))
+    db_attribute_tags = result.scalars().all()
+
     attribute_dict["tag"] = []
 
     if len(db_attribute_tags) > 0:
         for attribute_tag in db_attribute_tags:
-            tag = db.query(Tag).filter(Tag.id == attribute_tag.tag_id).first()
+            result = await db.execute(select(Tag).filter(Tag.id == attribute_tag.tag_id).limit(1))
+            tag = result.scalars().first()
+
             connected_tag = GetAttributeTag(
                 id=tag.id,
                 name=tag.name,
@@ -628,7 +641,9 @@ def _prepare_get_attribute_details_response(
     return GetAttributeAttributes(**attribute_dict)
 
 
-def _prepare_edit_attribute_response(db: Session, attribute_id: str, attribute: Attribute) -> EditAttributeAttributes:
+async def _prepare_edit_attribute_response(
+    db: Session, attribute_id: str, attribute: Attribute
+) -> EditAttributeAttributes:
     attribute_dict = attribute.asdict().copy()
 
     fields_to_convert = ["object_id", "sharing_group_id", "timestamp"]
@@ -638,12 +653,14 @@ def _prepare_edit_attribute_response(db: Session, attribute_id: str, attribute: 
         else:
             attribute_dict[field] = "0"
 
-    db_attribute_tags = db.query(AttributeTag).filter(AttributeTag.attribute_id == attribute_id).all()
+    result = await db.execute(select(AttributeTag).filter(AttributeTag.attribute_id == attribute_id))
+    db_attribute_tags = result.scalars().all()
     attribute_dict["tag"] = []
 
     if len(db_attribute_tags) > 0:
         for attribute_tag in db_attribute_tags:
-            tag = db.query(Tag).filter(Tag.id == attribute_tag.tag_id).first()
+            result = await db.execute(select(Tag).filter(Tag.id == attribute_tag.tag_id).limit(1))
+            tag = result.scalars().first()
             connected_tag = GetAttributeTag(
                 id=tag.id,
                 name=tag.name,
@@ -661,7 +678,7 @@ def _prepare_edit_attribute_response(db: Session, attribute_id: str, attribute: 
     return EditAttributeAttributes(**attribute_dict)
 
 
-def _category_statistics(
+async def _category_statistics(
     db: Session, percentage: int, total_count_of_attributes: int
 ) -> GetAttributeStatisticsCategoriesResponse:
     response_dict = {}
@@ -670,17 +687,21 @@ def _category_statistics(
         if percentage == 1:
             response_dict[category] = (
                 str(
-                    round((_count_of_attributes_with_given_category(db, category) / total_count_of_attributes) * 100, 2)
+                    round(
+                        (await _count_of_attributes_with_given_category(db, category) / total_count_of_attributes)
+                        * 100,
+                        2,
+                    )
                 )
                 + "%"
             )
         else:
-            response_dict[category] = str(_count_of_attributes_with_given_category(db, category))
+            response_dict[category] = str(await _count_of_attributes_with_given_category(db, category))
 
     return GetAttributeStatisticsCategoriesResponse(**response_dict)
 
 
-def _type_statistics(
+async def _type_statistics(
     db: Session, percentage: int, total_count_of_attributes: int
 ) -> GetAttributeStatisticsTypesResponse:
     response_dict = {}
@@ -688,19 +709,22 @@ def _type_statistics(
     for type in GetDescribeTypesAttributes().types:
         if percentage == 1:
             response_dict[type] = (
-                str(round((_count_of_attributes_with_given_type(db, type) / total_count_of_attributes) * 100, 2)) + "%"
+                str(round((await _count_of_attributes_with_given_type(db, type) / total_count_of_attributes) * 100, 2))
+                + "%"
             )
         else:
-            response_dict[type] = str(_count_of_attributes_with_given_type(db, type))
+            response_dict[type] = str(await _count_of_attributes_with_given_type(db, type))
 
     return GetAttributeStatisticsTypesResponse(**response_dict)
 
 
-def _count_of_attributes_with_given_category(db: Session, category: str) -> int:
-    attributes_with_given_category = db.query(Attribute).filter(Attribute.category == category).all()
+async def _count_of_attributes_with_given_category(db: Session, category: str) -> int:
+    result = await db.execute(select(Attribute).filter(Attribute.category == category))
+    attributes_with_given_category = result.scalars().all()
     return len(attributes_with_given_category)
 
 
-def _count_of_attributes_with_given_type(db: Session, type: str) -> int:
-    attributes_with_given_type = db.query(Attribute).filter(Attribute.type == type).all()
+async def _count_of_attributes_with_given_type(db: Session, type: str) -> int:
+    result = await db.execute(select(Attribute).filter(Attribute.type == type))
+    attributes_with_given_type = result.scalars().all()
     return len(attributes_with_given_type)

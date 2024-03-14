@@ -5,6 +5,7 @@ from urllib.parse import urlencode
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Path, status
 from fastapi.responses import RedirectResponse
+from sqlalchemy.future import select
 from sqlalchemy.orm import Session
 
 from mmisp.api.auth import decode_exchange_token, encode_exchange_token, encode_token
@@ -25,16 +26,18 @@ router = APIRouter(tags=["authentication"])
 @router.post("/auth/login/start", response_model=StartLoginResponse)
 @with_session_management
 async def start_login(db: Annotated[Session, Depends(get_db)], body: StartLoginBody) -> dict:
-    user: User | None = db.query(User).filter(User.email == body.email).first()
+    result = await db.execute(select(User).filter(User.email == body.email).limit(1))
+    user: User | None = result.scalars().first()
 
     if not user:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
-    identity_providers: list[OIDCIdentityProvider] = (
-        db.query(OIDCIdentityProvider)
-        .filter(OIDCIdentityProvider.active.is_(True), OIDCIdentityProvider.org_id == user.org_id)
-        .all()
+    result = await db.execute(
+        select(OIDCIdentityProvider).filter(
+            OIDCIdentityProvider.active.is_(True), OIDCIdentityProvider.org_id == user.org_id
+        )
     )
+    identity_providers: list[OIDCIdentityProvider] = result.scalars().all()
 
     login_type = LoginType.PASSWORD
 
@@ -47,7 +50,8 @@ async def start_login(db: Annotated[Session, Depends(get_db)], body: StartLoginB
 @router.post("/auth/login/password")
 @with_session_management
 async def password_login(db: Annotated[Session, Depends(get_db)], body: PasswordLoginBody) -> TokenResponse:
-    user: User | None = db.query(User).filter(User.email == body.email).first()
+    result = await db.execute(select(User).filter(User.email == body.email).limit(1))
+    user: User | None = result.scalars().first()
 
     if not user or user.external_auth_required or not verify_secret(body.password, user.password):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
@@ -60,9 +64,9 @@ async def password_login(db: Annotated[Session, Depends(get_db)], body: Password
 async def redirect_to_idp(
     db: Annotated[Session, Depends(get_db)], identity_provider_id: Annotated[int, Path(alias="identityProviderId")]
 ) -> RedirectResponse:
-    identity_provider: OIDCIdentityProvider | None = db.get(OIDCIdentityProvider, identity_provider_id)
+    identity_provider: OIDCIdentityProvider | None = await db.get(OIDCIdentityProvider, identity_provider_id)
 
-    if (not identity_provider) or (not identity_provider.active):
+    if not identity_provider or not identity_provider.active:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     oidc_config = await _get_oidc_config(identity_provider.base_url)
@@ -89,7 +93,7 @@ async def redirect_to_frontend(
     identity_provider_id: Annotated[int, Path(alias="identityProviderId")],
     code: str,
 ) -> RedirectResponse:
-    identity_provider: OIDCIdentityProvider | None = db.get(OIDCIdentityProvider, identity_provider_id)
+    identity_provider: OIDCIdentityProvider | None = await db.get(OIDCIdentityProvider, identity_provider_id)
 
     if not identity_provider or not identity_provider.active:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
@@ -131,7 +135,8 @@ async def redirect_to_frontend(
     if not user_info.get("email", None) or not user_info.get("sub", None):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
-    user: User | None = db.query(User).filter(User.email == user_info["email"]).first()
+    result = await db.execute(select(User).filter(User.email == user_info["email"]))
+    user: User | None = result.scalars().first()
 
     if (
         not user
@@ -144,7 +149,7 @@ async def redirect_to_frontend(
     if not user.sub:
         user.sub = user_info["sub"]
         user.date_modified = time()
-        db.commit()
+        await db.commit()
 
     exchange_token = encode_exchange_token(str(user.id))
 

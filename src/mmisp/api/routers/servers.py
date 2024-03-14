@@ -12,9 +12,9 @@ router = APIRouter(tags=["servers"])
 async def get_version(auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))]) -> dict:
     return {
         "version": importlib.metadata.version("mmisp-api"),
-        "perm_sync": check_permissions(auth, [Permission.SYNC]),
-        "perm_sighting": check_permissions(auth, [Permission.SIGHTING]),
-        "perm_galaxy_editor": check_permissions(auth, [Permission.GALAXY_EDITOR]),
+        "perm_sync": await check_permissions(auth, [Permission.SYNC]),
+        "perm_sighting": await check_permissions(auth, [Permission.SIGHTING]),
+        "perm_galaxy_editor": await check_permissions(auth, [Permission.GALAXY_EDITOR]),
         "request_encoding": [],
         "filter_sightings": True,
     }

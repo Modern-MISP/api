@@ -1,8 +1,7 @@
 import random
 import string
 
-from tests.database import get_db
-from tests.environment import client, environment
+from tests.environment import Session, client, environment
 from tests.generators.model_generators.taxonomy_generator import (
     generate_taxonomy,
     generate_taxonomy_entry,
@@ -16,9 +15,7 @@ def random_string(length: int = 10) -> str:
 
 class TestGetTaxonomyById:
     @staticmethod
-    def test_get_taxonomy_by_id() -> None:
-        db = get_db()
-
+    def test_get_taxonomy_by_id(db: Session) -> None:
         taxonomy = generate_taxonomy()
 
         db.add(taxonomy)

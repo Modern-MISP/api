@@ -119,19 +119,19 @@ async def update_noticelist_depr(
 
 
 async def _get_noticelist(db: Session, noticelist_id: int) -> NoticelistResponse:
-    noticelist: Noticelist | None = db.get(Noticelist, noticelist_id)
+    noticelist: Noticelist | None = await db.get(Noticelist, noticelist_id)
 
     if not noticelist:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Noticelist not found.")
 
-    noticelist_entries_query = select(NoticelistEntry).filter(NoticelistEntry.noticelist_id == noticelist_id)
-    noticelist_entries = db.execute(noticelist_entries_query).scalars().all()
+    result = await db.execute(select(NoticelistEntry).filter(NoticelistEntry.noticelist_id == noticelist_id))
+    noticelist_entries = result.scalars().all()
 
     return _prepare_noticelist_response(noticelist, noticelist_entries)
 
 
 async def _toggleEnable_noticelists(db: Session, noticelist_id: int) -> StandardStatusIdentifiedResponse:
-    noticelist: Noticelist | None = db.get(Noticelist, noticelist_id)
+    noticelist: Noticelist | None = await db.get(Noticelist, noticelist_id)
 
     if not noticelist:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Noticelist not found.")
@@ -140,7 +140,7 @@ async def _toggleEnable_noticelists(db: Session, noticelist_id: int) -> Standard
 
     noticelist.enabled = not noticelist.enabled
 
-    db.commit()
+    await db.commit()
 
     return StandardStatusIdentifiedResponse(
         saved=True,
@@ -153,29 +153,28 @@ async def _toggleEnable_noticelists(db: Session, noticelist_id: int) -> Standard
 
 
 async def _update_noticelists(db: Session, depr: bool) -> StandardStatusResponse:
-    number_updated_lists = db.execute(select(func.count()).select_from(Noticelist)).scalar()
-    saved = True
-    success = True
-    name = "Succesfully updated " + str(number_updated_lists) + "noticelists."
-    message = "Succesfully updated " + str(number_updated_lists) + "noticelists."
-    url = "/noticelists/update" if depr is True else "/noticelists/"
+    result = await db.execute(select(func.count()).select_from(Noticelist))
+    number_updated_lists = result.scalar()
 
     return StandardStatusResponse(
-        saved=saved,
-        success=success,
-        name=name,
-        message=message,
-        url=url,
+        saved=True,
+        success=True,
+        name="Succesfully updated " + str(number_updated_lists) + "noticelists.",
+        message="Succesfully updated " + str(number_updated_lists) + "noticelists.",
+        url="/noticelists/update" if depr is True else "/noticelists/",
     )
 
 
 async def _get_all_noticelists(db: Session) -> dict:
     noticelist_data: list[NoticelistResponse] = []
-    noticelists = db.execute(select(Noticelist)).scalars().all()
+
+    result = await db.execute(select(Noticelist))
+    noticelists = result.scalars().all()
+
     for noticelist in noticelists:
-        noticelist_entries = (
-            db.execute(select(NoticelistEntry).filter(NoticelistEntry.noticelist_id == noticelist.id)).scalars().all()
-        )
+        result = await db.execute(select(NoticelistEntry).filter(NoticelistEntry.noticelist_id == noticelist.id))
+        noticelist_entries = result.scalars().all()
+
         noticelist_data.append(_prepare_noticelist_response(noticelist, noticelist_entries))
 
     return GetAllNoticelistResponse(response=noticelist_data)

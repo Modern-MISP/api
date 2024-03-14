@@ -1,10 +1,9 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
 
 from mmisp.api_schemas.users.users_view_me_response import UsersViewMeResponse
-from mmisp.db.database import get_db, with_session_management
+from mmisp.db.database import Session, get_db, with_session_management
 from mmisp.db.models.organisation import Organisation
 from mmisp.db.models.role import Role
 from mmisp.db.models.user import User
@@ -21,8 +20,8 @@ router = APIRouter(tags=["users"])
 async def get_logged_in_user_info(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))], db: Annotated[Session, Depends(get_db)]
 ) -> dict:
-    user = db.get(User, auth.user_id)
-    organisation = db.get(Organisation, auth.org_id)
-    role = db.get(Role, auth.role_id)
+    user = await db.get(User, auth.user_id)
+    organisation = await db.get(Organisation, auth.org_id)
+    role = await db.get(Role, auth.role_id)
 
     return {"User": user.__dict__, "Organisation": organisation.__dict__, "Role": role.__dict__}

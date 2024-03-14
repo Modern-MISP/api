@@ -2,7 +2,6 @@ import re
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Path, status
-from sqlalchemy import and_
 from sqlalchemy.future import select
 from sqlalchemy.orm import Session
 
@@ -198,18 +197,19 @@ async def _add_tag(db: Session, body: TagCreateBody) -> TagResponse:
     _check_type_hex_colour(body.colour)
     tag: Tag = Tag(**body.dict())
 
-    existing_tag = db.execute(select(Tag).filter(Tag.name == body.name).limit(1)).scalars().first()
+    result = await db.execute(select(Tag).filter(Tag.name == body.name).limit(1))
+    existing_tag = result.scalars().first()
     if existing_tag:
         raise HTTPException(status.HTTP_403_FORBIDDEN, detail="This tag name already exists.")
 
     db.add(tag)
-    db.commit()
+    await db.commit()
 
     return {"Tag": tag.__dict__}
 
 
 async def _view_tag(db: Session, tag_id: int) -> TagAttributesResponse:
-    tag: Tag | None = db.get(Tag, tag_id)
+    tag: Tag | None = await db.get(Tag, tag_id)
 
     if not tag:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Tag not found.")
@@ -218,17 +218,20 @@ async def _view_tag(db: Session, tag_id: int) -> TagAttributesResponse:
 
 
 async def _search_tags(db: Session, tag_search_term: str) -> dict:
-    tags: list[Tag] = db.execute(select(Tag).filter(Tag.name.contains(tag_search_term))).scalars().all()
+    result = await db.execute(select(Tag).filter(Tag.name.contains(tag_search_term)))
+    tags: list[Tag] = result.scalars().all()
 
     tag_datas = []
     for tag in tags:
-        taxonomies: list[Taxonomy] = (
-            db.execute(select(Taxonomy).filter(Taxonomy.namespace == tag.name.split(":", 1)[0])).scalars().all()
+        result: list[Taxonomy] = await db.execute(
+            select(Taxonomy).filter(Taxonomy.namespace == tag.name.split(":", 1)[0])
         )
+        taxonomies = result.scalars().all()
+
         for taxonomy in taxonomies:
-            taxonomy_predicates: list[TaxonomyPredicate] = (
-                db.execute(select(TaxonomyPredicate).filter_by(taxonomy_id=taxonomy.id)).scalars().all()
-            )
+            result = await db.execute(select(TaxonomyPredicate).filter_by(taxonomy_id=taxonomy.id))
+            taxonomy_predicates: list[TaxonomyPredicate] = result.scalars().all()
+
             for taxonomy_predicate in taxonomy_predicates:
                 tag_datas.append(
                     {
@@ -242,50 +245,48 @@ async def _search_tags(db: Session, tag_search_term: str) -> dict:
 
 
 async def _update_tag(db: Session, body: TagUpdateBody, tag_id: int) -> TagResponse:
-    tag: Tag | None = db.get(Tag, tag_id)
+    tag: Tag | None = await db.get(Tag, tag_id)
 
     if not tag:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Tag not found.")
 
     if body.name:
-        existing_tag = (
-            db.execute(select(Tag).filter(and_(Tag.name == body.name, Tag.id != tag_id)).limit(1)).scalars().first()
-        )
+        result = await db.execute(select(Tag).filter(Tag.name == body.name, Tag.id != tag_id).limit(1))
+        existing_tag = result.scalars().first()
         if existing_tag:
             raise HTTPException(status.HTTP_403_FORBIDDEN, detail="This tag name already exists.")
 
     if body.colour:
         _check_type_hex_colour(body.colour)
 
-    update_data = body.dict()
+    update_record(tag, body.dict())
 
-    update_record(tag, update_data)
-
-    db.commit()
-
-    db.refresh(tag)
+    await db.commit()
+    await db.refresh(tag)
 
     return {"Tag": tag.__dict__}
 
 
 async def _delete_tag(db: Session, tag_id: int) -> TagDeleteResponse:
-    deleted_tag: Tag | None = db.get(Tag, tag_id)
+    deleted_tag: Tag | None = await db.get(Tag, tag_id)
 
     if not deleted_tag:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Tag not found.")
 
-    feeds: list[Feed] = db.execute(select(Feed).filter(Feed.tag_id == deleted_tag.id)).scalars().all()
+    result = await db.execute(select(Feed).filter(Feed.tag_id == deleted_tag.id))
+    feeds: list[Feed] = result.scalars().all()
+
     for feed in feeds:
         feed.tag_id = 0
 
-    galaxy_clusters: list[GalaxyCluster] = (
-        db.execute(select(GalaxyCluster).filter(GalaxyCluster.tag_name == deleted_tag.name)).scalars().all()
-    )
+    result = await db.execute(select(GalaxyCluster).filter(GalaxyCluster.tag_name == deleted_tag.name))
+    galaxy_clusters: list[GalaxyCluster] = result.scalars().all()
+
     for galaxy_cluster in galaxy_clusters:
         galaxy_cluster.tag_name = ""
 
-    db.delete(deleted_tag)
-    db.commit()
+    await db.delete(deleted_tag)
+    await db.commit()
 
     message = "Tag deleted."
 
@@ -293,7 +294,8 @@ async def _delete_tag(db: Session, tag_id: int) -> TagDeleteResponse:
 
 
 async def _get_tags(db: Session) -> dict:
-    tags: list[Tag] = db.execute(select(Tag)).scalars().all()
+    result = await db.execute(select(Tag))
+    tags: list[Tag] = result.scalars().all()
 
     return TagGetResponse(tags=[tag.__dict__ for tag in tags])
 

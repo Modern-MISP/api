@@ -3,6 +3,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Path, status
 from nanoid import generate
+from sqlalchemy.future import select
 from sqlalchemy.orm import Session
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize, check_permissions
@@ -158,7 +159,7 @@ async def _auth_key_add(auth: Auth, db: Session, user_id: int, body: AddAuthKeyB
     if body.user_id is not None:
         user_id = body.user_id
 
-    if auth.user_id != user_id and not check_permissions(auth, [Permission.SITE_ADMIN]):
+    if auth.user_id != user_id and not await check_permissions(auth, [Permission.SITE_ADMIN]):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
     auth_key_string = generate(size=40)
@@ -177,8 +178,9 @@ async def _auth_key_add(auth: Auth, db: Session, user_id: int, body: AddAuthKeyB
     )
 
     db.add(auth_key)
-    db.commit()
-    db.refresh(auth_key)
+
+    await db.commit()
+    await db.refresh(auth_key)
 
     return {
         "AuthKey": {
@@ -197,12 +199,14 @@ async def _auth_keys_view(
 ) -> dict:
     if not auth:
         raise HTTPException(401)
-    auth_key: AuthKey | None = db.query(AuthKey).filter(AuthKey.id == auth_key_id).first()
+
+    result = await db.execute(select(AuthKey).filter(AuthKey.id == auth_key_id))
+    auth_key: AuthKey | None = result.scalars().first()
 
     if not auth_key or (
         auth_key.user_id != auth.user_id
-        and (not check_permissions(auth, [Permission.ADMIN]) or auth_key.user.org_id != auth.org_id)
-        and (not check_permissions(auth, [Permission.SITE_ADMIN]))
+        and (not await check_permissions(auth, [Permission.ADMIN]) or auth_key.user.org_id != auth.org_id)
+        and (not await check_permissions(auth, [Permission.SITE_ADMIN]))
     ):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
@@ -221,11 +225,11 @@ async def _search_auth_keys(
     db: Session,
     body: SearchAuthKeyBody,
 ) -> list[dict]:
-    query = db.query(AuthKey).join(User, AuthKey.user_id == User.id)
+    query = select(AuthKey).join(User, AuthKey.user_id == User.id)
 
-    if not check_permissions(auth, [Permission.SITE_ADMIN]):
+    if not await check_permissions(auth, [Permission.SITE_ADMIN]):
         query = query.filter(User.org_id == auth.org_id)
-    if not check_permissions(auth, [Permission.ADMIN]):
+    if not await check_permissions(auth, [Permission.ADMIN]):
         query = query.filter(AuthKey.user_id == auth.user_id)
 
     if body.id:
@@ -252,7 +256,8 @@ async def _search_auth_keys(
 
         query = query.filter(AuthKey.allowed_ips == body.allowed_ips)
 
-    auth_keys: list[AuthKey] = query.limit(body.limit).offset(body.page * body.limit).all()
+    result = await db.execute(query.limit(body.limit).offset(body.page * body.limit))
+    auth_keys: list[AuthKey] = result.scalars().all()
 
     auth_keys_computed: list[dict] = []
 
@@ -272,12 +277,12 @@ async def _search_auth_keys(
 
 
 async def _auth_keys_edit(auth: Auth, db: Session, auth_key_id: int, body: EditAuthKeyBody) -> dict:
-    auth_key: AuthKey | None = db.query(AuthKey).filter(AuthKey.id == auth_key_id).first()
+    auth_key: AuthKey | None = await db.get(AuthKey, auth_key_id)
 
     if not auth_key or (
         auth_key.user_id != auth.user_id
-        and (not check_permissions(auth, [Permission.ADMIN]) or auth_key.user.org_id != auth.org_id)
-        and (not check_permissions(auth, [Permission.SITE_ADMIN]))
+        and (not await check_permissions(auth, [Permission.ADMIN]) or auth_key.user.org_id != auth.org_id)
+        and (not await check_permissions(auth, [Permission.SITE_ADMIN]))
     ):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
@@ -286,8 +291,8 @@ async def _auth_keys_edit(auth: Auth, db: Session, auth_key_id: int, body: EditA
 
     update_record(auth_key, update)
 
-    db.commit()
-    db.refresh(auth_key)
+    await db.commit()
+    await db.refresh(auth_key)
 
     return {
         "AuthKey": {
@@ -300,43 +305,48 @@ async def _auth_keys_edit(auth: Auth, db: Session, auth_key_id: int, body: EditA
 
 
 async def _auth_keys_delete(auth: Auth, db: Session, auth_key_id: int) -> None:
-    auth_key: AuthKey | None = db.get(AuthKey, auth_key_id)
+    auth_key: AuthKey | None = await db.get(AuthKey, auth_key_id)
 
     if not auth_key or (
         auth_key.user_id != auth.user_id
-        and (not check_permissions(auth, [Permission.ADMIN]) or auth_key.user.org_id != auth.org_id)
-        and (not check_permissions(auth, [Permission.SITE_ADMIN]))
+        and (not await check_permissions(auth, [Permission.ADMIN]) or auth_key.user.org_id != auth.org_id)
+        and (not await check_permissions(auth, [Permission.SITE_ADMIN]))
     ):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
-    db.delete(auth_key)
-    db.commit()
+    await db.delete(auth_key)
+    await db.commit()
 
 
 async def _auth_keys_get(
     auth: Auth,
     db: Session,
 ) -> list[dict]:
-    query = db.query(AuthKey).join(User, AuthKey.user_id == User.id)
+    query = select(AuthKey, User).join(User, AuthKey.user_id == User.id)
 
-    if not check_permissions(auth, [Permission.SITE_ADMIN]):
+    if not await check_permissions(auth, [Permission.SITE_ADMIN]):
         query = query.filter(User.org_id == auth.org_id)
-    if not check_permissions(auth, [Permission.ADMIN]):
+    if not await check_permissions(auth, [Permission.ADMIN]):
         query = query.filter(AuthKey.user_id == auth.user_id)
 
-    auth_keys: list[AuthKey] = query.all()
+    result = await db.execute(query)
+    auth_keys_and_users: list[tuple[AuthKey, User]] = result.all()
 
     auth_keys_computed: list[dict] = []
 
-    for auth_key in auth_keys:
+    for auth_key_and_user in auth_keys_and_users:
         auth_keys_computed.append(
             {
                 "AuthKey": {
-                    **auth_key.__dict__,
-                    "allowed_ips": json.loads(auth_key.allowed_ips) if auth_key.allowed_ips else None,
-                    "unique_ips": json.loads(auth_key.unique_ips) if auth_key.unique_ips else [],
+                    **auth_key_and_user[0].__dict__,
+                    "allowed_ips": json.loads(auth_key_and_user[0].allowed_ips)
+                    if auth_key_and_user[0].allowed_ips
+                    else None,
+                    "unique_ips": json.loads(auth_key_and_user[0].unique_ips)
+                    if auth_key_and_user[0].unique_ips
+                    else [],
                 },
-                "User": {**auth_key.user.__dict__},
+                "User": {**auth_key_and_user[1].__dict__},
             }
         )
 

@@ -1,16 +1,16 @@
 from datetime import datetime, timedelta
 from enum import Enum
 from time import time
-from typing import Annotated, Callable
+from typing import Annotated, Awaitable, Callable
 
 import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import APIKeyHeader
 from sqlalchemy import or_
-from sqlalchemy.orm import Session
+from sqlalchemy.future import select
 
 from mmisp.config import config
-from mmisp.db.database import get_db
+from mmisp.db.database import Session, get_db, with_session_management
 from mmisp.db.models.auth_key import AuthKey
 from mmisp.db.models.role import Role
 from mmisp.db.models.user import User
@@ -88,7 +88,7 @@ class Auth:
         user_id: int | None = None,
         org_id: int | None = None,
         role_id: int | None = None,
-        auth_key_id: int | None = False,
+        auth_key_id: int | None = None,
         is_worker: bool | None = False,
     ) -> None:
         self.user_id = user_id
@@ -98,15 +98,16 @@ class Auth:
         self.is_worker = is_worker
 
 
-def authorize(strategy: AuthStrategy, permissions: list[Permission] = []) -> Callable[[Session, str], Auth]:
-    def authorizer(
+def authorize(strategy: AuthStrategy, permissions: list[Permission] = []) -> Callable[[Session, str], Awaitable[Auth]]:
+    @with_session_management
+    async def authorizer(
         db: Annotated[Session, Depends(get_db)],
         authorization: Annotated[str, Depends(APIKeyHeader(name="authorization"))],
     ) -> Auth:
         authorization = authorization.replace("Bearer ", "")
 
         if not authorization:
-            raise HTTPException(401)
+            raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
         if strategy in [AuthStrategy.WORKER_KEY, AuthStrategy.ALL] and authorization == config.WORKER_KEY:
             return Auth(is_worker=True)
@@ -118,7 +119,7 @@ def authorize(strategy: AuthStrategy, permissions: list[Permission] = []) -> Cal
             user_id = _decode_token(authorization)
 
         if not user_id and strategy in [AuthStrategy.API_KEY, AuthStrategy.HYBRID, AuthStrategy.ALL]:
-            res = _check_api_key(db, authorization)
+            res = await _check_api_key(db, authorization)
 
             if res:
                 user_id, auth_key_id = res
@@ -129,14 +130,14 @@ def authorize(strategy: AuthStrategy, permissions: list[Permission] = []) -> Cal
         if not user_id:
             raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
-        user: User = db.get(User, user_id)
+        user: User = await db.get(User, user_id)
 
         if not user:
             raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
         auth = Auth(user_id=user.id, org_id=user.org_id, role_id=user.role_id, auth_key_id=auth_key_id)
 
-        if not check_permissions(auth, permissions):
+        if not await check_permissions(auth, permissions):
             raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
         return auth
@@ -144,56 +145,58 @@ def authorize(strategy: AuthStrategy, permissions: list[Permission] = []) -> Cal
     return authorizer
 
 
-def check_permissions(auth: Auth, permissions: list[Permission] = []) -> bool:
-    db = get_db()
+async def check_permissions(auth: Auth, permissions: list[Permission] = []) -> bool:
+    async with get_db() as db:
+        result = await db.execute(
+            select(Role).join(User, Role.id == User.role_id).filter(User.id == auth.user_id).limit(1)
+        )
+        role: Role | None = result.scalars().first()
 
-    role: Role | None = db.query(Role).join(User, Role.id == User.role_id).filter(User.id == auth.user_id).first()
-
-    if not role:
-        return False
-
-    auth_key: AuthKey | None = None
-
-    if auth.auth_key_id:
-        auth_key = db.get(AuthKey, auth.auth_key_id)
-
-        if not auth_key:
+        if not role:
             return False
 
-    if role.perm_site_admin and not auth_key:
+        auth_key: AuthKey | None = None
+
+        if auth.auth_key_id:
+            auth_key = await db.get(AuthKey, auth.auth_key_id)
+
+            if not auth_key:
+                return False
+
+        if role.perm_site_admin and not auth_key:
+            return True
+
+        for permission in permissions:
+            if (
+                (permission == Permission.ADD and (not role.perm_add or not role.perm_admin))
+                or (permission == Permission.MODIFY and (not role.perm_modify or not role.perm_admin))
+                or (permission == Permission.MODIFY_ORG and (not role.perm_modify_org or not role.perm_admin))
+                or (permission == Permission.PUBLISH and (not role.perm_publish or not role.perm_admin))
+                or (permission == Permission.DELEGATE and not role.perm_delegate)
+                or (permission == Permission.SYNC and not role.perm_sync)
+                or (permission == Permission.ADMIN and not role.perm_admin)
+                or (permission == Permission.AUDIT and not role.perm_audit)
+                or (permission == Permission.FULL and not role.perm_full)
+                or (permission == Permission.AUTH and not role.perm_auth)
+                or (permission == Permission.SITE_ADMIN and not role.perm_site_admin)
+                or (permission == Permission.REGEXP_ACCESS and not role.perm_regexp_access)
+                or (permission == Permission.TAGGER and not role.perm_tagger)
+                or (permission == Permission.TEMPLATE and not role.perm_template)
+                or (permission == Permission.SHARING_GROUP and not role.perm_sharing_group)
+                or (permission == Permission.TAG_EDITOR and not role.perm_tag_editor)
+                or (permission == Permission.SIGHTING and not role.perm_sighting)
+                or (permission == Permission.OBJECT_TEMPLATE and not role.perm_object_template)
+                or (permission == Permission.PUBLISH_ZMQ and not role.perm_publish_zmq)
+                or (permission == Permission.PUBLISH_KAFKA and not role.perm_publish_kafka)
+                or (permission == Permission.DECAYING and not role.perm_decaying)
+                or (permission == Permission.GALAXY_EDITOR and not role.perm_galaxy_editor)
+                or (permission == Permission.WARNINGLIST and not role.perm_warninglist)
+                or (permission == Permission.VIEW_FEED_CORRELATIONS and not role.perm_view_feed_correlations)
+                or (permission == Permission.WRITE_ACCESS and auth_key and auth_key.read_only)
+            ):
+                return False
+
         return True
-
-    for permission in permissions:
-        if (
-            (permission == Permission.ADD and (not role.perm_add or not role.perm_admin))
-            or (permission == Permission.MODIFY and (not role.perm_modify or not role.perm_admin))
-            or (permission == Permission.MODIFY_ORG and (not role.perm_modify_org or not role.perm_admin))
-            or (permission == Permission.PUBLISH and (not role.perm_publish or not role.perm_admin))
-            or (permission == Permission.DELEGATE and not role.perm_delegate)
-            or (permission == Permission.SYNC and not role.perm_sync)
-            or (permission == Permission.ADMIN and not role.perm_admin)
-            or (permission == Permission.AUDIT and not role.perm_audit)
-            or (permission == Permission.FULL and not role.perm_full)
-            or (permission == Permission.AUTH and not role.perm_auth)
-            or (permission == Permission.SITE_ADMIN and not role.perm_site_admin)
-            or (permission == Permission.REGEXP_ACCESS and not role.perm_regexp_access)
-            or (permission == Permission.TAGGER and not role.perm_tagger)
-            or (permission == Permission.TEMPLATE and not role.perm_template)
-            or (permission == Permission.SHARING_GROUP and not role.perm_sharing_group)
-            or (permission == Permission.TAG_EDITOR and not role.perm_tag_editor)
-            or (permission == Permission.SIGHTING and not role.perm_sighting)
-            or (permission == Permission.OBJECT_TEMPLATE and not role.perm_object_template)
-            or (permission == Permission.PUBLISH_ZMQ and not role.perm_publish_zmq)
-            or (permission == Permission.PUBLISH_KAFKA and not role.perm_publish_kafka)
-            or (permission == Permission.DECAYING and not role.perm_decaying)
-            or (permission == Permission.GALAXY_EDITOR and not role.perm_galaxy_editor)
-            or (permission == Permission.WARNINGLIST and not role.perm_warninglist)
-            or (permission == Permission.VIEW_FEED_CORRELATIONS and not role.perm_view_feed_correlations)
-            or (permission == Permission.WRITE_ACCESS and auth_key and auth_key.read_only)
-        ):
-            return False
-
-    return True
 
 
 def encode_token(user_id: str) -> str:
@@ -231,7 +234,7 @@ def decode_exchange_token(token: str) -> str | None:
     return payload.get("user_id", None)
 
 
-def _decode_token(token: str) -> str | None:
+def _decode_token(token: str) -> int | None:
     payload: dict
 
     try:
@@ -239,22 +242,22 @@ def _decode_token(token: str) -> str | None:
     except jwt.InvalidTokenError:
         return None
 
-    if not payload or payload.get("exchange_token", None):
+    if not payload or not payload.get("user_id", None) or payload.get("exchange_token", None):
         return None
 
-    return payload.get("user_id", None)
+    return int(payload["user_id"])
 
 
-def _check_api_key(db: Session, authorization: str) -> tuple[int, int] | None:
-    potential_auth_keys: list[AuthKey] = (
-        db.query(AuthKey)
-        .filter(
+async def _check_api_key(db: Session, authorization: str) -> tuple[int, int] | None:
+    result = await db.execute(
+        select(AuthKey).filter(
             AuthKey.authkey_start == authorization[:4],
             AuthKey.authkey_end == authorization[-4:],
             or_(AuthKey.expiration == 0, AuthKey.expiration < int(time())),
         )
-        .all()
     )
+
+    potential_auth_keys: list[AuthKey] = result.scalars().all()
 
     auth_key: AuthKey | None = None
 

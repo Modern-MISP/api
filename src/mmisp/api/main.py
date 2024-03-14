@@ -1,6 +1,9 @@
+from contextlib import asynccontextmanager
+from typing import AsyncGenerator
+
 from fastapi import FastAPI
 
-from mmisp.db.database import Base, engine
+from mmisp.db.database import create_all_models
 
 # if you add a new model module, add it here too
 from mmisp.db.models import (  # noqa: F401
@@ -44,9 +47,14 @@ from .routers import (
     warninglists,
 )
 
-Base.metadata.create_all(bind=engine)
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator:
+    await create_all_models()
+    yield
+
+
+app = FastAPI(lifespan=lifespan)
 
 # include Routes
 app.include_router(attributes.router)
