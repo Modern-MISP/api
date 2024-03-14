@@ -124,6 +124,7 @@ class TestAddObject:
         generate_specific_search_query().dict(),
         generate_search_query().dict(),
         generate_random_search_query().dict(),
+        generate_random_search_query().dict(),
     ]
 )
 def search_data(request: Any) -> dict[str, Any]:

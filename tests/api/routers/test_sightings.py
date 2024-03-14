@@ -8,9 +8,7 @@ from mmisp.db.models.attribute import Attribute
 from mmisp.db.models.event import Event
 from tests.environment import client, environment
 from tests.generators.model_generators.sharing_group_generator import generate_sharing_group
-from tests.generators.sighting_generator import (
-    generate_valid_random_sighting_data,
-)
+from tests.generators.sighting_generator import generate_valid_random_sighting_data
 
 
 @pytest.fixture(
@@ -48,7 +46,7 @@ class TestAddSighting:
         db.refresh(event)
 
         for val in sighting_data["values"]:
-            attributes = Attribute(
+            attribute = Attribute(
                 event_id=event.id,
                 category="test",
                 type="test",
@@ -57,7 +55,7 @@ class TestAddSighting:
                 sharing_group_id=sharing_group.id,
             )
 
-            db.add(attributes)
+            db.add(attribute)
 
         db.commit()
 
@@ -89,7 +87,7 @@ class TestAddSighting:
         db.refresh(event)
 
         for val in sighting_data["values"]:
-            attributes = Attribute(
+            attribute = Attribute(
                 event_id=event.id,
                 category="test",
                 type="test",
@@ -98,7 +96,7 @@ class TestAddSighting:
                 sharing_group_id=sharing_group.id,
             )
 
-            db.add(attributes)
+            db.add(attribute)
 
         db.commit()
 
@@ -133,7 +131,7 @@ class TestAddSighting:
         db.refresh(event)
 
         for val in sighting_data["values"]:
-            attributes = Attribute(
+            attribute = Attribute(
                 event_id=event.id,
                 category="test",
                 type="test",
@@ -142,7 +140,7 @@ class TestAddSighting:
                 sharing_group_id=sharing_group.id,
             )
 
-            db.add(attributes)
+            db.add(attribute)
 
         db.commit()
 
