@@ -1,7 +1,7 @@
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Path, status
-from sqlalchemy import func, or_
+from sqlalchemy import delete, func, or_
 from sqlalchemy.future import select
 from sqlalchemy.orm import Session
 
@@ -119,8 +119,9 @@ async def get_all_or_selected_warninglists(
     "/warninglists/checkValue",
     status_code=status.HTTP_200_OK,
     response_model=partial(CheckValueWarninglistsResponse),
-    summary="Get a list of ID and name of warninglists",
-    description="Retrieve a list of ID and name of warninglists, which match has the given search term as entry.",
+    summary="Get a list of ID and name of enabled warninglists",
+    description="Retrieve a list of ID and name of enabled warninglists, \
+        which match has the given search term as entry.",
 )
 @with_session_management
 async def get_warninglists_by_value(
@@ -300,6 +301,8 @@ async def _delete_warninglist(
     warninglist_response["WarninglistEntry"] = [warninglist_entry.__dict__ for warninglist_entry in warninglist_entries]
     warninglist_response["WarninglistType"] = [warninglist_type.__dict__ for warninglist_type in warninglist_types]
 
+    await db.execute(delete(WarninglistEntry).filter(WarninglistEntry.warninglist_id == warninglist.id))
+    await db.execute(delete(WarninglistType).filter(WarninglistType.warninglist_id == warninglist.id))
     await db.delete(warninglist)
     await db.commit()
 
@@ -317,7 +320,7 @@ async def _get_all_or_selected_warninglists(
     for warninglist in warninglists:
         warninglists_data.append(WarninglistsResponse(Warninglist=await _prepare_warninglist_response(db, warninglist)))
 
-    return GetSelectedAllWarninglistsResponse(response=warninglists_data)
+    return GetSelectedAllWarninglistsResponse(Warninglists=warninglists_data)
 
 
 async def _get_warninglists_by_value(
@@ -332,17 +335,20 @@ async def _get_warninglists_by_value(
         result = await db.execute(select(WarninglistEntry).filter(WarninglistEntry.value == value))
         warninglist_entries: list[WarninglistEntry] = result.scalars().all()
 
-        warninglists: list[NameWarninglist] = []
-
+        name_warninglists: list[NameWarninglist] = []
         for warninglist_entry in warninglist_entries:
-            warninglist: Warninglist = await db.get(Warninglist, warninglist_entry.warninglist_id)
-
-            if warninglist:
-                warninglists.append(NameWarninglist(id=warninglist.id, name=warninglist.name))
+            result = await db.execute(
+                select(Warninglist).filter(
+                    Warninglist.id == warninglist_entry.warninglist_id, Warninglist.enabled is True
+                )
+            )
+            warninglists: Warninglist = result.scalars().all()
+            for warninglist in warninglists:
+                name_warninglists.append(NameWarninglist(id=warninglist_entry.warninglist_id, name=warninglist.name))
 
         value_response = ValueWarninglistsResponse(
             value=value,
-            NameWarninglist=warninglists,
+            Warninglist=name_warninglists,
         )
 
         response.append(value_response)
@@ -354,11 +360,8 @@ async def _update_all_warninglists(
     db: Session,
     deprecated: bool,
 ) -> StandardStatusResponse:
-    result = await db.execute(select(func.count()).select_from(Warninglist))
-    number_updated_lists = result.scalar()
-
-    name = "Successfully updated " + str(number_updated_lists) + " warninglists."
-    message = "Successfully updated " + str(number_updated_lists) + " warninglists."
+    name = "All warninglists are up to date already."
+    message = "All warninglists are up to date already."
     url = "/warninglists/update" if deprecated else "/warninglists"
 
     return StandardStatusResponse(
@@ -380,7 +383,7 @@ async def _get_selected_warninglists(
     for warninglist in warninglists:
         warninglists_data.append(WarninglistsResponse(Warninglist=await _prepare_warninglist_response(db, warninglist)))
 
-    return GetSelectedAllWarninglistsResponse(response=warninglists_data)
+    return GetSelectedAllWarninglistsResponse(Warninglists=warninglists_data)
 
 
 async def _search_warninglist(db: Session, value: str | None = None, enabled: bool | None = None) -> list[Warninglist]:
@@ -393,7 +396,7 @@ async def _search_warninglist(db: Session, value: str | None = None, enabled: bo
             or_(Warninglist.name == value, Warninglist.description == value, Warninglist.type == value)
         )
 
-    result = await db.execute(query)
+    result = await db.execute(query.order_by(Warninglist.id.desc()))
     warninglists: list[Warninglist] = result.scalars().all()
 
     return warninglists
