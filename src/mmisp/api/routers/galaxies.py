@@ -23,7 +23,7 @@ from mmisp.api_schemas.galaxies.get_all_search_galaxies_response import (
 )
 from mmisp.api_schemas.galaxies.get_galaxy_response import GetGalaxyClusterResponse, GetGalaxyResponse
 from mmisp.api_schemas.galaxies.import_galaxies_body import ImportGalaxyBody
-from mmisp.api_schemas.galaxies.search_galaxies_body import SearchGalaxiesBody
+from mmisp.api_schemas.galaxies.search_galaxies_body import SearchGalaxiesbyValue
 from mmisp.api_schemas.organisations.organisation import Organisation as OrganisationSchema
 from mmisp.db.database import get_db, with_session_management
 from mmisp.db.models.attribute import Attribute, AttributeTag
@@ -122,7 +122,7 @@ async def get_galaxies(
 async def search_galaxies(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    body: SearchGalaxiesBody,
+    body: SearchGalaxiesbyValue,
 ) -> list[GetAllSearchGalaxiesResponse]:
     return await _search_galaxies(db, body)
 
@@ -351,17 +351,18 @@ async def _get_galaxies(db: Session) -> list[GetAllSearchGalaxiesResponse]:
     return response_list
 
 
-async def _search_galaxies(db: Session, body: SearchGalaxiesBody) -> list[GetAllSearchGalaxiesResponse]:
-    # filters = body.dict(exclude_unset=True)
-
-    result = await db.execute(select(Galaxy))
+async def _search_galaxies(db: Session, body: SearchGalaxiesbyValue) -> list[GetAllSearchGalaxiesResponse]:
+    search_term = body.value
+    result = await db.execute(
+        select(Galaxy).filter(
+            Galaxy.name.contains(search_term),
+            Galaxy.namespace.contains(search_term),
+            Galaxy.description.contains(search_term),
+            Galaxy.kill_chain_order.contains(search_term),
+            Galaxy.uuid.contains(search_term),
+        )
+    )
     galaxies: list[Galaxy] = result.scalars().all()
-    galaxy_dict = result.scalars().__dict__
-
-    for field, value in body.dict().items():
-        if field not in galaxy_dict.keys():
-            continue
-        galaxies = await db.execute(select(Galaxy).where(getattr(Galaxy, field) == value)).scalars().all()
 
     response_list = []
 
