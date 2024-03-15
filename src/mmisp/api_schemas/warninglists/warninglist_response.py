@@ -14,7 +14,7 @@ class WarninglistTypeResponse(BaseModel):
     warninglist_id: str
 
 
-class WarninglistAttributes(BaseModel):
+class WarninglistBaseResponse(BaseModel):
     id: str
     name: str = Field(max_length=255)
     type: str
@@ -23,11 +23,14 @@ class WarninglistAttributes(BaseModel):
     enabled: bool
     default: bool
     category: str
+
+
+class WarninglistAttributes(WarninglistBaseResponse):
     warninglist_entry_count: str
     valid_attributes: str
 
 
-class WarninglistAttributesResponse(WarninglistAttributes):
+class WarninglistAttributesResponse(WarninglistBaseResponse):
     WarninglistEntry: list[WarninglistEntryResponse] | None = None
     WarninglistType: list[WarninglistTypeResponse] | None = None
 

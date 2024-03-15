@@ -8,7 +8,7 @@ class WarninglistsResponse(BaseModel):
 
 
 class GetSelectedAllWarninglistsResponse(BaseModel):
-    response: list[WarninglistsResponse]
+    Warninglists: list[WarninglistsResponse]
 
     class Config:
         orm_mode = True
