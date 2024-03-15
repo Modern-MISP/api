@@ -1,6 +1,10 @@
 from pydantic import BaseModel
 
 
+class SearchGalaxiesbyValue(BaseModel):
+    value: str
+
+
 class SearchGalaxiesBody(BaseModel):
     id: str | None = None
     uuid: str | None = None

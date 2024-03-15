@@ -258,7 +258,7 @@ class TestGetAllGalaxies:
 class TestSearchGalaxies:
     @staticmethod
     def test_search_galaxies(db: Session) -> None:
-        request_body = {"name": "test galaxy", "local_only": False}
+        request_body = {"value": "test galaxy single name abcdefghijklmnopqrstuvwxyz"}
         organisation = generate_organisation()
 
         db.add(organisation)
@@ -287,7 +287,6 @@ class TestSearchGalaxies:
         assert isinstance(response_json, list)
         for galaxy in response_json:
             assert galaxy["Galaxy"]["name"] == request_body["name"]
-            assert galaxy["Galaxy"]["local_only"] == request_body["local_only"]
 
 
 class TestExportGalaxy:
