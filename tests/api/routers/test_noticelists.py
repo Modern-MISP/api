@@ -17,11 +17,20 @@ class TestGetNoticelist:
         for noticelist_id in noticelist_ids:
             response = client.get(f"/noticelists/{noticelist_id}", headers=headers)
             assert response.status_code == 200
-            assert response.json()["id"] == noticelist_id
+            assert response.json()["Noticelist"]["id"] == str(noticelist_id)
 
+        remove_noticelists(noticelist_ids)
+
+    @staticmethod
+    def test_get_existing_noticelist_details_deprecated() -> None:
+        headers = {"authorization": environment.site_admin_user_token}
+
+        noticelist_ids = add_noticelists()
+
+        for noticelist_id in noticelist_ids:
             response = client.get(f"/noticelists/view/{noticelist_id}", headers=headers)
             assert response.status_code == 200
-            assert response.json()["id"] == noticelist_id
+            assert response.json()["Noticelist"]["id"] == str(noticelist_id)
 
         remove_noticelists(noticelist_ids)
 
@@ -35,6 +44,13 @@ class TestGetNoticelist:
             response = client.get(f"/noticelists/{invalid_noticelist_id}", headers=headers)
             assert response.status_code == 422
 
+    @staticmethod
+    def test_get_invalid_noticelist_details_deprecated() -> None:
+        headers = {"authorization": environment.site_admin_user_token}
+
+        invalid_noticelist_ids = get_invalid_noticelist_ids()
+
+        for invalid_noticelist_id in invalid_noticelist_ids:
             response = client.get(f"/noticelists/view/{invalid_noticelist_id}", headers=headers)
             assert response.status_code == 422
 
@@ -48,6 +64,13 @@ class TestGetNoticelist:
             response = client.get(f"/noticelists/{non_existing_noticelist_id}", headers=headers)
             assert response.status_code == 404
 
+    @staticmethod
+    def test_get_non_existing_noticelist_details_deprecated() -> None:
+        headers = {"authorization": environment.site_admin_user_token}
+
+        non_existing_noticelist_ids = get_non_existing_noticelist_ids()
+
+        for non_existing_noticelist_id in non_existing_noticelist_ids:
             response = client.get(f"/noticelists/view/{non_existing_noticelist_id}", headers=headers)
             assert response.status_code == 404
 
@@ -59,11 +82,19 @@ class TestGetNoticelist:
 
         response = client.get(f"/noticelists/{noticelist_id[0]}", headers=headers)
         json = response.json()
-        assert isinstance(json["id"], int)
+        assert isinstance(json["Noticelist"]["id"], str)
+
+        remove_noticelists(noticelist_id)
+
+    @staticmethod
+    def test_get_noticelist_response_format_deprecated() -> None:
+        headers = {"authorization": environment.site_admin_user_token}
+
+        noticelist_id = add_noticelists(1)
 
         response = client.get(f"/noticelists/view/{noticelist_id[0]}", headers=headers)
         json = response.json()
-        assert isinstance(json["id"], int)
+        assert isinstance(json["Noticelist"]["id"], str)
 
         remove_noticelists(noticelist_id)
 
@@ -141,14 +172,21 @@ class TestUpdateNoticelist:
         assert response.status_code == 200
 
     @staticmethod
-    def test_update_noticelist_response_format_new() -> None:
+    def test_update_noticelist_deprecated() -> None:
+        headers = {"authorization": environment.site_admin_user_token}
+
+        response = client.post("/noticelists/update", headers=headers)
+        assert response.status_code == 200
+
+    @staticmethod
+    def test_update_noticelist_response_format() -> None:
         headers = {"authorization": environment.site_admin_user_token}
         response = client.put("/noticelists", headers=headers)
         json = response.json()
         assert json["url"] == "/noticelists/"
 
     @staticmethod
-    def test_update_noticelist_response_format_old() -> None:
+    def test_update_noticelist_response_format_deprecated() -> None:
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/noticelists/update", headers=headers)
         assert response.headers["Content-Type"] == "application/json"
