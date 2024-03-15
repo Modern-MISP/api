@@ -8,27 +8,31 @@ class Data(BaseModel):
     field: str | list[str] | None
     value: str | list[str] | None
     tags: str | list[str] | None
-    message: str | Any  # TODO: right format??
+    message: str | Any
 
 
 class NoticelistEntryResponse(BaseModel):
-    id: int
-    noticelistId: int
+    id: str
+    noticelist_id: str
     data: Data
 
 
-class NoticelistAttributesResponse(BaseModel):
-    id: int
+class NoticelistAttributes(BaseModel):
+    id: str
     name: str
     expanded_name: str
     ref: list[str]
     geographical_area: list[str]
-    version: int
+    version: str
     enabled: bool
 
 
-class NoticelistResponse(NoticelistAttributesResponse):
+class NoticelistAttributesResponse(NoticelistAttributes):
     NoticelistEntry: list[NoticelistEntryResponse]
+
+
+class NoticelistResponse(BaseModel):
+    Noticelist: NoticelistAttributesResponse
 
     class Config:
         orm_mode = True

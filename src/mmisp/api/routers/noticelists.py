@@ -2,13 +2,17 @@ import json
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Path, status
-from sqlalchemy import func
 from sqlalchemy.future import select
 from sqlalchemy.orm import Session
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
-from mmisp.api_schemas.noticelists.get_all_noticelist_response import GetAllNoticelistResponse
-from mmisp.api_schemas.noticelists.get_noticelist_response import NoticelistEntryResponse, NoticelistResponse
+from mmisp.api_schemas.noticelists.get_all_noticelist_response import GetAllNoticelist, GetAllNoticelistResponse
+from mmisp.api_schemas.noticelists.get_noticelist_response import (
+    NoticelistAttributes,
+    NoticelistAttributesResponse,
+    NoticelistEntryResponse,
+    NoticelistResponse,
+)
 from mmisp.api_schemas.standard_status_response import StandardStatusIdentifiedResponse, StandardStatusResponse
 from mmisp.db.database import get_db, with_session_management
 from mmisp.db.models.noticelist import Noticelist, NoticelistEntry
@@ -127,7 +131,7 @@ async def _get_noticelist(db: Session, noticelist_id: int) -> NoticelistResponse
     result = await db.execute(select(NoticelistEntry).filter(NoticelistEntry.noticelist_id == noticelist_id))
     noticelist_entries = result.scalars().all()
 
-    return _prepare_noticelist_response(noticelist, noticelist_entries)
+    return NoticelistResponse(Noticelist=_prepare_noticelist_response(noticelist, noticelist_entries))
 
 
 async def _toggleEnable_noticelists(db: Session, noticelist_id: int) -> StandardStatusIdentifiedResponse:
@@ -153,29 +157,35 @@ async def _toggleEnable_noticelists(db: Session, noticelist_id: int) -> Standard
 
 
 async def _update_noticelists(db: Session, depr: bool) -> StandardStatusResponse:
-    result = await db.execute(select(func.count()).select_from(Noticelist))
-    number_updated_lists = result.scalar()
-
     return StandardStatusResponse(
         saved=True,
         success=True,
-        name="Succesfully updated " + str(number_updated_lists) + "noticelists.",
-        message="Succesfully updated " + str(number_updated_lists) + "noticelists.",
+        name="All noticelists are up to date already.",
+        message="All noticelists are up to date already.",
         url="/noticelists/update" if depr is True else "/noticelists/",
     )
 
 
 async def _get_all_noticelists(db: Session) -> dict:
-    noticelist_data: list[NoticelistResponse] = []
+    noticelist_data: list[GetAllNoticelist] = []
 
     result = await db.execute(select(Noticelist))
-    noticelists = result.scalars().all()
+    noticelists: list[Noticelist] = result.scalars().all()
 
     for noticelist in noticelists:
-        result = await db.execute(select(NoticelistEntry).filter(NoticelistEntry.noticelist_id == noticelist.id))
-        noticelist_entries = result.scalars().all()
-
-        noticelist_data.append(_prepare_noticelist_response(noticelist, noticelist_entries))
+        noticelist_data.append(
+            GetAllNoticelist(
+                Noticelist=NoticelistAttributes(
+                    id=noticelist.id,
+                    name=noticelist.name,
+                    expanded_name=noticelist.expanded_name,
+                    ref=json.loads(noticelist.ref),
+                    geographical_area=json.loads(noticelist.geographical_area),
+                    version=noticelist.version,
+                    enabled=noticelist.enabled,
+                )
+            )
+        )
 
     return GetAllNoticelistResponse(response=noticelist_data)
 
@@ -184,7 +194,7 @@ def _prepare_noticelist_entries(noticelist_entries: list[NoticelistEntry]) -> li
     noticelist_entry_response = []
     for noticelist_entry in noticelist_entries:
         noticelist_entry_response_attribute = NoticelistEntryResponse(
-            id=noticelist_entry.id, noticelistId=noticelist_entry.noticelist_id, data=json.loads(noticelist_entry.data)
+            id=noticelist_entry.id, noticelist_id=noticelist_entry.noticelist_id, data=json.loads(noticelist_entry.data)
         )
         noticelist_entry_response.append(noticelist_entry_response_attribute)
 
@@ -193,8 +203,8 @@ def _prepare_noticelist_entries(noticelist_entries: list[NoticelistEntry]) -> li
 
 def _prepare_noticelist_response(
     noticelist: Noticelist, noticelist_entries: list[NoticelistEntry]
-) -> NoticelistResponse:
-    return NoticelistResponse(
+) -> NoticelistAttributesResponse:
+    return NoticelistAttributesResponse(
         id=noticelist.id,
         name=noticelist.name,
         expanded_name=noticelist.expanded_name,
