@@ -45,9 +45,7 @@ async def add_feed(
 )
 @with_session_management
 async def cache_feeds(
-    auth: Annotated[
-        Auth, Depends(authorize(AuthStrategy.WORKER_KEY, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))
-    ],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     cache_feeds_scope: Annotated[str, Path(alias="cacheFeedsScope")],
 ) -> FeedCacheResponse:
@@ -63,9 +61,7 @@ async def cache_feeds(
 )
 @with_session_management
 async def fetch_from_feed(
-    auth: Annotated[
-        Auth, Depends(authorize(AuthStrategy.WORKER_KEY, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))
-    ],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     feed_id: Annotated[int, Path(alias="feedId")],
 ) -> FeedFetchResponse:
@@ -131,9 +127,7 @@ async def toggle_feed(
 )
 @with_session_management
 async def fetch_data_from_all_feeds(
-    auth: Annotated[
-        Auth, Depends(authorize(AuthStrategy.WORKER_KEY, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))
-    ],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
 ) -> FeedFetchResponse:
     return await _fetch_data_from_all_feeds(db)
@@ -218,9 +212,7 @@ async def disable_feed(
 )
 @with_session_management
 async def cache_feeds_depr(
-    auth: Annotated[
-        Auth, Depends(authorize(AuthStrategy.WORKER_KEY, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))
-    ],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     cache_feeds_scope: Annotated[str, Path(alias="cacheFeedsScope")],
 ) -> FeedCacheResponse:
@@ -237,9 +229,7 @@ async def cache_feeds_depr(
 )
 @with_session_management
 async def fetch_from_feed_depr(
-    auth: Annotated[
-        Auth, Depends(authorize(AuthStrategy.WORKER_KEY, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))
-    ],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     feed_id: Annotated[int, Path(alias="feedId")],
 ) -> FeedFetchResponse:
@@ -256,9 +246,7 @@ async def fetch_from_feed_depr(
 )
 @with_session_management
 async def fetch_data_from_all_feeds_depr(
-    auth: Annotated[
-        Auth, Depends(authorize(AuthStrategy.WORKER_KEY, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))
-    ],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
 ) -> FeedFetchResponse:
     return await _fetch_data_from_all_feeds(db)
