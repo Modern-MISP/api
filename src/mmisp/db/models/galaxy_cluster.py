@@ -42,12 +42,11 @@ class GalaxyElement(Base):
 
 
 class GalaxyReference(Base):
-    # table name is unfortunately this way in legacy misp
     __tablename__ = "galaxy_reference"
 
     id = Column(Integer, primary_key=True, nullable=False)
     galaxy_cluster_id = Column(Integer, ForeignKey(GalaxyCluster.id, ondelete="CASCADE"), nullable=False, index=True)
     referenced_galaxy_cluster_id = Column(Integer, nullable=False, index=True)
     referenced_galaxy_cluster_uuid = Column(String(255), nullable=False, index=True)
-    referenced_galaxy_cluster_type = Column(Text, nullable=False)  # index=True
-    referenced_galaxy_cluster_value = Column(Text, nullable=False)  # index=True
+    referenced_galaxy_cluster_type = Column(Text, nullable=False)
+    referenced_galaxy_cluster_value = Column(Text, nullable=False)

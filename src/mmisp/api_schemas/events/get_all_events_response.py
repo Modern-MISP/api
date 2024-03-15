@@ -80,7 +80,6 @@ class GetAllEventsResponse(BaseModel):
     analysis: str
     attribute_count: str
     timestamp: str
-    distribution: str
     sharing_group_id: str
     proposal_email_lock: bool
     locked: bool
