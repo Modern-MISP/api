@@ -255,6 +255,41 @@ class TestGetAllGalaxies:
         assert isinstance(response_json, list)
 
 
+class TestSearchGalaxies:
+    @staticmethod
+    def test_search_galaxies(db: Session) -> None:
+        request_body = {"name": "test galaxy", "local_only": False}
+        organisation = generate_organisation()
+
+        db.add(organisation)
+        db.commit()
+        db.refresh(organisation)
+
+        tag = generate_tag()
+        setattr(tag, "user_id", 1)
+        setattr(tag, "org_id", 1)
+
+        db.add(tag)
+        db.commit()
+        db.refresh(tag)
+
+        galaxy = generate_galaxy()
+
+        db.add(galaxy)
+        db.commit()
+        db.refresh(galaxy)
+
+        headers = {"authorization": environment.site_admin_user_token}
+        response = client.post("/galaxies", json=request_body, headers=headers)
+
+        assert response.status_code == 200
+        response_json = response.json()
+        assert isinstance(response_json, list)
+        for galaxy in response_json:
+            assert galaxy["Galaxy"]["name"] == request_body["name"]
+            assert galaxy["Galaxy"]["local_only"] == request_body["local_only"]
+
+
 class TestExportGalaxy:
     @staticmethod
     def test_export_existing_galaxy(db: Session) -> None:

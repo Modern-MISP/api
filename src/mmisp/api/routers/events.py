@@ -167,7 +167,7 @@ async def rest_search_events(
 @router.post(
     "/events/index",
     status_code=status.HTTP_200_OK,
-    response_model=list[GetAllEventsResponse],
+    response_model=list[IndexEventsAttributes],
     summary="Search events",
     description="Search for events based on various filters, which are more general than the ones in 'rest search'.",
 )
@@ -301,7 +301,7 @@ async def add_event_depr(
     status_code=status.HTTP_200_OK,
     response_model=AddEditGetEventResponse,
     summary="Get event details (Deprecated)",
-    description="Deprecated. Retrieve details of a specific attribute by its ID. NOT YET AVAILABLE!",
+    description="Deprecated. Retrieve details of a specific attribute by its ID.",
 )
 @with_session_management
 async def get_event_details_depr(
@@ -318,7 +318,7 @@ async def get_event_details_depr(
     status_code=status.HTTP_200_OK,
     response_model=AddEditGetEventResponse,
     summary="Update an event (Deprecated)",
-    description="Deprecated. Update an existing event by its ID. NOT YET AVAILABLE!",
+    description="Deprecated. Update an existing event by its ID.",
 )
 @with_session_management
 async def update_event_depr(
@@ -336,7 +336,7 @@ async def update_event_depr(
     status_code=status.HTTP_200_OK,
     response_model=AddEditGetEventResponse,
     summary="Delete an event (Deprecated)",
-    description="Deprecated. Delete an existing event by its ID. NOT YET AVAILABLE!",
+    description="Deprecated. Delete an existing event by its ID.",
 )
 @with_session_management
 async def delete_event_depr(
@@ -418,7 +418,6 @@ async def _delete_event(db: Session, event_id: str) -> DeleteEventResponse:
                 name="Could not delete Event",
                 message="Could not delete Event",
                 url=f"/events/delete/{event_id}",
-                errors="Event was not deleted.",
             ).dict(),
         )
 
@@ -442,7 +441,7 @@ async def _get_events(db: Session) -> list[dict]:
     if not events:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No events found.")
 
-    event_responses = [await _prepare_all_events_response(db, event) for event in events]
+    event_responses = [await _prepare_all_events_response(db, event, "get_all") for event in events]
 
     return event_responses
 
@@ -460,7 +459,7 @@ async def _rest_search_events(db: Session, body: SearchEventsBody) -> dict:
     #         continue
     #     events = db.query(Event).filter(getattr(Event, field) == value).all()
 
-    #! todo: not all fields in 'SearchAttributesBody' are taken into account yet
+    # ! todo: not all fields in 'SearchAttributesBody' are taken into account yet
 
     if body.limit is not None:
         events = events[: body.limit]
@@ -477,7 +476,7 @@ async def _index_events(db: Session, body: IndexEventsBody) -> list[dict]:
     limit = 25
     offset = 0
 
-    if body.limit and body.limit < 500 and body.limit > 0:
+    if body.limit and 500 > body.limit > 0:
         limit = body.limit
     if body.page:
         offset = limit * body.page
@@ -488,7 +487,7 @@ async def _index_events(db: Session, body: IndexEventsBody) -> list[dict]:
     events: list[Event] = result.scalars().all()
     # todo: not all fields in 'IndexEventsBody' are taken into account yet
 
-    response_list = [await _prepare_all_events_response(db, event) for event in events]
+    response_list = [await _prepare_all_events_response(db, event, "index") for event in events]
 
     return response_list
 
@@ -885,7 +884,7 @@ def _prepare_event_report_response(event_report_list: list[EventReport]) -> AddE
     return response_event_report_list
 
 
-async def _prepare_all_events_response(db: Session, event: Event) -> GetAllEventsResponse:
+async def _prepare_all_events_response(db: Session, event: Event, request_type: str) -> GetAllEventsResponse:
     event_dict = event.__dict__.copy()
     event_dict["sharing_group_id"] = "0"
 
@@ -905,6 +904,15 @@ async def _prepare_all_events_response(db: Session, event: Event) -> GetAllEvent
     event_dict["GalaxyCluster"] = await _prepare_all_events_galaxy_cluster_response(db, event_tag_list)
     event_dict["date"] = str(event_dict["date"])
     event_dict["event_creator_email"] = (await db.get(User, event.user_id)).email
+
+    response_strategy = {"get_all": GetAllEventsResponse, "index": IndexEventsAttributes}
+
+    response_class = response_strategy.get(request_type)
+
+    if response_class:
+        return response_class(**event_dict).dict()
+
+    raise ValueError(f"Unknown request_type: {request_type}")
 
     return GetAllEventsResponse(**event_dict)
 
