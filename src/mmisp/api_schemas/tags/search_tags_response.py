@@ -20,7 +20,7 @@ class TagCombinedModel(BaseModel):
 
 
 class TagSearchResponse(BaseModel):
-    root: list[TagCombinedModel]
+    response: list[TagCombinedModel]
 
     class Config:
         orm_mode = True
