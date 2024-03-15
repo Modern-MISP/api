@@ -2,16 +2,19 @@ import re
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Path, status
+from sqlalchemy import delete, func
 from sqlalchemy.future import select
 from sqlalchemy.orm import Session
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
 from mmisp.api_schemas.tags.create_tag_body import TagCreateBody
 from mmisp.api_schemas.tags.delete_tag_response import TagDeleteResponse
-from mmisp.api_schemas.tags.get_tag_response import TagAttributesResponse, TagGetResponse, TagResponse
+from mmisp.api_schemas.tags.get_tag_response import TagAttributesResponse, TagGetResponse, TagResponse, TagViewResponse
 from mmisp.api_schemas.tags.search_tags_response import TagSearchResponse
 from mmisp.api_schemas.tags.update_tag_body import TagUpdateBody
 from mmisp.db.database import get_db, with_session_management
+from mmisp.db.models.attribute import AttributeTag
+from mmisp.db.models.event import EventTag
 from mmisp.db.models.feed import Feed
 from mmisp.db.models.galaxy_cluster import GalaxyCluster
 from mmisp.db.models.tag import Tag
@@ -41,7 +44,7 @@ async def add_tag(
 @router.get(
     "/tags/{tagId}",
     status_code=status.HTTP_200_OK,
-    response_model=TagAttributesResponse,
+    response_model=TagViewResponse,
     summary="View tag details",
     description="View details of a specific tag.",
 )
@@ -50,7 +53,7 @@ async def view_tag(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     tag_id: Annotated[int, Path(alias="tagId")],
-) -> TagAttributesResponse:
+) -> TagViewResponse:
     return await _view_tag(db, tag_id)
 
 
@@ -214,7 +217,10 @@ async def _view_tag(db: Session, tag_id: int) -> TagAttributesResponse:
     if not tag:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Tag not found.")
 
-    return tag.__dict__
+    result = await db.execute(select(func.count()).filter(EventTag.tag_id == tag.id))
+    count = result.scalar()
+
+    return TagViewResponse(**{**tag.__dict__, "attribute_count": 0, "count": count})
 
 
 async def _search_tags(db: Session, tag_search_term: str) -> dict:
@@ -223,10 +229,8 @@ async def _search_tags(db: Session, tag_search_term: str) -> dict:
 
     tag_datas = []
     for tag in tags:
-        result: list[Taxonomy] = await db.execute(
-            select(Taxonomy).filter(Taxonomy.namespace == tag.name.split(":", 1)[0])
-        )
-        taxonomies = result.scalars().all()
+        result = await db.execute(select(Taxonomy).filter(Taxonomy.namespace == tag.name.split(":", 1)[0]))
+        taxonomies: list[Taxonomy] = result.scalars().all()
 
         for taxonomy in taxonomies:
             result = await db.execute(select(TaxonomyPredicate).filter_by(taxonomy_id=taxonomy.id))
@@ -241,7 +245,7 @@ async def _search_tags(db: Session, tag_search_term: str) -> dict:
                     }
                 )
 
-    return {"root": tag_datas}
+    return {"response": tag_datas}
 
 
 async def _update_tag(db: Session, body: TagUpdateBody, tag_id: int) -> TagResponse:
@@ -285,6 +289,8 @@ async def _delete_tag(db: Session, tag_id: int) -> TagDeleteResponse:
     for galaxy_cluster in galaxy_clusters:
         galaxy_cluster.tag_name = ""
 
+    await db.execute(delete(EventTag).filter(EventTag.tag_id == deleted_tag.id))
+    await db.execute(delete(AttributeTag).filter(AttributeTag.tag_id == deleted_tag.id))
     await db.delete(deleted_tag)
     await db.commit()
 
@@ -297,7 +303,7 @@ async def _get_tags(db: Session) -> dict:
     result = await db.execute(select(Tag))
     tags: list[Tag] = result.scalars().all()
 
-    return TagGetResponse(tags=[tag.__dict__ for tag in tags])
+    return TagGetResponse(Tag=[tag.__dict__ for tag in tags])
 
 
 def _check_type_hex_colour(colour: Any) -> None:
