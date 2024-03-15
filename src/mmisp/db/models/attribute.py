@@ -35,8 +35,8 @@ class Attribute(Base, DictMixin):
     object_relation = Column(String(255), index=True)
     category = Column(String(255), nullable=False, index=True)
     type = Column(String(100), nullable=False, index=True)
-    value1 = Column(Text, nullable=False)  # index=True
-    value2 = Column(Text, nullable=False, default="")  # index=True
+    value1 = Column(Text, nullable=False)
+    value2 = Column(Text, nullable=False, default="")
     to_ids = Column(Boolean, default=True, nullable=False)
     timestamp = Column(Integer, nullable=False, default=0)
     distribution = Column(Integer, nullable=False, default=0)
@@ -75,10 +75,6 @@ class AttributeTag(Base):
     event_id = Column(Integer, ForeignKey(Event.id, ondelete="CASCADE"), nullable=False, index=True)
     tag_id = Column(Integer, ForeignKey(Tag.id, ondelete="CASCADE"), nullable=False, index=True)
     local = Column(Boolean, nullable=False, default=False)
-
-
-# TODO
-# categories als enum und dann pro typ ein set von categories
 
 
 class AttributeCategories(Enum):

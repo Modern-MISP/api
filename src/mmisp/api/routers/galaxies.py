@@ -1,4 +1,3 @@
-import logging
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Path
@@ -24,6 +23,7 @@ from mmisp.api_schemas.galaxies.get_all_search_galaxies_response import (
 )
 from mmisp.api_schemas.galaxies.get_galaxy_response import GetGalaxyClusterResponse, GetGalaxyResponse
 from mmisp.api_schemas.galaxies.import_galaxies_body import ImportGalaxyBody
+from mmisp.api_schemas.galaxies.search_galaxies_body import SearchGalaxiesBody
 from mmisp.api_schemas.organisations.organisation import Organisation as OrganisationSchema
 from mmisp.db.database import get_db, with_session_management
 from mmisp.db.models.attribute import Attribute, AttributeTag
@@ -35,23 +35,6 @@ from mmisp.db.models.tag import Tag
 from mmisp.util.partial import partial
 
 router = APIRouter(tags=["galaxies"])
-logging.basicConfig(level=logging.INFO)
-
-info_format = "%(asctime)s - %(message)s"
-error_format = "%(asctime)s - %(filename)s:%(lineno)d - %(message)s"
-
-info_handler = logging.StreamHandler()
-info_handler.setLevel(logging.INFO)
-info_handler.setFormatter(logging.Formatter(info_format))
-
-error_handler = logging.StreamHandler()
-error_handler.setLevel(logging.ERROR)
-error_handler.setFormatter(logging.Formatter(error_format))
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-logger.addHandler(info_handler)
-logger.addHandler(error_handler)
 
 
 @router.post(
@@ -137,9 +120,11 @@ async def get_galaxies(
 )
 @with_session_management
 async def search_galaxies(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))], db: Annotated[Session, Depends(get_db)]
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    db: Annotated[Session, Depends(get_db)],
+    body: SearchGalaxiesBody,
 ) -> list[GetAllSearchGalaxiesResponse]:
-    return await _get_galaxies(db)
+    return await _search_galaxies(db, body)
 
 
 @router.post(
@@ -362,6 +347,27 @@ async def _get_galaxies(db: Session) -> list[GetAllSearchGalaxiesResponse]:
 
     for galaxy in galaxies:
         response_list.append(GetAllSearchGalaxiesResponse(Galaxy=await _prepare_galaxy_response(db, galaxy)))
+
+    return response_list
+
+
+async def _search_galaxies(db: Session, body: SearchGalaxiesBody) -> list[GetAllSearchGalaxiesResponse]:
+    # filters = body.dict(exclude_unset=True)
+
+    result = await db.execute(select(Galaxy))
+    galaxies: list[Galaxy] = result.scalars().all()
+    galaxy_dict = result.scalars().__dict__
+
+    for field, value in body.dict().items():
+        if field not in galaxy_dict.keys():
+            continue
+        galaxies = await db.execute(select(Galaxy).where(getattr(Galaxy, field) == value)).scalars().all()
+
+    response_list = []
+
+    for galaxy in galaxies:
+        galaxy_dict = galaxy.__dict__
+        response_list.append(GetAllSearchGalaxiesResponse(Galaxy=GetAllSearchGalaxiesAttributes(**galaxy_dict)))
 
     return response_list
 

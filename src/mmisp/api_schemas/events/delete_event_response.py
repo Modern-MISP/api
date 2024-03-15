@@ -7,7 +7,7 @@ class DeleteEventResponse(BaseModel):
     name: str
     message: str
     url: str
-    errors: str
+    errors: str | None = None
 
     class Config:
         orm_mode = True

@@ -30,7 +30,7 @@ class IndexEventsAttributes(BaseModel):
     sighting_timestamp: str
     disable_correlation: bool
     extends_uuid: str
-    protected: bool
+    protected: bool | None = None
     Org: GetAllEventsOrg
     Orgc: GetAllEventsOrg
     GalaxyCluster: list[GetAllEventsGalaxyCluster] = []
