@@ -15,12 +15,17 @@ class TagAttributesResponse(BaseModel):
     local_only: bool | None = None
 
 
+class TagViewResponse(TagAttributesResponse):
+    attribute_count: int
+    count: int
+
+
 class TagResponse(BaseModel):
     Tag: TagAttributesResponse
 
 
 class TagGetResponse(BaseModel):
-    tags: list[TagAttributesResponse]
+    Tag: list[TagAttributesResponse]
 
     class Config:
         orm_mode = True
