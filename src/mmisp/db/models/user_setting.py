@@ -2,7 +2,6 @@ from enum import Enum
 from time import time
 
 from sqlalchemy import Column, ForeignKey, Integer, String, Text
-from sqlalchemy.orm import relationship
 
 from mmisp.db.database import Base
 
@@ -28,5 +27,3 @@ class UserSetting(Base):
     value = Column(Text, nullable=False)
     user_id = Column(Integer, ForeignKey(User.id), nullable=False, index=True)
     timestamp = Column(Integer, default=time, onupdate=time, nullable=False, index=True)
-
-    user = relationship(User, primaryjoin=user_id == User.id)
