@@ -341,7 +341,7 @@ async def _get_warninglists_by_value(
         for warninglist_entry in warninglist_entries:
             result = await db.execute(
                 select(Warninglist).filter(
-                    Warninglist.id == warninglist_entry.warninglist_id, Warninglist.enabled is True
+                    Warninglist.id == warninglist_entry.warninglist_id, Warninglist.enabled.is_(True)
                 )
             )
             warninglists: Warninglist = result.scalars().all()
