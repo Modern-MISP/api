@@ -162,7 +162,7 @@ async def _update_noticelists(db: Session, depr: bool) -> StandardStatusResponse
         success=True,
         name="All noticelists are up to date already.",
         message="All noticelists are up to date already.",
-        url="/noticelists/update" if depr is True else "/noticelists/",
+        url="/noticelists/update" if depr else "/noticelists/",
     )
 
 

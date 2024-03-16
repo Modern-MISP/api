@@ -662,7 +662,7 @@ async def _prepare_event_response(db: Session, event: Event) -> AddEditGetEventD
     for event_tag in event_tag_list:
         tag = await db.get(Tag, event_tag.tag_id)
 
-        if tag.is_galaxy is False:
+        if not tag.is_galaxy:
             continue
 
         result = await db.execute(select(GalaxyCluster).filter(GalaxyCluster.tag_name == tag.name))
@@ -711,7 +711,7 @@ async def _prepare_attribute_response(db: Session, attribute_list: list[Attribut
         for attribute_tag in attribute_tag_list:
             tag = await db.get(Tag, attribute_tag.tag_id)
 
-            if tag.is_galaxy is False:
+            if not tag.is_galaxy:
                 continue
 
             result = await db.execute(select(GalaxyCluster).filter(GalaxyCluster.tag_name == tag.name))

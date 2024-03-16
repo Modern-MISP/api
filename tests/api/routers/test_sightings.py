@@ -324,8 +324,8 @@ class TestDeleteSighting:
         response = client.delete(f"/sightings/{sighting_id}", headers=headers)
         response_data = response.json()
         assert response.status_code == 200
-        assert response_data["saved"] is True
-        assert response_data["success"] is True
+        assert response_data["saved"]
+        assert response_data["success"]
         assert response_data["message"] == "Sighting successfully deleted."
         assert response_data["name"] == "Sighting successfully deleted."
 

@@ -156,7 +156,7 @@ class TestToggleEnableNoticelist:
         response = client.post(f"noticelists/toggleEnable/{noticelist_id[0]}", headers=headers)
         json = response.json()
         assert json["id"] == str(noticelist_id[0])
-        assert json["saved"] is True
+        assert json["saved"]
 
         remove_noticelists(noticelist_id)
 

@@ -217,7 +217,7 @@ async def _import_galaxy_cluster(
         result = await db.execute(select(Galaxy).filter(Galaxy.type == galaxy_cluster_type))
         galaxies_with_given_type = result.scalars().all()
 
-        if galaxy_cluster_dict["default"] is True:
+        if galaxy_cluster_dict["default"]:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=DeleteForceUpdateImportGalaxyResponse(
@@ -393,7 +393,7 @@ async def _export_galaxy(db: Session, galaxy_id: str, body: ExportGalaxyBody) ->
     elif "distribution" not in body_dict_information:
         missing_information_in_body = True
 
-    if missing_information_in_body is True:
+    if missing_information_in_body:
         return []
 
     response_list = await _prepare_export_galaxy_response(db, galaxy_id, body_dict_information)
