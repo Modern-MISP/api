@@ -45,7 +45,7 @@ class TestAddTag:
         response = client.post("/tags", json=tag_data, headers=headers)
         assert response.status_code == 201
 
-        remove_tags([response.json()["Tag"]["id"]])
+        remove_tags([response.json()["tag"]["id"]])
 
     @staticmethod
     def test_add_tag_deprecated(tag_data: Dict[str, Any]) -> None:
@@ -53,7 +53,7 @@ class TestAddTag:
         response = client.post("/tags/add", json=tag_data, headers=headers)
         assert response.status_code == 201
 
-        remove_tags([response.json()["Tag"]["id"]])
+        remove_tags([response.json()["tag"]["id"]])
 
     @staticmethod
     def test_add_tag_with_existing_name(db: Session) -> None:
@@ -98,11 +98,11 @@ class TestAddTag:
         response = client.post("/tags", json=tag_data, headers=headers)
 
         json = response.json()
-        json["Tag"]["name"] == tag_data["name"]
-        json["Tag"]["colour"] == tag_data["colour"]
-        json["Tag"]["exportable"] == tag_data["exportable"]
+        json["tag"]["name"] == tag_data["name"]
+        json["tag"]["colour"] == tag_data["colour"]
+        json["tag"]["exportable"] == tag_data["exportable"]
 
-        remove_tags([response.json()["Tag"]["id"]])
+        remove_tags([response.json()["tag"]["id"]])
 
     @staticmethod
     def test_tag_response_format_deprecated(tag_data: Dict[str, Any]) -> None:
@@ -110,11 +110,11 @@ class TestAddTag:
         response = client.post("/tags/add", json=tag_data, headers=headers)
 
         json = response.json()
-        json["Tag"]["name"] == tag_data["name"]
-        json["Tag"]["colour"] == tag_data["colour"]
-        json["Tag"]["exportable"] == tag_data["exportable"]
+        json["tag"]["name"] == tag_data["name"]
+        json["tag"]["colour"] == tag_data["colour"]
+        json["tag"]["exportable"] == tag_data["exportable"]
 
-        remove_tags([response.json()["Tag"]["id"]])
+        remove_tags([response.json()["tag"]["id"]])
 
 
 class TestViewTag:
@@ -306,7 +306,7 @@ class TestEditTag:
         assert response.headers["Content-Type"] == "application/json"
         json = response.json()
         print(json)
-        assert json["Tag"]["id"] == str(tag[0])
+        assert json["tag"]["id"] == str(tag[0])
 
         remove_tags(tag)
 
@@ -378,10 +378,10 @@ class TestGetAllTags:
 
         json = response.json()
 
-        assert isinstance(json["Tag"], list)
+        assert isinstance(json["tag"], list)
 
-        assert "Tag" in json
-        for tag_wrapper in json["Tag"]:
+        assert "tag" in json
+        for tag_wrapper in json["tag"]:
             assert "id" in tag_wrapper
             assert "name" in tag_wrapper
             assert "colour" in tag_wrapper
