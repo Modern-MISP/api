@@ -43,4 +43,4 @@ test/plain:
 	pytest tests
 
 print-changes:
-	MYSQL_USER=misp MYSQL_PASSWORD=misp MYSQL_HOST=localhost MYSQL_DBNAME=misp python -m mmisp.db.print_changes
+	MYSQL_USER=root MYSQL_PASSWORD=misp MYSQL_HOST=localhost MYSQL_DBNAME=misp python -m mmisp.db.print_changes
