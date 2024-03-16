@@ -1,5 +1,6 @@
 import json
-from typing import Annotated
+import time
+from typing import Annotated, NamedTuple
 
 from fastapi import APIRouter, Depends, HTTPException, Path, status
 from nanoid import generate
@@ -24,13 +25,18 @@ from mmisp.db.models.auth_key import AuthKey
 from mmisp.db.models.user import User
 from mmisp.util.crypto import hash_secret
 from mmisp.util.models import update_record
-from mmisp.util.partial import partial
 from mmisp.util.uuid import is_uuid
 
 router = APIRouter(tags=["auth_keys"])
 
 
-@router.post("/auth_keys/{userId}", status_code=status.HTTP_201_CREATED, response_model=partial(AddAuthKeyResponse))
+@router.post(
+    "/auth_keys/{userId}",
+    status_code=status.HTTP_201_CREATED,
+    response_model=AddAuthKeyResponse,
+    summary="Add an AuthKey.",
+    description="Create an AuthKey for a specific user and write it to the database.",
+)
 @with_session_management
 async def auth_keys_add_user(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.AUTH]))],
@@ -41,7 +47,12 @@ async def auth_keys_add_user(
     return await _auth_key_add(auth=auth, db=db, user_id=user_id, body=body)
 
 
-@router.get("/auth_keys/view/{AuthKeyId}", response_model=partial(ViewAuthKeysResponse))
+@router.get(
+    "/auth_keys/view/{AuthKeyId}",
+    response_model=ViewAuthKeysResponse,
+    summary="View an AuthKey",
+    description="View an AuthKey by its ID.",
+)
 @with_session_management
 async def auth_keys_view_auth_key(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
@@ -51,7 +62,12 @@ async def auth_keys_view_auth_key(
     return await _auth_keys_view(auth=auth, db=db, auth_key_id=auth_key_id)
 
 
-@router.post("/auth_keys", response_model=list[SearchGetAuthKeysResponseItem])
+@router.post(
+    "/auth_keys",
+    response_model=list[SearchGetAuthKeysResponseItem],
+    summary="Search for specific AuthKeys.",
+    description="Search for specific AuthKeys by parameters.",
+)
 @with_session_management
 async def search_auth_keys(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
@@ -61,7 +77,12 @@ async def search_auth_keys(
     return await _search_auth_keys(auth=auth, db=db, body=body)
 
 
-@router.put("/auth_keys/{AuthKeyId}", response_model=partial(EditAuthKeyResponse))
+@router.put(
+    "/auth_keys/{AuthKeyId}",
+    response_model=EditAuthKeyResponse,
+    summary="Edit an AuthKey.",
+    description="Edit an AuthKey by its ID.",
+)
 @with_session_management
 async def auth_keys_edit_auth_key(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.AUTH]))],
@@ -72,7 +93,11 @@ async def auth_keys_edit_auth_key(
     return await _auth_keys_edit(auth=auth, db=db, auth_key_id=auth_key_id, body=body)
 
 
-@router.delete("/auth_keys/{AuthKeyId}")
+@router.delete(
+    "/auth_keys/{AuthKeyId}",
+    summary="Delete given AuthKey.",
+    description="Delete AuthKey by AuthKeyId from the database.",
+)
 @with_session_management
 async def auth_keys_delete_auth_key(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.AUTH]))],
@@ -91,7 +116,12 @@ async def auth_keys_delete_auth_key(
     )
 
 
-@router.get("/auth_keys", response_model=list[SearchGetAuthKeysResponseItem])
+@router.get(
+    "/auth_keys",
+    response_model=list[SearchGetAuthKeysResponseItem],
+    summary="Returns AuthKeys.",
+    description="Returns all AuthKeys stored in the database as a List.",
+)
 @with_session_management
 async def auth_keys_get(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
@@ -107,7 +137,9 @@ async def auth_keys_get(
     "/auth_keys/add/{userId}",
     status_code=status.HTTP_201_CREATED,
     deprecated=True,
-    response_model=partial(AddAuthKeyResponse),
+    response_model=AddAuthKeyResponse,
+    summary="Add an AuthKey.",
+    description="Create an AuthKey for a specific user and write it to the database.",
 )
 @with_session_management
 async def auth_keys_add_user_depr(
@@ -119,7 +151,13 @@ async def auth_keys_add_user_depr(
     return await _auth_key_add(auth=auth, db=db, user_id=user_id, body=body)
 
 
-@router.post("/auth_keys/edit/{AuthKeyId}", deprecated=True, response_model=partial(EditAuthKeyResponse))
+@router.post(
+    "/auth_keys/edit/{AuthKeyId}",
+    deprecated=True,
+    response_model=EditAuthKeyResponse,
+    summary="Edit AuthKey",
+    description="Edit AuthKey by AuthKey ID.",
+)
 @with_session_management
 async def auth_keys_edit_auth_key_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.AUTH]))],
@@ -130,7 +168,12 @@ async def auth_keys_edit_auth_key_depr(
     return await _auth_keys_edit(auth=auth, db=db, auth_key_id=auth_key_id, body=body)
 
 
-@router.delete("/auth_keys/delete/{AuthKeyId}", deprecated=True)
+@router.delete(
+    "/auth_keys/delete/{AuthKeyId}",
+    deprecated=True,
+    summary="Delete given AuthKey.",
+    description="Delete AuthKey by AuthKeyId from the database.",
+)
 @with_session_management
 async def auth_keys_delete_auth_key_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.AUTH]))],
@@ -174,6 +217,7 @@ async def _auth_key_add(auth: Auth, db: Session, user_id: int, body: AddAuthKeyB
         authkey=hashed_auth_key,
         authkey_start=auth_key_string[:4],
         authkey_end=auth_key_string[-4:],
+        created=int(time.time()),
         expiration=body.expiration,
     )
 
@@ -203,9 +247,14 @@ async def _auth_keys_view(
     result = await db.execute(select(AuthKey).filter(AuthKey.id == auth_key_id))
     auth_key: AuthKey | None = result.scalars().first()
 
-    if not auth_key or (
+    if not auth_key:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
+
+    user: User | None = await db.get(User, auth_key.user_id)
+
+    if (
         auth_key.user_id != auth.user_id
-        and (not await check_permissions(auth, [Permission.ADMIN]) or auth_key.user.org_id != auth.org_id)
+        and (not await check_permissions(auth, [Permission.ADMIN]) or user.org_id != auth.org_id)
         and (not await check_permissions(auth, [Permission.SITE_ADMIN]))
     ):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
@@ -216,7 +265,10 @@ async def _auth_keys_view(
             "allowed_ips": json.loads(auth_key.allowed_ips) if auth_key.allowed_ips else None,
             "unique_ips": json.loads(auth_key.unique_ips) if auth_key.unique_ips else [],
         },
-        "User": {**auth_key.user.__dict__},
+        "User": {
+            "id": user.id,
+            "email": user.email,
+        },
     }
 
 
@@ -225,7 +277,7 @@ async def _search_auth_keys(
     db: Session,
     body: SearchAuthKeyBody,
 ) -> list[dict]:
-    query = select(AuthKey).join(User, AuthKey.user_id == User.id)
+    query = select(AuthKey, User).join(User, AuthKey.user_id == User.id)
 
     if not await check_permissions(auth, [Permission.SITE_ADMIN]):
         query = query.filter(User.org_id == auth.org_id)
@@ -256,20 +308,31 @@ async def _search_auth_keys(
 
         query = query.filter(AuthKey.allowed_ips == body.allowed_ips)
 
+    class ResultItem(NamedTuple):
+        AuthKey: AuthKey
+        User: User
+
     result = await db.execute(query.limit(body.limit).offset(body.page * body.limit))
-    auth_keys: list[AuthKey] = result.scalars().all()
+    auth_keys_and_users: list[ResultItem] = result.all()
 
     auth_keys_computed: list[dict] = []
 
-    for auth_key in auth_keys:
+    for auth_key_and_user in auth_keys_and_users:
         auth_keys_computed.append(
             {
                 "AuthKey": {
-                    **auth_key.__dict__,
-                    "allowed_ips": json.loads(auth_key.allowed_ips) if auth_key.allowed_ips else None,
-                    "unique_ips": json.loads(auth_key.unique_ips) if auth_key.unique_ips else [],
+                    **auth_key_and_user.AuthKey.__dict__,
+                    "allowed_ips": json.loads(auth_key_and_user.AuthKey.allowed_ips)
+                    if auth_key_and_user.AuthKey.allowed_ips
+                    else None,
+                    "unique_ips": json.loads(auth_key_and_user.AuthKey.unique_ips)
+                    if auth_key_and_user.AuthKey.unique_ips
+                    else [],
                 },
-                "User": {**auth_key.user.__dict__},
+                "User": {
+                    "id": auth_key_and_user.User.id,
+                    "email": auth_key_and_user.User.email,
+                },
             }
         )
 
@@ -286,6 +349,8 @@ async def _auth_keys_edit(auth: Auth, db: Session, auth_key_id: int, body: EditA
     ):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
+    user: User | None = await db.get(User, auth_key.user_id)
+
     update = body.dict()
     update["allowed_ips"] = json.dumps(body.allowed_ips) if body.allowed_ips else None
 
@@ -300,16 +365,20 @@ async def _auth_keys_edit(auth: Auth, db: Session, auth_key_id: int, body: EditA
             "allowed_ips": json.loads(auth_key.allowed_ips) if auth_key.allowed_ips else None,
             "unique_ips": json.loads(auth_key.unique_ips) if auth_key.unique_ips else [],
         },
-        "User": {**auth_key.user.__dict__},
+        "User": {
+            "id": user.id,
+            "org_id": user.org_id,
+        },
     }
 
 
 async def _auth_keys_delete(auth: Auth, db: Session, auth_key_id: int) -> None:
     auth_key: AuthKey | None = await db.get(AuthKey, auth_key_id)
+    user: User | None = await db.get(User, auth_key.user_id)
 
     if not auth_key or (
         auth_key.user_id != auth.user_id
-        and (not await check_permissions(auth, [Permission.ADMIN]) or auth_key.user.org_id != auth.org_id)
+        and (not await check_permissions(auth, [Permission.ADMIN]) or user.org_id != auth.org_id)
         and (not await check_permissions(auth, [Permission.SITE_ADMIN]))
     ):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
@@ -329,8 +398,12 @@ async def _auth_keys_get(
     if not await check_permissions(auth, [Permission.ADMIN]):
         query = query.filter(AuthKey.user_id == auth.user_id)
 
+    class ResultItem(NamedTuple):
+        AuthKey: AuthKey
+        User: User
+
     result = await db.execute(query)
-    auth_keys_and_users: list[tuple[AuthKey, User]] = result.all()
+    auth_keys_and_users: list[ResultItem] = result.all()
 
     auth_keys_computed: list[dict] = []
 
@@ -338,15 +411,15 @@ async def _auth_keys_get(
         auth_keys_computed.append(
             {
                 "AuthKey": {
-                    **auth_key_and_user[0].__dict__,
-                    "allowed_ips": json.loads(auth_key_and_user[0].allowed_ips)
-                    if auth_key_and_user[0].allowed_ips
+                    **auth_key_and_user.AuthKey.__dict__,
+                    "allowed_ips": json.loads(auth_key_and_user.AuthKey.allowed_ips)
+                    if auth_key_and_user.AuthKey.allowed_ips
                     else None,
-                    "unique_ips": json.loads(auth_key_and_user[0].unique_ips)
-                    if auth_key_and_user[0].unique_ips
+                    "unique_ips": json.loads(auth_key_and_user.AuthKey.unique_ips)
+                    if auth_key_and_user.AuthKey.unique_ips
                     else [],
                 },
-                "User": {**auth_key_and_user[1].__dict__},
+                "User": {**auth_key_and_user.User.__dict__},
             }
         )
 
