@@ -187,7 +187,8 @@ async def get_all_sharing_groups(
     is_site_admin: bool = await check_permissions(auth, [Permission.SITE_ADMIN])
 
     if is_site_admin:
-        sharing_groups = await db.execute(select(SharingGroup)).scalars().all()
+        result = await db.execute(select(SharingGroup))
+        sharing_groups = result.scalars().all()
     else:
         user_org: Organisation | None = await db.get(Organisation, auth.org_id)
         result = await db.execute(
