@@ -22,13 +22,13 @@ from sqlalchemy import MetaData, create_engine
 from .database import Base
 
 # import all models, so Base is populated
-# the not imported modules have thrown errors
 from .models import (  # noqa: F401
-    #    attribute,
-    #    auth_keys,
+    attribute,
+    auth_key,
     event,
     feed,
     galaxy,
+    galaxy_cluster,
     noticelist,
     object,
     organisation,
@@ -37,7 +37,7 @@ from .models import (  # noqa: F401
     sharing_group,
     sighting,
     tag,
-    #    taxonomy,
+    taxonomy,
     user,
     user_setting,
     warninglist,
