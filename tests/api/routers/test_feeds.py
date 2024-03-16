@@ -356,56 +356,6 @@ def cach_feed_test_data() -> Generator:
     }
 
 
-class TestCacheFeeds:
-    pass  # route not yet implemented (worker)
-
-    # @staticmethod
-    # def test_cache_feeds_valid_data(cach_feed_test_data: dict[str, Any]) -> None:
-    #     headers = {"authorization": environment.site_admin_user_token}
-    #     response = client.post(f"/feeds/cacheFeeds/{cach_feed_test_data['valid_scope']}", headers=headers)
-    #     assert response.status_code == 200
-    #     assert response.json()["success"] is True
-
-    # @staticmethod
-    # def test_cache_feeds_invalid_data(cach_feed_test_data: dict[str, Any]) -> None:
-    #     headers = {"authorization": environment.site_admin_user_token}
-    #     response = client.post(f"/feeds/cacheFeeds/{cach_feed_test_data['invalid_scope']}", headers=headers)
-    #     assert response.status_code == 400
-
-    # @staticmethod
-    # def test_cache_feeds_response_format(cach_feed_test_data: dict[str, Any]) -> None:
-    #     headers = {"authorization": environment.site_admin_user_token}
-    #     response = client.post(f"/feeds/cacheFeeds/{cach_feed_test_data['valid_scope']}", headers=headers)
-    #     assert response.headers["Content-Type"] == "application/json"
-
-
-class TestFetchFeeds:
-    pass  # route not yet implemented (worker)
-
-    # @staticmethod
-    # def test_fetch_from_feed_existing_id(feed_test_ids: dict[str, Any]) -> None:
-    #     headers = {"authorization": environment.site_admin_user_token}
-    #     response = client.get(f"/feeds/fetchFromFeed/{feed_test_ids['valid_feed_id']}", headers=headers)
-    #     assert response.status_code == 200
-    #     assert "result" in response.json()
-
-    # @staticmethod
-    # def test_fetch_from_feed_invalid_id(feed_test_ids: dict[str, Any]) -> None:
-    #     headers = {"authorization": environment.site_admin_user_token}
-    #     response = client.get(f"/feeds/fetchFromFeed/{feed_test_ids['invalid_feed_id']}", headers=headers)
-    #     assert response.status_code == 422
-
-    # @staticmethod
-    # def test_fetch_from_feed_non_existing_id(feed_test_ids: dict[str, Any]) -> None:
-    #     response = client.get(f"/feeds/fetchFromFeed/{feed_test_ids['non_existing_feed_id']}")
-    #     assert response.status_code in (404, 405)
-
-    # @staticmethod
-    # def test_fetch_from_feed_response_format(feed_test_ids: dict[str, Any]) -> None:
-    #     response = client.get(f"/feeds/fetchFromFeed/{feed_test_ids['valid_feed_id']}")
-    #     assert response.headers["Content-Type"] == "application/json"
-
-
 class TestGetFeedByIdInfo:
     @staticmethod
     def test_get_existing_feed_details(feed_data: dict[str, Any], db: Session) -> None:
