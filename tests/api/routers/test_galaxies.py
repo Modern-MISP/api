@@ -185,7 +185,7 @@ class TestDeleteGalaxy:
 
         assert response.status_code == 200
         response_json = response.json()
-        assert response_json["saved"] is True
+        assert response_json["saved"]
         assert response_json["name"] == "Galaxy deleted"
 
     @staticmethod

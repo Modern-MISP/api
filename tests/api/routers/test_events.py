@@ -337,8 +337,8 @@ class TestPublishEvent:
         assert response.status_code == 200
         response_json = response.json()
 
-        assert response_json["saved"] is True
-        assert response_json["success"] is True
+        assert response_json["saved"]
+        assert response_json["success"]
         assert response_json["name"] == "Job queued"
         assert response_json["message"] == "Job queued"
         assert response_json["url"] == f"/events/publish/{event_id}"
@@ -388,8 +388,8 @@ class TestUnpublishEvent:
         assert response.status_code == 200
         response_json = response.json()
 
-        assert response_json["saved"] is True
-        assert response_json["success"] is True
+        assert response_json["saved"]
+        assert response_json["success"]
         assert response_json["name"] == "Event unpublished."
         assert response_json["message"] == "Event unpublished."
         assert response_json["url"] == f"/events/unpublish/{event_id}"
@@ -451,9 +451,9 @@ class TestAddTagToEvent:
 
         assert response.status_code == 200
         response_json = response.json()
-        assert response_json["saved"] is True
+        assert response_json["saved"]
         assert response_json["success"] == "Tag added"
-        assert response_json["check_publish"] is True
+        assert response_json["check_publish"]
 
     @staticmethod
     def test_add_invalid_or_non_existing_tag_to_attribute(db: Session) -> None:
@@ -534,7 +534,7 @@ class TestRemoveTagFromEvent:
 
         assert response.status_code == 200
         response_json = response.json()
-        assert response_json["saved"] is True
+        assert response_json["saved"]
         assert response_json["success"] == "Tag removed"
 
 

@@ -381,8 +381,8 @@ class TestDeleteObject:
         response_data = response.json()
         assert response_data["message"] == "Object has been permanently deleted."
         assert response_data["name"] == object_data["name"]
-        assert response_data["saved"] is True
-        assert response_data["success"] is True
+        assert response_data["saved"]
+        assert response_data["success"]
 
     @staticmethod
     def test_delete_object_soft_delete(object_data: dict[str, Any], db: Session) -> None:
@@ -433,8 +433,8 @@ class TestDeleteObject:
         response_data = response_delete.json()
         assert response_data["message"] == "Object has been soft deleted."
         assert response_data["name"] == object_data["name"]
-        assert response_data["saved"] is True
-        assert response_data["success"] is True
+        assert response_data["saved"]
+        assert response_data["success"]
 
     @staticmethod
     def test_delete_object_invalid_id() -> None:
