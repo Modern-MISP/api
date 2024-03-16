@@ -4,7 +4,7 @@ from mmisp.api_schemas.noticelists.get_noticelist_response import NoticelistAttr
 
 
 class GetAllNoticelist(BaseModel):
-    Noticelist: NoticelistAttributes
+    noticelist: NoticelistAttributes
 
 
 class GetAllNoticelistResponse(BaseModel):

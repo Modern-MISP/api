@@ -21,11 +21,11 @@ class TagViewResponse(TagAttributesResponse):
 
 
 class TagResponse(BaseModel):
-    Tag: TagAttributesResponse
+    tag: TagAttributesResponse
 
 
 class TagGetResponse(BaseModel):
-    Tag: list[TagAttributesResponse]
+    tag: list[TagAttributesResponse]
 
     class Config:
         orm_mode = True

@@ -4,11 +4,11 @@ from mmisp.api_schemas.warninglists.warninglist_response import WarninglistAttri
 
 
 class WarninglistsResponse(BaseModel):
-    Warninglist: WarninglistAttributes
+    warninglist: WarninglistAttributes
 
 
 class GetSelectedAllWarninglistsResponse(BaseModel):
-    Warninglists: list[WarninglistsResponse]
+    warninglists: list[WarninglistsResponse]
 
     class Config:
         orm_mode = True
