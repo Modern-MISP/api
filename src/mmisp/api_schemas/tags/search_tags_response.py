@@ -14,9 +14,9 @@ class TaxonomyPredicateResponse(TaxonomyPredicateSchema):
 
 
 class TagCombinedModel(BaseModel):
-    Tag: TagAttributesResponse
-    Taxonomy: TaxonomyView
-    TaxonomyPredicate: TaxonomyPredicateResponse
+    tag: TagAttributesResponse
+    taxonomy: TaxonomyView
+    taxonomy_predicate: TaxonomyPredicateResponse
 
 
 class TagSearchResponse(BaseModel):

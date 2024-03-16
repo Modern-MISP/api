@@ -131,7 +131,7 @@ async def _get_noticelist(db: Session, noticelist_id: int) -> NoticelistResponse
     result = await db.execute(select(NoticelistEntry).filter(NoticelistEntry.noticelist_id == noticelist_id))
     noticelist_entries = result.scalars().all()
 
-    return NoticelistResponse(Noticelist=_prepare_noticelist_response(noticelist, noticelist_entries))
+    return NoticelistResponse(noticelist=_prepare_noticelist_response(noticelist, noticelist_entries))
 
 
 async def _toggleEnable_noticelists(db: Session, noticelist_id: int) -> StandardStatusIdentifiedResponse:
@@ -175,7 +175,7 @@ async def _get_all_noticelists(db: Session) -> dict:
     for noticelist in noticelists:
         noticelist_data.append(
             GetAllNoticelist(
-                Noticelist=NoticelistAttributes(
+                noticelist=NoticelistAttributes(
                     id=noticelist.id,
                     name=noticelist.name,
                     expanded_name=noticelist.expanded_name,
@@ -212,5 +212,5 @@ def _prepare_noticelist_response(
         geographical_area=json.loads(noticelist.geographical_area),
         version=noticelist.version,
         enabled=noticelist.enabled,
-        NoticelistEntry=_prepare_noticelist_entries(noticelist_entries),
+        noticelistEntry=_prepare_noticelist_entries(noticelist_entries),
     )

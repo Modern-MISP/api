@@ -40,7 +40,7 @@ class TestAddWarninglist:
         assert response.status_code == 201
 
         json = response.json()
-        remove_warninglists([int(json["Warninglist"]["id"])])
+        remove_warninglists([int(json["warninglist"]["id"])])
 
 
 class TestToggleEnableWarninglist:
@@ -82,7 +82,7 @@ class TestGetWarninglistById:
             response = client.get(f"/warninglists/{warninglist_id}", headers=headers)
 
             assert response.status_code == 200
-            assert response.json()["Warninglist"]["id"] == str(warninglist_id)
+            assert response.json()["warninglist"]["id"] == str(warninglist_id)
 
         remove_warninglists(warninglist_test_ids)
 
@@ -95,7 +95,7 @@ class TestGetWarninglistById:
             response = client.get(f"/warninglists/view/{warninglist_id}", headers=headers)
 
             assert response.status_code == 200
-            assert response.json()["Warninglist"]["id"] == str(warninglist_id)
+            assert response.json()["warninglist"]["id"] == str(warninglist_id)
 
         remove_warninglists(warninglist_test_ids)
 
@@ -137,8 +137,9 @@ class TestGetWarninglistById:
         assert response.status_code == 200
         json = response.json()
 
-        assert json["Warninglist"]["id"] == str(warninglist_id[0])
-        assert isinstance(json["Warninglist"]["WarninglistEntry"], list)
+        print(json)
+        assert json["warninglist"]["id"] == str(warninglist_id[0])
+        assert isinstance(json["warninglist"]["warninglist_entry"], list)
 
         remove_warninglists(warninglist_id)
 
@@ -152,8 +153,8 @@ class TestGetWarninglistById:
         assert response.status_code == 200
         json = response.json()
 
-        assert json["Warninglist"]["id"] == str(warninglist_id[0])
-        assert isinstance(json["Warninglist"]["WarninglistEntry"], list)
+        assert json["warninglist"]["id"] == str(warninglist_id[0])
+        assert isinstance(json["warninglist"]["warninglist_entry"], list)
 
         remove_warninglists(warninglist_id)
 
@@ -193,8 +194,8 @@ class TestDeleteWarninglist:
             assert response.status_code == 200
             json = response.json()
 
-            assert isinstance(json["Warninglist"]["WarninglistEntry"], list)
-            assert json["Warninglist"]["id"] == str(warninglist_id)
+            assert isinstance(json["warninglist"]["warninglist_entry"], list)
+            assert json["warninglist"]["id"] == str(warninglist_id)
 
 
 class TestGetAllOrSelectedWarninglists:
@@ -261,7 +262,7 @@ class TestGetAllOrSelectedWarninglists:
         headers = {"authorization": environment.site_admin_user_token}
         response = client.get(f"/warninglists?value={warninglist_name}", headers=headers)
         json = response.json()
-        assert isinstance(json["Warninglists"], list)
+        assert isinstance(json["warninglists"], list)
 
         remove_warninglists(warninglist_ids)
 

@@ -31,12 +31,12 @@ class WarninglistAttributes(WarninglistBaseResponse):
 
 
 class WarninglistAttributesResponse(WarninglistBaseResponse):
-    WarninglistEntry: list[WarninglistEntryResponse] | None = None
-    WarninglistType: list[WarninglistTypeResponse] | None = None
+    warninglist_entry: list[WarninglistEntryResponse] | None = None
+    warninglist_type: list[WarninglistTypeResponse] | None = None
 
 
 class WarninglistResponse(BaseModel):
-    Warninglist: WarninglistAttributesResponse
+    warninglist: WarninglistAttributesResponse
 
     class Config:
         orm_mode = True

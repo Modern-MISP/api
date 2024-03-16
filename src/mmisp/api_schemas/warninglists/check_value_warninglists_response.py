@@ -8,7 +8,7 @@ class NameWarninglist(BaseModel):
 
 class ValueWarninglistsResponse(BaseModel):
     value: str
-    Warninglist: list[NameWarninglist] | None
+    warninglist: list[NameWarninglist] | None
 
 
 class CheckValueWarninglistsResponse(BaseModel):
