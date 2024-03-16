@@ -212,12 +212,20 @@ async def _restsearch(db: Session, body: ObjectSearchBody) -> dict[str, Any]:
     filters = body.dict(exclude_unset=True)
     objects = await _get_objects_with_filters(db=db, filters=filters)
 
+    object_ids = [obj.id for obj in objects]
+    result = await db.execute(select(Attribute).filter(Attribute.object_id.in_(object_ids)))
+    attributes = result.scalars().all()
+
+    attributes_by_object_id: dict[int, list[Attribute]] = {}
+    for attr in attributes:
+        if attr.object_id not in attributes_by_object_id:
+            attributes_by_object_id[attr.object_id] = []
+        attributes_by_object_id[attr.object_id].append(attr)
+
     objects_data = []
     for obj in objects:
-        result = await db.execute(select(Attribute).filter(Attribute.object_id == obj.id))
-        attributes = result.scalars().all()
-
-        attributes_data = [GetAllAttributesResponse.from_orm(attr) for attr in attributes]
+        obj_attributes = attributes_by_object_id.get(obj.id, [])
+        attributes_data = [GetAllAttributesResponse.from_orm(attr) for attr in obj_attributes]
 
         obj_data = ObjectWithAttributesResponse(
             **obj.__dict__,

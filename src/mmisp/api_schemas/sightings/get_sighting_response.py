@@ -11,6 +11,7 @@ class SightingAttributesResponse(BaseModel):
     id: str
     uuid: str
     attribute_id: str
+    attribute_uuid: str
     event_id: str
     org_id: str
     date_sighting: str

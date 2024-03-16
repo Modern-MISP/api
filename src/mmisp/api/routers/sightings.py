@@ -222,6 +222,7 @@ async def _add_sighting(db: Session, body: SightingCreateBody) -> list[dict[str,
             responses.append(
                 SightingAttributesResponse(
                     **sighting.__dict__,
+                    attribute_uuid=attribute.uuid,
                     organisation=organisation_response,
                 )
             )
@@ -257,6 +258,7 @@ async def _add_sightings_at_index(db: Session, attribute_id: int) -> SightingsGe
     )
     response: SightingAttributesResponse = SightingAttributesResponse(
         **sighting.__dict__,
+        attribute_uuid=attribute.uuid,
         organisation=organisation_response,
     )
 
@@ -307,17 +309,29 @@ async def _delete_sighting(db: Session, sighting_id: int) -> StandardStatusRespo
 
 async def _get_sightings(db: Session) -> list[dict[str, Any]]:
     responses: list[SightingsGetResponse] = []
-
     result = await db.execute(select(Sighting))
     sightings: list[Sighting] = result.scalars().all()
 
     if not sightings:
         return SightingsGetResponse(sightings=[])
 
-    for sighting in sightings:
-        organisation: Organisation = await db.get(Organisation, sighting.org_id)
+    attribute_ids = {sighting.attribute_id for sighting in sightings}
+    org_ids = {sighting.org_id for sighting in sightings}
 
-        organisation_response: SightingOrganisationResponse = SightingOrganisationResponse(
+    attributes_result = await db.execute(select(Attribute).filter(Attribute.id.in_(attribute_ids)))
+    attributes = attributes_result.scalars().all()
+    organisations_result = await db.execute(select(Organisation).filter(Organisation.id.in_(org_ids)))
+    organisations = organisations_result.scalars().all()
+
+    attributes_by_id = {attribute.id: attribute for attribute in attributes}
+    organisations_by_id = {organisation.id: organisation for organisation in organisations}
+
+    responses = []
+    for sighting in sightings:
+        attribute = attributes_by_id.get(sighting.attribute_id)
+        organisation = organisations_by_id.get(sighting.org_id)
+
+        organisation_response = SightingOrganisationResponse(
             id=organisation.id if organisation else None,
             uuid=organisation.uuid if organisation else None,
             name=organisation.name if organisation else None,
@@ -326,6 +340,7 @@ async def _get_sightings(db: Session) -> list[dict[str, Any]]:
         responses.append(
             SightingAttributesResponse(
                 **sighting.__dict__,
+                attribute_uuid=attribute.uuid if attribute else None,
                 organisation=organisation_response,
             )
         )
