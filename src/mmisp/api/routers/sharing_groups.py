@@ -588,7 +588,9 @@ async def _get_sharing_group_info(auth: Auth, db: Session, id: int) -> dict:
     result = await db.execute(select(SharingGroupOrg).filter(SharingGroupOrg.sharing_group_id == sharing_group.id))
     sharing_group_orgs: list[SharingGroupOrg] = result.scalars().all()
 
-    await db.execute(select(SharingGroupServer).filter(SharingGroupServer.sharing_group_id == sharing_group.id))
+    result = await db.execute(
+        select(SharingGroupServer).filter(SharingGroupServer.sharing_group_id == sharing_group.id)
+    )
     sharing_group_servers: list[SharingGroupServer] = result.scalars().all()
 
     sharing_group_orgs_computed: list[dict] = []
