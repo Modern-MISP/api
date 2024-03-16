@@ -25,7 +25,12 @@ from mmisp.db.models.user_setting import SettingName, UserSetting
 router = APIRouter(tags=["user_settings"])
 
 
-@router.post("/user_settings/setSetting/{userId}/{userSettingName}")
+@router.post(
+    "/user_settings/setSetting/{userId}/{userSettingName}",
+    summary="Set user setting.",
+    description="Create or Update a UserSetting by user ID and UserSettingName. \
+    If specified UserSetting doesn't exist, it is created.",
+)
 @with_session_management
 async def set_user_settings(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS]))],
@@ -37,7 +42,11 @@ async def set_user_settings(
     return await _set_user_settings(auth=auth, db=db, user_id=user_id, user_setting_name=user_setting_name, body=body)
 
 
-@router.get("/user_settings/{userSettingId}")
+@router.get(
+    "/user_settings/{userSettingId}",
+    summary="View UserSetting by ID.",
+    description="Displays a UserSetting by the UserSettingID.",
+)
 @with_session_management
 async def view_user_settings(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
@@ -47,7 +56,11 @@ async def view_user_settings(
     return await _view_user_settings(auth=auth, db=db, user_setting_id=user_setting_id)
 
 
-@router.get("/user_settings/{userId}/{userSettingName}")
+@router.get(
+    "/user_settings/{userId}/{userSettingName}",
+    summary="View UserSetting.",
+    description="Displays a UserSetting by given userID and UserSetting name.",
+)
 @with_session_management
 async def get_user_setting_by_id(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
@@ -58,7 +71,11 @@ async def get_user_setting_by_id(
     return await _get_user_setting_by_id(auth=auth, db=db, user_id=user_id, user_setting_name=user_setting_name)
 
 
-@router.post("/user_settings")
+@router.post(
+    "/user_settings",
+    summary="Displays all UserSettings.",
+    description="Displays all UserSettings by specified parameters.",
+)
 @with_session_management
 async def search_user_settings(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
@@ -68,7 +85,7 @@ async def search_user_settings(
     return await _search_user_settings(auth=auth, db=db, body=body)
 
 
-@router.get("/user_settings")
+@router.get("/user_settings", summary="Displays all UserSettings.", description="Displays all UserSettings.")
 @with_session_management
 async def get_user_settings(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
@@ -77,7 +94,11 @@ async def get_user_settings(
     return await _get_user_settings(auth=auth, db=db)
 
 
-@router.delete("/user_settings/{userSettingId}")
+@router.delete(
+    "/user_settings/{userSettingId}",
+    summary="Deletes a UserSetting.",
+    description="Deletes UserSetting by UserSetting ID.",
+)
 @with_session_management
 async def delete_user_settings(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS]))],
@@ -99,7 +120,12 @@ async def delete_user_settings(
 # --- deprecated ---
 
 
-@router.get("/user_settings/view/{userSettingId}", deprecated=True)
+@router.get(
+    "/user_settings/view/{userSettingId}",
+    deprecated=True,
+    summary="View UserSetting by ID.",
+    description="View UserSetting by UserSettingID.",
+)
 @with_session_management
 async def view_user_settings_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
@@ -123,7 +149,12 @@ async def view_user_settings_depr(
     return ViewUserSettingResponse(UserSetting=user_setting_out)
 
 
-@router.get("/user_settings/getSetting/{userId}/{userSettingName}", deprecated=True)
+@router.get(
+    "/user_settings/getSetting/{userId}/{userSettingName}",
+    deprecated=True,
+    summary="View a UserSetting.",
+    description="View a UserSetting by its userID and UserSetting name.",
+)
 @with_session_management
 async def get_user_setting_by_ids(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
@@ -150,7 +181,12 @@ async def get_user_setting_by_ids(
     )
 
 
-@router.delete("/user_settings/delete/{userSettingId}", deprecated=True)
+@router.delete(
+    "/user_settings/delete/{userSettingId}",
+    deprecated=True,
+    summary="Delete UserSetting.",
+    description="Delete a UserSetting by specified UserSettingID.",
+)
 @with_session_management
 async def delete_user_settings_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS]))],
