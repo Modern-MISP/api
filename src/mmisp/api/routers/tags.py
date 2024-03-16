@@ -208,7 +208,7 @@ async def _add_tag(db: Session, body: TagCreateBody) -> TagResponse:
     db.add(tag)
     await db.commit()
 
-    return {"Tag": tag.__dict__}
+    return {"tag": tag.__dict__}
 
 
 async def _view_tag(db: Session, tag_id: int) -> TagAttributesResponse:
@@ -239,9 +239,9 @@ async def _search_tags(db: Session, tag_search_term: str) -> dict:
             for taxonomy_predicate in taxonomy_predicates:
                 tag_datas.append(
                     {
-                        "Tag": tag.__dict__,
-                        "Taxonomy": taxonomy.__dict__,
-                        "TaxonomyPredicate": taxonomy_predicate.__dict__,
+                        "tag": tag.__dict__,
+                        "taxonomy": taxonomy.__dict__,
+                        "taxonomy_predicate": taxonomy_predicate.__dict__,
                     }
                 )
 
@@ -268,7 +268,7 @@ async def _update_tag(db: Session, body: TagUpdateBody, tag_id: int) -> TagRespo
     await db.commit()
     await db.refresh(tag)
 
-    return {"Tag": tag.__dict__}
+    return {"tag": tag.__dict__}
 
 
 async def _delete_tag(db: Session, tag_id: int) -> TagDeleteResponse:
@@ -303,7 +303,7 @@ async def _get_tags(db: Session) -> dict:
     result = await db.execute(select(Tag))
     tags: list[Tag] = result.scalars().all()
 
-    return TagGetResponse(Tag=[tag.__dict__ for tag in tags])
+    return TagGetResponse(tag=[tag.__dict__ for tag in tags])
 
 
 def _check_type_hex_colour(colour: Any) -> None:
