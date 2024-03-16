@@ -241,41 +241,56 @@ async def _get_taxonomy_details(db: Session, taxonomy_id: int) -> dict:
 
 async def _get_all_taxonomies(db: Session) -> dict:
     result = await db.execute(select(Taxonomy))
-    taxonomies = result.scalars().all()
+    taxonomies: list[Taxonomy] = result.scalars().all()
+
     response = []
+    tag_names = []
+    taxonomy_entries_predicates = []
+    taxonomy_entries_builder = []
+
+    result = await db.execute(select(Tag.name))
+    tag_names_retrieve: list[str] = result.scalars().all()
+
+    result = await db.execute(
+        select(TaxonomyPredicate.taxonomy_id, TaxonomyPredicate.value, TaxonomyEntry.value)
+        .outerjoin(TaxonomyEntry, TaxonomyPredicate.id == TaxonomyEntry.taxonomy_predicate_id)
+        .order_by(TaxonomyPredicate.taxonomy_id)
+    )
+    taxonomy_entries_predicates_db = result.all()
+
+    result = await db.execute(
+        select(TaxonomyPredicate.taxonomy_id, func.count(TaxonomyPredicate.taxonomy_id))
+        .outerjoin(TaxonomyEntry, TaxonomyPredicate.id == TaxonomyEntry.taxonomy_predicate_id)
+        .group_by(TaxonomyPredicate.taxonomy_id)
+    )
+    total_count_db = result.all()
+
+    for tag in tag_names_retrieve:
+        if ":" in tag:
+            tag_names.append(tag)
+
+    ctr = 1
+
+    for taxonomy_entry in taxonomy_entries_predicates_db:
+        if taxonomy_entry[0] == ctr:
+            taxonomy_entries_builder.append(taxonomy_entry)
+            continue
+
+        ctr = taxonomy_entry[0]
+        taxonomy_entries_predicates.append(taxonomy_entries_builder[:])
+        taxonomy_entries_builder.clear()
+        taxonomy_entries_builder.append(taxonomy_entry)
+
+    taxonomy_entries_predicates.append(taxonomy_entries_builder)
 
     for taxonomy in taxonomies:
-        result = await db.execute(
-            select(func.count())
-            .select_from(TaxonomyEntry)
-            .join(TaxonomyPredicate, TaxonomyPredicate.id == TaxonomyEntry.taxonomy_predicate_id)
-            .filter(TaxonomyPredicate.taxonomy_id == taxonomy.id)
-        )
-        total_count = result.scalar()
-
-        result = await db.execute(
-            select(TaxonomyEntry)
-            .join(TaxonomyPredicate, TaxonomyPredicate.id == TaxonomyEntry.taxonomy_predicate_id)
-            .filter(TaxonomyPredicate.taxonomy_id == taxonomy.id)
-        )
-        taxonomy_entries = result.scalars().all()
-
-        result = await db.execute(select(TaxonomyPredicate))
-        taxonomy_predicates = result.scalars().all()
-
-        for taxonomy_predicate in taxonomy_predicates:
-            result = await db.execute(
-                select(TaxonomyEntry).filter(TaxonomyEntry.taxonomy_predicate_id == taxonomy_predicate.id).limit(1)
-            )
-            if result.scalars().first() is None:
-                total_count += 1
+        total_count = total_count_db[taxonomy.id - 1][1]
 
         current_count = 0
-        for taxonomy_entry in taxonomy_entries:
-            tag_name = await _get_tag_name(db, taxonomy_entry)
-            result = await db.execute(select(Tag).filter(Tag.name == tag_name).limit(1))
-            tag = result.scalars().first()
-            if tag:
+        for taxonomy_entry in taxonomy_entries_predicates[taxonomy.id - 1]:
+            tag_name = taxonomy.namespace + ":" + taxonomy_entry[1]
+            entry_val = taxonomy_entry[2] if taxonomy_entry[2] is not None else ""
+            if tag_name in tag_names or tag_name + '="' + entry_val + '"' in tag_names:
                 current_count += 1
 
         taxonomy_response = ViewTaxonomyResponse(
@@ -292,6 +307,7 @@ async def _get_all_taxonomies(db: Session) -> dict:
             total_count=total_count,
             current_count=current_count,
         )
+
         response.append(taxonomy_response)
 
     return ViewTaxonomyResponseWrapper(taxonomies=response)
