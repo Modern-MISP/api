@@ -1,12 +1,10 @@
 from time import time
 
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
-from sqlalchemy.orm import relationship
 
 from mmisp.util.uuid import uuid
 
 from ..database import Base
-from .user import User
 
 
 class AuthKey(Base):
@@ -23,6 +21,4 @@ class AuthKey(Base):
     comment = Column(String(255))
     allowed_ips = Column(String(255))
     unique_ips = Column(String(255))
-    user_id = Column(Integer, ForeignKey(User.id), nullable=False)
-
-    user = relationship(User, primaryjoin=user_id == User.id, lazy="joined")
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
