@@ -59,7 +59,9 @@ async def password_login(db: Annotated[Session, Depends(get_db)], body: Password
     return TokenResponse(token=encode_token(str(user.id)))
 
 
-@router.get("/auth/login/idp/{identityProviderId}/authorize", response_class=RedirectResponse)
+@router.get(
+    "/auth/login/idp/{identityProviderId}/authorize", response_class=RedirectResponse, status_code=status.HTTP_302_FOUND
+)
 @with_session_management
 async def redirect_to_idp(
     db: Annotated[Session, Depends(get_db)], identity_provider_id: Annotated[int, Path(alias="identityProviderId")]
@@ -85,8 +87,12 @@ async def redirect_to_idp(
     return RedirectResponse(url=url, status_code=status.HTTP_302_FOUND)
 
 
-@router.get("/auth/login/idp/{identityProviderId}/callback", response_class=RedirectResponse)
-@router.post("/auth/login/idp/{identityProviderId}/callback", response_class=RedirectResponse)
+@router.get(
+    "/auth/login/idp/{identityProviderId}/callback", response_class=RedirectResponse, status_code=status.HTTP_302_FOUND
+)
+@router.post(
+    "/auth/login/idp/{identityProviderId}/callback", response_class=RedirectResponse, status_code=status.HTTP_302_FOUND
+)
 @with_session_management
 async def redirect_to_frontend(
     db: Annotated[Session, Depends(get_db)],
