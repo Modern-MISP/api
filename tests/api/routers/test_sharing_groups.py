@@ -398,6 +398,32 @@ class TestListSharingGroups:
         assert sharing_group_item["deletable"]
 
     @staticmethod
+    def test_list_own_sharing_group_site_admin(db: Session) -> None:
+        sharing_group = generate_sharing_group()
+        sharing_group.organisation_uuid = environment.instance_owner_org.uuid
+        sharing_group.org_id = environment.instance_owner_org.id
+
+        db.add(sharing_group)
+        db.commit()
+        db.refresh(sharing_group)
+
+        response = client.get(
+            "/sharing_groups",
+            headers={"authorization": environment.site_admin_user_token},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        json = response.json()
+
+        sharing_group_item = next(
+            (item for item in json["response"] if item["SharingGroup"]["id"] == str(sharing_group.id)), None
+        )
+
+        assert sharing_group_item
+        assert sharing_group_item["editable"]
+        assert sharing_group_item["deletable"]
+
+    @staticmethod
     def test_list_sharing_group_with_access_through_sharing_group_org(db: Session) -> None:
         sharing_group = generate_sharing_group()
         sharing_group.organisation_uuid = environment.instance_org_two.uuid
