@@ -326,11 +326,13 @@ async def _get_taxonomy_details_extended(db: Session, taxonomy_id: int) -> dict:
 
     for taxonomy_predicate in taxonomy_predicates:
         result = await db.execute(
-            select(TaxonomyEntry).filter(TaxonomyEntry.taxonomy_predicate_id == taxonomy_predicate)
+            select(TaxonomyEntry).filter(TaxonomyEntry.taxonomy_predicate_id == taxonomy_predicate.id)
         )
         taxonomy_entries_of_taxonomy_predicate = result.scalars().all()
 
         for taxonomy_entry_of_taxonomy_predicate in taxonomy_entries_of_taxonomy_predicate:
+            events = 0
+            attributes = 0
             tag_name = await _get_tag_name(db, taxonomy_entry_of_taxonomy_predicate)
 
             result = await db.execute(select(Tag).filter(Tag.name == tag_name).limit(1))
@@ -352,9 +354,9 @@ async def _get_taxonomy_details_extended(db: Session, taxonomy_id: int) -> dict:
             taxonomy_entries.append(
                 TaxonomyTagEntrySchema(
                     tag=tag_name,
-                    expanded=taxonomy_predicate.expand + ":" + taxonomy_entry_of_taxonomy_predicate.expanded,
+                    expanded=taxonomy_predicate.expanded + ":" + taxonomy_entry_of_taxonomy_predicate.expanded,
                     exclusive_predicate=taxonomy_predicate.exclusive,
-                    description=taxonomy_entries_of_taxonomy_predicate.description,
+                    description=taxonomy_entry_of_taxonomy_predicate.description,
                     existing_tag=existing_tag,
                     events=events,
                     attributes=attributes,
@@ -362,7 +364,7 @@ async def _get_taxonomy_details_extended(db: Session, taxonomy_id: int) -> dict:
             )
 
     response = {**taxonomy.__dict__, "entries": taxonomy_entries}
-    return response.__dict__
+    return response
 
 
 async def _export_taxonomy(db: Session, taxonomy_id: int) -> dict:
