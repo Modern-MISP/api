@@ -19,7 +19,3 @@ class ViewTaxonomyResponse(BaseModel):
 
     class Config:
         orm_mode = True
-
-
-class ViewTaxonomyResponseWrapper(BaseModel):
-    taxonomies: list[ViewTaxonomyResponse]
