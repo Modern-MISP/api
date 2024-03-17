@@ -6,7 +6,7 @@ from sqlalchemy.future import select
 from sqlalchemy.orm import Session
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
-from mmisp.api_schemas.noticelists.get_all_noticelist_response import GetAllNoticelist, GetAllNoticelistResponse
+from mmisp.api_schemas.noticelists.get_all_noticelist_response import GetAllNoticelists
 from mmisp.api_schemas.noticelists.get_noticelist_response import (
     NoticelistAttributes,
     NoticelistAttributesResponse,
@@ -16,7 +16,6 @@ from mmisp.api_schemas.noticelists.get_noticelist_response import (
 from mmisp.api_schemas.standard_status_response import StandardStatusIdentifiedResponse, StandardStatusResponse
 from mmisp.db.database import get_db, with_session_management
 from mmisp.db.models.noticelist import Noticelist, NoticelistEntry
-from mmisp.util.partial import partial
 
 router = APIRouter(tags=["noticelists"])
 
@@ -71,7 +70,7 @@ async def update_noticelists(
 @router.get(
     "/noticelists",
     status_code=status.HTTP_200_OK,
-    response_model=partial(GetAllNoticelistResponse),
+    response_model=list[GetAllNoticelists],
     summary="Get all noticelists",
     description="Retrieve a list of all noticelists.",
 )
@@ -79,7 +78,7 @@ async def update_noticelists(
 async def get_all_noticelists(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-) -> dict:
+) -> list[GetAllNoticelists]:
     return await _get_all_noticelists(db)
 
 
@@ -131,7 +130,7 @@ async def _get_noticelist(db: Session, noticelist_id: int) -> NoticelistResponse
     result = await db.execute(select(NoticelistEntry).filter(NoticelistEntry.noticelist_id == noticelist_id))
     noticelist_entries = result.scalars().all()
 
-    return NoticelistResponse(noticelist=_prepare_noticelist_response(noticelist, noticelist_entries))
+    return NoticelistResponse(Noticelist=_prepare_noticelist_response(noticelist, noticelist_entries))
 
 
 async def _toggleEnable_noticelists(db: Session, noticelist_id: int) -> StandardStatusIdentifiedResponse:
@@ -166,16 +165,16 @@ async def _update_noticelists(db: Session, depr: bool) -> StandardStatusResponse
     )
 
 
-async def _get_all_noticelists(db: Session) -> dict:
-    noticelist_data: list[GetAllNoticelist] = []
+async def _get_all_noticelists(db: Session) -> list[GetAllNoticelists]:
+    noticelist_data: list[GetAllNoticelists] = []
 
     result = await db.execute(select(Noticelist))
     noticelists: list[Noticelist] = result.scalars().all()
 
     for noticelist in noticelists:
         noticelist_data.append(
-            GetAllNoticelist(
-                noticelist=NoticelistAttributes(
+            GetAllNoticelists(
+                Noticelist=NoticelistAttributes(
                     id=noticelist.id,
                     name=noticelist.name,
                     expanded_name=noticelist.expanded_name,
@@ -187,7 +186,7 @@ async def _get_all_noticelists(db: Session) -> dict:
             )
         )
 
-    return GetAllNoticelistResponse(response=noticelist_data)
+    return noticelist_data
 
 
 def _prepare_noticelist_entries(noticelist_entries: list[NoticelistEntry]) -> list[NoticelistEntryResponse]:
@@ -212,5 +211,5 @@ def _prepare_noticelist_response(
         geographical_area=json.loads(noticelist.geographical_area),
         version=noticelist.version,
         enabled=noticelist.enabled,
-        noticelistEntry=_prepare_noticelist_entries(noticelist_entries),
+        NoticelistEntry=_prepare_noticelist_entries(noticelist_entries),
     )

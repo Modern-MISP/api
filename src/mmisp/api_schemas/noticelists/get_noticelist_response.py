@@ -28,11 +28,11 @@ class NoticelistAttributes(BaseModel):
 
 
 class NoticelistAttributesResponse(NoticelistAttributes):
-    noticelistEntry: list[NoticelistEntryResponse]
+    NoticelistEntry: list[NoticelistEntryResponse]
 
 
 class NoticelistResponse(BaseModel):
-    noticelist: NoticelistAttributesResponse
+    Noticelist: NoticelistAttributesResponse
 
     class Config:
         orm_mode = True

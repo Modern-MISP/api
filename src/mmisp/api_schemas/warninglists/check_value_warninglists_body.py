@@ -2,7 +2,7 @@ from pydantic import BaseModel
 
 
 class CheckValueWarninglistsBody(BaseModel):
-    value: list[str]
+    value: str
 
     class Config:
         orm_mode = True

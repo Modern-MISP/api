@@ -9,8 +9,8 @@ class Noticelist(Base):
     id = Column(Integer, primary_key=True, nullable=False)
     name = Column(String(255), nullable=False, index=True)
     expanded_name = Column(String(255), nullable=False)
-    ref = Column(String(255))  # data must be serialized as json
-    geographical_area = Column(String(255))  # data must be serialized as json
+    ref = Column(String(255))  # data serialized as json
+    geographical_area = Column(String(255))  # data serialized as json
     version = Column(Integer, nullable=False, default=1)
     enabled = Column(Boolean, nullable=False, default=False)
 
@@ -19,4 +19,4 @@ class NoticelistEntry(Base):
     __tablename__ = "noticelist_entries"
     id = Column(Integer, primary_key=True, nullable=False)
     noticelist_id = Column(Integer, ForeignKey(Noticelist.id, ondelete="CASCADE"), nullable=False)
-    data = Column(Text, nullable=False)  # data must be serialized as json
+    data = Column(Text, nullable=False)  # data serialized as json

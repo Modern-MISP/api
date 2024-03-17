@@ -3,12 +3,8 @@ from pydantic import BaseModel
 from mmisp.api_schemas.noticelists.get_noticelist_response import NoticelistAttributes
 
 
-class GetAllNoticelist(BaseModel):
-    noticelist: NoticelistAttributes
-
-
-class GetAllNoticelistResponse(BaseModel):
-    response: list[GetAllNoticelist]
+class GetAllNoticelists(BaseModel):
+    Noticelist: NoticelistAttributes
 
     class Config:
         orm_mode = True
