@@ -8,7 +8,10 @@ from mmisp.db.models.attribute import Attribute
 from mmisp.db.models.event import Event
 from tests.environment import client, environment
 from tests.generators.model_generators.sharing_group_generator import generate_sharing_group
-from tests.generators.sighting_generator import generate_valid_random_sighting_data
+from tests.generators.sighting_generator import (
+    generate_valid_random_sighting_data,
+    generate_valid_random_sighting_with_filter_data,
+)
 
 
 @pytest.fixture(
@@ -16,6 +19,8 @@ from tests.generators.sighting_generator import generate_valid_random_sighting_d
         generate_valid_random_sighting_data().dict(),
         generate_valid_random_sighting_data().dict(),
         generate_valid_random_sighting_data().dict(),
+        generate_valid_random_sighting_with_filter_data().dict(),
+        generate_valid_random_sighting_with_filter_data().dict(),
     ]
 )
 def sighting_data(request: Any) -> dict[str, Any]:
@@ -59,6 +64,9 @@ class TestAddSighting:
 
         db.commit()
 
+        if sighting_data["filters"]:
+            sighting_data["filters"]["value1"] = attribute.value1
+
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/sightings", json=sighting_data, headers=headers)
         assert response.status_code == 201
@@ -98,6 +106,9 @@ class TestAddSighting:
             db.add(attribute)
 
         db.commit()
+
+        if sighting_data["filters"]:
+            sighting_data["filters"]["value1"] = attribute.value1
 
         headers = {"authorization": environment.site_admin_user_token}
         response_first = client.post("/sightings", json=sighting_data, headers=headers)
@@ -143,6 +154,9 @@ class TestAddSighting:
 
         db.commit()
 
+        if sighting_data["filters"]:
+            sighting_data["filters"]["value1"] = attribute.value1
+
         incomplete_data = generate_valid_random_sighting_data().dict()
         del incomplete_data["values"]
         headers = {"authorization": environment.site_admin_user_token}
@@ -187,6 +201,9 @@ class TestAddSightingAtIndex:
         db.commit()
         db.refresh(attribute)
 
+        if sighting_data["filters"]:
+            sighting_data["filters"]["value1"] = attribute.value1
+
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post(f"/sightings/{attribute.id}", headers=headers)
         assert response.status_code == 201
@@ -227,6 +244,9 @@ class TestAddSightingAtIndex:
 
         db.add(attribute)
         db.commit()
+
+        if sighting_data["filters"]:
+            sighting_data["filters"]["value1"] = attribute.value1
 
         non_existent_attribute_id = "0"
         headers = {"authorization": environment.site_admin_user_token}
@@ -270,6 +290,9 @@ class TestGetSighting:
         db.add(attribute)
         db.commit()
 
+        if sighting_data["filters"]:
+            sighting_data["filters"]["value1"] = attribute.value1
+
         headers = {"authorization": environment.site_admin_user_token}
         response = client.get(f"/sightings/{event.id}", headers=headers)
         assert response.status_code == 200
@@ -310,6 +333,9 @@ class TestDeleteSighting:
         db.add(attribute)
         db.commit()
         db.refresh(attribute)
+
+        if sighting_data["filters"]:
+            sighting_data["filters"]["value1"] = attribute.value1
 
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post(f"/sightings/{attribute.id}", headers=headers)
@@ -361,6 +387,9 @@ class TestDeleteSighting:
         db.commit()
         db.refresh(attribute)
 
+        if sighting_data["filters"]:
+            sighting_data["filters"]["value1"] = attribute.value1
+
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post(f"/sightings/{attribute.id}", headers=headers)
         assert response.status_code == 201
@@ -410,6 +439,9 @@ class TestGetAllSightings:
         db.commit()
         db.refresh(attribute)
 
+        if sighting_data["filters"]:
+            sighting_data["filters"]["value1"] = attribute.value1
+
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post(f"/sightings/{attribute.id}", headers=headers)
         assert response.status_code == 201
@@ -452,6 +484,9 @@ class TestGetAllSightings:
         db.add(attribute)
         db.commit()
         db.refresh(attribute)
+
+        if sighting_data["filters"]:
+            sighting_data["filters"]["value1"] = attribute.value1
 
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post(f"/sightings/{attribute.id}", headers=headers)
