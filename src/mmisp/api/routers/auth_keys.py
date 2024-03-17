@@ -9,16 +9,18 @@ from sqlalchemy.orm import Session
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize, check_permissions
 from mmisp.api_schemas.auth_keys.add_auth_key_body import AddAuthKeyBody
-from mmisp.api_schemas.auth_keys.add_auth_key_response import AddAuthKeyResponse
+from mmisp.api_schemas.auth_keys.add_auth_key_response import AddAuthKeyResponse, AddAuthKeyResponseAuthKey
 from mmisp.api_schemas.auth_keys.edit_auth_key_body import EditAuthKeyBody
 from mmisp.api_schemas.auth_keys.edit_auth_key_response import (
-    EditAuthKeyResponse,
+    EditAuthKeyResponse, EditAuthKeyResponseAuthKey, EditAuthKeyResponseUser
 )
 from mmisp.api_schemas.auth_keys.search_auth_keys_body import SearchAuthKeyBody
 from mmisp.api_schemas.auth_keys.search_get_all_auth_keys_users_response import (
     SearchGetAuthKeysResponseItem,
+    SearchGetAuthKeysResponseItemAuthKey,
+    SearchGetAuthKeysResponseItemUser,
 )
-from mmisp.api_schemas.auth_keys.view_auth_key_response import ViewAuthKeysResponse
+from mmisp.api_schemas.auth_keys.view_auth_key_response import ViewAuthKeysResponse, ViewAuthKeyResponseWrapper
 from mmisp.api_schemas.standard_status_response import StandardStatusIdentifiedResponse
 from mmisp.db.database import get_db, with_session_management
 from mmisp.db.models.auth_key import AuthKey
@@ -43,7 +45,7 @@ async def auth_keys_add_user(
     db: Annotated[Session, Depends(get_db)],
     user_id: Annotated[int, Path(alias="userId")],
     body: AddAuthKeyBody,
-) -> dict:
+) -> AddAuthKeyResponse:
     return await _auth_key_add(auth=auth, db=db, user_id=user_id, body=body)
 
 
@@ -58,7 +60,7 @@ async def auth_keys_view_auth_key(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
     db: Annotated[Session, Depends(get_db)],
     auth_key_id: Annotated[int, Path(alias="AuthKeyId")],
-) -> dict:
+) -> ViewAuthKeysResponse:
     return await _auth_keys_view(auth=auth, db=db, auth_key_id=auth_key_id)
 
 
@@ -73,7 +75,7 @@ async def search_auth_keys(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
     db: Annotated[Session, Depends(get_db)],
     body: SearchAuthKeyBody,
-) -> list[dict]:
+) -> list[SearchGetAuthKeysResponseItem]:
     return await _search_auth_keys(auth=auth, db=db, body=body)
 
 
@@ -89,14 +91,15 @@ async def auth_keys_edit_auth_key(
     db: Annotated[Session, Depends(get_db)],
     auth_key_id: Annotated[int, Path(alias="AuthKeyId")],
     body: EditAuthKeyBody,
-) -> dict:
+) -> EditAuthKeyResponse:
     return await _auth_keys_edit(auth=auth, db=db, auth_key_id=auth_key_id, body=body)
 
 
 @router.delete(
     "/auth_keys/{AuthKeyId}",
+    response_model=StandardStatusIdentifiedResponse,
     summary="Delete given AuthKey.",
-    description="Delete AuthKey by AuthKeyId from the database.",
+    description="Delete AuthKey by AuthKeyId from the database."
 )
 @with_session_management
 async def auth_keys_delete_auth_key(
@@ -126,7 +129,7 @@ async def auth_keys_delete_auth_key(
 async def auth_keys_get(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
     db: Annotated[Session, Depends(get_db)],
-) -> list[dict]:
+) -> list[SearchGetAuthKeysResponseItem]:
     return await _auth_keys_get(auth=auth, db=db)
 
 
@@ -147,7 +150,7 @@ async def auth_keys_add_user_depr(
     db: Annotated[Session, Depends(get_db)],
     user_id: Annotated[int, Path(alias="userId")],
     body: AddAuthKeyBody,
-) -> dict:
+) -> AddAuthKeyResponse:
     return await _auth_key_add(auth=auth, db=db, user_id=user_id, body=body)
 
 
@@ -164,13 +167,14 @@ async def auth_keys_edit_auth_key_depr(
     db: Annotated[Session, Depends(get_db)],
     auth_key_id: Annotated[int, Path(alias="AuthKeyId")],
     body: EditAuthKeyBody,
-) -> dict:
+) -> EditAuthKeyResponse:
     return await _auth_keys_edit(auth=auth, db=db, auth_key_id=auth_key_id, body=body)
 
 
 @router.delete(
     "/auth_keys/delete/{AuthKeyId}",
     deprecated=True,
+    response_model=StandardStatusIdentifiedResponse,
     summary="Delete given AuthKey.",
     description="Delete AuthKey by AuthKeyId from the database.",
 )
@@ -195,7 +199,7 @@ async def auth_keys_delete_auth_key_depr(
 # --- endpoint logic ---
 
 
-async def _auth_key_add(auth: Auth, db: Session, user_id: int, body: AddAuthKeyBody) -> dict:
+async def _auth_key_add(auth: Auth, db: Session, user_id: int, body: AddAuthKeyBody) -> AddAuthKeyResponse:
     if body.uuid and not is_uuid(body.uuid):
         raise HTTPException(status.HTTP_400_BAD_REQUEST)
 
@@ -225,22 +229,31 @@ async def _auth_key_add(auth: Auth, db: Session, user_id: int, body: AddAuthKeyB
 
     await db.commit()
     await db.refresh(auth_key)
-
-    return {
-        "AuthKey": {
-            **auth_key.__dict__,
-            "allowed_ips": json.loads(auth_key.allowed_ips) if auth_key.allowed_ips else None,
-            "unique_ips": json.loads(auth_key.unique_ips) if auth_key.unique_ips else [],
-            "authkey_raw": auth_key_string,
-        }
-    }
+    return AddAuthKeyResponse(
+        AuthKey=AddAuthKeyResponseAuthKey(
+            id=auth_key.id,
+            uuid=auth_key.uuid,
+            authkey_start=auth_key.authkey_start,
+            authkey_end=auth_key.authkey_end,
+            created=auth_key.created,
+            expiration=auth_key.expiration,
+            read_only=auth_key.read_only,
+            user_id=auth_key.user_id,
+            comment=auth_key.comment,
+            allowed_ips=json.loads(
+                auth_key.allowed_ips) if auth_key.allowed_ips else None,
+            unique_ips=json.loads(
+                auth_key.unique_ips) if auth_key.unique_ips else [],
+            authkey_raw=auth_key_string
+        )
+    )
 
 
 async def _auth_keys_view(
     auth: Auth,
     db: Session,
     auth_key_id: int,
-) -> dict:
+) -> ViewAuthKeysResponse:
     if not auth:
         raise HTTPException(401)
 
@@ -259,24 +272,34 @@ async def _auth_keys_view(
     ):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
-    return {
-        "AuthKey": {
-            **auth_key.__dict__,
-            "allowed_ips": json.loads(auth_key.allowed_ips) if auth_key.allowed_ips else None,
-            "unique_ips": json.loads(auth_key.unique_ips) if auth_key.unique_ips else [],
-        },
-        "User": {
-            "id": user.id,
-            "email": user.email,
-        },
-    }
+    return ViewAuthKeysResponse(
+        AuthKey=ViewAuthKeyResponseWrapper(
+            id=auth_key.id,
+            uuid=auth_key.uuid,
+            authkey_start=auth_key.authkey_start,
+            authkey_end=auth_key.authkey_end,
+            created=auth_key.created,
+            expiration=auth_key.expiration,
+            read_only=auth_key.read_only,
+            user_id=auth_key.user_id,
+            comment=auth_key.comment,
+            allowed_ips=json.loads(
+                auth_key.allowed_ips) if auth_key.allowed_ips else None,
+            unique_ips=json.loads(
+                auth_key.unique_ips) if auth_key.unique_ips else [],
+        ),
+        User=SearchGetAuthKeysResponseItemUser(
+            id=user.id,
+            email=user.email,
+        ),
+    )
 
 
 async def _search_auth_keys(
     auth: Auth,
     db: Session,
     body: SearchAuthKeyBody,
-) -> list[dict]:
+) -> list[SearchGetAuthKeysResponseItem]:
     query = select(AuthKey, User).join(User, AuthKey.user_id == User.id)
 
     if not await check_permissions(auth, [Permission.SITE_ADMIN]):
@@ -315,31 +338,37 @@ async def _search_auth_keys(
     result = await db.execute(query.limit(body.limit).offset(body.page * body.limit))
     auth_keys_and_users: list[ResultItem] = result.all()
 
-    auth_keys_computed: list[dict] = []
+    auth_keys_computed: list[SearchGetAuthKeysResponseItem] = []
 
     for auth_key_and_user in auth_keys_and_users:
         auth_keys_computed.append(
-            {
-                "AuthKey": {
-                    **auth_key_and_user.AuthKey.__dict__,
-                    "allowed_ips": json.loads(auth_key_and_user.AuthKey.allowed_ips)
-                    if auth_key_and_user.AuthKey.allowed_ips
-                    else None,
-                    "unique_ips": json.loads(auth_key_and_user.AuthKey.unique_ips)
-                    if auth_key_and_user.AuthKey.unique_ips
-                    else [],
-                },
-                "User": {
-                    "id": auth_key_and_user.User.id,
-                    "email": auth_key_and_user.User.email,
-                },
-            }
+            SearchGetAuthKeysResponseItem(
+                AuthKey=SearchGetAuthKeysResponseItemAuthKey(
+                    id=auth_key_and_user.AuthKey.id,
+                    uuid=auth_key_and_user.AuthKey.uuid,
+                    authkey_start=auth_key_and_user.AuthKey.authkey_start,
+                    authkey_end=auth_key_and_user.AuthKey.authkey_end,
+                    created=auth_key_and_user.AuthKey.created,
+                    expiration=auth_key_and_user.AuthKey.expiration,
+                    read_only=auth_key_and_user.AuthKey.read_only,
+                    user_id=auth_key_and_user.AuthKey.user_id,
+                    comment=auth_key_and_user.AuthKey.comment,
+                    allowed_ips=json.loads(
+                        auth_key_and_user.AuthKey.allowed_ips) if auth_key_and_user.AuthKey.allowed_ips else None,
+                    unique_ips=json.loads(
+                        auth_key_and_user.AuthKey.unique_ips) if auth_key_and_user.AuthKey.unique_ips else [],
+                ),
+                User=SearchGetAuthKeysResponseItemUser(
+                    id=auth_key_and_user.User.id,
+                    email=auth_key_and_user.User.email,
+                ),
+            )
         )
 
     return auth_keys_computed
 
 
-async def _auth_keys_edit(auth: Auth, db: Session, auth_key_id: int, body: EditAuthKeyBody) -> dict:
+async def _auth_keys_edit(auth: Auth, db: Session, auth_key_id: int, body: EditAuthKeyBody) -> EditAuthKeyResponse:
     auth_key: AuthKey | None = await db.get(AuthKey, auth_key_id)
 
     if not auth_key or (
@@ -358,18 +387,27 @@ async def _auth_keys_edit(auth: Auth, db: Session, auth_key_id: int, body: EditA
 
     await db.commit()
     await db.refresh(auth_key)
-
-    return {
-        "AuthKey": {
-            **auth_key.__dict__,
-            "allowed_ips": json.loads(auth_key.allowed_ips) if auth_key.allowed_ips else None,
-            "unique_ips": json.loads(auth_key.unique_ips) if auth_key.unique_ips else [],
-        },
-        "User": {
-            "id": user.id,
-            "org_id": user.org_id,
-        },
-    }
+    return EditAuthKeyResponse(
+        AuthKey=EditAuthKeyResponseAuthKey(
+            id=auth_key.id,
+            uuid=auth_key.uuid,
+            authkey_start=auth_key.authkey_start,
+            authkey_end=auth_key.authkey_end,
+            created=auth_key.created,
+            expiration=auth_key.expiration,
+            read_only=auth_key.read_only,
+            user_id=auth_key.user_id,
+            comment=auth_key.comment,
+            allowed_ips=json.loads(
+                auth_key.allowed_ips) if auth_key.allowed_ips else None,
+            unique_ips=json.loads(
+                auth_key.unique_ips) if auth_key.unique_ips else [],
+        ),
+        User=EditAuthKeyResponseUser(
+            id=user.id,
+            org_id=user.org_id,
+        ),
+    )
 
 
 async def _auth_keys_delete(auth: Auth, db: Session, auth_key_id: int) -> None:
@@ -390,7 +428,7 @@ async def _auth_keys_delete(auth: Auth, db: Session, auth_key_id: int) -> None:
 async def _auth_keys_get(
     auth: Auth,
     db: Session,
-) -> list[dict]:
+) -> list[SearchGetAuthKeysResponseItem]:
     query = select(AuthKey, User).join(User, AuthKey.user_id == User.id)
 
     if not await check_permissions(auth, [Permission.SITE_ADMIN]):
@@ -405,22 +443,31 @@ async def _auth_keys_get(
     result = await db.execute(query)
     auth_keys_and_users: list[ResultItem] = result.all()
 
-    auth_keys_computed: list[dict] = []
+    auth_keys_computed: list[SearchGetAuthKeysResponseItem] = []
 
     for auth_key_and_user in auth_keys_and_users:
         auth_keys_computed.append(
-            {
-                "AuthKey": {
-                    **auth_key_and_user.AuthKey.__dict__,
-                    "allowed_ips": json.loads(auth_key_and_user.AuthKey.allowed_ips)
-                    if auth_key_and_user.AuthKey.allowed_ips
-                    else None,
-                    "unique_ips": json.loads(auth_key_and_user.AuthKey.unique_ips)
-                    if auth_key_and_user.AuthKey.unique_ips
-                    else [],
-                },
-                "User": {**auth_key_and_user.User.__dict__},
-            }
+            SearchGetAuthKeysResponseItem(
+                AuthKey=SearchGetAuthKeysResponseItemAuthKey(
+                    id=auth_key_and_user.AuthKey.id,
+                    uuid=auth_key_and_user.AuthKey.uuid,
+                    authkey_start=auth_key_and_user.AuthKey.authkey_start,
+                    authkey_end=auth_key_and_user.AuthKey.authkey_end,
+                    created=auth_key_and_user.AuthKey.created,
+                    expiration=auth_key_and_user.AuthKey.expiration,
+                    read_only=auth_key_and_user.AuthKey.read_only,
+                    user_id=auth_key_and_user.AuthKey.user_id,
+                    comment=auth_key_and_user.AuthKey.comment,
+                    allowed_ips=json.loads(
+                        auth_key_and_user.AuthKey.allowed_ips) if auth_key_and_user.AuthKey.allowed_ips else None,
+                    unique_ips=json.loads(
+                        auth_key_and_user.AuthKey.unique_ips) if auth_key_and_user.AuthKey.unique_ips else [],
+                ),
+                User=SearchGetAuthKeysResponseItemUser(
+                    id=auth_key_and_user.User.id,
+                    email=auth_key_and_user.User.email,
+                ),
+            )
         )
 
     return auth_keys_computed

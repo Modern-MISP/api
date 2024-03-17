@@ -20,7 +20,6 @@ from mmisp.api_schemas.taxonomies.get_taxonomy_by_id_response import (
 from mmisp.api_schemas.taxonomies.get_taxonomy_response import (
     TaxonomyView,
     ViewTaxonomyResponse,
-    ViewTaxonomyResponseWrapper,
 )
 from mmisp.api_schemas.taxonomies.get_taxonomy_tags_response import (
     GetTagTaxonomyResponse,
@@ -39,7 +38,7 @@ router = APIRouter(tags=["taxonomies"])
 @router.put(
     "/taxonomies",
     status_code=status.HTTP_200_OK,
-    response_model=partial(StandardStatusResponse),
+    response_model=StandardStatusResponse,
     summary="Update taxonomies",
     description="Update all taxonomies.",
 )
@@ -47,14 +46,14 @@ router = APIRouter(tags=["taxonomies"])
 async def update_taxonomies(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
-) -> dict:
+) -> StandardStatusResponse:
     return await _update_taxonomies(db, False)
 
 
 @router.get(
     "/taxonomies/{taxonomyId}",
     status_code=status.HTTP_200_OK,
-    response_model=partial(GetIdTaxonomyResponse),
+    response_model=GetIdTaxonomyResponseWrapper,
     summary="Get taxonomy details",
     description="Retrieve details of a specific taxonomy by its ID.",
 )
@@ -63,14 +62,14 @@ async def get_taxonomy_details(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     taxonomy_id: Annotated[int, Path(alias="taxonomyId")],
-) -> dict:
+) -> GetIdTaxonomyResponseWrapper:
     return await _get_taxonomy_details(db, taxonomy_id)
 
 
 @router.get(
     "/taxonomies",
     status_code=status.HTTP_200_OK,
-    response_model=partial(ViewTaxonomyResponseWrapper),
+    response_model=list[partial(ViewTaxonomyResponse)],
     summary="Get all taxonomies",
     description="Retrieve a list of all taxonomies.",
 )
@@ -78,14 +77,14 @@ async def get_taxonomy_details(
 async def get_taxonomies(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-) -> dict:
+) -> list[ViewTaxonomyResponse]:
     return await _get_all_taxonomies(db)
 
 
 @router.get(
     "/taxonomies/taxonomy_tags/{taxonomyId}",
     status_code=status.HTTP_200_OK,
-    response_model=partial(GetTagTaxonomyResponse),
+    response_model=GetTagTaxonomyResponse,
     summary="Get taxonomy inclusive tags and attributes",
     description="Retrieve details of a specific taxonomy and its tags and attributes by its ID.",
 )
@@ -94,14 +93,14 @@ async def get_taxonomy_details_extended(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     taxonomy_id: Annotated[int, Path(alias="taxonomyId")],
-) -> dict:
+) -> GetTagTaxonomyResponse:
     return await _get_taxonomy_details_extended(db, taxonomy_id)
 
 
 @router.get(
     "/taxonomies/export/{taxonomyId}",
     status_code=status.HTTP_200_OK,
-    response_model=partial(ExportTaxonomyResponse),
+    response_model=ExportTaxonomyResponse,
     summary="Export taxonomy",
     description="Export taxonomy.",
 )
@@ -110,14 +109,14 @@ async def export_taxonomy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     taxonomy_id: Annotated[int, Path(alias="taxonomyId")],
-) -> dict:
+) -> ExportTaxonomyResponse:
     return await _export_taxonomy(db, taxonomy_id)
 
 
 @router.post(
     "/taxonomies/enable/{taxonomyId}",
     status_code=status.HTTP_200_OK,
-    response_model=partial(StandardStatusResponse),
+    response_model=StandardStatusResponse,
     summary="Enable taxonomy",
     description="Enable a specific taxonomy by its ID.",
 )
@@ -126,14 +125,14 @@ async def enable_taxonomy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     taxonomy_id: Annotated[int, Path(alias="taxonomyId")],
-) -> dict:
+) -> StandardStatusResponse:
     return await _enable_taxonomy(db, taxonomy_id)
 
 
 @router.post(
     "/taxonomies/disable/{taxonomyId}",
     status_code=status.HTTP_200_OK,
-    response_model=partial(StandardStatusResponse),
+    response_model=StandardStatusResponse,
     summary="Disable taxonomy",
     description="Disable a specific taxonomy by its ID.",
 )
@@ -142,7 +141,7 @@ async def disable_taxonomies(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     taxonomy_id: Annotated[int, Path(alias="taxonomyId")],
-) -> dict:
+) -> StandardStatusResponse:
     return await _disable_taxonomy(db, taxonomy_id)
 
 
@@ -150,7 +149,7 @@ async def disable_taxonomies(
     "/taxonomies/update",
     deprecated=True,
     status_code=status.HTTP_200_OK,
-    response_model=partial(StandardStatusResponse),
+    response_model=StandardStatusResponse,
     summary="Update taxonomies",
     description="Update all taxonomies.",
 )
@@ -158,7 +157,7 @@ async def disable_taxonomies(
 async def update_taxonomies_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
-) -> dict:
+) -> StandardStatusResponse:
     return await _update_taxonomies(db, True)
 
 
@@ -166,7 +165,7 @@ async def update_taxonomies_depr(
     "/taxonomies/view/{taxonomyId}",
     deprecated=True,
     status_code=status.HTTP_200_OK,
-    response_model=partial(GetIdTaxonomyResponse),
+    response_model=GetIdTaxonomyResponseWrapper,
     summary="Get taxonomy details",
     description="Retrieve details of a specific taxonomy by its ID.",
 )
@@ -182,7 +181,7 @@ async def get_taxonomy_by_id_depr(
 # --- endpoint logic ---
 
 
-async def _update_taxonomies(db: Session, deprecated: bool) -> dict:
+async def _update_taxonomies(db: Session, deprecated: bool) -> StandardStatusResponse:
     result = await db.execute(select(func.count()).select_from(Taxonomy))
     number_updated_taxonomies = result.scalar()
     saved = True
@@ -200,7 +199,7 @@ async def _update_taxonomies(db: Session, deprecated: bool) -> dict:
     )
 
 
-async def _get_taxonomy_details(db: Session, taxonomy_id: int) -> dict:
+async def _get_taxonomy_details(db: Session, taxonomy_id: int) -> GetIdTaxonomyResponseWrapper:
     taxonomy: Taxonomy | None = await db.get(Taxonomy, taxonomy_id)
 
     if not taxonomy:
@@ -209,7 +208,7 @@ async def _get_taxonomy_details(db: Session, taxonomy_id: int) -> dict:
     result = await db.execute(select(TaxonomyPredicate).filter(TaxonomyPredicate.taxonomy_id == taxonomy.id))
     taxonomy_predicates = result.scalars().all()
 
-    taxonomy_entries: list[TaxonomyEntry] = []
+    taxonomy_entries: list[TaxonomyEntrySchema] = []
     for taxonomy_predicate in taxonomy_predicates:
         result = await db.execute(
             select(TaxonomyEntry).filter(TaxonomyEntry.taxonomy_predicate_id == taxonomy_predicate.id)
@@ -236,14 +235,26 @@ async def _get_taxonomy_details(db: Session, taxonomy_id: int) -> dict:
                 )
             )
 
-    return {**taxonomy.__dict__, "entries": taxonomy_entries}
+    response = GetIdTaxonomyResponseWrapper(
+        Taxonomy=GetIdTaxonomyResponse(
+            id=taxonomy.id,
+            namespace=taxonomy.namespace,
+            description=taxonomy.description,
+            version=taxonomy.version,
+            enabled=taxonomy.enabled,
+            exclusive=taxonomy.exclusive,
+            required=taxonomy.required,
+            highlighted=taxonomy.highlighted,
+            entries=taxonomy_entries
+        )
+    )
+    return response
 
-
-async def _get_all_taxonomies(db: Session) -> dict:
+async def _get_all_taxonomies(db: Session) -> list[ViewTaxonomyResponse]:
     result = await db.execute(select(Taxonomy))
     taxonomies: list[Taxonomy] = result.scalars().all()
 
-    response = []
+    response: list[ViewTaxonomyResponse] = []
     tag_names = []
     taxonomy_entries_predicates = []
     taxonomy_entries_builder = []
@@ -310,10 +321,10 @@ async def _get_all_taxonomies(db: Session) -> dict:
 
         response.append(taxonomy_response)
 
-    return ViewTaxonomyResponseWrapper(taxonomies=response)
+    return response
 
 
-async def _get_taxonomy_details_extended(db: Session, taxonomy_id: int) -> dict:
+async def _get_taxonomy_details_extended(db: Session, taxonomy_id: int) -> GetTagTaxonomyResponse:
     taxonomy: Taxonomy | None = await db.get(Taxonomy, taxonomy_id)
 
     if not taxonomy:
@@ -362,24 +373,34 @@ async def _get_taxonomy_details_extended(db: Session, taxonomy_id: int) -> dict:
                     attributes=attributes,
                 )
             )
-
-    response = {**taxonomy.__dict__, "entries": taxonomy_entries}
+    response = GetTagTaxonomyResponse(
+        id=taxonomy.id,
+        namespace=taxonomy.namespace,
+        description=taxonomy.description,
+        version=taxonomy.version,
+        enabled=taxonomy.enabled,
+        exclusive=taxonomy.exclusive,
+        required=taxonomy.required,
+        highlighted=taxonomy.highlighted,
+        entries=taxonomy_entries
+    )
     return response
 
 
-async def _export_taxonomy(db: Session, taxonomy_id: int) -> dict:
+async def _export_taxonomy(db: Session, taxonomy_id: int) -> ExportTaxonomyResponse:
     taxonomy: Taxonomy | None = await db.get(Taxonomy, taxonomy_id)
 
     if not Taxonomy:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Taxonomy not found.")
 
     predicates: list[TaxonomyPredicateSchema] = []
-    values: list[TaxonomyValueSchema] = []
+    entries: list[TaxonomyValueSchema] = []
 
     result = await db.execute(select(TaxonomyPredicate).filter(TaxonomyPredicate.taxonomy_id == taxonomy_id))
     taxonomy_predicates = result.scalars().all()
 
     for taxonomy_predicate in taxonomy_predicates:
+        values: list[ExportTaxonomyEntry] = []
         predicates.append(TaxonomyPredicateSchema(**taxonomy_predicate.__dict__))
 
         result = await db.execute(
@@ -388,12 +409,29 @@ async def _export_taxonomy(db: Session, taxonomy_id: int) -> dict:
         taxonomy_entries = result.scalars().all()
 
         for taxonomy_entry in taxonomy_entries:
-            values.append(ExportTaxonomyEntry(**taxonomy_entry.__dict__))
+            values.append(
+                ExportTaxonomyEntry(
+                    description=taxonomy_entry.description,
+                    expanded=taxonomy_entry.expanded,
+                    value=taxonomy_entry.value
+                )
+            )
+        value = TaxonomyValueSchema(
+            predicate=taxonomy_predicate.value,
+            entry=values
+        )
+        entries.append(value)
+    return ExportTaxonomyResponse(
+        namespace=taxonomy.namespace,
+        description=taxonomy.description,
+        version=taxonomy.version,
+        exclusive=taxonomy.exclusive,
+        predicates=predicates,
+        values=entries
+    )
 
-    return {**taxonomy.__dict__, "predicates": predicates, "values": values}
 
-
-async def _enable_taxonomy(db: Session, taxonomy_id: int) -> dict:
+async def _enable_taxonomy(db: Session, taxonomy_id: int) -> StandardStatusIdentifiedResponse:
     taxonomy: Taxonomy | None = await db.get(Taxonomy, taxonomy_id)
 
     if not taxonomy:
@@ -413,7 +451,7 @@ async def _enable_taxonomy(db: Session, taxonomy_id: int) -> dict:
     )
 
 
-async def _disable_taxonomy(db: Session, taxonomy_id: int) -> dict:
+async def _disable_taxonomy(db: Session, taxonomy_id: int) -> StandardStatusIdentifiedResponse:
     taxonomy: Taxonomy | None = await db.get(Taxonomy, taxonomy_id)
 
     if not taxonomy:

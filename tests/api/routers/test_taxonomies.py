@@ -37,7 +37,7 @@ class TestGetTaxonomyById:
         headers = {"authorization": environment.site_admin_user_token}
         response = client.get("/taxonomies/1", headers=headers)
         assert response.status_code == 200
-        assert response.json()["id"] == str(1)
+        assert response.json()["Taxonomy"]["id"] == str(1)
 
     @staticmethod
     def test_get_taxonomy_by_non_existing_id() -> None:
