@@ -23,7 +23,7 @@ class SightingFiltersBody(BaseModel):
     first_seen: str | None = None
     last_seen: str | None = None
     requested_attributes: list[str] | None = None
-    returnFormat: str | None = None
+    returnFormat: str | None = "json"
     limit: str | None = "25"
 
     @validator("limit")
