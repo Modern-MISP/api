@@ -17,7 +17,7 @@ class TestGetNoticelist:
         for noticelist_id in noticelist_ids:
             response = client.get(f"/noticelists/{noticelist_id}", headers=headers)
             assert response.status_code == 200
-            assert response.json()["noticelist"]["id"] == str(noticelist_id)
+            assert response.json()["Noticelist"]["id"] == str(noticelist_id)
 
         remove_noticelists(noticelist_ids)
 
@@ -30,7 +30,7 @@ class TestGetNoticelist:
         for noticelist_id in noticelist_ids:
             response = client.get(f"/noticelists/view/{noticelist_id}", headers=headers)
             assert response.status_code == 200
-            assert response.json()["noticelist"]["id"] == str(noticelist_id)
+            assert response.json()["Noticelist"]["id"] == str(noticelist_id)
 
         remove_noticelists(noticelist_ids)
 
@@ -82,7 +82,7 @@ class TestGetNoticelist:
 
         response = client.get(f"/noticelists/{noticelist_id[0]}", headers=headers)
         json = response.json()
-        assert isinstance(json["noticelist"]["id"], str)
+        assert isinstance(json["Noticelist"]["id"], str)
 
         remove_noticelists(noticelist_id)
 
@@ -94,7 +94,7 @@ class TestGetNoticelist:
 
         response = client.get(f"/noticelists/view/{noticelist_id[0]}", headers=headers)
         json = response.json()
-        assert isinstance(json["noticelist"]["id"], str)
+        assert isinstance(json["Noticelist"]["id"], str)
 
         remove_noticelists(noticelist_id)
 
@@ -211,7 +211,6 @@ class TestGetAllNoticelists:
 
         response = client.get("/noticelists", headers=headers)
         json = response.json()
-        assert "response" in json
-        assert isinstance(json["response"], list)
+        assert isinstance(json, list)
 
         remove_noticelists(noticelist_ids)

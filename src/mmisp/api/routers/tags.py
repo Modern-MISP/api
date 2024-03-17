@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
 from mmisp.api_schemas.tags.create_tag_body import TagCreateBody
 from mmisp.api_schemas.tags.delete_tag_response import TagDeleteResponse
-from mmisp.api_schemas.tags.get_tag_response import TagAttributesResponse, TagGetResponse, TagResponse, TagViewResponse
+from mmisp.api_schemas.tags.get_tag_response import TagGetResponse, TagResponse, TagViewResponse
 from mmisp.api_schemas.tags.search_tags_response import TagSearchResponse
 from mmisp.api_schemas.tags.update_tag_body import TagUpdateBody
 from mmisp.db.database import get_db, with_session_management
@@ -144,7 +144,7 @@ async def add_tag_depr(
 @router.get(
     "/tags/view/{tagId}",
     status_code=status.HTTP_200_OK,
-    response_model=TagAttributesResponse,
+    response_model=TagViewResponse,
     deprecated=True,
     summary="View tag details (Deprecated)",
     description="Deprecated. View details of a specific tag using the old route.",
@@ -154,7 +154,7 @@ async def view_tag_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     tag_id: Annotated[int, Path(alias="tagId")],
-) -> TagAttributesResponse:
+) -> TagViewResponse:
     return await _view_tag(db, tag_id)
 
 
@@ -208,10 +208,10 @@ async def _add_tag(db: Session, body: TagCreateBody) -> TagResponse:
     db.add(tag)
     await db.commit()
 
-    return {"tag": tag.__dict__}
+    return {"Tag": tag.__dict__}
 
 
-async def _view_tag(db: Session, tag_id: int) -> TagAttributesResponse:
+async def _view_tag(db: Session, tag_id: int) -> TagViewResponse:
     tag: Tag | None = await db.get(Tag, tag_id)
 
     if not tag:
@@ -239,9 +239,9 @@ async def _search_tags(db: Session, tag_search_term: str) -> dict:
             for taxonomy_predicate in taxonomy_predicates:
                 tag_datas.append(
                     {
-                        "tag": tag.__dict__,
-                        "taxonomy": taxonomy.__dict__,
-                        "taxonomy_predicate": taxonomy_predicate.__dict__,
+                        "Tag": tag.__dict__,
+                        "Taxonomy": taxonomy.__dict__,
+                        "TaxonomyPredicate": taxonomy_predicate.__dict__,
                     }
                 )
 
@@ -268,7 +268,7 @@ async def _update_tag(db: Session, body: TagUpdateBody, tag_id: int) -> TagRespo
     await db.commit()
     await db.refresh(tag)
 
-    return {"tag": tag.__dict__}
+    return {"Tag": tag.__dict__}
 
 
 async def _delete_tag(db: Session, tag_id: int) -> TagDeleteResponse:
@@ -303,7 +303,7 @@ async def _get_tags(db: Session) -> dict:
     result = await db.execute(select(Tag))
     tags: list[Tag] = result.scalars().all()
 
-    return TagGetResponse(tag=[tag.__dict__ for tag in tags])
+    return TagGetResponse(Tag=[tag.__dict__ for tag in tags])
 
 
 def _check_type_hex_colour(colour: Any) -> None:

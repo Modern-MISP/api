@@ -2,17 +2,9 @@ from pydantic import BaseModel
 
 
 class NameWarninglist(BaseModel):
-    id: int
+    id: str
     name: str
-
-
-class ValueWarninglistsResponse(BaseModel):
-    value: str
-    warninglist: list[NameWarninglist] | None
-
-
-class CheckValueWarninglistsResponse(BaseModel):
-    response: list[ValueWarninglistsResponse]
+    matched: str
 
     class Config:
         orm_mode = True

@@ -16,16 +16,16 @@ class TagAttributesResponse(BaseModel):
 
 
 class TagViewResponse(TagAttributesResponse):
-    attribute_count: int
     count: int
+    attribute_count: int
 
 
 class TagResponse(BaseModel):
-    tag: TagAttributesResponse
+    Tag: TagAttributesResponse
 
 
 class TagGetResponse(BaseModel):
-    tag: list[TagAttributesResponse]
+    Tag: list[TagAttributesResponse]
 
     class Config:
         orm_mode = True
