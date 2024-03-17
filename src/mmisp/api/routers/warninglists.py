@@ -8,11 +8,7 @@ from sqlalchemy.orm import Session
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
 from mmisp.api_schemas.standard_status_response import StandardStatusResponse
 from mmisp.api_schemas.warninglists.check_value_warninglists_body import CheckValueWarninglistsBody
-from mmisp.api_schemas.warninglists.check_value_warninglists_response import (
-    CheckValueWarninglistsResponse,
-    NameWarninglist,
-    ValueWarninglistsResponse,
-)
+from mmisp.api_schemas.warninglists.check_value_warninglists_response import NameWarninglist
 from mmisp.api_schemas.warninglists.create_warninglist_body import CreateWarninglistBody
 from mmisp.api_schemas.warninglists.get_selected_all_warninglists_response import (
     GetSelectedAllWarninglistsResponse,
@@ -117,8 +113,14 @@ async def get_all_or_selected_warninglists(
 
 @router.post(
     "/warninglists/checkValue",
+    responses={
+        200: {
+            "content": {
+                "application/json": {"example": {"value": [{"id": "string", "name": "string", "matched": "string"}]}}
+            }
+        },
+    },
     status_code=status.HTTP_200_OK,
-    response_model=partial(CheckValueWarninglistsResponse),
     summary="Get a list of ID and name of enabled warninglists",
     description="Retrieve a list of ID and name of enabled warninglists, \
         which match has the given search term as entry.",
@@ -228,7 +230,7 @@ async def _add_warninglist(
 
     warninglist_data = await _prepare_warninglist_details_response(db, new_warninglist)
 
-    return WarninglistResponse(warninglist=warninglist_data)
+    return WarninglistResponse(Warninglist=warninglist_data)
 
 
 async def _toggleEnable(
@@ -236,7 +238,12 @@ async def _toggleEnable(
     body: ToggleEnableWarninglistsBody,
 ) -> dict:
     warninglist_id_str_list = _convert_to_list(body.id)
-    warninglist_id_list = [int(id_str) for id_str in warninglist_id_str_list]
+    warninglist_id_list: list[int] = []
+    for id_str in warninglist_id_str_list:
+        try:
+            warninglist_id_list.append(int(id_str))
+        except ValueError:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="Warninglist id musst be an integer.")
     warninglist_name_list = _convert_to_list(body.name)
 
     result = await db.execute(
@@ -272,7 +279,7 @@ async def _get_warninglist_details(
 
     warninglist_response = await _prepare_warninglist_details_response(db, warninglist)
 
-    return WarninglistResponse(warninglist=warninglist_response)
+    return WarninglistResponse(Warninglist=warninglist_response)
 
 
 async def _delete_warninglist(
@@ -298,17 +305,15 @@ async def _delete_warninglist(
     warninglist_response = warninglist.__dict__
     warninglist_response["warninglist_entry_count"] = warninglist_entry_count
     warninglist_response["valid_attributes"] = valid_attributes
-    warninglist_response["warninglist_entry"] = [
-        warninglist_entry.__dict__ for warninglist_entry in warninglist_entries
-    ]
-    warninglist_response["warninglist_type"] = [warninglist_type.__dict__ for warninglist_type in warninglist_types]
+    warninglist_response["WarninglistEntry"] = [warninglist_entry.__dict__ for warninglist_entry in warninglist_entries]
+    warninglist_response["WarninglistType"] = [warninglist_type.__dict__ for warninglist_type in warninglist_types]
 
     await db.execute(delete(WarninglistEntry).filter(WarninglistEntry.warninglist_id == warninglist.id))
     await db.execute(delete(WarninglistType).filter(WarninglistType.warninglist_id == warninglist.id))
     await db.delete(warninglist)
     await db.commit()
 
-    return WarninglistResponse(warninglist=warninglist_response)
+    return WarninglistResponse(Warninglist=warninglist_response)
 
 
 async def _get_all_or_selected_warninglists(
@@ -320,42 +325,34 @@ async def _get_all_or_selected_warninglists(
 
     warninglists_data: list[WarninglistsResponse] = []
     for warninglist in warninglists:
-        warninglists_data.append(WarninglistsResponse(warninglist=await _prepare_warninglist_response(db, warninglist)))
+        warninglists_data.append(WarninglistsResponse(Warninglist=await _prepare_warninglist_response(db, warninglist)))
 
-    return GetSelectedAllWarninglistsResponse(warninglists=warninglists_data)
+    return GetSelectedAllWarninglistsResponse(Warninglists=warninglists_data)
 
 
 async def _get_warninglists_by_value(
     db: Session,
     body: CheckValueWarninglistsBody,
 ) -> dict:
-    values = body.value
+    value = body.value
 
-    response: list[ValueWarninglistsResponse] = []
+    result = await db.execute(select(WarninglistEntry).filter(WarninglistEntry.value == value))
+    warninglist_entries: list[WarninglistEntry] = result.scalars().all()
 
-    for value in values:
-        result = await db.execute(select(WarninglistEntry).filter(WarninglistEntry.value == value))
-        warninglist_entries: list[WarninglistEntry] = result.scalars().all()
-
-        name_warninglists: list[NameWarninglist] = []
-        for warninglist_entry in warninglist_entries:
-            result = await db.execute(
-                select(Warninglist).filter(
-                    Warninglist.id == warninglist_entry.warninglist_id, Warninglist.enabled.is_(True)
-                )
+    name_warninglists: list[NameWarninglist] = []
+    for warninglist_entry in warninglist_entries:
+        result = await db.execute(
+            select(Warninglist).filter(
+                Warninglist.id == warninglist_entry.warninglist_id, Warninglist.enabled.is_(True)
             )
-            warninglists: Warninglist = result.scalars().all()
-            for warninglist in warninglists:
-                name_warninglists.append(NameWarninglist(id=warninglist_entry.warninglist_id, name=warninglist.name))
-
-        value_response = ValueWarninglistsResponse(
-            value=value,
-            warninglist=name_warninglists,
         )
+        warninglists: list[Warninglist] = result.scalars().all()
+        for warninglist in warninglists:
+            name_warninglists.append(
+                NameWarninglist(id=warninglist_entry.warninglist_id, name=warninglist.name, matched=value)
+            )
 
-        response.append(value_response)
-
-    return CheckValueWarninglistsResponse(response=response)
+    return {f"{value}": name_warninglists}
 
 
 async def _update_all_warninglists(
@@ -383,9 +380,9 @@ async def _get_selected_warninglists(
 
     warninglists_data: list[WarninglistsResponse] = []
     for warninglist in warninglists:
-        warninglists_data.append(WarninglistsResponse(warninglist=await _prepare_warninglist_response(db, warninglist)))
+        warninglists_data.append(WarninglistsResponse(Warninglist=await _prepare_warninglist_response(db, warninglist)))
 
-    return GetSelectedAllWarninglistsResponse(warninglists=warninglists_data)
+    return GetSelectedAllWarninglistsResponse(Warninglists=warninglists_data)
 
 
 async def _search_warninglist(db: Session, value: str | None = None, enabled: bool | None = None) -> list[Warninglist]:
@@ -454,8 +451,8 @@ async def _prepare_warninglist_response(db: Session, warninglist: Warninglist) -
 
 async def _prepare_warninglist_details_response(db: Session, warninglist: Warninglist) -> dict:
     warninglist_response = await _prepare_warninglist_response(db, warninglist)
-    warninglist_response["warninglist_entry"] = await _get_warninglist_entries(db, warninglist.id)
-    warninglist_response["warninglist_type"] = await _get_warninglist_types(db, warninglist.id)
+    warninglist_response["WarninglistEntry"] = await _get_warninglist_entries(db, warninglist.id)
+    warninglist_response["WarninglistType"] = await _get_warninglist_types(db, warninglist.id)
 
     return warninglist_response
 
