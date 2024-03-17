@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
 from mmisp.api_schemas.standard_status_response import StandardStatusResponse
 from mmisp.api_schemas.warninglists.check_value_warninglists_body import CheckValueWarninglistsBody
-from mmisp.api_schemas.warninglists.check_value_warninglists_response import NameWarninglist
+from mmisp.api_schemas.warninglists.check_value_warninglists_response import CheckValueResponse, NameWarninglist
 from mmisp.api_schemas.warninglists.create_warninglist_body import CreateWarninglistBody
 from mmisp.api_schemas.warninglists.get_selected_all_warninglists_response import (
     GetSelectedAllWarninglistsResponse,
@@ -113,13 +113,7 @@ async def get_all_or_selected_warninglists(
 
 @router.post(
     "/warninglists/checkValue",
-    responses={
-        200: {
-            "content": {
-                "application/json": {"example": {"value": [{"id": "string", "name": "string", "matched": "string"}]}}
-            }
-        },
-    },
+    response_model=CheckValueResponse | dict,
     status_code=status.HTTP_200_OK,
     summary="Get a list of ID and name of enabled warninglists",
     description="Retrieve a list of ID and name of enabled warninglists, \

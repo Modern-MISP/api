@@ -6,5 +6,9 @@ class NameWarninglist(BaseModel):
     name: str
     matched: str
 
+
+class CheckValueResponse(BaseModel):
+    value: list[NameWarninglist]
+
     class Config:
         orm_mode = True
