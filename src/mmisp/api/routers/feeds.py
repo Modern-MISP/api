@@ -1,4 +1,4 @@
-from typing import Annotated, Any
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Path, status
 from sqlalchemy.future import select
@@ -9,13 +9,12 @@ from mmisp.api_schemas.feeds.cache_feed_response import FeedCacheResponse
 from mmisp.api_schemas.feeds.create_feed_body import FeedCreateBody
 from mmisp.api_schemas.feeds.enable_disable_feed_response import FeedEnableDisableResponse
 from mmisp.api_schemas.feeds.fetch_feeds_response import FeedFetchResponse
-from mmisp.api_schemas.feeds.get_feed_response import FeedResponse, FeedsResponse
+from mmisp.api_schemas.feeds.get_feed_response import FeedResponse
 from mmisp.api_schemas.feeds.toggle_feed_body import FeedToggleBody
 from mmisp.api_schemas.feeds.update_feed_body import FeedUpdateBody
 from mmisp.db.database import get_db, with_session_management
 from mmisp.db.models.feed import Feed
 from mmisp.util.models import update_record
-from mmisp.util.partial import partial
 
 router = APIRouter(tags=["feeds"])
 
@@ -136,7 +135,7 @@ async def fetch_data_from_all_feeds(
 @router.get(
     "/feeds",
     status_code=status.HTTP_200_OK,
-    response_model=partial(FeedsResponse),
+    response_model=list[FeedResponse],
     summary="Get all feeds",
     description="Retrieve a list of all feeds.",
 )
@@ -144,7 +143,7 @@ async def fetch_data_from_all_feeds(
 async def get_feeds(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-) -> list[dict[str, Any]]:
+) -> list[FeedResponse]:
     return await _get_feeds(db)
 
 
@@ -297,7 +296,7 @@ async def _add_feed(db: Session, body: FeedCreateBody) -> FeedResponse:
     await db.commit()
     await db.refresh(feed)
 
-    return FeedResponse(feed=feed.__dict__)
+    return FeedResponse(Feed=feed.__dict__)
 
 
 async def _cache_feeds(db: Session, cache_feeds_scope: str) -> FeedCacheResponse:
@@ -316,7 +315,7 @@ async def _get_feed_details(db: Session, feed_id: int) -> FeedResponse:
     if not feed:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Feed not found.")
 
-    return FeedResponse(feed=feed.__dict__)
+    return FeedResponse(Feed=feed.__dict__)
 
 
 async def _update_feed(db: Session, feed_id: int, body: FeedUpdateBody) -> FeedResponse:
@@ -330,7 +329,7 @@ async def _update_feed(db: Session, feed_id: int, body: FeedUpdateBody) -> FeedR
     await db.commit()
     await db.refresh(feed)
 
-    return FeedResponse(feed=feed.__dict__)
+    return FeedResponse(Feed=feed.__dict__)
 
 
 async def _toggle_feed(db: Session, feed_id: int, body: FeedToggleBody) -> FeedEnableDisableResponse:
@@ -358,11 +357,11 @@ async def _fetch_data_from_all_feeds(db: Session) -> FeedFetchResponse:
     raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Endpoint not yet supported.")
 
 
-async def _get_feeds(db: Session) -> list[dict[str, Any]]:
+async def _get_feeds(db: Session) -> list[FeedResponse]:
     result = await db.execute(select(Feed))
     feeds: list[Feed] = result.scalars().all()
 
-    return FeedsResponse(feeds=[feed.__dict__ for feed in feeds])
+    return [FeedResponse(Feed=feed.__dict__) for feed in feeds]
 
 
 async def _enable_feed(db: Session, feed_id: int) -> FeedEnableDisableResponse:

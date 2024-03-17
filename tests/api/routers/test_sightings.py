@@ -62,7 +62,6 @@ class TestAddSighting:
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/sightings", json=sighting_data, headers=headers)
         assert response.status_code == 201
-        assert "sightings" in response.json()
 
     @staticmethod
     def test_add_sighting_with_invalid_data(sighting_data: dict[str, Any], db: Session) -> None:
@@ -191,10 +190,9 @@ class TestAddSightingAtIndex:
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post(f"/sightings/{attribute.id}", headers=headers)
         assert response.status_code == 201
-        assert "sightings" in response.json()
-        assert "id" in response.json()["sightings"][0]
-        assert "event_id" in response.json()["sightings"][0]
-        assert "attribute_id" in response.json()["sightings"][0]
+        assert "id" in response.json()
+        assert "event_id" in response.json()
+        assert "attribute_id" in response.json()
 
     @staticmethod
     def test_add_sighting_at_index_invalid_attribute(sighting_data: dict[str, Any], db: Session) -> None:
@@ -275,7 +273,6 @@ class TestGetSighting:
         headers = {"authorization": environment.site_admin_user_token}
         response = client.get(f"/sightings/{event.id}", headers=headers)
         assert response.status_code == 200
-        assert "sightings" in response.json()
 
 
 class TestDeleteSighting:
@@ -318,7 +315,7 @@ class TestDeleteSighting:
         response = client.post(f"/sightings/{attribute.id}", headers=headers)
         assert response.status_code == 201
 
-        sighting_id = response.json()["sightings"][0]["id"]
+        sighting_id = response.json()["id"]
 
         headers = {"authorization": environment.site_admin_user_token}
         response = client.delete(f"/sightings/{sighting_id}", headers=headers)
@@ -474,4 +471,4 @@ class TestGetAllSightings:
             assert "event_id" in sighting_wrapper
             assert "org_id" in sighting_wrapper
             assert "date_sighting" in sighting_wrapper
-            assert "organisation" in sighting_wrapper
+            assert "Organisation" in sighting_wrapper
