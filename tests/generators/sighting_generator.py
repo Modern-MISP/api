@@ -40,7 +40,7 @@ def generate_random_search_query() -> SightingFiltersBody:
 
 def generate_valid_random_sighting_with_filter_data() -> SightingCreateBody:
     return SightingCreateBody(
-        values=[generate_random_value() for _ in range(random.randint(1, 2))],
+        values=[generate_random_value() for _ in range(random.randint(1, 3))],
         source=None,
         timestamp=int(time.time()),
         filters=generate_random_search_query(),

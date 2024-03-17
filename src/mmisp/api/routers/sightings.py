@@ -2,7 +2,7 @@ from time import time
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Path, status
-from sqlalchemy import select
+from sqlalchemy import and_, select
 from sqlalchemy.orm import Session
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
@@ -180,21 +180,19 @@ async def _add_sighting(db: Session, body: SightingCreateBody) -> list[SightingA
     filters: SightingFiltersBody | None = body.filters.dict(exclude_unset=True) if body.filters else None
     responses: list[SightingsGetResponse] = []
     attributes: list[Attribute] = []
+    counter = len(body.values) - 1
 
-    if filters and body.filters.return_format is None:
-        body.filters.return_format = "json"
-    elif filters:
-        _check_valid_return_format(return_format=body.filters.return_format)
+    if filters and body.filters.returnFormat:
+        _check_valid_return_format(return_format=body.filters.returnFormat)
 
     for value in body.values:
         if filters:
-            filters = body.dict(exclude_unset=True)
-            attributes = await _get_attributes_with_filters(db=db, filters=filters)
+            attributes = await _get_attributes_with_filters(db=db, filters=filters, value=value)
         else:
             result = await db.execute(select(Attribute).filter(Attribute.value1 == value))
             attributes = result.scalars().all()
 
-        if not attributes:
+        if not attributes and counter == 0:
             raise HTTPException(status.HTTP_404_NOT_FOUND, detail="No Attributes with given values found.")
 
         for attribute in attributes:
@@ -226,6 +224,8 @@ async def _add_sighting(db: Session, body: SightingCreateBody) -> list[SightingA
                     organisation=organisation_response,
                 )
             )
+
+        counter -= 1
 
     await db.commit()
 
@@ -353,68 +353,75 @@ def _check_valid_return_format(return_format: str) -> None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid return format.")
 
 
-async def _get_attributes_with_filters(db: Session, filters: SightingFiltersBody) -> list[Attribute]:
+async def _get_attributes_with_filters(db: Session, filters: SightingFiltersBody, value: str) -> list[Attribute]:
     search_body: SightingFiltersBody = SightingFiltersBody(**filters)
     query: Attribute = select(Attribute)
 
     if search_body.value1:
-        query = query.filter(Attribute.value1 == search_body.value1)
+        result = query.filter(and_(Attribute.value1 == search_body.value1, Attribute.value1 == value))
+        query = result
 
     if search_body.value2:
-        query = query.filter(Attribute.value2 == search_body.value2)
+        query = query.filter(and_(Attribute.value2 == search_body.value2, Attribute.value1 == value))
 
     if search_body.type:
-        query = query.filter(Attribute.type == search_body.type)
+        query = query.filter(and_(Attribute.type == search_body.type, Attribute.value1 == value))
 
     if search_body.category:
-        query = query.filter(Attribute.category == search_body.category)
+        query = query.filter(and_(Attribute.category == search_body.category, Attribute.value1 == value))
 
     if search_body.from_:
-        query = query.filter(Attribute.timestamp >= search_body.from_)
+        query = query.filter(and_(Attribute.timestamp >= search_body.from_, Attribute.value1 == value))
 
     if search_body.to:
-        query = query.filter(Attribute.timestamp <= search_body.to)
+        query = query.filter(and_(Attribute.timestamp <= search_body.to, Attribute.value1 == value))
 
     if search_body.last:
-        query = query.filter(Attribute.last_seen > search_body.last)
+        query = query.filter(and_(Attribute.last_seen > search_body.last, Attribute.value1 == value))
 
     if search_body.timestamp:
-        query = query.filter(Attribute.timestamp == search_body.timestamp)
+        query = query.filter(and_(Attribute.timestamp == search_body.timestamp, Attribute.value1 == value))
 
     if search_body.event_id:
-        query = query.filter(Attribute.event_id == search_body.event_id)
+        query = query.filter(and_(Attribute.event_id == search_body.event_id, Attribute.value1 == value))
 
     if search_body.uuid:
-        query = query.filter(Attribute.uuid == search_body.uuid)
+        query = query.filter(and_(Attribute.uuid == search_body.uuid, Attribute.value1 == value))
 
     if search_body.timestamp:
-        query = query.filter(Attribute.timestamp == search_body.attribute_timestamp)
+        query = query.filter(and_(Attribute.timestamp == search_body.attribute_timestamp, Attribute.value1 == value))
 
     if search_body.to_ids:
-        query = query.filter(Attribute.to_ids == search_body.to_ids)
+        query = query.filter(and_(Attribute.to_ids == search_body.to_ids, Attribute.value1 == value))
 
     if search_body.deleted:
-        query = query.filter(Attribute.deleted == search_body.deleted)
+        query = query.filter(and_(Attribute.deleted == search_body.deleted, Attribute.value1 == value))
 
     if search_body.event_timestamp:
-        subquery = select(Event.id).filter(Event.timestamp == search_body.event_timestamp)
+        subquery = select(Event.id).filter(
+            and_(Event.timestamp == search_body.event_timestamp, Attribute.value1 == value)
+        )
         query = query.filter(Attribute.event_id.in_(subquery))
 
-    if search_body.event_info:
-        subquery = select(Event.id).filter(Event.info.like(f"%{search_body.event_info}%"))
+    if search_body.eventinfo:
+        subquery = select(Event.id).filter(
+            and_(Event.info.like(f"%{search_body.eventinfo}%"), Attribute.value1 == value)
+        )
         query = query.filter(Attribute.event_id.in_(subquery))
 
-    if search_body.sharing_group:
-        query = query.filter(Attribute.sharing_group_id.in_(search_body.sharing_group))
+    if search_body.sharinggroup:
+        query = query.filter(and_(Attribute.sharing_group_id.in_(search_body.sharinggroup), Attribute.value1 == value))
 
     if search_body.first_seen:
-        query = query.filter(Attribute.first_seen == search_body.first_seen)
+        query = query.filter(and_(Attribute.first_seen == search_body.first_seen, Attribute.value1 == value))
 
     if search_body.last_seen:
-        query = query.filter(Attribute.last_seen == search_body.last_seen)
+        query = query.filter(and_(Attribute.last_seen == search_body.last_seen, Attribute.value1 == value))
 
     if search_body.requested_attributes:
-        query = query.filter(Attribute.sharing_group_id.in_(search_body.requested_attributes))
+        query = query.filter(
+            and_(Attribute.sharing_group_id.in_(search_body.requested_attributes), Attribute.value1 == value)
+        )
 
     if search_body.limit:
         query = query.limit(int(search_body.limit))
