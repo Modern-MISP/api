@@ -40,8 +40,9 @@ class TestAddObject:
         db.flush()
         db.refresh(sharing_group)
         object_data["sharing_group_id"] = sharing_group.id
-        for attribute in object_data["attributes"]:
-            attribute["sharing_group_id"] = sharing_group.id
+        if object_data["Attribute"]:
+            for attribute in object_data["Attribute"]:
+                attribute["sharing_group_id"] = sharing_group.id
 
         object_template = ObjectTemplate(name="test_template", user_id=1, org_id=1, version=100)
         db.add(object_template)
@@ -73,8 +74,8 @@ class TestAddObject:
         assert response.status_code == 201
 
         response_data = response.json()
-        assert "object" in response_data
-        assert int(response_data["object"]["event_id"]) == event_id
+        assert "Object" in response_data
+        assert int(response_data["Object"]["event_id"]) == event_id
 
     @staticmethod
     def test_add_object_response_format(object_data: dict[str, Any], db: Session) -> None:
@@ -85,8 +86,9 @@ class TestAddObject:
         db.flush()
         db.refresh(sharing_group)
         object_data["sharing_group_id"] = sharing_group.id
-        for attribute in object_data["attributes"]:
-            attribute["sharing_group_id"] = sharing_group.id
+        if object_data["Attribute"]:
+            for attribute in object_data["Attribute"]:
+                attribute["sharing_group_id"] = sharing_group.id
 
         object_template = ObjectTemplate(name="test_template", user_id=1, org_id=1, version=100)
         db.add(object_template)
@@ -116,7 +118,7 @@ class TestAddObject:
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post(f"/objects/{event_id}/{object_template_id}", json=object_data, headers=headers)
         assert response.headers["Content-Type"] == "application/json"
-        assert "object" in response.json()
+        assert "Object" in response.json()
 
 
 @pytest.fixture(
@@ -179,8 +181,9 @@ class TestGetObjectInfo:
         db.flush()
         db.refresh(sharing_group)
         object_data["sharing_group_id"] = sharing_group.id
-        for attribute in object_data["attributes"]:
-            attribute["sharing_group_id"] = sharing_group.id
+        if object_data["Attribute"]:
+            for attribute in object_data["Attribute"]:
+                attribute["sharing_group_id"] = sharing_group.id
 
         object_template = ObjectTemplate(name="test_template", user_id=1, org_id=1, version=100)
         db.add(object_template)
@@ -212,13 +215,13 @@ class TestGetObjectInfo:
         assert response.status_code == 201
 
         response_data = response.json()
-        object_id = response_data["object"]["id"]
+        object_id = response_data["Object"]["id"]
         response = client.get(f"/objects/{object_id}", headers=headers)
         assert response.status_code == 200
 
         response_data = response.json()
-        assert "object" in response_data
-        object_data = response_data["object"]
+        assert "Object" in response_data
+        object_data = response_data["Object"]
         assert object_data["id"] == object_id
         assert "name" in object_data
         assert "meta_category" in object_data
@@ -235,8 +238,9 @@ class TestGetObjectInfo:
         db.flush()
         db.refresh(sharing_group)
         object_data["sharing_group_id"] = sharing_group.id
-        for attribute in object_data["attributes"]:
-            attribute["sharing_group_id"] = sharing_group.id
+        if object_data["Attribute"]:
+            for attribute in object_data["Attribute"]:
+                attribute["sharing_group_id"] = sharing_group.id
 
         object_template = ObjectTemplate(name="test_template", user_id=1, org_id=1, version=100)
         db.add(object_template)
@@ -268,11 +272,11 @@ class TestGetObjectInfo:
         assert response.status_code == 201
 
         response_data = response.json()
-        object_id = response_data["object"]["id"]
+        object_id = response_data["Object"]["id"]
         response = client.get(f"/objects/{object_id}", headers=headers)
         assert response.headers["Content-Type"] == "application/json"
         response_data = response.json()
-        assert "object" in response_data
+        assert "Object" in response_data
 
     @staticmethod
     def test_get_object_details_invalid_id() -> None:
@@ -290,8 +294,9 @@ class TestGetObjectInfo:
         db.flush()
         db.refresh(sharing_group)
         object_data["sharing_group_id"] = sharing_group.id
-        for attribute in object_data["attributes"]:
-            attribute["sharing_group_id"] = sharing_group.id
+        if object_data["Attribute"]:
+            for attribute in object_data["Attribute"]:
+                attribute["sharing_group_id"] = sharing_group.id
 
         object_template = ObjectTemplate(name="test_template", user_id=1, org_id=1, version=100)
         db.add(object_template)
@@ -323,10 +328,10 @@ class TestGetObjectInfo:
         assert response.status_code == 201
 
         response_data = response.json()
-        object_id = response_data["object"]["id"]
+        object_id = response_data["Object"]["id"]
         response = client.get(f"/objects/{object_id}", headers=headers)
         response_data = response.json()
-        object_data = response_data["object"]
+        object_data = response_data["Object"]
         assert isinstance(object_data["id"], str)
         assert isinstance(object_data["name"], str)
 
@@ -341,8 +346,9 @@ class TestDeleteObject:
         db.flush()
         db.refresh(sharing_group)
         object_data["sharing_group_id"] = sharing_group.id
-        for attribute in object_data["attributes"]:
-            attribute["sharing_group_id"] = sharing_group.id
+        if object_data["Attribute"]:
+            for attribute in object_data["Attribute"]:
+                attribute["sharing_group_id"] = sharing_group.id
 
         object_template = ObjectTemplate(name="test_template", user_id=1, org_id=1, version=100)
         db.add(object_template)
@@ -374,7 +380,7 @@ class TestDeleteObject:
         assert response.status_code == 201
 
         response_data = response.json()
-        object_id = response_data["object"]["id"]
+        object_id = response_data["Object"]["id"]
         response = client.delete(f"/objects/{object_id}/true", headers=headers)
         assert response.status_code == 200
 
@@ -393,8 +399,9 @@ class TestDeleteObject:
         db.flush()
         db.refresh(sharing_group)
         object_data["sharing_group_id"] = sharing_group.id
-        for attribute in object_data["attributes"]:
-            attribute["sharing_group_id"] = sharing_group.id
+        if object_data["Attribute"]:
+            for attribute in object_data["Attribute"]:
+                attribute["sharing_group_id"] = sharing_group.id
 
         object_template = ObjectTemplate(name="test_template", user_id=1, org_id=1, version=100)
         db.add(object_template)
@@ -426,7 +433,7 @@ class TestDeleteObject:
         assert response.status_code == 201
 
         response_data = response.json()
-        object_id = response_data["object"]["id"]
+        object_id = response_data["Object"]["id"]
         response_delete = client.delete(f"/objects/{object_id}/false", headers=headers)
         assert response_delete.status_code == 200
 
@@ -453,8 +460,9 @@ class TestDeleteObject:
         db.flush()
         db.refresh(sharing_group)
         object_data["sharing_group_id"] = sharing_group.id
-        for attribute in object_data["attributes"]:
-            attribute["sharing_group_id"] = sharing_group.id
+        if object_data["Attribute"]:
+            for attribute in object_data["Attribute"]:
+                attribute["sharing_group_id"] = sharing_group.id
 
         object_template = ObjectTemplate(name="test_template", user_id=1, org_id=1, version=100)
         db.add(object_template)
@@ -486,7 +494,7 @@ class TestDeleteObject:
         assert response.status_code == 201
 
         response_data = response.json()
-        object_id = response_data["object"]["id"]
+        object_id = response_data["Object"]["id"]
         response_delete = client.delete(f"/objects/{object_id}/invalid_value", headers=headers)
         assert response_delete.status_code == 422
         assert "detail" in response_delete.json()

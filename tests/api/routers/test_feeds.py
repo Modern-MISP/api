@@ -74,7 +74,7 @@ class TestAddFeed:
         response = client.post("/feeds", json=feed_data, headers=headers)
 
         assert response.status_code == 201
-        assert response.json()["feed"]["name"] == feed_data["name"]
+        assert response.json()["Feed"]["name"] == feed_data["name"]
 
     @staticmethod
     def test_feed_error_handling() -> None:
@@ -128,8 +128,8 @@ class TestAddFeed:
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/feeds", json=feed_data, headers=headers)
         assert response.headers["Content-Type"] == "application/json"
-        assert response.json()["feed"]["name"] == feed_data["name"]
-        assert response.json()["feed"]["id"] is not None
+        assert response.json()["Feed"]["name"] == feed_data["name"]
+        assert response.json()["Feed"]["id"] is not None
 
 
 @pytest.fixture(scope="module")
@@ -183,7 +183,7 @@ class TestEnableFeed:
 
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/feeds", json=feed_data, headers=headers)
-        feed_id = response.json()["feed"]["id"]
+        feed_id = response.json()["Feed"]["id"]
         assert response.status_code == 201
 
         response = client.post(f"feeds/enable/{feed_id}", headers=headers)
@@ -237,7 +237,7 @@ class TestEnableFeed:
 
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/feeds", json=feed_data, headers=headers)
-        feed_id = response.json()["feed"]["id"]
+        feed_id = response.json()["Feed"]["id"]
         assert response.status_code == 201
 
         response = client.post(f"feeds/enable/{feed_id}", headers=headers)
@@ -287,7 +287,7 @@ class TestDisableFeed:
 
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/feeds", json=feed_data, headers=headers)
-        feed_id = response.json()["feed"]["id"]
+        feed_id = response.json()["Feed"]["id"]
         assert response.status_code == 201
 
         response = client.post(f"feeds/disable/{feed_id}", headers=headers)
@@ -341,7 +341,7 @@ class TestDisableFeed:
 
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/feeds", json=feed_data, headers=headers)
-        feed_id = response.json()["feed"]["id"]
+        feed_id = response.json()["Feed"]["id"]
         assert response.status_code == 201
 
         response = client.post(f"feeds/disable/{feed_id}", headers=headers)
@@ -399,13 +399,13 @@ class TestGetFeedByIdInfo:
 
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/feeds", json=feed_data, headers=headers)
-        feed_id = response.json()["feed"]["id"]
+        feed_id = response.json()["Feed"]["id"]
         assert response.status_code == 201
 
         response = client.get(f"/feeds/{feed_id}", headers=headers)
         assert response.status_code == 200
-        assert response.json()["feed"]["id"] == feed_id
-        assert response.json()["feed"]["name"] == feed_data["name"]
+        assert response.json()["Feed"]["id"] == feed_id
+        assert response.json()["Feed"]["name"] == feed_data["name"]
 
     @staticmethod
     def test_get_invalid_feed_by_id(feed_test_ids: dict[str, Any]) -> None:
@@ -461,15 +461,15 @@ class TestGetFeedByIdInfo:
 
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/feeds", json=feed_data, headers=headers)
-        feed_id = response.json()["feed"]["id"]
+        feed_id = response.json()["Feed"]["id"]
         assert response.status_code == 201
 
         response = client.get(f"/feeds/{feed_id}", headers=headers)
         assert response.headers["Content-Type"] == "application/json"
         data = response.json()
-        assert "feed" in data
-        assert data["feed"]["id"] == feed_id
-        assert data["feed"]["name"] == feed_data["name"]
+        assert "Feed" in data
+        assert data["Feed"]["id"] == feed_id
+        assert data["Feed"]["name"] == feed_data["name"]
 
 
 class TestUpdateFeed:
@@ -515,15 +515,15 @@ class TestUpdateFeed:
 
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/feeds", json=feed_data, headers=headers)
-        feed_id = response.json()["feed"]["id"]
+        feed_id = response.json()["Feed"]["id"]
         assert response.status_code == 201
 
         headers = {"authorization": environment.site_admin_user_token}
         response = client.put(f"/feeds/{feed_id}", json=feed_data, headers=headers)
         assert response.status_code == 200
         response_data = response.json()
-        assert response_data["feed"]["name"] == feed_data["name"]
-        assert response_data["feed"]["url"] == feed_data["url"]
+        assert response_data["Feed"]["name"] == feed_data["name"]
+        assert response_data["Feed"]["url"] == feed_data["url"]
 
     @staticmethod
     def test_update_non_existing_feed(feed_test_ids: dict[str, Any], feed_data: dict[str, Any]) -> None:
@@ -573,15 +573,15 @@ class TestUpdateFeed:
 
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/feeds", json=feed_data, headers=headers)
-        feed_id = response.json()["feed"]["id"]
+        feed_id = response.json()["Feed"]["id"]
         assert response.status_code == 201
 
         headers = {"authorization": environment.site_admin_user_token}
         response = client.put(f"/feeds/{feed_id}", json=feed_data, headers=headers)
         assert response.headers["Content-Type"] == "application/json"
-        assert "feed" in response.json()
-        assert response.json()["feed"]["id"] == feed_id
-        assert response.json()["feed"]["name"] == feed_data["name"]
+        assert "Feed" in response.json()
+        assert response.json()["Feed"]["id"] == feed_id
+        assert response.json()["Feed"]["name"] == feed_data["name"]
 
 
 class TestToggleFeed:
@@ -627,7 +627,7 @@ class TestToggleFeed:
 
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/feeds", json=feed_data, headers=headers)
-        feed_id = response.json()["feed"]["id"]
+        feed_id = response.json()["Feed"]["id"]
         assert response.status_code == 201
 
         toggle_data = {"enable": False}
@@ -699,7 +699,7 @@ class TestToggleFeed:
 
         headers = {"authorization": environment.site_admin_user_token}
         response = client.post("/feeds", json=feed_data, headers=headers)
-        feed_id = response.json()["feed"]["id"]
+        feed_id = response.json()["Feed"]["id"]
         assert response.status_code == 201
 
         toggle_data = {"enable": True}
@@ -746,25 +746,6 @@ class TestToggleFeed:
         assert "name" in data
         assert data["message"] == "Feed already enabled."
         assert "url" in data
-
-
-class TestFetschFromAllFeeds:
-    pass  # route not yet implemented (worker)
-
-    # @staticmethod
-    # def test_fetch_data_from_all_feeds() -> None:
-    #     headers = {"authorization": environment.site_admin_user_token}
-    #     response = client.get("/feeds/fetchFromAllFeeds", headers=headers)
-    #     assert response.status_code == 200
-    #     response_data = response.json()
-    #     assert "result" in response_data
-
-    # @staticmethod
-    # def test_fetch_from_all_feeds_response_format() -> None:
-    #     headers = {"authorization": environment.site_admin_user_token}
-    #     response = client.get("/feeds/fetchFromAllFeeds", headers=headers)
-    #     assert response.headers["Content-Type"] == "application/json"
-    #     assert "result" in response.json()
 
 
 class TestGetAllFeeds:
@@ -814,7 +795,6 @@ class TestGetAllFeeds:
 
         response = client.get("/feeds", headers=headers)
         assert response.status_code == 200
-        assert isinstance(response.json()["feeds"], list)
 
     @staticmethod
     def test_get_feeds_response_format(feed_data: dict[str, Any], db: Session) -> None:
@@ -863,12 +843,11 @@ class TestGetAllFeeds:
         response = client.get("/feeds", headers=headers)
         assert response.headers["Content-Type"] == "application/json"
         response_data = response.json()
-        assert isinstance(response_data["feeds"], list)
 
         # Test all required fields
-        assert "feeds" in response_data
-        for feed_wrapper in response_data["feeds"]:
-            assert "id" in feed_wrapper
-            assert "name" in feed_wrapper
-            assert "provider" in feed_wrapper
-            assert "url" in feed_wrapper
+        assert "Feed" in response_data[0]
+        for feed_wrapper in response_data:
+            assert "id" in feed_wrapper["Feed"]
+            assert "name" in feed_wrapper["Feed"]
+            assert "provider" in feed_wrapper["Feed"]
+            assert "url" in feed_wrapper["Feed"]
