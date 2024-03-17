@@ -144,7 +144,7 @@ async def delete_event(
 @with_session_management
 async def get_all_events(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))], db: Annotated[Session, Depends(get_db)]
-) -> list[dict]:
+) -> list[GetAllEventsResponse]:
     return await _get_events(db)
 
 
@@ -176,7 +176,7 @@ async def index_events(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     body: IndexEventsBody,
-) -> list[IndexEventsAttributes]:
+) -> list[dict]:
     return await _index_events(db, body)
 
 
@@ -291,7 +291,7 @@ async def add_event_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS]))],
     db: Annotated[Session, Depends(get_db)],
     body: AddEventBody,
-) -> dict:
+) -> AddEditGetEventResponse:
     return await _add_event(auth, db, body)
 
 
@@ -308,7 +308,7 @@ async def get_event_details_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     event_id: Annotated[str, Path(alias="eventId")],
-) -> dict:
+) -> AddEditGetEventResponse:
     return await _get_event_details(db, event_id)
 
 
@@ -334,7 +334,7 @@ async def update_event_depr(
     "/events/delete/{eventId}",
     deprecated=True,
     status_code=status.HTTP_200_OK,
-    response_model=AddEditGetEventResponse,
+    response_model=DeleteEventResponse,
     summary="Delete an event (Deprecated)",
     description="Deprecated. Delete an existing event by its ID.",
 )
@@ -344,7 +344,7 @@ async def delete_event_depr(
     db: Annotated[Session, Depends(get_db)],
     event_id: Annotated[str, Path(..., alias="eventId")],
 ) -> DeleteEventResponse:
-    return _delete_event(db, event_id)
+    return await _delete_event(db, event_id)
 
 
 # --- endpoint logic ---
@@ -418,6 +418,7 @@ async def _delete_event(db: Session, event_id: str) -> DeleteEventResponse:
                 name="Could not delete Event",
                 message="Could not delete Event",
                 url=f"/events/delete/{event_id}",
+                id=str(event_id),
             ).dict(),
         )
 
@@ -430,11 +431,11 @@ async def _delete_event(db: Session, event_id: str) -> DeleteEventResponse:
         name="Event deleted",
         message="Event deleted",
         url=f"/events/delete/{event_id}",
-        errors="Event was not deleted.",
+        id=str(event_id),
     )
 
 
-async def _get_events(db: Session) -> list[dict]:
+async def _get_events(db: Session) -> list[GetAllEventsResponse]:
     result = await db.execute(select(Event))
     events: list[Event] = result.scalars().all()
 
