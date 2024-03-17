@@ -10,7 +10,6 @@ from mmisp.api_schemas.tags.create_tag_body import TagCreateBody
 from mmisp.db.models.tag import Tag
 
 
-# TODO: util class for generate numbers/strings
 def generate_number() -> int:
     number = random.randint(1, 4)
     return number

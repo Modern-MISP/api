@@ -14,7 +14,7 @@ def generate_user() -> User:
         invited_by=0,
         gpgkey="",
         certif_public="",
-        nids_sid=12345,  # I don't know what this is
+        nids_sid=12345,  # unused
         termsaccepted=True,
         newsread=0,
         change_pw=False,

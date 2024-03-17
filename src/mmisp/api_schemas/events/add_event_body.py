@@ -1,7 +1,5 @@
 from pydantic import BaseModel
 
-#  from mmisp.api_schemas.attributes.add_attribute_body import AddAttributeBody
-
 
 class AddEventTag(BaseModel):
     name: str
@@ -26,12 +24,7 @@ class AddEventBody(BaseModel):
     sighting_timestamp: str | None = None
     disable_correlation: bool | None = None
     extends_uuid: str | None = None
-    # event_creator_email: str | None = None
     protected: str | None = None
-
-    # cryptographic_key: str | None = None
-    # Attribute: list[AddAttributeBody] | None = None
-    # Tag: list[AddEventTag] | None = None
 
     class Config:
         orm_mode = True

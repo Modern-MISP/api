@@ -12,7 +12,6 @@ class User(Base):
     id = Column(Integer, primary_key=True, nullable=False)
     password = Column(String(255), nullable=False)
     org_id = Column(Integer, ForeignKey(Organisation.id), nullable=False, index=True)
-    # no server foreign key, since fake value 0 is used to reference the local server
     server_id = Column(Integer, nullable=False, default=0, index=True)
     email = Column(String(255), nullable=False, unique=True)
     autoalert = Column(Boolean, default=False, nullable=False)

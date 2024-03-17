@@ -23,7 +23,6 @@ class SearchAttributesModelOverrides(BaseModel):
 
 
 class SearchAttributesBody(BaseModel):
-    # return_format: Annotated[str, Field(alias="returnFormat")]
     returnFormat: str
     page: int | None = None
     limit: int | None = None

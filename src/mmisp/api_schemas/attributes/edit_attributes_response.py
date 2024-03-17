@@ -32,11 +32,11 @@ class EditAttributeAttributes(BaseModel):
     disable_correlation: bool
     first_seen: str | None = None
     last_seen: str | None = None
-    tag: list[EditAttributeTag]  # new
+    tag: list[EditAttributeTag]
 
 
 class EditAttributeResponse(BaseModel):
-    Attribute: EditAttributeAttributes  # Field(alias="Attribute")]
+    Attribute: EditAttributeAttributes
 
     class Config:
         orm_mode = True

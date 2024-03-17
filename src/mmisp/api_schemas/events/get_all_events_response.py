@@ -20,7 +20,7 @@ class GetAllEventsGalaxyClusterGalaxy(BaseModel):
     namespace: str
     enabled: bool
     local_only: bool
-    kill_chain_order: str | None = None  # optional
+    kill_chain_order: str | None = None
 
 
 class GetAllEventsGalaxyCluster(BaseModel):

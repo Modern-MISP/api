@@ -30,12 +30,12 @@ class GetAttributeAttributes(BaseModel):
     disable_correlation: bool
     first_seen: Optional[str] = Field(..., nullable=True)
     last_seen: Optional[str] = Field(..., nullable=True)
-    event_uuid: str  # new
-    tag: list[GetAttributeTag] | None = None  # = Field(alias="Tag") # new
+    event_uuid: str
+    tag: list[GetAttributeTag] | None = None
 
 
 class GetAttributeResponse(BaseModel):
-    Attribute: GetAttributeAttributes  # = Field(alias="Attribute")
+    Attribute: GetAttributeAttributes
 
     class Config:
         orm_mode = True
