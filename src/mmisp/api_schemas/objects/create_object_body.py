@@ -13,7 +13,7 @@ class ObjectCreateBody(BaseModel):
     deleted: bool | None = None
     first_seen: str | None = None
     last_seen: str | None = None
-    attributes: list[AddAttributeBody]
+    Attribute: list[AddAttributeBody] | None = None
 
     class Config:
         orm_mode = True

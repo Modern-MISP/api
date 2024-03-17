@@ -13,17 +13,17 @@ class ObjectWithAttributesResponse(BaseModel):
     meta_category: str | None = None
     description: str | None = None
     template_uuid: str | None = None
-    template_version: str
-    event_id: str
-    timestamp: str
-    distribution: str
+    template_version: str | None = None
+    event_id: str | None = None
+    timestamp: str | None = None
+    distribution: str | None = None
     sharing_group_id: str | None = None
-    comment: str
-    deleted: bool
+    comment: str | None = None
+    deleted: bool | None = None
     first_seen: str | None = None
     last_seen: str | None = None
-    attributes: list[GetAllAttributesResponse]
-    event: ObjectEventResponse | None = None
+    Attribute: list[GetAllAttributesResponse] | None = None
+    Event: ObjectEventResponse | None = None
 
     @validator("sharing_group_id", always=True)
     def check_sharing_group_id(cls, value: Any, values: Dict[str, Any]) -> Optional[int]:  # noqa: ANN101
@@ -37,7 +37,7 @@ class ObjectWithAttributesResponse(BaseModel):
 
 
 class ObjectResponse(BaseModel):
-    object: ObjectWithAttributesResponse
+    Object: ObjectWithAttributesResponse
 
     class Config:
         orm_mode = True

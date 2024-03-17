@@ -62,7 +62,7 @@ def generate_valid_object_data() -> ObjectCreateBody:
         deleted=False,
         first_seen=generate_random_date_str(),
         last_seen=generate_random_date_str(),
-        attributes=[generate_valid_object_create_attributes() for _ in range(random.randint(1, 5))],
+        Attribute=[generate_valid_object_create_attributes() for _ in range(random.randint(1, 5))],
     )
 
 
@@ -101,7 +101,7 @@ def generate_valid_random_object_data() -> ObjectCreateBody:
         deleted=False,
         first_seen=generate_random_date_str(),
         last_seen=generate_random_date_str(),
-        attributes=[generate_valid_object_create_attributes() for _ in range(random.randint(1, 5))],
+        Attribute=[generate_valid_object_create_attributes() for _ in range(random.randint(1, 5))],
     )
 
 

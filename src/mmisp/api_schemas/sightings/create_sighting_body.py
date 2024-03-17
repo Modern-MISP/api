@@ -18,12 +18,12 @@ class SightingFiltersBody(BaseModel):
     to_ids: bool | None = None
     deleted: bool | None = None
     event_timestamp: str | None = None
-    event_info: str | None = None
-    sharing_group: list[str] | None = None
+    eventinfo: str | None = None
+    sharinggroup: list[str] | None = None
     first_seen: str | None = None
     last_seen: str | None = None
     requested_attributes: list[str] | None = None
-    return_format: str | None = None
+    returnFormat: str | None = None
     limit: str | None = "25"
 
     @validator("limit")

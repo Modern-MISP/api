@@ -41,14 +41,7 @@ class FeedAttributesResponse(BaseModel):
 
 
 class FeedResponse(BaseModel):
-    feed: FeedAttributesResponse
-
-    class Config:
-        orm_mode = True
-
-
-class FeedsResponse(BaseModel):
-    feeds: list[FeedAttributesResponse]
+    Feed: FeedAttributesResponse
 
     class Config:
         orm_mode = True
