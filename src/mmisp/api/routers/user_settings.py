@@ -21,15 +21,17 @@ from mmisp.api_schemas.user_settings.view_user_setting_response import (
 )
 from mmisp.db.database import get_db, with_session_management
 from mmisp.db.models.user_setting import SettingName, UserSetting
+from mmisp.util.partial import partial
 
 router = APIRouter(tags=["user_settings"])
 
 
 @router.post(
     "/user_settings/setSetting/{userId}/{userSettingName}",
+    response_model=SetUserSettingResponse,
     summary="Set user setting.",
     description="Create or Update a UserSetting by user ID and UserSettingName. \
-    If specified UserSetting doesn't exist, it is created.",
+    If specified UserSetting doesn't exist, it is created."
 )
 @with_session_management
 async def set_user_settings(
@@ -44,6 +46,7 @@ async def set_user_settings(
 
 @router.get(
     "/user_settings/{userSettingId}",
+    response_model=ViewUserSettingResponse,
     summary="View UserSetting by ID.",
     description="Displays a UserSetting by the UserSettingID.",
 )
@@ -58,6 +61,7 @@ async def view_user_settings(
 
 @router.get(
     "/user_settings/{userId}/{userSettingName}",
+    response_model=ViewUserSettingResponse,
     summary="View UserSetting.",
     description="Displays a UserSetting by given userID and UserSetting name.",
 )
@@ -73,6 +77,7 @@ async def get_user_setting_by_id(
 
 @router.post(
     "/user_settings",
+    response_model=list[partial(UserSettingResponse)],
     summary="Displays all UserSettings.",
     description="Displays all UserSettings by specified parameters.",
 )
@@ -85,7 +90,12 @@ async def search_user_settings(
     return await _search_user_settings(auth=auth, db=db, body=body)
 
 
-@router.get("/user_settings", summary="Displays all UserSettings.", description="Displays all UserSettings.")
+@router.get(
+    "/user_settings",
+    response_model=list[partial(UserSettingResponse)],
+    summary="Displays all UserSettings.",
+    description="Displays all UserSettings."
+)
 @with_session_management
 async def get_user_settings(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
@@ -96,6 +106,7 @@ async def get_user_settings(
 
 @router.delete(
     "/user_settings/{userSettingId}",
+    response_model=StandardStatusIdentifiedResponse,
     summary="Deletes a UserSetting.",
     description="Deletes UserSetting by UserSetting ID.",
 )
@@ -123,6 +134,7 @@ async def delete_user_settings(
 @router.get(
     "/user_settings/view/{userSettingId}",
     deprecated=True,
+    response_model=ViewUserSettingResponse,
     summary="View UserSetting by ID.",
     description="View UserSetting by UserSettingID.",
 )
@@ -151,6 +163,7 @@ async def view_user_settings_depr(
 
 @router.get(
     "/user_settings/getSetting/{userId}/{userSettingName}",
+    response_model=GetUserSettingResponse,
     deprecated=True,
     summary="View a UserSetting.",
     description="View a UserSetting by its userID and UserSetting name.",
@@ -184,6 +197,7 @@ async def get_user_setting_by_ids(
 @router.delete(
     "/user_settings/delete/{userSettingId}",
     deprecated=True,
+    response_model=StandardStatusIdentifiedResponse,
     summary="Delete UserSetting.",
     description="Delete a UserSetting by specified UserSettingID.",
 )
