@@ -269,14 +269,14 @@ async def _get_all_taxonomies(db: Session) -> dict:
         if ":" in tag:
             tag_names.append(tag)
 
-    ctr = 1
+    current_taxonomy_id = 1
 
     for taxonomy_entry in taxonomy_entries_predicates_db:
-        if taxonomy_entry[0] == ctr:
+        if taxonomy_entry[0] == current_taxonomy_id:
             taxonomy_entries_builder.append(taxonomy_entry)
             continue
 
-        ctr = taxonomy_entry[0]
+        current_taxonomy_id = taxonomy_entry[0]
         taxonomy_entries_predicates.append(taxonomy_entries_builder[:])
         taxonomy_entries_builder.clear()
         taxonomy_entries_builder.append(taxonomy_entry)
