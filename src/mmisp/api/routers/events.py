@@ -453,14 +453,6 @@ async def _rest_search_events(db: Session, body: SearchEventsBody) -> dict:
     result = await db.execute(select(Event))
     events: list[Event] = result.scalars().all()
 
-    # for field, value in body.dict().items():
-    #     event_dict = db.query(Event).__dict__.copy()
-    #     if field not in event_dict:
-    #         continue
-    #     events = db.query(Event).filter(getattr(Event, field) == value).all()
-
-    # ! todo: not all fields in 'SearchAttributesBody' are taken into account yet
-
     if body.limit is not None:
         events = events[: body.limit]
     response_list = []
@@ -485,7 +477,6 @@ async def _index_events(db: Session, body: IndexEventsBody) -> list[dict]:
 
     result = await db.execute(query)
     events: list[Event] = result.scalars().all()
-    # todo: not all fields in 'IndexEventsBody' are taken into account yet
 
     response_list = [await _prepare_all_events_response(db, event, "index") for event in events]
 

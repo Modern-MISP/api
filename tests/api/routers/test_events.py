@@ -541,7 +541,6 @@ class TestRemoveTagFromEvent:
 @respx.mock
 def test_add_attribute_via_free_text_import_valid_data(db: Session) -> None:
     return
-    #! TODO: this test fails, worker should return a list
     request_body = {"Attribute": {"value": "1.2.3.4"}}
     organisation = generate_organisation()
 

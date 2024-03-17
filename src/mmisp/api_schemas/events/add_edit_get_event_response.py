@@ -48,24 +48,24 @@ class AddEditGetEventGalaxyCluster(BaseModel):
     source: str
     authors: list[str]
     version: str
-    distribution: str | None = None  # change back later
+    distribution: str | None = None
     sharing_group_id: str | None = None
     org_id: str
     orgc_id: str
-    default: bool | None = None  # change back later
-    locked: bool | None = None  # change back later
-    extends_uuid: str | None = None  # change back later
-    extends_version: str | None = None  # change back later
-    published: bool | None = None  # change back later
-    deleted: bool | None = None  # change back later
+    default: bool | None = None
+    locked: bool | None = None
+    extends_uuid: str | None = None
+    extends_version: str | None = None
+    published: bool | None = None
+    deleted: bool | None = None
     GalaxyClusterRelation: list[AddEditGetEventGalaxyClusterRelation] = []
-    Org: Organisation | None = None  # change back later
-    Orgc: Organisation | None = None  # change back later
+    Org: Organisation | None = None
+    Orgc: Organisation | None = None
     meta: AddEditGetEventGalaxyClusterMeta | None = None
     tag_id: str
     attribute_tag_id: str | None = None
     event_tag_id: str | None = None
-    local: bool | None = None  # change back later
+    local: bool | None = None
     relationship_type: str = ""
 
 

@@ -10,8 +10,8 @@ class GetAllAttributesResponse(BaseModel):
     object_relation: str | None = None
     category: str | None = None
     type: str
-    value1: str | None = None  # new
-    value2: str | None = None  # new
+    value1: str | None = None
+    value2: str | None = None
     to_ids: bool | None = None
     uuid: str | None = None
     timestamp: str | None = None

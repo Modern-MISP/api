@@ -11,8 +11,8 @@ class AddAttributeAttributes(BaseModel):
     category: str
     type: str
     value: str
-    value1: str  # new
-    value2: str  # new
+    value1: str
+    value2: str
     to_ids: bool
     uuid: str
     timestamp: str
@@ -23,7 +23,7 @@ class AddAttributeAttributes(BaseModel):
     disable_correlation: bool
     first_seen: Optional[str] = Field(..., nullable=True)
     last_seen: Optional[str] = Field(..., nullable=True)
-    attribute_tag: list[str] = Field([], alias="AttributeTag")  # new
+    attribute_tag: list[str] = Field([], alias="AttributeTag")
 
 
 class AddAttributeResponse(BaseModel):

@@ -22,8 +22,8 @@ class ObjectSearchBody(BaseModel):
     event_timestamp: str | None = None
     org_id: str | None = None
     uuid: str | None = None
-    value1: str | None = None  # new
-    value2: str | None = None  # new
+    value1: str | None = None
+    value2: str | None = None
     type: str | None = None
     object_relation: str | None = None
     attribute_timestamp: str | None = None

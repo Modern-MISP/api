@@ -47,8 +47,8 @@ class Role(BaseModel):
     perm_object_template: bool
     """Create or modify MISP Object templates."""
     default_role: bool
-    memory_limit: str  # ???
-    max_execution_time: str  # ???
+    memory_limit: str
+    max_execution_time: str
     restricted_to_site_admin: bool
     perm_publish_zmq: bool
     """Allow users to publish data to the ZMQ pubsub channel via the publish event to ZMQ button."""

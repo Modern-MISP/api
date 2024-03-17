@@ -13,7 +13,7 @@ class GalaxyCluster(Base):
     uuid = Column(String(255), unique=True, default=uuid, index=True)
     collection_uuid = Column(String(255), nullable=False, index=True, default="0")
     type = Column(String(255), nullable=False, index=True)
-    value = Column(Text, nullable=False)  # index=True
+    value = Column(Text, nullable=False)
     tag_name = Column(String(255), nullable=False, default="", index=True)
     description = Column(Text, nullable=False)
     galaxy_id = Column(Integer, ForeignKey(Galaxy.id, ondelete="CASCADE"), nullable=False, index=True)
@@ -38,7 +38,7 @@ class GalaxyElement(Base):
     id = Column(Integer, primary_key=True, nullable=False)
     galaxy_cluster_id = Column(Integer, ForeignKey(GalaxyCluster.id, ondelete="CASCADE"), nullable=False, index=True)
     key = Column(String(255), nullable=False, default="", index=True)
-    value = Column(Text, nullable=False)  # index=True
+    value = Column(Text, nullable=False)
 
 
 class GalaxyReference(Base):

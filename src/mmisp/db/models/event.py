@@ -18,7 +18,7 @@ class Event(Base):
     uuid = Column(String(40), unique=True, default=uuid, nullable=False, index=True)
     org_id = Column(Integer, ForeignKey(Organisation.id), nullable=False, index=True)
     date = Column(DateTime, default=datetime.utcnow, nullable=False)
-    info = Column(Text, nullable=False)  # index=True
+    info = Column(Text, nullable=False)
     user_id = Column(Integer, ForeignKey(User.id), nullable=False)
     published = Column(Boolean, nullable=False, default=False)
     analysis = Column(Integer, nullable=False)
