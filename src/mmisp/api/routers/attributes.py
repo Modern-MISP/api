@@ -457,13 +457,6 @@ async def _rest_search_attributes(db: Session, body: SearchAttributesBody) -> di
 
     result = await db.execute(select(Attribute))
     attributes: list[Attribute] = result.scalars().all()
-    # for field, value in body.dict().items():
-    #     attribute_dict = db.query(Attribute).__dict__.copy()
-    #     if field not in attribute_dict:
-    #         continue
-    #     attributes = db.query(Attribute).filter(getattr(Attribute, field) == value).all()
-
-    #! todo: not all fields in 'SearchAttributesBody' are taken into account yet
     if body.limit is not None:
         attributes = attributes[: body.limit]
     response_list = []
@@ -607,7 +600,7 @@ async def _prepare_get_attribute_details_response(
 ) -> GetAttributeAttributes:
     attribute_dict = attribute.asdict().copy()
 
-    if "event_uuid" not in attribute_dict.keys():  #! should not occur, perhaps sqlalchemy caching?
+    if "event_uuid" not in attribute_dict.keys():
         attribute_dict["event_uuid"] = attribute.event_uuid
 
     fields_to_convert = ["object_id", "sharing_group_id", "timestamp"]
