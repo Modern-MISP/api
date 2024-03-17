@@ -32,7 +32,6 @@ from mmisp.db.models.galaxy import Galaxy
 from mmisp.db.models.galaxy_cluster import GalaxyCluster, GalaxyElement, GalaxyReference
 from mmisp.db.models.organisation import Organisation
 from mmisp.db.models.tag import Tag
-from mmisp.util.partial import partial
 
 router = APIRouter(tags=["galaxies"])
 
@@ -54,13 +53,13 @@ async def import_galaxy_cluster(
     return await _import_galaxy_cluster(db, body, request)
 
 
-@router.get("/galaxies/{galaxyId}", status_code=status.HTTP_200_OK, response_model=partial(GetGalaxyResponse))
+@router.get("/galaxies/{galaxyId}", status_code=status.HTTP_200_OK, response_model=GetGalaxyResponse)
 @with_session_management
 async def get_galaxy_details(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     galaxy_id: Annotated[str, Path(alias="galaxyId")],
-) -> dict:
+) -> GetGalaxyResponse:
     return await _get_galaxy_details(db, galaxy_id)
 
 
@@ -148,6 +147,8 @@ async def export_galaxy(
     "/galaxies/attachCluster/{attachTargetId}/{attachTargetType}/local:{local}",
     status_code=status.HTTP_200_OK,
     response_model=AttachClusterGalaxyResponse,
+    summary="Attach Cluster to Galaxy.",
+    description="Attach a Galaxy Cluster to given Galaxy."
 )
 @with_session_management
 async def galaxies_attachCluster(
@@ -168,14 +169,16 @@ async def galaxies_attachCluster(
     "/galaxies/view/{galaxyId}",
     deprecated=True,
     status_code=status.HTTP_200_OK,
-    response_model=partial(GetGalaxyResponse),
+    response_model=GetGalaxyResponse,
+    summary="View Galayx by ID.",
+    description="View Galaxy by given Galaxy ID."
 )
 @with_session_management
 async def get_galaxy_details_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     galaxy_id: Annotated[str, Path(alias="galaxyId")],
-) -> dict:
+) -> GetGalaxyResponse:
     return await _get_galaxy_details(db, galaxy_id)
 
 
@@ -184,6 +187,8 @@ async def get_galaxy_details_depr(
     deprecated=True,
     status_code=status.HTTP_200_OK,
     response_model=DeleteForceUpdateImportGalaxyResponse,
+    summary="Delete Galaxy by ID",
+    description="Delete Galaxy by GalaxyID."
 )
 @with_session_management
 async def delete_galaxy_depr(
@@ -299,7 +304,7 @@ async def _import_galaxy_cluster(
     )
 
 
-async def _get_galaxy_details(db: Session, galaxy_id: str) -> dict:
+async def _get_galaxy_details(db: Session, galaxy_id: str) -> GetGalaxyResponse:
     galaxy: Galaxy | None = await db.get(Galaxy, galaxy_id)
 
     if not galaxy:
@@ -373,7 +378,7 @@ async def _search_galaxies(db: Session, body: SearchGalaxiesbyValue) -> list[Get
     return response_list
 
 
-async def _export_galaxy(db: Session, galaxy_id: str, body: ExportGalaxyBody) -> list[dict]:
+async def _export_galaxy(db: Session, galaxy_id: str, body: ExportGalaxyBody) -> list[ExportGalaxyClusterResponse]:
     galaxy: Galaxy | None = await db.get(Galaxy, galaxy_id)
 
     if not galaxy:

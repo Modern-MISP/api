@@ -81,7 +81,7 @@ async def add_attribute(
 @router.get(
     "/attributes/describeTypes",
     status_code=status.HTTP_200_OK,
-    response_model=partial(GetDescribeTypesResponse),
+    response_model=GetDescribeTypesResponse,
     summary="Get all attribute describe types",
     description="Retrieve a list of all available attribute types and categories.",
 )
@@ -94,7 +94,7 @@ async def get_attributes_describe_types(
 @router.get(
     "/attributes/{attributeId}",
     status_code=status.HTTP_200_OK,
-    response_model=partial(GetAttributeResponse),
+    response_model=GetAttributeResponse,
     summary="Get attribute details",
     description="Retrieve details of a specific attribute by its ID.",
 )
@@ -103,14 +103,14 @@ async def get_attribute_details(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     attribute_id: Annotated[str, Path(alias="attributeId")],
-) -> dict:
+) -> GetAttributeResponse:
     return await _get_attribute_details(db, attribute_id)
 
 
 @router.put(
     "/attributes/{attributeId}",
     status_code=status.HTTP_200_OK,
-    response_model=partial(EditAttributeResponse),
+    response_model=EditAttributeResponse,
     summary="Update an attribute",
     description="Update an existing attribute by its ID.",
 )
@@ -120,7 +120,7 @@ async def update_attribute(
     db: Annotated[Session, Depends(get_db)],
     attribute_id: Annotated[str, Path(alias="attributeId")],
     body: EditAttributeBody,
-) -> dict:
+) -> EditAttributeResponse:
     return await _update_attribute(db, attribute_id, body)
 
 
@@ -136,14 +136,14 @@ async def delete_attribute(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS]))],
     db: Annotated[Session, Depends(get_db)],
     attribute_id: Annotated[str, Path(alias="attributeId")],
-) -> dict:
+) -> DeleteAttributeResponse:
     return await _delete_attribute(db, attribute_id)
 
 
 @router.get(
     "/attributes",
     status_code=status.HTTP_200_OK,
-    response_model=list[GetAllAttributesResponse],
+    response_model=list[partial(GetAllAttributesResponse)],
     summary="Get all Attributes",
     description="Retrieve a list of all attributes.",
 )
@@ -192,7 +192,7 @@ async def get_attributes_statistics(
 @router.post(
     "/attributes/restore/{attributeId}",
     status_code=status.HTTP_200_OK,
-    response_model=partial(GetAttributeResponse),
+    response_model=GetAttributeResponse,
     summary="Restore an attribute",
     description="Restore an attribute by its ID.",
 )
@@ -201,7 +201,7 @@ async def restore_attribute(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS]))],
     db: Annotated[Session, Depends(get_db)],
     attribute_id: Annotated[str, Path(alias="attributeId")],
-) -> dict:
+) -> GetAttributeResponse:
     return await _restore_attribute(db, attribute_id)
 
 
@@ -353,7 +353,7 @@ async def _add_attribute(db: Session, event_id: str, body: AddAttributeBody) -> 
 
     attribute_data = _prepare_attribute_response(new_attribute, "add")
 
-    return AddAttributeResponse(Attribute=attribute_data).__dict__
+    return AddAttributeResponse(Attribute=attribute_data)
 
 
 async def _get_attribute_details(db: Session, attribute_id: str) -> GetAttributeResponse:
@@ -364,7 +364,7 @@ async def _get_attribute_details(db: Session, attribute_id: str) -> GetAttribute
 
     attribute_data = await _prepare_get_attribute_details_response(db, attribute_id, attribute)
 
-    return GetAttributeResponse(Attribute=attribute_data).__dict__
+    return GetAttributeResponse(Attribute=attribute_data)
 
 
 async def _update_attribute(db: Session, attribute_id: str, body: EditAttributeBody) -> EditAttributeResponse:
@@ -383,7 +383,7 @@ async def _update_attribute(db: Session, attribute_id: str, body: EditAttributeB
     return EditAttributeResponse(Attribute=attribute_data).__dict__
 
 
-async def _delete_attribute(db: Session, attribute_id: str) -> dict:
+async def _delete_attribute(db: Session, attribute_id: str) -> DeleteAttributeResponse:
     attribute: Attribute | None = await db.get(Attribute, attribute_id)
 
     if not attribute:
@@ -392,7 +392,7 @@ async def _delete_attribute(db: Session, attribute_id: str) -> dict:
     await db.delete(attribute)
     await db.commit()
 
-    return DeleteAttributeResponse(message="Attribute deleted.").__dict__
+    return DeleteAttributeResponse(message="Attribute deleted.")
 
 
 async def _get_attributes(db: Session) -> list[dict]:
@@ -503,7 +503,7 @@ async def _get_attribute_statistics(
         return await _type_statistics(db, percentage, total_count_of_attributes)
 
 
-async def _restore_attribute(db: Session, attribute_id: str) -> dict:
+async def _restore_attribute(db: Session, attribute_id: str) -> GetAttributeResponse:
     attribute: Attribute | None = await db.get(Attribute, attribute_id)
 
     if not attribute:
@@ -516,7 +516,7 @@ async def _restore_attribute(db: Session, attribute_id: str) -> dict:
 
     attribute_data = await _prepare_get_attribute_details_response(db, str(attribute.id), attribute)
 
-    return GetAttributeResponse(Attribute=attribute_data).__dict__
+    return GetAttributeResponse(Attribute=attribute_data)
 
 
 async def _add_tag_to_attribute(
@@ -530,12 +530,12 @@ async def _add_tag_to_attribute(
     try:
         int(tag_id)
     except ValueError:
-        return AddRemoveTagAttributeResponse(saved=False, errors="Invalid Tag").__dict__
+        return AddRemoveTagAttributeResponse(saved=False, errors="Invalid Tag")
 
     tag = await db.get(Tag, tag_id)
 
     if not tag:
-        return AddRemoveTagAttributeResponse(saved=False, errors="Tag could not be added.").__dict__
+        return AddRemoveTagAttributeResponse(saved=False, errors="Tag could not be added.")
 
     if int(local) not in [0, 1]:
         return AddRemoveTagAttributeResponse(saved=False, errors="Invalid 'local'").__dict__
@@ -553,7 +553,7 @@ async def _add_tag_to_attribute(
     return AddRemoveTagAttributeResponse(saved=True, success="Tag added", check_publish=True).__dict__
 
 
-async def _remove_tag_from_attribute(db: Session, attribute_id: str, tag_id: str) -> dict:
+async def _remove_tag_from_attribute(db: Session, attribute_id: str, tag_id: str) -> AddRemoveTagAttributeResponse:
     attribute: Attribute | None = await db.get(Attribute, attribute_id)
 
     if not attribute:
@@ -562,20 +562,20 @@ async def _remove_tag_from_attribute(db: Session, attribute_id: str, tag_id: str
     try:
         int(tag_id)
     except ValueError:
-        return AddRemoveTagAttributeResponse(saved=False, errors="Invalid Tag").__dict__
+        return AddRemoveTagAttributeResponse(saved=False, errors="Invalid Tag")
     if not await db.get(Tag, tag_id):
-        return AddRemoveTagAttributeResponse(saved=False, errors="Tag could not be removed.").__dict__
+        return AddRemoveTagAttributeResponse(saved=False, errors="Tag could not be removed.")
 
     result = await db.execute(select(AttributeTag).filter(AttributeTag.attribute_id == attribute_id).limit(1))
     attribute_tag = result.scalars().first()
 
     if not attribute_tag:
-        return AddRemoveTagAttributeResponse(saved=False, errors="Invalid attribute - tag combination.").__dict__
+        return AddRemoveTagAttributeResponse(saved=False, errors="Invalid attribute - tag combination.")
 
     await db.delete(attribute_tag)
     await db.commit()
 
-    return AddRemoveTagAttributeResponse(saved=True, success="Tag removed", check_publish=True).__dict__
+    return AddRemoveTagAttributeResponse(saved=True, success="Tag removed", check_publish=True)
 
 
 def _prepare_attribute_response(attribute: Attribute, request_type: str) -> dict[str, Any]:
@@ -599,7 +599,6 @@ async def _prepare_get_attribute_details_response(
     db: Session, attribute_id: str, attribute: Attribute
 ) -> GetAttributeAttributes:
     attribute_dict = attribute.asdict().copy()
-
     if "event_uuid" not in attribute_dict.keys():
         attribute_dict["event_uuid"] = attribute.event_uuid
 
