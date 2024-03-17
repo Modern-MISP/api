@@ -164,7 +164,7 @@ async def _add_object(db: Session, event_id: int, object_template_id: int, body:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Event not found.")
 
     object: Object = Object(
-        **body.dict(exclude={"attributes"}),
+        **body.dict(exclude={"Attribute"}),
         template_uuid=template.uuid,
         template_version=template.version,
         event_id=int(event_id),
@@ -175,7 +175,7 @@ async def _add_object(db: Session, event_id: int, object_template_id: int, body:
     await db.flush()
     await db.refresh(object)
 
-    for attr in body.attributes:
+    for attr in body.Attribute:
         attribute: Attribute = Attribute(
             **attr.dict(exclude={"event_id", "object_id", "timestamp"}),
             event_id=int(event_id),
@@ -200,7 +200,7 @@ async def _add_object(db: Session, event_id: int, object_template_id: int, body:
         event=None,
     )
 
-    return ObjectResponse(object=object_response)
+    return ObjectResponse(Object=object_response)
 
 
 async def _restsearch(db: Session, body: ObjectSearchBody) -> dict[str, Any]:
@@ -262,7 +262,7 @@ async def _get_object_details(db: Session, object_id: int) -> ObjectResponse:
         **object.__dict__, attributes=attributes_response, event=event_response
     )
 
-    return ObjectResponse(object=object_data)
+    return ObjectResponse(Object=object_data)
 
 
 async def _delete_object(db: Session, object_id: int, hard_delete: bool) -> StandardStatusResponse:

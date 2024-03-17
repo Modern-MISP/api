@@ -12,12 +12,12 @@ class SightingAttributesResponse(BaseModel):
     uuid: str
     attribute_id: str
     attribute_uuid: str
-    event_id: str
-    org_id: str
-    date_sighting: str
+    event_id: str | None = None
+    org_id: str | None = None
+    date_sighting: str | None = None
     source: str | None = None
     type: str | None = None
-    organisation: SightingOrganisationResponse
+    Organisation: SightingOrganisationResponse | None = None
 
 
 class SightingsGetResponse(BaseModel):
