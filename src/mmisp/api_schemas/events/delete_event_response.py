@@ -7,6 +7,7 @@ class DeleteEventResponse(BaseModel):
     name: str
     message: str
     url: str
+    id: str
     errors: str | None = None
 
     class Config:
