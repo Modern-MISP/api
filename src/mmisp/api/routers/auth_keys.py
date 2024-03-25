@@ -12,7 +12,9 @@ from mmisp.api_schemas.auth_keys.add_auth_key_body import AddAuthKeyBody
 from mmisp.api_schemas.auth_keys.add_auth_key_response import AddAuthKeyResponse, AddAuthKeyResponseAuthKey
 from mmisp.api_schemas.auth_keys.edit_auth_key_body import EditAuthKeyBody
 from mmisp.api_schemas.auth_keys.edit_auth_key_response import (
-    EditAuthKeyResponse, EditAuthKeyResponseAuthKey, EditAuthKeyResponseUser
+    EditAuthKeyResponse,
+    EditAuthKeyResponseAuthKey,
+    EditAuthKeyResponseUser,
 )
 from mmisp.api_schemas.auth_keys.search_auth_keys_body import SearchAuthKeyBody
 from mmisp.api_schemas.auth_keys.search_get_all_auth_keys_users_response import (
@@ -20,7 +22,7 @@ from mmisp.api_schemas.auth_keys.search_get_all_auth_keys_users_response import 
     SearchGetAuthKeysResponseItemAuthKey,
     SearchGetAuthKeysResponseItemUser,
 )
-from mmisp.api_schemas.auth_keys.view_auth_key_response import ViewAuthKeysResponse, ViewAuthKeyResponseWrapper
+from mmisp.api_schemas.auth_keys.view_auth_key_response import ViewAuthKeyResponseWrapper, ViewAuthKeysResponse
 from mmisp.api_schemas.standard_status_response import StandardStatusIdentifiedResponse
 from mmisp.db.database import get_db, with_session_management
 from mmisp.db.models.auth_key import AuthKey
@@ -99,7 +101,7 @@ async def auth_keys_edit_auth_key(
     "/auth_keys/{AuthKeyId}",
     response_model=StandardStatusIdentifiedResponse,
     summary="Delete given AuthKey.",
-    description="Delete AuthKey by AuthKeyId from the database."
+    description="Delete AuthKey by AuthKeyId from the database.",
 )
 @with_session_management
 async def auth_keys_delete_auth_key(
@@ -240,11 +242,9 @@ async def _auth_key_add(auth: Auth, db: Session, user_id: int, body: AddAuthKeyB
             read_only=auth_key.read_only,
             user_id=auth_key.user_id,
             comment=auth_key.comment,
-            allowed_ips=json.loads(
-                auth_key.allowed_ips) if auth_key.allowed_ips else None,
-            unique_ips=json.loads(
-                auth_key.unique_ips) if auth_key.unique_ips else [],
-            authkey_raw=auth_key_string
+            allowed_ips=json.loads(auth_key.allowed_ips) if auth_key.allowed_ips else None,
+            unique_ips=json.loads(auth_key.unique_ips) if auth_key.unique_ips else [],
+            authkey_raw=auth_key_string,
         )
     )
 
@@ -283,10 +283,8 @@ async def _auth_keys_view(
             read_only=auth_key.read_only,
             user_id=auth_key.user_id,
             comment=auth_key.comment,
-            allowed_ips=json.loads(
-                auth_key.allowed_ips) if auth_key.allowed_ips else None,
-            unique_ips=json.loads(
-                auth_key.unique_ips) if auth_key.unique_ips else [],
+            allowed_ips=json.loads(auth_key.allowed_ips) if auth_key.allowed_ips else None,
+            unique_ips=json.loads(auth_key.unique_ips) if auth_key.unique_ips else [],
         ),
         User=SearchGetAuthKeysResponseItemUser(
             id=user.id,
@@ -353,10 +351,12 @@ async def _search_auth_keys(
                     read_only=auth_key_and_user.AuthKey.read_only,
                     user_id=auth_key_and_user.AuthKey.user_id,
                     comment=auth_key_and_user.AuthKey.comment,
-                    allowed_ips=json.loads(
-                        auth_key_and_user.AuthKey.allowed_ips) if auth_key_and_user.AuthKey.allowed_ips else None,
-                    unique_ips=json.loads(
-                        auth_key_and_user.AuthKey.unique_ips) if auth_key_and_user.AuthKey.unique_ips else [],
+                    allowed_ips=json.loads(auth_key_and_user.AuthKey.allowed_ips)
+                    if auth_key_and_user.AuthKey.allowed_ips
+                    else None,
+                    unique_ips=json.loads(auth_key_and_user.AuthKey.unique_ips)
+                    if auth_key_and_user.AuthKey.unique_ips
+                    else [],
                 ),
                 User=SearchGetAuthKeysResponseItemUser(
                     id=auth_key_and_user.User.id,
@@ -398,10 +398,8 @@ async def _auth_keys_edit(auth: Auth, db: Session, auth_key_id: int, body: EditA
             read_only=auth_key.read_only,
             user_id=auth_key.user_id,
             comment=auth_key.comment,
-            allowed_ips=json.loads(
-                auth_key.allowed_ips) if auth_key.allowed_ips else None,
-            unique_ips=json.loads(
-                auth_key.unique_ips) if auth_key.unique_ips else [],
+            allowed_ips=json.loads(auth_key.allowed_ips) if auth_key.allowed_ips else None,
+            unique_ips=json.loads(auth_key.unique_ips) if auth_key.unique_ips else [],
         ),
         User=EditAuthKeyResponseUser(
             id=user.id,
@@ -458,10 +456,12 @@ async def _auth_keys_get(
                     read_only=auth_key_and_user.AuthKey.read_only,
                     user_id=auth_key_and_user.AuthKey.user_id,
                     comment=auth_key_and_user.AuthKey.comment,
-                    allowed_ips=json.loads(
-                        auth_key_and_user.AuthKey.allowed_ips) if auth_key_and_user.AuthKey.allowed_ips else None,
-                    unique_ips=json.loads(
-                        auth_key_and_user.AuthKey.unique_ips) if auth_key_and_user.AuthKey.unique_ips else [],
+                    allowed_ips=json.loads(auth_key_and_user.AuthKey.allowed_ips)
+                    if auth_key_and_user.AuthKey.allowed_ips
+                    else None,
+                    unique_ips=json.loads(auth_key_and_user.AuthKey.unique_ips)
+                    if auth_key_and_user.AuthKey.unique_ips
+                    else [],
                 ),
                 User=SearchGetAuthKeysResponseItemUser(
                     id=auth_key_and_user.User.id,
