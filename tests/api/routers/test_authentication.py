@@ -6,8 +6,8 @@ from fastapi import status
 from httpx import Response
 
 from mmisp.api.auth import _decode_token, encode_exchange_token, encode_token
+from mmisp.api.config import config
 from mmisp.api_schemas.authentication.start_login_response import LoginType
-from mmisp.config import config
 from mmisp.db.models.identity_provider import OIDCIdentityProvider
 from mmisp.db.models.user import User
 from mmisp.util.crypto import hash_secret

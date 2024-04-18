@@ -9,7 +9,7 @@ from fastapi.security import APIKeyHeader
 from sqlalchemy import or_
 from sqlalchemy.future import select
 
-from mmisp.config import config
+from mmisp.api.config import config
 from mmisp.db.database import Session, get_db, with_session_management
 from mmisp.db.models.auth_key import AuthKey
 from mmisp.db.models.role import Role

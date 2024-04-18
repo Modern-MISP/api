@@ -11,6 +11,7 @@ from starlette import status
 from starlette.requests import Request
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
+from mmisp.api.config import config
 from mmisp.api_schemas.attributes.get_describe_types_response import GetDescribeTypesAttributes
 from mmisp.api_schemas.events.add_attribute_via_free_text_import_event_body import (
     AddAttributeViaFreeTextImportEventBody,
@@ -53,7 +54,6 @@ from mmisp.api_schemas.events.publish_event_response import PublishEventResponse
 from mmisp.api_schemas.events.search_events_body import SearchEventsBody
 from mmisp.api_schemas.events.search_events_response import SearchEventsResponse
 from mmisp.api_schemas.events.unpublish_event_response import UnpublishEventResponse
-from mmisp.config import config
 from mmisp.db.database import get_db, with_session_management
 from mmisp.db.models.attribute import Attribute, AttributeTag
 from mmisp.db.models.event import Event, EventReport, EventTag

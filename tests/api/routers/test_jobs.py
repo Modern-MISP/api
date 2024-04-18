@@ -1,7 +1,7 @@
 import respx
 from httpx import Response
 
-from mmisp.config import config
+from mmisp.api.config import config
 
 from ...environment import client, environment
 

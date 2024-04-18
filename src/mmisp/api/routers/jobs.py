@@ -4,7 +4,7 @@ import httpx
 from fastapi import APIRouter, Depends
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
-from mmisp.config import config
+from mmisp.api.config import config
 
 router = APIRouter(tags=["jobs"])
 

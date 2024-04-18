@@ -3,7 +3,7 @@ from sqlalchemy.engine.url import make_url
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import NullPool
 
-from mmisp.config import config
+from mmisp.db.config import config
 
 url = make_url(config.DATABASE_URL)
 

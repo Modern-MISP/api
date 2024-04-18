@@ -6,7 +6,7 @@ from fastapi import HTTPException
 from nanoid import generate
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize, check_permissions, encode_exchange_token
-from mmisp.config import config
+from mmisp.api.config import config
 from mmisp.db.database import get_db
 from mmisp.util.crypto import hash_secret
 from tests.environment import environment
