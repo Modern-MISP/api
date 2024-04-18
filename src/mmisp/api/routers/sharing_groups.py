@@ -5,6 +5,7 @@ from sqlalchemy import and_, delete, or_
 from sqlalchemy.future import select
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize, check_permissions
+from mmisp.api.config import config
 from mmisp.api_schemas.sharing_groups.add_org_to_sharing_group_body import AddOrgToSharingGroupBody
 from mmisp.api_schemas.sharing_groups.add_org_to_sharing_group_legacy_body import AddOrgToSharingGroupLegacyBody
 from mmisp.api_schemas.sharing_groups.add_server_to_sharing_group_body import AddServerToSharingGroupBody
@@ -24,7 +25,6 @@ from mmisp.api_schemas.sharing_groups.view_update_sharing_group_legacy_response 
     ViewUpdateSharingGroupLegacyResponse,
 )
 from mmisp.api_schemas.standard_status_response import StandardStatusResponse
-from mmisp.config import config
 from mmisp.db.database import Session, get_db, with_session_management
 from mmisp.db.models.organisation import Organisation
 from mmisp.db.models.server import Server

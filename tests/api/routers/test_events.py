@@ -2,7 +2,7 @@ import respx
 from httpx import Response
 from sqlalchemy.orm import Session
 
-from mmisp.config import config
+from mmisp.api.config import config
 from mmisp.db.models.event import EventTag
 from mmisp.db.models.galaxy_cluster import GalaxyCluster
 

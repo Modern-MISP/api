@@ -9,12 +9,12 @@ from sqlalchemy.future import select
 from sqlalchemy.orm import Session
 
 from mmisp.api.auth import decode_exchange_token, encode_exchange_token, encode_token
+from mmisp.api.config import config
 from mmisp.api_schemas.authentication.exchange_token_login_body import ExchangeTokenLoginBody
 from mmisp.api_schemas.authentication.password_login_body import PasswordLoginBody
 from mmisp.api_schemas.authentication.start_login_body import StartLoginBody
 from mmisp.api_schemas.authentication.start_login_response import LoginType, StartLoginResponse
 from mmisp.api_schemas.authentication.token_response import TokenResponse
-from mmisp.config import config
 from mmisp.db.database import get_db, with_session_management
 from mmisp.db.models.identity_provider import OIDCIdentityProvider
 from mmisp.db.models.user import User

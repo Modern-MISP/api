@@ -2,7 +2,7 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.engine.url import make_url
 from sqlalchemy.exc import ProgrammingError
 
-from mmisp.config import config
+from mmisp.api.config import config
 
 url = make_url(config.DATABASE_URL).set(database="", drivername="mysql+mysqlconnector")
 database = make_url(config.DATABASE_URL).database
