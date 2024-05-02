@@ -8,7 +8,7 @@ requires-python = ">=3.11.0"
 
 
 dependencies = [
-  "mmisp-lib==0.1.1",
+  "mmisp-lib==0.1.2",
   "fastapi==0.104.1",
   "SQLAlchemy[asyncio]==1.4.46",
   "pydantic==1.10.13",
@@ -29,7 +29,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-  "ruff==0.3.7",
+  "ruff>=0.3.7",
   "mypy==1.8.0",
   "pre-commit==3.6.0",
   "pytest==8.0.0",
@@ -42,7 +42,7 @@ dev = [
 [tool.ruff]
 fix = true
 line-length = 120
-required-version = "0.3.7"
+required-version = ">=0.3.7"
 select = ["E", "F", "W", "I", "ICN", "ANN"]
 ignore = ["ANN002", "ANN003", "ANN401"]
 src = ["src"]
