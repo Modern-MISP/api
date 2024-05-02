@@ -558,9 +558,7 @@ class TestAttributesRestSearch:
         assert response.status_code == 200
         response_json = response.json()
         assert "response" in response_json
-        assert isinstance(response_json["response"], list)
-        response_json_attribute = response_json["response"][0]
-        assert "Attribute" in response_json_attribute
+        assert isinstance(response_json["response"]["Attribute"], list)
 
     @staticmethod
     def test_invalid_search_attribute_data() -> None:
@@ -596,12 +594,11 @@ class TestAttributeStatistics:
 
     @staticmethod
     def test_invalid_parameters_attribute_statistics() -> None:
-        request_body = {"context": "invalid context", "percentage": 2}
-        context = request_body["context"]
-        percentage = request_body["percentage"]
         headers = {"authorization": environment.site_admin_user_token}
-        response = client.get(f"/attributes/attributeStatistics/{context}/{percentage}", headers=headers)
-        assert response.status_code == 405
+        response = client.get("/attributes/attributeStatistics/invalid_context/0", headers=headers)
+        assert response.status_code == 422
+        response = client.get("/attributes/attributeStatistics/type/non_boolean", headers=headers)
+        assert response.status_code == 422
 
 
 # --- Test attribute describe types

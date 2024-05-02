@@ -1,4 +1,4 @@
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Request, status
 from sqlalchemy import func, select
@@ -28,8 +28,6 @@ from mmisp.api_schemas.attributes.get_describe_types_response import (
 )
 from mmisp.api_schemas.attributes.search_attributes_body import SearchAttributesBody
 from mmisp.api_schemas.attributes.search_attributes_response import (
-    SearchAttributesAttributes,
-    SearchAttributesAttributesDetails,
     SearchAttributesEvent,
     SearchAttributesObject,
     SearchAttributesResponse,
@@ -48,7 +46,6 @@ router = APIRouter(tags=["attributes"])
 @router.post(
     "/attributes/restSearch",
     status_code=status.HTTP_200_OK,
-    response_model=partial(SearchAttributesResponse),
     summary="Search attributes",
     description="Search for attributes based on various filters.",
 )
@@ -57,7 +54,7 @@ async def rest_search_attributes(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     body: SearchAttributesBody,
-) -> dict:
+) -> SearchAttributesResponse:
     return await _rest_search_attributes(db, body)
 
 
@@ -175,7 +172,6 @@ async def delete_selected_attributes(
 @router.get(
     "/attributes/attributeStatistics/{context}/{percentage}",
     status_code=status.HTTP_200_OK,
-    response_model=GetAttributeStatisticsCategoriesResponse,
     summary="Get attribute statistics",
     description="Get the count/percentage of attributes per category/type.",
 )
@@ -183,9 +179,9 @@ async def delete_selected_attributes(
 async def get_attributes_statistics(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    context: str,
-    percentage: int,
-) -> GetAttributeStatisticsCategoriesResponse:
+    context: Literal["type"] | Literal["category"],
+    percentage: bool,
+) -> GetAttributeStatisticsCategoriesResponse | GetAttributeStatisticsTypesResponse:
     return await _get_attribute_statistics(db, context, percentage)
 
 
@@ -481,19 +477,13 @@ async def _rest_search_attributes(db: Session, body: SearchAttributesBody) -> di
             tag_dict["local"] = attribute_tag.local
             attribute_dict["Tag"].append(GetAttributeTag(**tag_dict))
 
-        response_list.append(SearchAttributesAttributes(Attribute=SearchAttributesAttributesDetails(**attribute_dict)))
-
-    return SearchAttributesResponse(response=response_list).__dict__
+        response_list.append(attribute_dict)
+    return SearchAttributesResponse.parse_obj({"response": {"Attribute": response_list}})
 
 
 async def _get_attribute_statistics(
-    db: Session, context: str, percentage: int
+    db: Session, context: Literal["type"] | Literal["category"], percentage: bool
 ) -> GetAttributeStatisticsTypesResponse | GetAttributeStatisticsCategoriesResponse:
-    if context not in ["type", "category"]:
-        raise HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED, detail="Invalid 'context'")
-    if int(percentage) not in [0, 1]:
-        raise HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED, detail="Invalid 'percentage'")
-
     result = await db.execute(select(func.count()).select_from(Attribute))
     total_count_of_attributes = result.scalar()
 
