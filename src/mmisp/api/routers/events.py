@@ -469,10 +469,10 @@ async def _index_events(db: Session, body: IndexEventsBody) -> list[dict]:
     limit = 25
     offset = 0
 
-    if body.limit and 500 > body.limit > 0:
+    if body.limit:
         limit = body.limit
     if body.page:
-        offset = limit * body.page
+        offset = limit * (body.page - 1)
 
     query = query.limit(limit).offset(offset)
 
