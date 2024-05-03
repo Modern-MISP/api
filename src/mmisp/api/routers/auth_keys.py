@@ -333,7 +333,7 @@ async def _search_auth_keys(
         AuthKey: AuthKey
         User: User
 
-    result = await db.execute(query.limit(body.limit).offset(body.page * body.limit))
+    result = await db.execute(query.limit(body.limit).offset((body.page - 1) * body.limit))
     auth_keys_and_users: list[ResultItem] = result.all()
 
     auth_keys_computed: list[SearchGetAuthKeysResponseItem] = []
