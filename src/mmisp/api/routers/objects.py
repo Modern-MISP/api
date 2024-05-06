@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Path, status
 from sqlalchemy import delete, or_, select
 from sqlalchemy.orm import Session
 
-from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
+from mmisp.api.auth import Auth, AuthStrategy, authorize
 from mmisp.api_schemas.attributes.get_all_attributes_response import GetAllAttributesResponse
 from mmisp.api_schemas.events.get_event_response import ObjectEventResponse
 from mmisp.api_schemas.objects.create_object_body import ObjectCreateBody
@@ -35,7 +35,7 @@ router = APIRouter(tags=["objects"])
 )
 @with_session_management
 async def add_object(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
     event_id: Annotated[int, Path(alias="eventId")],
     object_template_id: Annotated[int, Path(alias="objectTemplateId")],
@@ -85,7 +85,7 @@ async def get_object_details(
 )
 @with_session_management
 async def delete_object(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
     object_id: Annotated[int, Path(alias="objectId")],
     hard_delete: Annotated[bool, Path(alias="hardDelete")],
@@ -106,7 +106,7 @@ async def delete_object(
 )
 @with_session_management
 async def add_object_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
     event_id: Annotated[int, Path(alias="eventId")],
     object_template_id: Annotated[int, Path(alias="objectTemplateId")],
@@ -144,7 +144,7 @@ async def get_object_details_depr(
 )
 @with_session_management
 async def delete_object_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
     object_id: Annotated[int, Path(alias="objectId")],
     hard_delete: Annotated[bool, Path(alias="hardDelete")],

@@ -31,11 +31,11 @@ router = APIRouter(tags=["user_settings"])
     response_model=SetUserSettingResponse,
     summary="Set user setting.",
     description="Create or Update a UserSetting by user ID and UserSettingName. \
-    If specified UserSetting doesn't exist, it is created."
+    If specified UserSetting doesn't exist, it is created.",
 )
 @with_session_management
 async def set_user_settings(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
     user_id: Annotated[int, Path(alias="userId")],
     user_setting_name: Annotated[str, Path(alias="userSettingName")],
@@ -94,7 +94,7 @@ async def search_user_settings(
     "/user_settings",
     response_model=list[partial(UserSettingResponse)],
     summary="Displays all UserSettings.",
-    description="Displays all UserSettings."
+    description="Displays all UserSettings.",
 )
 @with_session_management
 async def get_user_settings(
@@ -112,7 +112,7 @@ async def get_user_settings(
 )
 @with_session_management
 async def delete_user_settings(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
     user_setting_id: Annotated[int, Path(alias="userSettingId")],
 ) -> StandardStatusIdentifiedResponse:
@@ -203,7 +203,7 @@ async def get_user_setting_by_ids(
 )
 @with_session_management
 async def delete_user_settings_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
     user_setting_id: Annotated[int, Path(alias="userSettingId")],
 ) -> StandardStatusIdentifiedResponse:

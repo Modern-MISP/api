@@ -67,7 +67,7 @@ async def rest_search_attributes(
 )
 @with_session_management
 async def add_attribute(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
     event_id: Annotated[str, Path(alias="eventId")],
     body: AddAttributeBody,
@@ -113,7 +113,7 @@ async def get_attribute_details(
 )
 @with_session_management
 async def update_attribute(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
     attribute_id: Annotated[str, Path(alias="attributeId")],
     body: EditAttributeBody,
@@ -130,7 +130,7 @@ async def update_attribute(
 )
 @with_session_management
 async def delete_attribute(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
     attribute_id: Annotated[str, Path(alias="attributeId")],
 ) -> DeleteAttributeResponse:
@@ -160,7 +160,7 @@ async def get_attributes(
 )
 @with_session_management
 async def delete_selected_attributes(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
     event_id: Annotated[str, Path(alias="eventId")],
     body: DeleteSelectedAttributeBody,
@@ -194,7 +194,7 @@ async def get_attributes_statistics(
 )
 @with_session_management
 async def restore_attribute(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
     attribute_id: Annotated[str, Path(alias="attributeId")],
 ) -> GetAttributeResponse:
@@ -210,7 +210,7 @@ async def restore_attribute(
 )
 @with_session_management
 async def add_tag_to_attribute(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.TAGGER]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.TAGGER]))],
     db: Annotated[Session, Depends(get_db)],
     attribute_id: Annotated[str, Path(alias="attributeId")],
     tag_id: Annotated[str, Path(alias="tagId")],
@@ -228,7 +228,7 @@ async def add_tag_to_attribute(
 )
 @with_session_management
 async def remove_tag_from_attribute(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.TAGGER]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.TAGGER]))],
     db: Annotated[Session, Depends(get_db)],
     attribute_id: Annotated[str, Path(alias="attributeId")],
     tag_id: Annotated[str, Path(alias="tagId")],
@@ -249,7 +249,7 @@ async def remove_tag_from_attribute(
 )
 @with_session_management
 async def add_attribute_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
     event_id: Annotated[str, Path(alias="eventId")],
     body: AddAttributeBody,
@@ -284,7 +284,7 @@ async def get_attribute_details_depr(
 )
 @with_session_management
 async def update_attribute_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
     attribute_id: Annotated[str, Path(alias="attributeId")],
     body: EditAttributeBody,
@@ -302,7 +302,7 @@ async def update_attribute_depr(
 )
 @with_session_management
 async def delete_attribute_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
     attribute_id: Annotated[str, Path(alias="attributeId")],
 ) -> dict:

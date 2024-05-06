@@ -36,7 +36,7 @@ router = APIRouter(tags=["warninglists"])
 )
 @with_session_management
 async def add_warninglist(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.WARNINGLIST]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WARNINGLIST]))],
     db: Annotated[Session, Depends(get_db)],
     body: CreateWarninglistBody,
 ) -> WarninglistResponse:
@@ -69,7 +69,7 @@ async def get_warninglist_details(
 )
 @with_session_management
 async def post_toggleEnable(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     body: ToggleEnableWarninglistsBody,
 ) -> ToggleEnableWarninglistsResponse:
@@ -85,7 +85,7 @@ async def post_toggleEnable(
 )
 @with_session_management
 async def delete_warninglist(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     warninglist_id: Annotated[int, Path(alias="id")],
 ) -> WarninglistResponse:
@@ -137,7 +137,7 @@ async def get_warninglists_by_value(
 )
 @with_session_management
 async def update_all_warninglists(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
 ) -> StandardStatusResponse:
     return await _update_all_warninglists(db, False)
@@ -190,7 +190,7 @@ async def search_warninglists(
 )
 @with_session_management
 async def update_all_warninglists_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
 ) -> StandardStatusResponse:
     return await _update_all_warninglists(db, True)

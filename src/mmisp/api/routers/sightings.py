@@ -32,7 +32,7 @@ router = APIRouter(tags=["sightings"])
 )
 @with_session_management
 async def add_sighting(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SIGHTING]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SIGHTING]))],
     db: Annotated[Session, Depends(get_db)],
     body: SightingCreateBody,
 ) -> list[SightingAttributesResponse]:
@@ -48,7 +48,7 @@ async def add_sighting(
 )
 @with_session_management
 async def add_sightings_at_index(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SIGHTING]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SIGHTING]))],
     db: Annotated[Session, Depends(get_db)],
     attribute_id: Annotated[int, Path(alias="attributeId")],
 ) -> SightingAttributesResponse:
@@ -80,7 +80,7 @@ async def get_sightings_at_index(
 )
 @with_session_management
 async def delete_sighting(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SIGHTING]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SIGHTING]))],
     db: Annotated[Session, Depends(get_db)],
     sighting_id: Annotated[int, Path(alias="sightingId")],
 ) -> StandardStatusResponse:
@@ -115,7 +115,7 @@ async def get_sightings(
 )
 @with_session_management
 async def add_sighting_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SIGHTING]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SIGHTING]))],
     db: Annotated[Session, Depends(get_db)],
     body: SightingCreateBody,
 ) -> list[SightingAttributesResponse]:
@@ -132,7 +132,7 @@ async def add_sighting_depr(
 )
 @with_session_management
 async def add_sightings_at_index_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SIGHTING]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SIGHTING]))],
     db: Annotated[Session, Depends(get_db)],
     attribute_id: Annotated[int, Path(alias="attributeId")],
 ) -> SightingAttributesResponse:
@@ -149,7 +149,7 @@ async def add_sightings_at_index_depr(
 )
 @with_session_management
 async def delete_sighting_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SIGHTING]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SIGHTING]))],
     db: Annotated[Session, Depends(get_db)],
     sighting_id: Annotated[int, Path(alias="sightingId")],
 ) -> StandardStatusResponse:
