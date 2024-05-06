@@ -45,7 +45,7 @@ router = APIRouter(tags=["galaxies"])
 )
 @with_session_management
 async def import_galaxy_cluster(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.GALAXY_EDITOR]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.GALAXY_EDITOR]))],
     db: Annotated[Session, Depends(get_db)],
     body: list[ImportGalaxyBody],
     request: Request,
@@ -87,7 +87,7 @@ async def update_galaxy(
 )
 @with_session_management
 async def delete_galaxy(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     galaxy_id: Annotated[str, Path(alias="galaxyId")],
     request: Request,
@@ -148,11 +148,11 @@ async def export_galaxy(
     status_code=status.HTTP_200_OK,
     response_model=AttachClusterGalaxyResponse,
     summary="Attach Cluster to Galaxy.",
-    description="Attach a Galaxy Cluster to given Galaxy."
+    description="Attach a Galaxy Cluster to given Galaxy.",
 )
 @with_session_management
 async def galaxies_attachCluster(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     attach_target_id: Annotated[str, Path(alias="attachTargetId")],
     attach_target_type: Annotated[str, Path(alias="attachTargetType")],
@@ -171,7 +171,7 @@ async def galaxies_attachCluster(
     status_code=status.HTTP_200_OK,
     response_model=GetGalaxyResponse,
     summary="View Galayx by ID.",
-    description="View Galaxy by given Galaxy ID."
+    description="View Galaxy by given Galaxy ID.",
 )
 @with_session_management
 async def get_galaxy_details_depr(
@@ -188,11 +188,11 @@ async def get_galaxy_details_depr(
     status_code=status.HTTP_200_OK,
     response_model=DeleteForceUpdateImportGalaxyResponse,
     summary="Delete Galaxy by ID",
-    description="Delete Galaxy by GalaxyID."
+    description="Delete Galaxy by GalaxyID.",
 )
 @with_session_management
 async def delete_galaxy_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     galaxy_id: Annotated[str, Path(alias="galaxyId")],
     request: Request,

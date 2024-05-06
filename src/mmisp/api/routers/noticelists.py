@@ -45,7 +45,7 @@ async def get_noticelist(
 )
 @with_session_management
 async def post_toggleEnable_noticelist(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     noticelist_id: Annotated[int, Path(alias="noticelistId")],
 ) -> StandardStatusIdentifiedResponse:
@@ -61,7 +61,7 @@ async def post_toggleEnable_noticelist(
 )
 @with_session_management
 async def update_noticelists(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
 ) -> StandardStatusResponse:
     return await _update_noticelists(db, False)
@@ -112,7 +112,7 @@ async def get_noticelist_depr(
 )
 @with_session_management
 async def update_noticelist_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
 ) -> StandardStatusResponse:
     return await _update_noticelists(db, True)

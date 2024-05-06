@@ -44,7 +44,7 @@ router = APIRouter(tags=["taxonomies"])
 )
 @with_session_management
 async def update_taxonomies(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
 ) -> StandardStatusResponse:
     return await _update_taxonomies(db, False)
@@ -122,7 +122,7 @@ async def export_taxonomy(
 )
 @with_session_management
 async def enable_taxonomy(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     taxonomy_id: Annotated[int, Path(alias="taxonomyId")],
 ) -> StandardStatusResponse:
@@ -138,7 +138,7 @@ async def enable_taxonomy(
 )
 @with_session_management
 async def disable_taxonomies(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     taxonomy_id: Annotated[int, Path(alias="taxonomyId")],
 ) -> StandardStatusResponse:
@@ -155,7 +155,7 @@ async def disable_taxonomies(
 )
 @with_session_management
 async def update_taxonomies_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
 ) -> StandardStatusResponse:
     return await _update_taxonomies(db, True)
@@ -245,10 +245,11 @@ async def _get_taxonomy_details(db: Session, taxonomy_id: int) -> GetIdTaxonomyR
             exclusive=taxonomy.exclusive,
             required=taxonomy.required,
             highlighted=taxonomy.highlighted,
-            entries=taxonomy_entries
+            entries=taxonomy_entries,
         )
     )
     return response
+
 
 async def _get_all_taxonomies(db: Session) -> list[ViewTaxonomyResponse]:
     result = await db.execute(select(Taxonomy))
@@ -382,7 +383,7 @@ async def _get_taxonomy_details_extended(db: Session, taxonomy_id: int) -> GetTa
         exclusive=taxonomy.exclusive,
         required=taxonomy.required,
         highlighted=taxonomy.highlighted,
-        entries=taxonomy_entries
+        entries=taxonomy_entries,
     )
     return response
 
@@ -411,15 +412,10 @@ async def _export_taxonomy(db: Session, taxonomy_id: int) -> ExportTaxonomyRespo
         for taxonomy_entry in taxonomy_entries:
             values.append(
                 ExportTaxonomyEntry(
-                    description=taxonomy_entry.description,
-                    expanded=taxonomy_entry.expanded,
-                    value=taxonomy_entry.value
+                    description=taxonomy_entry.description, expanded=taxonomy_entry.expanded, value=taxonomy_entry.value
                 )
             )
-        value = TaxonomyValueSchema(
-            predicate=taxonomy_predicate.value,
-            entry=values
-        )
+        value = TaxonomyValueSchema(predicate=taxonomy_predicate.value, entry=values)
         entries.append(value)
     return ExportTaxonomyResponse(
         namespace=taxonomy.namespace,
@@ -427,7 +423,7 @@ async def _export_taxonomy(db: Session, taxonomy_id: int) -> ExportTaxonomyRespo
         version=taxonomy.version,
         exclusive=taxonomy.exclusive,
         predicates=predicates,
-        values=entries
+        values=entries,
     )
 
 

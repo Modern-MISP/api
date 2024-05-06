@@ -1,7 +1,7 @@
-from dataclasses import dataclass
 from os import getenv
 
 from dotenv import load_dotenv
+from pydantic.dataclasses import dataclass
 
 
 @dataclass
@@ -11,6 +11,7 @@ class APIConfig:
     OWN_URL: str
     WORKER_URL: str
     DASHBOARD_URL: str
+    READONLY_MODE: bool
 
 
 load_dotenv(getenv("ENV_FILE", ".env"))
@@ -21,4 +22,5 @@ config: APIConfig = APIConfig(
     OWN_URL=getenv("OWN_URL", ""),
     WORKER_URL=getenv("WORKER_URL", ""),
     DASHBOARD_URL=getenv("DASHBOARD_URL", ""),
+    READONLY_MODE=bool(getenv("READONLY_MODE", False)),
 )

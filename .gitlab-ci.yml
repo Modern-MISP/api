@@ -2,14 +2,22 @@ default:
   tags:
       - any-image-allowed
 
+variables:
+  LIB_REPO_URL: https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.kit.edu/${CI_PROJECT_NAMESPACE}/lib.git
+
 stages:
   - test
 
 test_job:
   stage: test
-  image: python:3.11-slim
+  image: python:3.11
   before_script:
     - python --version
   script:
     - pip install -e ".[dev]"
+    - if [ "$CI_PROJECT_NAMESPACE" != "kit/kit-cert/mmisp" ] || [ "$CI_COMMIT_REF_NAME" != "main" ]; then
+        if git ls-remote --exit-code --heads $LIB_REPO_URL $CI_COMMIT_REF_NAME; then
+          pip install --force-reinstall git+${LIB_REPO_URL}@${CI_COMMIT_REF_NAME};
+        fi
+      fi
     - ENV_FILE=.env.test.lite pytest tests

@@ -46,7 +46,7 @@ LOCAL_INSTANCE_SERVER = {"id": 0, "name": "Local instance", "url": config.OWN_UR
 )
 @with_session_management
 async def create_sharing_group(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SHARING_GROUP]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
     body: CreateSharingGroupBody,
 ) -> dict:
@@ -78,7 +78,7 @@ async def get_sharing_group(
 )
 @with_session_management
 async def update_sharing_group(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SHARING_GROUP]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
     id: int,
     body: UpdateSharingGroupBody,
@@ -95,7 +95,7 @@ async def update_sharing_group(
 )
 @with_session_management
 async def delete_sharing_group(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SHARING_GROUP]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
     id: int,
 ) -> dict:
@@ -142,7 +142,7 @@ async def get_sharing_group_info(
 )
 @with_session_management
 async def add_org_to_sharing_group(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SHARING_GROUP]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
     id: int,
     body: AddOrgToSharingGroupBody,
@@ -159,7 +159,7 @@ async def add_org_to_sharing_group(
 )
 @with_session_management
 async def remove_org_from_sharing_group(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SHARING_GROUP]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
     id: int,
     organisation_id: Annotated[int, Path(alias="organisationId")],
@@ -176,7 +176,7 @@ async def remove_org_from_sharing_group(
 )
 @with_session_management
 async def add_server_to_sharing_group(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SHARING_GROUP]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
     id: int,
     body: AddServerToSharingGroupBody,
@@ -193,7 +193,7 @@ async def add_server_to_sharing_group(
 )
 @with_session_management
 async def remove_server_from_sharing_group(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SHARING_GROUP]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
     id: int,
     server_id: Annotated[int, Path(alias="serverId")],
@@ -214,7 +214,7 @@ async def remove_server_from_sharing_group(
 )
 @with_session_management
 async def create_sharing_group_legacy(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SHARING_GROUP]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
     body: CreateSharingGroupLegacyBody,
 ) -> dict:
@@ -248,7 +248,7 @@ async def view_sharing_group_legacy(
 )
 @with_session_management
 async def update_sharing_group_legacy(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SHARING_GROUP]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
     id: Annotated[int, Path(alias="sharingGroupId")],
     body: UpdateSharingGroupLegacyBody,
@@ -266,7 +266,7 @@ async def update_sharing_group_legacy(
 )
 @with_session_management
 async def delete_sharing_group_legacy(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SHARING_GROUP]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
     id: Annotated[int, Path(alias="sharingGroupId")],
 ) -> dict:
@@ -283,7 +283,7 @@ async def delete_sharing_group_legacy(
 )
 @with_session_management
 async def add_org_to_sharing_group_legacy(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SHARING_GROUP]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
     id: Annotated[int, Path(alias="sharingGroupId")],
     organisation_id: Annotated[int, Path(alias="organisationId")],
@@ -302,7 +302,7 @@ async def add_org_to_sharing_group_legacy(
 )
 @with_session_management
 async def remove_org_from_sharing_group_legacy(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SHARING_GROUP]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
     id: Annotated[int, Path(alias="sharingGroupId")],
     organisation_id: Annotated[int, Path(alias="organisationId")],
@@ -320,7 +320,7 @@ async def remove_org_from_sharing_group_legacy(
 )
 @with_session_management
 async def add_server_to_sharing_group_legacy(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SHARING_GROUP]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
     id: Annotated[int, Path(alias="sharingGroupId")],
     server_id: Annotated[int, Path(alias="serverId")],
@@ -338,7 +338,7 @@ async def add_server_to_sharing_group_legacy(
 )
 @with_session_management
 async def remove_server_from_sharing_group_legacy(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SHARING_GROUP]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
     id: Annotated[int, Path(alias="sharingGroupId")],
     server_id: Annotated[int, Path(alias="serverId")],

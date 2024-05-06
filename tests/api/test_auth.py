@@ -137,26 +137,3 @@ class TestCheckPermissions:
                 Permission.SITE_ADMIN,
             ],
         )
-
-    @staticmethod
-    @pytest.mark.asyncio
-    async def test_check_permissions_no_write_access() -> None:
-        db = get_db()
-
-        auth_key = generate_auth_key()
-        auth_key.user_id = environment.site_admin_user.id
-        auth_key.read_only = True
-
-        db.add(auth_key)
-
-        await db.commit()
-        await db.refresh(auth_key)
-
-        auth = Auth(
-            user_id=environment.site_admin_user.id,
-            org_id=environment.site_admin_user.org_id,
-            role_id=environment.site_admin_user.role_id,
-            auth_key_id=auth_key.id,
-        )
-
-        assert not await check_permissions(auth, [Permission.WRITE_ACCESS])

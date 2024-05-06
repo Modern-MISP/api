@@ -34,7 +34,7 @@ router = APIRouter(tags=["tags"])
 )
 @with_session_management
 async def add_tag(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.TAG_EDITOR]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.TAG_EDITOR]))],
     db: Annotated[Session, Depends(get_db)],
     body: TagCreateBody,
 ) -> TagResponse:
@@ -82,7 +82,7 @@ async def search_tags(
 )
 @with_session_management
 async def update_tag(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     body: TagUpdateBody,
     tag_id: Annotated[int, Path(alias="tagId")],
@@ -99,7 +99,7 @@ async def update_tag(
 )
 @with_session_management
 async def delete_tag(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     tag_id: Annotated[int, Path(alias="tagId")],
 ) -> TagDeleteResponse:
@@ -134,7 +134,7 @@ async def get_tags(
 )
 @with_session_management
 async def add_tag_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.TAG_EDITOR]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.TAG_EDITOR]))],
     db: Annotated[Session, Depends(get_db)],
     body: TagCreateBody,
 ) -> TagResponse:
@@ -168,7 +168,7 @@ async def view_tag_depr(
 )
 @with_session_management
 async def update_tag_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     body: TagUpdateBody,
     tag_id: Annotated[int, Path(alias="tagId")],
@@ -186,7 +186,7 @@ async def update_tag_depr(
 )
 @with_session_management
 async def delete_tag_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.SITE_ADMIN]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     tag_id: Annotated[int, Path(alias="tagId")],
 ) -> TagDeleteResponse:

@@ -43,7 +43,7 @@ router = APIRouter(tags=["auth_keys"])
 )
 @with_session_management
 async def auth_keys_add_user(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.AUTH]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
     db: Annotated[Session, Depends(get_db)],
     user_id: Annotated[int, Path(alias="userId")],
     body: AddAuthKeyBody,
@@ -89,7 +89,7 @@ async def search_auth_keys(
 )
 @with_session_management
 async def auth_keys_edit_auth_key(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.AUTH]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
     db: Annotated[Session, Depends(get_db)],
     auth_key_id: Annotated[int, Path(alias="AuthKeyId")],
     body: EditAuthKeyBody,
@@ -105,7 +105,7 @@ async def auth_keys_edit_auth_key(
 )
 @with_session_management
 async def auth_keys_delete_auth_key(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.AUTH]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
     db: Annotated[Session, Depends(get_db)],
     auth_key_id: Annotated[int, Path(alias="AuthKeyId")],
 ) -> StandardStatusIdentifiedResponse:
@@ -148,7 +148,7 @@ async def auth_keys_get(
 )
 @with_session_management
 async def auth_keys_add_user_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.AUTH]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
     db: Annotated[Session, Depends(get_db)],
     user_id: Annotated[int, Path(alias="userId")],
     body: AddAuthKeyBody,
@@ -165,7 +165,7 @@ async def auth_keys_add_user_depr(
 )
 @with_session_management
 async def auth_keys_edit_auth_key_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.AUTH]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
     db: Annotated[Session, Depends(get_db)],
     auth_key_id: Annotated[int, Path(alias="AuthKeyId")],
     body: EditAuthKeyBody,
@@ -182,7 +182,7 @@ async def auth_keys_edit_auth_key_depr(
 )
 @with_session_management
 async def auth_keys_delete_auth_key_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WRITE_ACCESS, Permission.AUTH]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
     db: Annotated[Session, Depends(get_db)],
     auth_key_id: Annotated[int, Path(alias="AuthKeyId")],
 ) -> StandardStatusIdentifiedResponse:
