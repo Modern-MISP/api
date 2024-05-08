@@ -13,6 +13,7 @@ from .generators.model_generators.organisation_generator import generate_organis
 from .generators.model_generators.role_generator import generate_org_admin_role, generate_site_admin_role
 from .generators.model_generators.tag_generator import generate_tag
 from .generators.model_generators.user_generator import generate_user
+from .generators.model_generators.sharing_group_generator import generate_sharing_group
 
 
 @pytest.fixture(scope="function")
@@ -246,3 +247,20 @@ def tag(db):
 
     db.delete(tag)
     db.commit()
+
+@pytest.fixture
+def sharing_group(db, instance_org_two):
+    sharing_group = generate_sharing_group()
+    sharing_group.organisation_uuid = instance_org_two.uuid
+    sharing_group.org_id = instance_org_two.id
+
+    db.add(sharing_group)
+    db.commit()
+    db.refresh(sharing_group)
+
+    yield sharing_group
+
+    db.delete(sharing_group)
+    db.commit()
+
+

@@ -6,24 +6,7 @@ from mmisp.api_schemas.attributes.get_describe_types_response import GetDescribe
 from mmisp.db.models.attribute import AttributeTag
 
 from ...environment import client
-from ...generators.model_generators.sharing_group_generator import generate_sharing_group
 from ...generators.model_generators.tag_generator import generate_tag
-
-
-@pytest.fixture
-def sharing_group(db, instance_org_two):
-    sharing_group = generate_sharing_group()
-    sharing_group.organisation_uuid = instance_org_two.uuid
-    sharing_group.org_id = instance_org_two.id
-
-    db.add(sharing_group)
-    db.commit()
-    db.refresh(sharing_group)
-
-    yield sharing_group
-
-    db.delete(sharing_group)
-    db.commit()
 
 
 def test_add_attribute_valid_data(site_admin_user_token, event, db) -> None:
