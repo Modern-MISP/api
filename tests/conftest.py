@@ -7,8 +7,11 @@ from mmisp.api.auth import encode_token
 from tests.database import get_db
 from tests.generators.model_generators.server_generator import generate_server
 
+from .generators.model_generators.attribute_generator import generate_attribute
+from .generators.model_generators.event_generator import generate_event
 from .generators.model_generators.organisation_generator import generate_organisation
 from .generators.model_generators.role_generator import generate_org_admin_role, generate_site_admin_role
+from .generators.model_generators.tag_generator import generate_tag
 from .generators.model_generators.user_generator import generate_user
 
 
@@ -147,3 +150,99 @@ def site_admin_user_token(site_admin_user):
 @pytest.fixture
 def instance_owner_org_admin_user_token(instance_owner_org_admin_user):
     return encode_token(instance_owner_org_admin_user.id)
+
+
+@pytest.fixture
+def organisation(db):
+    organisation = generate_organisation()
+
+    db.add(organisation)
+    db.commit()
+    db.refresh(organisation)
+
+    yield organisation
+
+    db.delete(organisation)
+    db.commit()
+
+
+@pytest.fixture
+def event(db, organisation):
+    org_id = organisation.id
+    event = generate_event()
+    event.org_id = org_id
+    event.orgc_id = org_id
+
+    db.add(event)
+    db.commit()
+    db.refresh(event)
+
+    yield event
+
+    db.delete(event)
+    db.commit()
+
+
+@pytest.fixture
+def event2(db, organisation):
+    org_id = organisation.id
+    event = generate_event()
+    event.org_id = org_id
+    event.orgc_id = org_id
+
+    db.add(event)
+    db.commit()
+    db.refresh(event)
+
+    yield event
+
+    db.delete(event)
+    db.commit()
+
+
+@pytest.fixture
+def attribute(db, event):
+    event_id = event.id
+    attribute = generate_attribute(event_id)
+
+    db.add(attribute)
+    db.commit()
+    db.refresh(attribute)
+
+    yield attribute
+
+    db.delete(attribute)
+    db.commit()
+
+
+@pytest.fixture
+def attribute2(db, event):
+    event_id = event.id
+    attribute = generate_attribute(event_id)
+
+    db.add(attribute)
+    db.commit()
+    db.refresh(attribute)
+
+    yield attribute
+
+    db.delete(attribute)
+    db.commit()
+
+
+@pytest.fixture
+def tag(db):
+    tag = generate_tag()
+
+    tag.user_id = 1
+    tag.org_id = 1
+    tag.is_galaxy = True
+
+    db.add(tag)
+    db.commit()
+    db.refresh(tag)
+
+    yield tag
+
+    db.delete(tag)
+    db.commit()

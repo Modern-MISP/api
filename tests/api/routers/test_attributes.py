@@ -1,13 +1,11 @@
 import pytest
+import sqlalchemy as sa
 from sqlalchemy.orm import Session
 
 from mmisp.api_schemas.attributes.get_describe_types_response import GetDescribeTypesAttributes
 from mmisp.db.models.attribute import AttributeTag
 
 from ...environment import client
-from ...generators.model_generators.attribute_generator import generate_attribute
-from ...generators.model_generators.event_generator import generate_event
-from ...generators.model_generators.organisation_generator import generate_organisation
 from ...generators.model_generators.sharing_group_generator import generate_sharing_group
 from ...generators.model_generators.tag_generator import generate_tag
 
@@ -28,23 +26,7 @@ def sharing_group(db, instance_org_two):
     db.commit()
 
 
-@pytest.fixture
-def organisation(db):
-    organisation = generate_organisation()
-
-    db.add(organisation)
-    db.commit()
-    db.refresh(organisation)
-
-    yield organisation
-
-    db.delete(organisation)
-    db.commit()
-
-
-def test_add_attribute_valid_data(
-    db: Session, instance_org_two, site_admin_user_token, sharing_group, organisation
-) -> None:
+def test_add_attribute_valid_data(site_admin_user_token, event, db) -> None:
     request_body = {
         "value": "1.2.3.4",
         "type": "ip-src",
@@ -54,19 +36,8 @@ def test_add_attribute_valid_data(
         "comment": "test comment",
         "disable_correlation": False,
     }
-
-    org_id = organisation.id
-
-    event = generate_event()
-    setattr(event, "org_id", org_id)
-    setattr(event, "orgc_id", org_id)
-    setattr(event, "sharing_group_id", sharing_group.id)
-
-    db.add(event)
-    db.commit()
-    db.refresh(event)
-
     event_id = event.id
+    assert event.id is not None
 
     headers = {"authorization": site_admin_user_token}
     response = client.post(f"/attributes/{event_id}", json=request_body, headers=headers)
@@ -80,6 +51,14 @@ def test_add_attribute_valid_data(
     assert response_json["Attribute"]["distribution"] == request_body["distribution"]
     assert response_json["Attribute"]["comment"] == request_body["comment"]
     assert response_json["Attribute"]["disable_correlation"] == request_body["disable_correlation"]
+    assert response_json["Attribute"]["id"] is not None
+
+    # need to remove attribute, so teardown works
+    print(response_json["Attribute"]["id"])
+    stmt = sa.sql.text("DELETE FROM attributes WHERE id=:id")
+    #    stmt.bindparams(id=response_json["Attribute"]["id"])
+    db.execute(stmt, {"id": response_json["Attribute"]["id"]})
+    db.commit()
 
 
 def test_add_attribute_invalid_event_id(site_admin_user_token) -> None:
@@ -101,21 +80,12 @@ def test_add_attribute_invalid_event_id(site_admin_user_token) -> None:
     assert response.status_code == 404
 
 
-def test_add_attribute_invalid_data(
-    db: Session, instance_org_two, site_admin_user_token, sharing_group, organisation
-) -> None:
+def test_add_attribute_invalid_data(db: Session, event, site_admin_user_token, sharing_group) -> None:
     request_body = {"value": "1.2.3.4", "type": "invalid type"}
 
-    org_id = organisation.id
+    event.sharing_group_id = sharing_group.id
 
-    event = generate_event()
-    setattr(event, "org_id", org_id)
-    setattr(event, "orgc_id", org_id)
-    setattr(event, "sharing_group_id", sharing_group.id)
-
-    db.add(event)
     db.commit()
-    db.refresh(event)
 
     event_id = event.id
 
@@ -128,43 +98,29 @@ def test_add_attribute_invalid_data(
 
 
 def test_get_existing_attribute(
-    db: Session, instance_org_two, site_admin_user_token, sharing_group, organisation
+    db: Session,
+    instance_org_two,
+    site_admin_user_token,
+    sharing_group,
+    organisation,
+    event,
+    attribute,
+    tag,
+    attributetag,
 ) -> None:
     sharing_group_id = sharing_group.id
-    org_id = organisation.id
-
-    event = generate_event()
-    event.org_id = org_id
-    event.orgc_id = org_id
     event.sharing_group_id = sharing_group_id
 
-    db.add(event)
     db.commit()
-    db.refresh(event)
 
     event_id = event.id
 
-    attribute = generate_attribute()
-    attribute.event_id = event_id
     attribute.sharing_group_id = sharing_group_id
 
-    tag = generate_tag()
-    tag.user_id = 1
-    tag.org_id = 1
-
-    db.add_all([attribute, tag])
-    db.commit()
-    db.refresh(attribute)
-    db.refresh(tag)
+    assert tag.user_id == 1
+    assert tag.org_id == 1
 
     attribute_id = attribute.id
-    tag_id = tag.id
-
-    add_attribute_tag_body = AttributeTag(attribute_id=attribute_id, event_id=event_id, tag_id=tag_id, local=False)
-
-    db.add(add_attribute_tag_body)
-    db.commit()
-    db.refresh(add_attribute_tag_body)
 
     headers = {"authorization": site_admin_user_token}
     response = client.get(f"/attributes/{attribute_id}", headers=headers)
@@ -193,7 +149,8 @@ def test_get_existing_attribute(
     assert "event_uuid" in response_json["Attribute"]
     assert "tag" in response_json["Attribute"]
     if len(response_json["Attribute"]["tag"]) > 0:
-        assert response_json["Attribute"]["tag"][0]["id"] == str(tag_id)
+        print(response_json["Attribute"]["tag"])
+        assert response_json["Attribute"]["tag"][0]["id"] == str(attributetag.id)
 
 
 def test_get_invalid_or_non_existing_attribute(site_admin_user_token) -> None:
@@ -207,9 +164,7 @@ def test_get_invalid_or_non_existing_attribute(site_admin_user_token) -> None:
 # --- Test edit attribute
 
 
-def test_edit_existing_attribute(
-    db: Session, instance_org_two, site_admin_user_token, sharing_group, organisation
-) -> None:
+def test_edit_existing_attribute(db: Session, site_admin_user_token, sharing_group, event, attribute) -> None:
     request_body = {
         "category": "Payload delivery",
         "value": "2.3.4.5",
@@ -218,28 +173,17 @@ def test_edit_existing_attribute(
         "comment": "new comment",
         "disable_correlation": False,
     }
-    org_id = organisation.id
-
-    event = generate_event()
-    setattr(event, "org_id", org_id)
-    setattr(event, "orgc_id", org_id)
-    setattr(event, "sharing_group_id", sharing_group.id)
-
-    db.add(event)
+    event.sharing_group_id = sharing_group.id
     db.commit()
-    db.refresh(event)
 
     event_id = event.id
 
-    attribute = generate_attribute()
-    setattr(attribute, "event_id", event_id)
-    setattr(attribute, "sharing_group_id", sharing_group.id)
+    attribute.sharing_group_id = sharing_group.id
 
-    db.add(attribute)
     db.commit()
-    db.refresh(attribute)
 
     attribute_id = attribute.id
+    assert attribute.id is not None
 
     headers = {"authorization": site_admin_user_token}
     response = client.put(f"/attributes/{attribute_id}", json=request_body, headers=headers)
@@ -287,28 +231,13 @@ def test_edit_non_existing_attribute(site_admin_user_token) -> None:
 
 # --- Test delete attribute by id
 def test_delete_existing_attribute(
-    db: Session, instance_org_two, site_admin_user_token, sharing_group, organisation
+    db: Session, instance_org_two, site_admin_user_token, sharing_group, organisation, event, attribute
 ) -> None:
-    org_id = organisation.id
+    event.sharing_group_id = sharing_group.id
 
-    event = generate_event()
-    setattr(event, "org_id", org_id)
-    setattr(event, "orgc_id", org_id)
-    setattr(event, "sharing_group_id", sharing_group.id)
-
-    db.add(event)
-    db.commit()
-    db.refresh(event)
-
-    event_id = event.id
-
-    attribute = generate_attribute()
-    setattr(attribute, "event_id", event_id)
     setattr(attribute, "sharing_group_id", sharing_group.id)
 
-    db.add(attribute)
     db.commit()
-    db.refresh(attribute)
 
     attribute_id = attribute.id
 
@@ -329,35 +258,14 @@ def test_delete_invalid_or_non_existing_attribute(site_admin_user_token) -> None
 # --- Test get all attributes
 
 
-def test_get_all_attributes(db: Session, instance_org_two, site_admin_user_token, sharing_group, organisation) -> None:
-    org_id = organisation.id
+def test_get_all_attributes(
+    db: Session, event, site_admin_user_token, sharing_group, organisation, attribute, attribute2
+) -> None:
+    event.sharing_group_id = sharing_group.id
+    attribute.sharing_group_id = sharing_group.id
+    attribute2.sharing_group_id = sharing_group.id
 
-    event = generate_event()
-    setattr(event, "org_id", org_id)
-    setattr(event, "orgc_id", org_id)
-    setattr(event, "sharing_group_id", sharing_group.id)
-
-    db.add(event)
     db.commit()
-    db.refresh(event)
-
-    event_id = event.id
-
-    attribute1 = generate_attribute()
-    setattr(attribute1, "event_id", event_id)
-    setattr(attribute1, "sharing_group_id", sharing_group.id)
-
-    db.add(attribute1)
-    db.commit()
-    db.refresh(attribute1)
-
-    attribute2 = generate_attribute()
-    setattr(attribute2, "event_id", event_id)
-    setattr(attribute2, "sharing_group_id", sharing_group.id)
-
-    db.add(attribute2)
-    db.commit()
-    db.refresh(attribute2)
 
     headers = {"authorization": site_admin_user_token}
     response = client.get("/attributes", headers=headers)
@@ -389,43 +297,21 @@ def test_get_all_attributes(db: Session, instance_org_two, site_admin_user_token
 
 # --- Test delete selected attribute(s)
 def test_delete_selected_attributes_from_existing_event(
-    db: Session, instance_org_two, site_admin_user_token, sharing_group, organisation
+    db: Session, site_admin_user_token, sharing_group, event, attribute, attribute2
 ) -> None:
     request_body = {"id": "1 2 3", "allow_hard_delete": False}
-    org_id = organisation.id
-
-    event = generate_event()
-    setattr(event, "org_id", org_id)
-    setattr(event, "orgc_id", org_id)
-    setattr(event, "sharing_group_id", sharing_group.id)
-
-    db.add(event)
-    db.commit()
-    db.refresh(event)
 
     event_id = event.id
-
-    attribute1 = generate_attribute()
-    setattr(attribute1, "event_id", event_id)
-    setattr(attribute1, "sharing_group_id", sharing_group.id)
-
-    db.add(attribute1)
-    db.commit()
-    db.refresh(attribute1)
-
-    attribute1_id = attribute1.id
-
-    attribute2 = generate_attribute()
-    setattr(attribute2, "event_id", event_id)
+    setattr(event, "sharing_group_id", sharing_group.id)
+    setattr(attribute, "sharing_group_id", sharing_group.id)
     setattr(attribute2, "sharing_group_id", sharing_group.id)
 
-    db.add(attribute2)
     db.commit()
-    db.refresh(attribute2)
 
+    attribute_id = attribute.id
     attribute2_id = attribute2.id
 
-    attribute_ids = str(attribute1_id) + " " + str(attribute2_id)
+    attribute_ids = str(attribute_id) + " " + str(attribute2_id)
 
     request_body["id"] = attribute_ids
 
@@ -442,30 +328,11 @@ def test_delete_selected_attributes_from_existing_event(
     assert response_json["url"] == f"/attributes/deleteSelected/{event_id}"
 
 
-def test_valid_search_attribute_data(
-    db: Session, instance_org_two, site_admin_user_token, sharing_group, organisation
-) -> None:
+def test_valid_search_attribute_data(db: Session, event, site_admin_user_token, sharing_group) -> None:
     request_body = {"returnFormat": "json", "limit": 100}
-    org_id = organisation.id
 
-    event = generate_event()
-    setattr(event, "org_id", org_id)
-    setattr(event, "orgc_id", org_id)
-    setattr(event, "sharing_group_id", sharing_group.id)
-
-    db.add(event)
+    event.sharing_group_id = sharing_group.id
     db.commit()
-    db.refresh(event)
-
-    event_id = event.id
-
-    attribute = generate_attribute()
-    setattr(attribute, "event_id", event_id)
-    setattr(attribute, "sharing_group_id", sharing_group.id)
-
-    db.add(attribute)
-    db.commit()
-    db.refresh(attribute)
 
     headers = {"authorization": site_admin_user_token}
     response = client.post("/attributes/restSearch", json=request_body, headers=headers)
@@ -525,30 +392,16 @@ def test_attribute_describe_types(site_admin_user_token) -> None:
 # --- Test restore attribute
 
 
-def test_restore_existing_attribute(
-    db: Session, instance_org_two, site_admin_user_token, sharing_group, organisation
-) -> None:
-    org_id = organisation.id
-
-    event = generate_event()
-    setattr(event, "org_id", org_id)
-    setattr(event, "orgc_id", org_id)
-    setattr(event, "sharing_group_id", sharing_group.id)
+def test_restore_existing_attribute(db: Session, site_admin_user_token, sharing_group, event, attribute) -> None:
+    event.sharing_group_id = sharing_group.id
 
     db.add(event)
     db.commit()
     db.refresh(event)
 
-    event_id = event.id
+    attribute.sharing_group_id = sharing_group.id
 
-    attribute = generate_attribute()
-    attribute.event_id = event_id
-    setattr(attribute, "event_id", event_id)
-    setattr(attribute, "sharing_group_id", sharing_group.id)
-
-    db.add(attribute)
     db.commit()
-    db.refresh(attribute)
 
     attribute_id = attribute.id
 
@@ -568,29 +421,12 @@ def test_restore_invalid_attribute(site_admin_user_token) -> None:
 # --- Test adding a tag
 
 
-def test_add_existing_tag_to_attribute(
-    db: Session, instance_org_two, site_admin_user_token, sharing_group, organisation
-) -> None:
-    org_id = organisation.id
+def test_add_existing_tag_to_attribute(db: Session, site_admin_user_token, sharing_group, event, attribute) -> None:
+    event.sharing_group_id = sharing_group.id
 
-    event = generate_event()
-    setattr(event, "org_id", org_id)
-    setattr(event, "orgc_id", org_id)
-    setattr(event, "sharing_group_id", sharing_group.id)
-
-    db.add(event)
-    db.commit()
-    db.refresh(event)
-
-    event_id = event.id
-
-    attribute = generate_attribute()
-    setattr(attribute, "event_id", event_id)
     setattr(attribute, "sharing_group_id", sharing_group.id)
 
-    db.add(attribute)
     db.commit()
-    db.refresh(attribute)
 
     attribute_id = attribute.id
 
@@ -618,28 +454,12 @@ def test_add_existing_tag_to_attribute(
 
 
 def test_add_invalid_or_non_existing_tag_to_attribute(
-    db: Session, site_admin_user_token, instance_org_two, sharing_group, organisation
+    db: Session, site_admin_user_token, event, sharing_group, attribute
 ) -> None:
-    org_id = organisation.id
+    event.sharing_group_id = sharing_group.id
+    attribute.sharing_group_id = sharing_group.id
 
-    event = generate_event()
-    setattr(event, "org_id", org_id)
-    setattr(event, "orgc_id", org_id)
-    setattr(event, "sharing_group_id", sharing_group.id)
-
-    db.add(event)
     db.commit()
-    db.refresh(event)
-
-    event_id = event.id
-
-    attribute = generate_attribute()
-    setattr(attribute, "event_id", event_id)
-    setattr(attribute, "sharing_group_id", sharing_group.id)
-
-    db.add(attribute)
-    db.commit()
-    db.refresh(attribute)
 
     attribute_id = attribute.id
 
@@ -660,48 +480,32 @@ def test_add_invalid_or_non_existing_tag_to_attribute(
     assert response_json["saved"] is False
 
 
-def test_remove_existing_tag_from_attribute(db: Session, site_admin_user_token, sharing_group, organisation) -> None:
-    org_id = organisation.id
-
-    event = generate_event()
-    setattr(event, "org_id", org_id)
-    setattr(event, "orgc_id", org_id)
-    setattr(event, "sharing_group_id", sharing_group.id)
-
-    db.add(event)
-    db.commit()
-    db.refresh(event)
-
-    event_id = event.id
-
-    attribute = generate_attribute()
-    setattr(attribute, "event_id", event_id)
-    setattr(attribute, "sharing_group_id", sharing_group.id)
-
-    db.add(attribute)
-    db.commit()
-    db.refresh(attribute)
-
-    attribute_id = attribute.id
-
-    tag = generate_tag()
-    setattr(tag, "user_id", 1)
-    setattr(tag, "org_id", 1)
-
-    db.add(tag)
-    db.commit()
-    db.refresh(tag)
-
-    tag_id = tag.id
-
-    attribute_tag = AttributeTag(attribute_id=attribute_id, event_id=event_id, tag_id=tag_id, local=False)
+@pytest.fixture
+def attributetag(attribute, event, tag, db):
+    attribute_tag = AttributeTag(attribute_id=attribute.id, event_id=event.id, tag_id=tag.id, local=False)
 
     db.add(attribute_tag)
     db.commit()
-    db.refresh(attribute_tag)
+
+    yield attribute_tag
+
+    db.delete(attribute_tag)
+    db.commit
+
+
+def test_remove_existing_tag_from_attribute(
+    db: Session, site_admin_user_token, sharing_group, event, attribute, tag, attributetag
+) -> None:
+    event.sharing_group_id = sharing_group.id
+    db.commit()
+
+    attribute.sharing_group_id = sharing_group.id
+    db.commit()
+
+    attribute_id = attribute.id
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post(f"/attributes/removeTag/{attribute_id}/{tag_id}", headers=headers)
+    response = client.post(f"/attributes/removeTag/{attribute_id}/{tag.id}", headers=headers)
 
     assert response.status_code == 200
     response_json = response.json()
