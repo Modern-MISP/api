@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from mmisp.db.models.event import Event
 from mmisp.db.models.tag import Tag
-from tests.environment import client, environment
+from tests.environment import client
 from tests.generators.feed_generator import (
     generate_random_valid_feed_data,
     generate_valid_feed_data,
@@ -31,21 +31,22 @@ def feed_data(request: Any) -> dict[str, Any]:
 
 class TestAddFeed:
     @staticmethod
-    def test_add_feed(feed_data: dict[str, Any], db: Session) -> None:
-        sharing_group = generate_sharing_group()
-        sharing_group.organisation_uuid = environment.instance_owner_org.uuid
-        sharing_group.org_id = environment.instance_owner_org.id
-        db.add(sharing_group)
-        db.flush()
-        db.refresh(sharing_group)
+    def test_add_feed(
+        feed_data: dict[str, Any],
+        db: Session,
+        instance_owner_org,
+        instance_owner_org_admin_user,
+        sharing_group,
+        site_admin_user_token,
+    ) -> None:
         feed_data["sharing_group_id"] = sharing_group.id
 
         tag = Tag(
             name=str(time()) + uuid4().hex,
             colour="#FFFFFF",
             exportable=False,
-            org_id=environment.instance_owner_org.id,
-            user_id=environment.instance_owner_org_admin_user.id,
+            org_id=instance_owner_org.id,
+            user_id=instance_owner_org_admin_user.id,
             local_only=True,
         )
         db.add(tag)
@@ -54,9 +55,9 @@ class TestAddFeed:
         feed_data["tag_id"] = tag.id
 
         event = Event(
-            user_id=environment.instance_owner_org_admin_user.id,
-            org_id=environment.instance_owner_org.id,
-            orgc_id=environment.instance_owner_org.id,
+            user_id=instance_owner_org_admin_user.id,
+            org_id=instance_owner_org.id,
+            orgc_id=instance_owner_org.id,
             info="test",
             date=datetime.utcnow(),
             analysis=0,
@@ -70,26 +71,28 @@ class TestAddFeed:
 
         db.commit()
 
-        headers = {"authorization": environment.site_admin_user_token}
+        headers = {"authorization": site_admin_user_token}
         response = client.post("/feeds", json=feed_data, headers=headers)
 
         assert response.status_code == 201
         assert response.json()["Feed"]["name"] == feed_data["name"]
 
     @staticmethod
-    def test_feed_error_handling() -> None:
+    def test_feed_error_handling(site_admin_user_token) -> None:
         invalid_data = {"name": "Test Feed"}
-        headers = {"authorization": environment.site_admin_user_token}
+        headers = {"authorization": site_admin_user_token}
         response = client.post("/feeds", json=invalid_data, headers=headers)
         assert response.status_code == 422
         assert response.json()["detail"][0]["msg"] == "field required"
         assert response.json()["detail"][0]["type"] == "value_error.missing"
 
     @staticmethod
-    def test_feed_response_format(feed_data: dict[str, Any], db: Session) -> None:
+    def test_feed_response_format(
+        feed_data: dict[str, Any], db: Session, site_admin_user_token, instance_owner_org, instance_owner_org_admin_user
+    ) -> None:
         sharing_group = generate_sharing_group()
-        sharing_group.organisation_uuid = environment.instance_owner_org.uuid
-        sharing_group.org_id = environment.instance_owner_org.id
+        sharing_group.organisation_uuid = instance_owner_org.uuid
+        sharing_group.org_id = instance_owner_org.id
         db.add(sharing_group)
         db.flush()
         db.refresh(sharing_group)
@@ -99,8 +102,8 @@ class TestAddFeed:
             name=str(time()) + uuid4().hex,
             colour="#FFFFFF",
             exportable=False,
-            org_id=environment.instance_owner_org.id,
-            user_id=environment.instance_owner_org_admin_user.id,
+            org_id=instance_owner_org.id,
+            user_id=instance_owner_org_admin_user.id,
             local_only=True,
         )
         db.add(tag)
@@ -109,9 +112,9 @@ class TestAddFeed:
         feed_data["tag_id"] = tag.id
 
         event = Event(
-            user_id=environment.instance_owner_org_admin_user.id,
-            org_id=environment.instance_owner_org.id,
-            orgc_id=environment.instance_owner_org.id,
+            user_id=instance_owner_org_admin_user.id,
+            org_id=instance_owner_org.id,
+            orgc_id=instance_owner_org.id,
             info="test",
             date=datetime.utcnow(),
             analysis=0,
@@ -125,7 +128,7 @@ class TestAddFeed:
 
         db.commit()
 
-        headers = {"authorization": environment.site_admin_user_token}
+        headers = {"authorization": site_admin_user_token}
         response = client.post("/feeds", json=feed_data, headers=headers)
         assert response.headers["Content-Type"] == "application/json"
         assert response.json()["Feed"]["name"] == feed_data["name"]
