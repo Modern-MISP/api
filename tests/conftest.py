@@ -142,3 +142,8 @@ def instance_two_owner_org_admin_user(db, instance_two_owner_org, instance_two_s
 @pytest.fixture
 def site_admin_user_token(site_admin_user):
     return encode_token(site_admin_user.id)
+
+
+@pytest.fixture
+def instance_owner_org_admin_user_token(instance_owner_org_admin_user):
+    return encode_token(instance_owner_org_admin_user.id)
