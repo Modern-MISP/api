@@ -4,6 +4,7 @@ import pytest
 from sqlalchemy.orm import Session
 
 from mmisp.api.auth import encode_token
+from mmisp.db.models.sharing_group import SharingGroupOrg, SharingGroupServer
 from tests.database import get_db
 from tests.generators.model_generators.server_generator import generate_server
 
@@ -11,9 +12,9 @@ from .generators.model_generators.attribute_generator import generate_attribute
 from .generators.model_generators.event_generator import generate_event
 from .generators.model_generators.organisation_generator import generate_organisation
 from .generators.model_generators.role_generator import generate_org_admin_role, generate_site_admin_role
+from .generators.model_generators.sharing_group_generator import generate_sharing_group
 from .generators.model_generators.tag_generator import generate_tag
 from .generators.model_generators.user_generator import generate_user
-from .generators.model_generators.sharing_group_generator import generate_sharing_group
 
 
 @pytest.fixture(scope="function")
@@ -154,6 +155,11 @@ def instance_owner_org_admin_user_token(instance_owner_org_admin_user):
 
 
 @pytest.fixture
+def instance_org_two_admin_user_token(instance_org_two_admin_user):
+    return encode_token(instance_org_two_admin_user.id)
+
+
+@pytest.fixture
 def organisation(db):
     organisation = generate_organisation()
 
@@ -248,8 +254,25 @@ def tag(db):
     db.delete(tag)
     db.commit()
 
+
 @pytest.fixture
-def sharing_group(db, instance_org_two):
+def sharing_group(db, instance_owner_org):
+    sharing_group = generate_sharing_group()
+    sharing_group.organisation_uuid = instance_owner_org.uuid
+    sharing_group.org_id = instance_owner_org.id
+
+    db.add(sharing_group)
+    db.commit()
+    db.refresh(sharing_group)
+
+    yield sharing_group
+
+    db.delete(sharing_group)
+    db.commit()
+
+
+@pytest.fixture
+def sharing_group2(db, instance_org_two):
     sharing_group = generate_sharing_group()
     sharing_group.organisation_uuid = instance_org_two.uuid
     sharing_group.org_id = instance_org_two.id
@@ -264,3 +287,60 @@ def sharing_group(db, instance_org_two):
     db.commit()
 
 
+@pytest.fixture
+def sharing_group_org(db, sharing_group, instance_owner_org):
+    sharing_group_org = SharingGroupOrg(sharing_group_id=sharing_group.id, org_id=instance_owner_org.id)
+    db.add(sharing_group_org)
+    db.commit()
+    yield sharing_group_org
+    db.delete(sharing_group_org)
+    db.commit()
+
+
+@pytest.fixture
+def sharing_group_org_two(db, sharing_group, instance_org_two):
+    sharing_group_org = SharingGroupOrg(sharing_group_id=sharing_group.id, org_id=instance_org_two.id)
+    db.add(sharing_group_org)
+    db.commit()
+    yield sharing_group_org
+    db.delete(sharing_group_org)
+    db.commit()
+
+
+@pytest.fixture
+def server(db, instance_owner_org):
+    server = generate_server()
+    server.org_id = instance_owner_org.id
+
+    db.add(server)
+    db.commit()
+    yield server
+
+    db.delete(server)
+    db.commit()
+
+
+@pytest.fixture
+def sharing_group_server(db, sharing_group, server):
+    sharing_group_server = SharingGroupServer(sharing_group_id=sharing_group.id, server_id=server.id)
+
+    db.add(sharing_group_server)
+    db.commit()
+
+    yield sharing_group_server
+
+    db.delete(sharing_group_server)
+    db.commit()
+
+
+@pytest.fixture
+def sharing_group_server_all_orgs(db, server, sharing_group):
+    sharing_group_server = SharingGroupServer(sharing_group_id=sharing_group.id, server_id=server.id, all_orgs=True)
+
+    db.add(sharing_group_server)
+    db.commit()
+
+    yield sharing_group_server
+
+    db.delete(sharing_group_server)
+    db.commit()
