@@ -1,6 +1,7 @@
 from typing import Generator
 
 import pytest
+from icecream import ic
 from sqlalchemy.orm import Session
 
 from mmisp.api.auth import encode_token
@@ -299,6 +300,7 @@ def sharing_group_org(db, sharing_group, instance_owner_org):
 
 @pytest.fixture
 def sharing_group_org_two(db, sharing_group, instance_org_two):
+    ic(instance_org_two)
     sharing_group_org = SharingGroupOrg(sharing_group_id=sharing_group.id, org_id=instance_org_two.id)
     db.add(sharing_group_org)
     db.commit()
