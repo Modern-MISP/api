@@ -17,327 +17,313 @@ from tests.api.helpers.warninglists_helper import (
     get_largest_id,
     remove_warninglists,
 )
-from tests.environment import client, environment
+from tests.environment import client
 
 
-class TestAddWarninglist:
-    @staticmethod
-    def test_add_warninglists() -> None:
-        data = CreateWarninglistBody(
-            name=f"test warninglist{time()}",
-            type=WarninglistListType.CIDR.value,
-            description="test description",
-            enabled=False,
-            default=False,
-            category=WarninglistCategory.KNOWN_IDENTIFIER.value,
-            valid_attributes=["md5"],
-            values="a b c",
-        ).dict()
+def test_add_warninglists(site_admin_user_token) -> None:
+    data = CreateWarninglistBody(
+        name=f"test warninglist{time()}",
+        type=WarninglistListType.CIDR.value,
+        description="test description",
+        enabled=False,
+        default=False,
+        category=WarninglistCategory.KNOWN_IDENTIFIER.value,
+        valid_attributes=["md5"],
+        values="a b c",
+    ).dict()
 
-        headers = {"authorization": environment.site_admin_user_token}
-        response = client.post("/warninglists/new", json=data, headers=headers)
+    headers = {"authorization": site_admin_user_token}
+    response = client.post("/warninglists/new", json=data, headers=headers)
 
-        assert response.status_code == 201
+    assert response.status_code == 201
 
-        json = response.json()
-        remove_warninglists([int(json["Warninglist"]["id"])])
+    json = response.json()
+    remove_warninglists([int(json["Warninglist"]["id"])])
 
 
-class TestToggleEnableWarninglist:
-    @staticmethod
-    def test_toggleEnable_warninglist() -> None:
-        warninglist_ids = add_warninglists()
-        toggle_data = generate_enable_warning_lists_body(warninglist_ids).dict()
+def test_toggleEnable_warninglist(site_admin_user_token) -> None:
+    warninglist_ids = add_warninglists()
+    toggle_data = generate_enable_warning_lists_body(warninglist_ids).dict()
 
-        headers = {"authorization": environment.site_admin_user_token}
-        response = client.post("/warninglists/toggleEnable", json=toggle_data, headers=headers)
+    headers = {"authorization": site_admin_user_token}
+    response = client.post("/warninglists/toggleEnable", json=toggle_data, headers=headers)
 
-        assert response.status_code == 200
+    assert response.status_code == 200
 
-        remove_warninglists(warninglist_ids)
-
-    @staticmethod
-    def test_toggleEnable_missing_warninglist() -> None:
-        invalid_toggle_data = ToggleEnableWarninglistsBody(
-            id=["-1"],
-            name="",
-            enabled=False,
-        ).dict()
-
-        headers = {"authorization": environment.site_admin_user_token}
-        response = client.post("/warninglists/toggleEnable", json=invalid_toggle_data, headers=headers)
-
-        assert response.status_code == 200
-        json = response.json()
-        json["errors"] == "Warninglist(s) not found."
+    remove_warninglists(warninglist_ids)
 
 
-class TestGetWarninglistById:
-    @staticmethod
-    def test_get_existing_warninglist_details() -> None:
-        headers = {"authorization": environment.site_admin_user_token}
-        warninglist_test_ids = add_warninglists()
+def test_toggleEnable_missing_warninglist(site_admin_user_token) -> None:
+    invalid_toggle_data = ToggleEnableWarninglistsBody(
+        id=["-1"],
+        name="",
+        enabled=False,
+    ).dict()
 
-        for warninglist_id in warninglist_test_ids:
-            response = client.get(f"/warninglists/{warninglist_id}", headers=headers)
+    headers = {"authorization": site_admin_user_token}
+    response = client.post("/warninglists/toggleEnable", json=invalid_toggle_data, headers=headers)
 
-            assert response.status_code == 200
-            assert response.json()["Warninglist"]["id"] == str(warninglist_id)
+    assert response.status_code == 200
+    json = response.json()
+    json["errors"] == "Warninglist(s) not found."
 
-        remove_warninglists(warninglist_test_ids)
 
-    @staticmethod
-    def test_get_existing_warninglist_details_deprecated() -> None:
-        headers = {"authorization": environment.site_admin_user_token}
-        warninglist_test_ids = add_warninglists()
+def test_get_existing_warninglist_details(site_admin_user_token) -> None:
+    headers = {"authorization": site_admin_user_token}
+    warninglist_test_ids = add_warninglists()
 
-        for warninglist_id in warninglist_test_ids:
-            response = client.get(f"/warninglists/view/{warninglist_id}", headers=headers)
-
-            assert response.status_code == 200
-            assert response.json()["Warninglist"]["id"] == str(warninglist_id)
-
-        remove_warninglists(warninglist_test_ids)
-
-    @staticmethod
-    def test_get_invalid_warninglist_by_id() -> None:
-        headers = {"authorization": environment.site_admin_user_token}
-        response = client.get("/warninglists/text", headers=headers)
-        assert response.status_code == 422
-
-    @staticmethod
-    def test_get_invalid_warninglist_by_id_deprecated() -> None:
-        headers = {"authorization": environment.site_admin_user_token}
-        response = client.get("/warninglists/view/text", headers=headers)
-        assert response.status_code == 422
-
-    @staticmethod
-    def test_get_non_existing_warninglist_details() -> None:
-        non_existing_warninglist_id = get_largest_id() * 10
-
-        headers = {"authorization": environment.site_admin_user_token}
-        response = client.get(f"/warninglists/{non_existing_warninglist_id}", headers=headers)
-        assert response.status_code == 404
-
-    @staticmethod
-    def test_get_non_existing_warninglist_details_deprecated() -> None:
-        non_existing_warninglist_id = get_largest_id() * 10
-
-        headers = {"authorization": environment.site_admin_user_token}
-        response = client.get(f"/warninglists/view/{non_existing_warninglist_id}", headers=headers)
-        assert response.status_code == 404
-
-    @staticmethod
-    def test_get_warninglist_response_format() -> None:
-        warninglist_id = add_warninglists(1)
-
-        headers = {"authorization": environment.site_admin_user_token}
-        response = client.get(f"/warninglists/{warninglist_id[0]}", headers=headers)
+    for warninglist_id in warninglist_test_ids:
+        response = client.get(f"/warninglists/{warninglist_id}", headers=headers)
 
         assert response.status_code == 200
+        assert response.json()["Warninglist"]["id"] == str(warninglist_id)
+
+    remove_warninglists(warninglist_test_ids)
+
+
+def test_get_existing_warninglist_details_deprecated(site_admin_user_token) -> None:
+    headers = {"authorization": site_admin_user_token}
+    warninglist_test_ids = add_warninglists()
+
+    for warninglist_id in warninglist_test_ids:
+        response = client.get(f"/warninglists/view/{warninglist_id}", headers=headers)
+
+        assert response.status_code == 200
+        assert response.json()["Warninglist"]["id"] == str(warninglist_id)
+
+    remove_warninglists(warninglist_test_ids)
+
+
+def test_get_invalid_warninglist_by_id(site_admin_user_token) -> None:
+    headers = {"authorization": site_admin_user_token}
+    response = client.get("/warninglists/text", headers=headers)
+    assert response.status_code == 422
+
+
+def test_get_invalid_warninglist_by_id_deprecated(site_admin_user_token) -> None:
+    headers = {"authorization": site_admin_user_token}
+    response = client.get("/warninglists/view/text", headers=headers)
+    assert response.status_code == 422
+
+
+def test_get_non_existing_warninglist_details(site_admin_user_token) -> None:
+    non_existing_warninglist_id = get_largest_id() * 10
+
+    headers = {"authorization": site_admin_user_token}
+    response = client.get(f"/warninglists/{non_existing_warninglist_id}", headers=headers)
+    assert response.status_code == 404
+
+
+def test_get_non_existing_warninglist_details_deprecated(site_admin_user_token) -> None:
+    non_existing_warninglist_id = get_largest_id() * 10
+
+    headers = {"authorization": site_admin_user_token}
+    response = client.get(f"/warninglists/view/{non_existing_warninglist_id}", headers=headers)
+    assert response.status_code == 404
+
+
+def test_get_warninglist_response_format(site_admin_user_token) -> None:
+    warninglist_id = add_warninglists(1)
+
+    headers = {"authorization": site_admin_user_token}
+    response = client.get(f"/warninglists/{warninglist_id[0]}", headers=headers)
+
+    assert response.status_code == 200
+    json = response.json()
+
+    print(json)
+    assert json["Warninglist"]["id"] == str(warninglist_id[0])
+    assert isinstance(json["Warninglist"]["WarninglistEntry"], list)
+
+    remove_warninglists(warninglist_id)
+
+
+def test_get_warninglist_response_format_deprecated(site_admin_user_token) -> None:
+    warninglist_id = add_warninglists(1)
+
+    headers = {"authorization": site_admin_user_token}
+    response = client.get(f"/warninglists/view/{warninglist_id[0]}", headers=headers)
+
+    assert response.status_code == 200
+    json = response.json()
+
+    assert json["Warninglist"]["id"] == str(warninglist_id[0])
+    assert isinstance(json["Warninglist"]["WarninglistEntry"], list)
+
+    remove_warninglists(warninglist_id)
+
+
+def test_delete_existing_warninglist(site_admin_user_token) -> None:
+    headers = {"authorization": site_admin_user_token}
+    warninglist_test_ids = add_warninglists()
+
+    for warninglist_test_id in warninglist_test_ids:
+        response = client.delete(f"/warninglists/{warninglist_test_id}", headers=headers)
+        assert response.status_code == 200
+
+
+def test_delete_invalid_warninglist_by_id(site_admin_user_token) -> None:
+    headers = {"authorization": site_admin_user_token}
+    response = client.delete("/warninglists/text", headers=headers)
+    assert response.status_code == 422
+
+
+def test_delete_non_existing_warninglist(site_admin_user_token) -> None:
+    non_existing_warninglist_id = get_largest_id() * 10
+
+    headers = {"authorization": site_admin_user_token}
+    response = client.delete(f"/warninglists/{non_existing_warninglist_id}", headers=headers)
+    assert response.status_code == 404
+
+
+def test_delete_warninglist_response_format(site_admin_user_token) -> None:
+    headers = {"authorization": site_admin_user_token}
+    warninglist_test_ids = add_warninglists()
+
+    for warninglist_id in warninglist_test_ids:
+        response = client.delete(f"/warninglists/{warninglist_id}", headers=headers)
+
+        assert response.status_code == 200
         json = response.json()
 
-        print(json)
-        assert json["Warninglist"]["id"] == str(warninglist_id[0])
         assert isinstance(json["Warninglist"]["WarninglistEntry"], list)
-
-        remove_warninglists(warninglist_id)
-
-    @staticmethod
-    def test_get_warninglist_response_format_deprecated() -> None:
-        warninglist_id = add_warninglists(1)
-
-        headers = {"authorization": environment.site_admin_user_token}
-        response = client.get(f"/warninglists/view/{warninglist_id[0]}", headers=headers)
-
-        assert response.status_code == 200
-        json = response.json()
-
-        assert json["Warninglist"]["id"] == str(warninglist_id[0])
-        assert isinstance(json["Warninglist"]["WarninglistEntry"], list)
-
-        remove_warninglists(warninglist_id)
+        assert json["Warninglist"]["id"] == str(warninglist_id)
 
 
-class TestDeleteWarninglist:
-    @staticmethod
-    def test_delete_existing_warninglist() -> None:
-        headers = {"authorization": environment.site_admin_user_token}
-        warninglist_test_ids = add_warninglists()
+def test_get_all_warninglist(site_admin_user_token) -> None:
+    headers = {"authorization": site_admin_user_token}
 
-        for warninglist_test_id in warninglist_test_ids:
-            response = client.delete(f"/warninglists/{warninglist_test_id}", headers=headers)
-            assert response.status_code == 200
+    response = client.get("/warninglists", headers=headers)
 
-    @staticmethod
-    def test_delete_invalid_warninglist_by_id() -> None:
-        headers = {"authorization": environment.site_admin_user_token}
-        response = client.delete("/warninglists/text", headers=headers)
-        assert response.status_code == 422
-
-    @staticmethod
-    def test_delete_non_existing_warninglist() -> None:
-        non_existing_warninglist_id = get_largest_id() * 10
-
-        headers = {"authorization": environment.site_admin_user_token}
-        response = client.delete(f"/warninglists/{non_existing_warninglist_id}", headers=headers)
-        assert response.status_code == 404
-
-    @staticmethod
-    def test_delete_warninglist_response_format() -> None:
-        headers = {"authorization": environment.site_admin_user_token}
-        warninglist_test_ids = add_warninglists()
-
-        for warninglist_id in warninglist_test_ids:
-            response = client.delete(f"/warninglists/{warninglist_id}", headers=headers)
-
-            assert response.status_code == 200
-            json = response.json()
-
-            assert isinstance(json["Warninglist"]["WarninglistEntry"], list)
-            assert json["Warninglist"]["id"] == str(warninglist_id)
+    assert response.status_code == 200
 
 
-class TestGetAllOrSelectedWarninglists:
-    @staticmethod
-    def test_get_all_warninglist() -> None:
-        headers = {"authorization": environment.site_admin_user_token}
+def test_get_selected_warninglists(db: Session, site_admin_user_token) -> None:
+    warninglist_id = add_warninglists(1)
 
-        response = client.get("/warninglists", headers=headers)
+    warninglist: Warninglist = db.get(Warninglist, warninglist_id)
 
-        assert response.status_code == 200
+    headers = {"authorization": site_admin_user_token}
+    response = client.get(f"/warninglists?value={warninglist.name}&enabled=True", headers=headers)
+    assert response.status_code == 200
 
-    @staticmethod
-    def test_get_selected_warninglists(db: Session) -> None:
-        warninglist_id = add_warninglists(1)
+    response = client.get(f"/warninglists?value={warninglist.name}", headers=headers)
+    assert response.status_code == 200
 
-        warninglist: Warninglist = db.get(Warninglist, warninglist_id)
+    response = client.get("/warninglists?enabled=True", headers=headers)
+    assert response.status_code == 200
 
-        headers = {"authorization": environment.site_admin_user_token}
-        response = client.get(f"/warninglists?value={warninglist.name}&enabled=True", headers=headers)
-        assert response.status_code == 200
+    response = client.get("/warninglists?enabled=False", headers=headers)
+    assert response.status_code == 200
 
-        response = client.get(f"/warninglists?value={warninglist.name}", headers=headers)
-        assert response.status_code == 200
-
-        response = client.get("/warninglists?enabled=True", headers=headers)
-        assert response.status_code == 200
-
-        response = client.get("/warninglists?enabled=False", headers=headers)
-        assert response.status_code == 200
-
-        remove_warninglists(warninglist_id)
-
-    @staticmethod
-    def test_get_selected_warninglists_deprecated(db: Session) -> None:
-        warninglist_id = add_warninglists(1)
-
-        warninglist: Warninglist = db.get(Warninglist, warninglist_id)
-
-        data = GetSelectedWarninglistsBody(value=warninglist.name, enabled=warninglist.enabled).dict()
-        headers = {"authorization": environment.site_admin_user_token}
-        response = client.post("/warninglists", json=data, headers=headers)
-        assert response.status_code == 200
-
-        data = GetSelectedWarninglistsBody(value=warninglist.name).dict()
-        response = client.post("/warninglists", json=data, headers=headers)
-        assert response.status_code == 200
-
-        data = GetSelectedWarninglistsBody(enabled=warninglist.enabled).dict()
-        response = client.post("/warninglists", json=data, headers=headers)
-        assert response.status_code == 200
-
-        data = GetSelectedWarninglistsBody().dict()
-        response = client.post("/warninglists", json=data, headers=headers)
-        assert response.status_code == 200
-
-        remove_warninglists(warninglist_id)
-
-    @staticmethod
-    def test_get_all_warninglist_response_format(db: Session) -> None:
-        warninglist_ids = add_warninglists(1)
-
-        warninglist_name = db.get(Warninglist, warninglist_ids[0]).name
-
-        headers = {"authorization": environment.site_admin_user_token}
-        response = client.get(f"/warninglists?value={warninglist_name}", headers=headers)
-        json = response.json()
-        assert isinstance(json["Warninglists"], list)
-
-        remove_warninglists(warninglist_ids)
+    remove_warninglists(warninglist_id)
 
 
-class TestGetWarninglistByValue:
-    @staticmethod
-    def test_get_warninglist_by_value(db: Session) -> None:
-        warninglist_id = add_warninglists(1)
+def test_get_selected_warninglists_deprecated(db: Session, site_admin_user_token) -> None:
+    warninglist_id = add_warninglists(1)
 
-        warninglist_entry: WarninglistEntry = (
-            db.query(WarninglistEntry).filter(WarninglistEntry.warninglist_id == warninglist_id[0]).first()
-        )
+    warninglist: Warninglist = db.get(Warninglist, warninglist_id)
 
-        headers = {"authorization": environment.site_admin_user_token}
-        value_data = CheckValueWarninglistsBody(value=warninglist_entry.value).dict()
+    data = GetSelectedWarninglistsBody(value=warninglist.name, enabled=warninglist.enabled).dict()
+    headers = {"authorization": site_admin_user_token}
+    response = client.post("/warninglists", json=data, headers=headers)
+    assert response.status_code == 200
 
-        response = client.post("/warninglists/checkValue", json=value_data, headers=headers)
+    data = GetSelectedWarninglistsBody(value=warninglist.name).dict()
+    response = client.post("/warninglists", json=data, headers=headers)
+    assert response.status_code == 200
 
-        assert response.status_code == 200
+    data = GetSelectedWarninglistsBody(enabled=warninglist.enabled).dict()
+    response = client.post("/warninglists", json=data, headers=headers)
+    assert response.status_code == 200
 
-        remove_warninglists(warninglist_id)
+    data = GetSelectedWarninglistsBody().dict()
+    response = client.post("/warninglists", json=data, headers=headers)
+    assert response.status_code == 200
 
-    @staticmethod
-    def test_get_warninglist_by_value_response_format(db: Session) -> None:
-        warninglist_ids = add_warninglists(1)
-
-        warninglist_entry: WarninglistEntry = (
-            db.query(WarninglistEntry).filter(WarninglistEntry.warninglist_id == warninglist_ids[0]).first()
-        )
-
-        headers = {"authorization": environment.site_admin_user_token}
-        value = warninglist_entry.value
-        value_data = CheckValueWarninglistsBody(value=value).dict()
-
-        response = client.post("/warninglists/checkValue", json=value_data, headers=headers)
-
-        assert response.status_code == 200
-        json = response.json()
-
-        assert isinstance(json[f"{value}"], list)
-
-        remove_warninglists(warninglist_ids)
+    remove_warninglists(warninglist_id)
 
 
-class TestUpdateWarninglist:
-    @staticmethod
-    def test_update_warninglist() -> None:
-        headers = {"authorization": environment.site_admin_user_token}
-        response = client.put("/warninglists", headers=headers)
-        assert response.status_code == 200
+def test_get_all_warninglist_response_format(db: Session, site_admin_user_token) -> None:
+    warninglist_ids = add_warninglists(1)
 
-    @staticmethod
-    def test_update_warninglist_deprecated() -> None:
-        headers = {"authorization": environment.site_admin_user_token}
-        response = client.post("/warninglists/update", headers=headers)
-        assert response.status_code == 200
+    warninglist_name = db.get(Warninglist, warninglist_ids[0]).name
 
-    @staticmethod
-    def test_update_warninglist_response_format() -> None:
-        headers = {"authorization": environment.site_admin_user_token}
+    headers = {"authorization": site_admin_user_token}
+    response = client.get(f"/warninglists?value={warninglist_name}", headers=headers)
+    json = response.json()
+    assert isinstance(json["Warninglists"], list)
 
-        response = client.put("/warninglists", headers=headers)
+    remove_warninglists(warninglist_ids)
 
-        assert response.status_code == 200
-        json = response.json()
 
-        assert json["url"] == "/warninglists"
+def test_get_warninglist_by_value(db: Session, site_admin_user_token) -> None:
+    warninglist_id = add_warninglists(1)
 
-    @staticmethod
-    def test_update_warninglist_response_format_deprecated() -> None:
-        headers = {"authorization": environment.site_admin_user_token}
+    warninglist_entry: WarninglistEntry = (
+        db.query(WarninglistEntry).filter(WarninglistEntry.warninglist_id == warninglist_id[0]).first()
+    )
 
-        response = client.post("/warninglists/update", headers=headers)
+    headers = {"authorization": site_admin_user_token}
+    value_data = CheckValueWarninglistsBody(value=warninglist_entry.value).dict()
 
-        assert response.status_code == 200
-        json = response.json()
+    response = client.post("/warninglists/checkValue", json=value_data, headers=headers)
 
-        assert json["url"] == "/warninglists/update"
+    assert response.status_code == 200
+
+    remove_warninglists(warninglist_id)
+
+
+def test_get_warninglist_by_value_response_format(db: Session, site_admin_user_token) -> None:
+    warninglist_ids = add_warninglists(1)
+
+    warninglist_entry: WarninglistEntry = (
+        db.query(WarninglistEntry).filter(WarninglistEntry.warninglist_id == warninglist_ids[0]).first()
+    )
+
+    headers = {"authorization": site_admin_user_token}
+    value = warninglist_entry.value
+    value_data = CheckValueWarninglistsBody(value=value).dict()
+
+    response = client.post("/warninglists/checkValue", json=value_data, headers=headers)
+
+    assert response.status_code == 200
+    json = response.json()
+
+    assert isinstance(json[f"{value}"], list)
+
+    remove_warninglists(warninglist_ids)
+
+
+def test_update_warninglist(site_admin_user_token) -> None:
+    headers = {"authorization": site_admin_user_token}
+    response = client.put("/warninglists", headers=headers)
+    assert response.status_code == 200
+
+
+def test_update_warninglist_deprecated(site_admin_user_token) -> None:
+    headers = {"authorization": site_admin_user_token}
+    response = client.post("/warninglists/update", headers=headers)
+    assert response.status_code == 200
+
+
+def test_update_warninglist_response_format(site_admin_user_token) -> None:
+    headers = {"authorization": site_admin_user_token}
+
+    response = client.put("/warninglists", headers=headers)
+
+    assert response.status_code == 200
+    json = response.json()
+
+    assert json["url"] == "/warninglists"
+
+
+def test_update_warninglist_response_format_deprecated(site_admin_user_token) -> None:
+    headers = {"authorization": site_admin_user_token}
+
+    response = client.post("/warninglists/update", headers=headers)
+
+    assert response.status_code == 200
+    json = response.json()
+
+    assert json["url"] == "/warninglists/update"
