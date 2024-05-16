@@ -665,6 +665,9 @@ async def _category_statistics(
 ) -> GetAttributeStatisticsCategoriesResponse:
     response_dict = {}
 
+    if total_count_of_attributes == 0:
+        return GetAttributeStatisticsCategoriesResponse(**{x: "" for x in GetDescribeTypesAttributes().categories})
+
     for category in GetDescribeTypesAttributes().categories:
         if percentage == 1:
             response_dict[category] = (
@@ -687,6 +690,9 @@ async def _type_statistics(
     db: Session, percentage: int, total_count_of_attributes: int
 ) -> GetAttributeStatisticsTypesResponse:
     response_dict = {}
+
+    if total_count_of_attributes == 0:
+        return GetAttributeStatisticsTypesResponse(**{x: "" for x in GetDescribeTypesAttributes().types})
 
     for type in GetDescribeTypesAttributes().types:
         if percentage == 1:

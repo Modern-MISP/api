@@ -1,17 +1,31 @@
-from datetime import datetime
 from typing import Any
 
 import pytest
+import sqlalchemy as sa
+from icecream import ic
 from sqlalchemy.orm import Session
 
 from mmisp.db.models.attribute import Attribute
-from mmisp.db.models.event import Event
-from tests.environment import client, environment
-from tests.generators.model_generators.sharing_group_generator import generate_sharing_group
+from tests.environment import client
 from tests.generators.sighting_generator import (
     generate_valid_random_sighting_data,
     generate_valid_random_sighting_with_filter_data,
 )
+
+
+@pytest.fixture(autouse=True)
+def check_counts_stay_constant(db):
+    count_attributes = db.execute("SELECT COUNT(*) FROM attributes").first()[0]
+    count_events = db.execute("SELECT COUNT(*) FROM events").first()[0]
+    count_sightings = db.execute("SELECT COUNT(*) FROM sightings").first()[0]
+    yield
+    ncount_attributes = db.execute("SELECT COUNT(*) FROM attributes").first()[0]
+    ncount_events = db.execute("SELECT COUNT(*) FROM events").first()[0]
+    ncount_sightings = db.execute("SELECT COUNT(*) FROM sightings").first()[0]
+
+    assert count_attributes == ncount_attributes
+    assert count_events == ncount_events
+    assert count_sightings == ncount_sightings
 
 
 @pytest.fixture(
@@ -27,483 +41,269 @@ def sighting_data(request: Any) -> dict[str, Any]:
     return request.param
 
 
-class TestAddSighting:
-    @staticmethod
-    def test_add_sighting(sighting_data: dict[str, Any], db: Session) -> None:
-        sharing_group = generate_sharing_group()
-        sharing_group.organisation_uuid = environment.instance_owner_org.uuid
-        sharing_group.org_id = environment.instance_owner_org.id
-        db.add(sharing_group)
-        db.flush()
-        db.refresh(sharing_group)
-        event = Event(
-            user_id=environment.instance_owner_org_admin_user.id,
-            org_id=environment.instance_owner_org.id,
-            orgc_id=environment.instance_owner_org.id,
-            info="test",
-            date=datetime.utcnow(),
-            analysis=0,
-            sharing_group_id=sharing_group.id,
-            threat_level_id=0,
-        )
-        db.add(event)
-        db.flush()
-        db.refresh(event)
-
-        for val in sighting_data["values"]:
-            attribute = Attribute(
-                event_id=event.id,
-                category="test",
-                type="test",
-                value1=val,
-                value2="",
-                sharing_group_id=sharing_group.id,
-            )
-
-            db.add(attribute)
-
-        db.commit()
-
-        if sighting_data["filters"]:
-            sighting_data["filters"]["value1"] = attribute.value1
-
-        headers = {"authorization": environment.site_admin_user_token}
-        response = client.post("/sightings", json=sighting_data, headers=headers)
-        assert response.status_code == 201
-
-    @staticmethod
-    def test_add_sighting_with_invalid_data(sighting_data: dict[str, Any], db: Session) -> None:
-        sharing_group = generate_sharing_group()
-        sharing_group.organisation_uuid = environment.instance_owner_org.uuid
-        sharing_group.org_id = environment.instance_owner_org.id
-        db.add(sharing_group)
-        db.flush()
-        db.refresh(sharing_group)
-        event = Event(
-            user_id=environment.instance_owner_org_admin_user.id,
-            org_id=environment.instance_owner_org.id,
-            orgc_id=environment.instance_owner_org.id,
-            info="test",
-            date=datetime.utcnow(),
-            analysis=0,
-            sharing_group_id=sharing_group.id,
-            threat_level_id=0,
-        )
-        db.add(event)
-        db.flush()
-        db.refresh(event)
-
-        for val in sighting_data["values"]:
-            attribute = Attribute(
-                event_id=event.id,
-                category="test",
-                type="test",
-                value1=val,
-                value2="",
-                sharing_group_id=sharing_group.id,
-            )
-
-            db.add(attribute)
-
-        db.commit()
-
-        if sighting_data["filters"]:
-            sighting_data["filters"]["value1"] = attribute.value1
-
-        headers = {"authorization": environment.site_admin_user_token}
-        response_first = client.post("/sightings", json=sighting_data, headers=headers)
-        assert response_first.status_code == 201
-        response_second = client.post("/sightings", json=sighting_data, headers=headers)
-        assert response_second.status_code == 201
-        response_second = client.post("/sightings", json=sighting_data, headers=headers)
-        assert response_second.status_code == 201
-
-    @staticmethod
-    def test_add_sighting_missing_required_fields(sighting_data: dict[str, Any], db: Session) -> None:
-        sharing_group = generate_sharing_group()
-        sharing_group.organisation_uuid = environment.instance_owner_org.uuid
-        sharing_group.org_id = environment.instance_owner_org.id
-        db.add(sharing_group)
-        db.flush()
-        db.refresh(sharing_group)
-        event = Event(
-            user_id=environment.instance_owner_org_admin_user.id,
-            org_id=environment.instance_owner_org.id,
-            orgc_id=environment.instance_owner_org.id,
-            info="test",
-            date=datetime.utcnow(),
-            analysis=0,
-            sharing_group_id=sharing_group.id,
-            threat_level_id=0,
-        )
-        db.add(event)
-        db.flush()
-        db.refresh(event)
-
-        for val in sighting_data["values"]:
-            attribute = Attribute(
-                event_id=event.id,
-                category="test",
-                type="test",
-                value1=val,
-                value2="",
-                sharing_group_id=sharing_group.id,
-            )
-
-            db.add(attribute)
-
-        db.commit()
-
-        if sighting_data["filters"]:
-            sighting_data["filters"]["value1"] = attribute.value1
-
-        incomplete_data = generate_valid_random_sighting_data().dict()
-        del incomplete_data["values"]
-        headers = {"authorization": environment.site_admin_user_token}
-        response = client.post("/sightings", json=incomplete_data, headers=headers)
-        assert response.status_code == 422
-        assert response.json()["detail"][0]["msg"] == "field required"
+def delete_sighting(db, sighting_id):
+    stmt = sa.sql.text("DELETE FROM sightings WHERE id=:id")
+    db.execute(stmt, {"id": sighting_id})
+    db.commit()
 
 
-class TestAddSightingAtIndex:
-    @staticmethod
-    def test_add_sightings_at_index_success(sighting_data: dict[str, Any], db: Session) -> None:
-        sharing_group = generate_sharing_group()
-        sharing_group.organisation_uuid = environment.instance_owner_org.uuid
-        sharing_group.org_id = environment.instance_owner_org.id
-        db.add(sharing_group)
-        db.flush()
-        db.refresh(sharing_group)
-        event = Event(
-            user_id=environment.instance_owner_org_admin_user.id,
-            org_id=environment.instance_owner_org.id,
-            orgc_id=environment.instance_owner_org.id,
-            info="test",
-            date=datetime.utcnow(),
-            analysis=0,
-            sharing_group_id=sharing_group.id,
-            threat_level_id=0,
-        )
-        db.add(event)
-        db.flush()
-        db.refresh(event)
-
+@pytest.fixture
+def attributes_sighting_data(db, sighting_data, sharing_group, event):
+    attributes = []
+    for val in sighting_data["values"]:
         attribute = Attribute(
             event_id=event.id,
-            category="test",
-            type="test",
-            value1=sighting_data["values"][0],
+            category="other",
+            type="text",
+            value1=val,
             value2="",
             sharing_group_id=sharing_group.id,
         )
 
         db.add(attribute)
         db.commit()
-        db.refresh(attribute)
+        attributes.append(attribute)
+        ic(attribute.asdict())
 
-        if sighting_data["filters"]:
-            sighting_data["filters"]["value1"] = attribute.value1
+    yield attributes
 
-        headers = {"authorization": environment.site_admin_user_token}
-        response = client.post(f"/sightings/{attribute.id}", headers=headers)
-        assert response.status_code == 201
-        assert "id" in response.json()
-        assert "event_id" in response.json()
-        assert "attribute_id" in response.json()
-
-    @staticmethod
-    def test_add_sighting_at_index_invalid_attribute(sighting_data: dict[str, Any], db: Session) -> None:
-        sharing_group = generate_sharing_group()
-        sharing_group.organisation_uuid = environment.instance_owner_org.uuid
-        sharing_group.org_id = environment.instance_owner_org.id
-        db.add(sharing_group)
-        db.flush()
-        db.refresh(sharing_group)
-        event = Event(
-            user_id=environment.instance_owner_org_admin_user.id,
-            org_id=environment.instance_owner_org.id,
-            orgc_id=environment.instance_owner_org.id,
-            info="test",
-            date=datetime.utcnow(),
-            analysis=0,
-            sharing_group_id=sharing_group.id,
-            threat_level_id=0,
-        )
-        db.add(event)
-        db.flush()
-        db.refresh(event)
-
-        attribute = Attribute(
-            event_id=event.id,
-            category="test",
-            type="test",
-            value1=sighting_data["values"][0],
-            value2="",
-            sharing_group_id=sharing_group.id,
-        )
-
-        db.add(attribute)
-        db.commit()
-
-        if sighting_data["filters"]:
-            sighting_data["filters"]["value1"] = attribute.value1
-
-        non_existent_attribute_id = "0"
-        headers = {"authorization": environment.site_admin_user_token}
-        response = client.post(f"/sightings/{non_existent_attribute_id}", headers=headers)
-        assert response.status_code == 404
-        assert response.json()["detail"] == "Attribute not found."
+    for a in attributes:
+        db.delete(a)
+    db.commit()
 
 
-class TestGetSighting:
-    @staticmethod
-    def test_get_sighting_success(sighting_data: dict[str, Any], db: Session) -> None:
-        sharing_group = generate_sharing_group()
-        sharing_group.organisation_uuid = environment.instance_owner_org.uuid
-        sharing_group.org_id = environment.instance_owner_org.id
-        db.add(sharing_group)
-        db.flush()
-        db.refresh(sharing_group)
-        event = Event(
-            user_id=environment.instance_owner_org_admin_user.id,
-            org_id=environment.instance_owner_org.id,
-            orgc_id=environment.instance_owner_org.id,
-            info="test",
-            date=datetime.utcnow(),
-            analysis=0,
-            sharing_group_id=sharing_group.id,
-            threat_level_id=0,
-        )
-        db.add(event)
-        db.flush()
-        db.refresh(event)
+@pytest.fixture
+def first_attribute_sighting_data(db, sighting_data, sharing_group, event):
+    attribute = Attribute(
+        event_id=event.id,
+        category="other",
+        type="text",
+        value1=sighting_data["values"][0],
+        value2="",
+        sharing_group_id=sharing_group.id,
+    )
 
-        attribute = Attribute(
-            event_id=event.id,
-            category="test",
-            type="test",
-            value1=sighting_data["values"][0],
-            value2="",
-            sharing_group_id=sharing_group.id,
-        )
+    db.add(attribute)
+    db.commit()
+    ic(attribute.asdict())
 
-        db.add(attribute)
-        db.commit()
+    yield attribute
 
-        if sighting_data["filters"]:
-            sighting_data["filters"]["value1"] = attribute.value1
-
-        headers = {"authorization": environment.site_admin_user_token}
-        response = client.get(f"/sightings/{event.id}", headers=headers)
-        assert response.status_code == 200
+    db.delete(attribute)
+    db.commit()
 
 
-class TestDeleteSighting:
-    @staticmethod
-    def test_delete_sighting_success(sighting_data: dict[str, Any], db: Session) -> None:
-        sharing_group = generate_sharing_group()
-        sharing_group.organisation_uuid = environment.instance_owner_org.uuid
-        sharing_group.org_id = environment.instance_owner_org.id
-        db.add(sharing_group)
-        db.flush()
-        db.refresh(sharing_group)
-        event = Event(
-            user_id=environment.instance_owner_org_admin_user.id,
-            org_id=environment.instance_owner_org.id,
-            orgc_id=environment.instance_owner_org.id,
-            info="test",
-            date=datetime.utcnow(),
-            analysis=0,
-            sharing_group_id=sharing_group.id,
-            threat_level_id=0,
-        )
-        db.add(event)
-        db.flush()
-        db.refresh(event)
+def test_add_sighting(
+    attributes_sighting_data, sighting_data: dict[str, Any], db: Session, site_admin_user_token
+) -> None:
+    attributes = attributes_sighting_data
+    if sighting_data["filters"]:
+        sighting_data["filters"]["value1"] = sighting_data["values"][-1]
 
-        attribute = Attribute(
-            event_id=event.id,
-            category="test",
-            type="test",
-            value1=sighting_data["values"][0],
-            value2="",
-            sharing_group_id=sharing_group.id,
-        )
+    headers = {"authorization": site_admin_user_token}
+    response = client.post("/sightings", json=sighting_data, headers=headers)
+    response_data = response.json()
+    ic(response_data)
+    response_attribute_ids = [x["attribute_id"] for x in response_data]
 
-        db.add(attribute)
-        db.commit()
-        db.refresh(attribute)
+    assert response.status_code == 201
+    if sighting_data["filters"]:
+        assert str(attributes[-1].id) in response_attribute_ids
+        assert len(response_attribute_ids) == 1
+    else:
+        for a in attributes:
+            assert str(a.id) in response_attribute_ids
 
-        if sighting_data["filters"]:
-            sighting_data["filters"]["value1"] = attribute.value1
-
-        headers = {"authorization": environment.site_admin_user_token}
-        response = client.post(f"/sightings/{attribute.id}", headers=headers)
-        assert response.status_code == 201
-
-        sighting_id = response.json()["id"]
-
-        headers = {"authorization": environment.site_admin_user_token}
-        response = client.delete(f"/sightings/{sighting_id}", headers=headers)
-        response_data = response.json()
-        assert response.status_code == 200
-        assert response_data["saved"]
-        assert response_data["success"]
-        assert response_data["message"] == "Sighting successfully deleted."
-        assert response_data["name"] == "Sighting successfully deleted."
-
-    @staticmethod
-    def test_delete_sighting_invalid_id(sighting_data: dict[str, Any], db: Session) -> None:
-        sharing_group = generate_sharing_group()
-        sharing_group.organisation_uuid = environment.instance_owner_org.uuid
-        sharing_group.org_id = environment.instance_owner_org.id
-        db.add(sharing_group)
-        db.flush()
-        db.refresh(sharing_group)
-        event = Event(
-            user_id=environment.instance_owner_org_admin_user.id,
-            org_id=environment.instance_owner_org.id,
-            orgc_id=environment.instance_owner_org.id,
-            info="test",
-            date=datetime.utcnow(),
-            analysis=0,
-            sharing_group_id=sharing_group.id,
-            threat_level_id=0,
-        )
-        db.add(event)
-        db.flush()
-        db.refresh(event)
-
-        attribute = Attribute(
-            event_id=event.id,
-            category="test",
-            type="test",
-            value1=sighting_data["values"][0],
-            value2="",
-            sharing_group_id=sharing_group.id,
-        )
-
-        db.add(attribute)
-        db.commit()
-        db.refresh(attribute)
-
-        if sighting_data["filters"]:
-            sighting_data["filters"]["value1"] = attribute.value1
-
-        headers = {"authorization": environment.site_admin_user_token}
-        response = client.post(f"/sightings/{attribute.id}", headers=headers)
-        assert response.status_code == 201
-
-        sighting_id = "0"
-
-        headers = {"authorization": environment.site_admin_user_token}
-        response = client.delete(f"/sightings/{sighting_id}", headers=headers)
-        assert response.status_code == 404
-        assert "detail" in response.json()
-        assert response.json()["detail"] == "Sighting not found."
+    for sighting in response_data:
+        delete_sighting(db, sighting["id"])
 
 
-class TestGetAllSightings:
-    @staticmethod
-    def test_get_all_sightings_success(sighting_data: dict[str, Any], db: Session) -> None:
-        sharing_group = generate_sharing_group()
-        sharing_group.organisation_uuid = environment.instance_owner_org.uuid
-        sharing_group.org_id = environment.instance_owner_org.id
-        db.add(sharing_group)
-        db.flush()
-        db.refresh(sharing_group)
-        event = Event(
-            user_id=environment.instance_owner_org_admin_user.id,
-            org_id=environment.instance_owner_org.id,
-            orgc_id=environment.instance_owner_org.id,
-            info="test",
-            date=datetime.utcnow(),
-            analysis=0,
-            sharing_group_id=sharing_group.id,
-            threat_level_id=0,
-        )
-        db.add(event)
-        db.flush()
-        db.refresh(event)
+def test_add_sighting_with_invalid_data(
+    attributes_sighting_data, sighting_data: dict[str, Any], db: Session, site_admin_user_token
+) -> None:
+    attributes = attributes_sighting_data
+    if sighting_data["filters"]:
+        sighting_data["filters"]["value1"] = attributes[-1].value1
 
-        attribute = Attribute(
-            event_id=event.id,
-            category="test",
-            type="test",
-            value1=sighting_data["values"][0],
-            value2="",
-            sharing_group_id=sharing_group.id,
-        )
+    headers = {"authorization": site_admin_user_token}
+    response_first = client.post("/sightings", json=sighting_data, headers=headers)
+    assert response_first.status_code == 201
+    response_second = client.post("/sightings", json=sighting_data, headers=headers)
+    assert response_second.status_code == 201
+    response_third = client.post("/sightings", json=sighting_data, headers=headers)
+    assert response_third.status_code == 201
 
-        db.add(attribute)
-        db.commit()
-        db.refresh(attribute)
+    for sighting in response_first.json():
+        delete_sighting(db, sighting["id"])
+    for sighting in response_second.json():
+        delete_sighting(db, sighting["id"])
+    for sighting in response_third.json():
+        delete_sighting(db, sighting["id"])
 
-        if sighting_data["filters"]:
-            sighting_data["filters"]["value1"] = attribute.value1
 
-        headers = {"authorization": environment.site_admin_user_token}
-        response = client.post(f"/sightings/{attribute.id}", headers=headers)
-        assert response.status_code == 201
+def test_add_sighting_missing_required_fields(
+    attributes_sighting_data, sighting_data: dict[str, Any], db: Session, site_admin_user_token
+) -> None:
+    attributes = attributes_sighting_data
+    if sighting_data["filters"]:
+        sighting_data["filters"]["value1"] = attributes[-1].value1
 
-        response = client.get("/sightings", headers=headers)
-        assert response.status_code == 200
-        assert isinstance(response.json()["sightings"], list)
+    incomplete_data = generate_valid_random_sighting_data().dict()
+    del incomplete_data["values"]
+    headers = {"authorization": site_admin_user_token}
+    response = client.post("/sightings", json=incomplete_data, headers=headers)
+    assert response.status_code == 422
+    assert response.json()["detail"][0]["msg"] == "field required"
 
-    @staticmethod
-    def test_get_sightings_response_format(sighting_data: dict[str, Any], db: Session) -> None:
-        sharing_group = generate_sharing_group()
-        sharing_group.organisation_uuid = environment.instance_owner_org.uuid
-        sharing_group.org_id = environment.instance_owner_org.id
-        db.add(sharing_group)
-        db.flush()
-        db.refresh(sharing_group)
-        event = Event(
-            user_id=environment.instance_owner_org_admin_user.id,
-            org_id=environment.instance_owner_org.id,
-            orgc_id=environment.instance_owner_org.id,
-            info="test",
-            date=datetime.utcnow(),
-            analysis=0,
-            sharing_group_id=sharing_group.id,
-            threat_level_id=0,
-        )
-        db.add(event)
-        db.flush()
-        db.refresh(event)
 
-        attribute = Attribute(
-            event_id=event.id,
-            category="test",
-            type="test",
-            value1=sighting_data["values"][0],
-            value2="",
-            sharing_group_id=sharing_group.id,
-        )
+def test_add_sightings_at_index_success(
+    first_attribute_sighting_data,
+    sighting_data: dict[str, Any],
+    db: Session,
+    sharing_group,
+    event,
+    site_admin_user_token,
+) -> None:
+    attribute = first_attribute_sighting_data
+    if sighting_data["filters"]:
+        sighting_data["filters"]["value1"] = attribute.value1
 
-        db.add(attribute)
-        db.commit()
-        db.refresh(attribute)
+    headers = {"authorization": site_admin_user_token}
+    response = client.post(f"/sightings/{attribute.id}", headers=headers)
+    assert response.status_code == 201
+    response_data = response.json()
+    assert "id" in response_data
+    assert "event_id" in response_data
+    assert "attribute_id" in response_data
 
-        if sighting_data["filters"]:
-            sighting_data["filters"]["value1"] = attribute.value1
+    delete_sighting(db, response_data["id"])
 
-        headers = {"authorization": environment.site_admin_user_token}
-        response = client.post(f"/sightings/{attribute.id}", headers=headers)
-        assert response.status_code == 201
 
-        response = client.get("/sightings", headers=headers)
-        assert response.headers["Content-Type"] == "application/json"
-        response_data = response.json()
-        assert isinstance(response_data["sightings"], list)
+def test_add_sighting_at_index_invalid_attribute(
+    first_attribute_sighting_data,
+    sighting_data: dict[str, Any],
+    db: Session,
+    sharing_group,
+    event,
+    site_admin_user_token,
+) -> None:
+    attribute = first_attribute_sighting_data
 
-        # Test all required fields
-        assert "sightings" in response_data
-        for sighting_wrapper in response_data["sightings"]:
-            assert "id" in sighting_wrapper
-            assert "uuid" in sighting_wrapper
-            assert "attribute_id" in sighting_wrapper
-            assert "event_id" in sighting_wrapper
-            assert "org_id" in sighting_wrapper
-            assert "date_sighting" in sighting_wrapper
-            assert "Organisation" in sighting_wrapper
+    if sighting_data["filters"]:
+        sighting_data["filters"]["value1"] = attribute.value1
+
+    non_existent_attribute_id = "0"
+    headers = {"authorization": site_admin_user_token}
+    response = client.post(f"/sightings/{non_existent_attribute_id}", headers=headers)
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Attribute not found."
+
+
+def test_get_sighting_success(
+    first_attribute_sighting_data, sighting_data: dict[str, Any], db: Session, event, site_admin_user_token
+) -> None:
+    attribute = first_attribute_sighting_data
+
+    if sighting_data["filters"]:
+        sighting_data["filters"]["value1"] = attribute.value1
+
+    headers = {"authorization": site_admin_user_token}
+    response = client.get(f"/sightings/{event.id}", headers=headers)
+    assert response.status_code == 200
+
+
+def test_delete_sighting_success(
+    first_attribute_sighting_data, sighting_data: dict[str, Any], db: Session, site_admin_user_token
+) -> None:
+    attribute = first_attribute_sighting_data
+    if sighting_data["filters"]:
+        sighting_data["filters"]["value1"] = attribute.value1
+
+    headers = {"authorization": site_admin_user_token}
+    response = client.post(f"/sightings/{attribute.id}", headers=headers)
+    assert response.status_code == 201
+
+    sighting_id = response.json()["id"]
+
+    headers = {"authorization": site_admin_user_token}
+    response = client.delete(f"/sightings/{sighting_id}", headers=headers)
+    response_data = response.json()
+    assert response.status_code == 200
+    assert response_data["saved"]
+    assert response_data["success"]
+    assert response_data["message"] == "Sighting successfully deleted."
+    assert response_data["name"] == "Sighting successfully deleted."
+
+
+def test_delete_sighting_invalid_id(
+    first_attribute_sighting_data, sighting_data: dict[str, Any], db: Session, site_admin_user_token
+) -> None:
+    attribute = first_attribute_sighting_data
+    if sighting_data["filters"]:
+        sighting_data["filters"]["value1"] = attribute.value1
+
+    headers = {"authorization": site_admin_user_token}
+    response = client.post(f"/sightings/{attribute.id}", headers=headers)
+    assert response.status_code == 201
+
+    real_sighting_id = response.json()["id"]
+    sighting_id = "0"
+
+    headers = {"authorization": site_admin_user_token}
+    response = client.delete(f"/sightings/{sighting_id}", headers=headers)
+    response_data = response.json()
+    assert response.status_code == 404
+    assert "detail" in response_data
+    assert response_data["detail"] == "Sighting not found."
+
+    delete_sighting(db, real_sighting_id)
+
+
+def test_get_all_sightings_success(
+    first_attribute_sighting_data, sighting_data: dict[str, Any], db: Session, site_admin_user_token
+) -> None:
+    attribute = first_attribute_sighting_data
+    if sighting_data["filters"]:
+        sighting_data["filters"]["value1"] = attribute.value1
+
+    headers = {"authorization": site_admin_user_token}
+    response = client.post(f"/sightings/{attribute.id}", headers=headers)
+    real_sighting_id = response.json()["id"]
+    assert response.status_code == 201
+
+    response = client.get("/sightings", headers=headers)
+    assert response.status_code == 200
+    assert isinstance(response.json()["sightings"], list)
+    delete_sighting(db, real_sighting_id)
+
+
+def test_get_sightings_response_format(
+    first_attribute_sighting_data, sighting_data: dict[str, Any], db: Session, site_admin_user_token
+) -> None:
+    attribute = first_attribute_sighting_data
+    if sighting_data["filters"]:
+        sighting_data["filters"]["value1"] = attribute.value1
+
+    headers = {"authorization": site_admin_user_token}
+    response = client.post(f"/sightings/{attribute.id}", headers=headers)
+    assert response.status_code == 201
+
+    response = client.get("/sightings", headers=headers)
+    assert response.headers["Content-Type"] == "application/json"
+    response_data = response.json()
+    assert isinstance(response_data["sightings"], list)
+
+    # Test all required fields
+    assert "sightings" in response_data
+    for sighting_wrapper in response_data["sightings"]:
+        assert "id" in sighting_wrapper
+        assert "uuid" in sighting_wrapper
+        assert "attribute_id" in sighting_wrapper
+        assert "event_id" in sighting_wrapper
+        assert "org_id" in sighting_wrapper
+        assert "date_sighting" in sighting_wrapper
+        assert "Organisation" in sighting_wrapper
+
+    ic(response_data)
+    for x in response_data["sightings"]:
+        delete_sighting(db, x["id"])

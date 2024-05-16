@@ -1,551 +1,323 @@
+import pytest
+import sqlalchemy as sa
+from icecream import ic
 from sqlalchemy.orm import Session
 
 from mmisp.api_schemas.galaxies.export_galaxies_body import ExportGalaxyAttributes, ExportGalaxyBody
 from mmisp.db.models.galaxy_cluster import GalaxyCluster, GalaxyElement, GalaxyReference
 
-from ...environment import client, environment
-from ...generators.model_generators.event_generator import generate_event
+from ...environment import client
 from ...generators.model_generators.galaxy_generator import generate_galaxy
 from ...generators.model_generators.organisation_generator import generate_organisation
-from ...generators.model_generators.tag_generator import generate_tag
 from ..helpers.galaxy_helper import get_invalid_import_galaxy_body, get_valid_import_galaxy_body
 
 
-class TestImportGalaxyCluster:
-    @staticmethod
-    def test_import_galaxy_cluster_valid_data(db: Session) -> None:
-        organisation = generate_organisation()
+@pytest.fixture(autouse=True)
+def check_counts_stay_constant(db):
+    count_galaxies = db.execute("SELECT COUNT(*) FROM galaxies").first()[0]
+    count_galaxy_clusters = db.execute("SELECT COUNT(*) FROM galaxy_clusters").first()[0]
+    count_galaxy_elements = db.execute("SELECT COUNT(*) FROM galaxy_elements").first()[0]
+    yield
+    ncount_galaxies = db.execute("SELECT COUNT(*) FROM galaxies").first()[0]
+    ncount_galaxy_clusters = db.execute("SELECT COUNT(*) FROM galaxy_clusters").first()[0]
+    ncount_galaxy_elements = db.execute("SELECT COUNT(*) FROM galaxy_elements").first()[0]
 
-        db.add(organisation)
-        db.commit()
-        db.refresh(organisation)
+    assert count_galaxies == ncount_galaxies
+    assert count_galaxy_clusters == ncount_galaxy_clusters
+    assert count_galaxy_elements == ncount_galaxy_elements
 
-        org_id = organisation.id
 
-        galaxy = generate_galaxy()
+@pytest.fixture
+def galaxy(db):
+    galaxy = generate_galaxy()
 
-        db.add(galaxy)
-        db.commit()
-        db.refresh(galaxy)
+    db.add(galaxy)
+    db.commit()
+    db.refresh(galaxy)
 
-        galaxy_id = galaxy.id
+    yield galaxy
 
-        tag = generate_tag()
-        setattr(tag, "user_id", 1)
-        setattr(tag, "org_id", 1)
+    db.delete(galaxy)
+    db.commit()
 
-        db.add(tag)
-        db.commit()
-        db.refresh(tag)
 
-        tag_name = tag.name
+@pytest.fixture
+def galaxy2(db):
+    galaxy = generate_galaxy()
 
-        request_body = get_valid_import_galaxy_body(tag_name, galaxy_id, org_id, galaxy.uuid)
+    db.add(galaxy)
+    db.commit()
+    db.refresh(galaxy)
 
-        headers = {"authorization": environment.site_admin_user_token}
-        response = client.post("/galaxies/import", json=request_body, headers=headers)
-        response_json = response.json()
-        print(response_json)
-        assert response.status_code == 200
-        assert response_json["name"] == "Galaxy clusters imported. 1 imported, 0 ignored, 0 failed."
+    yield galaxy
 
-    @staticmethod
-    def test_import_galaxy_cluster_invalid_data(db: Session) -> None:
-        organisation = generate_organisation()
+    db.delete(galaxy)
+    db.commit()
 
-        db.add(organisation)
-        db.commit()
-        db.refresh(organisation)
 
-        org_id = organisation.id
+@pytest.fixture
+def organisation(db):
+    organisation = generate_organisation()
 
-        galaxy = generate_galaxy()
+    db.add(organisation)
+    db.commit()
+    db.refresh(organisation)
 
-        db.add(galaxy)
-        db.commit()
-        db.refresh(galaxy)
+    yield organisation
 
-        galaxy_id = galaxy.id
+    db.delete(organisation)
+    db.commit()
 
-        tag = generate_tag()
-        setattr(tag, "user_id", 1)
-        setattr(tag, "org_id", 1)
 
-        db.add(tag)
-        db.commit()
-        db.refresh(tag)
+@pytest.fixture
+def add_galaxy_cluster_body(db, galaxy, tag):
+    add_galaxy_cluster_body = GalaxyCluster(
+        type="test", value="test", tag_name=tag.name, description="", galaxy_id=galaxy.id, authors="Me"
+    )
 
-        tag_name = tag.name
+    db.add(add_galaxy_cluster_body)
+    db.commit()
+    db.refresh(add_galaxy_cluster_body)
 
-        request_body = get_invalid_import_galaxy_body(tag_name, galaxy_id, org_id)
+    yield add_galaxy_cluster_body
 
-        headers = {"authorization": environment.site_admin_user_token}
-        response = client.post("/galaxies/import", json=request_body, headers=headers)
+    db.delete(add_galaxy_cluster_body)
+    db.commit()
 
-        assert response.status_code == 403
 
+@pytest.fixture
+def add_galaxy_cluster_body2(db, galaxy2, tag):
+    add_galaxy_cluster_body = GalaxyCluster(
+        type="test", value="test", tag_name=tag.name, description="", galaxy_id=galaxy2.id, authors="Me"
+    )
 
-class TestGetGalaxyDetails:
-    @staticmethod
-    def test_get_existing_galaxy_details(db: Session) -> None:
-        tag = generate_tag()
-        setattr(tag, "user_id", 1)
-        setattr(tag, "org_id", 1)
+    db.add(add_galaxy_cluster_body)
+    db.commit()
+    db.refresh(add_galaxy_cluster_body)
 
-        db.add(tag)
-        db.commit()
-        db.refresh(tag)
+    yield add_galaxy_cluster_body
 
-        tag_name = tag.name
+    db.delete(add_galaxy_cluster_body)
+    db.commit()
 
-        galaxy = generate_galaxy()
 
-        db.add(galaxy)
-        db.commit()
-        db.refresh(galaxy)
+@pytest.fixture
+def add_galaxy_element(db, add_galaxy_cluster_body):
+    add_galaxy_element = GalaxyElement(
+        galaxy_cluster_id=add_galaxy_cluster_body.id, key="refs", value="http://github.com"
+    )
 
-        galaxy_id = galaxy.id
+    db.add(add_galaxy_element)
+    db.commit()
+    db.refresh(add_galaxy_element)
 
-        add_galaxy_cluster_body = GalaxyCluster(
-            type="test", value="test", tag_name=tag_name, description="", galaxy_id=galaxy_id, authors="Me"
-        )
+    yield add_galaxy_element
 
-        db.add(add_galaxy_cluster_body)
-        db.commit()
-        db.refresh(add_galaxy_cluster_body)
+    db.delete(add_galaxy_element)
+    db.commit()
 
-        galaxy_cluster_id = add_galaxy_cluster_body.id
 
-        add_galaxy_element = GalaxyElement(galaxy_cluster_id=galaxy_cluster_id, key="refs", value="http://github.com")
+def test_import_galaxy_cluster_valid_data(db, site_admin_user_token, galaxy, organisation, tag) -> None:
+    org_id = organisation.id
+    galaxy_id = galaxy.id
+    tag_name = tag.name
 
-        db.add(add_galaxy_element)
-        db.commit()
-        db.refresh(add_galaxy_element)
+    request_body = get_valid_import_galaxy_body(tag_name, galaxy_id, org_id, galaxy.uuid)
 
-        headers = {"authorization": environment.site_admin_user_token}
-        response = client.get(f"/galaxies/{galaxy_id}", headers=headers)
+    headers = {"authorization": site_admin_user_token}
+    response = client.post("/galaxies/import", json=request_body, headers=headers)
+    response_json = response.json()
+    assert response.status_code == 200
+    assert response_json["name"] == "Galaxy clusters imported. 1 imported, 0 ignored, 0 failed."
 
-        assert response.status_code == 200
+    ic(response_json)
+    ic(request_body)
+    stmt = sa.sql.text(
+        "DELETE FROM galaxy_elements WHERE galaxy_cluster_id IN (SELECT id FROM galaxy_clusters WHERE galaxy_id=:id)"
+    )
+    db.execute(stmt, {"id": galaxy_id})
 
-        response_json = response.json()
+    stmt = sa.sql.text("DELETE FROM galaxy_clusters WHERE galaxy_id=:id")
+    db.execute(stmt, {"id": galaxy_id})
+    db.commit()
 
-        assert response_json["Galaxy"]["id"] == str(galaxy_id)
-        assert response_json["GalaxyCluster"][0]["id"] == str(galaxy_cluster_id)
-        assert response_json["GalaxyCluster"][0]["GalaxyElement"][0]["id"] == str(add_galaxy_element.id)
-        assert response_json["GalaxyCluster"][0]["GalaxyElement"][0]["key"] == add_galaxy_element.key
-        assert response_json["GalaxyCluster"][0]["GalaxyElement"][0]["value"] == add_galaxy_element.value
 
-    @staticmethod
-    def test_get_non_existing_galaxy_details() -> None:
-        headers = {"authorization": environment.site_admin_user_token}
-        response = client.get("/galaxies/0", headers=headers)
+def test_import_galaxy_cluster_invalid_data(site_admin_user_token, galaxy, organisation, tag) -> None:
+    org_id = organisation.id
+    galaxy_id = galaxy.id
+    tag_name = tag.name
 
-        assert response.status_code == 404
+    request_body = get_invalid_import_galaxy_body(tag_name, galaxy_id, org_id)
 
+    headers = {"authorization": site_admin_user_token}
+    response = client.post("/galaxies/import", json=request_body, headers=headers)
 
-class TestDeleteGalaxy:
-    @staticmethod
-    def test_delete_existing_galaxy(db: Session) -> None:
-        tag = generate_tag()
-        setattr(tag, "user_id", 1)
-        setattr(tag, "org_id", 1)
+    assert response.status_code == 403
 
-        db.add(tag)
-        db.commit()
-        db.refresh(tag)
 
-        tag_name = tag.name
+def test_get_existing_galaxy_details(
+    db: Session, site_admin_user_token, galaxy, add_galaxy_cluster_body, add_galaxy_element
+) -> None:
+    galaxy_id = galaxy.id
+    galaxy_cluster_id = add_galaxy_cluster_body.id
 
-        galaxy = generate_galaxy()
+    headers = {"authorization": site_admin_user_token}
+    response = client.get(f"/galaxies/{galaxy_id}", headers=headers)
 
-        db.add(galaxy)
-        db.commit()
-        db.refresh(galaxy)
+    assert response.status_code == 200
 
-        galaxy_id = galaxy.id
+    response_json = response.json()
 
-        add_galaxy_cluster_body = GalaxyCluster(
-            type="test", value="test", tag_name=tag_name, description="", galaxy_id=galaxy_id, authors="Me"
-        )
+    ic(response_json)
+    assert response_json["Galaxy"]["id"] == str(galaxy_id)
+    assert len(response_json["GalaxyCluster"]) == 1
+    assert response_json["GalaxyCluster"][0]["id"] == str(galaxy_cluster_id)
+    assert response_json["GalaxyCluster"][0]["GalaxyElement"][0]["id"] == str(add_galaxy_element.id)
+    assert response_json["GalaxyCluster"][0]["GalaxyElement"][0]["key"] == add_galaxy_element.key
+    assert response_json["GalaxyCluster"][0]["GalaxyElement"][0]["value"] == add_galaxy_element.value
 
-        db.add(add_galaxy_cluster_body)
-        db.commit()
-        db.refresh(add_galaxy_cluster_body)
 
-        galaxy_cluster_id = add_galaxy_cluster_body.id
+def test_get_non_existing_galaxy_details(site_admin_user_token) -> None:
+    headers = {"authorization": site_admin_user_token}
+    response = client.get("/galaxies/0", headers=headers)
 
-        add_galaxy_element = GalaxyElement(galaxy_cluster_id=galaxy_cluster_id, key="refs", value="http://github.com")
+    assert response.status_code == 404
 
-        db.add(add_galaxy_element)
-        db.commit()
-        db.refresh(add_galaxy_element)
 
-        headers = {"authorization": environment.site_admin_user_token}
-        response = client.delete(f"/galaxies/{galaxy_id}", headers=headers)
+def test_delete_existing_galaxy(
+    db: Session, site_admin_user_token, galaxy, organisation, tag, add_galaxy_cluster_body, add_galaxy_element
+) -> None:
+    galaxy_id = galaxy.id
 
-        assert response.status_code == 200
-        response_json = response.json()
-        assert response_json["saved"]
-        assert response_json["name"] == "Galaxy deleted"
+    headers = {"authorization": site_admin_user_token}
+    response = client.delete(f"/galaxies/{galaxy_id}", headers=headers)
 
-    @staticmethod
-    def test_delete_non_existing_galaxy() -> None:
-        headers = {"authorization": environment.site_admin_user_token}
-        response = client.delete("/galaxies/0", headers=headers)
+    assert response.status_code == 200
+    response_json = response.json()
+    assert response_json["saved"]
+    assert response_json["name"] == "Galaxy deleted"
 
-        assert response.status_code == 404
-        response_json = response.json()
-        print(response_json)
-        assert response_json["detail"]["name"] == "Invalid galaxy."
 
+def test_delete_non_existing_galaxy(site_admin_user_token, galaxy, organisation, tag) -> None:
+    headers = {"authorization": site_admin_user_token}
+    response = client.delete("/galaxies/0", headers=headers)
 
-class TestGetAllGalaxies:
-    @staticmethod
-    def test_get_all_galaxies(db: Session) -> None:
-        tag = generate_tag()
-        setattr(tag, "user_id", 1)
-        setattr(tag, "org_id", 1)
+    assert response.status_code == 404
+    response_json = response.json()
+    print(response_json)
+    assert response_json["detail"]["name"] == "Invalid galaxy."
 
-        db.add(tag)
-        db.commit()
-        db.refresh(tag)
 
-        tag_name = tag.name
-        print(tag.name)
+def test_get_all_galaxies(
+    db: Session, site_admin_user_token, add_galaxy_cluster_body, add_galaxy_cluster_body2
+) -> None:
+    headers = {"authorization": site_admin_user_token}
+    response = client.get("/galaxies", headers=headers)
 
-        galaxy1 = generate_galaxy()
+    assert response.status_code == 200
+    response_json = response.json()
+    assert isinstance(response_json, list)
 
-        db.add(galaxy1)
-        db.commit()
-        db.refresh(galaxy1)
 
-        galaxy1_id = galaxy1.id
+def test_search_galaxies(site_admin_user_token, organisation, tag, galaxy) -> None:
+    request_body = {"value": "test galaxy single name abcdefghijklmnopqrstuvwxyz"}
 
-        galaxy2 = generate_galaxy()
+    headers = {"authorization": site_admin_user_token}
+    response = client.post("/galaxies", json=request_body, headers=headers)
 
-        db.add(galaxy2)
-        db.commit()
-        db.refresh(galaxy2)
+    assert response.status_code == 200
+    response_json = response.json()
+    assert isinstance(response_json, list)
+    for galaxy in response_json:
+        assert galaxy["Galaxy"]["name"] == request_body["name"]
 
-        galaxy2_id = galaxy2.id
 
-        add_galaxy_cluster_body1 = GalaxyCluster(
-            type="test", value="test", tag_name=tag_name, description="", galaxy_id=galaxy1_id, authors="Me"
-        )
-        print(add_galaxy_cluster_body1.tag_name)
+def test_export_existing_galaxy(
+    db: Session,
+    site_admin_user_token,
+    galaxy,
+    organisation,
+    tag,
+    add_galaxy_cluster_body,
+    add_galaxy_cluster_body2,
+    add_galaxy_element,
+) -> None:
+    galaxy_id = galaxy.id
 
-        add_galaxy_cluster_body2 = GalaxyCluster(
-            type="test", value="test", tag_name=tag_name, description="", galaxy_id=galaxy2_id, authors="Me"
-        )
-        print(add_galaxy_cluster_body2.tag_name)
+    galaxy_cluster_id1 = add_galaxy_cluster_body.id
+    galaxy_cluster_id = add_galaxy_cluster_body2.id
+    assert galaxy_cluster_id
 
-        db.add(add_galaxy_cluster_body1)
-        db.commit()
-        db.refresh(add_galaxy_cluster_body1)
+    galaxy_reference = GalaxyReference(
+        galaxy_cluster_id=galaxy_cluster_id1,
+        referenced_galaxy_cluster_id=add_galaxy_cluster_body.id,
+        referenced_galaxy_cluster_uuid=add_galaxy_cluster_body.uuid,
+        referenced_galaxy_cluster_type=add_galaxy_cluster_body.type,
+        referenced_galaxy_cluster_value=add_galaxy_cluster_body.value,
+    )
 
-        db.add(add_galaxy_cluster_body2)
-        db.commit()
-        db.refresh(add_galaxy_cluster_body2)
+    db.add(galaxy_reference)
+    db.commit()
+    db.refresh(galaxy_reference)
 
-        headers = {"authorization": environment.site_admin_user_token}
-        response = client.get("/galaxies", headers=headers)
+    body = ExportGalaxyBody(Galaxy=ExportGalaxyAttributes(default=False, distribution="1"))
+    request_body = body.dict()
 
-        assert response.status_code == 200
-        response_json = response.json()
-        assert isinstance(response_json, list)
+    headers = {"authorization": site_admin_user_token}
+    response = client.post(f"/galaxies/export/{galaxy_id}", json=request_body, headers=headers)
 
+    assert response.status_code == 200
 
-class TestSearchGalaxies:
-    @staticmethod
-    def test_search_galaxies(db: Session) -> None:
-        request_body = {"value": "test galaxy single name abcdefghijklmnopqrstuvwxyz"}
-        organisation = generate_organisation()
 
-        db.add(organisation)
-        db.commit()
-        db.refresh(organisation)
+def test_export_non_existing_galaxy(
+    db: Session,
+    site_admin_user_token,
+    galaxy,
+    organisation,
+    tag,
+    add_galaxy_cluster_body,
+    add_galaxy_cluster_body2,
+    add_galaxy_element,
+) -> None:
+    galaxy_cluster_id1 = add_galaxy_cluster_body.id
 
-        tag = generate_tag()
-        setattr(tag, "user_id", 1)
-        setattr(tag, "org_id", 1)
+    galaxy_reference = GalaxyReference(
+        galaxy_cluster_id=galaxy_cluster_id1,
+        referenced_galaxy_cluster_id=add_galaxy_cluster_body.id,
+        referenced_galaxy_cluster_uuid=add_galaxy_cluster_body.uuid,
+        referenced_galaxy_cluster_type=add_galaxy_cluster_body.type,
+        referenced_galaxy_cluster_value=add_galaxy_cluster_body.value,
+    )
 
-        db.add(tag)
-        db.commit()
-        db.refresh(tag)
+    db.add(galaxy_reference)
+    db.commit()
+    db.refresh(galaxy_reference)
 
-        galaxy = generate_galaxy()
+    body = ExportGalaxyBody(Galaxy=ExportGalaxyAttributes(default=False, distribution="1"))
+    request_body = body.dict()
+    headers = {"authorization": site_admin_user_token}
+    response = client.post("/galaxies/export/0", json=request_body, headers=headers)
 
-        db.add(galaxy)
-        db.commit()
-        db.refresh(galaxy)
+    assert response.status_code == 404
 
-        headers = {"authorization": environment.site_admin_user_token}
-        response = client.post("/galaxies", json=request_body, headers=headers)
 
-        assert response.status_code == 200
-        response_json = response.json()
-        assert isinstance(response_json, list)
-        for galaxy in response_json:
-            assert galaxy["Galaxy"]["name"] == request_body["name"]
+def test_attach_cluster(site_admin_user_token, galaxy, organisation, tag, add_galaxy_cluster_body, event) -> None:
+    galaxy_cluster_id1 = add_galaxy_cluster_body.id
+    event_id = event.id
 
+    headers = {"authorization": site_admin_user_token}
 
-class TestExportGalaxy:
-    @staticmethod
-    def test_export_existing_galaxy(db: Session) -> None:
-        organisation = generate_organisation()
+    request_body = {"Galaxy": {"target_id": galaxy_cluster_id1}}
+    response = client.post(f"/galaxies/attachCluster/{event_id}/event/local:0", json=request_body, headers=headers)
 
-        db.add(organisation)
-        db.commit()
-        db.refresh(organisation)
+    assert response.status_code == 200
+    assert response.json()["success"] == "Cluster attached."
 
-        org_id = organisation.id
 
-        tag = generate_tag()
-        setattr(tag, "user_id", 1)
-        setattr(tag, "org_id", 1)
+def test_attach_cluster_non_existing_cluster(site_admin_user_token) -> None:
+    request_body = {"Galaxy": {"target_id": 0}}
+    headers = {"authorization": site_admin_user_token}
+    response = client.post("/galaxies/attachCluster/1/event/local:0", json=request_body, headers=headers)
 
-        db.add(tag)
-        db.commit()
-        db.refresh(tag)
-
-        tag_name = tag.name
-
-        galaxy = generate_galaxy()
-
-        db.add(galaxy)
-        db.commit()
-        db.refresh(galaxy)
-
-        galaxy_id = galaxy.id
-
-        add_galaxy_cluster_body1 = GalaxyCluster(
-            type="test type",
-            value="test",
-            tag_name=tag_name,
-            description="",
-            galaxy_id=galaxy_id,
-            authors="Me",
-            default=False,
-            distribution=1,
-            org_id=org_id,
-            orgc_id=org_id,
-        )
-
-        db.add(add_galaxy_cluster_body1)
-        db.commit()
-        db.refresh(add_galaxy_cluster_body1)
-
-        galaxy_cluster_id1 = add_galaxy_cluster_body1.id
-
-        add_galaxy_cluster_body = GalaxyCluster(
-            type="test",
-            value="test",
-            tag_name=tag_name,
-            description="",
-            galaxy_id=galaxy_id,
-            authors="Me",
-            default=False,
-            distribution=1,
-            org_id=org_id,
-            orgc_id=org_id,
-        )
-
-        db.add(add_galaxy_cluster_body)
-        db.commit()
-        db.refresh(add_galaxy_cluster_body)
-
-        galaxy_cluster_id = add_galaxy_cluster_body.id
-
-        add_galaxy_element = GalaxyElement(galaxy_cluster_id=galaxy_cluster_id, key="refs", value="http://github.com")
-
-        db.add(add_galaxy_element)
-        db.commit()
-        db.refresh(add_galaxy_element)
-
-        galaxy_reference = GalaxyReference(
-            galaxy_cluster_id=galaxy_cluster_id1,
-            referenced_galaxy_cluster_id=add_galaxy_cluster_body1.id,
-            referenced_galaxy_cluster_uuid=add_galaxy_cluster_body1.uuid,
-            referenced_galaxy_cluster_type=add_galaxy_cluster_body1.type,
-            referenced_galaxy_cluster_value=add_galaxy_cluster_body1.value,
-        )
-
-        db.add(galaxy_reference)
-        db.commit()
-        db.refresh(galaxy_reference)
-
-        body = ExportGalaxyBody(Galaxy=ExportGalaxyAttributes(default=False, distribution="1"))
-        request_body = body.dict()
-
-        headers = {"authorization": environment.site_admin_user_token}
-        response = client.post(f"/galaxies/export/{galaxy_id}", json=request_body, headers=headers)
-
-        assert response.status_code == 200
-
-    @staticmethod
-    def test_export_non_existing_galaxy(db: Session) -> None:
-        organisation = generate_organisation()
-
-        db.add(organisation)
-        db.commit()
-        db.refresh(organisation)
-
-        org_id = organisation.id
-
-        tag = generate_tag()
-        setattr(tag, "user_id", 1)
-        setattr(tag, "org_id", 1)
-
-        db.add(tag)
-        db.commit()
-        db.refresh(tag)
-
-        tag_name = tag.name
-
-        galaxy = generate_galaxy()
-
-        db.add(galaxy)
-        db.commit()
-        db.refresh(galaxy)
-
-        galaxy_id = galaxy.id
-
-        add_galaxy_cluster_body1 = GalaxyCluster(
-            type="test type",
-            value="test",
-            tag_name=tag_name,
-            description="",
-            galaxy_id=galaxy_id,
-            authors="Me",
-            default=False,
-            distribution=1,
-            org_id=org_id,
-            orgc_id=org_id,
-        )
-
-        db.add(add_galaxy_cluster_body1)
-        db.commit()
-        db.refresh(add_galaxy_cluster_body1)
-
-        galaxy_cluster_id1 = add_galaxy_cluster_body1.id
-
-        add_galaxy_cluster_body = GalaxyCluster(
-            type="test",
-            value="test",
-            tag_name=tag_name,
-            description="",
-            galaxy_id=galaxy_id,
-            authors="Me",
-            default=False,
-            distribution=1,
-            org_id=org_id,
-            orgc_id=org_id,
-        )
-
-        db.add(add_galaxy_cluster_body)
-        db.commit()
-        db.refresh(add_galaxy_cluster_body)
-
-        galaxy_cluster_id = add_galaxy_cluster_body.id
-
-        add_galaxy_element = GalaxyElement(galaxy_cluster_id=galaxy_cluster_id, key="refs", value="http://github.com")
-
-        db.add(add_galaxy_element)
-        db.commit()
-        db.refresh(add_galaxy_element)
-
-        galaxy_reference = GalaxyReference(
-            galaxy_cluster_id=galaxy_cluster_id1,
-            referenced_galaxy_cluster_id=add_galaxy_cluster_body1.id,
-            referenced_galaxy_cluster_uuid=add_galaxy_cluster_body1.uuid,
-            referenced_galaxy_cluster_type=add_galaxy_cluster_body1.type,
-            referenced_galaxy_cluster_value=add_galaxy_cluster_body1.value,
-        )
-
-        db.add(galaxy_reference)
-        db.commit()
-        db.refresh(galaxy_reference)
-
-        body = ExportGalaxyBody(Galaxy=ExportGalaxyAttributes(default=False, distribution="1"))
-        request_body = body.dict()
-        headers = {"authorization": environment.site_admin_user_token}
-        response = client.post("/galaxies/export/0", json=request_body, headers=headers)
-
-        assert response.status_code == 404
-
-
-class TestAttachCluster:
-    @staticmethod
-    def test_attach_cluster(db: Session) -> None:
-        organisation = generate_organisation()
-
-        db.add(organisation)
-        db.commit()
-        db.refresh(organisation)
-
-        org_id = organisation.id
-
-        tag = generate_tag()
-        setattr(tag, "user_id", 1)
-        setattr(tag, "org_id", 1)
-
-        db.add(tag)
-        db.commit()
-        db.refresh(tag)
-
-        tag_name = tag.name
-
-        galaxy = generate_galaxy()
-
-        db.add(galaxy)
-        db.commit()
-        db.refresh(galaxy)
-
-        galaxy_id = galaxy.id
-
-        add_galaxy_cluster_body1 = GalaxyCluster(
-            type="test type",
-            value="test",
-            tag_name=tag_name,
-            description="",
-            galaxy_id=galaxy_id,
-            authors="Me",
-            default=False,
-            distribution=1,
-            org_id=org_id,
-            orgc_id=org_id,
-        )
-
-        db.add(add_galaxy_cluster_body1)
-        db.commit()
-        db.refresh(add_galaxy_cluster_body1)
-
-        galaxy_cluster_id1 = add_galaxy_cluster_body1.id
-
-        event = generate_event()
-
-        db.add(event)
-        db.commit()
-        db.refresh(event)
-
-        event_id = event.id
-
-        setattr(event, "org_id", org_id)
-        setattr(event, "orgc_id", org_id)
-
-        headers = {"authorization": environment.site_admin_user_token}
-
-        request_body = {"Galaxy": {"target_id": galaxy_cluster_id1}}
-        response = client.post(f"/galaxies/attachCluster/{event_id}/event/local:0", json=request_body, headers=headers)
-
-        assert response.status_code == 200
-        assert response.json()["success"] == "Cluster attached."
-
-    @staticmethod
-    def test_attach_cluster_non_existing_cluster() -> None:
-        request_body = {"Galaxy": {"target_id": 0}}
-        headers = {"authorization": environment.site_admin_user_token}
-        response = client.post("/galaxies/attachCluster/1/event/local:0", json=request_body, headers=headers)
-
-        assert response.status_code == 404
-        assert response.json()["detail"] == "Invalid Galaxy cluster."
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Invalid Galaxy cluster."

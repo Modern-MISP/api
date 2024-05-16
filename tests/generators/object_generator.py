@@ -33,10 +33,8 @@ def generate_random_str(length: int = 10) -> str:
 # Generate object data
 def generate_valid_object_create_attributes() -> AddAttributeBody:
     return AddAttributeBody(
-        type=generate_random_str(),
+        type="text",
         value=generate_random_str(),
-        value1=generate_random_str(),
-        value2=generate_random_str(),
         event_id=generate_ids_as_str(),
         category=generate_random_str(),
         to_ids=True,
