@@ -1,5 +1,6 @@
 import pytest
 import sqlalchemy as sa
+from icecream import ic
 from sqlalchemy.orm import Session
 
 from mmisp.api_schemas.attributes.get_describe_types_response import GetDescribeTypesAttributes
@@ -60,11 +61,12 @@ def test_add_attribute_invalid_event_id(site_admin_user_token) -> None:
         json=request_body,
         headers=headers,
     )
+    ic(response)
     assert response.status_code == 404
 
 
 def test_add_attribute_invalid_data(db: Session, event, site_admin_user_token, sharing_group) -> None:
-    request_body = {"value": "1.2.3.4", "type": "invalid type"}
+    request_body = {"value": "1.2.3.4", "type": "invalid"}
 
     event.sharing_group_id = sharing_group.id
 
@@ -74,7 +76,8 @@ def test_add_attribute_invalid_data(db: Session, event, site_admin_user_token, s
 
     headers = {"authorization": site_admin_user_token}
     response = client.post(f"/attributes/{event_id}", json=request_body, headers=headers)
-    assert response.status_code == 403
+    ic(response.json())
+    assert response.status_code == 422
 
 
 # --- Test get attribute by id
@@ -104,6 +107,8 @@ def test_get_existing_attribute(
     assert tag.org_id == 1
 
     attribute_id = attribute.id
+
+    ic(attribute.asdict())
 
     headers = {"authorization": site_admin_user_token}
     response = client.get(f"/attributes/{attribute_id}", headers=headers)

@@ -526,6 +526,7 @@ def test_add_org_to_own_sharing_group(
 
     assert response.status_code == status.HTTP_200_OK
     json = response.json()
+    ic(json)
     assert json["org_id"] == str(999)
     delete_sharing_group_orgs(db, json["id"])
 

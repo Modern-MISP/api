@@ -53,8 +53,8 @@ def attributes_sighting_data(db, sighting_data, sharing_group, event):
     for val in sighting_data["values"]:
         attribute = Attribute(
             event_id=event.id,
-            category="test",
-            type="test",
+            category="other",
+            type="text",
             value1=val,
             value2="",
             sharing_group_id=sharing_group.id,
@@ -76,8 +76,8 @@ def attributes_sighting_data(db, sighting_data, sharing_group, event):
 def first_attribute_sighting_data(db, sighting_data, sharing_group, event):
     attribute = Attribute(
         event_id=event.id,
-        category="test",
-        type="test",
+        category="other",
+        type="text",
         value1=sighting_data["values"][0],
         value2="",
         sharing_group_id=sharing_group.id,

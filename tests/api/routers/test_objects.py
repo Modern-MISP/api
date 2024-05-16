@@ -7,7 +7,6 @@ from sqlalchemy.orm import Session
 
 from mmisp.db.models.object import ObjectTemplate
 from tests.environment import client
-from tests.generators.model_generators.sharing_group_generator import generate_sharing_group
 from tests.generators.object_generator import (
     generate_random_search_query,
     generate_search_query,
@@ -15,6 +14,21 @@ from tests.generators.object_generator import (
     generate_valid_object_data,
     generate_valid_random_object_data,
 )
+
+
+@pytest.fixture(autouse=True)
+def check_counts_stay_constant(db):
+    count_sharing_groups = db.execute(sa.text("SELECT COUNT(*) FROM sharing_groups")).first()[0]
+    count_sharing_groups_orgs = db.execute(sa.text("SELECT COUNT(*) FROM sharing_group_orgs")).first()[0]
+    count_sharing_groups_servers = db.execute(sa.text("SELECT COUNT(*) FROM sharing_group_servers")).first()[0]
+    yield
+    ncount_sharing_groups = db.execute(sa.text("SELECT COUNT(*) FROM sharing_groups")).first()[0]
+    ncount_sharing_groups_orgs = db.execute(sa.text("SELECT COUNT(*) FROM sharing_group_orgs")).first()[0]
+    ncount_sharing_groups_servers = db.execute(sa.text("SELECT COUNT(*) FROM sharing_group_servers")).first()[0]
+
+    assert count_sharing_groups == ncount_sharing_groups
+    assert count_sharing_groups_orgs == ncount_sharing_groups_orgs
+    assert count_sharing_groups_servers == ncount_sharing_groups_servers
 
 
 @pytest.fixture(
@@ -185,14 +199,14 @@ def test_get_object_details_valid_id(
 
 
 def test_get_object_details_response_format(
-    object_data: dict[str, Any], db: Session, instance_owner_org, object_template, event, site_admin_user_token
+    object_data: dict[str, Any],
+    db: Session,
+    instance_owner_org,
+    object_template,
+    event,
+    site_admin_user_token,
+    sharing_group,
 ) -> None:
-    sharing_group = generate_sharing_group()
-    sharing_group.organisation_uuid = instance_owner_org.uuid
-    sharing_group.org_id = instance_owner_org.id
-    db.add(sharing_group)
-    db.flush()
-    db.refresh(sharing_group)
     object_data["sharing_group_id"] = sharing_group.id
     if object_data["Attribute"]:
         for attribute in object_data["Attribute"]:
