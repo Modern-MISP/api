@@ -25,7 +25,7 @@ from mmisp.api_schemas.sharing_groups.view_update_sharing_group_legacy_response 
     ViewUpdateSharingGroupLegacyResponse,
 )
 from mmisp.api_schemas.standard_status_response import StandardStatusResponse
-from mmisp.db.database import Session, get_db, with_session_management
+from mmisp.db.database import Session, get_db
 from mmisp.db.models.organisation import Organisation
 from mmisp.db.models.server import Server
 from mmisp.db.models.sharing_group import SharingGroup, SharingGroupOrg, SharingGroupServer
@@ -44,7 +44,6 @@ LOCAL_INSTANCE_SERVER = {"id": 0, "name": "Local instance", "url": config.OWN_UR
     summary="Add a new sharing group",
     description="Add a new sharing group with given details.",
 )
-@with_session_management
 async def create_sharing_group(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
@@ -60,7 +59,6 @@ async def create_sharing_group(
     summary="Get sharing group details",
     description="Retrieve details of a specific sharing group.",
 )
-@with_session_management
 async def get_sharing_group(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
@@ -76,7 +74,6 @@ async def get_sharing_group(
     summary="Update sharing group",
     description="Update an existing sharing group.",
 )
-@with_session_management
 async def update_sharing_group(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
@@ -93,7 +90,6 @@ async def update_sharing_group(
     summary="Delete sharing group",
     description="Delete a specific sharing group.",
 )
-@with_session_management
 async def delete_sharing_group(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
@@ -109,7 +105,6 @@ async def delete_sharing_group(
     summary="Get all sharing groups",
     description="Retrieve a list of all sharing groups.",
 )
-@with_session_management
 async def get_all_sharing_groups(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
@@ -124,7 +119,6 @@ async def get_all_sharing_groups(
     summary="Additional infos from a sharing group",
     description="Details of a sharing group and org.count, user_count and created_by_email.",
 )
-@with_session_management
 async def get_sharing_group_info(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
@@ -140,7 +134,6 @@ async def get_sharing_group_info(
     summary="Add an organisation",
     description="Add an organisation to a sharing group.",
 )
-@with_session_management
 async def add_org_to_sharing_group(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
@@ -157,7 +150,6 @@ async def add_org_to_sharing_group(
     summary="Remove an organisation",
     description="Remove an organisation from a sharing group.",
 )
-@with_session_management
 async def remove_org_from_sharing_group(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
@@ -174,7 +166,6 @@ async def remove_org_from_sharing_group(
     summary="Add a server",
     description="Add a server to a sharing group.",
 )
-@with_session_management
 async def add_server_to_sharing_group(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
@@ -191,7 +182,6 @@ async def add_server_to_sharing_group(
     summary="Remove a server",
     description="Remove a server from a sharing group.",
 )
-@with_session_management
 async def remove_server_from_sharing_group(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
@@ -212,7 +202,6 @@ async def remove_server_from_sharing_group(
     summary="Add new sharing group",
     description="Add a new sharing group with given details.",
 )
-@with_session_management
 async def create_sharing_group_legacy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
@@ -229,7 +218,6 @@ async def create_sharing_group_legacy(
     summary="Get sharing groups details",
     description="Retrieve details of a specific sharing group by its ID.",
 )
-@with_session_management
 async def view_sharing_group_legacy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
@@ -246,7 +234,6 @@ async def view_sharing_group_legacy(
     summary="Update sharing group",
     description="Update an existing sharing group by its ID.",
 )
-@with_session_management
 async def update_sharing_group_legacy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
@@ -264,7 +251,6 @@ async def update_sharing_group_legacy(
     summary="Delete sharing group",
     description="Delete a specific sharing group.",
 )
-@with_session_management
 async def delete_sharing_group_legacy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
@@ -281,7 +267,6 @@ async def delete_sharing_group_legacy(
     summary="Add an organisation",
     description="Add an organisation to a sharing group.",
 )
-@with_session_management
 async def add_org_to_sharing_group_legacy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
@@ -300,7 +285,6 @@ async def add_org_to_sharing_group_legacy(
     summary="Remove an organisation",
     description="Remove an organisation from a sharing group.",
 )
-@with_session_management
 async def remove_org_from_sharing_group_legacy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
@@ -318,7 +302,6 @@ async def remove_org_from_sharing_group_legacy(
     summary="Add a server",
     description="Add a server to a sharing group.",
 )
-@with_session_management
 async def add_server_to_sharing_group_legacy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
@@ -336,7 +319,6 @@ async def add_server_to_sharing_group_legacy(
     summary="Remove a server",
     description="Remove a server to a sharing group.",
 )
-@with_session_management
 async def remove_server_from_sharing_group_legacy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
@@ -352,7 +334,7 @@ async def remove_server_from_sharing_group_legacy(
 async def _create_sharing_group(auth: Auth, db: Session, body: CreateSharingGroupBody) -> dict:
     organisation: Organisation | None = None
 
-    if body.organisation_uuid and await check_permissions(auth, [Permission.SITE_ADMIN]):
+    if body.organisation_uuid and await check_permissions(db, auth, [Permission.SITE_ADMIN]):
         result = await db.execute(select(Organisation).filter(Organisation.uuid == body.organisation_uuid).limit(1))
         organisation = result.scalars().first()
 
@@ -390,7 +372,7 @@ async def _get_sharing_group(auth: Auth, db: Session, id: int) -> dict:
 
     sharing_group = cast(SharingGroup, sharing_group)
 
-    if sharing_group.org_id == auth.org_id or await check_permissions(auth, [Permission.SITE_ADMIN]):
+    if sharing_group.org_id == auth.org_id or await check_permissions(db, auth, [Permission.SITE_ADMIN]):
         return sharing_group.__dict__
 
     result = await db.execute(
@@ -432,7 +414,7 @@ async def _update_sharing_group(auth: Auth, db: Session, id: int, body: UpdateSh
 
     sharing_group = cast(SharingGroup, sharing_group)
 
-    if sharing_group.org_id != auth.org_id and not await check_permissions(auth, [Permission.SITE_ADMIN]):
+    if sharing_group.org_id != auth.org_id and not await check_permissions(db, auth, [Permission.SITE_ADMIN]):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     update_record(sharing_group, body.dict())
@@ -451,7 +433,7 @@ async def _delete_sharing_group(auth: Auth, db: Session, id: int) -> dict:
 
     sharing_group = cast(SharingGroup, sharing_group)
 
-    if sharing_group.org_id != auth.org_id and not await check_permissions(auth, [Permission.SITE_ADMIN]):
+    if sharing_group.org_id != auth.org_id and not await check_permissions(db, auth, [Permission.SITE_ADMIN]):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     await db.execute(delete(SharingGroupOrg).filter(SharingGroupOrg.sharing_group_id == sharing_group.id))
@@ -466,7 +448,7 @@ async def _delete_sharing_group(auth: Auth, db: Session, id: int) -> dict:
 async def _get_all_sharing_groups(auth: Auth, db: Session) -> dict:
     sharing_groups: list[SharingGroup] = []
 
-    is_site_admin: bool = await check_permissions(auth, [Permission.SITE_ADMIN])
+    is_site_admin: bool = await check_permissions(db, auth, [Permission.SITE_ADMIN])
 
     if is_site_admin:
         result = await db.execute(select(SharingGroup))
@@ -557,7 +539,7 @@ async def _get_sharing_group_info(auth: Auth, db: Session, id: int) -> dict:
     if not sharing_group:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
-    if sharing_group.org_id != auth.org_id and not await check_permissions(auth, [Permission.SITE_ADMIN]):
+    if sharing_group.org_id != auth.org_id and not await check_permissions(db, auth, [Permission.SITE_ADMIN]):
         result = await db.execute(
             select(SharingGroupOrg)
             .filter(SharingGroupOrg.sharing_group_id == id, SharingGroupOrg.org_id == auth.org_id)
@@ -627,7 +609,7 @@ async def _add_org_to_sharing_group(auth: Auth, db: Session, id: int, body: AddO
     sharing_group: SharingGroup | None = await db.get(SharingGroup, id)
 
     if not sharing_group or (
-        sharing_group.org_id != auth.org_id and not await check_permissions(auth, [Permission.SITE_ADMIN])
+        sharing_group.org_id != auth.org_id and not await check_permissions(db, auth, [Permission.SITE_ADMIN])
     ):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
@@ -662,7 +644,7 @@ async def _remove_org_from_sharing_group(auth: Auth, db: Session, id: int, organ
     sharing_group: SharingGroup | None = await db.get(SharingGroup, id)
 
     if not sharing_group or (
-        sharing_group.org_id != auth.org_id and not await check_permissions(auth, [Permission.SITE_ADMIN])
+        sharing_group.org_id != auth.org_id and not await check_permissions(db, auth, [Permission.SITE_ADMIN])
     ):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
@@ -686,7 +668,7 @@ async def _add_server_to_sharing_group(auth: Auth, db: Session, id: int, body: A
     sharing_group: SharingGroup | None = await db.get(SharingGroup, id)
 
     if not sharing_group or (
-        sharing_group.org_id != auth.org_id and not await check_permissions(auth, [Permission.SITE_ADMIN])
+        sharing_group.org_id != auth.org_id and not await check_permissions(db, auth, [Permission.SITE_ADMIN])
     ):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
@@ -721,7 +703,7 @@ async def _remove_server_from_sharing_group(auth: Auth, db: Session, id: int, se
     sharing_group: SharingGroup | None = await db.get(SharingGroup, id)
 
     if not sharing_group or (
-        sharing_group.org_id != auth.org_id and not await check_permissions(auth, [Permission.SITE_ADMIN])
+        sharing_group.org_id != auth.org_id and not await check_permissions(db, auth, [Permission.SITE_ADMIN])
     ):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
@@ -744,7 +726,7 @@ async def _remove_server_from_sharing_group(auth: Auth, db: Session, id: int, se
 async def _create_sharing_group_legacy(auth: Auth, db: Session, body: CreateSharingGroupLegacyBody) -> dict:
     organisation: Organisation | None = None
 
-    is_site_admin = await check_permissions(auth, [Permission.SITE_ADMIN])
+    is_site_admin = await check_permissions(db, auth, [Permission.SITE_ADMIN])
 
     if body.organisation_uuid and is_site_admin:
         result = await db.execute(select(Organisation).filter(Organisation.uuid == body.organisation_uuid).limit(1))
@@ -794,7 +776,7 @@ async def _view_sharing_group_legacy(auth: Auth, db: Session, id: int) -> dict:
     if not sharing_group:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
-    if sharing_group.org_id != auth.org_id and not await check_permissions(auth, [Permission.SITE_ADMIN]):
+    if sharing_group.org_id != auth.org_id and not await check_permissions(db, auth, [Permission.SITE_ADMIN]):
         result = await db.execute(
             select(SharingGroupOrg)
             .filter(SharingGroupOrg.sharing_group_id == id, SharingGroupOrg.org_id == auth.org_id)
@@ -868,7 +850,7 @@ async def _update_sharing_group_legacy(auth: Auth, db: Session, id: int, body: U
 
     sharing_group = cast(SharingGroup, sharing_group)
 
-    if sharing_group.org_id != auth.org_id and not await check_permissions(auth, [Permission.SITE_ADMIN]):
+    if sharing_group.org_id != auth.org_id and not await check_permissions(db, auth, [Permission.SITE_ADMIN]):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     update = body.dict(include={"name", "description", "releasability", "local", "active", "roaming"})
@@ -925,7 +907,7 @@ async def _delete_sharing_group_legacy(auth: Auth, db: Session, id: int) -> dict
 
     sharing_group = cast(SharingGroup, sharing_group)
 
-    if sharing_group.org_id != auth.org_id and not await check_permissions(auth, [Permission.SITE_ADMIN]):
+    if sharing_group.org_id != auth.org_id and not await check_permissions(db, auth, [Permission.SITE_ADMIN]):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     await db.execute(delete(SharingGroupOrg).filter(SharingGroupOrg.sharing_group_id == sharing_group.id))
@@ -950,7 +932,7 @@ async def _add_org_to_sharing_group_legacy(
     sharing_group: SharingGroup | None = await db.get(SharingGroup, id)
 
     if not sharing_group or (
-        sharing_group.org_id != auth.org_id and not await check_permissions(auth, [Permission.SITE_ADMIN])
+        sharing_group.org_id != auth.org_id and not await check_permissions(db, auth, [Permission.SITE_ADMIN])
     ):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
@@ -988,7 +970,7 @@ async def _remove_org_from_sharing_group_legacy(auth: Auth, db: Session, id: int
     sharing_group: SharingGroup | None = await db.get(SharingGroup, id)
 
     if not sharing_group or (
-        sharing_group.org_id != auth.org_id and not await check_permissions(auth, [Permission.SITE_ADMIN])
+        sharing_group.org_id != auth.org_id and not await check_permissions(db, auth, [Permission.SITE_ADMIN])
     ):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
@@ -1020,7 +1002,7 @@ async def _add_server_to_sharing_group_legacy(
     sharing_group: SharingGroup | None = await db.get(SharingGroup, id)
 
     if not sharing_group or (
-        sharing_group.org_id != auth.org_id and not await check_permissions(auth, [Permission.SITE_ADMIN])
+        sharing_group.org_id != auth.org_id and not await check_permissions(db, auth, [Permission.SITE_ADMIN])
     ):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
@@ -1058,7 +1040,7 @@ async def _remove_server_from_sharing_group_legacy(auth: Auth, db: Session, id: 
     sharing_group: SharingGroup | None = await db.get(SharingGroup, id)
 
     if not sharing_group or (
-        sharing_group.org_id != auth.org_id and not await check_permissions(auth, [Permission.SITE_ADMIN])
+        sharing_group.org_id != auth.org_id and not await check_permissions(db, auth, [Permission.SITE_ADMIN])
     ):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 

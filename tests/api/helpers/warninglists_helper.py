@@ -2,8 +2,6 @@ import random
 import string
 
 from sqlalchemy import func
-from sqlalchemy.orm import Session
-from tests.database import get_db
 from tests.generators.model_generators.warninglist_generator import (
     generate_warninglist,
     generate_warninglist_entry,
@@ -18,9 +16,7 @@ def random_string(length: int = 10) -> str:
     return "".join(random.choices(string.ascii_letters + string.digits, k=length))
 
 
-def add_warninglists(number: int = 5) -> list[int]:
-    db = get_db()
-
+def add_warninglists(db, number: int = 5) -> list[int]:
     warninglist_ids = []
 
     for i in range(number):
@@ -48,9 +44,7 @@ def add_warninglists(number: int = 5) -> list[int]:
     return warninglist_ids
 
 
-def remove_warninglists(ids: list[int]) -> None:
-    db = get_db()
-
+def remove_warninglists(db, ids: list[int]) -> None:
     db.query(Warninglist).filter(Warninglist.id.in_(ids)).delete(False)
 
     db.commit()
@@ -67,8 +61,7 @@ def generate_enable_warning_lists_body(ids: list[int]) -> ToggleEnableWarninglis
     )
 
 
-def get_largest_id() -> int:
-    db: Session = get_db()
+def get_largest_id(db) -> int:
     largest_id = db.query(func.max(Warninglist.id)).scalar()
     if not largest_id:
         largest_id = 1

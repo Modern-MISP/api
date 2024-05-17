@@ -4,16 +4,28 @@ from typing import Any, Generator
 from uuid import uuid4
 
 import pytest
+import sqlalchemy as sa
 from sqlalchemy.orm import Session
 
 from mmisp.db.models.event import Event
 from mmisp.db.models.tag import Tag
-from tests.environment import client
 from tests.generators.feed_generator import (
     generate_random_valid_feed_data,
     generate_valid_feed_data,
     generate_valid_required_feed_data,
 )
+
+
+def delete_feed(db, id):
+    stmt = sa.sql.text("DELETE FROM feeds WHERE id=:id")
+    db.execute(stmt, {"id": id})
+    db.commit()
+
+
+def delete_event(db, id):
+    stmt = sa.sql.text("DELETE FROM events WHERE id=:id")
+    db.execute(stmt, {"id": id})
+    db.commit()
 
 
 @pytest.fixture(scope="module")
@@ -66,6 +78,7 @@ def test_add_feed(
     instance_owner_org_admin_user,
     sharing_group,
     site_admin_user_token,
+    client,
 ) -> None:
     feed_data["sharing_group_id"] = sharing_group.id
 
@@ -105,8 +118,11 @@ def test_add_feed(
     assert response.status_code == 201
     assert response.json()["Feed"]["name"] == feed_data["name"]
 
+    db.delete(event)
+    db.commit()
 
-def test_feed_error_handling(site_admin_user_token) -> None:
+
+def test_feed_error_handling(site_admin_user_token, client) -> None:
     invalid_data = {"name": "Test Feed"}
     headers = {"authorization": site_admin_user_token}
     response = client.post("/feeds", json=invalid_data, headers=headers)
@@ -123,6 +139,7 @@ def test_feed_response_format(
     instance_owner_org_admin_user,
     sharing_group,
     event,
+    client,
 ) -> None:
     feed_data["sharing_group_id"] = sharing_group.id
 
@@ -150,7 +167,7 @@ def test_feed_response_format(
 
 
 def test_enable_feed(
-    feed_test_ids: dict[str, Any], feed_data: dict[str, Any], sharing_group, tag, event, site_admin_user_token
+    feed_test_ids: dict[str, Any], feed_data: dict[str, Any], sharing_group, tag, event, site_admin_user_token, client
 ) -> None:
     feed_data["sharing_group_id"] = sharing_group.id
     feed_data["tag_id"] = tag.id
@@ -172,7 +189,7 @@ def test_enable_feed(
 
 
 def test_feed_enable_response_format(
-    feed_data: dict[str, Any], sharing_group, tag, event, site_admin_user_token
+    feed_data: dict[str, Any], sharing_group, tag, event, site_admin_user_token, client
 ) -> None:
     feed_data["sharing_group_id"] = sharing_group.id
     feed_data["tag_id"] = tag.id
@@ -195,6 +212,7 @@ def test_disable_feed(
     tag,
     event,
     site_admin_user_token,
+    client,
 ) -> None:
     feed_data["sharing_group_id"] = sharing_group.id
     feed_data["tag_id"] = tag.id
@@ -216,7 +234,7 @@ def test_disable_feed(
 
 
 def test_disable_feed_response_format(
-    feed_data: dict[str, Any], db: Session, sharing_group, tag, event, site_admin_user_token
+    feed_data: dict[str, Any], db: Session, sharing_group, tag, event, site_admin_user_token, client
 ) -> None:
     feed_data["sharing_group_id"] = sharing_group.id
     feed_data["tag_id"] = tag.id
@@ -232,7 +250,7 @@ def test_disable_feed_response_format(
 
 
 def test_get_existing_feed_details(
-    feed_data: dict[str, Any], db: Session, sharing_group, tag, event, site_admin_user_token
+    feed_data: dict[str, Any], db: Session, sharing_group, tag, event, site_admin_user_token, client
 ) -> None:
     feed_data["sharing_group_id"] = sharing_group.id
     feed_data["tag_id"] = tag.id
@@ -251,19 +269,21 @@ def test_get_existing_feed_details(
     assert response.json()["Feed"]["name"] == feed_data["name"]
 
 
-def test_get_invalid_feed_by_id(feed_test_ids: dict[str, Any], site_admin_user_token) -> None:
+def test_get_invalid_feed_by_id(feed_test_ids: dict[str, Any], site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.get(f"/feeds/{feed_test_ids['invalid_feed_id']}", headers=headers)
     assert response.status_code == 422
 
 
-def test_get_non_existing_feed_details(feed_test_ids: dict[str, Any], site_admin_user_token) -> None:
+def test_get_non_existing_feed_details(feed_test_ids: dict[str, Any], site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.get(f"/feeds/{feed_test_ids['non_existing_feed_id']}", headers=headers)
     assert response.status_code == 404
 
 
-def test_get_feed_response_format(feed_data: dict[str, Any], sharing_group, tag, event, site_admin_user_token) -> None:
+def test_get_feed_response_format(
+    feed_data: dict[str, Any], sharing_group, tag, event, site_admin_user_token, client
+) -> None:
     feed_data["sharing_group_id"] = sharing_group.id
     feed_data["tag_id"] = tag.id
     feed_data["event_id"] = event.id
@@ -281,7 +301,9 @@ def test_get_feed_response_format(feed_data: dict[str, Any], sharing_group, tag,
     assert data["Feed"]["name"] == feed_data["name"]
 
 
-def test_update_existing_feed(feed_data: dict[str, Any], sharing_group, tag, event, site_admin_user_token) -> None:
+def test_update_existing_feed(
+    feed_data: dict[str, Any], sharing_group, tag, event, site_admin_user_token, client
+) -> None:
     feed_data["sharing_group_id"] = sharing_group.id
     feed_data["tag_id"] = tag.id
     feed_data["event_id"] = event.id
@@ -300,7 +322,7 @@ def test_update_existing_feed(feed_data: dict[str, Any], sharing_group, tag, eve
 
 
 def test_update_non_existing_feed(
-    feed_test_ids: dict[str, Any], feed_data: dict[str, Any], site_admin_user_token
+    feed_test_ids: dict[str, Any], feed_data: dict[str, Any], site_admin_user_token, client
 ) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.put(f"/feeds/{feed_test_ids['non_existing_feed_id']}", json=feed_data, headers=headers)
@@ -308,7 +330,7 @@ def test_update_non_existing_feed(
 
 
 def test_update_feed_response_format(
-    feed_data: dict[str, Any], sharing_group, tag, event, site_admin_user_token
+    feed_data: dict[str, Any], sharing_group, tag, event, site_admin_user_token, client
 ) -> None:
     feed_data["sharing_group_id"] = sharing_group.id
     feed_data["tag_id"] = tag.id
@@ -326,7 +348,9 @@ def test_update_feed_response_format(
     assert response.json()["Feed"]["name"] == feed_data["name"]
 
 
-def test_toggle_existing_feed(feed_data: dict[str, Any], sharing_group, tag, event, site_admin_user_token) -> None:
+def test_toggle_existing_feed(
+    feed_data: dict[str, Any], sharing_group, tag, event, site_admin_user_token, client
+) -> None:
     feed_data["sharing_group_id"] = sharing_group.id
     feed_data["tag_id"] = tag.id
     feed_data["event_id"] = event.id
@@ -353,7 +377,7 @@ def test_toggle_existing_feed(feed_data: dict[str, Any], sharing_group, tag, eve
     assert response.status_code == 200
 
 
-def test_toggle_non_existing_feed(feed_test_ids: dict[str, Any], site_admin_user_token) -> None:
+def test_toggle_non_existing_feed(feed_test_ids: dict[str, Any], site_admin_user_token, client) -> None:
     toggle_data = {"enable": True}
     headers = {"authorization": site_admin_user_token}
     response = client.patch(f"feeds/{feed_test_ids['non_existing_feed_id']}", json=toggle_data, headers=headers)
@@ -361,7 +385,7 @@ def test_toggle_non_existing_feed(feed_test_ids: dict[str, Any], site_admin_user
 
 
 def test_toggle_feed_response_format(
-    feed_data: dict[str, Any], sharing_group, tag, event, site_admin_user_token
+    feed_data: dict[str, Any], sharing_group, tag, event, site_admin_user_token, client
 ) -> None:
     feed_data["sharing_group_id"] = sharing_group.id
     feed_data["tag_id"] = tag.id
@@ -413,7 +437,7 @@ def test_toggle_feed_response_format(
     assert "url" in data
 
 
-def test_get_all_feeds(feed_data: dict[str, Any], sharing_group, tag, event, site_admin_user_token) -> None:
+def test_get_all_feeds(feed_data: dict[str, Any], sharing_group, tag, event, site_admin_user_token, client) -> None:
     feed_data["sharing_group_id"] = sharing_group.id
     feed_data["tag_id"] = tag.id
     feed_data["event_id"] = event.id
@@ -426,7 +450,9 @@ def test_get_all_feeds(feed_data: dict[str, Any], sharing_group, tag, event, sit
     assert response.status_code == 200
 
 
-def test_get_feeds_response_format(feed_data: dict[str, Any], sharing_group, tag, event, site_admin_user_token) -> None:
+def test_get_feeds_response_format(
+    feed_data: dict[str, Any], sharing_group, tag, event, site_admin_user_token, client
+) -> None:
     feed_data["sharing_group_id"] = sharing_group.id
     feed_data["tag_id"] = tag.id
     feed_data["event_id"] = event.id

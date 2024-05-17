@@ -25,7 +25,7 @@ from mmisp.api_schemas.galaxies.get_galaxy_response import GetGalaxyClusterRespo
 from mmisp.api_schemas.galaxies.import_galaxies_body import ImportGalaxyBody
 from mmisp.api_schemas.galaxies.search_galaxies_body import SearchGalaxiesbyValue
 from mmisp.api_schemas.organisations.organisation import Organisation as OrganisationSchema
-from mmisp.db.database import get_db, with_session_management
+from mmisp.db.database import get_db
 from mmisp.db.models.attribute import Attribute, AttributeTag
 from mmisp.db.models.event import Event, EventTag
 from mmisp.db.models.galaxy import Galaxy
@@ -43,7 +43,6 @@ router = APIRouter(tags=["galaxies"])
     summary="Add new galaxy cluster",
     description="Add a new galaxy cluster to an existing galaxy.",
 )
-@with_session_management
 async def import_galaxy_cluster(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.GALAXY_EDITOR]))],
     db: Annotated[Session, Depends(get_db)],
@@ -54,7 +53,6 @@ async def import_galaxy_cluster(
 
 
 @router.get("/galaxies/{galaxyId}", status_code=status.HTTP_200_OK, response_model=GetGalaxyResponse)
-@with_session_management
 async def get_galaxy_details(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -70,7 +68,6 @@ async def get_galaxy_details(
     summary="Update galaxies",
     description="Force the galaxies to update with the JSON definitions. NOT YET IMPLEMENTED!",
 )
-@with_session_management
 async def update_galaxy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.WORKER_KEY, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -85,7 +82,6 @@ async def update_galaxy(
     summary="Delete a galaxy",
     description="Delete a specific galaxy by its Id.",
 )
-@with_session_management
 async def delete_galaxy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -102,7 +98,6 @@ async def delete_galaxy(
     summary="Get all galaxies",
     description="Get a list with all existing galaxies.",
 )
-@with_session_management
 async def get_galaxies(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))], db: Annotated[Session, Depends(get_db)]
 ) -> list[GetAllSearchGalaxiesResponse]:
@@ -117,7 +112,6 @@ async def get_galaxies(
     description="Search galaxies by search term which matches with galaxy name, namespace, description, \
         kill_chain_order or uuid.",
 )
-@with_session_management
 async def search_galaxies(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -133,7 +127,6 @@ async def search_galaxies(
     summary="Export galaxy cluster",
     description="Export galaxy cluster.",
 )
-@with_session_management
 async def export_galaxy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -150,7 +143,6 @@ async def export_galaxy(
     summary="Attach Cluster to Galaxy.",
     description="Attach a Galaxy Cluster to given Galaxy.",
 )
-@with_session_management
 async def galaxies_attachCluster(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -173,7 +165,6 @@ async def galaxies_attachCluster(
     summary="View Galayx by ID.",
     description="View Galaxy by given Galaxy ID.",
 )
-@with_session_management
 async def get_galaxy_details_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -190,7 +181,6 @@ async def get_galaxy_details_depr(
     summary="Delete Galaxy by ID",
     description="Delete Galaxy by GalaxyID.",
 )
-@with_session_management
 async def delete_galaxy_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],

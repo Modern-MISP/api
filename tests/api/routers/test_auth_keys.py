@@ -1,9 +1,16 @@
 from time import time
 
 import pytest
+import sqlalchemy as sa
+from icecream import ic
 
-from tests.environment import client
 from tests.generators.model_generators.auth_key_generator import generate_auth_key
+
+
+def delete_auth_key(db, auth_key_id):
+    stmt = sa.sql.text("DELETE FROM auth_keys WHERE id=:id")
+    db.execute(stmt, {"id": auth_key_id})
+    db.commit()
 
 
 @pytest.fixture
@@ -20,7 +27,7 @@ def auth_key(db, instance_owner_org_admin_user):
     db.commit()
 
 
-def test_add_auth_key(site_admin_user_token, site_admin_user) -> None:
+def test_add_auth_key(db, site_admin_user_token, site_admin_user, client) -> None:
     body = {"comment": f"test key {time()}"}
 
     headers = {"authorization": site_admin_user_token}
@@ -28,11 +35,14 @@ def test_add_auth_key(site_admin_user_token, site_admin_user) -> None:
 
     assert response.status_code == 201
     response_json = response.json()
+    ic(response_json)
 
     assert response_json["AuthKey"]["comment"] == body["comment"]
 
+    delete_auth_key(db, response_json["AuthKey"]["id"])
 
-def test_add_auth_key_depr(site_admin_user_token, site_admin_user) -> None:
+
+def test_add_auth_key_depr(db, site_admin_user_token, site_admin_user, client) -> None:
     body = {"comment": f"test key {time()}"}
 
     headers = {"authorization": site_admin_user_token}
@@ -42,16 +52,17 @@ def test_add_auth_key_depr(site_admin_user_token, site_admin_user) -> None:
     response_json = response.json()
 
     assert response_json["AuthKey"]["comment"] == body["comment"]
+    delete_auth_key(db, response_json["AuthKey"]["id"])
 
 
-def test_search_existing_auth_key_details(site_admin_user_token) -> None:
+def test_search_existing_auth_key_details(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.post("/auth_keys", json={}, headers=headers)
 
     assert response.status_code == 200
 
 
-def test_search_non_existing_auth_key_details(site_admin_user_token) -> None:
+def test_search_non_existing_auth_key_details(site_admin_user_token, client) -> None:
     body = {"id": "-1"}
 
     headers = {"authorization": site_admin_user_token}
@@ -63,7 +74,7 @@ def test_search_non_existing_auth_key_details(site_admin_user_token) -> None:
     assert len(json) == 0
 
 
-def test_get_existing_auth_key_details(auth_key, site_admin_user_token) -> None:
+def test_get_existing_auth_key_details(auth_key, site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.get(f"/auth_keys/view/{auth_key.id}", headers=headers)
 
@@ -73,14 +84,14 @@ def test_get_existing_auth_key_details(auth_key, site_admin_user_token) -> None:
     assert json["AuthKey"]["id"] == str(auth_key.id)
 
 
-def test_get_non_existing_auth_key_details(site_admin_user_token) -> None:
+def test_get_non_existing_auth_key_details(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.get("/auth_keys/view/-1", headers=headers)
 
     assert response.status_code == 404
 
 
-def test_edit_auth_key(auth_key, instance_owner_org_admin_user_token) -> None:
+def test_edit_auth_key(auth_key, instance_owner_org_admin_user_token, client) -> None:
     body = {"comment": f"updated {time()}"}
 
     headers = {"authorization": instance_owner_org_admin_user_token}
@@ -93,7 +104,7 @@ def test_edit_auth_key(auth_key, instance_owner_org_admin_user_token) -> None:
     assert json["AuthKey"]["comment"] == body["comment"]
 
 
-def test_edit_auth_key_depr(auth_key, instance_owner_org_admin_user_token) -> None:
+def test_edit_auth_key_depr(auth_key, instance_owner_org_admin_user_token, client) -> None:
     body = {"comment": f"updated {time()}"}
 
     headers = {"authorization": instance_owner_org_admin_user_token}
@@ -106,7 +117,7 @@ def test_edit_auth_key_depr(auth_key, instance_owner_org_admin_user_token) -> No
     assert json["AuthKey"]["comment"] == body["comment"]
 
 
-def test_get_all_auth_keys(site_admin_user_token) -> None:
+def test_get_all_auth_keys(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.get("/auth_keys", headers=headers)
 
@@ -114,7 +125,7 @@ def test_get_all_auth_keys(site_admin_user_token) -> None:
     assert isinstance(response.json(), list)
 
 
-def test_delete_auth_key(auth_key, site_admin_user_token) -> None:
+def test_delete_auth_key(auth_key, site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.delete(f"/auth_keys/{auth_key.id}", headers=headers)
 
@@ -127,7 +138,7 @@ def test_delete_auth_key(auth_key, site_admin_user_token) -> None:
     assert json["id"] == str(auth_key.id)
 
 
-def test_delete_auth_key_depr(auth_key, site_admin_user_token) -> None:
+def test_delete_auth_key_depr(auth_key, site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.delete(f"/auth_keys/delete/{auth_key.id}", headers=headers)
 

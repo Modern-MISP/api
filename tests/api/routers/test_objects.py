@@ -6,7 +6,6 @@ from icecream import ic
 from sqlalchemy.orm import Session
 
 from mmisp.db.models.object import ObjectTemplate
-from tests.environment import client
 from tests.generators.object_generator import (
     generate_random_search_query,
     generate_search_query,
@@ -45,8 +44,10 @@ def object_data(request: Any) -> dict[str, Any]:
 
 
 @pytest.fixture
-def object_template(db, organisation):
-    object_template = ObjectTemplate(name="test_template", user_id=1, org_id=organisation.id, version=100)
+def object_template(db, organisation, site_admin_user):
+    object_template = ObjectTemplate(
+        name="test_template", user_id=site_admin_user.id, org_id=organisation.id, version=100
+    )
     db.add(object_template)
     db.flush()
     db.refresh(object_template)
@@ -72,7 +73,7 @@ def delete_attributes_from_object_resp(db, response_data):
 
 
 def test_add_object_to_event(
-    object_data: dict[str, Any], sharing_group, object_template, event, site_admin_user_token, db
+    object_data: dict[str, Any], sharing_group, object_template, event, site_admin_user_token, db, client
 ) -> None:
     object_data["sharing_group_id"] = sharing_group.id
     if object_data["Attribute"]:
@@ -95,7 +96,7 @@ def test_add_object_to_event(
 
 
 def test_add_object_response_format(
-    object_data: dict[str, Any], db: Session, event, site_admin_user_token, object_template, sharing_group
+    object_data: dict[str, Any], db: Session, event, site_admin_user_token, object_template, sharing_group, client
 ) -> None:
     object_data["sharing_group_id"] = sharing_group.id
     if object_data["Attribute"]:
@@ -127,7 +128,7 @@ def search_data(request: Any) -> dict[str, Any]:
     return request.param
 
 
-def test_search_objects_with_filters(search_data: dict[str, Any], site_admin_user_token) -> None:
+def test_search_objects_with_filters(search_data: dict[str, Any], site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.post("/objects/restsearch", json=search_data, headers=headers)
     assert response.status_code == 200
@@ -143,7 +144,7 @@ def test_search_objects_with_filters(search_data: dict[str, Any], site_admin_use
         assert "comment" in obj["object"] != ""
 
 
-def test_search_objects_response_format(search_data: dict[str, Any], site_admin_user_token) -> None:
+def test_search_objects_response_format(search_data: dict[str, Any], site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.post("/objects/restsearch", json=search_data, headers=headers)
     assert response.headers["Content-Type"] == "application/json"
@@ -152,7 +153,7 @@ def test_search_objects_response_format(search_data: dict[str, Any], site_admin_
     assert isinstance(response_data["response"], list)
 
 
-def test_search_objects_data_integrity(search_data: dict[str, Any], site_admin_user_token) -> None:
+def test_search_objects_data_integrity(search_data: dict[str, Any], site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.post("/objects/restsearch", json=search_data, headers=headers)
     response_data = response.json()
@@ -164,7 +165,7 @@ def test_search_objects_data_integrity(search_data: dict[str, Any], site_admin_u
 
 
 def test_get_object_details_valid_id(
-    object_data: dict[str, Any], db: Session, sharing_group, object_template, event, site_admin_user_token
+    object_data: dict[str, Any], db: Session, sharing_group, object_template, event, site_admin_user_token, client
 ) -> None:
     object_data["sharing_group_id"] = sharing_group.id
     if object_data["Attribute"]:
@@ -206,6 +207,7 @@ def test_get_object_details_response_format(
     event,
     site_admin_user_token,
     sharing_group,
+    client,
 ) -> None:
     object_data["sharing_group_id"] = sharing_group.id
     if object_data["Attribute"]:
@@ -232,7 +234,7 @@ def test_get_object_details_response_format(
     delete_attributes_from_object_resp(db, response_data)
 
 
-def test_get_object_details_invalid_id(site_admin_user_token) -> None:
+def test_get_object_details_invalid_id(site_admin_user_token, client) -> None:
     object_id: str = "invalid_id"
     headers = {"authorization": site_admin_user_token}
     response = client.get(f"/objects/{object_id}", headers=headers)
@@ -240,7 +242,7 @@ def test_get_object_details_invalid_id(site_admin_user_token) -> None:
 
 
 def test_get_object_details_data_integrity(
-    object_data: dict[str, Any], db: Session, sharing_group, event, object_template, site_admin_user_token
+    object_data: dict[str, Any], db: Session, sharing_group, event, object_template, site_admin_user_token, client
 ) -> None:
     object_data["sharing_group_id"] = sharing_group.id
     if object_data["Attribute"]:
@@ -248,12 +250,15 @@ def test_get_object_details_data_integrity(
             attribute["sharing_group_id"] = sharing_group.id
 
     object_data["event_id"] = event.id
+    db.commit()
 
     object_template_id = object_template.id
+    ic(object_template.asdict())
     event_id = event.id
 
     headers = {"authorization": site_admin_user_token}
     response = client.post(f"/objects/{event_id}/{object_template_id}", json=object_data, headers=headers)
+    ic(response.json())
     assert response.status_code == 201
 
     response_data = response.json()
@@ -274,6 +279,7 @@ def test_delete_object_hard_delete(
     event,
     sharing_group,
     site_admin_user_token,
+    client,
 ) -> None:
     object_data["sharing_group_id"] = sharing_group.id
     if object_data["Attribute"]:
@@ -304,7 +310,7 @@ def test_delete_object_hard_delete(
 
 
 def test_delete_object_soft_delete(
-    object_data: dict[str, Any], db: Session, sharing_group, object_template, event, site_admin_user_token
+    object_data: dict[str, Any], db: Session, sharing_group, object_template, event, site_admin_user_token, client
 ) -> None:
     object_data["sharing_group_id"] = sharing_group.id
     if object_data["Attribute"]:
@@ -334,7 +340,7 @@ def test_delete_object_soft_delete(
     delete_attributes_from_object_resp(db, response_data)
 
 
-def test_delete_object_invalid_id(site_admin_user_token) -> None:
+def test_delete_object_invalid_id(site_admin_user_token, client) -> None:
     object_id = "invalid_id"
     headers = {"authorization": site_admin_user_token}
     response_delete = client.delete(f"/objects/{object_id}/true", headers=headers)
@@ -343,7 +349,7 @@ def test_delete_object_invalid_id(site_admin_user_token) -> None:
 
 
 def test_delete_object_invalid_hard_delete(
-    db, object_data: dict[str, Any], sharing_group, object_template, event, site_admin_user_token
+    db, object_data: dict[str, Any], sharing_group, object_template, event, site_admin_user_token, client
 ) -> None:
     object_data["sharing_group_id"] = sharing_group.id
     if object_data["Attribute"]:

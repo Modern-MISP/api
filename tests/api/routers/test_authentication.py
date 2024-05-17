@@ -13,7 +13,6 @@ from mmisp.db.models.identity_provider import OIDCIdentityProvider
 from mmisp.db.models.user import User
 from mmisp.util.crypto import hash_secret
 from mmisp.util.uuid import uuid
-from tests.environment import client
 from tests.generators.model_generators.identity_provider_generator import generate_oidc_identity_provider
 from tests.generators.model_generators.user_generator import generate_user
 
@@ -103,7 +102,7 @@ def auth_environment(password, password_auth_user, external_auth_user, identity_
     )
 
 
-def test_start_login_password(instance_owner_org_admin_user) -> None:
+def test_start_login_password(instance_owner_org_admin_user, client) -> None:
     user = instance_owner_org_admin_user
 
     response = client.post("/auth/login/start", json={"email": user.email})
@@ -115,7 +114,7 @@ def test_start_login_password(instance_owner_org_admin_user) -> None:
     assert json["identityProviders"] == []
 
 
-def test_start_login_idp(auth_environment: AuthEnvironment) -> None:
+def test_start_login_idp(auth_environment: AuthEnvironment, client) -> None:
     response = client.post("/auth/login/start", json={"email": auth_environment.external_auth_user.email})
 
     assert response.status_code == status.HTTP_200_OK
@@ -126,13 +125,13 @@ def test_start_login_idp(auth_environment: AuthEnvironment) -> None:
     assert json["identityProviders"][0]["name"] == auth_environment.identity_provider.name
 
 
-def test_start_login_unknown() -> None:
+def test_start_login_unknown(client) -> None:
     response = client.post("/auth/login/start", json={"email": f"doesnotexist{time_ns()}@test.com"})
 
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
-def test_password_login_correct(auth_environment: AuthEnvironment) -> None:
+def test_password_login_correct(auth_environment: AuthEnvironment, client) -> None:
     response = client.post(
         "/auth/login/password",
         json={"email": auth_environment.password_auth_user.email, "password": auth_environment.password},
@@ -145,7 +144,7 @@ def test_password_login_correct(auth_environment: AuthEnvironment) -> None:
     assert user_id == auth_environment.password_auth_user.id
 
 
-def test_password_login_wrong_email(auth_environment: AuthEnvironment) -> None:
+def test_password_login_wrong_email(auth_environment: AuthEnvironment, client) -> None:
     response = client.post(
         "/auth/login/password",
         json={"email": f"random{time_ns()}@random.com", "password": auth_environment.password},
@@ -154,7 +153,7 @@ def test_password_login_wrong_email(auth_environment: AuthEnvironment) -> None:
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
-def test_password_login_wrong_password(auth_environment: AuthEnvironment) -> None:
+def test_password_login_wrong_password(auth_environment: AuthEnvironment, client) -> None:
     response = client.post(
         "/auth/login/password",
         json={
@@ -166,7 +165,7 @@ def test_password_login_wrong_password(auth_environment: AuthEnvironment) -> Non
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
-def test_password_login_idp_user(auth_environment: AuthEnvironment) -> None:
+def test_password_login_idp_user(auth_environment: AuthEnvironment, client) -> None:
     response = client.post(
         "/auth/login/password",
         json={"email": auth_environment.external_auth_user.email, "password": auth_environment.password},
@@ -176,7 +175,7 @@ def test_password_login_idp_user(auth_environment: AuthEnvironment) -> None:
 
 
 @respx.mock
-def test_redirect_to_idp_correct(auth_environment: AuthEnvironment) -> None:
+def test_redirect_to_idp_correct(auth_environment: AuthEnvironment, client) -> None:
     route = respx.get(f"{auth_environment.identity_provider.base_url}/.well-known/openid-configuration").mock(
         return_value=Response(200, json=auth_environment.well_known_oidc_config)
     )
@@ -188,13 +187,13 @@ def test_redirect_to_idp_correct(auth_environment: AuthEnvironment) -> None:
     assert route.called
 
 
-def test_redirect_to_idp_not_existing() -> None:
+def test_redirect_to_idp_not_existing(client) -> None:
     response = client.get("/auth/login/idp/-1/authorize")
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
 @respx.mock
-def test_redirect_to_frontend_correct(auth_environment: AuthEnvironment) -> None:
+def test_redirect_to_frontend_correct(auth_environment: AuthEnvironment, client) -> None:
     config_route = respx.get(f"{auth_environment.identity_provider.base_url}/.well-known/openid-configuration").mock(
         return_value=Response(200, json=auth_environment.well_known_oidc_config)
     )
@@ -225,13 +224,13 @@ def test_redirect_to_frontend_correct(auth_environment: AuthEnvironment) -> None
     assert info_route.called
 
 
-def test_redirect_to_frontend_idp_does_not_exist() -> None:
+def test_redirect_to_frontend_idp_does_not_exist(client) -> None:
     response = client.get("/auth/login/idp/-1/callback?code=test-code")
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
 @respx.mock
-def test_redirect_to_frontend_no_access_token(auth_environment: AuthEnvironment) -> None:
+def test_redirect_to_frontend_no_access_token(auth_environment: AuthEnvironment, client) -> None:
     config_route = respx.get(f"{auth_environment.identity_provider.base_url}/.well-known/openid-configuration").mock(
         return_value=Response(200, json=auth_environment.well_known_oidc_config)
     )
@@ -247,7 +246,7 @@ def test_redirect_to_frontend_no_access_token(auth_environment: AuthEnvironment)
 
 
 @respx.mock
-def test_redirect_to_frontend_invalid_sub(auth_environment: AuthEnvironment) -> None:
+def test_redirect_to_frontend_invalid_sub(auth_environment: AuthEnvironment, client) -> None:
     config_route = respx.get(f"{auth_environment.identity_provider.base_url}/.well-known/openid-configuration").mock(
         return_value=Response(200, json=auth_environment.well_known_oidc_config)
     )
@@ -272,7 +271,7 @@ def test_redirect_to_frontend_invalid_sub(auth_environment: AuthEnvironment) -> 
     assert info_route.called
 
 
-def test_exchange_token_login_valid(auth_environment: AuthEnvironment) -> None:
+def test_exchange_token_login_valid(auth_environment: AuthEnvironment, client) -> None:
     response = client.post(
         "/auth/login/token",
         json={"exchangeToken": encode_exchange_token(str(auth_environment.external_auth_user.id))},
@@ -283,7 +282,7 @@ def test_exchange_token_login_valid(auth_environment: AuthEnvironment) -> None:
     assert _decode_token(json["token"]) == auth_environment.external_auth_user.id
 
 
-def test_exchange_token_login_regular_token(auth_environment: AuthEnvironment) -> None:
+def test_exchange_token_login_regular_token(auth_environment: AuthEnvironment, client) -> None:
     response = client.post(
         "/auth/login/token",
         json={"exchangeToken": encode_token(str(auth_environment.external_auth_user.id))},

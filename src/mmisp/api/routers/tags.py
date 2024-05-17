@@ -12,7 +12,7 @@ from mmisp.api_schemas.tags.delete_tag_response import TagDeleteResponse
 from mmisp.api_schemas.tags.get_tag_response import TagGetResponse, TagResponse, TagViewResponse
 from mmisp.api_schemas.tags.search_tags_response import TagSearchResponse
 from mmisp.api_schemas.tags.update_tag_body import TagUpdateBody
-from mmisp.db.database import get_db, with_session_management
+from mmisp.db.database import get_db
 from mmisp.db.models.attribute import AttributeTag
 from mmisp.db.models.event import EventTag
 from mmisp.db.models.feed import Feed
@@ -32,7 +32,6 @@ router = APIRouter(tags=["tags"])
     summary="Add new tag",
     description="Add a new tag with given details.",
 )
-@with_session_management
 async def add_tag(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.TAG_EDITOR]))],
     db: Annotated[Session, Depends(get_db)],
@@ -48,7 +47,6 @@ async def add_tag(
     summary="View tag details",
     description="View details of a specific tag.",
 )
-@with_session_management
 async def view_tag(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -64,7 +62,6 @@ async def view_tag(
     summary="Search tags",
     description="Search for tags using a specific search term.",
 )
-@with_session_management
 async def search_tags(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -80,7 +77,6 @@ async def search_tags(
     summary="Edit tag",
     description="Edit details of a specific tag.",
 )
-@with_session_management
 async def update_tag(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -97,7 +93,6 @@ async def update_tag(
     summary="Delete tag",
     description="Delete a specific tag.",
 )
-@with_session_management
 async def delete_tag(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -113,7 +108,6 @@ async def delete_tag(
     summary="Get all tags",
     description="Retrieve a list of all tags.",
 )
-@with_session_management
 async def get_tags(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -132,7 +126,6 @@ async def get_tags(
     summary="Add new tag (Deprecated)",
     description="Deprecated. Add a new tag using the old route.",
 )
-@with_session_management
 async def add_tag_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.TAG_EDITOR]))],
     db: Annotated[Session, Depends(get_db)],
@@ -149,7 +142,6 @@ async def add_tag_depr(
     summary="View tag details (Deprecated)",
     description="Deprecated. View details of a specific tag using the old route.",
 )
-@with_session_management
 async def view_tag_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -166,7 +158,6 @@ async def view_tag_depr(
     summary="Edit tag (Deprecated)",
     description="Deprecated. Edit a specific tag using the old route.",
 )
-@with_session_management
 async def update_tag_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -184,7 +175,6 @@ async def update_tag_depr(
     summary="Delete tag (Deprecated)",
     description="Deprecated. Delete a specific tag using the old route.",
 )
-@with_session_management
 async def delete_tag_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],

@@ -11,7 +11,7 @@ from sqlalchemy import or_
 from sqlalchemy.future import select
 
 from mmisp.api.config import config
-from mmisp.db.database import Session, get_db, with_session_management
+from mmisp.db.database import Session, get_db
 from mmisp.db.models.auth_key import AuthKey
 from mmisp.db.models.role import Role
 from mmisp.db.models.user import User
@@ -81,7 +81,6 @@ def authorize(
     if permissions is None:
         permissions = []
 
-    @with_session_management
     async def authorizer(
         db: Annotated[Session, Depends(get_db)],
         authorization: Annotated[str, Depends(APIKeyHeader(name="authorization"))],
@@ -102,7 +101,7 @@ def authorize(
 
         auth = Auth(user_id=user.id, org_id=user.org_id, role_id=user.role_id, auth_key_id=auth_key_id)
 
-        if not await check_permissions(auth, permissions):
+        if not await check_permissions(db, auth, permissions):
             raise HTTPException(status.HTTP_403_UNAUTHORIZED)
 
         return auth
@@ -110,23 +109,20 @@ def authorize(
     return authorizer
 
 
-async def check_permissions(auth: Auth, permissions: list[Permission] = []) -> bool:
-    async with get_db() as db:
-        result = await db.execute(
-            select(Role).join(User, Role.id == User.role_id).filter(User.id == auth.user_id).limit(1)
-        )
-        role: Role | None = result.scalars().first()
+async def check_permissions(db: Session, auth: Auth, permissions: list[Permission] = []) -> bool:
+    result = await db.execute(select(Role).join(User, Role.id == User.role_id).filter(User.id == auth.user_id).limit(1))
+    role: Role | None = result.scalars().first()
 
-        if not role:
+    if not role:
+        return False
+
+    permission_roles = role.get_permissions()
+
+    for permission in permissions:
+        if permission not in permission_roles:
             return False
 
-        permission_roles = role.get_permissions()
-
-        for permission in permissions:
-            if permission not in permission_roles:
-                return False
-
-        return True
+    return True
 
 
 def encode_token(user_id: str) -> str:

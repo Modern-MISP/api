@@ -5,7 +5,6 @@ from typing import Annotated, NamedTuple
 from fastapi import APIRouter, Depends, HTTPException, Path, status
 from nanoid import generate
 from sqlalchemy.future import select
-from sqlalchemy.orm import Session
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize, check_permissions
 from mmisp.api_schemas.auth_keys.add_auth_key_body import AddAuthKeyBody
@@ -24,7 +23,7 @@ from mmisp.api_schemas.auth_keys.search_get_all_auth_keys_users_response import 
 )
 from mmisp.api_schemas.auth_keys.view_auth_key_response import ViewAuthKeyResponseWrapper, ViewAuthKeysResponse
 from mmisp.api_schemas.standard_status_response import StandardStatusIdentifiedResponse
-from mmisp.db.database import get_db, with_session_management
+from mmisp.db.database import Session, get_db
 from mmisp.db.models.auth_key import AuthKey
 from mmisp.db.models.user import User
 from mmisp.util.crypto import hash_secret
@@ -41,7 +40,6 @@ router = APIRouter(tags=["auth_keys"])
     summary="Add an AuthKey.",
     description="Create an AuthKey for a specific user and write it to the database.",
 )
-@with_session_management
 async def auth_keys_add_user(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
     db: Annotated[Session, Depends(get_db)],
@@ -57,7 +55,6 @@ async def auth_keys_add_user(
     summary="View an AuthKey",
     description="View an AuthKey by its ID.",
 )
-@with_session_management
 async def auth_keys_view_auth_key(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
     db: Annotated[Session, Depends(get_db)],
@@ -72,7 +69,6 @@ async def auth_keys_view_auth_key(
     summary="Search for specific AuthKeys.",
     description="Search for specific AuthKeys by parameters.",
 )
-@with_session_management
 async def search_auth_keys(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
     db: Annotated[Session, Depends(get_db)],
@@ -87,7 +83,6 @@ async def search_auth_keys(
     summary="Edit an AuthKey.",
     description="Edit an AuthKey by its ID.",
 )
-@with_session_management
 async def auth_keys_edit_auth_key(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
     db: Annotated[Session, Depends(get_db)],
@@ -103,7 +98,6 @@ async def auth_keys_edit_auth_key(
     summary="Delete given AuthKey.",
     description="Delete AuthKey by AuthKeyId from the database.",
 )
-@with_session_management
 async def auth_keys_delete_auth_key(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
     db: Annotated[Session, Depends(get_db)],
@@ -127,7 +121,6 @@ async def auth_keys_delete_auth_key(
     summary="Returns AuthKeys.",
     description="Returns all AuthKeys stored in the database as a List.",
 )
-@with_session_management
 async def auth_keys_get(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
     db: Annotated[Session, Depends(get_db)],
@@ -146,7 +139,6 @@ async def auth_keys_get(
     summary="Add an AuthKey.",
     description="Create an AuthKey for a specific user and write it to the database.",
 )
-@with_session_management
 async def auth_keys_add_user_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
     db: Annotated[Session, Depends(get_db)],
@@ -163,7 +155,6 @@ async def auth_keys_add_user_depr(
     summary="Edit AuthKey",
     description="Edit AuthKey by AuthKey ID.",
 )
-@with_session_management
 async def auth_keys_edit_auth_key_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
     db: Annotated[Session, Depends(get_db)],
@@ -180,7 +171,6 @@ async def auth_keys_edit_auth_key_depr(
     summary="Delete given AuthKey.",
     description="Delete AuthKey by AuthKeyId from the database.",
 )
-@with_session_management
 async def auth_keys_delete_auth_key_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
     db: Annotated[Session, Depends(get_db)],
@@ -208,7 +198,7 @@ async def _auth_key_add(auth: Auth, db: Session, user_id: int, body: AddAuthKeyB
     if body.user_id is not None:
         user_id = body.user_id
 
-    if auth.user_id != user_id and not await check_permissions(auth, [Permission.SITE_ADMIN]):
+    if auth.user_id != user_id and not await check_permissions(db, auth, [Permission.SITE_ADMIN]):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
     auth_key_string = generate(size=40, alphabet="abcdefghijklmnopqrstuvwxyz1234567890")
@@ -267,8 +257,8 @@ async def _auth_keys_view(
 
     if (
         auth_key.user_id != auth.user_id
-        and (not await check_permissions(auth, [Permission.ADMIN]) or user.org_id != auth.org_id)
-        and (not await check_permissions(auth, [Permission.SITE_ADMIN]))
+        and (not await check_permissions(db, auth, [Permission.ADMIN]) or user.org_id != auth.org_id)
+        and (not await check_permissions(db, auth, [Permission.SITE_ADMIN]))
     ):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
@@ -300,9 +290,9 @@ async def _search_auth_keys(
 ) -> list[SearchGetAuthKeysResponseItem]:
     query = select(AuthKey, User).join(User, AuthKey.user_id == User.id)
 
-    if not await check_permissions(auth, [Permission.SITE_ADMIN]):
+    if not await check_permissions(db, auth, [Permission.SITE_ADMIN]):
         query = query.filter(User.org_id == auth.org_id)
-    if not await check_permissions(auth, [Permission.ADMIN]):
+    if not await check_permissions(db, auth, [Permission.ADMIN]):
         query = query.filter(AuthKey.user_id == auth.user_id)
 
     if body.id:
@@ -373,8 +363,8 @@ async def _auth_keys_edit(auth: Auth, db: Session, auth_key_id: int, body: EditA
 
     if not auth_key or (
         auth_key.user_id != auth.user_id
-        and (not await check_permissions(auth, [Permission.ADMIN]) or auth_key.user.org_id != auth.org_id)
-        and (not await check_permissions(auth, [Permission.SITE_ADMIN]))
+        and (not await check_permissions(db, auth, [Permission.ADMIN]) or auth_key.user.org_id != auth.org_id)
+        and (not await check_permissions(db, auth, [Permission.SITE_ADMIN]))
     ):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
@@ -387,6 +377,7 @@ async def _auth_keys_edit(auth: Auth, db: Session, auth_key_id: int, body: EditA
 
     await db.commit()
     await db.refresh(auth_key)
+    await db.refresh(user)
     return EditAuthKeyResponse(
         AuthKey=EditAuthKeyResponseAuthKey(
             id=auth_key.id,
@@ -414,8 +405,8 @@ async def _auth_keys_delete(auth: Auth, db: Session, auth_key_id: int) -> None:
 
     if not auth_key or (
         auth_key.user_id != auth.user_id
-        and (not await check_permissions(auth, [Permission.ADMIN]) or user.org_id != auth.org_id)
-        and (not await check_permissions(auth, [Permission.SITE_ADMIN]))
+        and (not await check_permissions(db, auth, [Permission.ADMIN]) or user.org_id != auth.org_id)
+        and (not await check_permissions(db, auth, [Permission.SITE_ADMIN]))
     ):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
@@ -429,9 +420,9 @@ async def _auth_keys_get(
 ) -> list[SearchGetAuthKeysResponseItem]:
     query = select(AuthKey, User).join(User, AuthKey.user_id == User.id)
 
-    if not await check_permissions(auth, [Permission.SITE_ADMIN]):
+    if not await check_permissions(db, auth, [Permission.SITE_ADMIN]):
         query = query.filter(User.org_id == auth.org_id)
-    if not await check_permissions(auth, [Permission.ADMIN]):
+    if not await check_permissions(db, auth, [Permission.ADMIN]):
         query = query.filter(AuthKey.user_id == auth.user_id)
 
     class ResultItem(NamedTuple):

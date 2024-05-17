@@ -6,7 +6,6 @@ from sqlalchemy.orm import Session
 from mmisp.api_schemas.galaxies.export_galaxies_body import ExportGalaxyAttributes, ExportGalaxyBody
 from mmisp.db.models.galaxy_cluster import GalaxyCluster, GalaxyElement, GalaxyReference
 
-from ...environment import client
 from ...generators.model_generators.galaxy_generator import generate_galaxy
 from ...generators.model_generators.organisation_generator import generate_organisation
 from ..helpers.galaxy_helper import get_invalid_import_galaxy_body, get_valid_import_galaxy_body
@@ -117,7 +116,7 @@ def add_galaxy_element(db, add_galaxy_cluster_body):
     db.commit()
 
 
-def test_import_galaxy_cluster_valid_data(db, site_admin_user_token, galaxy, organisation, tag) -> None:
+def test_import_galaxy_cluster_valid_data(db, site_admin_user_token, galaxy, organisation, tag, client) -> None:
     org_id = organisation.id
     galaxy_id = galaxy.id
     tag_name = tag.name
@@ -142,7 +141,7 @@ def test_import_galaxy_cluster_valid_data(db, site_admin_user_token, galaxy, org
     db.commit()
 
 
-def test_import_galaxy_cluster_invalid_data(site_admin_user_token, galaxy, organisation, tag) -> None:
+def test_import_galaxy_cluster_invalid_data(site_admin_user_token, galaxy, organisation, tag, client) -> None:
     org_id = organisation.id
     galaxy_id = galaxy.id
     tag_name = tag.name
@@ -156,7 +155,7 @@ def test_import_galaxy_cluster_invalid_data(site_admin_user_token, galaxy, organ
 
 
 def test_get_existing_galaxy_details(
-    db: Session, site_admin_user_token, galaxy, add_galaxy_cluster_body, add_galaxy_element
+    db: Session, site_admin_user_token, galaxy, add_galaxy_cluster_body, add_galaxy_element, client
 ) -> None:
     galaxy_id = galaxy.id
     galaxy_cluster_id = add_galaxy_cluster_body.id
@@ -177,7 +176,7 @@ def test_get_existing_galaxy_details(
     assert response_json["GalaxyCluster"][0]["GalaxyElement"][0]["value"] == add_galaxy_element.value
 
 
-def test_get_non_existing_galaxy_details(site_admin_user_token) -> None:
+def test_get_non_existing_galaxy_details(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.get("/galaxies/0", headers=headers)
 
@@ -185,7 +184,7 @@ def test_get_non_existing_galaxy_details(site_admin_user_token) -> None:
 
 
 def test_delete_existing_galaxy(
-    db: Session, site_admin_user_token, galaxy, organisation, tag, add_galaxy_cluster_body, add_galaxy_element
+    db: Session, site_admin_user_token, galaxy, organisation, tag, add_galaxy_cluster_body, add_galaxy_element, client
 ) -> None:
     galaxy_id = galaxy.id
 
@@ -198,7 +197,7 @@ def test_delete_existing_galaxy(
     assert response_json["name"] == "Galaxy deleted"
 
 
-def test_delete_non_existing_galaxy(site_admin_user_token, galaxy, organisation, tag) -> None:
+def test_delete_non_existing_galaxy(site_admin_user_token, galaxy, organisation, tag, client) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.delete("/galaxies/0", headers=headers)
 
@@ -209,7 +208,7 @@ def test_delete_non_existing_galaxy(site_admin_user_token, galaxy, organisation,
 
 
 def test_get_all_galaxies(
-    db: Session, site_admin_user_token, add_galaxy_cluster_body, add_galaxy_cluster_body2
+    db: Session, site_admin_user_token, add_galaxy_cluster_body, add_galaxy_cluster_body2, client
 ) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.get("/galaxies", headers=headers)
@@ -219,7 +218,7 @@ def test_get_all_galaxies(
     assert isinstance(response_json, list)
 
 
-def test_search_galaxies(site_admin_user_token, organisation, tag, galaxy) -> None:
+def test_search_galaxies(site_admin_user_token, organisation, tag, galaxy, client) -> None:
     request_body = {"value": "test galaxy single name abcdefghijklmnopqrstuvwxyz"}
 
     headers = {"authorization": site_admin_user_token}
@@ -241,6 +240,7 @@ def test_export_existing_galaxy(
     add_galaxy_cluster_body,
     add_galaxy_cluster_body2,
     add_galaxy_element,
+    client,
 ) -> None:
     galaxy_id = galaxy.id
 
@@ -278,6 +278,7 @@ def test_export_non_existing_galaxy(
     add_galaxy_cluster_body,
     add_galaxy_cluster_body2,
     add_galaxy_element,
+    client,
 ) -> None:
     galaxy_cluster_id1 = add_galaxy_cluster_body.id
 
@@ -301,7 +302,9 @@ def test_export_non_existing_galaxy(
     assert response.status_code == 404
 
 
-def test_attach_cluster(site_admin_user_token, galaxy, organisation, tag, add_galaxy_cluster_body, event) -> None:
+def test_attach_cluster(
+    site_admin_user_token, galaxy, organisation, tag, add_galaxy_cluster_body, event, client
+) -> None:
     galaxy_cluster_id1 = add_galaxy_cluster_body.id
     event_id = event.id
 
@@ -314,7 +317,7 @@ def test_attach_cluster(site_admin_user_token, galaxy, organisation, tag, add_ga
     assert response.json()["success"] == "Cluster attached."
 
 
-def test_attach_cluster_non_existing_cluster(site_admin_user_token) -> None:
+def test_attach_cluster_non_existing_cluster(site_admin_user_token, client) -> None:
     request_body = {"Galaxy": {"target_id": 0}}
     headers = {"authorization": site_admin_user_token}
     response = client.post("/galaxies/attachCluster/1/event/local:0", json=request_body, headers=headers)

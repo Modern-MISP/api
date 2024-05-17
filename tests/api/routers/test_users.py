@@ -1,7 +1,4 @@
-from tests.environment import client
-
-
-def test_users_me(site_admin_user_token, site_admin_user) -> None:
+def test_users_me(site_admin_user_token, site_admin_user, client) -> None:
     response = client.get("/users/view/me", headers={"authorization": site_admin_user_token})
 
     assert response.status_code == 200

@@ -6,11 +6,10 @@ from sqlalchemy.orm import Session
 from mmisp.api_schemas.attributes.get_describe_types_response import GetDescribeTypesAttributes
 from mmisp.db.models.attribute import AttributeTag
 
-from ...environment import client
 from ...generators.model_generators.tag_generator import generate_tag
 
 
-def test_add_attribute_valid_data(site_admin_user_token, event, db) -> None:
+def test_add_attribute_valid_data(site_admin_user_token, event, db, client) -> None:
     request_body = {
         "value": "1.2.3.4",
         "type": "ip-src",
@@ -45,7 +44,7 @@ def test_add_attribute_valid_data(site_admin_user_token, event, db) -> None:
     db.commit()
 
 
-def test_add_attribute_invalid_event_id(site_admin_user_token) -> None:
+def test_add_attribute_invalid_event_id(site_admin_user_token, client) -> None:
     request_body = {
         "value": "1.2.3.4",
         "type": "ip-src",
@@ -65,7 +64,7 @@ def test_add_attribute_invalid_event_id(site_admin_user_token) -> None:
     assert response.status_code == 404
 
 
-def test_add_attribute_invalid_data(db: Session, event, site_admin_user_token, sharing_group) -> None:
+def test_add_attribute_invalid_data(db: Session, event, site_admin_user_token, sharing_group, client) -> None:
     request_body = {"value": "1.2.3.4", "type": "invalid"}
 
     event.sharing_group_id = sharing_group.id
@@ -93,6 +92,7 @@ def test_get_existing_attribute(
     attribute,
     tag,
     attributetag,
+    client,
 ) -> None:
     sharing_group_id = sharing_group.id
     event.sharing_group_id = sharing_group_id
@@ -141,7 +141,7 @@ def test_get_existing_attribute(
         assert response_json["Attribute"]["tag"][0]["id"] == str(attributetag.id)
 
 
-def test_get_invalid_or_non_existing_attribute(site_admin_user_token) -> None:
+def test_get_invalid_or_non_existing_attribute(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.get("/attributes/0", headers=headers)
     assert response.status_code == 404
@@ -152,7 +152,7 @@ def test_get_invalid_or_non_existing_attribute(site_admin_user_token) -> None:
 # --- Test edit attribute
 
 
-def test_edit_existing_attribute(db: Session, site_admin_user_token, sharing_group, event, attribute) -> None:
+def test_edit_existing_attribute(db: Session, site_admin_user_token, sharing_group, event, attribute, client) -> None:
     request_body = {
         "category": "Payload delivery",
         "value": "2.3.4.5",
@@ -201,7 +201,7 @@ def test_edit_existing_attribute(db: Session, site_admin_user_token, sharing_gro
     assert "tag" in response_json["Attribute"]
 
 
-def test_edit_non_existing_attribute(site_admin_user_token) -> None:
+def test_edit_non_existing_attribute(site_admin_user_token, client) -> None:
     request_body = {
         "category": "Payload delivery",
         "value": "2.3.4.5",
@@ -219,7 +219,7 @@ def test_edit_non_existing_attribute(site_admin_user_token) -> None:
 
 # --- Test delete attribute by id
 def test_delete_existing_attribute(
-    db: Session, instance_org_two, site_admin_user_token, sharing_group, organisation, event, attribute
+    db: Session, instance_org_two, site_admin_user_token, sharing_group, organisation, event, attribute, client
 ) -> None:
     event.sharing_group_id = sharing_group.id
 
@@ -235,7 +235,7 @@ def test_delete_existing_attribute(
     assert response.status_code == 200
 
 
-def test_delete_invalid_or_non_existing_attribute(site_admin_user_token) -> None:
+def test_delete_invalid_or_non_existing_attribute(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.delete("/attributes/0", headers=headers)
     assert response.status_code == 404
@@ -247,7 +247,7 @@ def test_delete_invalid_or_non_existing_attribute(site_admin_user_token) -> None
 
 
 def test_get_all_attributes(
-    db: Session, event, site_admin_user_token, sharing_group, organisation, attribute, attribute2
+    db: Session, event, site_admin_user_token, sharing_group, organisation, attribute, attribute2, client
 ) -> None:
     event.sharing_group_id = sharing_group.id
     attribute.sharing_group_id = sharing_group.id
@@ -285,7 +285,7 @@ def test_get_all_attributes(
 
 # --- Test delete selected attribute(s)
 def test_delete_selected_attributes_from_existing_event(
-    db: Session, site_admin_user_token, sharing_group, event, attribute, attribute2
+    db: Session, site_admin_user_token, sharing_group, event, attribute, attribute2, client
 ) -> None:
     request_body = {"id": "1 2 3", "allow_hard_delete": False}
 
@@ -316,7 +316,7 @@ def test_delete_selected_attributes_from_existing_event(
     assert response_json["url"] == f"/attributes/deleteSelected/{event_id}"
 
 
-def test_valid_search_attribute_data(db: Session, event, site_admin_user_token, sharing_group) -> None:
+def test_valid_search_attribute_data(db: Session, event, site_admin_user_token, sharing_group, client) -> None:
     request_body = {"returnFormat": "json", "limit": 100}
 
     event.sharing_group_id = sharing_group.id
@@ -330,7 +330,7 @@ def test_valid_search_attribute_data(db: Session, event, site_admin_user_token, 
     assert isinstance(response_json["response"]["Attribute"], list)
 
 
-def test_invalid_search_attribute_data(site_admin_user_token) -> None:
+def test_invalid_search_attribute_data(site_admin_user_token, client) -> None:
     request_body = {"returnFormat": "invalid format"}
     headers = {"authorization": site_admin_user_token}
     response = client.post("/attributes/restSearch", json=request_body, headers=headers)
@@ -340,7 +340,7 @@ def test_invalid_search_attribute_data(site_admin_user_token) -> None:
 # --- Test attribute statistics
 
 
-def test_valid_parameters_attribute_statistics(site_admin_user_token) -> None:
+def test_valid_parameters_attribute_statistics(site_admin_user_token, client) -> None:
     request_body = {"context": "category", "percentage": "1"}
     context = request_body["context"]
     percentage = request_body["percentage"]
@@ -360,7 +360,7 @@ def test_valid_parameters_attribute_statistics(site_admin_user_token) -> None:
             assert "%" in item
 
 
-def test_invalid_parameters_attribute_statistics(site_admin_user_token) -> None:
+def test_invalid_parameters_attribute_statistics(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.get("/attributes/attributeStatistics/invalid_context/0", headers=headers)
     assert response.status_code == 422
@@ -371,7 +371,7 @@ def test_invalid_parameters_attribute_statistics(site_admin_user_token) -> None:
 # --- Test attribute describe types
 
 
-def test_attribute_describe_types(site_admin_user_token) -> None:
+def test_attribute_describe_types(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.get("/attributes/describeTypes", headers=headers)
     assert response.status_code == 200
@@ -380,7 +380,9 @@ def test_attribute_describe_types(site_admin_user_token) -> None:
 # --- Test restore attribute
 
 
-def test_restore_existing_attribute(db: Session, site_admin_user_token, sharing_group, event, attribute) -> None:
+def test_restore_existing_attribute(
+    db: Session, site_admin_user_token, sharing_group, event, attribute, client
+) -> None:
     event.sharing_group_id = sharing_group.id
 
     db.add(event)
@@ -398,7 +400,7 @@ def test_restore_existing_attribute(db: Session, site_admin_user_token, sharing_
     assert response.status_code == 200
 
 
-def test_restore_invalid_attribute(site_admin_user_token) -> None:
+def test_restore_invalid_attribute(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.post("/attributes/restore/0", headers=headers)
     assert response.status_code == 404
@@ -409,7 +411,9 @@ def test_restore_invalid_attribute(site_admin_user_token) -> None:
 # --- Test adding a tag
 
 
-def test_add_existing_tag_to_attribute(db: Session, site_admin_user_token, sharing_group, event, attribute) -> None:
+def test_add_existing_tag_to_attribute(
+    db: Session, site_admin_user_token, sharing_group, event, attribute, client
+) -> None:
     event.sharing_group_id = sharing_group.id
 
     setattr(attribute, "sharing_group_id", sharing_group.id)
@@ -442,7 +446,7 @@ def test_add_existing_tag_to_attribute(db: Session, site_admin_user_token, shari
 
 
 def test_add_invalid_or_non_existing_tag_to_attribute(
-    db: Session, site_admin_user_token, event, sharing_group, attribute
+    db: Session, site_admin_user_token, event, sharing_group, attribute, client
 ) -> None:
     event.sharing_group_id = sharing_group.id
     attribute.sharing_group_id = sharing_group.id
@@ -482,7 +486,7 @@ def attributetag(attribute, event, tag, db):
 
 
 def test_remove_existing_tag_from_attribute(
-    db: Session, site_admin_user_token, sharing_group, event, attribute, tag, attributetag
+    db: Session, site_admin_user_token, sharing_group, event, attribute, tag, attributetag, client
 ) -> None:
     event.sharing_group_id = sharing_group.id
     db.commit()

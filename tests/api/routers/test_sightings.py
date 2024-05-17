@@ -6,7 +6,6 @@ from icecream import ic
 from sqlalchemy.orm import Session
 
 from mmisp.db.models.attribute import Attribute
-from tests.environment import client
 from tests.generators.sighting_generator import (
     generate_valid_random_sighting_data,
     generate_valid_random_sighting_with_filter_data,
@@ -94,7 +93,7 @@ def first_attribute_sighting_data(db, sighting_data, sharing_group, event):
 
 
 def test_add_sighting(
-    attributes_sighting_data, sighting_data: dict[str, Any], db: Session, site_admin_user_token
+    attributes_sighting_data, sighting_data: dict[str, Any], db: Session, site_admin_user_token, client
 ) -> None:
     attributes = attributes_sighting_data
     if sighting_data["filters"]:
@@ -119,7 +118,7 @@ def test_add_sighting(
 
 
 def test_add_sighting_with_invalid_data(
-    attributes_sighting_data, sighting_data: dict[str, Any], db: Session, site_admin_user_token
+    attributes_sighting_data, sighting_data: dict[str, Any], db: Session, site_admin_user_token, client
 ) -> None:
     attributes = attributes_sighting_data
     if sighting_data["filters"]:
@@ -142,7 +141,7 @@ def test_add_sighting_with_invalid_data(
 
 
 def test_add_sighting_missing_required_fields(
-    attributes_sighting_data, sighting_data: dict[str, Any], db: Session, site_admin_user_token
+    attributes_sighting_data, sighting_data: dict[str, Any], db: Session, site_admin_user_token, client
 ) -> None:
     attributes = attributes_sighting_data
     if sighting_data["filters"]:
@@ -163,6 +162,7 @@ def test_add_sightings_at_index_success(
     sharing_group,
     event,
     site_admin_user_token,
+    client,
 ) -> None:
     attribute = first_attribute_sighting_data
     if sighting_data["filters"]:
@@ -186,6 +186,7 @@ def test_add_sighting_at_index_invalid_attribute(
     sharing_group,
     event,
     site_admin_user_token,
+    client,
 ) -> None:
     attribute = first_attribute_sighting_data
 
@@ -200,7 +201,7 @@ def test_add_sighting_at_index_invalid_attribute(
 
 
 def test_get_sighting_success(
-    first_attribute_sighting_data, sighting_data: dict[str, Any], db: Session, event, site_admin_user_token
+    first_attribute_sighting_data, sighting_data: dict[str, Any], db: Session, event, site_admin_user_token, client
 ) -> None:
     attribute = first_attribute_sighting_data
 
@@ -213,7 +214,7 @@ def test_get_sighting_success(
 
 
 def test_delete_sighting_success(
-    first_attribute_sighting_data, sighting_data: dict[str, Any], db: Session, site_admin_user_token
+    first_attribute_sighting_data, sighting_data: dict[str, Any], db: Session, site_admin_user_token, client
 ) -> None:
     attribute = first_attribute_sighting_data
     if sighting_data["filters"]:
@@ -236,7 +237,7 @@ def test_delete_sighting_success(
 
 
 def test_delete_sighting_invalid_id(
-    first_attribute_sighting_data, sighting_data: dict[str, Any], db: Session, site_admin_user_token
+    first_attribute_sighting_data, sighting_data: dict[str, Any], db: Session, site_admin_user_token, client
 ) -> None:
     attribute = first_attribute_sighting_data
     if sighting_data["filters"]:
@@ -260,7 +261,7 @@ def test_delete_sighting_invalid_id(
 
 
 def test_get_all_sightings_success(
-    first_attribute_sighting_data, sighting_data: dict[str, Any], db: Session, site_admin_user_token
+    first_attribute_sighting_data, sighting_data: dict[str, Any], db: Session, site_admin_user_token, client
 ) -> None:
     attribute = first_attribute_sighting_data
     if sighting_data["filters"]:
@@ -278,7 +279,7 @@ def test_get_all_sightings_success(
 
 
 def test_get_sightings_response_format(
-    first_attribute_sighting_data, sighting_data: dict[str, Any], db: Session, site_admin_user_token
+    first_attribute_sighting_data, sighting_data: dict[str, Any], db: Session, site_admin_user_token, client
 ) -> None:
     attribute = first_attribute_sighting_data
     if sighting_data["filters"]:
