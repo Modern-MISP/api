@@ -17,7 +17,7 @@ from mmisp.api_schemas.objects.get_object_response import (
 )
 from mmisp.api_schemas.objects.search_objects_body import ObjectSearchBody
 from mmisp.api_schemas.standard_status_response import StandardStatusResponse
-from mmisp.db.database import get_db, with_session_management
+from mmisp.db.database import get_db
 from mmisp.db.models.attribute import Attribute
 from mmisp.db.models.event import Event
 from mmisp.db.models.object import Object, ObjectTemplate
@@ -33,7 +33,6 @@ router = APIRouter(tags=["objects"])
     summary="Add object to event",
     description="Add a new object to a specific event using a template.",
 )
-@with_session_management
 async def add_object(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
@@ -51,7 +50,6 @@ async def add_object(
     summary="Search objects",
     description="Search for objects based on various filters.",
 )
-@with_session_management
 async def restsearch(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -67,7 +65,6 @@ async def restsearch(
     summary="View object details",
     description="View details of a specific object including its attributes and related event.",
 )
-@with_session_management
 async def get_object_details(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -83,7 +80,6 @@ async def get_object_details(
     summary="Delete object",
     description="Delete a specific object. The hardDelete parameter determines if it's a hard or soft delete.",
 )
-@with_session_management
 async def delete_object(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
@@ -104,7 +100,6 @@ async def delete_object(
     summary="Add object to event (Deprecated)",
     description="Deprecated. Add an object to an event using the old route.",
 )
-@with_session_management
 async def add_object_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
@@ -123,7 +118,6 @@ async def add_object_depr(
     summary="View object details (Deprecated)",
     description="Deprecated. View details of a specific object using the old route.",
 )
-@with_session_management
 async def get_object_details_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -142,7 +136,6 @@ async def get_object_details_depr(
     Deprecated. Delete a specific object using the old route.
     The hardDelete parameter determines if it's a hard or soft delete.""",
 )
-@with_session_management
 async def delete_object_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],

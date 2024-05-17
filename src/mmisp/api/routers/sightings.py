@@ -13,7 +13,7 @@ from mmisp.api_schemas.sightings.get_sighting_response import (
     SightingsGetResponse,
 )
 from mmisp.api_schemas.standard_status_response import StandardStatusResponse
-from mmisp.db.database import get_db, with_session_management
+from mmisp.db.database import get_db
 from mmisp.db.models.attribute import Attribute
 from mmisp.db.models.event import Event
 from mmisp.db.models.organisation import Organisation
@@ -30,7 +30,6 @@ router = APIRouter(tags=["sightings"])
     summary="Add sighting",
     description="Add a new sighting for each given value.",
 )
-@with_session_management
 async def add_sighting(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SIGHTING]))],
     db: Annotated[Session, Depends(get_db)],
@@ -46,7 +45,6 @@ async def add_sighting(
     summary="Add sighting at index",
     description="Add a new sighting for a specific attribute.",
 )
-@with_session_management
 async def add_sightings_at_index(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SIGHTING]))],
     db: Annotated[Session, Depends(get_db)],
@@ -62,7 +60,6 @@ async def add_sightings_at_index(
     summary="Get sightings for event",
     description="Retrieve all sightings associated with a specific event ID.",
 )
-@with_session_management
 async def get_sightings_at_index(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -78,7 +75,6 @@ async def get_sightings_at_index(
     summary="Delete sighting",
     description="Delete a specific sighting.",
 )
-@with_session_management
 async def delete_sighting(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SIGHTING]))],
     db: Annotated[Session, Depends(get_db)],
@@ -94,7 +90,6 @@ async def delete_sighting(
     summary="Get all sightings",
     description="Retrieve a list of all sightings.",
 )
-@with_session_management
 async def get_sightings(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -113,7 +108,6 @@ async def get_sightings(
     summary="Add sighting (Deprecated)",
     description="Deprecated. Add a new sighting using the old route.",
 )
-@with_session_management
 async def add_sighting_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SIGHTING]))],
     db: Annotated[Session, Depends(get_db)],
@@ -130,7 +124,6 @@ async def add_sighting_depr(
     summary="Add sighting at index (Deprecated)",
     description="Deprecated. Add a new sighting for a specific attribute using the old route.",
 )
-@with_session_management
 async def add_sightings_at_index_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SIGHTING]))],
     db: Annotated[Session, Depends(get_db)],
@@ -147,7 +140,6 @@ async def add_sightings_at_index_depr(
     summary="Delete sighting (Deprecated)",
     description="Deprecated. Delete a specific sighting using the old route.",
 )
-@with_session_management
 async def delete_sighting_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SIGHTING]))],
     db: Annotated[Session, Depends(get_db)],
@@ -164,7 +156,6 @@ async def delete_sighting_depr(
     summary="Get sightings for event (Deprecated)",
     description="Deprecated. Retrieve all sightings associated with a specific event ID using the old route.",
 )
-@with_session_management
 async def get_sightings_at_index_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],

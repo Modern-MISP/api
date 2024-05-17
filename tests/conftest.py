@@ -1,12 +1,19 @@
+import asyncio
+from contextlib import ExitStack
 from typing import Generator
 
 import pytest
+from fastapi.testclient import TestClient
 from icecream import ic
-from sqlalchemy.orm import Session
+from sqlalchemy import create_engine
+from sqlalchemy.engine.url import make_url
+from sqlalchemy.orm import Session, sessionmaker
 
 from mmisp.api.auth import encode_token
+from mmisp.api.main import init_app
+from mmisp.db.config import config
+from mmisp.db.database import Base
 from mmisp.db.models.sharing_group import SharingGroupOrg, SharingGroupServer
-from tests.database import get_db
 from tests.generators.model_generators.server_generator import generate_server
 
 from .generators.model_generators.attribute_generator import generate_attribute
@@ -18,9 +25,45 @@ from .generators.model_generators.tag_generator import generate_tag
 from .generators.model_generators.user_generator import generate_user
 
 
+@pytest.fixture(autouse=True)
+def app():
+    with ExitStack():
+        yield init_app()
+
+
+@pytest.fixture
+def client(app):
+    with TestClient(app) as c:
+        yield c
+
+
+@pytest.fixture(scope="session")
+def event_loop(request):
+    loop = asyncio.get_event_loop_policy().new_event_loop()
+    yield loop
+    loop.close()
+
+
+@pytest.fixture(scope="session")
+def connection(event_loop):
+    url = make_url(config.DATABASE_URL)
+
+    if "mysql" in url.drivername:
+        url = url.set(drivername="mysql+mysqlconnector")
+    if "sqlite" in url.drivername:
+        url = url.set(drivername="sqlite")
+
+    print(url)
+
+    engine = create_engine(url, echo=True)
+    Base.metadata.drop_all(engine)
+    Base.metadata.create_all(engine)
+    yield sessionmaker(autocommit=False, autoflush=False, expire_on_commit=False, bind=engine)
+
+
 @pytest.fixture(scope="function")
-def db() -> Generator[Session, None, None]:
-    with get_db() as db:
+def db(connection) -> Generator[Session, None, None]:
+    with connection() as db:
         yield db
 
 
@@ -175,11 +218,12 @@ def organisation(db):
 
 
 @pytest.fixture
-def event(db, organisation):
+def event(db, organisation, site_admin_user):
     org_id = organisation.id
     event = generate_event()
     event.org_id = org_id
     event.orgc_id = org_id
+    event.user_id = site_admin_user.id
 
     db.add(event)
     db.commit()
@@ -192,11 +236,12 @@ def event(db, organisation):
 
 
 @pytest.fixture
-def event2(db, organisation):
+def event2(db, organisation, site_admin_user):
     org_id = organisation.id
     event = generate_event()
     event.org_id = org_id
     event.orgc_id = org_id
+    event.user_id = site_admin_user.id
 
     db.add(event)
     db.commit()

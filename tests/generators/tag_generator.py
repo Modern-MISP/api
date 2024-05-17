@@ -3,8 +3,6 @@ import string
 from typing import Any
 
 from sqlalchemy import func
-from sqlalchemy.orm import Session
-from tests.database import get_db
 
 from mmisp.api_schemas.tags.create_tag_body import TagCreateBody
 from mmisp.db.models.tag import Tag
@@ -66,8 +64,7 @@ def generate_invalid_tag_data() -> Any:
     return {"name": input_list[0], "colour": input_list[1], "exportable": input_list[2]}
 
 
-def generate_tags(number: int = 10) -> list:
-    db: Session = get_db()
+def generate_tags(db, number: int = 10) -> list:
     tag_ids = []
     for i in range(number):
         new_tag = Tag(**generate_valid_tag_data().dict())
@@ -79,8 +76,7 @@ def generate_tags(number: int = 10) -> list:
     return tag_ids
 
 
-def get_non_existing_tags(number: int = 10) -> list:
-    db: Session = get_db()
+def get_non_existing_tags(db, number: int = 10) -> list:
     tag_ids = []
     largest_id = db.query(func.max(Tag.id)).scalar()
     print(largest_id)
@@ -100,8 +96,7 @@ def get_invalid_tags(number: int = 10) -> list:
     return invalid_tags
 
 
-def remove_tags(ids: list[int]) -> None:
-    db: Session = get_db()
+def remove_tags(db, ids: list[int]) -> None:
     for id in ids:
         tag = db.get(Tag, id)
         db.delete(tag)

@@ -14,7 +14,7 @@ from mmisp.api_schemas.noticelists.get_noticelist_response import (
     NoticelistResponse,
 )
 from mmisp.api_schemas.standard_status_response import StandardStatusIdentifiedResponse, StandardStatusResponse
-from mmisp.db.database import get_db, with_session_management
+from mmisp.db.database import get_db
 from mmisp.db.models.noticelist import Noticelist, NoticelistEntry
 
 router = APIRouter(tags=["noticelists"])
@@ -27,7 +27,6 @@ router = APIRouter(tags=["noticelists"])
     summary="Get noticelist details",
     description="Retrieve details of a specific noticelist by its ID.",
 )
-@with_session_management
 async def get_noticelist(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -43,7 +42,6 @@ async def get_noticelist(
     summary="Disable/Enable noticelist",
     description="Disable/Enable a specific noticelist by its ID.",
 )
-@with_session_management
 async def post_toggleEnable_noticelist(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -59,7 +57,6 @@ async def post_toggleEnable_noticelist(
     summary="Update noticelists",
     description="Update all noticelists.",
 )
-@with_session_management
 async def update_noticelists(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -74,7 +71,6 @@ async def update_noticelists(
     summary="Get all noticelists",
     description="Retrieve a list of all noticelists.",
 )
-@with_session_management
 async def get_all_noticelists(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -93,7 +89,6 @@ async def get_all_noticelists(
     summary="Get noticelist details (Deprecated)",
     description="Deprecated. Retrieve details of a specific noticelist by its ID using the old route.",
 )
-@with_session_management
 async def get_noticelist_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -110,7 +105,6 @@ async def get_noticelist_depr(
     summary="Update noticelists (Deprecated)",
     description="Deprecated. Update all noticelists.",
 )
-@with_session_management
 async def update_noticelist_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],

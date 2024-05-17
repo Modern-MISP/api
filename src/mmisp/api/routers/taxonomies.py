@@ -25,7 +25,7 @@ from mmisp.api_schemas.taxonomies.get_taxonomy_tags_response import (
     GetTagTaxonomyResponse,
     TaxonomyTagEntrySchema,
 )
-from mmisp.db.database import get_db, with_session_management
+from mmisp.db.database import get_db
 from mmisp.db.models.attribute import AttributeTag
 from mmisp.db.models.event import EventTag
 from mmisp.db.models.tag import Tag
@@ -42,7 +42,6 @@ router = APIRouter(tags=["taxonomies"])
     summary="Update taxonomies",
     description="Update all taxonomies.",
 )
-@with_session_management
 async def update_taxonomies(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -57,7 +56,6 @@ async def update_taxonomies(
     summary="Get taxonomy details",
     description="Retrieve details of a specific taxonomy by its ID.",
 )
-@with_session_management
 async def get_taxonomy_details(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -73,7 +71,6 @@ async def get_taxonomy_details(
     summary="Get all taxonomies",
     description="Retrieve a list of all taxonomies.",
 )
-@with_session_management
 async def get_taxonomies(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -88,7 +85,6 @@ async def get_taxonomies(
     summary="Get taxonomy inclusive tags and attributes",
     description="Retrieve details of a specific taxonomy and its tags and attributes by its ID.",
 )
-@with_session_management
 async def get_taxonomy_details_extended(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -104,7 +100,6 @@ async def get_taxonomy_details_extended(
     summary="Export taxonomy",
     description="Export taxonomy.",
 )
-@with_session_management
 async def export_taxonomy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -120,7 +115,6 @@ async def export_taxonomy(
     summary="Enable taxonomy",
     description="Enable a specific taxonomy by its ID.",
 )
-@with_session_management
 async def enable_taxonomy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -136,7 +130,6 @@ async def enable_taxonomy(
     summary="Disable taxonomy",
     description="Disable a specific taxonomy by its ID.",
 )
-@with_session_management
 async def disable_taxonomies(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -153,7 +146,6 @@ async def disable_taxonomies(
     summary="Update taxonomies",
     description="Update all taxonomies.",
 )
-@with_session_management
 async def update_taxonomies_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -169,7 +161,6 @@ async def update_taxonomies_depr(
     summary="Get taxonomy details",
     description="Retrieve details of a specific taxonomy by its ID.",
 )
-@with_session_management
 async def get_taxonomy_by_id_depr(
     db: Annotated[Session, Depends(get_db)],
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],

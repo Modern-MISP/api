@@ -3,8 +3,6 @@ import random
 import string
 
 from sqlalchemy import func
-from sqlalchemy.orm import Session
-from tests.database import get_db
 
 from mmisp.db.models.noticelist import Noticelist, NoticelistEntry
 
@@ -13,8 +11,7 @@ def random_string(length: int = 10) -> str:
     return "".join(random.choices(string.ascii_letters + string.digits, k=length))
 
 
-def get_non_existing_noticelist_ids(number: int = 10) -> list:
-    db: Session = get_db()
+def get_non_existing_noticelist_ids(db, number: int = 10) -> list:
     noticelist_ids = []
     largest_id = db.query(func.max(Noticelist.id)).scalar()
     print(largest_id)
@@ -57,8 +54,7 @@ def generate_random_noticelistentry_input(noticelist_id: int) -> NoticelistEntry
     )
 
 
-def add_noticelists(number: int = 10) -> list[int]:
-    db = get_db()
+def add_noticelists(db, number: int = 10) -> list[int]:
     noticelist_ids = []
     for i in range(number):
         new_noticelist = generate_random_noticelist_input()
@@ -73,8 +69,7 @@ def add_noticelists(number: int = 10) -> list[int]:
     return noticelist_ids
 
 
-def remove_noticelists(ids: list[int]) -> None:
-    db = get_db()
+def remove_noticelists(db, ids: list[int]) -> None:
     for id in ids:
         noticelist = db.get(Noticelist, id)
         db.delete(noticelist)

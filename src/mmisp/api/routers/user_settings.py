@@ -19,7 +19,7 @@ from mmisp.api_schemas.user_settings.view_user_setting_response import (
     ViewUserSettingResponse,
     ViewUserSettingResponseUserSetting,
 )
-from mmisp.db.database import get_db, with_session_management
+from mmisp.db.database import get_db
 from mmisp.db.models.user_setting import SettingName, UserSetting
 from mmisp.util.partial import partial
 
@@ -33,7 +33,6 @@ router = APIRouter(tags=["user_settings"])
     description="Create or Update a UserSetting by user ID and UserSettingName. \
     If specified UserSetting doesn't exist, it is created.",
 )
-@with_session_management
 async def set_user_settings(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
@@ -50,7 +49,6 @@ async def set_user_settings(
     summary="View UserSetting by ID.",
     description="Displays a UserSetting by the UserSettingID.",
 )
-@with_session_management
 async def view_user_settings(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -65,7 +63,6 @@ async def view_user_settings(
     summary="View UserSetting.",
     description="Displays a UserSetting by given userID and UserSetting name.",
 )
-@with_session_management
 async def get_user_setting_by_id(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -81,7 +78,6 @@ async def get_user_setting_by_id(
     summary="Displays all UserSettings.",
     description="Displays all UserSettings by specified parameters.",
 )
-@with_session_management
 async def search_user_settings(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -96,7 +92,6 @@ async def search_user_settings(
     summary="Displays all UserSettings.",
     description="Displays all UserSettings.",
 )
-@with_session_management
 async def get_user_settings(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -110,7 +105,6 @@ async def get_user_settings(
     summary="Deletes a UserSetting.",
     description="Deletes UserSetting by UserSetting ID.",
 )
-@with_session_management
 async def delete_user_settings(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
@@ -138,7 +132,6 @@ async def delete_user_settings(
     summary="View UserSetting by ID.",
     description="View UserSetting by UserSettingID.",
 )
-@with_session_management
 async def view_user_settings_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -147,7 +140,7 @@ async def view_user_settings_depr(
     user_setting: UserSetting | None = await db.get(UserSetting, user_setting_id)
 
     if not user_setting or (
-        user_setting.user_id != auth.user_id and not await check_permissions(auth, [Permission.SITE_ADMIN])
+        user_setting.user_id != auth.user_id and not await check_permissions(db, auth, [Permission.SITE_ADMIN])
     ):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
@@ -168,7 +161,6 @@ async def view_user_settings_depr(
     summary="View a UserSetting.",
     description="View a UserSetting by its userID and UserSetting name.",
 )
-@with_session_management
 async def get_user_setting_by_ids(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -181,7 +173,7 @@ async def get_user_setting_by_ids(
     user_setting: UserSetting | None = result.scalars().first()
 
     if not user_setting or (
-        user_setting.user_id != auth.user_id and not await check_permissions(auth, [Permission.SITE_ADMIN])
+        user_setting.user_id != auth.user_id and not await check_permissions(db, auth, [Permission.SITE_ADMIN])
     ):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
@@ -201,7 +193,6 @@ async def get_user_setting_by_ids(
     summary="Delete UserSetting.",
     description="Delete a UserSetting by specified UserSettingID.",
 )
-@with_session_management
 async def delete_user_settings_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
@@ -237,7 +228,7 @@ async def _set_user_settings(
             detail=f"User Setting not found. Defined user Settings are: {', '.join(possible_names)}",
         )
 
-    if user_id != auth.user_id and not await check_permissions(auth, [Permission.SITE_ADMIN]):
+    if user_id != auth.user_id and not await check_permissions(db, auth, [Permission.SITE_ADMIN]):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     result = await db.execute(
@@ -280,7 +271,7 @@ async def _view_user_settings(
     user_setting: UserSetting | None = await db.get(UserSetting, user_setting_id)
 
     if not user_setting or (
-        user_setting.user_id != auth.user_id and not await check_permissions(auth, [Permission.SITE_ADMIN])
+        user_setting.user_id != auth.user_id and not await check_permissions(db, auth, [Permission.SITE_ADMIN])
     ):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
@@ -301,7 +292,7 @@ async def _get_user_setting_by_id(
     user_id: int,
     user_setting_name: str,
 ) -> ViewUserSettingResponse:
-    if user_id != auth.user_id and not await check_permissions(auth, [Permission.SITE_ADMIN]):
+    if user_id != auth.user_id and not await check_permissions(db, auth, [Permission.SITE_ADMIN]):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     result = await db.execute(
@@ -333,7 +324,7 @@ async def _search_user_settings(
 
     query = select(UserSetting)
 
-    if not await check_permissions(auth, [Permission.SITE_ADMIN]):
+    if not await check_permissions(db, auth, [Permission.SITE_ADMIN]):
         query = query.filter(UserSetting.user_id == auth.user_id)
 
     if id:
@@ -370,7 +361,7 @@ async def _get_user_settings(
 ) -> list[UserSettingResponse]:
     query = select(UserSetting)
 
-    if not await check_permissions(auth, [Permission.SITE_ADMIN]):
+    if not await check_permissions(db, auth, [Permission.SITE_ADMIN]):
         query = query.filter(UserSetting.user_id == auth.user_id)
 
     result = await db.execute(query)
@@ -402,7 +393,7 @@ async def _delete_user_settings(
     user_setting: UserSetting | None = await db.get(UserSetting, user_setting_id)
 
     if not user_setting or (
-        user_setting.user_id != auth.user_id and not await check_permissions(auth, [Permission.SITE_ADMIN])
+        user_setting.user_id != auth.user_id and not await check_permissions(db, auth, [Permission.SITE_ADMIN])
     ):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 

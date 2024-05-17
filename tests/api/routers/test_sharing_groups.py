@@ -12,24 +12,17 @@ from sqlalchemy.orm import Session
 from mmisp.db.models.sharing_group import SharingGroup, SharingGroupOrg, SharingGroupServer
 from mmisp.util.uuid import uuid
 
-from ...environment import client
-
 
 def delete_sharing_group_server(db, sharing_group_id):
-    db_sharing_group_servers: list[SharingGroupServer] = (
-        db.query(SharingGroupServer).filter(SharingGroupServer.sharing_group_id == sharing_group_id).all()
-    )
-    for x in db_sharing_group_servers:
-        db.delete(x)
+    stmt = sa.sql.text("DELETE FROM sharing_group_servers WHERE sharing_group_id=:id")
+    db.execute(stmt, {"id": sharing_group_id})
     db.commit()
 
 
 def delete_sharing_group_orgs(db, sharing_group_id):
-    db_sharing_group_orgs: list[SharingGroupOrg] = (
-        db.query(SharingGroupOrg).filter(SharingGroupOrg.sharing_group_id == sharing_group_id).all()
-    )
-    for x in db_sharing_group_orgs:
-        db.delete(x)
+    stmt = sa.sql.text("DELETE FROM sharing_group_orgs WHERE sharing_group_id=:id")
+    db.execute(stmt, {"id": sharing_group_id})
+    db.commit()
     db.commit()
 
 
@@ -49,12 +42,20 @@ def check_counts_stay_constant(db):
     ncount_sharing_groups_orgs = db.execute("SELECT COUNT(*) FROM sharing_group_orgs").first()[0]
     ncount_sharing_groups_servers = db.execute("SELECT COUNT(*) FROM sharing_group_servers").first()[0]
 
+    sharing_groups = db.execute("SELECT * FROM sharing_groups").all()
+    sharing_groups_orgs = db.execute("SELECT * FROM sharing_group_orgs").all()
+    sharing_groups_servers = db.execute("SELECT * FROM sharing_group_servers").all()
+
+    ic(sharing_groups)
+    ic(sharing_groups_orgs)
+    ic(sharing_groups_servers)
+
     assert count_sharing_groups == ncount_sharing_groups
     assert count_sharing_groups_orgs == ncount_sharing_groups_orgs
     assert count_sharing_groups_servers == ncount_sharing_groups_servers
 
 
-def test_create_valid_sharing_group(db: Session, site_admin_user_token, instance_owner_org) -> None:
+def test_create_valid_sharing_group(db: Session, site_admin_user_token, instance_owner_org, client) -> None:
     body = {"name": f"Test Sharing Group {uuid()}{time_ns()}", "description": "description", "releasability": "yes"}
 
     response = client.post("/sharing_groups", headers={"authorization": site_admin_user_token}, json=body)
@@ -80,7 +81,7 @@ def test_create_valid_sharing_group(db: Session, site_admin_user_token, instance
 
 
 def test_create_valid_sharing_group_with_org_id_overwrite(
-    db: Session, instance_two_owner_org, site_admin_user_token
+    db: Session, instance_two_owner_org, site_admin_user_token, client
 ) -> None:
     body = {
         "name": f"test_create_valid_sharing_group_with_org_id_overwrite-{uuid()}",
@@ -111,7 +112,7 @@ def test_create_valid_sharing_group_with_org_id_overwrite(
 
 
 def test_create_sharing_group_with_org_id_overwrite_but_not_enough_permissions(
-    db, instance_two_owner_org, instance_owner_org_admin_user_token, instance_owner_org
+    db, instance_two_owner_org, instance_owner_org_admin_user_token, instance_owner_org, client
 ) -> None:
     body = {
         "name": f"test_create_sharing_group_with_org_id_overwrite_but_not_enough_permissions-{uuid()}",
@@ -133,7 +134,7 @@ def test_create_sharing_group_with_org_id_overwrite_but_not_enough_permissions(
 
 
 def test_get_own_created_sharing_group(
-    db: Session, sharing_group, instance_owner_org, instance_owner_org_admin_user_token
+    db: Session, sharing_group, instance_owner_org, instance_owner_org_admin_user_token, client
 ) -> None:
     response = client.get(
         f"/sharing_groups/{sharing_group.id}",
@@ -146,7 +147,7 @@ def test_get_own_created_sharing_group(
 
 
 def test_get_sharing_group_with_access_through_sharing_group_org(
-    db: Session, sharing_group, sharing_group_org_two, instance_org_two_admin_user_token
+    db: Session, sharing_group, sharing_group_org_two, instance_org_two_admin_user_token, client
 ) -> None:
     assert sharing_group_org_two
 
@@ -161,7 +162,7 @@ def test_get_sharing_group_with_access_through_sharing_group_org(
 
 
 def test_get_sharing_group_with_access_through_sharing_group_server(
-    db: Session, sharing_group, sharing_group_server_all_orgs, instance_org_two_admin_user_token
+    db: Session, sharing_group, sharing_group_server_all_orgs, instance_org_two_admin_user_token, client
 ) -> None:
     assert sharing_group
     assert sharing_group_server_all_orgs
@@ -177,7 +178,9 @@ def test_get_sharing_group_with_access_through_sharing_group_server(
     assert json["id"] == str(sharing_group.id)
 
 
-def test_get_sharing_group_with_access_through_site_admin(db: Session, sharing_group, site_admin_user_token) -> None:
+def test_get_sharing_group_with_access_through_site_admin(
+    db: Session, sharing_group, site_admin_user_token, client
+) -> None:
     response = client.get(
         f"/sharing_groups/{sharing_group.id}",
         headers={"authorization": site_admin_user_token},
@@ -189,7 +192,7 @@ def test_get_sharing_group_with_access_through_site_admin(db: Session, sharing_g
 
 
 def test_get_sharing_group_with_no_access(
-    db: Session, sharing_group, sharing_group_server, instance_org_two, instance_org_two_admin_user_token
+    db: Session, sharing_group, sharing_group_server, instance_org_two, instance_org_two_admin_user_token, client
 ) -> None:
     response = client.get(
         f"/sharing_groups/{sharing_group.id}",
@@ -201,7 +204,7 @@ def test_get_sharing_group_with_no_access(
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
-def test_update_own_sharing_group(db: Session, sharing_group, instance_owner_org_admin_user_token) -> None:
+def test_update_own_sharing_group(db: Session, sharing_group, instance_owner_org_admin_user_token, client) -> None:
     new_description = f"this is a new description + {datetime.utcnow()}"
 
     response = client.put(
@@ -218,7 +221,9 @@ def test_update_own_sharing_group(db: Session, sharing_group, instance_owner_org
     assert json["description"] == new_description
 
 
-def test_update_sharing_group_with_access_through_site_admin(db: Session, sharing_group, site_admin_user_token) -> None:
+def test_update_sharing_group_with_access_through_site_admin(
+    db: Session, sharing_group, site_admin_user_token, client
+) -> None:
     new_description = f"this is a new description + {datetime.utcnow()}"
 
     response = client.put(
@@ -236,7 +241,7 @@ def test_update_sharing_group_with_access_through_site_admin(db: Session, sharin
 
 
 def test_update_sharing_group_no_access_although_sharing_group_org_exists(
-    db: Session, sharing_group, sharing_group_org, instance_org_two_admin_user_token
+    db: Session, sharing_group, sharing_group_org, instance_org_two_admin_user_token, client
 ) -> None:
     assert sharing_group_org
     new_description = f"this is a new description + {datetime.utcnow()}"
@@ -251,7 +256,7 @@ def test_update_sharing_group_no_access_although_sharing_group_org_exists(
 
 
 def test_delete_own_sharing_group(
-    db: Session, sharing_group, sharing_group_org, sharing_group_server, instance_owner_org_admin_user_token
+    db: Session, sharing_group, sharing_group_org, sharing_group_server, instance_owner_org_admin_user_token, client
 ) -> None:
     sharing_group_id = sharing_group.id
     sharing_group_org_id = sharing_group_org.id
@@ -285,7 +290,7 @@ def test_delete_own_sharing_group(
 
 
 def test_delete_sharing_group_with_access_through_site_admin(
-    db: Session, sharing_group, instance_org_two, site_admin_user_token
+    db: Session, sharing_group, instance_org_two, site_admin_user_token, client
 ) -> None:
     response = client.delete(
         f"/sharing_groups/{sharing_group.id}",
@@ -311,6 +316,7 @@ def test_delete_sharing_group_no_access_although_sharing_group_org_exists(
     instance_owner_org,
     instance_org_two,
     instance_org_two_admin_user_token,
+    client,
 ) -> None:
     response = client.delete(
         f"/sharing_groups/{sharing_group.id}",
@@ -320,7 +326,7 @@ def test_delete_sharing_group_no_access_although_sharing_group_org_exists(
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
-def test_list_own_sharing_group(db: Session, sharing_group, instance_owner_org_admin_user_token) -> None:
+def test_list_own_sharing_group(db: Session, sharing_group, instance_owner_org_admin_user_token, client) -> None:
     response = client.get(
         "/sharing_groups",
         headers={"authorization": instance_owner_org_admin_user_token},
@@ -338,7 +344,7 @@ def test_list_own_sharing_group(db: Session, sharing_group, instance_owner_org_a
 
 
 def test_list_own_sharing_group_site_admin(
-    db: Session, sharing_group, instance_owner_org, site_admin_user_token
+    db: Session, sharing_group, instance_owner_org, site_admin_user_token, client
 ) -> None:
     response = client.get(
         "/sharing_groups",
@@ -358,7 +364,7 @@ def test_list_own_sharing_group_site_admin(
 
 
 def test_list_sharing_group_with_access_through_sharing_group_org(
-    db: Session, sharing_group_org_two, instance_org_two_admin_user_token, site_admin_user_token
+    db: Session, sharing_group_org_two, instance_org_two_admin_user_token, site_admin_user_token, client
 ) -> None:
     response = client.get(
         "/sharing_groups",
@@ -390,7 +396,12 @@ def test_list_sharing_group_with_access_through_sharing_group_org(
 
 
 def test_list_sharing_group_with_access_through_sharing_group_server(
-    db: Session, sharing_group, sharing_group_server_all_orgs, instance_org_two_admin_user_token, site_admin_user_token
+    db: Session,
+    sharing_group,
+    sharing_group_server_all_orgs,
+    instance_org_two_admin_user_token,
+    site_admin_user_token,
+    client,
 ) -> None:
     assert sharing_group_server_all_orgs
 
@@ -424,7 +435,7 @@ def test_list_sharing_group_with_access_through_sharing_group_server(
 
 
 def test_list_sharing_group_with_no_access(
-    db: Session, sharing_group, sharing_group_server, instance_org_two, instance_org_two_admin_user_token
+    db: Session, sharing_group, sharing_group_server, instance_org_two, instance_org_two_admin_user_token, client
 ) -> None:
     response = client.get(
         "/sharing_groups",
@@ -441,7 +452,9 @@ def test_list_sharing_group_with_no_access(
     assert not sharing_group_item
 
 
-def test_get_own_created_sharing_group_info(db: Session, sharing_group, instance_owner_org_admin_user_token) -> None:
+def test_get_own_created_sharing_group_info(
+    db: Session, sharing_group, instance_owner_org_admin_user_token, client
+) -> None:
     response = client.get(
         f"/sharing_groups/{sharing_group.id}/info",
         headers={"authorization": instance_owner_org_admin_user_token},
@@ -455,7 +468,7 @@ def test_get_own_created_sharing_group_info(db: Session, sharing_group, instance
 
 
 def test_get_sharing_group_info_with_access_through_sharing_group_org(
-    sharing_group, sharing_group_org_two, instance_org_two_admin_user_token
+    sharing_group, sharing_group_org_two, instance_org_two_admin_user_token, client
 ) -> None:
     assert sharing_group_org_two
     response = client.get(
@@ -471,7 +484,7 @@ def test_get_sharing_group_info_with_access_through_sharing_group_org(
 
 
 def test_get_sharing_group_info_with_access_through_sharing_group_server(
-    db, sharing_group, sharing_group_server_all_orgs, instance_org_two_admin_user_token
+    db, sharing_group, sharing_group_server_all_orgs, instance_org_two_admin_user_token, client
 ) -> None:
     sharing_group_server_all_orgs.server_id = 0
     db.commit()
@@ -490,7 +503,7 @@ def test_get_sharing_group_info_with_access_through_sharing_group_server(
 
 
 def test_get_sharing_group_info_with_access_through_site_admin(
-    db: Session, site_admin_user_token, sharing_group
+    db: Session, site_admin_user_token, sharing_group, client
 ) -> None:
     response = client.get(
         f"/sharing_groups/{sharing_group.id}/info",
@@ -505,7 +518,7 @@ def test_get_sharing_group_info_with_access_through_site_admin(
 
 
 def test_get_sharing_group_info_with_no_access(
-    db: Session, sharing_group_server, sharing_group, instance_org_two, instance_org_two_admin_user_token
+    db: Session, sharing_group_server, sharing_group, instance_org_two, instance_org_two_admin_user_token, client
 ) -> None:
     response = client.get(
         f"/sharing_groups/{sharing_group.id}/info",
@@ -516,7 +529,7 @@ def test_get_sharing_group_info_with_no_access(
 
 
 def test_add_org_to_own_sharing_group(
-    db: Session, sharing_group, instance_owner_org, instance_owner_org_admin_user_token
+    db: Session, sharing_group, instance_owner_org, instance_owner_org_admin_user_token, client
 ) -> None:
     response = client.patch(
         f"/sharing_groups/{sharing_group.id}/organisations",
@@ -528,11 +541,11 @@ def test_add_org_to_own_sharing_group(
     json = response.json()
     ic(json)
     assert json["org_id"] == str(999)
-    delete_sharing_group_orgs(db, json["id"])
+    delete_sharing_group_orgs(db, sharing_group.id)
 
 
 def test_patch_org_to_own_sharing_group(
-    db: Session, sharing_group_org, instance_owner_org, instance_owner_org_admin_user_token, sharing_group
+    db: Session, sharing_group_org, instance_owner_org, instance_owner_org_admin_user_token, sharing_group, client
 ) -> None:
     response = client.patch(
         f"/sharing_groups/{sharing_group.id}/organisations",
@@ -550,7 +563,7 @@ def test_patch_org_to_own_sharing_group(
 
 
 def test_add_org_to_sharing_group_using_site_admin(
-    db: Session, instance_org_two, site_admin_user_token, sharing_group
+    db: Session, instance_org_two, site_admin_user_token, sharing_group, client
 ) -> None:
     response = client.patch(
         f"/sharing_groups/{sharing_group.id}/organisations",
@@ -566,7 +579,7 @@ def test_add_org_to_sharing_group_using_site_admin(
 
 
 def test_add_org_to_sharing_group_with_no_access(
-    db: Session, sharing_group2, sharing_group_org, instance_owner_org, instance_owner_org_admin_user_token
+    db: Session, sharing_group2, sharing_group_org, instance_owner_org, instance_owner_org_admin_user_token, client
 ) -> None:
     response = client.patch(
         f"/sharing_groups/{sharing_group2.id}/organisations",
@@ -578,7 +591,7 @@ def test_add_org_to_sharing_group_with_no_access(
 
 
 def test_remove_org_from_own_sharing_group(
-    db: Session, instance_owner_org, sharing_group, sharing_group_org, instance_owner_org_admin_user_token
+    db: Session, instance_owner_org, sharing_group, sharing_group_org, instance_owner_org_admin_user_token, client
 ) -> None:
     sharing_group_org_id = sharing_group_org.id
 
@@ -596,7 +609,7 @@ def test_remove_org_from_own_sharing_group(
     assert not db_sharing_group_org
 
 
-def test_add_server_to_own_sharing_group(db, sharing_group, instance_owner_org_admin_user_token) -> None:
+def test_add_server_to_own_sharing_group(db, sharing_group, instance_owner_org_admin_user_token, client) -> None:
     response = client.patch(
         f"/sharing_groups/{sharing_group.id}/servers",
         headers={"authorization": instance_owner_org_admin_user_token},
@@ -611,7 +624,7 @@ def test_add_server_to_own_sharing_group(db, sharing_group, instance_owner_org_a
 
 
 def test_patch_server_to_own_sharing_group(
-    db, sharing_group_server, sharing_group, instance_owner_org_admin_user_token
+    db, sharing_group_server, sharing_group, instance_owner_org_admin_user_token, client
 ) -> None:
     response = client.patch(
         f"/sharing_groups/{sharing_group.id}/servers",
@@ -628,7 +641,9 @@ def test_patch_server_to_own_sharing_group(
     delete_sharing_group_server(db, sharing_group.id)
 
 
-def test_add_server_to_sharing_group_using_site_admin(db: Session, sharing_group, site_admin_user_token) -> None:
+def test_add_server_to_sharing_group_using_site_admin(
+    db: Session, sharing_group, site_admin_user_token, client
+) -> None:
     response = client.patch(
         f"/sharing_groups/{sharing_group.id}/servers",
         headers={"authorization": site_admin_user_token},
@@ -642,7 +657,7 @@ def test_add_server_to_sharing_group_using_site_admin(db: Session, sharing_group
 
 
 def test_add_server_to_sharing_group_with_no_access(
-    db: Session, sharing_group, sharing_group_org, instance_owner_org, instance_org_two_admin_user_token
+    db: Session, sharing_group, sharing_group_org, instance_owner_org, instance_org_two_admin_user_token, client
 ) -> None:
     response = client.patch(
         f"/sharing_groups/{sharing_group.id}/servers",
@@ -654,12 +669,15 @@ def test_add_server_to_sharing_group_with_no_access(
 
 
 def test_remove_server_from_own_sharing_group(
-    db: Session, sharing_group_server, sharing_group, instance_owner_org_admin_user_token
+    db: Session, sharing_group_server, sharing_group, instance_owner_org_admin_user_token, client
 ) -> None:
+    print("----------------- BEGIN TESTCASE ------------------")
     sharing_group_server_id = sharing_group_server.id
     ic(sharing_group_server.asdict())
+    url = f"/sharing_groups/{sharing_group.id}/servers/{sharing_group_server.server_id}"
+    ic(url)
     response = client.delete(
-        f"/sharing_groups/{sharing_group.id}/servers/{sharing_group_server_id}",
+        url,
         headers={"authorization": instance_owner_org_admin_user_token},
     )
 
@@ -672,7 +690,7 @@ def test_remove_server_from_own_sharing_group(
     assert not db_sharing_group_server
 
 
-def test_create_valid_sharing_group_legacy(db, instance_owner_org, site_admin_user_token) -> None:
+def test_create_valid_sharing_group_legacy(db, instance_owner_org, site_admin_user_token, client) -> None:
     body = {"name": f"Test Sharing Group {uuid()}{time_ns()}", "description": "description", "releasability": "yes"}
 
     response = client.post("/sharing_groups/add", headers={"authorization": site_admin_user_token}, json=body)
@@ -696,7 +714,7 @@ def test_create_valid_sharing_group_legacy(db, instance_owner_org, site_admin_us
 
 
 def test_create_valid_sharing_group_legacy_with_org_id_overwrite(
-    db, site_admin_user_token, instance_two_owner_org
+    db, site_admin_user_token, instance_two_owner_org, client
 ) -> None:
     body = {
         "name": f"Test Sharing Group {uuid()}{time_ns()}",
@@ -720,7 +738,7 @@ def test_create_valid_sharing_group_legacy_with_org_id_overwrite(
 
 
 def test_create_sharing_group_legacy_with_org_id_overwrite_but_not_enough_permissions(
-    db, instance_two_owner_org, instance_owner_org, instance_owner_org_admin_user_token
+    db, instance_two_owner_org, instance_owner_org, instance_owner_org_admin_user_token, client
 ) -> None:
     body = {
         "name": f"Test Sharing Group {uuid()}{time_ns()}",
@@ -745,7 +763,9 @@ def test_create_sharing_group_legacy_with_org_id_overwrite_but_not_enough_permis
     delete_sharing_group_server(db, json["SharingGroup"]["id"])
 
 
-def test_get_own_created_sharing_group_legacy(db: Session, sharing_group, instance_owner_org_admin_user_token) -> None:
+def test_get_own_created_sharing_group_legacy(
+    db: Session, sharing_group, instance_owner_org_admin_user_token, client
+) -> None:
     response = client.get(
         f"/sharing_groups/view/{sharing_group.id}",
         headers={"authorization": instance_owner_org_admin_user_token},
@@ -757,7 +777,7 @@ def test_get_own_created_sharing_group_legacy(db: Session, sharing_group, instan
 
 
 def test_get_sharing_group_legacy_with_access_through_sharing_group_org(
-    db: Session, sharing_group, sharing_group_org_two, instance_org_two_admin_user_token
+    db: Session, sharing_group, sharing_group_org_two, instance_org_two_admin_user_token, client
 ) -> None:
     assert sharing_group_org_two
 
@@ -772,7 +792,7 @@ def test_get_sharing_group_legacy_with_access_through_sharing_group_org(
 
 
 def test_get_sharing_group_legacy_with_access_through_sharing_group_server(
-    db: Session, sharing_group, sharing_group_server_all_orgs, instance_org_two_admin_user_token
+    db: Session, sharing_group, sharing_group_server_all_orgs, instance_org_two_admin_user_token, client
 ) -> None:
     assert sharing_group_server_all_orgs
     sharing_group_server_all_orgs.server_id = 0
@@ -789,7 +809,7 @@ def test_get_sharing_group_legacy_with_access_through_sharing_group_server(
 
 
 def test_get_sharing_group_legacy_with_access_through_site_admin(
-    db: Session, sharing_group, instance_org_two, site_admin_user_token
+    db: Session, sharing_group, instance_org_two, site_admin_user_token, client
 ) -> None:
     response = client.get(
         f"/sharing_groups/view/{sharing_group.id}",
@@ -802,7 +822,7 @@ def test_get_sharing_group_legacy_with_access_through_site_admin(
 
 
 def test_get_sharing_group_legacy_with_no_access(
-    db: Session, sharing_group, sharing_group_server, instance_org_two_admin_user_token
+    db: Session, sharing_group, sharing_group_server, instance_org_two_admin_user_token, client
 ) -> None:
     response = client.get(
         f"/sharing_groups/view/{sharing_group.id}",
@@ -812,7 +832,9 @@ def test_get_sharing_group_legacy_with_no_access(
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
-def test_update_own_sharing_group_legacy(db: Session, sharing_group, instance_owner_org_admin_user_token) -> None:
+def test_update_own_sharing_group_legacy(
+    db: Session, sharing_group, instance_owner_org_admin_user_token, client
+) -> None:
     new_description = f"this is a new description + {datetime.utcnow()}"
 
     response = client.post(
@@ -834,7 +856,7 @@ def test_update_own_sharing_group_legacy(db: Session, sharing_group, instance_ow
 
 
 def test_update_sharing_group_legacy_with_access_through_site_admin(
-    db: Session, sharing_group, instance_org_two, site_admin_user_token
+    db: Session, sharing_group, instance_org_two, site_admin_user_token, client
 ) -> None:
     new_description = f"this is a new description + {datetime.utcnow()}"
 
@@ -858,7 +880,7 @@ def test_update_sharing_group_legacy_with_access_through_site_admin(
 
 
 def test_update_sharing_group_legacy_no_access_although_sharing_group_org_exists(
-    db: Session, sharing_group, sharing_group_org, instance_owner_org, instance_org_two_admin_user_token
+    db: Session, sharing_group, sharing_group_org, instance_owner_org, instance_org_two_admin_user_token, client
 ) -> None:
     new_description = f"this is a new description + {datetime.utcnow()}"
 
@@ -882,6 +904,7 @@ def test_delete_own_sharing_group_legacy(
     sharing_group_org,
     sharing_group_server,
     instance_owner_org_admin_user_token,
+    client,
 ) -> None:
     sharing_group_id = sharing_group.id
     sharing_group_org_id = sharing_group_org.id
@@ -917,7 +940,7 @@ def test_delete_own_sharing_group_legacy(
 
 
 def test_delete_sharing_group_legacy_with_access_through_site_admin(
-    db: Session, sharing_group, instance_org_two, site_admin_user_token
+    db: Session, sharing_group, instance_org_two, site_admin_user_token, client
 ) -> None:
     response = client.delete(
         f"/sharing_groups/delete/{sharing_group.id}",
@@ -939,7 +962,7 @@ def test_delete_sharing_group_legacy_with_access_through_site_admin(
 
 
 def test_delete_sharing_group_legacy_no_access_although_sharing_group_org_exists(
-    db: Session, sharing_group, sharing_group_org, instance_owner_org, instance_org_two_admin_user_token
+    db: Session, sharing_group, sharing_group_org, instance_owner_org, instance_org_two_admin_user_token, client
 ) -> None:
     response = client.delete(
         f"/sharing_groups/delete/{sharing_group.id}",
@@ -949,7 +972,9 @@ def test_delete_sharing_group_legacy_no_access_although_sharing_group_org_exists
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
-def test_add_org_to_own_sharing_group_legacy(db: Session, sharing_group, instance_owner_org_admin_user_token) -> None:
+def test_add_org_to_own_sharing_group_legacy(
+    db: Session, sharing_group, instance_owner_org_admin_user_token, client
+) -> None:
     response = client.post(
         f"/sharing_groups/addOrg/{sharing_group.id}/999",
         headers={"authorization": instance_owner_org_admin_user_token},
@@ -964,7 +989,7 @@ def test_add_org_to_own_sharing_group_legacy(db: Session, sharing_group, instanc
 
 
 def test_patch_org_to_own_sharing_group_legacy(
-    db: Session, sharing_group, sharing_group_org, instance_owner_org_admin_user_token
+    db: Session, sharing_group, sharing_group_org, instance_owner_org_admin_user_token, client
 ) -> None:
     sharing_group_org.extend = True
     db.commit()
@@ -992,7 +1017,9 @@ def test_patch_org_to_own_sharing_group_legacy(
     delete_sharing_group_orgs(db, sharing_group.id)
 
 
-def test_add_org_to_sharing_group_legacy_using_site_admin(db: Session, sharing_group, site_admin_user_token) -> None:
+def test_add_org_to_sharing_group_legacy_using_site_admin(
+    db: Session, sharing_group, site_admin_user_token, client
+) -> None:
     response = client.post(
         f"/sharing_groups/addOrg/{sharing_group.id}/999",
         headers={"authorization": site_admin_user_token},
@@ -1013,6 +1040,7 @@ def test_add_org_to_sharing_group_legacy_with_no_access(
     instance_org_two_admin_user_token,
     sharing_group,
     instance_owner_org,
+    client,
 ) -> None:
     response = client.post(
         f"/sharing_groups/addOrg/{sharing_group.id}/999",
@@ -1023,7 +1051,7 @@ def test_add_org_to_sharing_group_legacy_with_no_access(
 
 
 def test_remove_org_from_own_sharing_group_legacy(
-    db: Session, sharing_group, sharing_group_org, instance_owner_org, instance_owner_org_admin_user_token
+    db: Session, sharing_group, sharing_group_org, instance_owner_org, instance_owner_org_admin_user_token, client
 ) -> None:
     sharing_group_org_id = sharing_group_org.id
 
@@ -1045,7 +1073,7 @@ def test_remove_org_from_own_sharing_group_legacy(
 
 
 def test_add_server_to_own_sharing_group_legacy(
-    db: Session, sharing_group, instance_owner_org_admin_user_token
+    db: Session, sharing_group, instance_owner_org_admin_user_token, client
 ) -> None:
     response = client.post(
         f"/sharing_groups/addServer/{sharing_group.id}/999",
@@ -1061,7 +1089,7 @@ def test_add_server_to_own_sharing_group_legacy(
 
 
 def test_patch_server_to_own_sharing_group_legacy(
-    db: Session, sharing_group, sharing_group_server_all_orgs, instance_owner_org_admin_user_token
+    db: Session, sharing_group, sharing_group_server_all_orgs, instance_owner_org_admin_user_token, client
 ) -> None:
     sharing_group_server_id = sharing_group_server_all_orgs.id
 
@@ -1085,7 +1113,7 @@ def test_patch_server_to_own_sharing_group_legacy(
 
 
 def test_add_server_to_sharing_group_legeacy_using_site_admin(
-    db: Session, sharing_group, site_admin_user_token
+    db: Session, sharing_group, site_admin_user_token, client
 ) -> None:
     response = client.post(
         f"/sharing_groups/addServer/{sharing_group.id}/999",
@@ -1101,7 +1129,7 @@ def test_add_server_to_sharing_group_legeacy_using_site_admin(
 
 
 def test_add_server_to_sharing_group_legacy_with_no_access(
-    db: Session, sharing_group, instance_owner_org, sharing_group_org, instance_org_two_admin_user_token
+    db: Session, sharing_group, instance_owner_org, sharing_group_org, instance_org_two_admin_user_token, client
 ) -> None:
     response = client.post(
         f"/sharing_groups/addServer/{sharing_group.id}/999",
@@ -1112,12 +1140,12 @@ def test_add_server_to_sharing_group_legacy_with_no_access(
 
 
 def test_remove_server_from_own_sharing_group_legacy(
-    db: Session, sharing_group, sharing_group_server, instance_owner_org, instance_owner_org_admin_user_token
+    db: Session, sharing_group, sharing_group_server, instance_owner_org, instance_owner_org_admin_user_token, client
 ) -> None:
     sharing_group_server_id = sharing_group_server.id
 
     response = client.post(
-        f"/sharing_groups/removeServer/{sharing_group.id}/{instance_owner_org.id}",
+        f"/sharing_groups/removeServer/{sharing_group.id}/{sharing_group_server.server_id}",
         headers={"authorization": instance_owner_org_admin_user_token},
     )
 

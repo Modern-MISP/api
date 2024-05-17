@@ -3,7 +3,6 @@ import string
 
 import pytest
 
-from tests.environment import client
 from tests.generators.model_generators.tag_generator import generate_tag
 from tests.generators.model_generators.taxonomy_generator import (
     generate_taxonomy,
@@ -58,21 +57,21 @@ def taxonomy_entry(db, taxonomy_predicate):
     db.commit()
 
 
-def test_get_taxonomy_by_id(db, taxonomy, taxonomy_entry, site_admin_user_token) -> None:
+def test_get_taxonomy_by_id(db, taxonomy, taxonomy_entry, site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.get(f"/taxonomies/{taxonomy.id}", headers=headers)
     assert response.status_code == 200
     assert response.json()["Taxonomy"]["id"] == str(1)
 
 
-def test_get_taxonomy_by_non_existing_id(site_admin_user_token) -> None:
+def test_get_taxonomy_by_non_existing_id(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.get("/taxonomies/1000", headers=headers)
     assert response.status_code == 404
 
 
 def test_get_taxonomy_expanded_by_id_with_tag(
-    db, taxonomy, taxonomy_predicate, taxonomy_entry, site_admin_user_token
+    db, taxonomy, taxonomy_predicate, taxonomy_entry, site_admin_user_token, client
 ) -> None:
     tag = generate_tag()
     tag.name = taxonomy.namespace + ":" + taxonomy_predicate.value + '="' + taxonomy_entry.value + '"'
@@ -89,7 +88,7 @@ def test_get_taxonomy_expanded_by_id_with_tag(
 
 
 def test_get_taxonomy_expanded_by_id_without_tag(
-    db, taxonomy, taxonomy_predicate, taxonomy_entry, site_admin_user_token
+    db, taxonomy, taxonomy_predicate, taxonomy_entry, site_admin_user_token, client
 ) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.get(f"/taxonomies/taxonomy_tags/{taxonomy.id}", headers=headers)
@@ -98,7 +97,7 @@ def test_get_taxonomy_expanded_by_id_without_tag(
     assert response_json["id"] == str(taxonomy.id)
 
 
-def test_get_taxonomy_expanded_by_invalid_id(db, site_admin_user_token) -> None:
+def test_get_taxonomy_expanded_by_invalid_id(db, site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.get("/taxonomies/taxonomy_tags/-1", headers=headers)
     response_json = response.json()
@@ -106,31 +105,31 @@ def test_get_taxonomy_expanded_by_invalid_id(db, site_admin_user_token) -> None:
     assert response_json
 
 
-def test_all_taxonomies(site_admin_user_token) -> None:
+def test_all_taxonomies(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.get("/taxonomies", headers=headers)
     assert response.status_code == 200
 
 
-def test_export_taxonomy(site_admin_user_token, taxonomy) -> None:
+def test_export_taxonomy(site_admin_user_token, taxonomy, client) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.get(f"/taxonomies/export/{taxonomy.id}", headers=headers)
     assert response.status_code == 200
 
 
-def test_enable_taxonomy(site_admin_user_token, taxonomy) -> None:
+def test_enable_taxonomy(site_admin_user_token, taxonomy, client) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.post(f"/taxonomies/enable/{taxonomy.id}", headers=headers, json={})
     assert response.status_code == 200
 
 
-def test_disable_taxonomy(site_admin_user_token, taxonomy) -> None:
+def test_disable_taxonomy(site_admin_user_token, taxonomy, client) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.post(f"/taxonomies/disable/{taxonomy.id}", headers=headers, json={})
     assert response.status_code == 200
 
 
-def test_update_taxonomy(site_admin_user_token) -> None:
+def test_update_taxonomy(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.post("/taxonomies/update", headers=headers, json={})
     assert response.status_code == 200

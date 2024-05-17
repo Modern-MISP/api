@@ -1,9 +1,9 @@
 import pytest
+import sqlalchemy as sa
 
 from mmisp.db.models.event import EventTag
 from mmisp.db.models.galaxy_cluster import GalaxyCluster
 
-from ...environment import client
 from ...generators.model_generators.galaxy_generator import generate_galaxy
 
 
@@ -57,7 +57,13 @@ def eventtag(db, event, tag):
     db.commit()
 
 
-def test_add_event_valid_data(site_admin_user_token) -> None:
+def delete_event(db, id):
+    stmt = sa.sql.text("DELETE FROM events WHERE id=:id")
+    db.execute(stmt, {"id": id})
+    db.commit()
+
+
+def test_add_event_valid_data(db, site_admin_user_token, client) -> None:
     request_body = {"info": "test event"}
     headers = {"authorization": site_admin_user_token}
     response = client.post("/events", json=request_body, headers=headers)
@@ -70,9 +76,11 @@ def test_add_event_valid_data(site_admin_user_token) -> None:
     assert "uuid" in response_json["Event"]["Org"]
     assert "local" in response_json["Event"]["Org"]
 
+    delete_event(db, response_json["Event"]["id"])
+
 
 def test_get_existing_event(
-    organisation, event, attribute, galaxy, galaxy_cluster, tag, site_admin_user_token, eventtag
+    organisation, event, attribute, galaxy, galaxy_cluster, tag, site_admin_user_token, eventtag, client
 ) -> None:
     org_id = organisation.id
 
@@ -99,7 +107,7 @@ def test_get_existing_event(
     assert response_json["Event"]["Galaxy"][0]["GalaxyCluster"][0]["event_tag_id"] == str(eventtag.id)
 
 
-def test_get_non_existing_event(site_admin_user_token) -> None:
+def test_get_non_existing_event(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.get("/events/0", headers=headers)
     assert response.status_code == 404
@@ -107,7 +115,7 @@ def test_get_non_existing_event(site_admin_user_token) -> None:
     assert response.status_code == 404
 
 
-def test_update_existing_event(event, site_admin_user_token) -> None:
+def test_update_existing_event(event, site_admin_user_token, client) -> None:
     request_body = {"info": "updated info"}
     event_id = event.id
 
@@ -119,7 +127,7 @@ def test_update_existing_event(event, site_admin_user_token) -> None:
     assert response_json["Event"]["info"] == request_body["info"]
 
 
-def test_update_non_existing_event(site_admin_user_token) -> None:
+def test_update_non_existing_event(site_admin_user_token, client) -> None:
     request_body = {"info": "updated event"}
     headers = {"authorization": site_admin_user_token}
     response = client.put("/events/0", json=request_body, headers=headers)
@@ -129,7 +137,7 @@ def test_update_non_existing_event(site_admin_user_token) -> None:
     assert response.status_code == 404
 
 
-def test_delete_existing_event(event, site_admin_user_token) -> None:
+def test_delete_existing_event(event, site_admin_user_token, client) -> None:
     event_id = event.id
 
     headers = {"authorization": site_admin_user_token}
@@ -138,7 +146,7 @@ def test_delete_existing_event(event, site_admin_user_token) -> None:
     assert response.status_code == 200
 
 
-def test_delete_invalid_or_non_existing_event(site_admin_user_token) -> None:
+def test_delete_invalid_or_non_existing_event(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.delete("/events/0", headers=headers)
     assert response.status_code == 404
@@ -146,7 +154,7 @@ def test_delete_invalid_or_non_existing_event(site_admin_user_token) -> None:
     assert response.status_code == 404
 
 
-def test_get_all_events(event, event2, site_admin_user_token) -> None:
+def test_get_all_events(event, event2, site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.get("/events", headers=headers)
 
@@ -155,7 +163,7 @@ def test_get_all_events(event, event2, site_admin_user_token) -> None:
     assert isinstance(response_json, list)
 
 
-def test_valid_search_attribute_data(organisation, event, attribute, site_admin_user_token) -> None:
+def test_valid_search_attribute_data(organisation, event, attribute, site_admin_user_token, client) -> None:
     json = {"returnFormat": "json", "limit": 100}
     headers = {"authorization": site_admin_user_token}
     response = client.post("/events/restSearch", json=json, headers=headers)
@@ -167,14 +175,14 @@ def test_valid_search_attribute_data(organisation, event, attribute, site_admin_
     assert "Event" in response_json_attribute
 
 
-def test_invalid_search_attribute_data(site_admin_user_token) -> None:
+def test_invalid_search_attribute_data(site_admin_user_token, client) -> None:
     json = {"returnFormat": "invalid format"}
     headers = {"authorization": site_admin_user_token}
     response = client.post("/events/restSearch", json=json, headers=headers)
     assert response.status_code == 404
 
 
-def test_index_events_valid_data(organisation, event, site_admin_user_token) -> None:
+def test_index_events_valid_data(organisation, event, site_admin_user_token, client) -> None:
     json = {"distribution": "1"}
     headers = {"authorization": site_admin_user_token}
     response = client.post("/events/index", json=json, headers=headers)
@@ -185,7 +193,7 @@ def test_index_events_valid_data(organisation, event, site_admin_user_token) -> 
     assert "GalaxyCluster" in response_json[0]
 
 
-def test_publish_existing_event(organisation, event, site_admin_user_token) -> None:
+def test_publish_existing_event(organisation, event, site_admin_user_token, client) -> None:
     event_id = event.id
 
     headers = {"authorization": site_admin_user_token}
@@ -202,7 +210,7 @@ def test_publish_existing_event(organisation, event, site_admin_user_token) -> N
     assert response_json["id"] == str(event_id)
 
 
-def test_publish_invalid_event(site_admin_user_token) -> None:
+def test_publish_invalid_event(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.post("/events/publish/0", headers=headers)
     assert response.status_code == 200
@@ -218,7 +226,7 @@ def test_publish_invalid_event(site_admin_user_token) -> None:
     assert response_json["url"] == "/events/publish/invalid_id"
 
 
-def test_publish_existing_event2(event, site_admin_user_token) -> None:
+def test_publish_existing_event2(event, site_admin_user_token, client) -> None:
     event_id = event.id
 
     headers = {"authorization": site_admin_user_token}
@@ -235,7 +243,7 @@ def test_publish_existing_event2(event, site_admin_user_token) -> None:
     assert response_json["id"] == str(event_id)
 
 
-def test_publish_invalid_event2(site_admin_user_token) -> None:
+def test_publish_invalid_event2(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.post("/events/unpublish/0", headers=headers)
     assert response.status_code == 200
@@ -251,7 +259,7 @@ def test_publish_invalid_event2(site_admin_user_token) -> None:
     assert response_json["url"] == "/events/unpublish/invalid_id"
 
 
-def test_add_existing_tag_to_attribute(event, tag, site_admin_user_token) -> None:
+def test_add_existing_tag_to_attribute(event, tag, site_admin_user_token, client) -> None:
     tag_id = tag.id
     event_id = event.id
 
@@ -268,7 +276,7 @@ def test_add_existing_tag_to_attribute(event, tag, site_admin_user_token) -> Non
     assert response_json["check_publish"]
 
 
-def test_add_invalid_or_non_existing_tag_to_attribute(event, site_admin_user_token) -> None:
+def test_add_invalid_or_non_existing_tag_to_attribute(event, site_admin_user_token, client) -> None:
     event_id = event.id
 
     headers = {"authorization": site_admin_user_token}
@@ -288,7 +296,7 @@ def test_add_invalid_or_non_existing_tag_to_attribute(event, site_admin_user_tok
     assert response_json["saved"] is False
 
 
-def test_remove_existing_tag_from_attribute(event, tag, eventtag, site_admin_user_token) -> None:
+def test_remove_existing_tag_from_attribute(event, tag, eventtag, site_admin_user_token, client) -> None:
     tag_id = tag.id
     event_id = event.id
 

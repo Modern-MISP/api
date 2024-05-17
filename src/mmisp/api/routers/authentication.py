@@ -15,7 +15,7 @@ from mmisp.api_schemas.authentication.password_login_body import PasswordLoginBo
 from mmisp.api_schemas.authentication.start_login_body import StartLoginBody
 from mmisp.api_schemas.authentication.start_login_response import LoginType, StartLoginResponse
 from mmisp.api_schemas.authentication.token_response import TokenResponse
-from mmisp.db.database import get_db, with_session_management
+from mmisp.db.database import get_db
 from mmisp.db.models.identity_provider import OIDCIdentityProvider
 from mmisp.db.models.user import User
 from mmisp.util.crypto import verify_secret
@@ -24,7 +24,6 @@ router = APIRouter(tags=["authentication"])
 
 
 @router.post("/auth/login/start", response_model=StartLoginResponse)
-@with_session_management
 async def start_login(db: Annotated[Session, Depends(get_db)], body: StartLoginBody) -> dict:
     result = await db.execute(select(User).filter(User.email == body.email).limit(1))
     user: User | None = result.scalars().first()
@@ -48,7 +47,6 @@ async def start_login(db: Annotated[Session, Depends(get_db)], body: StartLoginB
 
 
 @router.post("/auth/login/password")
-@with_session_management
 async def password_login(db: Annotated[Session, Depends(get_db)], body: PasswordLoginBody) -> TokenResponse:
     result = await db.execute(select(User).filter(User.email == body.email).limit(1))
     user: User | None = result.scalars().first()
@@ -62,7 +60,6 @@ async def password_login(db: Annotated[Session, Depends(get_db)], body: Password
 @router.get(
     "/auth/login/idp/{identityProviderId}/authorize", response_class=RedirectResponse, status_code=status.HTTP_302_FOUND
 )
-@with_session_management
 async def redirect_to_idp(
     db: Annotated[Session, Depends(get_db)], identity_provider_id: Annotated[int, Path(alias="identityProviderId")]
 ) -> RedirectResponse:
@@ -93,7 +90,6 @@ async def redirect_to_idp(
 @router.post(
     "/auth/login/idp/{identityProviderId}/callback", response_class=RedirectResponse, status_code=status.HTTP_302_FOUND
 )
-@with_session_management
 async def redirect_to_frontend(
     db: Annotated[Session, Depends(get_db)],
     identity_provider_id: Annotated[int, Path(alias="identityProviderId")],
