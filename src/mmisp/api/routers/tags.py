@@ -1,10 +1,10 @@
 import re
+from collections.abc import Sequence
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Path, status
 from sqlalchemy import delete, func
 from sqlalchemy.future import select
-from sqlalchemy.orm import Session
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
 from mmisp.api_schemas.tags.create_tag_body import TagCreateBody
@@ -12,7 +12,7 @@ from mmisp.api_schemas.tags.delete_tag_response import TagDeleteResponse
 from mmisp.api_schemas.tags.get_tag_response import TagGetResponse, TagResponse, TagViewResponse
 from mmisp.api_schemas.tags.search_tags_response import TagSearchResponse
 from mmisp.api_schemas.tags.update_tag_body import TagUpdateBody
-from mmisp.db.database import get_db
+from mmisp.db.database import Session, get_db
 from mmisp.db.models.attribute import AttributeTag
 from mmisp.db.models.event import EventTag
 from mmisp.db.models.feed import Feed
@@ -104,14 +104,13 @@ async def delete_tag(
 @router.get(
     "/tags",
     status_code=status.HTTP_200_OK,
-    response_model=partial(TagGetResponse),
     summary="Get all tags",
     description="Retrieve a list of all tags.",
 )
 async def get_tags(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-) -> dict:
+) -> TagGetResponse:
     return await _get_tags(db)
 
 
@@ -198,7 +197,7 @@ async def _add_tag(db: Session, body: TagCreateBody) -> TagResponse:
     db.add(tag)
     await db.commit()
 
-    return {"Tag": tag.__dict__}
+    return TagResponse.parse_obj({"Tag": tag.__dict__})
 
 
 async def _view_tag(db: Session, tag_id: int) -> TagViewResponse:
@@ -215,16 +214,16 @@ async def _view_tag(db: Session, tag_id: int) -> TagViewResponse:
 
 async def _search_tags(db: Session, tag_search_term: str) -> dict:
     result = await db.execute(select(Tag).filter(Tag.name.contains(tag_search_term)))
-    tags: list[Tag] = result.scalars().all()
+    tags: Sequence[Tag] = result.scalars().all()
 
     tag_datas = []
     for tag in tags:
         result = await db.execute(select(Taxonomy).filter(Taxonomy.namespace == tag.name.split(":", 1)[0]))
-        taxonomies: list[Taxonomy] = result.scalars().all()
+        taxonomies: Sequence[Taxonomy] = result.scalars().all()
 
         for taxonomy in taxonomies:
             result = await db.execute(select(TaxonomyPredicate).filter_by(taxonomy_id=taxonomy.id))
-            taxonomy_predicates: list[TaxonomyPredicate] = result.scalars().all()
+            taxonomy_predicates: Sequence[TaxonomyPredicate] = result.scalars().all()
 
             for taxonomy_predicate in taxonomy_predicates:
                 tag_datas.append(
@@ -258,7 +257,7 @@ async def _update_tag(db: Session, body: TagUpdateBody, tag_id: int) -> TagRespo
     await db.commit()
     await db.refresh(tag)
 
-    return {"Tag": tag.__dict__}
+    return TagResponse.parse_obj({"Tag": tag.__dict__})
 
 
 async def _delete_tag(db: Session, tag_id: int) -> TagDeleteResponse:
@@ -268,13 +267,13 @@ async def _delete_tag(db: Session, tag_id: int) -> TagDeleteResponse:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Tag not found.")
 
     result = await db.execute(select(Feed).filter(Feed.tag_id == deleted_tag.id))
-    feeds: list[Feed] = result.scalars().all()
+    feeds: Sequence[Feed] = result.scalars().all()
 
     for feed in feeds:
         feed.tag_id = 0
 
     result = await db.execute(select(GalaxyCluster).filter(GalaxyCluster.tag_name == deleted_tag.name))
-    galaxy_clusters: list[GalaxyCluster] = result.scalars().all()
+    galaxy_clusters: Sequence[GalaxyCluster] = result.scalars().all()
 
     for galaxy_cluster in galaxy_clusters:
         galaxy_cluster.tag_name = ""
@@ -286,12 +285,12 @@ async def _delete_tag(db: Session, tag_id: int) -> TagDeleteResponse:
 
     message = "Tag deleted."
 
-    return {"name": message, "message": message, "url": f"/tags/{tag_id}"}
+    return TagDeleteResponse.parse_obj({"name": message, "message": message, "url": f"/tags/{tag_id}"})
 
 
-async def _get_tags(db: Session) -> dict:
+async def _get_tags(db: Session) -> TagGetResponse:
     result = await db.execute(select(Tag))
-    tags: list[Tag] = result.scalars().all()
+    tags: Sequence[Tag] = result.scalars().all()
 
     return TagGetResponse(Tag=[tag.__dict__ for tag in tags])
 

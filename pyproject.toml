@@ -1,6 +1,6 @@
 [project]
 name = "mmisp-api"
-version = "0.1.2"
+version = "0.1.3"
 description = ""
 authors = []
 readme = "README.md"
@@ -8,9 +8,9 @@ requires-python = ">=3.11.0"
 
 
 dependencies = [
-  "mmisp-lib==0.1.7",
+  "mmisp-lib==0.1.9",
   "fastapi==0.104.1",
-  "SQLAlchemy[asyncio]==1.4.46",
+  "SQLAlchemy[asyncio]>=1.4.46",
   "pydantic==1.10.13",
   "uvicorn==0.24.0.post1",
   "python-dotenv==1.0.0",
@@ -30,7 +30,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   "ruff>=0.3.7",
-  "mypy==1.8.0",
+  "mypy==1.10.0",
   "pre-commit==3.6.0",
   "pytest==8.0.0",
   "pytest-asyncio==0.23.5.post1",
@@ -38,15 +38,20 @@ dev = [
   "respx==0.20.2",
   "mysql-connector-python==8.3.0",
   "icecream",
+  "types-Pygments",
+  "types-passlib",
 ]
 
 [tool.ruff]
 fix = true
 line-length = 120
 required-version = ">=0.3.7"
-select = ["E", "F", "W", "I", "ICN", "ANN"]
-ignore = ["ANN002", "ANN003", "ANN401"]
 src = ["src"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "ICN", "ANN"]
+#select = ["ALL"]
+ignore = ["ANN002", "ANN003", "ANN401"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["ANN001", "ANN201", "ANN202"]
@@ -56,3 +61,6 @@ max-line-length = 120
 
 [tool.coverage.run]
 concurrency = ["greenlet", "thread"]
+
+[tool.mypy]
+plugins = ["pydantic.mypy"]

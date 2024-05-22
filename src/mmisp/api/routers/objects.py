@@ -1,10 +1,11 @@
+from collections.abc import Sequence
 from datetime import datetime
 from time import time
-from typing import Annotated, Any
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Path, status
 from sqlalchemy import delete, or_, select
-from sqlalchemy.orm import Session
+from sqlalchemy.sql.expression import Select
 
 from mmisp.api.auth import Auth, AuthStrategy, authorize
 from mmisp.api_schemas.attributes.get_all_attributes_response import GetAllAttributesResponse
@@ -17,11 +18,10 @@ from mmisp.api_schemas.objects.get_object_response import (
 )
 from mmisp.api_schemas.objects.search_objects_body import ObjectSearchBody
 from mmisp.api_schemas.standard_status_response import StandardStatusResponse
-from mmisp.db.database import get_db
+from mmisp.db.database import Session, get_db
 from mmisp.db.models.attribute import Attribute
 from mmisp.db.models.event import Event
 from mmisp.db.models.object import Object, ObjectTemplate
-from mmisp.util.partial import partial
 
 router = APIRouter(tags=["objects"])
 
@@ -46,7 +46,6 @@ async def add_object(
 @router.post(
     "/objects/restsearch",
     status_code=status.HTTP_200_OK,
-    response_model=partial(ObjectSearchResponse),
     summary="Search objects",
     description="Search for objects based on various filters.",
 )
@@ -54,14 +53,13 @@ async def restsearch(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     body: ObjectSearchBody,
-) -> dict[str, Any]:
+) -> ObjectSearchResponse:
     return await _restsearch(db, body)
 
 
 @router.get(
     "/objects/{objectId}",
     status_code=status.HTTP_200_OK,
-    response_model=ObjectResponse,
     summary="View object details",
     description="View details of a specific object including its attributes and related event.",
 )
@@ -168,7 +166,7 @@ async def _add_object(db: Session, event_id: int, object_template_id: int, body:
     await db.flush()
     await db.refresh(object)
 
-    for attr in body.Attribute:
+    for attr in body.Attribute or []:
         attribute: Attribute = Attribute(
             **attr.dict(exclude={"event_id", "object_id", "timestamp"}),
             event_id=int(event_id),
@@ -181,7 +179,7 @@ async def _add_object(db: Session, event_id: int, object_template_id: int, body:
     await db.refresh(object)
 
     result = await db.execute(select(Attribute).filter(Attribute.object_id == object.id))
-    attributes: list[Attribute] = result.scalars().all()
+    attributes: Sequence[Attribute] = result.scalars().all()
 
     attributes_response: list[GetAllAttributesResponse] = [
         GetAllAttributesResponse(**attribute.asdict()) for attribute in attributes
@@ -196,14 +194,13 @@ async def _add_object(db: Session, event_id: int, object_template_id: int, body:
     return ObjectResponse(Object=object_response)
 
 
-async def _restsearch(db: Session, body: ObjectSearchBody) -> dict[str, Any]:
+async def _restsearch(db: Session, body: ObjectSearchBody) -> ObjectSearchResponse:
     if body.return_format is None:
         body.return_format = "json"
     else:
         _check_valid_return_format(return_format=body.return_format)
 
-    filters = body.dict(exclude_unset=True)
-    objects = await _get_objects_with_filters(db=db, filters=filters)
+    objects = await _get_objects_with_filters(db=db, filters=body)
 
     object_ids = [obj.id for obj in objects]
     result = await db.execute(select(Attribute).filter(Attribute.object_id.in_(object_ids)))
@@ -227,7 +224,7 @@ async def _restsearch(db: Session, body: ObjectSearchBody) -> dict[str, Any]:
         )
         objects_data.append(obj_data)
 
-    return ObjectSearchResponse(response=[{"object": obj.dict()} for obj in objects_data])
+    return ObjectSearchResponse(response=objects_data)
 
 
 async def _get_object_details(db: Session, object_id: int) -> ObjectResponse:
@@ -237,12 +234,12 @@ async def _get_object_details(db: Session, object_id: int) -> ObjectResponse:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Object not found.")
 
     result = await db.execute(select(Attribute).filter(Attribute.object_id == object.id))
-    attributes: list[Attribute] = result.scalars().all()
+    attributes: Sequence[Attribute] = result.scalars().all()
 
     result = await db.execute(
         select(Event).join(Object, Event.id == Object.event_id).filter(Object.id == object_id).limit(1)
     )
-    event: Event = result.scalars().first()
+    event: Event = result.scalars().one()
 
     event_response: ObjectEventResponse = ObjectEventResponse(
         id=str(event.id), info=event.info, org_id=str(event.org_id), orgc_id=str(event.orgc_id)
@@ -292,18 +289,18 @@ def _check_valid_return_format(return_format: str) -> None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid return format.")
 
 
-async def _get_objects_with_filters(db: Session, filters: ObjectSearchBody) -> list[Object]:
-    search_body: ObjectSearchBody = ObjectSearchBody(**filters)
-    query: Object = select(Object)
+async def _get_objects_with_filters(db: Session, filters: ObjectSearchBody) -> Sequence[Object]:
+    search_body: ObjectSearchBody = filters
+    query: Select = select(Object)
 
     if search_body.object_name:
         query = query.filter(Object.name == search_body.object_name)
 
     if search_body.object_template_version:
-        query = query.filter(str(Object.template_version) == search_body.object_template_version)
+        query = query.filter(Object.template_version == search_body.object_template_version)
 
     if search_body.event_id:
-        query = query.filter(str(Object.event_id) == search_body.event_id)
+        query = query.filter(Object.event_id == search_body.event_id)
 
     if search_body.category:
         query = query.filter(Object.meta_category == search_body.category)
@@ -312,10 +309,10 @@ async def _get_objects_with_filters(db: Session, filters: ObjectSearchBody) -> l
         query = query.filter(Object.comment.like(f"%{search_body.comment}%"))
 
     if search_body.first_seen:
-        query = query.filter(str(Object.first_seen) == search_body.first_seen)
+        query = query.filter(Object.first_seen == search_body.first_seen)
 
     if search_body.last_seen:
-        query = query.filter(str(Object.last_seen) == search_body.last_seen)
+        query = query.filter(Object.last_seen == search_body.last_seen)
 
     if search_body.quick_filter:
         query = query.filter(

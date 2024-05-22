@@ -1,4 +1,6 @@
-from typing import Annotated, Any, Literal
+import typing
+from collections.abc import Sequence
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Request, status
 from sqlalchemy import func, select
@@ -38,7 +40,6 @@ from mmisp.db.models.event import Event
 from mmisp.db.models.object import Object
 from mmisp.db.models.tag import Tag
 from mmisp.util.models import update_record
-from mmisp.util.partial import partial
 
 router = APIRouter(tags=["attributes"])
 
@@ -135,13 +136,12 @@ async def delete_attribute(
 @router.get(
     "/attributes",
     status_code=status.HTTP_200_OK,
-    response_model=list[partial(GetAllAttributesResponse)],
     summary="Get all Attributes",
     description="Retrieve a list of all attributes.",
 )
 async def get_attributes(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))], db: Annotated[Session, Depends(get_db)]
-) -> list[dict]:
+) -> list[GetAllAttributesResponse]:
     return await _get_attributes(db)
 
 
@@ -173,7 +173,7 @@ async def get_attributes_statistics(
     db: Annotated[Session, Depends(get_db)],
     context: Literal["type"] | Literal["category"],
     percentage: bool,
-) -> GetAttributeStatisticsCategoriesResponse | GetAttributeStatisticsTypesResponse:
+) -> GetAttributeStatisticsCategoriesResponse | GetAttributeStatisticsTypesResponse:  # type: ignore
     return await _get_attribute_statistics(db, context, percentage)
 
 
@@ -290,7 +290,7 @@ async def delete_attribute_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
     attribute_id: Annotated[str, Path(alias="attributeId")],
-) -> dict:
+) -> DeleteAttributeResponse:
     return await _delete_attribute(db, attribute_id)
 
 
@@ -332,7 +332,7 @@ async def _add_attribute(db: Session, event_id: str, body: AddAttributeBody) -> 
     await db.refresh(new_attribute)
     setattr(event, "attribute_count", event.attribute_count + 1)
 
-    attribute_data = _prepare_attribute_response(new_attribute, "add")
+    attribute_data = _prepare_attribute_response_add(new_attribute)
 
     return AddAttributeResponse(Attribute=attribute_data)
 
@@ -361,7 +361,7 @@ async def _update_attribute(db: Session, attribute_id: str, body: EditAttributeB
 
     attribute_data = await _prepare_edit_attribute_response(db, attribute_id, attribute)
 
-    return EditAttributeResponse(Attribute=attribute_data).__dict__
+    return EditAttributeResponse(Attribute=attribute_data)
 
 
 async def _delete_attribute(db: Session, attribute_id: str) -> DeleteAttributeResponse:
@@ -376,14 +376,14 @@ async def _delete_attribute(db: Session, attribute_id: str) -> DeleteAttributeRe
     return DeleteAttributeResponse(message="Attribute deleted.")
 
 
-async def _get_attributes(db: Session) -> list[dict]:
+async def _get_attributes(db: Session) -> list[GetAllAttributesResponse]:
     result = await db.execute(select(Attribute))
     attributes = result.scalars().all()
 
     if not attributes:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No attributes found.")
 
-    attribute_responses = [_prepare_attribute_response(attribute, "get all") for attribute in attributes]
+    attribute_responses = [_prepare_attribute_response_get_all(attribute) for attribute in attributes]
 
     return attribute_responses
 
@@ -429,15 +429,15 @@ async def _delete_selected_attributes(
         message=f"{attribute_count} {attribute_str} deleted.",
         url=str(request.url.path),
         id=str(event_id),
-    ).__dict__
+    )
 
 
-async def _rest_search_attributes(db: Session, body: SearchAttributesBody) -> dict:
+async def _rest_search_attributes(db: Session, body: SearchAttributesBody) -> SearchAttributesResponse:
     if body.returnFormat != "json":
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid output format.")
 
     result = await db.execute(select(Attribute))
-    attributes: list[Attribute] = result.scalars().all()
+    attributes: Sequence[Attribute] = result.scalars().all()
     if body.limit is not None:
         attributes = attributes[: body.limit]
     response_list = []
@@ -468,9 +468,9 @@ async def _rest_search_attributes(db: Session, body: SearchAttributesBody) -> di
 
 async def _get_attribute_statistics(
     db: Session, context: Literal["type"] | Literal["category"], percentage: bool
-) -> GetAttributeStatisticsTypesResponse | GetAttributeStatisticsCategoriesResponse:
+) -> GetAttributeStatisticsTypesResponse | GetAttributeStatisticsCategoriesResponse:  # type: ignore
     result = await db.execute(select(func.count()).select_from(Attribute))
-    total_count_of_attributes = result.scalar()
+    total_count_of_attributes = typing.cast(int, result.scalar())
 
     if context == "category":
         return await _category_statistics(db, percentage, total_count_of_attributes)
@@ -513,7 +513,7 @@ async def _add_tag_to_attribute(
         return AddRemoveTagAttributeResponse(saved=False, errors="Tag could not be added.")
 
     if int(local) not in [0, 1]:
-        return AddRemoveTagAttributeResponse(saved=False, errors="Invalid 'local'").__dict__
+        return AddRemoveTagAttributeResponse(saved=False, errors="Invalid 'local'")
     local_output = local != "0"
 
     new_attribute_tag = AttributeTag(
@@ -525,7 +525,7 @@ async def _add_tag_to_attribute(
     await db.commit()
     await db.refresh(new_attribute_tag)
 
-    return AddRemoveTagAttributeResponse(saved=True, success="Tag added", check_publish=True).__dict__
+    return AddRemoveTagAttributeResponse(saved=True, success="Tag added", check_publish=True)
 
 
 async def _remove_tag_from_attribute(db: Session, attribute_id: str, tag_id: str) -> AddRemoveTagAttributeResponse:
@@ -553,21 +553,24 @@ async def _remove_tag_from_attribute(db: Session, attribute_id: str, tag_id: str
     return AddRemoveTagAttributeResponse(saved=True, success="Tag removed", check_publish=True)
 
 
-def _prepare_attribute_response(attribute: Attribute, request_type: str) -> dict[str, Any]:
+def _prepare_attribute_response_add(attribute: Attribute) -> AddAttributeAttributes:
     attribute_dict = attribute.asdict().copy()
 
     fields_to_convert = ["object_id", "sharing_group_id"]
     for field in fields_to_convert:
         attribute_dict[field] = str(attribute_dict.get(field, "0"))
 
-    response_strategy = {"add": AddAttributeAttributes, "get all": GetAllAttributesResponse}
+    return AddAttributeAttributes(**attribute_dict)
 
-    response_class = response_strategy.get(request_type)
 
-    if response_class:
-        return response_class(**attribute_dict).dict()
+def _prepare_attribute_response_get_all(attribute: Attribute) -> GetAllAttributesResponse:
+    attribute_dict = attribute.asdict().copy()
 
-    raise ValueError(f"Unknown request_type: {request_type}")
+    fields_to_convert = ["object_id", "sharing_group_id"]
+    for field in fields_to_convert:
+        attribute_dict[field] = str(attribute_dict.get(field, "0"))
+
+    return GetAllAttributesResponse(**attribute_dict)
 
 
 async def _prepare_get_attribute_details_response(
@@ -593,7 +596,7 @@ async def _prepare_get_attribute_details_response(
     if len(db_attribute_tags) > 0:
         for attribute_tag in db_attribute_tags:
             result = await db.execute(select(Tag).filter(Tag.id == attribute_tag.tag_id).limit(1))
-            tag = result.scalars().first()
+            tag = result.scalars().one()
 
             connected_tag = GetAttributeTag(
                 id=tag.id,
@@ -627,7 +630,7 @@ async def _prepare_edit_attribute_response(
     if len(db_attribute_tags) > 0:
         for attribute_tag in db_attribute_tags:
             result = await db.execute(select(Tag).filter(Tag.id == attribute_tag.tag_id).limit(1))
-            tag = result.scalars().first()
+            tag = result.scalars().one()
             connected_tag = GetAttributeTag(
                 id=tag.id,
                 name=tag.name,
@@ -638,7 +641,7 @@ async def _prepare_edit_attribute_response(
                 numerical_value=tag.numerical_value,
                 is_galaxy=tag.is_galaxy,
                 is_costum_galaxy=tag.is_custom_galaxy,
-                local_only=tag.local_only,
+                local=tag.local_only,
             )
             attribute_dict["tag"].append(connected_tag)
 
@@ -673,7 +676,7 @@ async def _category_statistics(
 
 async def _type_statistics(
     db: Session, percentage: int, total_count_of_attributes: int
-) -> GetAttributeStatisticsTypesResponse:
+) -> GetAttributeStatisticsTypesResponse:  # type: ignore
     response_dict = {}
 
     if total_count_of_attributes == 0:
@@ -691,12 +694,14 @@ async def _type_statistics(
     return GetAttributeStatisticsTypesResponse(**response_dict)
 
 
+# todo: use count function instead of len()
 async def _count_of_attributes_with_given_category(db: Session, category: str) -> int:
     result = await db.execute(select(Attribute).filter(Attribute.category == category))
     attributes_with_given_category = result.scalars().all()
     return len(attributes_with_given_category)
 
 
+# todo: use count function instead of len()
 async def _count_of_attributes_with_given_type(db: Session, type: str) -> int:
     result = await db.execute(select(Attribute).filter(Attribute.type == type))
     attributes_with_given_type = result.scalars().all()

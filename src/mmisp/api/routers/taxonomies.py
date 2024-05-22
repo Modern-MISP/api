@@ -1,11 +1,13 @@
+import typing
+from collections.abc import Sequence
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Path, status
 from sqlalchemy import func, select
-from sqlalchemy.orm import Session
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
 from mmisp.api_schemas.standard_status_response import StandardStatusIdentifiedResponse, StandardStatusResponse
+from mmisp.api_schemas.tags.get_tag_response import TagAttributesResponse
 from mmisp.api_schemas.taxonomies.export_taxonomies_response import (
     ExportTaxonomyEntry,
     ExportTaxonomyResponse,
@@ -25,12 +27,11 @@ from mmisp.api_schemas.taxonomies.get_taxonomy_tags_response import (
     GetTagTaxonomyResponse,
     TaxonomyTagEntrySchema,
 )
-from mmisp.db.database import get_db
+from mmisp.db.database import Session, get_db
 from mmisp.db.models.attribute import AttributeTag
 from mmisp.db.models.event import EventTag
 from mmisp.db.models.tag import Tag
 from mmisp.db.models.taxonomy import Taxonomy, TaxonomyEntry, TaxonomyPredicate
-from mmisp.util.partial import partial
 
 router = APIRouter(tags=["taxonomies"])
 
@@ -67,14 +68,13 @@ async def get_taxonomy_details(
 @router.get(
     "/taxonomies",
     status_code=status.HTTP_200_OK,
-    response_model=list[partial(ViewTaxonomyResponse)],
     summary="Get all taxonomies",
-    description="Retrieve a list of all taxonomies.",
 )
 async def get_taxonomies(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
 ) -> list[ViewTaxonomyResponse]:
+    """Retrieve a list of all taxonomies."""
     return await _get_all_taxonomies(db)
 
 
@@ -212,7 +212,7 @@ async def _get_taxonomy_details(db: Session, taxonomy_id: int) -> GetIdTaxonomyR
             result = await db.execute(select(Tag).filter(Tag.name == tag_name).limit(1))
             tag = result.scalars().first()
             if tag:
-                existing_tag = tag.__dict__
+                existing_tag: TagAttributesResponse | bool = TagAttributesResponse.parse_obj(tag.__dict__)
             else:
                 existing_tag = False
 
@@ -244,7 +244,7 @@ async def _get_taxonomy_details(db: Session, taxonomy_id: int) -> GetIdTaxonomyR
 
 async def _get_all_taxonomies(db: Session) -> list[ViewTaxonomyResponse]:
     result = await db.execute(select(Taxonomy))
-    taxonomies: list[Taxonomy] = result.scalars().all()
+    taxonomies: Sequence[Taxonomy] = result.scalars().all()
 
     response: list[ViewTaxonomyResponse] = []
     tag_names = []
@@ -252,7 +252,7 @@ async def _get_all_taxonomies(db: Session) -> list[ViewTaxonomyResponse]:
     taxonomy_entries_builder = []
 
     result = await db.execute(select(Tag.name))
-    tag_names_retrieve: list[str] = result.scalars().all()
+    tag_names_retrieve: Sequence[str] = result.scalars().all()
 
     result = await db.execute(
         select(TaxonomyPredicate.taxonomy_id, TaxonomyPredicate.value, TaxonomyEntry.value)
@@ -291,7 +291,7 @@ async def _get_all_taxonomies(db: Session) -> list[ViewTaxonomyResponse]:
 
         current_count = 0
         for taxonomy_entry in taxonomy_entries_predicates[taxonomy.id - 1]:
-            tag_name = taxonomy.namespace + ":" + taxonomy_entry[1]
+            tag_name = str(taxonomy.namespace) + ":" + taxonomy_entry[1]
             entry_val = taxonomy_entry[2] if taxonomy_entry[2] is not None else ""
             if tag_name in tag_names or tag_name + '="' + entry_val + '"' in tag_names:
                 current_count += 1
@@ -343,14 +343,14 @@ async def _get_taxonomy_details_extended(db: Session, taxonomy_id: int) -> GetTa
 
             if tag:
                 result = await db.execute(select(func.count()).select_from(EventTag).filter(EventTag.tag_id == tag.id))
-                events = result.scalar()
+                events = typing.cast(int, result.scalar())
 
                 result = await db.execute(
                     select(func.count()).select_from(AttributeTag).filter(AttributeTag.tag_id == tag.id)
                 )
-                attributes = result.scalar()
+                attributes = typing.cast(int, result.scalar())
 
-                existing_tag = tag.__dict__
+                existing_tag: dict | bool = tag.__dict__
             else:
                 existing_tag = False
 
@@ -382,7 +382,7 @@ async def _get_taxonomy_details_extended(db: Session, taxonomy_id: int) -> GetTa
 async def _export_taxonomy(db: Session, taxonomy_id: int) -> ExportTaxonomyResponse:
     taxonomy: Taxonomy | None = await db.get(Taxonomy, taxonomy_id)
 
-    if not Taxonomy:
+    if not taxonomy:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Taxonomy not found.")
 
     predicates: list[TaxonomyPredicateSchema] = []
@@ -462,9 +462,9 @@ async def _get_tag_name(db: Session, taxonomy_entry: TaxonomyEntry) -> str:
     result = await db.execute(
         select(TaxonomyPredicate).filter(TaxonomyPredicate.id == taxonomy_entry.taxonomy_predicate_id).limit(1)
     )
-    taxonomy_predicate = result.scalars().first()
+    taxonomy_predicate = result.scalars().one()
 
     result = await db.execute(select(Taxonomy).filter(Taxonomy.id == taxonomy_predicate.taxonomy_id).limit(1))
-    taxonomy = result.scalars().first()
+    taxonomy = result.scalars().one()
 
-    return taxonomy.namespace + ":" + taxonomy_predicate.value + '="' + taxonomy_entry.value + '"'
+    return str(taxonomy.namespace) + ":" + str(taxonomy_predicate.value) + '="' + str(taxonomy_entry.value) + '"'

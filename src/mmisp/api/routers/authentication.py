@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from time import time
 from typing import Annotated
 from urllib.parse import urlencode
@@ -6,7 +7,6 @@ import httpx
 from fastapi import APIRouter, Depends, HTTPException, Path, status
 from fastapi.responses import RedirectResponse
 from sqlalchemy.future import select
-from sqlalchemy.orm import Session
 
 from mmisp.api.auth import decode_exchange_token, encode_exchange_token, encode_token
 from mmisp.api.config import config
@@ -15,7 +15,7 @@ from mmisp.api_schemas.authentication.password_login_body import PasswordLoginBo
 from mmisp.api_schemas.authentication.start_login_body import StartLoginBody
 from mmisp.api_schemas.authentication.start_login_response import LoginType, StartLoginResponse
 from mmisp.api_schemas.authentication.token_response import TokenResponse
-from mmisp.db.database import get_db
+from mmisp.db.database import Session, get_db
 from mmisp.db.models.identity_provider import OIDCIdentityProvider
 from mmisp.db.models.user import User
 from mmisp.util.crypto import verify_secret
@@ -36,7 +36,7 @@ async def start_login(db: Annotated[Session, Depends(get_db)], body: StartLoginB
             OIDCIdentityProvider.active.is_(True), OIDCIdentityProvider.org_id == user.org_id
         )
     )
-    identity_providers: list[OIDCIdentityProvider] = result.scalars().all()
+    identity_providers: Sequence[OIDCIdentityProvider] = result.scalars().all()
 
     login_type = LoginType.PASSWORD
 
@@ -150,7 +150,7 @@ async def redirect_to_frontend(
 
     if not user.sub:
         user.sub = user_info["sub"]
-        user.date_modified = time()
+        user.date_modified = int(time())
         await db.commit()
 
     exchange_token = encode_exchange_token(str(user.id))

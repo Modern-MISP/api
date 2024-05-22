@@ -1,9 +1,9 @@
 import json
+from collections.abc import Sequence
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Path, status
 from sqlalchemy.future import select
-from sqlalchemy.orm import Session
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
 from mmisp.api_schemas.noticelists.get_all_noticelist_response import GetAllNoticelists
@@ -14,7 +14,7 @@ from mmisp.api_schemas.noticelists.get_noticelist_response import (
     NoticelistResponse,
 )
 from mmisp.api_schemas.standard_status_response import StandardStatusIdentifiedResponse, StandardStatusResponse
-from mmisp.db.database import get_db
+from mmisp.db.database import Session, get_db
 from mmisp.db.models.noticelist import Noticelist, NoticelistEntry
 
 router = APIRouter(tags=["noticelists"])
@@ -163,7 +163,7 @@ async def _get_all_noticelists(db: Session) -> list[GetAllNoticelists]:
     noticelist_data: list[GetAllNoticelists] = []
 
     result = await db.execute(select(Noticelist))
-    noticelists: list[Noticelist] = result.scalars().all()
+    noticelists: Sequence[Noticelist] = result.scalars().all()
 
     for noticelist in noticelists:
         noticelist_data.append(
@@ -183,7 +183,7 @@ async def _get_all_noticelists(db: Session) -> list[GetAllNoticelists]:
     return noticelist_data
 
 
-def _prepare_noticelist_entries(noticelist_entries: list[NoticelistEntry]) -> list[NoticelistEntryResponse]:
+def _prepare_noticelist_entries(noticelist_entries: Sequence[NoticelistEntry]) -> list[NoticelistEntryResponse]:
     noticelist_entry_response = []
     for noticelist_entry in noticelist_entries:
         noticelist_entry_response_attribute = NoticelistEntryResponse(
@@ -195,7 +195,7 @@ def _prepare_noticelist_entries(noticelist_entries: list[NoticelistEntry]) -> li
 
 
 def _prepare_noticelist_response(
-    noticelist: Noticelist, noticelist_entries: list[NoticelistEntry]
+    noticelist: Noticelist, noticelist_entries: Sequence[NoticelistEntry]
 ) -> NoticelistAttributesResponse:
     return NoticelistAttributesResponse(
         id=noticelist.id,

@@ -1,9 +1,13 @@
 import json
 import time
-from typing import Annotated, NamedTuple
+from collections.abc import Sequence
+from typing import TYPE_CHECKING, Annotated, Any, Tuple
 
 from fastapi import APIRouter, Depends, HTTPException, Path, status
-from nanoid import generate
+from nanoid import generate  # type: ignore
+
+if TYPE_CHECKING:
+    from sqlalchemy import Row
 from sqlalchemy.future import select
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize, check_permissions
@@ -254,6 +258,8 @@ async def _auth_keys_view(
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     user: User | None = await db.get(User, auth_key.user_id)
+    if user is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     if (
         auth_key.user_id != auth.user_id
@@ -319,13 +325,8 @@ async def _search_auth_keys(
 
         query = query.filter(AuthKey.allowed_ips == body.allowed_ips)
 
-    class ResultItem(NamedTuple):
-        AuthKey: AuthKey
-        User: User
-
     result = await db.execute(query.limit(body.limit).offset((body.page - 1) * body.limit))
-    auth_keys_and_users: list[ResultItem] = result.all()
-
+    auth_keys_and_users: Sequence[Row[Tuple[AuthKey, User]]] = result.all()
     auth_keys_computed: list[SearchGetAuthKeysResponseItem] = []
 
     for auth_key_and_user in auth_keys_and_users:
@@ -370,6 +371,9 @@ async def _auth_keys_edit(auth: Auth, db: Session, auth_key_id: int, body: EditA
 
     user: User | None = await db.get(User, auth_key.user_id)
 
+    if user is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
+
     update = body.dict()
     update["allowed_ips"] = json.dumps(body.allowed_ips) if body.allowed_ips else None
 
@@ -401,7 +405,12 @@ async def _auth_keys_edit(auth: Auth, db: Session, auth_key_id: int, body: EditA
 
 async def _auth_keys_delete(auth: Auth, db: Session, auth_key_id: int) -> None:
     auth_key: AuthKey | None = await db.get(AuthKey, auth_key_id)
+    if auth_key is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
+
     user: User | None = await db.get(User, auth_key.user_id)
+    if user is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     if not auth_key or (
         auth_key.user_id != auth.user_id
@@ -425,12 +434,8 @@ async def _auth_keys_get(
     if not await check_permissions(db, auth, [Permission.ADMIN]):
         query = query.filter(AuthKey.user_id == auth.user_id)
 
-    class ResultItem(NamedTuple):
-        AuthKey: AuthKey
-        User: User
-
     result = await db.execute(query)
-    auth_keys_and_users: list[ResultItem] = result.all()
+    auth_keys_and_users: Sequence[Any] = result.all()
 
     auth_keys_computed: list[SearchGetAuthKeysResponseItem] = []
 

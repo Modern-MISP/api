@@ -1,8 +1,8 @@
+from collections.abc import Sequence
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Path
 from sqlalchemy.future import select
-from sqlalchemy.orm import Session
 from starlette import status
 from starlette.requests import Request
 
@@ -25,7 +25,7 @@ from mmisp.api_schemas.galaxies.get_galaxy_response import GetGalaxyClusterRespo
 from mmisp.api_schemas.galaxies.import_galaxies_body import ImportGalaxyBody
 from mmisp.api_schemas.galaxies.search_galaxies_body import SearchGalaxiesbyValue
 from mmisp.api_schemas.organisations.organisation import Organisation as OrganisationSchema
-from mmisp.db.database import get_db
+from mmisp.db.database import Session, get_db
 from mmisp.db.models.attribute import Attribute, AttributeTag
 from mmisp.db.models.event import Event, EventTag
 from mmisp.db.models.galaxy import Galaxy
@@ -72,7 +72,10 @@ async def update_galaxy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.WORKER_KEY, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
 ) -> DeleteForceUpdateImportGalaxyResponse:
-    return DeleteForceUpdateImportGalaxyResponse()
+    raise NotImplementedError()
+
+
+#    return DeleteForceUpdateImportGalaxyResponse()
 
 
 @router.delete(
@@ -318,7 +321,7 @@ async def _delete_galaxy(db: Session, galaxy_id: str, request: Request) -> Delet
         )
 
     result = await db.execute(select(GalaxyCluster).filter(GalaxyCluster.galaxy_id == galaxy.id).limit(1))
-    connected_tag_name = result.scalars().first().tag_name
+    connected_tag_name = result.scalars().one().tag_name
 
     result = await db.execute(select(Tag).filter(Tag.name == connected_tag_name))
     connected_tag = result.scalars().first()
@@ -357,7 +360,7 @@ async def _search_galaxies(db: Session, body: SearchGalaxiesbyValue) -> list[Get
             Galaxy.uuid.contains(search_term),
         )
     )
-    galaxies: list[Galaxy] = result.scalars().all()
+    galaxies: Sequence[Galaxy] = result.scalars().all()
 
     response_list = []
 
@@ -409,7 +412,7 @@ async def _attach_cluster_to_galaxy(
         local = "0"
 
     result = await db.execute(select(Tag).filter(Tag.name == galaxy_cluster.tag_name).limit(1))
-    tag_id = result.scalars().first().id
+    tag_id = result.scalars().one().id
 
     if attach_target_type == "event":
         event: Event | None = await db.get(Event, attach_target_id)
@@ -508,6 +511,9 @@ async def _prepare_export_galaxy_response(
 ) -> list[ExportGalaxyClusterResponse]:
     response_list = []
     galaxy = await db.get(Galaxy, galaxy_id)
+    if galaxy is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
+
     galaxy_response = await _prepare_galaxy_response(db, galaxy)
     galaxy_cluster_response_list = await _prepare_galaxy_cluster_response(db, galaxy)
     for galaxy_cluster in galaxy_cluster_response_list:
@@ -536,7 +542,7 @@ async def _prepare_export_galaxy_response(
 
 
 async def _prepare_galaxy_cluster_relation_response(
-    db: Session, galaxy_cluster_relation_list: list[GalaxyReference]
+    db: Session, galaxy_cluster_relation_list: Sequence[GalaxyReference]
 ) -> list[AddEditGetEventGalaxyClusterRelation]:
     galaxy_cluster_relation_response_list = []
 
@@ -546,7 +552,7 @@ async def _prepare_galaxy_cluster_relation_response(
         result = await db.execute(
             select(GalaxyCluster).filter(GalaxyCluster.id == galaxy_cluster_relation.galaxy_cluster_id).limit(1)
         )
-        related_galaxy_cluster = result.scalars().first()
+        related_galaxy_cluster = result.scalars().one()
 
         result = await db.execute(select(Tag).filter(Tag.name == related_galaxy_cluster.tag_name))
         tag_list = result.scalars().all()
@@ -555,6 +561,9 @@ async def _prepare_galaxy_cluster_relation_response(
             galaxy_cluster_relation_dict["Tag"] = _prepare_tag_response(tag_list)
 
         galaxy_cluster_relation_galaxy_cluster = await db.get(GalaxyCluster, galaxy_cluster_relation.galaxy_cluster_id)
+
+        if galaxy_cluster_relation_galaxy_cluster is None:
+            continue
 
         galaxy_cluster_relation_dict["galaxy_cluster_uuid"] = galaxy_cluster_relation_galaxy_cluster.uuid
         galaxy_cluster_relation_dict["distribution"] = galaxy_cluster_relation_galaxy_cluster.distribution
@@ -568,7 +577,7 @@ async def _prepare_galaxy_cluster_relation_response(
     return galaxy_cluster_relation_response_list
 
 
-def _prepare_tag_response(tag_list: list[Any]) -> list[AddEditGetEventGalaxyClusterRelationTag]:
+def _prepare_tag_response(tag_list: Sequence[Any]) -> list[AddEditGetEventGalaxyClusterRelationTag]:
     tag_response_list = []
 
     for tag in tag_list:
