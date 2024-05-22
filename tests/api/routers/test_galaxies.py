@@ -2,6 +2,7 @@ import pytest
 import sqlalchemy as sa
 from icecream import ic
 from sqlalchemy.orm import Session
+from sqlalchemy.sql import text
 
 from mmisp.api_schemas.galaxies.export_galaxies_body import ExportGalaxyAttributes, ExportGalaxyBody
 from mmisp.db.models.galaxy_cluster import GalaxyCluster, GalaxyElement, GalaxyReference
@@ -13,13 +14,13 @@ from ..helpers.galaxy_helper import get_invalid_import_galaxy_body, get_valid_im
 
 @pytest.fixture(autouse=True)
 def check_counts_stay_constant(db):
-    count_galaxies = db.execute("SELECT COUNT(*) FROM galaxies").first()[0]
-    count_galaxy_clusters = db.execute("SELECT COUNT(*) FROM galaxy_clusters").first()[0]
-    count_galaxy_elements = db.execute("SELECT COUNT(*) FROM galaxy_elements").first()[0]
+    count_galaxies = db.execute(text("SELECT COUNT(*) FROM galaxies")).first()[0]
+    count_galaxy_clusters = db.execute(text("SELECT COUNT(*) FROM galaxy_clusters")).first()[0]
+    count_galaxy_elements = db.execute(text("SELECT COUNT(*) FROM galaxy_elements")).first()[0]
     yield
-    ncount_galaxies = db.execute("SELECT COUNT(*) FROM galaxies").first()[0]
-    ncount_galaxy_clusters = db.execute("SELECT COUNT(*) FROM galaxy_clusters").first()[0]
-    ncount_galaxy_elements = db.execute("SELECT COUNT(*) FROM galaxy_elements").first()[0]
+    ncount_galaxies = db.execute(text("SELECT COUNT(*) FROM galaxies")).first()[0]
+    ncount_galaxy_clusters = db.execute(text("SELECT COUNT(*) FROM galaxy_clusters")).first()[0]
+    ncount_galaxy_elements = db.execute(text("SELECT COUNT(*) FROM galaxy_elements")).first()[0]
 
     assert count_galaxies == ncount_galaxies
     assert count_galaxy_clusters == ncount_galaxy_clusters

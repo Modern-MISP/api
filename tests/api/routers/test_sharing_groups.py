@@ -34,17 +34,17 @@ def delete_sharing_group(db, sharing_group_id):
 
 @pytest.fixture(autouse=True)
 def check_counts_stay_constant(db):
-    count_sharing_groups = db.execute("SELECT COUNT(*) FROM sharing_groups").first()[0]
-    count_sharing_groups_orgs = db.execute("SELECT COUNT(*) FROM sharing_group_orgs").first()[0]
-    count_sharing_groups_servers = db.execute("SELECT COUNT(*) FROM sharing_group_servers").first()[0]
+    count_sharing_groups = db.execute(sa.sql.text("SELECT COUNT(*) FROM sharing_groups")).first()[0]
+    count_sharing_groups_orgs = db.execute(sa.sql.text("SELECT COUNT(*) FROM sharing_group_orgs")).first()[0]
+    count_sharing_groups_servers = db.execute(sa.sql.text("SELECT COUNT(*) FROM sharing_group_servers")).first()[0]
     yield
-    ncount_sharing_groups = db.execute("SELECT COUNT(*) FROM sharing_groups").first()[0]
-    ncount_sharing_groups_orgs = db.execute("SELECT COUNT(*) FROM sharing_group_orgs").first()[0]
-    ncount_sharing_groups_servers = db.execute("SELECT COUNT(*) FROM sharing_group_servers").first()[0]
+    ncount_sharing_groups = db.execute(sa.sql.text("SELECT COUNT(*) FROM sharing_groups")).first()[0]
+    ncount_sharing_groups_orgs = db.execute(sa.sql.text("SELECT COUNT(*) FROM sharing_group_orgs")).first()[0]
+    ncount_sharing_groups_servers = db.execute(sa.sql.text("SELECT COUNT(*) FROM sharing_group_servers")).first()[0]
 
-    sharing_groups = db.execute("SELECT * FROM sharing_groups").all()
-    sharing_groups_orgs = db.execute("SELECT * FROM sharing_group_orgs").all()
-    sharing_groups_servers = db.execute("SELECT * FROM sharing_group_servers").all()
+    sharing_groups = db.execute(sa.sql.text("SELECT * FROM sharing_groups")).all()
+    sharing_groups_orgs = db.execute(sa.sql.text("SELECT * FROM sharing_group_orgs")).all()
+    sharing_groups_servers = db.execute(sa.sql.text("SELECT * FROM sharing_group_servers")).all()
 
     ic(sharing_groups)
     ic(sharing_groups_orgs)

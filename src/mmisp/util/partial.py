@@ -1,5 +1,5 @@
 from types import UnionType
-from typing import Type, get_args, get_origin, get_type_hints
+from typing import Any, Type, get_args, get_origin, get_type_hints
 
 from pydantic import BaseModel, Field, create_model
 
@@ -14,7 +14,7 @@ def _is_pydantic_base_model(type_: Type) -> bool:
         return False
 
 
-def _make_optional(type_: Type) -> Type:
+def _make_optional(type_: Type) -> Any:
     """Make the type optional."""
     origin = get_origin(type_)
     args = get_args(type_)
@@ -31,7 +31,7 @@ def _make_optional(type_: Type) -> Type:
         return type_ | None
 
 
-def partial(model: Type[BaseModel]) -> Type[BaseModel]:
+def partial(model: Type[BaseModel]) -> Type[BaseModel]:  # type: ignore
     """Takes a Pydantic model and returns a modified version with every field as optional."""
     new_name = "Partial" + model.__name__
 
@@ -54,7 +54,7 @@ def partial(model: Type[BaseModel]) -> Type[BaseModel]:
 
         fields[field_name] = (optional_field_type, default_value)
 
-    partial_model_registry[new_name] = create_model(new_name, **fields)
+    partial_model_registry[new_name] = create_model(new_name, **fields)  # type: ignore
     return partial_model_registry[new_name]
 
 

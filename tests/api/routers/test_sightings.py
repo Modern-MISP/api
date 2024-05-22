@@ -4,6 +4,7 @@ import pytest
 import sqlalchemy as sa
 from icecream import ic
 from sqlalchemy.orm import Session
+from sqlalchemy.sql import text
 
 from mmisp.db.models.attribute import Attribute
 from tests.generators.sighting_generator import (
@@ -14,13 +15,13 @@ from tests.generators.sighting_generator import (
 
 @pytest.fixture(autouse=True)
 def check_counts_stay_constant(db):
-    count_attributes = db.execute("SELECT COUNT(*) FROM attributes").first()[0]
-    count_events = db.execute("SELECT COUNT(*) FROM events").first()[0]
-    count_sightings = db.execute("SELECT COUNT(*) FROM sightings").first()[0]
+    count_attributes = db.execute(text("SELECT COUNT(*) FROM attributes")).first()[0]
+    count_events = db.execute(text("SELECT COUNT(*) FROM events")).first()[0]
+    count_sightings = db.execute(text("SELECT COUNT(*) FROM sightings")).first()[0]
     yield
-    ncount_attributes = db.execute("SELECT COUNT(*) FROM attributes").first()[0]
-    ncount_events = db.execute("SELECT COUNT(*) FROM events").first()[0]
-    ncount_sightings = db.execute("SELECT COUNT(*) FROM sightings").first()[0]
+    ncount_attributes = db.execute(text("SELECT COUNT(*) FROM attributes")).first()[0]
+    ncount_events = db.execute(text("SELECT COUNT(*) FROM events")).first()[0]
+    ncount_sightings = db.execute(text("SELECT COUNT(*) FROM sightings")).first()[0]
 
     assert count_attributes == ncount_attributes
     assert count_events == ncount_events

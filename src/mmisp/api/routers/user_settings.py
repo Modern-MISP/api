@@ -1,9 +1,9 @@
 import json
+from collections.abc import Sequence
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Path, status
 from sqlalchemy.future import select
-from sqlalchemy.orm import Session
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize, check_permissions
 from mmisp.api_schemas.standard_status_response import StandardStatusIdentifiedResponse
@@ -19,16 +19,14 @@ from mmisp.api_schemas.user_settings.view_user_setting_response import (
     ViewUserSettingResponse,
     ViewUserSettingResponseUserSetting,
 )
-from mmisp.db.database import get_db
+from mmisp.db.database import Session, get_db
 from mmisp.db.models.user_setting import SettingName, UserSetting
-from mmisp.util.partial import partial
 
 router = APIRouter(tags=["user_settings"])
 
 
 @router.post(
     "/user_settings/setSetting/{userId}/{userSettingName}",
-    response_model=SetUserSettingResponse,
     summary="Set user setting.",
     description="Create or Update a UserSetting by user ID and UserSettingName. \
     If specified UserSetting doesn't exist, it is created.",
@@ -45,7 +43,6 @@ async def set_user_settings(
 
 @router.get(
     "/user_settings/{userSettingId}",
-    response_model=ViewUserSettingResponse,
     summary="View UserSetting by ID.",
     description="Displays a UserSetting by the UserSettingID.",
 )
@@ -59,7 +56,6 @@ async def view_user_settings(
 
 @router.get(
     "/user_settings/{userId}/{userSettingName}",
-    response_model=ViewUserSettingResponse,
     summary="View UserSetting.",
     description="Displays a UserSetting by given userID and UserSetting name.",
 )
@@ -74,7 +70,6 @@ async def get_user_setting_by_id(
 
 @router.post(
     "/user_settings",
-    response_model=list[partial(UserSettingResponse)],
     summary="Displays all UserSettings.",
     description="Displays all UserSettings by specified parameters.",
 )
@@ -88,7 +83,6 @@ async def search_user_settings(
 
 @router.get(
     "/user_settings",
-    response_model=list[partial(UserSettingResponse)],
     summary="Displays all UserSettings.",
     description="Displays all UserSettings.",
 )
@@ -101,7 +95,6 @@ async def get_user_settings(
 
 @router.delete(
     "/user_settings/{userSettingId}",
-    response_model=StandardStatusIdentifiedResponse,
     summary="Deletes a UserSetting.",
     description="Deletes UserSetting by UserSetting ID.",
 )
@@ -128,7 +121,6 @@ async def delete_user_settings(
 @router.get(
     "/user_settings/view/{userSettingId}",
     deprecated=True,
-    response_model=ViewUserSettingResponse,
     summary="View UserSetting by ID.",
     description="View UserSetting by UserSettingID.",
 )
@@ -156,7 +148,6 @@ async def view_user_settings_depr(
 
 @router.get(
     "/user_settings/getSetting/{userId}/{userSettingName}",
-    response_model=GetUserSettingResponse,
     deprecated=True,
     summary="View a UserSetting.",
     description="View a UserSetting by its userID and UserSetting name.",
@@ -189,7 +180,6 @@ async def get_user_setting_by_ids(
 @router.delete(
     "/user_settings/delete/{userSettingId}",
     deprecated=True,
-    response_model=StandardStatusIdentifiedResponse,
     summary="Delete UserSetting.",
     description="Delete a UserSetting by specified UserSettingID.",
 )
@@ -335,7 +325,7 @@ async def _search_user_settings(
         query = query.filter(UserSetting.user_id == user_id)
 
     result = await db.execute(query)
-    user_settings: list[UserSetting] = result.scalars().all()
+    user_settings: Sequence[UserSetting] = result.scalars().all()
 
     user_settings_out: list[UserSettingResponse] = []
 
@@ -365,7 +355,7 @@ async def _get_user_settings(
         query = query.filter(UserSetting.user_id == auth.user_id)
 
     result = await db.execute(query)
-    user_settings: list[UserSetting] = result.scalars().all()
+    user_settings: Sequence[UserSetting] = result.scalars().all()
 
     user_settings_out: list[UserSettingResponse] = []
 

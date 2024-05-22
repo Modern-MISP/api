@@ -6,6 +6,7 @@ from uuid import uuid4
 import pytest
 import sqlalchemy as sa
 from sqlalchemy.orm import Session
+from sqlalchemy.sql import text
 
 from mmisp.db.models.event import Event
 from mmisp.db.models.tag import Tag
@@ -58,13 +59,13 @@ def feed_data(request: Any) -> dict[str, Any]:
 
 @pytest.fixture(autouse=True)
 def check_counts_stay_constant(db):
-    count_sharing_groups = db.execute("SELECT COUNT(*) FROM sharing_groups").first()[0]
-    count_sharing_groups_orgs = db.execute("SELECT COUNT(*) FROM sharing_group_orgs").first()[0]
-    count_sharing_groups_servers = db.execute("SELECT COUNT(*) FROM sharing_group_servers").first()[0]
+    count_sharing_groups = db.execute(text("SELECT COUNT(*) FROM sharing_groups")).first()[0]
+    count_sharing_groups_orgs = db.execute(text("SELECT COUNT(*) FROM sharing_group_orgs")).first()[0]
+    count_sharing_groups_servers = db.execute(text("SELECT COUNT(*) FROM sharing_group_servers")).first()[0]
     yield
-    ncount_sharing_groups = db.execute("SELECT COUNT(*) FROM sharing_groups").first()[0]
-    ncount_sharing_groups_orgs = db.execute("SELECT COUNT(*) FROM sharing_group_orgs").first()[0]
-    ncount_sharing_groups_servers = db.execute("SELECT COUNT(*) FROM sharing_group_servers").first()[0]
+    ncount_sharing_groups = db.execute(text("SELECT COUNT(*) FROM sharing_groups")).first()[0]
+    ncount_sharing_groups_orgs = db.execute(text("SELECT COUNT(*) FROM sharing_group_orgs")).first()[0]
+    ncount_sharing_groups_servers = db.execute(text("SELECT COUNT(*) FROM sharing_group_servers")).first()[0]
 
     assert count_sharing_groups == ncount_sharing_groups
     assert count_sharing_groups_orgs == ncount_sharing_groups_orgs

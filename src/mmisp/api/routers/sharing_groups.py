@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from typing import Annotated, Any, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Path, status
@@ -130,7 +131,6 @@ async def get_sharing_group_info(
 @router.patch(
     "/sharing_groups/{id}/organisations",
     status_code=status.HTTP_200_OK,
-    response_model=partial(SharingGroupOrgSchema),
     summary="Add an organisation",
     description="Add an organisation to a sharing group.",
 )
@@ -139,7 +139,7 @@ async def add_org_to_sharing_group(
     db: Annotated[Session, Depends(get_db)],
     id: int,
     body: AddOrgToSharingGroupBody,
-) -> dict:
+) -> SharingGroupOrgSchema:
     return await _add_org_to_sharing_group(auth, db, id, body)
 
 
@@ -230,7 +230,6 @@ async def view_sharing_group_legacy(
     "/sharing_groups/edit/{sharingGroupId}",
     deprecated=True,
     status_code=status.HTTP_200_OK,
-    response_model=partial(ViewUpdateSharingGroupLegacyResponse),
     summary="Update sharing group",
     description="Update an existing sharing group by its ID.",
 )
@@ -239,7 +238,7 @@ async def update_sharing_group_legacy(
     db: Annotated[Session, Depends(get_db)],
     id: Annotated[int, Path(alias="sharingGroupId")],
     body: UpdateSharingGroupLegacyBody,
-) -> dict:
+) -> ViewUpdateSharingGroupLegacyResponse:
     return await _update_sharing_group_legacy(auth, db, id, body)
 
 
@@ -273,7 +272,7 @@ async def add_org_to_sharing_group_legacy(
     id: Annotated[int, Path(alias="sharingGroupId")],
     organisation_id: Annotated[int, Path(alias="organisationId")],
     body: AddOrgToSharingGroupLegacyBody = AddOrgToSharingGroupLegacyBody(),
-) -> dict:
+) -> StandardStatusResponse:
     return await _add_org_to_sharing_group_legacy(auth, db, id, organisation_id, body)
 
 
@@ -281,7 +280,6 @@ async def add_org_to_sharing_group_legacy(
     "/sharing_groups/removeOrg/{sharingGroupId}/{organisationId}",
     status_code=status.HTTP_200_OK,
     deprecated=True,
-    response_model=partial(StandardStatusResponse),
     summary="Remove an organisation",
     description="Remove an organisation from a sharing group.",
 )
@@ -290,7 +288,7 @@ async def remove_org_from_sharing_group_legacy(
     db: Annotated[Session, Depends(get_db)],
     id: Annotated[int, Path(alias="sharingGroupId")],
     organisation_id: Annotated[int, Path(alias="organisationId")],
-) -> dict:
+) -> StandardStatusResponse:
     return await _remove_org_from_sharing_group_legacy(auth, db, id, organisation_id)
 
 
@@ -298,7 +296,6 @@ async def remove_org_from_sharing_group_legacy(
     "/sharing_groups/addServer/{sharingGroupId}/{serverId}",
     status_code=status.HTTP_200_OK,
     deprecated=True,
-    response_model=partial(StandardStatusResponse),
     summary="Add a server",
     description="Add a server to a sharing group.",
 )
@@ -308,7 +305,7 @@ async def add_server_to_sharing_group_legacy(
     id: Annotated[int, Path(alias="sharingGroupId")],
     server_id: Annotated[int, Path(alias="serverId")],
     body: AddServerToSharingGroupLegacyBody = AddServerToSharingGroupLegacyBody(),
-) -> dict:
+) -> StandardStatusResponse:
     return await _add_server_to_sharing_group_legacy(auth, db, id, server_id, body)
 
 
@@ -324,7 +321,7 @@ async def remove_server_from_sharing_group_legacy(
     db: Annotated[Session, Depends(get_db)],
     id: Annotated[int, Path(alias="sharingGroupId")],
     server_id: Annotated[int, Path(alias="serverId")],
-) -> dict:
+) -> StandardStatusResponse:
     return await _remove_server_from_sharing_group_legacy(auth, db, id, server_id)
 
 
@@ -338,8 +335,11 @@ async def _create_sharing_group(auth: Auth, db: Session, body: CreateSharingGrou
         result = await db.execute(select(Organisation).filter(Organisation.uuid == body.organisation_uuid).limit(1))
         organisation = result.scalars().first()
 
-    if not organisation:
+    if organisation is None:
         organisation = await db.get(Organisation, auth.org_id)
+
+    if organisation is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     sharing_group = SharingGroup(
         **{
@@ -446,7 +446,7 @@ async def _delete_sharing_group(auth: Auth, db: Session, id: int) -> dict:
 
 
 async def _get_all_sharing_groups(auth: Auth, db: Session) -> dict:
-    sharing_groups: list[SharingGroup] = []
+    sharing_groups: Sequence[SharingGroup] = []
 
     is_site_admin: bool = await check_permissions(db, auth, [Permission.SITE_ADMIN])
 
@@ -455,7 +455,7 @@ async def _get_all_sharing_groups(auth: Auth, db: Session) -> dict:
         sharing_groups = result.scalars().all()
     else:
         user_org: Organisation | None = await db.get(Organisation, auth.org_id)
-        result = await db.execute(
+        query = (
             select(SharingGroup)
             .join(
                 SharingGroupOrg,
@@ -467,35 +467,44 @@ async def _get_all_sharing_groups(auth: Auth, db: Session) -> dict:
                 SharingGroup.id == SharingGroupServer.sharing_group_id,
                 isouter=True,
             )
-            .filter(
+        )
+        if user_org and user_org.local:
+            query = query.filter(
                 or_(
                     SharingGroupOrg.org_id == auth.org_id,
                     SharingGroup.org_id == auth.org_id,
-                    and_(SharingGroupServer.server_id == 0, SharingGroupServer.all_orgs.is_(True))
-                    if user_org and user_org.local
-                    else None,
+                    and_(SharingGroupServer.server_id == 0, SharingGroupServer.all_orgs.is_(True)),
                 )
             )
-        )
+        else:
+            query = query.filter(
+                or_(
+                    SharingGroupOrg.org_id == auth.org_id,
+                    SharingGroup.org_id == auth.org_id,
+                )
+            )
+        result = await db.execute(query)
         sharing_groups = result.scalars().all()
 
     sharing_groups_computed: list[dict] = []
 
     for sharing_group in sharing_groups:
-        organisation: Organisation = await db.get(Organisation, sharing_group.org_id)
+        organisation: Organisation | None = await db.get(Organisation, sharing_group.org_id)
 
         result = await db.execute(select(SharingGroupOrg).filter(SharingGroupOrg.sharing_group_id == sharing_group.id))
-        sharing_group_orgs: list[SharingGroupOrg] = result.scalars().all()
+        sharing_group_orgs: Sequence[SharingGroupOrg] = result.scalars().all()
 
         result = await db.execute(
             select(SharingGroupServer).filter(SharingGroupServer.sharing_group_id == sharing_group.id)
         )
-        sharing_group_servers: list[SharingGroupServer] = result.scalars().all()
+        sharing_group_servers: Sequence[SharingGroupServer] = result.scalars().all()
 
         sharing_group_orgs_computed: list[dict] = []
 
         for sharing_group_org in sharing_group_orgs:
-            sharing_group_org_organisation: Organisation = await db.get(Organisation, sharing_group_org.org_id)
+            sharing_group_org_organisation: Organisation | None = await db.get(Organisation, sharing_group_org.org_id)
+            if sharing_group_org_organisation is None:
+                continue
 
             sharing_group_orgs_computed.append(
                 {
@@ -565,20 +574,20 @@ async def _get_sharing_group_info(auth: Auth, db: Session, id: int) -> dict:
         if not sharing_group_org and not sharing_group_server:
             raise HTTPException(status.HTTP_404_NOT_FOUND)
 
-    organisation: Organisation = await db.get(Organisation, sharing_group.org_id)
+    organisation: Organisation | None = await db.get(Organisation, sharing_group.org_id)
 
     result = await db.execute(select(SharingGroupOrg).filter(SharingGroupOrg.sharing_group_id == sharing_group.id))
-    sharing_group_orgs: list[SharingGroupOrg] = result.scalars().all()
+    sharing_group_orgs: Sequence[SharingGroupOrg] = result.scalars().all()
 
     result = await db.execute(
         select(SharingGroupServer).filter(SharingGroupServer.sharing_group_id == sharing_group.id)
     )
-    sharing_group_servers: list[SharingGroupServer] = result.scalars().all()
+    sharing_group_servers: Sequence[SharingGroupServer] = result.scalars().all()
 
     sharing_group_orgs_computed: list[dict] = []
 
     for sharing_group_org in sharing_group_orgs:
-        sharing_group_org_organisation: Organisation = await db.get(Organisation, sharing_group_org.org_id)
+        sharing_group_org_organisation: Organisation | None = await db.get(Organisation, sharing_group_org.org_id)
 
         sharing_group_orgs_computed.append(
             {**sharing_group_org.__dict__, "Organisation": getattr(sharing_group_org_organisation, "__dict__", None)}
@@ -605,7 +614,9 @@ async def _get_sharing_group_info(auth: Auth, db: Session, id: int) -> dict:
     }
 
 
-async def _add_org_to_sharing_group(auth: Auth, db: Session, id: int, body: AddOrgToSharingGroupBody) -> dict:
+async def _add_org_to_sharing_group(
+    auth: Auth, db: Session, id: int, body: AddOrgToSharingGroupBody
+) -> SharingGroupOrgSchema:
     sharing_group: SharingGroup | None = await db.get(SharingGroup, id)
 
     if not sharing_group or (
@@ -637,7 +648,7 @@ async def _add_org_to_sharing_group(auth: Auth, db: Session, id: int, body: AddO
     await db.commit()
     await db.refresh(sharing_group_org)
 
-    return sharing_group_org.__dict__
+    return SharingGroupOrgSchema.parse_obj(sharing_group_org.asdict())
 
 
 async def _remove_org_from_sharing_group(auth: Auth, db: Session, id: int, organisation_id: int) -> dict:
@@ -736,6 +747,8 @@ async def _create_sharing_group_legacy(auth: Auth, db: Session, body: CreateShar
 
     if not organisation:
         organisation = await db.get(Organisation, auth.org_id)
+    if organisation is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     create = body.dict(exclude={"org_count", "created", "modified", "sync_user_id"})
 
@@ -802,20 +815,20 @@ async def _view_sharing_group_legacy(auth: Auth, db: Session, id: int) -> dict:
         if not sharing_group_org and not sharing_group_server:
             raise HTTPException(status.HTTP_404_NOT_FOUND)
 
-    organisation: Organisation = await db.get(Organisation, sharing_group.org_id)
+    organisation: Organisation | None = await db.get(Organisation, sharing_group.org_id)
 
     result = await db.execute(select(SharingGroupOrg).filter(SharingGroupOrg.sharing_group_id == sharing_group.id))
-    sharing_group_orgs: list[SharingGroupOrg] = result.scalars().all()
+    sharing_group_orgs: Sequence[SharingGroupOrg] = result.scalars().all()
 
     result = await db.execute(
         select(SharingGroupServer).filter(SharingGroupServer.sharing_group_id == sharing_group.id)
     )
-    sharing_group_servers: list[SharingGroupServer] = result.scalars().all()
+    sharing_group_servers: Sequence[SharingGroupServer] = result.scalars().all()
 
     sharing_group_orgs_computed: list[dict] = []
 
     for sharing_group_org in sharing_group_orgs:
-        sharing_group_org_organisation: Organisation = await db.get(Organisation, sharing_group_org.org_id)
+        sharing_group_org_organisation: Organisation | None = await db.get(Organisation, sharing_group_org.org_id)
 
         sharing_group_orgs_computed.append(
             {**sharing_group_org.__dict__, "Organisation": getattr(sharing_group_org_organisation, "__dict__", None)}
@@ -842,7 +855,9 @@ async def _view_sharing_group_legacy(auth: Auth, db: Session, id: int) -> dict:
     }
 
 
-async def _update_sharing_group_legacy(auth: Auth, db: Session, id: int, body: UpdateSharingGroupBody) -> dict:
+async def _update_sharing_group_legacy(
+    auth: Auth, db: Session, id: int, body: UpdateSharingGroupLegacyBody
+) -> ViewUpdateSharingGroupLegacyResponse:
     sharing_group: SharingGroup | None = await db.get(SharingGroup, id)
 
     if not sharing_group:
@@ -862,17 +877,17 @@ async def _update_sharing_group_legacy(auth: Auth, db: Session, id: int, body: U
     organisation = await db.get(Organisation, sharing_group.org_id)
 
     result = await db.execute(select(SharingGroupOrg).filter(SharingGroupOrg.sharing_group_id == sharing_group.id))
-    sharing_group_orgs: list[SharingGroupOrg] = result.scalars().all()
+    sharing_group_orgs: Sequence[SharingGroupOrg] = result.scalars().all()
 
     result = await db.execute(
         select(SharingGroupServer).filter(SharingGroupServer.sharing_group_id == sharing_group.id)
     )
-    sharing_group_servers: list[SharingGroupServer] = result.scalars().all()
+    sharing_group_servers: Sequence[SharingGroupServer] = result.scalars().all()
 
     sharing_group_orgs_computed: list[dict] = []
 
     for sharing_group_org in sharing_group_orgs:
-        sharing_group_org_organisation: Organisation = await db.get(Organisation, sharing_group_org.org_id)
+        sharing_group_org_organisation: Organisation | None = await db.get(Organisation, sharing_group_org.org_id)
 
         sharing_group_orgs_computed.append(
             {**sharing_group_org.__dict__, "Organisation": getattr(sharing_group_org_organisation, "__dict__", None)}
@@ -891,12 +906,14 @@ async def _update_sharing_group_legacy(auth: Auth, db: Session, id: int, body: U
 
         sharing_group_servers_computed.append({**sharing_group_server.__dict__, "Server": sharing_group_server_server})
 
-    return {
-        "SharingGroup": sharing_group.__dict__,
-        "Organisation": organisation.__dict__,
-        "SharingGroupOrg": sharing_group_orgs_computed,
-        "SharingGroupServer": sharing_group_servers_computed,
-    }
+    return ViewUpdateSharingGroupLegacyResponse.parse_obj(
+        {
+            "SharingGroup": sharing_group.__dict__,
+            "Organisation": organisation.__dict__,
+            "SharingGroupOrg": sharing_group_orgs_computed,
+            "SharingGroupServer": sharing_group_servers_computed,
+        }
+    )
 
 
 async def _delete_sharing_group_legacy(auth: Auth, db: Session, id: int) -> dict:
@@ -927,8 +944,8 @@ async def _delete_sharing_group_legacy(auth: Auth, db: Session, id: int) -> dict
 
 
 async def _add_org_to_sharing_group_legacy(
-    auth: Auth, db: Session, id: int, organisation_id: int, body: AddOrgToSharingGroupBody
-) -> dict:
+    auth: Auth, db: Session, id: int, organisation_id: int, body: AddOrgToSharingGroupLegacyBody
+) -> StandardStatusResponse:
     sharing_group: SharingGroup | None = await db.get(SharingGroup, id)
 
     if not sharing_group or (
@@ -966,7 +983,9 @@ async def _add_org_to_sharing_group_legacy(
     )
 
 
-async def _remove_org_from_sharing_group_legacy(auth: Auth, db: Session, id: int, organisation_id: int) -> dict:
+async def _remove_org_from_sharing_group_legacy(
+    auth: Auth, db: Session, id: int, organisation_id: int
+) -> StandardStatusResponse:
     sharing_group: SharingGroup | None = await db.get(SharingGroup, id)
 
     if not sharing_group or (
@@ -997,8 +1016,8 @@ async def _remove_org_from_sharing_group_legacy(auth: Auth, db: Session, id: int
 
 
 async def _add_server_to_sharing_group_legacy(
-    auth: Auth, db: Session, id: int, server_id: int, body: AddServerToSharingGroupBody
-) -> dict:
+    auth: Auth, db: Session, id: int, server_id: int, body: AddServerToSharingGroupLegacyBody
+) -> StandardStatusResponse:
     sharing_group: SharingGroup | None = await db.get(SharingGroup, id)
 
     if not sharing_group or (
@@ -1036,7 +1055,9 @@ async def _add_server_to_sharing_group_legacy(
     )
 
 
-async def _remove_server_from_sharing_group_legacy(auth: Auth, db: Session, id: int, server_id: int) -> dict:
+async def _remove_server_from_sharing_group_legacy(
+    auth: Auth, db: Session, id: int, server_id: int
+) -> StandardStatusResponse:
     sharing_group: SharingGroup | None = await db.get(SharingGroup, id)
 
     if not sharing_group or (

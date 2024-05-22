@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
@@ -183,7 +184,7 @@ async def _check_api_key(db: Session, authorization: str, is_readonly_route: boo
         )
     )
 
-    potential_auth_keys: list[AuthKey] = result.scalars().all()
+    potential_auth_keys: Sequence[AuthKey] = result.scalars().all()
 
     for auth_key in potential_auth_keys:
         if verify_secret(authorization, auth_key.authkey):

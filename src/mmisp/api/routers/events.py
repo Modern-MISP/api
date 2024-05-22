@@ -1,4 +1,5 @@
 from calendar import timegm
+from collections.abc import Sequence
 from datetime import date
 from time import gmtime
 from typing import Annotated, Any
@@ -6,7 +7,7 @@ from typing import Annotated, Any
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Path
 from sqlalchemy.future import select
-from sqlalchemy.orm import Query, Session
+from sqlalchemy.sql import Select
 from starlette import status
 from starlette.requests import Request
 
@@ -54,7 +55,7 @@ from mmisp.api_schemas.events.publish_event_response import PublishEventResponse
 from mmisp.api_schemas.events.search_events_body import SearchEventsBody
 from mmisp.api_schemas.events.search_events_response import SearchEventsResponse
 from mmisp.api_schemas.events.unpublish_event_response import UnpublishEventResponse
-from mmisp.db.database import get_db
+from mmisp.db.database import Session, get_db
 from mmisp.db.models.attribute import Attribute, AttributeTag
 from mmisp.db.models.event import Event, EventReport, EventTag
 from mmisp.db.models.galaxy import Galaxy
@@ -133,7 +134,6 @@ async def delete_event(
 @router.get(
     "/events",
     status_code=status.HTTP_200_OK,
-    response_model=list[GetAllEventsResponse],
     summary="Get all events",
     description="Retrieve a list of all events.",
 )
@@ -154,7 +154,7 @@ async def rest_search_events(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     body: SearchEventsBody,
-) -> dict:
+) -> SearchEventsResponse:
     return await _rest_search_events(db, body)
 
 
@@ -169,7 +169,7 @@ async def index_events(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     body: IndexEventsBody,
-) -> list[dict]:
+) -> list[GetAllEventsResponse]:
     return await _index_events(db, body)
 
 
@@ -250,9 +250,11 @@ async def add_attribute_via_free_text_import(
     db: Annotated[Session, Depends(get_db)],
     event_id: Annotated[str, Path(alias="eventId")],
     body: AddAttributeViaFreeTextImportEventBody,
-) -> list[dict]:
+) -> list[AddAttributeViaFreeTextImportEventResponse]:
     body_dict = body.dict()
     user = FreeTextImportWorkerUser(user_id=auth.user_id)
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="no user")
     data = FreeTextImportWorkerData(data=body_dict["Attribute"]["value"])
     worker_body = FreeTextImportWorkerBody(user=user, data=data).dict()
     print(worker_body)
@@ -341,6 +343,9 @@ async def _add_event(auth: Auth, db: Session, body: AddEventBody) -> AddEditGetE
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN_BAD_REQUEST, detail="invalid 'info'")
 
     user = await db.get(User, auth.user_id)
+    if user is None:
+        # this should never happen, it would mean, the user disappeared between auth and processing the request
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="user not available")
 
     new_event = Event(
         **{
@@ -421,7 +426,7 @@ async def _delete_event(db: Session, event_id: str) -> DeleteEventResponse:
 
 async def _get_events(db: Session) -> list[GetAllEventsResponse]:
     result = await db.execute(select(Event))
-    events: list[Event] = result.scalars().all()
+    events: Sequence[Event] = result.scalars().all()
 
     if not events:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No events found.")
@@ -431,12 +436,12 @@ async def _get_events(db: Session) -> list[GetAllEventsResponse]:
     return event_responses
 
 
-async def _rest_search_events(db: Session, body: SearchEventsBody) -> dict:
+async def _rest_search_events(db: Session, body: SearchEventsBody) -> SearchEventsResponse:
     if body.returnFormat != "json":
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid output format.")
 
     result = await db.execute(select(Event))
-    events: list[Event] = result.scalars().all()
+    events: Sequence[Event] = result.scalars().all()
 
     if body.limit is not None:
         events = events[: body.limit]
@@ -447,8 +452,8 @@ async def _rest_search_events(db: Session, body: SearchEventsBody) -> dict:
     return SearchEventsResponse(response=response_list)
 
 
-async def _index_events(db: Session, body: IndexEventsBody) -> list[dict]:
-    query: Query = select(Event)
+async def _index_events(db: Session, body: IndexEventsBody) -> list[GetAllEventsResponse]:
+    query: Select = select(Event)
 
     limit = 25
     offset = 0
@@ -461,7 +466,7 @@ async def _index_events(db: Session, body: IndexEventsBody) -> list[dict]:
     query = query.limit(limit).offset(offset)
 
     result = await db.execute(query)
-    events: list[Event] = result.scalars().all()
+    events: Sequence[Event] = result.scalars().all()
 
     response_list = [await _prepare_all_events_response(db, event, "index") for event in events]
 
@@ -561,7 +566,9 @@ async def _remove_tag_from_event(db: Session, event_id: str, tag_id: str) -> Add
     return AddRemoveTagEventsResponse(saved=True, success="Tag removed", check_publish=True)
 
 
-async def _add_attribute_via_free_text_import(db: Session, event_id: str, response_json: Any) -> list[dict]:
+async def _add_attribute_via_free_text_import(
+    db: Session, event_id: str, response_json: Any
+) -> list[AddAttributeViaFreeTextImportEventResponse]:
     event: Event | None = await db.get(Event, event_id)
 
     if not event:
@@ -599,11 +606,13 @@ async def _prepare_event_response(db: Session, event: Event) -> AddEditGetEventD
 
     event_dict["date"] = str(event_dict["date"])
 
-    org: Organisation = await db.get(Organisation, event.org_id)
-    orgc: Organisation = await db.get(Organisation, event.orgc_id)
+    org: Organisation | None = await db.get(Organisation, event.org_id)
+    orgc: Organisation | None = await db.get(Organisation, event.orgc_id)
 
-    event_dict["Org"] = AddEditGetEventOrg(id=org.id, name=org.name, uuid=org.uuid, local=org.local)
-    event_dict["Orgc"] = AddEditGetEventOrg(id=orgc.id, name=orgc.name, uuid=orgc.uuid, local=orgc.local)
+    if org is not None:
+        event_dict["Org"] = AddEditGetEventOrg(id=org.id, name=org.name, uuid=org.uuid, local=org.local)
+    if orgc is not None:
+        event_dict["Orgc"] = AddEditGetEventOrg(id=orgc.id, name=orgc.name, uuid=orgc.uuid, local=orgc.local)
 
     result = await db.execute(select(Attribute).filter(Attribute.event_id == event.id))
     attribute_list = result.scalars().all()
@@ -637,6 +646,8 @@ async def _prepare_event_response(db: Session, event: Event) -> AddEditGetEventD
 
     for event_tag in event_tag_list:
         tag = await db.get(Tag, event_tag.tag_id)
+        if tag is None:
+            continue
 
         if not tag.is_galaxy:
             continue
@@ -656,13 +667,16 @@ async def _prepare_event_response(db: Session, event: Event) -> AddEditGetEventD
 
     event_dict["Galaxy"] = await _prepare_galaxy_response(db, event_dict["Galaxy"], event, galaxy_cluster_list)
     event_dict["date"] = str(event_dict["date"])
-
-    event_dict["event_creator_email"] = (await db.get(User, event.user_id)).email
+    user = await db.get(User, event.user_id)
+    if user is not None:
+        event_dict["event_creator_email"] = user.email
 
     return AddEditGetEventDetails(**event_dict)
 
 
-async def _prepare_attribute_response(db: Session, attribute_list: list[Attribute]) -> list[AddEditGetEventAttribute]:
+async def _prepare_attribute_response(
+    db: Session, attribute_list: Sequence[Attribute]
+) -> list[AddEditGetEventAttribute]:
     attribute_response_list = []
 
     for attribute in attribute_list:
@@ -686,6 +700,8 @@ async def _prepare_attribute_response(db: Session, attribute_list: list[Attribut
 
         for attribute_tag in attribute_tag_list:
             tag = await db.get(Tag, attribute_tag.tag_id)
+            if tag is None:
+                continue
 
             if not tag.is_galaxy:
                 continue
@@ -712,11 +728,13 @@ async def _prepare_attribute_response(db: Session, attribute_list: list[Attribut
     return attribute_response_list
 
 
-async def _prepare_tag_response(db: Session, tag_list: list[Any]) -> list[AddEditGetEventTag]:
+async def _prepare_tag_response(db: Session, tag_list: Sequence[Any]) -> list[AddEditGetEventTag]:
     tag_response_list = []
 
     for attribute_or_event_tag in tag_list:
         tag = await db.get(Tag, int(attribute_or_event_tag.tag_id))
+        if tag is None:
+            continue
 
         attribute_or_event_tag_dict = tag.__dict__.copy()
 
@@ -730,7 +748,7 @@ async def _prepare_tag_response(db: Session, tag_list: list[Any]) -> list[AddEdi
 
 
 async def _prepare_galaxy_response(
-    db: Session, galaxy_list: list[Galaxy], data_object: Any, galaxy_cluster_list: list[GalaxyCluster]
+    db: Session, galaxy_list: list[Galaxy], data_object: Any, galaxy_cluster_list: Sequence[GalaxyCluster]
 ) -> list[AddEditGetEventGalaxy]:
     galaxy_response_list = []
 
@@ -748,7 +766,7 @@ async def _prepare_galaxy_response(
 
 
 async def _prepare_galaxy_cluster_response(
-    db: Session, galaxy_cluster_list: list[GalaxyCluster], data_object: Any, galaxy_id: int
+    db: Session, galaxy_cluster_list: Sequence[GalaxyCluster], data_object: Any, galaxy_id: int
 ) -> list[AddEditGetEventGalaxyCluster]:
     galaxy_cluster_response_list = []
 
@@ -787,12 +805,12 @@ async def _prepare_galaxy_cluster_response(
                 .filter(AttributeTag.tag_id == tag.id, AttributeTag.attribute_id == data_object.id)
                 .limit(1)
             )
-            galaxy_cluster_dict["attribute_tag_id"] = result.scalars().first().id
+            galaxy_cluster_dict["attribute_tag_id"] = result.scalars().one().id
         elif isinstance(data_object, Event):
             result = await db.execute(
                 select(EventTag).filter(EventTag.tag_id == tag.id, EventTag.event_id == data_object.id).limit(1)
             )
-            galaxy_cluster_dict["event_tag_id"] = result.scalars().first().id
+            galaxy_cluster_dict["event_tag_id"] = result.scalars().one().id
 
         result = await db.execute(
             select(GalaxyReference).filter(GalaxyReference.galaxy_cluster_id == galaxy_cluster.id)
@@ -810,7 +828,7 @@ async def _prepare_galaxy_cluster_response(
 
 
 async def _prepare_galaxy_cluster_relation_response(
-    db: Session, galaxy_cluster_relation_list: list[GalaxyReference]
+    db: Session, galaxy_cluster_relation_list: Sequence[GalaxyReference]
 ) -> list[AddEditGetEventGalaxyClusterRelation]:
     galaxy_cluster_relation_response_list = []
 
@@ -818,6 +836,8 @@ async def _prepare_galaxy_cluster_relation_response(
         galaxy_cluster_relation_dict = galaxy_cluster_relation.__dict__.copy()
 
         related_galaxy_cluster = await db.get(GalaxyCluster, galaxy_cluster_relation.galaxy_cluster_id)
+        if related_galaxy_cluster is None:
+            continue
 
         result = await db.execute(select(Tag).filter(Tag.name == related_galaxy_cluster.tag_name))
         tag_list = result.scalars().all()
@@ -833,7 +853,7 @@ async def _prepare_galaxy_cluster_relation_response(
     return galaxy_cluster_relation_response_list
 
 
-async def _prepare_object_response(db: Session, object_list: list[Object]) -> list[AddEditGetEventObject]:
+async def _prepare_object_response(db: Session, object_list: Sequence[Object]) -> list[AddEditGetEventObject]:
     response_object_list = []
 
     for object in object_list:
@@ -850,14 +870,14 @@ async def _prepare_object_response(db: Session, object_list: list[Object]) -> li
     return response_object_list
 
 
-def _prepare_event_report_response(event_report_list: list[EventReport]) -> AddEditGetEventEventReport:
+def _prepare_event_report_response(event_report_list: Sequence[EventReport]) -> AddEditGetEventEventReport:
     response_event_report_list = []
 
     for event_report in event_report_list:
         event_report_dict = event_report.__dict__.copy()
         response_event_report_list.append(AddEditGetEventEventReport(**event_report_dict))
 
-    return response_event_report_list
+    return AddEditGetEventEventReport.parse_obj(response_event_report_list)
 
 
 async def _prepare_all_events_response(db: Session, event: Event, request_type: str) -> GetAllEventsResponse:
@@ -879,7 +899,9 @@ async def _prepare_all_events_response(db: Session, event: Event, request_type: 
 
     event_dict["GalaxyCluster"] = await _prepare_all_events_galaxy_cluster_response(db, event_tag_list)
     event_dict["date"] = str(event_dict["date"])
-    event_dict["event_creator_email"] = (await db.get(User, event.user_id)).email
+    user = await db.get(User, event.user_id)
+    if user is not None:
+        event_dict["event_creator_email"] = user.email
 
     response_strategy = {"get_all": GetAllEventsResponse, "index": IndexEventsAttributes}
 
@@ -894,12 +916,14 @@ async def _prepare_all_events_response(db: Session, event: Event, request_type: 
 
 
 async def _prepare_all_events_galaxy_cluster_response(
-    db: Session, event_tag_list: list[EventTag]
+    db: Session, event_tag_list: Sequence[EventTag]
 ) -> list[GetAllEventsGalaxyCluster]:
     galaxy_cluster_response_list = []
 
     for event_tag in event_tag_list:
         tag = await db.get(Tag, event_tag.tag_id)
+        if tag is None:
+            continue
 
         if tag.is_galaxy:
             result = await db.execute(select(GalaxyCluster).filter(GalaxyCluster.tag_name == tag.name))
@@ -909,6 +933,8 @@ async def _prepare_all_events_galaxy_cluster_response(
                 galaxy_cluster_dict = galaxy_cluster.__dict__.copy()
 
                 galaxy = await db.get(Galaxy, galaxy_cluster.galaxy_id)
+                if galaxy is None or tag is None:
+                    continue
                 galaxy_dict = galaxy.__dict__.copy()
                 galaxy_dict["local_only"] = tag.local_only
 
@@ -934,7 +960,7 @@ async def _prepare_all_events_galaxy_cluster_response(
 
 
 async def _prepare_all_events_event_tag_response(
-    db: Session, event_tag_list: list[EventTag]
+    db: Session, event_tag_list: Sequence[EventTag]
 ) -> list[GetAllEventsEventTag]:
     event_tag_response_list = []
 

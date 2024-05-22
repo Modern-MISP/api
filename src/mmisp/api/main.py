@@ -1,14 +1,14 @@
 import importlib
 import importlib.resources
 import itertools
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator, Callable
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 import mmisp.db.all_models  # noqa: F401
-from mmisp.db.database import create_all_models, sessionmanager
+from mmisp.db.database import sessionmanager
 
 router_pkg = "mmisp.api.routers"
 all_routers = (
@@ -25,18 +25,18 @@ for m in router_module_names:
     fastapi_routers.append(mod.router)
 
 
-def init_app(init_db: bool = True) -> FastAPI:
-    lifespan: Callable | None = None
-
+def init_app(*, init_db: bool = True) -> FastAPI:
     if init_db:
         sessionmanager.init()
 
-    @asynccontextmanager
-    async def lifespan(app: FastAPI) -> AsyncGenerator:
-        await create_all_models()
-        yield
-        if sessionmanager._engine is not None:
-            await sessionmanager.close()
+        @asynccontextmanager
+        async def lifespan(app: FastAPI) -> AsyncGenerator:
+            await sessionmanager.create_all()
+            yield
+            if sessionmanager._engine is not None:
+                await sessionmanager.close()
+    else:
+        lifespan = None  # type: ignore
 
     app = FastAPI(lifespan=lifespan)
 

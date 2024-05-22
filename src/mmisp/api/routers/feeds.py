@@ -1,8 +1,8 @@
+from collections.abc import Sequence
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Path, status
 from sqlalchemy.future import select
-from sqlalchemy.orm import Session
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
 from mmisp.api_schemas.feeds.cache_feed_response import FeedCacheResponse
@@ -12,7 +12,7 @@ from mmisp.api_schemas.feeds.fetch_feeds_response import FeedFetchResponse
 from mmisp.api_schemas.feeds.get_feed_response import FeedResponse
 from mmisp.api_schemas.feeds.toggle_feed_body import FeedToggleBody
 from mmisp.api_schemas.feeds.update_feed_body import FeedUpdateBody
-from mmisp.db.database import get_db
+from mmisp.db.database import Session, get_db
 from mmisp.db.models.feed import Feed
 from mmisp.util.models import update_record
 
@@ -343,7 +343,7 @@ async def _fetch_data_from_all_feeds(db: Session) -> FeedFetchResponse:
 
 async def _get_feeds(db: Session) -> list[FeedResponse]:
     result = await db.execute(select(Feed))
-    feeds: list[Feed] = result.scalars().all()
+    feeds: Sequence[Feed] = result.scalars().all()
 
     return [FeedResponse(Feed=feed.__dict__) for feed in feeds]
 

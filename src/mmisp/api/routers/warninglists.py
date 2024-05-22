@@ -1,9 +1,9 @@
-from typing import Annotated, Any
+from collections.abc import Sequence
+from typing import Annotated, Any, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Path, status
 from sqlalchemy import delete, func, or_
 from sqlalchemy.future import select
-from sqlalchemy.orm import Session
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
 from mmisp.api_schemas.standard_status_response import StandardStatusResponse
@@ -20,9 +20,8 @@ from mmisp.api_schemas.warninglists.toggle_enable_warninglists_response import T
 from mmisp.api_schemas.warninglists.warninglist_response import (
     WarninglistResponse,
 )
-from mmisp.db.database import get_db
+from mmisp.db.database import Session, get_db
 from mmisp.db.models.warninglist import Warninglist, WarninglistEntry, WarninglistType
-from mmisp.util.partial import partial
 
 router = APIRouter(tags=["warninglists"])
 
@@ -30,7 +29,6 @@ router = APIRouter(tags=["warninglists"])
 @router.post(
     "/warninglists/new",
     status_code=status.HTTP_201_CREATED,
-    response_model=WarninglistResponse,
     summary="Add a new warninglist",
     description="Add a new warninglist with given details.",
 )
@@ -45,7 +43,6 @@ async def add_warninglist(
 @router.get(
     "/warninglists/{warninglistId}",
     status_code=status.HTTP_200_OK,
-    response_model=WarninglistResponse,
     summary="Get warninglist details",
     description="Retrieve details of a specific warninglist by its ID.",
 )
@@ -60,7 +57,6 @@ async def get_warninglist_details(
 @router.post(
     "/warninglists/toggleEnable",
     status_code=status.HTTP_200_OK,
-    response_model=ToggleEnableWarninglistsResponse,
     response_model_exclude_unset=True,
     summary="Disable/Enable warninglist",
     description="Disable/Enable a specific warninglist by its ID or name.",
@@ -76,7 +72,6 @@ async def post_toggleEnable(
 @router.delete(
     "/warninglists/{id}",
     status_code=status.HTTP_200_OK,
-    response_model=WarninglistResponse,
     summary="Delete warninglist",
     description="Delete a specific warninglist.",
 )
@@ -91,7 +86,6 @@ async def delete_warninglist(
 @router.get(
     "/warninglists",
     status_code=status.HTTP_200_OK,
-    response_model=partial(GetSelectedAllWarninglistsResponse),
     summary="Get all warninglists, or selected ones by value and status",
     description="Receive a list of all warning lists, or when setting the path parameters value and enabled, receive a \
         list of warninglists for which the value matches either the name, description, or type and enabled matches \
@@ -102,13 +96,12 @@ async def get_all_or_selected_warninglists(
     db: Annotated[Session, Depends(get_db)],
     value: str | None = None,
     enabled: bool | None = None,
-) -> dict:
+) -> GetSelectedAllWarninglistsResponse:
     return await _get_all_or_selected_warninglists(db, value, enabled)
 
 
 @router.post(
     "/warninglists/checkValue",
-    response_model=CheckValueResponse | dict,
     status_code=status.HTTP_200_OK,
     summary="Get a list of ID and name of enabled warninglists",
     description="Retrieve a list of ID and name of enabled warninglists, \
@@ -118,14 +111,13 @@ async def get_warninglists_by_value(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     body: CheckValueWarninglistsBody,
-) -> dict:
+) -> CheckValueResponse | dict:
     return await _get_warninglists_by_value(db, body)
 
 
 @router.put(
     "/warninglists",
     status_code=status.HTTP_200_OK,
-    response_model=StandardStatusResponse,
     summary="Update warninglists",
     description="Update all warninglists.",
 )
@@ -143,7 +135,6 @@ async def update_all_warninglists(
     "/warninglists/view/{warninglistId}",
     deprecated=True,
     status_code=status.HTTP_200_OK,
-    response_model=WarninglistResponse,
     summary="Get warninglist details (Deprecated)",
     description="Deprecated. Retrieve details of a specific warninglist by its ID using the old route.",
 )
@@ -159,7 +150,6 @@ async def get_warninglist_details_depr(
     "/warninglists",
     deprecated=True,
     status_code=status.HTTP_200_OK,
-    response_model=partial(GetSelectedAllWarninglistsResponse),
     summary="Get selected warninglists (Deprecated)",
     description="Retrieve a list of warninglists, which match given search terms using the old route.",
 )
@@ -167,7 +157,7 @@ async def search_warninglists(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     body: GetSelectedWarninglistsBody,
-) -> dict:
+) -> GetSelectedAllWarninglistsResponse:
     return await _get_selected_warninglists(db, body)
 
 
@@ -175,7 +165,6 @@ async def search_warninglists(
     "/warninglists/update",
     deprecated=True,
     status_code=status.HTTP_200_OK,
-    response_model=StandardStatusResponse,
     summary="Update warninglists (Deprecated)",
     description="Deprecated. Update all warninglists.",
 )
@@ -192,7 +181,7 @@ async def update_all_warninglists_depr(
 async def _add_warninglist(
     db: Session,
     body: CreateWarninglistBody,
-) -> dict:
+) -> WarninglistResponse:
     create = body.dict()
     create.pop("values")
     create.pop("valid_attributes")
@@ -220,7 +209,7 @@ async def _add_warninglist(
 async def _toggleEnable(
     db: Session,
     body: ToggleEnableWarninglistsBody,
-) -> dict:
+) -> ToggleEnableWarninglistsResponse:
     warninglist_id_str_list = _convert_to_list(body.id)
     warninglist_id_list: list[int] = []
     for id_str in warninglist_id_str_list:
@@ -235,7 +224,7 @@ async def _toggleEnable(
             or_(Warninglist.id.in_(warninglist_id_list), Warninglist.name.in_(warninglist_name_list))
         )
     )
-    warninglists: list[Warninglist] = result.scalars().all()
+    warninglists: Sequence[Warninglist] = result.scalars().all()
 
     for warninglist in warninglists:
         warninglist.enabled = body.enabled
@@ -255,7 +244,7 @@ async def _toggleEnable(
 async def _get_warninglist_details(
     db: Session,
     warninglist_id: int,
-) -> dict:
+) -> WarninglistResponse:
     warninglist: Warninglist | None = await db.get(Warninglist, warninglist_id)
 
     if not warninglist:
@@ -269,7 +258,7 @@ async def _get_warninglist_details(
 async def _delete_warninglist(
     db: Session,
     warninglist_id: int,
-) -> dict:
+) -> WarninglistResponse:
     warninglist: Warninglist | None = await db.get(Warninglist, warninglist_id)
 
     if not warninglist:
@@ -304,8 +293,8 @@ async def _get_all_or_selected_warninglists(
     db: Session,
     value: str | None = None,
     enabled: bool | None = None,
-) -> dict:
-    warninglists: list[Warninglist] = await _search_warninglist(db, value, enabled)
+) -> GetSelectedAllWarninglistsResponse:
+    warninglists: Sequence[Warninglist] = await _search_warninglist(db, value, enabled)
 
     warninglists_data: list[WarninglistsResponse] = []
     for warninglist in warninglists:
@@ -321,7 +310,7 @@ async def _get_warninglists_by_value(
     value = body.value
 
     result = await db.execute(select(WarninglistEntry).filter(WarninglistEntry.value == value))
-    warninglist_entries: list[WarninglistEntry] = result.scalars().all()
+    warninglist_entries: Sequence[WarninglistEntry] = result.scalars().all()
 
     name_warninglists: list[NameWarninglist] = []
     for warninglist_entry in warninglist_entries:
@@ -330,7 +319,7 @@ async def _get_warninglists_by_value(
                 Warninglist.id == warninglist_entry.warninglist_id, Warninglist.enabled.is_(True)
             )
         )
-        warninglists: list[Warninglist] = result.scalars().all()
+        warninglists: Sequence[Warninglist] = result.scalars().all()
         for warninglist in warninglists:
             name_warninglists.append(
                 NameWarninglist(id=warninglist_entry.warninglist_id, name=warninglist.name, matched=value)
@@ -359,8 +348,8 @@ async def _update_all_warninglists(
 async def _get_selected_warninglists(
     db: Session,
     body: GetSelectedWarninglistsBody,
-) -> dict:
-    warninglists: list[Warninglist] = await _search_warninglist(db, body.value, body.enabled)
+) -> GetSelectedAllWarninglistsResponse:
+    warninglists: Sequence[Warninglist] = await _search_warninglist(db, body.value, body.enabled)
 
     warninglists_data: list[WarninglistsResponse] = []
     for warninglist in warninglists:
@@ -369,7 +358,9 @@ async def _get_selected_warninglists(
     return GetSelectedAllWarninglistsResponse(Warninglists=warninglists_data)
 
 
-async def _search_warninglist(db: Session, value: str | None = None, enabled: bool | None = None) -> list[Warninglist]:
+async def _search_warninglist(
+    db: Session, value: str | None = None, enabled: bool | None = None
+) -> Sequence[Warninglist]:
     query = select(Warninglist)
 
     if enabled is not None:
@@ -380,7 +371,7 @@ async def _search_warninglist(db: Session, value: str | None = None, enabled: bo
         )
 
     result = await db.execute(query.order_by(Warninglist.id.desc()))
-    warninglists: list[Warninglist] = result.scalars().all()
+    warninglists: Sequence[Warninglist] = result.scalars().all()
 
     return warninglists
 
@@ -410,7 +401,7 @@ def _create_warninglist_entries(values: str, warninglist_id: int) -> list[Warnin
     return new_warninglist_entries
 
 
-def _create_warninglist_types(valid_attributes: list[str], warninglist_id: int) -> list[WarninglistType]:
+def _create_warninglist_types(valid_attributes: Sequence[str], warninglist_id: int) -> list[WarninglistType]:
     new_warninglist_types: list[WarninglistType] = []
     for valid_attribute in valid_attributes:
         new_warninglist_type = WarninglistType(type=valid_attribute, warninglist_id=warninglist_id)
@@ -455,12 +446,12 @@ async def _get_warninglist_entries(db: Session, warninglist_id: int) -> list[dic
 
 async def _get_warninglist_entry_count(db: Session, warninglist_id: int) -> int:
     result = await db.execute(select(func.count()).filter(WarninglistEntry.warninglist_id == warninglist_id))
-    return result.scalar()
+    return cast(int, result.scalar())
 
 
 async def _get_valid_attributes(db: Session, warninglist_id: int) -> str:
     result = await db.execute(select(WarninglistType).filter(WarninglistType.warninglist_id == warninglist_id))
-    warninglist_types: list[WarninglistType] = result.scalars().all()
+    warninglist_types: Sequence[WarninglistType] = result.scalars().all()
 
     attributes = [warninglist_type.type for warninglist_type in warninglist_types]
     valid_attributes: str = ", ".join(attributes)
