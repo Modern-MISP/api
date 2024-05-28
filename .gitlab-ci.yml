@@ -28,7 +28,7 @@ pytest_mariadb:
   stage: test
   image: python:3.11
   script:
-    - pytest tests
+    - pytest -x tests
   services:
     - name: mariadb:latest
       alias: db
