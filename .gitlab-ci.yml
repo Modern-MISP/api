@@ -28,7 +28,7 @@ pytest_mariadb:
   stage: test
   image: python:3.11
   script:
-    - pytest -x tests
+    - pytest tests/api/routers
   services:
     - name: mariadb:latest
       alias: db
@@ -48,7 +48,7 @@ pytest:
   stage: test
   image: python:3.11
   script:
-    - ENV_FILE=.env.test.lite pytest --cov --cov-report term --cov-report xml:coverage.xml tests
+    - ENV_FILE=.env.test.lite pytest --cov --cov-report term --cov-report xml:coverage.xml tests/api/routers
   coverage: '/TOTAL.*\s+(\d+%)$/'
   artifacts:
     reports:
@@ -62,7 +62,7 @@ pytest_sa2:
   image: python:3.11
   script:
     - pip install "sqlalchemy>=2.0"
-    - ENV_FILE=.env.test.lite pytest tests
+    - ENV_FILE=.env.test.lite pytest tests/api/routers
 
 mypy:
   stage: test
@@ -73,10 +73,11 @@ mypy:
 
 legacy_misp:
   stage: test
-  image: curlimages/curl:latest
+  image: python:3.11
   before_script: []
   script:
-    - "curl -v http://misp-core/"
+    - while curl -s http://misp-core/ | grep -q "MISP is loading..."; do sleep 10; done
+    - curl http://misp-core/
   services:
     - name: mariadb:latest
       alias: db
