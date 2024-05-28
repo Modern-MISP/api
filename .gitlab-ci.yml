@@ -33,6 +33,8 @@ pytest_mariadb:
   services:
     - name: mariadb:latest
       alias: db
+    - name: valkey/valkey:7.2
+      alias: redis
   variables:
     MARIADB_ROOT_PASSWORD: misp
     MARIADB_DATABASE: mmisp-tests
