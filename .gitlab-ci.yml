@@ -82,6 +82,8 @@ legacy_misp:
       alias: db
     - name: hub.cert.kit.edu:5000/misp-core:latest
       alias: misp-core
+      variables:
+        MYSQL_PASSWORD: misp
   variables:
     MARIADB_ROOT_PASSWORD: misp
     MARIADB_DATABASE: misp
