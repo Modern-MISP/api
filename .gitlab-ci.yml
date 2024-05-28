@@ -76,7 +76,7 @@ legacy_misp:
   image: curlimages/curl:latest
   before_script: []
   script:
-    - "curl http://misp-core/"
+    - "curl -v http://misp-core/"
   services:
     - name: mariadb:latest
       alias: db
