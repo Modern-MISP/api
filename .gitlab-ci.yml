@@ -85,7 +85,7 @@ legacy_misp:
       variables:
         MYSQL_PASSWORD: misp
         MYSQL_USER: root
-        DISABLE_SSL_REDIRECT: false
+        DISABLE_SSL_REDIRECT: true
   variables:
     MARIADB_ROOT_PASSWORD: misp
     MARIADB_DATABASE: misp
