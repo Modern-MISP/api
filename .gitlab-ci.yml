@@ -75,7 +75,9 @@ legacy_misp:
   stage: test
   image: python:3.11
   script:
+    - date
     - while curl -s http://misp-core/ | grep -q "MISP is loading..."; do sleep 10; done
+    - date
     - pytest tests/compatibility_tests
   services:
     - name: mariadb:latest
