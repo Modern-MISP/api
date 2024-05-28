@@ -30,5 +30,6 @@ def test_get_existing_event(
     assert response_json["Event"]["Galaxy"][0]["GalaxyCluster"][0]["event_tag_id"] == str(eventtag.id)
 
     legacy_response = httpx.get(f"http://misp-core/events/{event_id}", headers=headers)
-    ic(legacy_response)
+    ic(legacy_response.text)
+    ic(legacy_response.headers)
     assert False
