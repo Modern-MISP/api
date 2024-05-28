@@ -3,8 +3,9 @@ from icecream import ic
 
 
 def test_get_existing_event(
-    organisation, event, attribute, galaxy, galaxy_cluster, tag, site_admin_user_token, eventtag, client
+    organisation, event, attribute, galaxy, galaxy_cluster, tag, auth_key, eventtag, client
 ) -> None:
+    clear_key, auth_key = auth_key
     org_id = organisation.id
 
     event_id = event.id
@@ -14,7 +15,7 @@ def test_get_existing_event(
 
     galaxy_cluster_id = galaxy_cluster.id
 
-    headers = {"authorization": site_admin_user_token, "accept": "application/json"}
+    headers = {"authorization": clear_key, "accept": "application/json"}
     response = client.get(f"/events/{event_id}", headers=headers)
 
     assert response.status_code == 200

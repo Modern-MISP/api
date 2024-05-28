@@ -5,6 +5,7 @@ from typing import Generator
 import pytest
 from fastapi.testclient import TestClient
 from icecream import ic
+from nanoid import generate
 from sqlalchemy import create_engine
 from sqlalchemy.engine.url import make_url
 from sqlalchemy.orm import Session, sessionmaker
@@ -16,6 +17,8 @@ from mmisp.db.database import Base
 from mmisp.db.models.event import EventTag
 from mmisp.db.models.galaxy_cluster import GalaxyCluster
 from mmisp.db.models.sharing_group import SharingGroupOrg, SharingGroupServer
+from mmisp.util.crypto import hash_secret
+from tests.generators.model_generators.auth_key_generator import generate_auth_key
 from tests.generators.model_generators.server_generator import generate_server
 
 from .generators.model_generators.attribute_generator import generate_attribute
@@ -443,4 +446,25 @@ def eventtag(db, event, tag):
     yield eventtag
 
     db.delete(eventtag)
+    db.commit()
+
+
+@pytest.fixture()
+def auth_key(db, site_admin_user):
+    clear_key = generate(size=40)
+
+    auth_key = generate_auth_key()
+    auth_key.user_id = site_admin_user.id
+    auth_key.authkey = hash_secret(clear_key)
+    auth_key.authkey_start = clear_key[:4]
+    auth_key.authkey_end = clear_key[-4:]
+
+    db.add(auth_key)
+
+    db.commit()
+    db.refresh(auth_key)
+
+    yield clear_key, auth_key
+
+    db.delete(auth_key)
     db.commit()

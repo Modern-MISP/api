@@ -7,5 +7,5 @@ def verify_secret(secret: str, secret_hash: str) -> bool:
 
 
 def hash_secret(secret: str) -> str:
-    context = CryptContext(schemes=["bcrypt", "argon2"])
+    context = CryptContext(schemes=["bcrypt", "argon2"], bcrypt__ident="2y")
     return context.hash(secret)

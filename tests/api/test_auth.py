@@ -4,34 +4,10 @@ from typing import Any
 import pytest
 from fastapi import HTTPException
 from icecream import ic
-from nanoid import generate
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize, check_permissions, encode_exchange_token
 from mmisp.api.config import config
 from mmisp.db.database import get_db
-from mmisp.util.crypto import hash_secret
-from tests.generators.model_generators.auth_key_generator import generate_auth_key
-
-
-@pytest.fixture()
-def auth_key(db, site_admin_user):
-    clear_key = generate(size=40)
-
-    auth_key = generate_auth_key()
-    auth_key.user_id = site_admin_user.id
-    auth_key.authkey = hash_secret(clear_key)
-    auth_key.authkey_start = clear_key[:4]
-    auth_key.authkey_end = clear_key[-4:]
-
-    db.add(auth_key)
-
-    db.commit()
-    db.refresh(auth_key)
-
-    yield clear_key, auth_key
-
-    db.delete(auth_key)
-    db.commit()
 
 
 @pytest.mark.asyncio
