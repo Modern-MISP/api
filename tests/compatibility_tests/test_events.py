@@ -14,7 +14,7 @@ def test_get_existing_event(
 
     galaxy_cluster_id = galaxy_cluster.id
 
-    headers = {"authorization": site_admin_user_token}
+    headers = {"authorization": site_admin_user_token, "accept": "application/json"}
     response = client.get(f"/events/{event_id}", headers=headers)
 
     assert response.status_code == 200
