@@ -74,6 +74,7 @@ mypy:
 legacy_misp:
   stage: test
   image: curlimages/curl:latest
+  before_script:
   script:
     - "curl http://misp-core/"
   services:
