@@ -74,13 +74,13 @@ mypy:
 legacy_misp:
   stage: test
   image: curlimages/curl:latest
-  before_script:
+  before_script: []
   script:
     - "curl http://misp-core/"
   services:
     - name: mariadb:latest
       alias: db
-    - name: ghcr.io/misp/misp-docker/misp-core:latest
+    - name: hub.cert.kit.edu:5000/misp-core:latest
       alias: misp-core
   variables:
     MARIADB_ROOT_PASSWORD: misp
