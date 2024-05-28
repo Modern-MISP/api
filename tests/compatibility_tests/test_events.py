@@ -1,4 +1,5 @@
 import httpx
+from icecream import ic
 
 
 def test_get_existing_event(
@@ -28,5 +29,6 @@ def test_get_existing_event(
     assert response_json["Event"]["Galaxy"][0]["GalaxyCluster"][0]["id"] == str(galaxy_cluster_id)
     assert response_json["Event"]["Galaxy"][0]["GalaxyCluster"][0]["event_tag_id"] == str(eventtag.id)
 
-    assert httpx.get(f"http://misp-core/events/{event_id}", headers=headers)
+    legacy_response = httpx.get(f"http://misp-core/events/{event_id}", headers=headers)
+    ic(legacy_response)
     assert False
