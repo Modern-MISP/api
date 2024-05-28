@@ -74,7 +74,6 @@ mypy:
 legacy_misp:
   stage: test
   image: python:3.11
-  before_script: []
   script:
     - while curl -s http://misp-core/ | grep -q "MISP is loading..."; do sleep 10; done
     - pytest tests/compatibility_tests
