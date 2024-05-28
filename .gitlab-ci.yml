@@ -6,6 +6,7 @@ variables:
   LIB_REPO_URL: https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.kit.edu/${CI_PROJECT_NAMESPACE}/lib.git
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
   CI_DEBUG_SERVICES: true
+  PYTHONUNBUFFERED: true
 
 stages:
   - test
@@ -33,8 +34,6 @@ pytest_mariadb:
   services:
     - name: mariadb:latest
       alias: db
-    - name: valkey/valkey:7.2
-      alias: redis
   variables:
     MARIADB_ROOT_PASSWORD: misp
     MARIADB_DATABASE: mmisp-tests
@@ -80,7 +79,26 @@ legacy_misp:
   script:
     - date
     - while curl -s http://misp-core/ | grep -q "MISP is loading..."; do sleep 10; done
+    - curl -v http://misp-core/users/login
     - date
+    - |
+      python -c "
+      import time
+      import mysql.connector
+      from icecream import ic
+      conn = mysql.connector.connect(user='root', password='misp', host='db', database='misp')
+      conn.autocommit = True
+      value = 1
+      while value < 120:
+          cursor = conn.cursor();
+          cursor.execute(\"SELECT description, \`change\` FROM logs ORDER by id DESC LIMIT 5\");
+          print(cursor.fetchall())
+          cursor.execute(\"SELECT value FROM admin_settings WHERE setting='db_version'\");
+          value = int(cursor.fetchone()[0])
+          print('DB Version is', value)
+          cursor.close()
+          time.sleep(5)
+      conn.close()"
     - pytest tests/compatibility_tests
   services:
     - name: mariadb:latest
@@ -91,6 +109,8 @@ legacy_misp:
         MYSQL_PASSWORD: misp
         MYSQL_USER: root
         DISABLE_SSL_REDIRECT: true
+    - name: valkey/valkey:7.2
+      alias: redis
   variables:
     MARIADB_ROOT_PASSWORD: misp
     MARIADB_DATABASE: misp

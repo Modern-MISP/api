@@ -1,9 +1,11 @@
 import httpx
+import sqlalchemy as sa
+from deepdiff import DeepDiff
 from icecream import ic
 
 
 def test_get_existing_event(
-    organisation, event, attribute, galaxy, galaxy_cluster, tag, auth_key, eventtag, client
+    db, organisation, event, attribute, galaxy, galaxy_cluster, tag, auth_key, eventtag, client
 ) -> None:
     clear_key, auth_key = auth_key
     org_id = organisation.id
@@ -16,7 +18,7 @@ def test_get_existing_event(
     galaxy_cluster_id = galaxy_cluster.id
 
     headers = {"authorization": clear_key, "accept": "application/json"}
-    response = client.get(f"/events/{event_id}", headers=headers)
+    response = client.get(f"/events/view/{event_id}", headers=headers)
 
     assert response.status_code == 200
     response_json = response.json()
@@ -30,7 +32,21 @@ def test_get_existing_event(
     assert response_json["Event"]["Galaxy"][0]["GalaxyCluster"][0]["id"] == str(galaxy_cluster_id)
     assert response_json["Event"]["Galaxy"][0]["GalaxyCluster"][0]["event_tag_id"] == str(eventtag.id)
 
-    legacy_response = httpx.get(f"http://misp-core/events/{event_id}", headers=headers)
+    # do not remove this its needed for gitlab-ci. why? i do not know
+    db.commit()
+    #    stmt = sa.sql.text("SELECT * FROM users")
+    #    for row in db.execute(stmt, {}):
+    #        print(row)
+    #    stmt = sa.sql.text("SELECT * FROM auth_keys")
+    #    for row in db.execute(stmt, {}):
+    #        print(row)
+    # time.sleep(5)
+
+    legacy_response = httpx.get(f"http://misp-core/events/view/{event_id}?extended=true", headers=headers)
     ic(legacy_response.text)
     ic(legacy_response.headers)
-    assert False
+    db.commit()
+    stmt = sa.sql.text("SELECT * FROM logs ORDER BY id DESC LIMIT 5")
+    for row in db.execute(stmt, {}):
+        print(row)
+    assert DeepDiff(response_json, legacy_response.json()) == {}

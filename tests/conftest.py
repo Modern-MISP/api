@@ -1,4 +1,5 @@
 import asyncio
+import string
 from contextlib import ExitStack
 from typing import Generator
 
@@ -62,7 +63,7 @@ def connection(event_loop):
     print(url)
 
     engine = create_engine(url, echo=True)
-    Base.metadata.drop_all(engine)
+    #    Base.metadata.drop_all(engine)
     Base.metadata.create_all(engine)
     yield sessionmaker(autocommit=False, autoflush=False, expire_on_commit=False, bind=engine)
 
@@ -263,6 +264,7 @@ def event2(db, organisation, site_admin_user):
 def attribute(db, event):
     event_id = event.id
     attribute = generate_attribute(event_id)
+    event.attribute_count += 1
 
     db.add(attribute)
     db.commit()
@@ -271,6 +273,7 @@ def attribute(db, event):
     yield attribute
 
     db.delete(attribute)
+    event.attribute_count -= 1
     db.commit()
 
 
@@ -451,7 +454,7 @@ def eventtag(db, event, tag):
 
 @pytest.fixture()
 def auth_key(db, site_admin_user):
-    clear_key = generate(size=40)
+    clear_key = generate(string.ascii_letters + string.digits, size=40)
 
     auth_key = generate_auth_key()
     auth_key.user_id = site_admin_user.id
