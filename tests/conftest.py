@@ -13,11 +13,14 @@ from mmisp.api.auth import encode_token
 from mmisp.api.main import init_app
 from mmisp.db.config import config
 from mmisp.db.database import Base
+from mmisp.db.models.event import EventTag
+from mmisp.db.models.galaxy_cluster import GalaxyCluster
 from mmisp.db.models.sharing_group import SharingGroupOrg, SharingGroupServer
 from tests.generators.model_generators.server_generator import generate_server
 
 from .generators.model_generators.attribute_generator import generate_attribute
 from .generators.model_generators.event_generator import generate_event
+from .generators.model_generators.galaxy_generator import generate_galaxy
 from .generators.model_generators.organisation_generator import generate_organisation
 from .generators.model_generators.role_generator import generate_org_admin_role, generate_site_admin_role
 from .generators.model_generators.sharing_group_generator import generate_sharing_group
@@ -390,4 +393,54 @@ def sharing_group_server_all_orgs(db, server, sharing_group):
     yield sharing_group_server
 
     db.delete(sharing_group_server)
+    db.commit()
+
+
+@pytest.fixture
+def galaxy(db):
+    galaxy = generate_galaxy()
+
+    db.add(galaxy)
+    db.commit()
+    db.refresh(galaxy)
+
+    yield galaxy
+
+    db.delete(galaxy)
+    db.commit()
+
+
+@pytest.fixture
+def galaxy_cluster(db, tag, galaxy):
+    galaxy_cluster = GalaxyCluster(
+        collection_uuid="uuid",
+        type="test type",
+        value="test",
+        tag_name=tag.name,
+        description="test",
+        galaxy_id=galaxy.id,
+        authors="admin",
+    )
+
+    db.add(galaxy_cluster)
+    db.commit()
+    db.refresh(galaxy_cluster)
+
+    yield galaxy_cluster
+
+    db.delete(galaxy_cluster)
+    db.commit()
+
+
+@pytest.fixture
+def eventtag(db, event, tag):
+    eventtag = EventTag(event_id=event.id, tag_id=tag.id, local=False)
+
+    db.add(eventtag)
+    db.commit()
+    db.refresh(eventtag)
+
+    yield eventtag
+
+    db.delete(eventtag)
     db.commit()
