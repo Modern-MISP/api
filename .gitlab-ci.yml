@@ -24,6 +24,25 @@ before_script:
       fi
     fi
 
+pytest_mariadb:
+  stage: test
+  image: python:3.11
+  script:
+    - pytest tests
+  services:
+    - name: mariadb:latest
+      alias: db
+  variables:
+    MARIADB_ROOT_PASSWORD: misp
+    DATABASE_URL: "mysql+aiomysql://root:misp@db:3306/mmisp-tests"
+    HASH_SECRET: hO1cfVGuFGsNwGvw9xzxnq5sU
+    WORKER_KEY: GcXh5TAq8RxYvdTpdioP0nI20Le
+    OWN_URL: http://localhost:4000
+    WORKER_URL: https://worker.mmisp.service
+    DASHBOARD_URL: https://dashboard.mmisp.service
+    DEBUG: true
+
+
 pytest:
   stage: test
   image: python:3.11
