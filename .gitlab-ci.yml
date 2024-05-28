@@ -77,7 +77,7 @@ legacy_misp:
   before_script: []
   script:
     - while curl -s http://misp-core/ | grep -q "MISP is loading..."; do sleep 10; done
-    - curl http://misp-core/
+    - curl -v http://misp-core/
   services:
     - name: mariadb:latest
       alias: db
