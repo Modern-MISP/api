@@ -84,6 +84,7 @@ legacy_misp:
       alias: misp-core
       variables:
         MYSQL_PASSWORD: misp
+        MYSQL_USER: root
   variables:
     MARIADB_ROOT_PASSWORD: misp
     MARIADB_DATABASE: misp
