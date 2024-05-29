@@ -23,6 +23,7 @@ router = APIRouter(tags=["users"])
 async def add_user(
     //TODO
 )
+    return await _add_user(db, user)
 
 
 @router.get(
@@ -34,6 +35,7 @@ async def add_user(
 async def get_all_users(
    //TODO
 ) 
+    return await _get_all_users(db)
 
 @router.get(
     "/users/view/{userId}",
@@ -44,6 +46,7 @@ async def get_all_users(
 async def get_user_by_id(
    //TODO
 )
+    return await _get_user(db, userId)
 
 @router.delete(
     "/users/{userId}",
@@ -55,6 +58,7 @@ async def get_user_by_id(
 async def delete_user(
     //TODO
 )
+    return await _delete_user(db, userID)
 
 @router.delete(
     "/users/{userId}",
@@ -66,6 +70,7 @@ async def delete_user(
 async def delete_user_token(
     //TODO
 )
+    return await _delete_user_token(db, userID)
 
 @router.put(
     "/users/{userId}",
@@ -77,6 +82,7 @@ async def delete_user_token(
 async def update_user(
     //TODO
 ) 
+    return await _update_user(db, userID)
 
 
 
@@ -90,3 +96,17 @@ async def get_logged_in_user_info(
     role = await db.get(Role, auth.role_id)
 
     return {"User": user.__dict__, "Organisation": organisation.__dict__, "Role": role.__dict__}
+
+# --- endpoint logic ---
+
+async def _add_user(db: Session, user: user)
+
+async def _get_all_users(db: Session)
+
+async def _get_user(db: Session, userID: str)
+
+async def _delete_user(db: Session, userID: str)
+
+async def _delete_user_token(db: Session, userID: str)
+
+async def _update_user(db: Session, userID: str)
