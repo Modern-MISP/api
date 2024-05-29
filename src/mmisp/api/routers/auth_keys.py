@@ -1,4 +1,5 @@
 import json
+import string
 import time
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, Annotated, Any, Tuple
@@ -205,7 +206,7 @@ async def _auth_key_add(auth: Auth, db: Session, user_id: int, body: AddAuthKeyB
     if auth.user_id != user_id and not await check_permissions(db, auth, [Permission.SITE_ADMIN]):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
-    auth_key_string = generate(size=40, alphabet="abcdefghijklmnopqrstuvwxyz1234567890")
+    auth_key_string = generate(size=40, alphabet=string.ascii_letters + string.digits)
     hashed_auth_key = hash_secret(auth_key_string)
 
     auth_key = AuthKey(
