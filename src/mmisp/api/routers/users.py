@@ -20,7 +20,7 @@ router = APIRouter(tags=["users"])
     summary="Add new user",
     description="Add a new user with the given details.",
 )
-async def add_event(
+async def add_user(
     //TODO
 )
 
@@ -74,7 +74,7 @@ async def delete_user_token(
     summary="Update a user",
     description="Update an existing user by their ID.",
 )
-async def update_event(
+async def update_user(
     //TODO
 ) 
 
