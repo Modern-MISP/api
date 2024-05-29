@@ -259,6 +259,17 @@ async def add_attribute_via_free_text_import(
     print(response_json)
     return await _add_attribute_via_free_text_import(db, event_id, response_json)
 
+@router.get(
+    "/events/freeTextImportProcessID/{eventId}",
+    status_code=status.HTTP_200_OK,
+    response_model=PLACEHOLDER,
+    summary="Fetches the process ID from the current freetext Import",
+    description="Gets the processID from the worker.",
+)
+async def get_pid_from_free_text_import(
+    //TODO
+)
+
 
 # --- deprecated ---
 
