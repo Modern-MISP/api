@@ -299,6 +299,7 @@ def tag(db):
     tag.user_id = 1
     tag.org_id = 1
     tag.is_galaxy = True
+    tag.exportable = True
 
     db.add(tag)
     db.commit()
