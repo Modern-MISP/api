@@ -1,5 +1,4 @@
 import httpx
-import sqlalchemy as sa
 from deepdiff import DeepDiff
 from icecream import ic
 
@@ -22,6 +21,9 @@ def test_get_existing_event(
 
     assert response.status_code == 200
     response_json = response.json()
+
+    ic(response_json)
+
     assert response_json["Event"]["id"] == str(event_id)
     assert response_json["Event"]["org_id"] == str(org_id)
     assert response_json["Event"]["orgc_id"] == str(org_id)
@@ -32,21 +34,10 @@ def test_get_existing_event(
     assert response_json["Event"]["Galaxy"][0]["GalaxyCluster"][0]["id"] == str(galaxy_cluster_id)
     assert response_json["Event"]["Galaxy"][0]["GalaxyCluster"][0]["event_tag_id"] == str(eventtag.id)
 
-    # do not remove this its needed for gitlab-ci. why? i do not know
     db.commit()
-    #    stmt = sa.sql.text("SELECT * FROM users")
-    #    for row in db.execute(stmt, {}):
-    #        print(row)
-    #    stmt = sa.sql.text("SELECT * FROM auth_keys")
-    #    for row in db.execute(stmt, {}):
-    #        print(row)
-    # time.sleep(5)
 
     legacy_response = httpx.get(f"http://misp-core/events/view/{event_id}?extended=true", headers=headers)
     ic(legacy_response.text)
     ic(legacy_response.headers)
     db.commit()
-    stmt = sa.sql.text("SELECT * FROM logs ORDER BY id DESC LIMIT 5")
-    for row in db.execute(stmt, {}):
-        print(row)
     assert DeepDiff(response_json, legacy_response.json()) == {}

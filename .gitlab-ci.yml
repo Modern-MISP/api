@@ -5,7 +5,7 @@ default:
 variables:
   LIB_REPO_URL: https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.kit.edu/${CI_PROJECT_NAMESPACE}/lib.git
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
-  CI_DEBUG_SERVICES: true
+  #  CI_DEBUG_SERVICES: true
   PYTHONUNBUFFERED: true
 
 stages:
