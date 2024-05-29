@@ -13,6 +13,72 @@ from ..auth import Auth, AuthStrategy, authorize
 
 router = APIRouter(tags=["users"])
 
+@router.post(
+    "/users",
+    status_code=status.HTTP_200_OK,
+    response_model=AddEditGetEventResponse,
+    summary="Add new user",
+    description="Add a new user with the given details.",
+)
+async def add_event(
+    //TODO
+)
+
+
+@router.get(
+    "/users/view/all",
+    status_code=status.HTTP_200_OK,
+    summary="Get all users",
+    description="Retrieve a list of all users.",
+)
+async def get_all_users(
+   //TODO
+) 
+
+@router.get(
+    "/users/view/{userId}",
+    status_code=status.HTTP_200_OK,
+    summary="Get a user by id",
+    description="Retrieve a user specified by id.",
+)
+async def get_user_by_id(
+   //TODO
+)
+
+@router.delete(
+    "/users/{userId}",
+    status_code=status.HTTP_200_OK,
+    response_model=DeleteEventResponse,
+    summary="Delete a user",
+    description="Delete a user by their ID.",
+)
+async def delete_user(
+    //TODO
+)
+
+@router.delete(
+    "/users/{userId}",
+    status_code=status.HTTP_200_OK,
+    response_model=DeleteEventResponse,
+    summary="Delete a users login token",
+    description="Delete a users login token by their ID.",
+)
+async def delete_user_token(
+    //TODO
+)
+
+@router.put(
+    "/users/{userId}",
+    status_code=status.HTTP_200_OK,
+    response_model=AddEditGetEventResponse,
+    summary="Update a user",
+    description="Update an existing user by their ID.",
+)
+async def update_event(
+    //TODO
+) 
+
+
 
 @router.get("/users/view/me.json", response_model=partial(UsersViewMeResponse))
 @router.get("/users/view/me", response_model=partial(UsersViewMeResponse))
