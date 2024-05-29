@@ -37,7 +37,6 @@ def test_get_existing_event(
     db.commit()
 
     legacy_response = httpx.get(f"http://misp-core/events/view/{event_id}?extended=true", headers=headers)
-    ic(legacy_response.text)
-    ic(legacy_response.headers)
+    ic(legacy_response.json())
     db.commit()
     assert DeepDiff(response_json, legacy_response.json()) == {}
