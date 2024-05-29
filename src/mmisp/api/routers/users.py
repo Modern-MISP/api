@@ -16,7 +16,7 @@ router = APIRouter(tags=["users"])
 @router.post(
     "/users",
     status_code=status.HTTP_200_OK,
-    response_model=AddEditGetEventResponse,
+    response_model=PLACEHOLDER,
     summary="Add new user",
     description="Add a new user with the given details.",
 )
@@ -48,7 +48,7 @@ async def get_user_by_id(
 @router.delete(
     "/users/{userId}",
     status_code=status.HTTP_200_OK,
-    response_model=DeleteEventResponse,
+    response_model=PLACEHOLDER,
     summary="Delete a user",
     description="Delete a user by their ID.",
 )
@@ -59,7 +59,7 @@ async def delete_user(
 @router.delete(
     "/users/{userId}",
     status_code=status.HTTP_200_OK,
-    response_model=DeleteEventResponse,
+    response_model=PLACEHOLDER,
     summary="Delete a users login token",
     description="Delete a users login token by their ID.",
 )
@@ -70,7 +70,7 @@ async def delete_user_token(
 @router.put(
     "/users/{userId}",
     status_code=status.HTTP_200_OK,
-    response_model=AddEditGetEventResponse,
+    response_model=PLACEHOLDER,
     summary="Update a user",
     description="Update an existing user by their ID.",
 )
