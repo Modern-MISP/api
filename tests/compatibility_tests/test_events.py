@@ -4,15 +4,16 @@ from icecream import ic
 
 
 def to_legacy_format(data):
+    cp = {}
     if isinstance(data, dict):
         for key, value in data.items():
             if isinstance(value, (int, float)):
-                data[key] = str(value)
+                cp[key] = str(value)
             elif isinstance(value, bool):
-                data[key] = str(value).lower()
+                cp[key] = str(value).lower()
             elif isinstance(value, dict):
-                to_legacy_format(value)
-    return data
+                cp[key] = to_legacy_format(value)
+    return cp
 
 
 def test_get_existing_event(
@@ -50,5 +51,6 @@ def test_get_existing_event(
 
     legacy_response = httpx.get(f"http://misp-core/events/view/{event_id}?extended=true", headers=headers)
     ic(legacy_response.json())
+    response_json_in_legacy = to_legacy_format(response_json)
     db.commit()
-    assert DeepDiff(to_legacy_format(response_json), legacy_response.json()) == {}
+    assert DeepDiff(response_json_in_legacy, legacy_response.json()) == {}
