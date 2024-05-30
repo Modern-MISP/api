@@ -9,8 +9,8 @@ def to_legacy_format(data):
         for key, value in data.items():
             if isinstance(value, (int, float)):
                 cp[key] = str(value)
-            elif isinstance(value, bool):
-                cp[key] = str(value).lower()
+                #            elif isinstance(value, bool):
+                #                cp[key] = str(value).lower()
             elif isinstance(value, dict):
                 cp[key] = to_legacy_format(value)
     return cp
