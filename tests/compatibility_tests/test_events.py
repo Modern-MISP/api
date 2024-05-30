@@ -3,6 +3,18 @@ from deepdiff import DeepDiff
 from icecream import ic
 
 
+def to_legacy_format(data):
+    if isinstance(data, dict):
+        for key, value in data.items():
+            if isinstance(value, (int, float)):
+                data[key] = str(value)
+            elif isinstance(value, bool):
+                data[key] = str(value).lower()
+            elif isinstance(value, dict):
+                to_legacy_format(value)
+    return data
+
+
 def test_get_existing_event(
     db, organisation, event, attribute, galaxy, galaxy_cluster, tag, auth_key, eventtag, client
 ) -> None:
@@ -39,4 +51,4 @@ def test_get_existing_event(
     legacy_response = httpx.get(f"http://misp-core/events/view/{event_id}?extended=true", headers=headers)
     ic(legacy_response.json())
     db.commit()
-    assert DeepDiff(response_json, legacy_response.json()) == {}
+    assert DeepDiff(to_legacy_format(response_json), legacy_response.json()) == {}

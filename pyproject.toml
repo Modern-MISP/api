@@ -55,7 +55,7 @@ select = ["E", "F", "W", "I", "ICN", "ANN"]
 ignore = ["ANN002", "ANN003", "ANN401"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["ANN001", "ANN201", "ANN202"]
+"tests/**" = ["ANN001", "ANN201", "ANN202", "S101"]
 
 [tool.pylint.format]
 max-line-length = 120
