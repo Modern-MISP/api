@@ -9,10 +9,10 @@ def to_legacy_format(data):
         for key, value in data.items():
             if isinstance(value, (int, float)):
                 cp[key] = str(value)
-                #            elif isinstance(value, bool):
-                #                cp[key] = str(value).lower()
             elif isinstance(value, dict):
                 cp[key] = to_legacy_format(value)
+            else:
+                cp[key] = value
     return cp
 
 
@@ -50,7 +50,8 @@ def test_get_existing_event(
     db.commit()
 
     legacy_response = httpx.get(f"http://misp-core/events/view/{event_id}?extended=true", headers=headers)
-    ic(legacy_response.json())
     response_json_in_legacy = to_legacy_format(response_json)
+    ic(response_json_in_legacy)
+    ic(legacy_response.json())
     db.commit()
     assert DeepDiff(response_json_in_legacy, legacy_response.json()) == {}
