@@ -4,18 +4,15 @@ from icecream import ic
 
 
 def to_legacy_format(data):
-    cp = {}
-    if isinstance(data, dict):
-        for key, value in data.items():
-            if isinstance(value, bool):
-                cp[key] = value
-            elif isinstance(value, (int, float)):
-                cp[key] = str(value)
-            elif isinstance(value, dict):
-                cp[key] = to_legacy_format(value)
-            else:
-                cp[key] = value
-    return cp
+    if isinstance(data, bool):
+        return data
+    elif isinstance(data, (int, float)):
+        return str(data)
+    elif isinstance(data, dict):
+        return {key: to_legacy_format(value) for key, value in data.items()}
+    elif isinstance(data, list):
+        return [to_legacy_format(x) for x in data]
+    return data
 
 
 def test_get_existing_event(
