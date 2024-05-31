@@ -4,7 +4,7 @@ from icecream import ic
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import text
 
-from mmisp.api_schemas.galaxies.export_galaxies_body import ExportGalaxyAttributes, ExportGalaxyBody
+from mmisp.api_schemas.galaxies import ExportGalaxyAttributes, ExportGalaxyBody
 from mmisp.db.models.galaxy_cluster import GalaxyCluster, GalaxyElement, GalaxyReference
 
 from ...generators.model_generators.galaxy_generator import generate_galaxy

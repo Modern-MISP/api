@@ -7,24 +7,26 @@ from starlette import status
 from starlette.requests import Request
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
-from mmisp.api_schemas.events.add_edit_get_event_response import (
+from mmisp.api_schemas.events import (
     AddEditGetEventGalaxyClusterRelation,
     AddEditGetEventGalaxyClusterRelationTag,
+    GetAllEventsGalaxyClusterGalaxy,
 )
-from mmisp.api_schemas.events.get_all_events_response import GetAllEventsGalaxyClusterGalaxy
-from mmisp.api_schemas.galaxies.attach_galaxy_cluster_body import AttachClusterGalaxyBody
-from mmisp.api_schemas.galaxies.attach_galaxy_cluster_response import AttachClusterGalaxyResponse
-from mmisp.api_schemas.galaxies.delete_force_update_import_galaxy_response import DeleteForceUpdateImportGalaxyResponse
-from mmisp.api_schemas.galaxies.export_galaxies_body import ExportGalaxyBody
-from mmisp.api_schemas.galaxies.export_galaxies_response import ExportGalaxyClusterResponse, ExportGalaxyGalaxyElement
-from mmisp.api_schemas.galaxies.get_all_search_galaxies_response import (
+from mmisp.api_schemas.galaxies import (
+    AttachClusterGalaxyBody,
+    AttachClusterGalaxyResponse,
+    DeleteForceUpdateImportGalaxyResponse,
+    ExportGalaxyBody,
+    ExportGalaxyClusterResponse,
+    ExportGalaxyGalaxyElement,
     GetAllSearchGalaxiesAttributes,
     GetAllSearchGalaxiesResponse,
+    GetGalaxyClusterResponse,
+    GetGalaxyResponse,
+    ImportGalaxyBody,
+    SearchGalaxiesbyValue,
 )
-from mmisp.api_schemas.galaxies.get_galaxy_response import GetGalaxyClusterResponse, GetGalaxyResponse
-from mmisp.api_schemas.galaxies.import_galaxies_body import ImportGalaxyBody
-from mmisp.api_schemas.galaxies.search_galaxies_body import SearchGalaxiesbyValue
-from mmisp.api_schemas.organisations.organisation import Organisation as OrganisationSchema
+from mmisp.api_schemas.organisations import Organisation as OrganisationSchema
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.attribute import Attribute, AttributeTag
 from mmisp.db.models.event import Event, EventTag

@@ -7,15 +7,14 @@ from sqlalchemy.future import select
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize, check_permissions
 from mmisp.api_schemas.standard_status_response import StandardStatusIdentifiedResponse
-from mmisp.api_schemas.user_settings.get_uid_user_setting_response import GetUserSettingResponse
-from mmisp.api_schemas.user_settings.get_user_settings_response import UserSettingResponse, UserSettingSchema
-from mmisp.api_schemas.user_settings.search_user_setting_body import SearchUserSettingBody
-from mmisp.api_schemas.user_settings.set_user_setting_body import SetUserSettingBody
-from mmisp.api_schemas.user_settings.set_user_setting_response import (
+from mmisp.api_schemas.user_settings import (
+    GetUserSettingResponse,
+    SearchUserSettingBody,
+    SetUserSettingBody,
     SetUserSettingResponse,
     SetUserSettingResponseUserSetting,
-)
-from mmisp.api_schemas.user_settings.view_user_setting_response import (
+    UserSettingResponse,
+    UserSettingSchema,
     ViewUserSettingResponse,
     ViewUserSettingResponseUserSetting,
 )

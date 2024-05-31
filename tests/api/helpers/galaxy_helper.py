@@ -1,6 +1,9 @@
-from mmisp.api_schemas.galaxies.export_galaxies_response import ExportGalaxyGalaxyElement
-from mmisp.api_schemas.galaxies.get_galaxy_response import GetGalaxyClusterResponse
-from mmisp.api_schemas.galaxies.import_galaxies_body import ImportGalaxyBody, ImportGalaxyGalaxy
+from mmisp.api_schemas.galaxies import (
+    ExportGalaxyGalaxyElement,
+    GetGalaxyClusterResponse,
+    ImportGalaxyBody,
+    ImportGalaxyGalaxy,
+)
 
 
 def get_valid_import_galaxy_body(tag_name: str, galaxy_id: int, org_id: int, galaxy_uuid: str) -> list[dict]:

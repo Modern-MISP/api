@@ -6,8 +6,8 @@ from fastapi import APIRouter, Depends, HTTPException, Path, status
 from sqlalchemy.future import select
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
-from mmisp.api_schemas.noticelists.get_all_noticelist_response import GetAllNoticelists
-from mmisp.api_schemas.noticelists.get_noticelist_response import (
+from mmisp.api_schemas.noticelists import (
+    GetAllNoticelists,
     NoticelistAttributes,
     NoticelistAttributesResponse,
     NoticelistEntryResponse,

@@ -12,21 +12,21 @@ if TYPE_CHECKING:
 from sqlalchemy.future import select
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize, check_permissions
-from mmisp.api_schemas.auth_keys.add_auth_key_body import AddAuthKeyBody
-from mmisp.api_schemas.auth_keys.add_auth_key_response import AddAuthKeyResponse, AddAuthKeyResponseAuthKey
-from mmisp.api_schemas.auth_keys.edit_auth_key_body import EditAuthKeyBody
-from mmisp.api_schemas.auth_keys.edit_auth_key_response import (
+from mmisp.api_schemas.auth_keys import (
+    AddAuthKeyBody,
+    AddAuthKeyResponse,
+    AddAuthKeyResponseAuthKey,
+    EditAuthKeyBody,
     EditAuthKeyResponse,
     EditAuthKeyResponseAuthKey,
     EditAuthKeyResponseUser,
-)
-from mmisp.api_schemas.auth_keys.search_auth_keys_body import SearchAuthKeyBody
-from mmisp.api_schemas.auth_keys.search_get_all_auth_keys_users_response import (
+    SearchAuthKeyBody,
     SearchGetAuthKeysResponseItem,
     SearchGetAuthKeysResponseItemAuthKey,
     SearchGetAuthKeysResponseItemUser,
+    ViewAuthKeyResponseWrapper,
+    ViewAuthKeysResponse,
 )
-from mmisp.api_schemas.auth_keys.view_auth_key_response import ViewAuthKeyResponseWrapper, ViewAuthKeysResponse
 from mmisp.api_schemas.standard_status_response import StandardStatusIdentifiedResponse
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.auth_key import AuthKey

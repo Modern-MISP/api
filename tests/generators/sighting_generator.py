@@ -2,7 +2,7 @@ import random
 import string
 import time
 
-from mmisp.api_schemas.sightings.create_sighting_body import SightingCreateBody, SightingFiltersBody
+from mmisp.api_schemas.sightings import SightingCreateBody, SightingFiltersBody
 
 
 def generate_random_value() -> str:

@@ -7,24 +7,24 @@ from sqlalchemy.future import select
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize, check_permissions
 from mmisp.api.config import config
-from mmisp.api_schemas.sharing_groups.add_org_to_sharing_group_body import AddOrgToSharingGroupBody
-from mmisp.api_schemas.sharing_groups.add_org_to_sharing_group_legacy_body import AddOrgToSharingGroupLegacyBody
-from mmisp.api_schemas.sharing_groups.add_server_to_sharing_group_body import AddServerToSharingGroupBody
-from mmisp.api_schemas.sharing_groups.add_server_to_sharing_group_legacy_body import AddServerToSharingGroupLegacyBody
-from mmisp.api_schemas.sharing_groups.create_sharing_group_body import CreateSharingGroupBody
-from mmisp.api_schemas.sharing_groups.create_sharing_group_legacy_body import CreateSharingGroupLegacyBody
-from mmisp.api_schemas.sharing_groups.create_sharing_group_legacy_response import CreateSharingGroupLegacyResponse
-from mmisp.api_schemas.sharing_groups.delete_sharing_group_legacy_response import DeleteSharingGroupLegacyResponse
-from mmisp.api_schemas.sharing_groups.get_all_sharing_groups_response import GetAllSharingGroupsResponse
-from mmisp.api_schemas.sharing_groups.get_sharing_group_info_response import GetSharingGroupInfoResponse
-from mmisp.api_schemas.sharing_groups.sharing_group import SharingGroup as SharingGroupSchema
-from mmisp.api_schemas.sharing_groups.sharing_group_org import SharingGroupOrg as SharingGroupOrgSchema
-from mmisp.api_schemas.sharing_groups.sharing_group_server import SharingGroupServer as SharingGroupServerSchema
-from mmisp.api_schemas.sharing_groups.update_sharing_group_body import UpdateSharingGroupBody
-from mmisp.api_schemas.sharing_groups.update_sharing_group_legacy_body import UpdateSharingGroupLegacyBody
-from mmisp.api_schemas.sharing_groups.view_update_sharing_group_legacy_response import (
+from mmisp.api_schemas.sharing_groups import (
+    AddOrgToSharingGroupBody,
+    AddOrgToSharingGroupLegacyBody,
+    AddServerToSharingGroupBody,
+    AddServerToSharingGroupLegacyBody,
+    CreateSharingGroupBody,
+    CreateSharingGroupLegacyBody,
+    CreateSharingGroupLegacyResponse,
+    DeleteSharingGroupLegacyResponse,
+    GetAllSharingGroupsResponse,
+    GetSharingGroupInfoResponse,
+    UpdateSharingGroupBody,
+    UpdateSharingGroupLegacyBody,
     ViewUpdateSharingGroupLegacyResponse,
 )
+from mmisp.api_schemas.sharing_groups import SharingGroup as SharingGroupSchema
+from mmisp.api_schemas.sharing_groups import SharingGroupOrg as SharingGroupOrgSchema
+from mmisp.api_schemas.sharing_groups import SharingGroupServer as SharingGroupServerSchema
 from mmisp.api_schemas.standard_status_response import StandardStatusResponse
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.organisation import Organisation

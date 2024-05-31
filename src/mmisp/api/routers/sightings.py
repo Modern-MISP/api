@@ -7,9 +7,10 @@ from sqlalchemy import and_, select
 from sqlalchemy.sql.expression import Select
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
-from mmisp.api_schemas.sightings.create_sighting_body import SightingCreateBody, SightingFiltersBody
-from mmisp.api_schemas.sightings.get_sighting_response import (
+from mmisp.api_schemas.sightings import (
     SightingAttributesResponse,
+    SightingCreateBody,
+    SightingFiltersBody,
     SightingOrganisationResponse,
     SightingsGetResponse,
 )

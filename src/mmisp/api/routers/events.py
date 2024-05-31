@@ -13,14 +13,10 @@ from starlette.requests import Request
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
 from mmisp.api.config import config
-from mmisp.api_schemas.attributes.get_describe_types_response import GetDescribeTypesAttributes
-from mmisp.api_schemas.events.add_attribute_via_free_text_import_event_body import (
+from mmisp.api_schemas.attributes import GetDescribeTypesAttributes
+from mmisp.api_schemas.events import (
     AddAttributeViaFreeTextImportEventBody,
-)
-from mmisp.api_schemas.events.add_attribute_via_free_text_import_event_response import (
     AddAttributeViaFreeTextImportEventResponse,
-)
-from mmisp.api_schemas.events.add_edit_get_event_response import (
     AddEditGetEventAttribute,
     AddEditGetEventDetails,
     AddEditGetEventEventReport,
@@ -31,30 +27,26 @@ from mmisp.api_schemas.events.add_edit_get_event_response import (
     AddEditGetEventOrg,
     AddEditGetEventResponse,
     AddEditGetEventTag,
-)
-from mmisp.api_schemas.events.add_event_body import AddEventBody
-from mmisp.api_schemas.events.add_remove_tag_events_response import AddRemoveTagEventsResponse
-from mmisp.api_schemas.events.delete_event_response import DeleteEventResponse
-from mmisp.api_schemas.events.edit_event_body import EditEventBody
-from mmisp.api_schemas.events.FreeTextImportWorkerBody import (
+    AddEventBody,
+    AddRemoveTagEventsResponse,
+    DeleteEventResponse,
+    EditEventBody,
     FreeTextImportWorkerBody,
     FreeTextImportWorkerData,
     FreeTextImportWorkerUser,
-)
-from mmisp.api_schemas.events.get_all_events_response import (
     GetAllEventsEventTag,
     GetAllEventsEventTagTag,
     GetAllEventsGalaxyCluster,
     GetAllEventsGalaxyClusterGalaxy,
     GetAllEventsOrg,
     GetAllEventsResponse,
+    IndexEventsAttributes,
+    IndexEventsBody,
+    PublishEventResponse,
+    SearchEventsBody,
+    SearchEventsResponse,
+    UnpublishEventResponse,
 )
-from mmisp.api_schemas.events.index_events_body import IndexEventsBody
-from mmisp.api_schemas.events.index_events_response import IndexEventsAttributes
-from mmisp.api_schemas.events.publish_event_response import PublishEventResponse
-from mmisp.api_schemas.events.search_events_body import SearchEventsBody
-from mmisp.api_schemas.events.search_events_response import SearchEventsResponse
-from mmisp.api_schemas.events.unpublish_event_response import UnpublishEventResponse
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.attribute import Attribute, AttributeTag
 from mmisp.db.models.event import Event, EventReport, EventTag

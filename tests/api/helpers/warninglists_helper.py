@@ -8,7 +8,7 @@ from tests.generators.model_generators.warninglist_generator import (
     generate_warninglist_type,
 )
 
-from mmisp.api_schemas.warninglists.toggle_enable_warninglists_body import ToggleEnableWarninglistsBody
+from mmisp.api_schemas.warninglists import ToggleEnableWarninglistsBody
 from mmisp.db.models.warninglist import Warninglist
 
 

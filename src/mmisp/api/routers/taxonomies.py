@@ -7,25 +7,19 @@ from sqlalchemy import func, select
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
 from mmisp.api_schemas.standard_status_response import StandardStatusIdentifiedResponse, StandardStatusResponse
-from mmisp.api_schemas.tags.get_tag_response import TagAttributesResponse
-from mmisp.api_schemas.taxonomies.export_taxonomies_response import (
+from mmisp.api_schemas.tags import TagAttributesResponse
+from mmisp.api_schemas.taxonomies import (
     ExportTaxonomyEntry,
     ExportTaxonomyResponse,
-    TaxonomyPredicateSchema,
-    TaxonomyValueSchema,
-)
-from mmisp.api_schemas.taxonomies.get_taxonomy_by_id_response import (
     GetIdTaxonomyResponse,
     GetIdTaxonomyResponseWrapper,
+    GetTagTaxonomyResponse,
     TaxonomyEntrySchema,
-)
-from mmisp.api_schemas.taxonomies.get_taxonomy_response import (
+    TaxonomyPredicateSchema,
+    TaxonomyTagEntrySchema,
+    TaxonomyValueSchema,
     TaxonomyView,
     ViewTaxonomyResponse,
-)
-from mmisp.api_schemas.taxonomies.get_taxonomy_tags_response import (
-    GetTagTaxonomyResponse,
-    TaxonomyTagEntrySchema,
 )
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.attribute import AttributeTag
