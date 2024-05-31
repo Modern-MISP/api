@@ -100,6 +100,7 @@ async def get_logged_in_user_info(
 # --- endpoint logic ---
 
 async def _add_user(db: Session, user: user)
+//Adds a new user and generates a new single-time password
 
 async def _get_all_users(db: Session)
 
