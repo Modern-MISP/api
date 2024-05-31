@@ -8,7 +8,7 @@ requires-python = ">=3.11.0"
 
 
 dependencies = [
-  "mmisp-lib==0.1.9",
+  "mmisp-lib==0.1.10",
   "fastapi==0.104.1",
   "SQLAlchemy[asyncio]>=1.4.46",
   "pydantic==1.10.13",
@@ -40,6 +40,7 @@ dev = [
   "icecream",
   "types-Pygments",
   "types-passlib",
+  "deepdiff",
 ]
 
 [tool.ruff]
@@ -54,7 +55,7 @@ select = ["E", "F", "W", "I", "ICN", "ANN"]
 ignore = ["ANN002", "ANN003", "ANN401"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["ANN001", "ANN201", "ANN202"]
+"tests/**" = ["ANN001", "ANN201", "ANN202", "S101"]
 
 [tool.pylint.format]
 max-line-length = 120

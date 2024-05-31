@@ -1,10 +1,12 @@
 import asyncio
+import string
 from contextlib import ExitStack
 from typing import Generator
 
 import pytest
 from fastapi.testclient import TestClient
 from icecream import ic
+from nanoid import generate
 from sqlalchemy import create_engine
 from sqlalchemy.engine.url import make_url
 from sqlalchemy.orm import Session, sessionmaker
@@ -13,11 +15,16 @@ from mmisp.api.auth import encode_token
 from mmisp.api.main import init_app
 from mmisp.db.config import config
 from mmisp.db.database import Base
+from mmisp.db.models.event import EventTag
+from mmisp.db.models.galaxy_cluster import GalaxyCluster
 from mmisp.db.models.sharing_group import SharingGroupOrg, SharingGroupServer
+from mmisp.util.crypto import hash_secret
+from tests.generators.model_generators.auth_key_generator import generate_auth_key
 from tests.generators.model_generators.server_generator import generate_server
 
 from .generators.model_generators.attribute_generator import generate_attribute
 from .generators.model_generators.event_generator import generate_event
+from .generators.model_generators.galaxy_generator import generate_galaxy
 from .generators.model_generators.organisation_generator import generate_organisation
 from .generators.model_generators.role_generator import generate_org_admin_role, generate_site_admin_role
 from .generators.model_generators.sharing_group_generator import generate_sharing_group
@@ -56,7 +63,7 @@ def connection(event_loop):
     print(url)
 
     engine = create_engine(url, echo=True)
-    Base.metadata.drop_all(engine)
+    #    Base.metadata.drop_all(engine)
     Base.metadata.create_all(engine)
     yield sessionmaker(autocommit=False, autoflush=False, expire_on_commit=False, bind=engine)
 
@@ -257,6 +264,7 @@ def event2(db, organisation, site_admin_user):
 def attribute(db, event):
     event_id = event.id
     attribute = generate_attribute(event_id)
+    event.attribute_count += 1
 
     db.add(attribute)
     db.commit()
@@ -265,6 +273,7 @@ def attribute(db, event):
     yield attribute
 
     db.delete(attribute)
+    event.attribute_count -= 1
     db.commit()
 
 
@@ -290,6 +299,7 @@ def tag(db):
     tag.user_id = 1
     tag.org_id = 1
     tag.is_galaxy = True
+    tag.exportable = True
 
     db.add(tag)
     db.commit()
@@ -390,4 +400,75 @@ def sharing_group_server_all_orgs(db, server, sharing_group):
     yield sharing_group_server
 
     db.delete(sharing_group_server)
+    db.commit()
+
+
+@pytest.fixture
+def galaxy(db):
+    galaxy = generate_galaxy()
+
+    db.add(galaxy)
+    db.commit()
+    db.refresh(galaxy)
+
+    yield galaxy
+
+    db.delete(galaxy)
+    db.commit()
+
+
+@pytest.fixture
+def galaxy_cluster(db, tag, galaxy):
+    galaxy_cluster = GalaxyCluster(
+        collection_uuid="uuid",
+        type="test type",
+        value="test",
+        tag_name=tag.name,
+        description="test",
+        galaxy_id=galaxy.id,
+        authors="admin",
+    )
+
+    db.add(galaxy_cluster)
+    db.commit()
+    db.refresh(galaxy_cluster)
+
+    yield galaxy_cluster
+
+    db.delete(galaxy_cluster)
+    db.commit()
+
+
+@pytest.fixture
+def eventtag(db, event, tag):
+    eventtag = EventTag(event_id=event.id, tag_id=tag.id, local=False)
+
+    db.add(eventtag)
+    db.commit()
+    db.refresh(eventtag)
+
+    yield eventtag
+
+    db.delete(eventtag)
+    db.commit()
+
+
+@pytest.fixture()
+def auth_key(db, site_admin_user):
+    clear_key = generate(string.ascii_letters + string.digits, size=40)
+
+    auth_key = generate_auth_key()
+    auth_key.user_id = site_admin_user.id
+    auth_key.authkey = hash_secret(clear_key)
+    auth_key.authkey_start = clear_key[:4]
+    auth_key.authkey_end = clear_key[-4:]
+
+    db.add(auth_key)
+
+    db.commit()
+    db.refresh(auth_key)
+
+    yield clear_key, auth_key
+
+    db.delete(auth_key)
     db.commit()
