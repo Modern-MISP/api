@@ -4,7 +4,7 @@ from typing import Any
 
 from sqlalchemy import func
 
-from mmisp.api_schemas.tags.create_tag_body import TagCreateBody
+from mmisp.api_schemas.tags import TagCreateBody
 from mmisp.db.models.tag import Tag
 
 

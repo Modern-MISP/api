@@ -6,30 +6,26 @@ from fastapi import APIRouter, Depends, HTTPException, Path, Request, status
 from sqlalchemy import func, select
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
-from mmisp.api_schemas.attributes.add_attribute_body import AddAttributeBody
-from mmisp.api_schemas.attributes.add_attribute_response import AddAttributeAttributes, AddAttributeResponse
-from mmisp.api_schemas.attributes.add_remove_tag_attribute_response import AddRemoveTagAttributeResponse
-from mmisp.api_schemas.attributes.delete_attribute_response import DeleteAttributeResponse
-from mmisp.api_schemas.attributes.delete_selected_attribute_body import DeleteSelectedAttributeBody
-from mmisp.api_schemas.attributes.delete_selected_attribute_response import DeleteSelectedAttributeResponse
-from mmisp.api_schemas.attributes.edit_attribute_body import EditAttributeBody
-from mmisp.api_schemas.attributes.edit_attributes_response import EditAttributeAttributes, EditAttributeResponse
-from mmisp.api_schemas.attributes.get_all_attributes_response import GetAllAttributesResponse
-from mmisp.api_schemas.attributes.get_attribute_response import (
+from mmisp.api_schemas.attributes import (
+    AddAttributeAttributes,
+    AddAttributeBody,
+    AddAttributeResponse,
+    AddRemoveTagAttributeResponse,
+    DeleteAttributeResponse,
+    DeleteSelectedAttributeBody,
+    DeleteSelectedAttributeResponse,
+    EditAttributeAttributes,
+    EditAttributeBody,
+    EditAttributeResponse,
+    GetAllAttributesResponse,
     GetAttributeAttributes,
     GetAttributeResponse,
-    GetAttributeTag,
-)
-from mmisp.api_schemas.attributes.get_attribute_statistics_response import (
     GetAttributeStatisticsCategoriesResponse,
     GetAttributeStatisticsTypesResponse,
-)
-from mmisp.api_schemas.attributes.get_describe_types_response import (
+    GetAttributeTag,
     GetDescribeTypesAttributes,
     GetDescribeTypesResponse,
-)
-from mmisp.api_schemas.attributes.search_attributes_body import SearchAttributesBody
-from mmisp.api_schemas.attributes.search_attributes_response import (
+    SearchAttributesBody,
     SearchAttributesEvent,
     SearchAttributesObject,
     SearchAttributesResponse,

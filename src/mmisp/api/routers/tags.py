@@ -7,11 +7,15 @@ from sqlalchemy import delete, func
 from sqlalchemy.future import select
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
-from mmisp.api_schemas.tags.create_tag_body import TagCreateBody
-from mmisp.api_schemas.tags.delete_tag_response import TagDeleteResponse
-from mmisp.api_schemas.tags.get_tag_response import TagGetResponse, TagResponse, TagViewResponse
-from mmisp.api_schemas.tags.search_tags_response import TagSearchResponse
-from mmisp.api_schemas.tags.update_tag_body import TagUpdateBody
+from mmisp.api_schemas.tags import (
+    TagCreateBody,
+    TagDeleteResponse,
+    TagGetResponse,
+    TagResponse,
+    TagSearchResponse,
+    TagUpdateBody,
+    TagViewResponse,
+)
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.attribute import AttributeTag
 from mmisp.db.models.event import EventTag

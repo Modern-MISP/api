@@ -1,7 +1,6 @@
 from datetime import datetime
 
-from mmisp.api_schemas.warninglists.create_warninglist_body import (
-    ValidAttribute,
+from mmisp.api_schemas.warninglists import (
     WarninglistCategory,
     WarninglistListType,
 )
@@ -29,4 +28,4 @@ def generate_warninglist_entry() -> WarninglistEntry:
 
 def generate_warninglist_type() -> WarninglistType:
     """These fields need to be set manually: warninglist_id"""
-    return WarninglistType(type=ValidAttribute.MD5)
+    return WarninglistType(type="md5")

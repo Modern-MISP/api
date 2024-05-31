@@ -7,18 +7,17 @@ from sqlalchemy.future import select
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
 from mmisp.api_schemas.standard_status_response import StandardStatusResponse
-from mmisp.api_schemas.warninglists.check_value_warninglists_body import CheckValueWarninglistsBody
-from mmisp.api_schemas.warninglists.check_value_warninglists_response import CheckValueResponse, NameWarninglist
-from mmisp.api_schemas.warninglists.create_warninglist_body import CreateWarninglistBody
-from mmisp.api_schemas.warninglists.get_selected_all_warninglists_response import (
+from mmisp.api_schemas.warninglists import (
+    CheckValueResponse,
+    CheckValueWarninglistsBody,
+    CreateWarninglistBody,
     GetSelectedAllWarninglistsResponse,
-    WarninglistsResponse,
-)
-from mmisp.api_schemas.warninglists.get_selected_warninglists_body import GetSelectedWarninglistsBody
-from mmisp.api_schemas.warninglists.toggle_enable_warninglists_body import ToggleEnableWarninglistsBody
-from mmisp.api_schemas.warninglists.toggle_enable_warninglists_response import ToggleEnableWarninglistsResponse
-from mmisp.api_schemas.warninglists.warninglist_response import (
+    GetSelectedWarninglistsBody,
+    NameWarninglist,
+    ToggleEnableWarninglistsBody,
+    ToggleEnableWarninglistsResponse,
     WarninglistResponse,
+    WarninglistsResponse,
 )
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.warninglist import Warninglist, WarninglistEntry, WarninglistType

@@ -2,14 +2,14 @@ from time import time
 
 from sqlalchemy.orm import Session
 
-from mmisp.api_schemas.warninglists.check_value_warninglists_body import CheckValueWarninglistsBody
-from mmisp.api_schemas.warninglists.create_warninglist_body import (
+from mmisp.api_schemas.warninglists import (
+    CheckValueWarninglistsBody,
     CreateWarninglistBody,
+    GetSelectedWarninglistsBody,
+    ToggleEnableWarninglistsBody,
     WarninglistCategory,
     WarninglistListType,
 )
-from mmisp.api_schemas.warninglists.get_selected_warninglists_body import GetSelectedWarninglistsBody
-from mmisp.api_schemas.warninglists.toggle_enable_warninglists_body import ToggleEnableWarninglistsBody
 from mmisp.db.models.warninglist import Warninglist, WarninglistEntry
 from tests.api.helpers.warninglists_helper import (
     add_warninglists,

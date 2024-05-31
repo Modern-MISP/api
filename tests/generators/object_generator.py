@@ -2,9 +2,8 @@ import random
 import string
 import time
 
-from mmisp.api_schemas.attributes.add_attribute_body import AddAttributeBody
-from mmisp.api_schemas.objects.create_object_body import ObjectCreateBody
-from mmisp.api_schemas.objects.search_objects_body import ObjectSearchBody
+from mmisp.api_schemas.attributes import AddAttributeBody
+from mmisp.api_schemas.objects import ObjectCreateBody, ObjectSearchBody
 
 
 def generate_random_date_str() -> str:

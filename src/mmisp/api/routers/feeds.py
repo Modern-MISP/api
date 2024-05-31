@@ -5,13 +5,15 @@ from fastapi import APIRouter, Depends, HTTPException, Path, status
 from sqlalchemy.future import select
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
-from mmisp.api_schemas.feeds.cache_feed_response import FeedCacheResponse
-from mmisp.api_schemas.feeds.create_feed_body import FeedCreateBody
-from mmisp.api_schemas.feeds.enable_disable_feed_response import FeedEnableDisableResponse
-from mmisp.api_schemas.feeds.fetch_feeds_response import FeedFetchResponse
-from mmisp.api_schemas.feeds.get_feed_response import FeedResponse
-from mmisp.api_schemas.feeds.toggle_feed_body import FeedToggleBody
-from mmisp.api_schemas.feeds.update_feed_body import FeedUpdateBody
+from mmisp.api_schemas.feeds import (
+    FeedCacheResponse,
+    FeedCreateBody,
+    FeedEnableDisableResponse,
+    FeedFetchResponse,
+    FeedResponse,
+    FeedToggleBody,
+    FeedUpdateBody,
+)
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.feed import Feed
 from mmisp.util.models import update_record

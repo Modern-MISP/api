@@ -3,7 +3,7 @@ import sqlalchemy as sa
 from icecream import ic
 from sqlalchemy.orm import Session
 
-from mmisp.api_schemas.attributes.get_describe_types_response import GetDescribeTypesAttributes
+from mmisp.api_schemas.attributes import GetDescribeTypesAttributes
 from mmisp.db.models.attribute import AttributeTag
 
 from ...generators.model_generators.tag_generator import generate_tag

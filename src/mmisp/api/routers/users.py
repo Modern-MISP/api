@@ -2,7 +2,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends
 
-from mmisp.api_schemas.users.users_view_me_response import UsersViewMeResponse
+from mmisp.api_schemas.users import UsersViewMeResponse
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.organisation import Organisation
 from mmisp.db.models.role import Role

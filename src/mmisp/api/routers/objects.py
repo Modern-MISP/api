@@ -8,15 +8,15 @@ from sqlalchemy import delete, or_, select
 from sqlalchemy.sql.expression import Select
 
 from mmisp.api.auth import Auth, AuthStrategy, authorize
-from mmisp.api_schemas.attributes.get_all_attributes_response import GetAllAttributesResponse
-from mmisp.api_schemas.events.get_event_response import ObjectEventResponse
-from mmisp.api_schemas.objects.create_object_body import ObjectCreateBody
-from mmisp.api_schemas.objects.get_object_response import (
+from mmisp.api_schemas.attributes import GetAllAttributesResponse
+from mmisp.api_schemas.events import ObjectEventResponse
+from mmisp.api_schemas.objects import (
+    ObjectCreateBody,
     ObjectResponse,
+    ObjectSearchBody,
     ObjectSearchResponse,
     ObjectWithAttributesResponse,
 )
-from mmisp.api_schemas.objects.search_objects_body import ObjectSearchBody
 from mmisp.api_schemas.standard_status_response import StandardStatusResponse
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.attribute import Attribute
