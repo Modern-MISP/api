@@ -28,6 +28,36 @@ async def update_backup(
 )
 return await _update_backup(db, path)
 
+@router.get("/servers/remote/getAll",
+    status_code=status.HTTP_200_OK,
+    summary="requests a list of all remote servers",
+    description="returns a list of all currently active remote servers",
+    )
+async def get_remote_servers(
+    //TODO
+)
+return await _get_remote_servers(db)
+
+@router.post("/servers/remote/add",
+    status_code=status.HTTP_200_OK,
+    summary="adds a new remote server to the list",
+    description="adds a new remote server based on the input of an admin",
+    )
+async def add_remote_server(
+    //TODO
+)
+return await _add_remote_server(auth, db, body)
+
+@router.delete("/servers/remote/delete/{serverId}",
+    status_code=status.HTTP_200_OK,
+    summary="deletes a remote server by id",
+    description="deletes a remote server if the given id is valid",
+    )
+async def delete_remote_server(
+    //TODO
+)
+return await _delete_remote_server(db, serverId)
+
 @router.get("/servers/getVersion")
 async def get_version(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
@@ -47,3 +77,9 @@ async def get_version(
 async def _create_backup(db: Session, str: path)
 
 async def _update_backup(db: Session, str: path)
+
+async def _get_remote_servers(db: get_db)
+
+async def _add_remote_server(//PLACEHOLDER)
+
+async def _delete_remote_server(db: get_db, str: serverId)
