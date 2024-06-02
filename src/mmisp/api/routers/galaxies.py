@@ -53,6 +53,17 @@ async def import_galaxy_cluster(
 ) -> DeleteForceUpdateImportGalaxyResponse:
     return await _import_galaxy_cluster(db, body, request)
 
+@router.get("/galaxies/clusters/{clusterID}",
+    status_code=status.HTTP_200_OK,
+    response_model=PLACEHOLDER,
+    summary="gets information from a galaxy cluster",
+    description="returns information from a galaxy cluster selected by its id.",
+    )
+async def get_galaxy_cluster(
+    //TODO
+)
+    return await _get_galaxy_cluster(db, clusterID)
+
 
 @router.get("/galaxies/{galaxyId}", status_code=status.HTTP_200_OK, response_model=GetGalaxyResponse)
 async def get_galaxy_details(
@@ -297,6 +308,8 @@ async def _import_galaxy_cluster(
         message=f"Galaxy clusters imported. {successfully_imported_counter} imported, 0 ignored, 0 failed.",
         url=str(request.url.path),
     )
+
+async def _get_galaxy_cluster(db: Session, str: galaxyID)
 
 
 async def _get_galaxy_details(db: Session, galaxy_id: str) -> GetGalaxyResponse:
