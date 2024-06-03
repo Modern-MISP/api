@@ -1,7 +1,14 @@
+"""
+Modern MISP API - mmisp.api.auth
+
+Handlers to manage authentication and authorization to the modern misp api.
+
+"""
+
 from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from enum import Enum
+from enum import StrEnum
 from time import time
 from typing import Annotated, Awaitable, Callable
 
@@ -20,7 +27,18 @@ from mmisp.lib.permissions import Permission
 from mmisp.util.crypto import verify_secret
 
 
-class AuthStrategy(Enum):
+class AuthStrategy(StrEnum):
+    """
+    Possible strategies to use for authentication to the api.
+    Valid values:
+
+    - jwt: Use only jwts after login
+    - api_key: Use only api-key
+    - jwt/api_key: Either jwt or api_key
+    - worker_key: Only accessible for modern misp worker
+    - all: Use any authentication method
+    """
+
     JWT = "jwt"
     API_KEY = "api_key"
     HYBRID = "jwt/api_key"
@@ -30,6 +48,10 @@ class AuthStrategy(Enum):
 
 @dataclass
 class Auth:
+    """
+    Contains the result of an authentication process.
+    """
+
     user_id: int | None = None
     org_id: int | None = None
     role_id: int | None = None
