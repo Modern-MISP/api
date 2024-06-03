@@ -10,6 +10,7 @@ variables:
 
 stages:
   - test
+  - docs
 
 cache:
   paths:
@@ -121,3 +122,16 @@ legacy_misp:
     WORKER_URL: https://worker.mmisp.service
     DASHBOARD_URL: https://dashboard.mmisp.service
     DEBUG: true
+
+generate_mkdocs:
+  before_script: []
+  stage: docs
+  image: hub.cert.kit.edu:5000/mkdocs
+  script:
+    - source /root/.venv/bin/activate; PYTHONPATH=src mkdocs build
+  artifacts:
+    paths:
+      - site
+  services:
+    - name: plantuml/plantuml-server
+      alias: plantuml

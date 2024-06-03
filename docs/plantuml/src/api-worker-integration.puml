@@ -1,0 +1,18 @@
+@startuml
+User -> API : POST freetextImport
+API -> Worker: POST /jobs/freeTextImport
+Worker -> API: 200 <jobid>
+API -> User: 303 /jobs/<jobid>
+
+loop "Until successful"
+  User -> API: GET /jobs/<jobid>
+  API -> Worker: GET /jobs/<jobid>
+  Worker -> API: 503 retry: 5s
+  API -> User: 503 retry: 5s
+end
+
+User -> API: GET /jobs/<jobid>
+API -> Worker: GET /jobs/<jobid>
+Worker -> API: 200 <jobresult>
+API -> User: 200 <jobresult>
+@enduml
