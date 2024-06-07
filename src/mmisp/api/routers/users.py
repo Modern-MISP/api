@@ -15,74 +15,63 @@ router = APIRouter(tags=["users"])
 
 @router.post(
     "/users",
-    status_code=status.HTTP_200_OK,
-    response_model=UserAttributesResponse,
+    #response_model=UserAttributesResponse,
     summary="Add new user",
     description="Add a new user with the given details.",
 )
 async def add_user(
-    //TODO
-)
-    return await _add_user(db, user)
+    TODO
+) : return await _add_user(db, user)
 
 
 @router.get(
     "/users/view/all",
-    status_code=status.HTTP_200_OK,
     summary="Get all users",
     description="Retrieve a list of all users.",
 )
 async def get_all_users(
-   //TODO
-) 
-    return await _get_all_users(db)
+   TODO
+) : return await _get_all_users(db)
 
 @router.get(
     "/users/view/{userId}",
-    status_code=status.HTTP_200_OK,
     summary="Get a user by id",
     description="Retrieve a user specified by id.",
 )
 async def get_user_by_id(
-   //TODO
-)
-    return await _get_user(db, userId)
+   TODO
+) : return await _get_user(db, userId)
 
 @router.delete(
     "/users/{userId}",
-    status_code=status.HTTP_200_OK,
-    response_model=UserAttributesResponse,
+    #response_model=UserAttributesResponse,
     summary="Delete a user",
     description="Delete a user by their ID.",
 )
 async def delete_user(
-    //TODO
-)
-    return await _delete_user(db, userID)
+    TODO
+) : return await _delete_user(db, userID)
 
 @router.delete(
     "/users/{userId}",
-    status_code=status.HTTP_200_OK,
-    response_model=UserAttributesResponse,
+    #response_model=UserAttributesResponse,
     summary="Delete a users login token",
     description="Delete a users login token by their ID.",
 )
 async def delete_user_token(
-    //TODO
-)
-    return await _delete_user_token(db, userID)
+    TODO
+) : return await _delete_user_token(db, userID)
 
 @router.put(
     "/users/{userId}",
-    status_code=status.HTTP_200_OK,
-    response_model=UserAttributesResponse,
+
+    #response_model=UserAttributesResponse,
     summary="Update a user",
     description="Update an existing user by their ID.",
 )
 async def update_user(
-    //TODO
-) 
-    return await _update_user(db, userID)
+    TODO
+) : return await _update_user(db, userID)
 
 
 
@@ -99,15 +88,19 @@ async def get_logged_in_user_info(
 
 # --- endpoint logic ---
 
-async def _add_user(db: Session, user: user)
-//Adds a new user and generates a new single-time password
+async def _add_user(db: Session, user: User) : return null
+#Adds a new user and generates a new single-time password
 
-async def _get_all_users(db: Session)
+async def _get_all_users(db: Session) : return null
 
-async def _get_user(db: Session, userID: str)
+async def _get_user(db: Session, userID: str) : return null
 
-async def _delete_user(db: Session, userID: str)
+async def _delete_user(db: Session, userID: str) : return null
 
-async def _delete_user_token(db: Session, userID: str)
+async def _delete_user_token(db: Session, userID: str) : return null
 
+<<<<<<< HEAD
 async def _update_user(db: Session, userID: str)
+=======
+async def _update_user(db: Session, userID: str) : return null
+>>>>>>> b0e77a7 (made the code runnable in fastapi)

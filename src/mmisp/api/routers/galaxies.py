@@ -55,13 +55,13 @@ async def import_galaxy_cluster(
 
 @router.get("/galaxies/clusters/{clusterID}",
     status_code=status.HTTP_200_OK,
-    response_model=PLACEHOLDER,
+    #response_model=PLACEHOLDER,
     summary="gets information from a galaxy cluster",
     description="returns information from a galaxy cluster selected by its id.",
     )
 async def get_galaxy_cluster(
-    //TODO
-)
+    TODO
+):
     return await _get_galaxy_cluster(db, clusterID)
 
 
@@ -309,7 +309,7 @@ async def _import_galaxy_cluster(
         url=str(request.url.path),
     )
 
-async def _get_galaxy_cluster(db: Session, str: galaxyID)
+async def _get_galaxy_cluster(db: Session, str: get_galaxy_cluster) : return null
 
 
 async def _get_galaxy_details(db: Session, galaxy_id: str) -> GetGalaxyResponse:
