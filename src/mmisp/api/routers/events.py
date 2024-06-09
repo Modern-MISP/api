@@ -267,7 +267,7 @@ async def add_attribute_via_free_text_import(
 )
 async def get_pid_from_free_text_import(
     TODO
-): return null
+): return None
 
 
 # --- deprecated ---

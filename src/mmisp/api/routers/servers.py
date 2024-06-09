@@ -62,12 +62,12 @@ async def get_version(auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRI
 
 # --- endpoint logic ---
 
-async def _create_backup(db: Session, str: "path") : return null
+async def _create_backup(db: Session, str: "path") : return None
 
-async def _update_backup(db: Session, str: "path") : return null
+async def _update_backup(db: Session, str: "path") : return None
 
-async def _get_remote_servers(db: get_db) : return null
+async def _get_remote_servers(db: get_db) : return None
 
-async def _add_remote_server(PLACEHOLDER) : return null
+async def _add_remote_server(PLACEHOLDER) : return None
 
-async def _delete_remote_server(db: get_db, str: "serverId"): return null
+async def _delete_remote_server(db: get_db, str: "serverId"): return None

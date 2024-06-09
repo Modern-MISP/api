@@ -88,19 +88,16 @@ async def get_logged_in_user_info(
 
 # --- endpoint logic ---
 
-async def _add_user(db: Session, user: User) : return null
+async def _add_user(db: Session, user: User) : return None
 #Adds a new user and generates a new single-time password
 
-async def _get_all_users(db: Session) : return null
+async def _get_all_users(db: Session) : return None
 
-async def _get_user(db: Session, userID: str) : return null
+async def _get_user(db: Session, userID: str) : return None
 
-async def _delete_user(db: Session, userID: str) : return null
+async def _delete_user(db: Session, userID: str) : return None
 
-async def _delete_user_token(db: Session, userID: str) : return null
+async def _delete_user_token(db: Session, userID: str) : return None
 
-<<<<<<< HEAD
-async def _update_user(db: Session, userID: str)
-=======
-async def _update_user(db: Session, userID: str) : return null
->>>>>>> b0e77a7 (made the code runnable in fastapi)
+async def _update_user(db: Session, userID: str) : return None
+
