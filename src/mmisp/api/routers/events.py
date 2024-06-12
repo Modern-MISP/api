@@ -77,6 +77,7 @@ async def add_event(
     db: Annotated[Session, Depends(get_db)],
     body: AddEventBody,
 ) -> AddEditGetEventResponse:
+    """Add a new event with the given details."""
     return await _add_event(auth, db, body)
 
 
@@ -92,6 +93,7 @@ async def get_event_details(
     db: Annotated[Session, Depends(get_db)],
     event_id: Annotated[str, Path(alias="eventId")],
 ) -> AddEditGetEventResponse:
+    """Retrieve details of a specific attribute by ist ID."""
     return await _get_event_details(db, event_id)
 
 
@@ -108,6 +110,7 @@ async def update_event(
     event_id: Annotated[str, Path(alias="eventId")],
     body: EditEventBody,
 ) -> AddEditGetEventResponse:
+    """Update an existing event by its ID."""
     return await _update_event(db, event_id, body)
 
 
@@ -123,6 +126,7 @@ async def delete_event(
     db: Annotated[Session, Depends(get_db)],
     event_id: Annotated[str, Path(alias="eventId")],
 ) -> DeleteEventResponse:
+    """Delete an attribute by its ID."""
     return await _delete_event(db, event_id)
 
 
@@ -135,6 +139,7 @@ async def delete_event(
 async def get_all_events(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))], db: Annotated[Session, Depends(get_db)]
 ) -> list[GetAllEventsResponse]:
+    """Retrieve a list of all events."""
     return await _get_events(db)
 
 
@@ -150,6 +155,7 @@ async def rest_search_events(
     db: Annotated[Session, Depends(get_db)],
     body: SearchEventsBody,
 ) -> SearchEventsResponse:
+    """Search for events based on various filters."""
     return await _rest_search_events(db, body)
 
 
@@ -165,6 +171,7 @@ async def index_events(
     db: Annotated[Session, Depends(get_db)],
     body: IndexEventsBody,
 ) -> list[GetAllEventsResponse]:
+    """Search for events based on various filters, which are more general than the ones in 'rest search'."""
     return await _index_events(db, body)
 
 
@@ -181,6 +188,7 @@ async def publish_event(
     event_id: Annotated[str, Path(alias="eventId")],
     request: Request,
 ) -> PublishEventResponse:
+    """Publish an event by ist ID."""
     return await _publish_event(db, event_id, request)
 
 
@@ -197,6 +205,7 @@ async def unpublish_event(
     event_id: Annotated[str, Path(alias="eventId")],
     request: Request,
 ) -> UnpublishEventResponse:
+    """Unpublish an event by its ID."""
     return await _unpublish_event(db, event_id, request)
 
 
@@ -214,6 +223,7 @@ async def add_tag_to_event(
     tag_id: Annotated[str, Path(alias="tagId")],
     local: str,
 ) -> AddRemoveTagEventsResponse:
+    """Add a tag to an attribute by their ids."""
     return await _add_tag_to_event(db, event_id, tag_id, local)
 
 
@@ -230,6 +240,7 @@ async def remove_tag_from_event(
     event_id: Annotated[str, Path(alias="eventId")],
     tag_id: Annotated[str, Path(alias="tagId")],
 ) -> AddRemoveTagEventsResponse:
+    """Add a tag to an event by their ids."""
     return await _remove_tag_from_event(db, event_id, tag_id)
 
 
@@ -246,6 +257,7 @@ async def add_attribute_via_free_text_import(
     event_id: Annotated[str, Path(alias="eventId")],
     body: AddAttributeViaFreeTextImportEventBody,
 ) -> list[AddAttributeViaFreeTextImportEventResponse]:
+    """Add attribute to event via free text import."""
     body_dict = body.dict()
     user = FreeTextImportWorkerUser(user_id=auth.user_id)
     if user is None:
@@ -262,12 +274,15 @@ async def add_attribute_via_free_text_import(
 @router.get(
     "/events/freeTextImportProcessID/{eventId}",
     status_code=status.HTTP_200_OK,
-    summary="Fetches the process ID from the current freetext Import", #add response model here
+    summary="Fetches the process ID from the current freetext Import", 
     description="Gets the processID from the worker.",
 )
 async def get_pid_from_free_text_import(
     TODO
-): return None
+)-> #add response model here
+    :
+    """Gets the processID from the worker."""
+     return None
 
 
 # --- deprecated ---
@@ -286,6 +301,7 @@ async def add_event_depr(
     db: Annotated[Session, Depends(get_db)],
     body: AddEventBody,
 ) -> AddEditGetEventResponse:
+    """Deprecated. Add a new event with the given details."""
     return await _add_event(auth, db, body)
 
 
@@ -302,6 +318,7 @@ async def get_event_details_depr(
     db: Annotated[Session, Depends(get_db)],
     event_id: Annotated[str, Path(alias="eventId")],
 ) -> AddEditGetEventResponse:
+    """Deprecated. Retrieve details of a specific attribute by its ID."""
     return await _get_event_details(db, event_id)
 
 
@@ -319,6 +336,7 @@ async def update_event_depr(
     event_id: Annotated[str, Path(alias="eventId")],
     body: EditEventBody,
 ) -> AddEditGetEventResponse:
+    """Deprecated. Update an existing event by its ID."""
     return await _update_event(db, event_id, body=body)
 
 
@@ -335,6 +353,7 @@ async def delete_event_depr(
     db: Annotated[Session, Depends(get_db)],
     event_id: Annotated[str, Path(..., alias="eventId")],
 ) -> DeleteEventResponse:
+    """Deprecated. Delete an existing event by its ID."""
     return await _delete_event(db, event_id)
 
 
