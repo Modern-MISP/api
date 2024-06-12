@@ -150,6 +150,16 @@ async def _get_galaxy_details(db: Session, galaxy_id: str) -> GetGalaxyResponse:
 
     return GetGalaxyResponse(Galaxy=galaxy_data, GalaxyCluster=galaxy_cluster_data)
 
+async def _prepare_galaxy_response(db: Session, galaxy: Galaxy) -> GetAllSearchGalaxiesAttributes:
+    galaxy_dict = galaxy.__dict__.copy()
+
+    result = await db.execute(select(GalaxyCluster).filter(GalaxyCluster.galaxy_id == galaxy.id).limit(1))
+    galaxy_cluster = result.scalars().first()
+
+    if galaxy_cluster is None:
+        galaxy_dict["local_only"] = True
+
+    return GetAllSearchGalaxiesAttributes(**galaxy_dict)
 
 async def _delete_galaxy(db: Session, galaxy_id: str, request: Request) -> DeleteForceUpdateImportGalaxyResponse:
     galaxy = await db.get(Galaxy, galaxy_id)
@@ -211,19 +221,4 @@ async def _search_galaxies(db: Session, body: SearchGalaxiesbyValue) -> list[Get
         response_list.append(GetAllSearchGalaxiesResponse(Galaxy=GetAllSearchGalaxiesAttributes(**galaxy_dict)))
 
     return response_list
-
-
-
-async def _prepare_galaxy_response(db: Session, galaxy: Galaxy) -> GetAllSearchGalaxiesAttributes:
-    galaxy_dict = galaxy.__dict__.copy()
-
-    result = await db.execute(select(GalaxyCluster).filter(GalaxyCluster.galaxy_id == galaxy.id).limit(1))
-    galaxy_cluster = result.scalars().first()
-
-    if galaxy_cluster is None:
-        galaxy_dict["local_only"] = True
-
-    return GetAllSearchGalaxiesAttributes(**galaxy_dict)
-
-
 
