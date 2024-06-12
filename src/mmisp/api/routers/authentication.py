@@ -28,6 +28,7 @@ router = APIRouter(tags=["authentication"])
 
 @router.post("/auth/login/start", response_model=StartLoginResponse)
 async def start_login(db: Annotated[Session, Depends(get_db)], body: StartLoginBody) -> dict:
+    """Starts the login process."""
     result = await db.execute(select(User).filter(User.email == body.email).limit(1))
     user: User | None = result.scalars().first()
 
@@ -51,6 +52,7 @@ async def start_login(db: Annotated[Session, Depends(get_db)], body: StartLoginB
 
 @router.post("/auth/login/password")
 async def password_login(db: Annotated[Session, Depends(get_db)], body: PasswordLoginBody) -> TokenResponse:
+    """Login with password."""
     result = await db.execute(select(User).filter(User.email == body.email).limit(1))
     user: User | None = result.scalars().first()
 
@@ -66,6 +68,7 @@ async def password_login(db: Annotated[Session, Depends(get_db)], body: Password
 async def redirect_to_idp(
     db: Annotated[Session, Depends(get_db)], identity_provider_id: Annotated[int, Path(alias="identityProviderId")]
 ) -> RedirectResponse:
+    """Redirects to Idp."""
     identity_provider: OIDCIdentityProvider | None = await db.get(OIDCIdentityProvider, identity_provider_id)
 
     if not identity_provider or not identity_provider.active:
@@ -98,6 +101,7 @@ async def redirect_to_frontend(
     identity_provider_id: Annotated[int, Path(alias="identityProviderId")],
     code: str,
 ) -> RedirectResponse:
+    """Redirects to the frontend."""
     identity_provider: OIDCIdentityProvider | None = await db.get(OIDCIdentityProvider, identity_provider_id)
 
     if not identity_provider or not identity_provider.active:
@@ -165,6 +169,7 @@ async def redirect_to_frontend(
 
 @router.post("/auth/login/token")
 async def exchange_token_login(body: ExchangeTokenLoginBody) -> TokenResponse:
+    """Login with exchange token."""
     user_id = decode_exchange_token(body.exchangeToken)
 
     if not user_id:
