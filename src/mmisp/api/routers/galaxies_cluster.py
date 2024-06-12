@@ -58,8 +58,8 @@ async def import_galaxy_cluster(
     )
 async def get_galaxy_cluster(
     TODO
-)-> #response_model=PLACEHOLDER 
-    :
+) :
+     #response_model=PLACEHOLDER
     """Returns information from a galaxy cluster selected by its id."""
     return await _get_galaxy_cluster(db, clusterID)
 
@@ -203,7 +203,7 @@ async def _import_galaxy_cluster(
         url=str(request.url.path),
     )
 
-async def _get_galaxy_cluster(db: Session, cluster_id: str) -> GetGalaxyClusterResponse:
+async def _get_galaxy_cluster(db: Session, cluster_id: str) : #response_model=PLACEHOLDER
     #TODO
     return None
 
