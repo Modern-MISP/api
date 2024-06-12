@@ -49,7 +49,7 @@ async def cache_feeds(
     db: Annotated[Session, Depends(get_db)],
     cache_feeds_scope: Annotated[str, Path(alias="cacheFeedsScope")],
 ) -> FeedCacheResponse:
-    """Cache feeds based on a specific scope. NOT YET AVAILABLE!"""
+    """Cache feeds based on a specific scope."""
     return await _cache_feeds(db, cache_feeds_scope)
 
 
@@ -65,7 +65,7 @@ async def fetch_from_feed(
     db: Annotated[Session, Depends(get_db)],
     feed_id: Annotated[int, Path(alias="feedId")],
 ) -> FeedFetchResponse:
-    """Fetch data from a specific feed by its ID. NOT YET AVAILABLE!"""
+    """Fetch data from a specific feed by its ID."""
     return await _fetch_from_feed(db, feed_id)
 
 
@@ -130,7 +130,7 @@ async def fetch_data_from_all_feeds(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
 ) -> FeedFetchResponse:
-    """Fetch data from all available feeds. NOT YET AVAILABLE!"""
+    """Fetch data from all available feeds."""
     return await _fetch_data_from_all_feeds(db)
 
 
