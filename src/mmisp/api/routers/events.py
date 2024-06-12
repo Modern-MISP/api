@@ -279,10 +279,10 @@ async def add_attribute_via_free_text_import(
 )
 async def get_pid_from_free_text_import(
     TODO
-)-> #add response model here
-    :
+) :
+    #add response model here
     """Gets the processID from the worker."""
-     return None
+    return None
 
 
 # --- deprecated ---
