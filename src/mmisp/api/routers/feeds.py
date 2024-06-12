@@ -33,6 +33,7 @@ async def add_feed(
     db: Annotated[Session, Depends(get_db)],
     body: FeedCreateBody,
 ) -> FeedResponse:
+    """Add a new feed with given details."""
     return await _add_feed(db, body)
 
 
@@ -48,6 +49,7 @@ async def cache_feeds(
     db: Annotated[Session, Depends(get_db)],
     cache_feeds_scope: Annotated[str, Path(alias="cacheFeedsScope")],
 ) -> FeedCacheResponse:
+    """Cache feeds based on a specific scope. NOT YET AVAILABLE!"""
     return await _cache_feeds(db, cache_feeds_scope)
 
 
@@ -63,6 +65,7 @@ async def fetch_from_feed(
     db: Annotated[Session, Depends(get_db)],
     feed_id: Annotated[int, Path(alias="feedId")],
 ) -> FeedFetchResponse:
+    """Fetch data from a specific feed by its ID. NOT YET AVAILABLE!"""
     return await _fetch_from_feed(db, feed_id)
 
 
@@ -78,6 +81,7 @@ async def get_feed_details(
     db: Annotated[Session, Depends(get_db)],
     feed_id: Annotated[int, Path(alias="feedId")],
 ) -> FeedResponse:
+    """Retrieve details of a specific feed by its ID."""
     return await _get_feed_details(db, feed_id)
 
 
@@ -94,6 +98,7 @@ async def update_feed(
     feed_id: Annotated[int, Path(alias="feedId")],
     body: FeedUpdateBody,
 ) -> FeedResponse:
+    """Update an existing feed by its ID."""
     return await _update_feed(db, feed_id, body)
 
 
@@ -110,6 +115,7 @@ async def toggle_feed(
     feed_id: Annotated[int, Path(alias="feedId")],
     body: FeedToggleBody,
 ) -> FeedEnableDisableResponse:
+    """Toggle the status of a feed between enabled and disabled."""
     return await _toggle_feed(db, feed_id, body)
 
 
@@ -124,6 +130,7 @@ async def fetch_data_from_all_feeds(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
 ) -> FeedFetchResponse:
+    """Fetch data from all available feeds. NOT YET AVAILABLE!"""
     return await _fetch_data_from_all_feeds(db)
 
 
@@ -138,6 +145,7 @@ async def get_feeds(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
 ) -> list[FeedResponse]:
+    """Retrieve a list of all feeds."""
     return await _get_feeds(db)
 
 
@@ -157,6 +165,7 @@ async def add_feed_depr(
     db: Annotated[Session, Depends(get_db)],
     body: FeedCreateBody,
 ) -> FeedResponse:
+    """Deprecated. Add a new feed with given details using the old route."""
     return await _add_feed(db, body)
 
 
@@ -173,6 +182,7 @@ async def enable_feed(
     db: Annotated[Session, Depends(get_db)],
     feed_id: Annotated[int, Path(alias="feedId")],
 ) -> FeedEnableDisableResponse:
+    """Deprecated. Enable a specific feed by its ID using the old route."""
     return await _enable_feed(db, feed_id)
 
 
@@ -189,6 +199,7 @@ async def disable_feed(
     db: Annotated[Session, Depends(get_db)],
     feed_id: Annotated[int, Path(alias="feedId")],
 ) -> FeedEnableDisableResponse:
+    """Deprecated. Disable a specific feed by its ID using the old route."""
     return await _disable_feed(db, feed_id)
 
 
@@ -205,6 +216,7 @@ async def cache_feeds_depr(
     db: Annotated[Session, Depends(get_db)],
     cache_feeds_scope: Annotated[str, Path(alias="cacheFeedsScope")],
 ) -> FeedCacheResponse:
+    """Cache feeds based on a specific scope."""
     return await _cache_feeds(db, cache_feeds_scope)
 
 
@@ -221,6 +233,7 @@ async def fetch_from_feed_depr(
     db: Annotated[Session, Depends(get_db)],
     feed_id: Annotated[int, Path(alias="feedId")],
 ) -> FeedFetchResponse:
+    """Deprecated. Fetch data from a specific feed by its ID using the old route."""
     return await _fetch_from_feed(db, feed_id)
 
 
@@ -236,6 +249,7 @@ async def fetch_data_from_all_feeds_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
 ) -> FeedFetchResponse:
+    """Deprecated. Fetch data from all available feeds using the old route."""
     return await _fetch_data_from_all_feeds(db)
 
 
@@ -252,6 +266,7 @@ async def get_feed_details_depr(
     db: Annotated[Session, Depends(get_db)],
     feed_id: Annotated[int, Path(alias="feedId")],
 ) -> FeedResponse:
+    """Deprecated. Retrieve details of a specific feed by its ID using the old route."""
     return await _get_feed_details(db, feed_id)
 
 
@@ -269,6 +284,7 @@ async def update_feed_depr(
     feed_id: Annotated[int, Path(alias="feedId")],
     body: FeedUpdateBody,
 ) -> FeedResponse:
+    """Deprecated. Update an existing feed by its ID using the old route."""
     return await _update_feed(db, feed_id, body)
 
 
