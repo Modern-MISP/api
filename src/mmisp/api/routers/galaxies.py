@@ -46,6 +46,7 @@ async def get_galaxy_details(
     db: Annotated[Session, Depends(get_db)],
     galaxy_id: Annotated[str, Path(alias="galaxyId")],
 ) -> GetGalaxyResponse:
+    """"Gets the details of a galaxy."""
     return await _get_galaxy_details(db, galaxy_id)
 
 
@@ -60,6 +61,7 @@ async def update_galaxy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.WORKER_KEY, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
 ) -> DeleteForceUpdateImportGalaxyResponse:
+    """Force the galaxies to update with the JSON definitions."""
     raise NotImplementedError()
 
 
@@ -77,6 +79,7 @@ async def update_galaxy(
 async def get_galaxies(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))], db: Annotated[Session, Depends(get_db)]
 ) -> list[GetAllSearchGalaxiesResponse]:
+    """Get a list with all existing galaxies."""
     return await _get_galaxies(db)
 
 
@@ -93,6 +96,7 @@ async def search_galaxies(
     db: Annotated[Session, Depends(get_db)],
     body: SearchGalaxiesbyValue,
 ) -> list[GetAllSearchGalaxiesResponse]:
+    """Search galaxies by search term which matches with galaxy name, namespace, description, kill_chain_order or uuid."""
     return await _search_galaxies(db, body)
 
 
@@ -114,6 +118,7 @@ async def get_galaxy_details_depr(
     db: Annotated[Session, Depends(get_db)],
     galaxy_id: Annotated[str, Path(alias="galaxyId")],
 ) -> GetGalaxyResponse:
+    """View Galaxy by given Galaxy ID."""
     return await _get_galaxy_details(db, galaxy_id)
 
 
@@ -131,6 +136,7 @@ async def delete_galaxy_depr(
     galaxy_id: Annotated[str, Path(alias="galaxyId")],
     request: Request,
 ) -> DeleteForceUpdateImportGalaxyResponse:
+    """Delete Galaxy by GalaxyID."""
     return await _delete_galaxy(db, galaxy_id, request)
 
 
