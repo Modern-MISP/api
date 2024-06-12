@@ -35,6 +35,7 @@ async def get_noticelist(
     db: Annotated[Session, Depends(get_db)],
     noticelist_id: Annotated[int, Path(alias="noticelistId")],
 ) -> NoticelistResponse:
+    """Retrieve details of a specific noticelist by its ID."""
     return await _get_noticelist(db, noticelist_id)
 
 
@@ -50,6 +51,7 @@ async def post_toggleEnable_noticelist(
     db: Annotated[Session, Depends(get_db)],
     noticelist_id: Annotated[int, Path(alias="noticelistId")],
 ) -> StandardStatusIdentifiedResponse:
+    """Disable/Enable a specific noticelist by its ID."""
     return await _toggleEnable_noticelists(db, noticelist_id)
 
 
@@ -64,6 +66,7 @@ async def update_noticelists(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
 ) -> StandardStatusResponse:
+    """Update all noticelists."""
     return await _update_noticelists(db, False)
 
 
@@ -78,6 +81,7 @@ async def get_all_noticelists(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
 ) -> list[GetAllNoticelists]:
+    """Retrieve a list of all noticelists."""
     return await _get_all_noticelists(db)
 
 
