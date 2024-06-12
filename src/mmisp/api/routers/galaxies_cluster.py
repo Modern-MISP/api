@@ -200,7 +200,7 @@ async def _import_galaxy_cluster(
 
 async def _get_galaxy_cluster(db: Session, cluster_id: str) -> GetGalaxyClusterResponse:
     #TODO
- return None
+    return None
 
 
 async def _export_galaxy(db: Session, galaxy_id: str, body: ExportGalaxyBody) -> list[ExportGalaxyClusterResponse]:
