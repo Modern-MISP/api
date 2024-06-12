@@ -47,17 +47,20 @@ async def import_galaxy_cluster(
     body: list[ImportGalaxyBody],
     request: Request,
 ) -> DeleteForceUpdateImportGalaxyResponse:
+    """Add a new galaxy cluster to an existing galaxy."""
     return await _import_galaxy_cluster(db, body, request)
 
 @router.get("/galaxies/clusters/{clusterID}",
     status_code=status.HTTP_200_OK,
     #response_model=PLACEHOLDER,
     summary="gets information from a galaxy cluster",
-    description="returns information from a galaxy cluster selected by its id.",
+    description="Returns information from a galaxy cluster selected by its id.",
     )
 async def get_galaxy_cluster(
     TODO
-):
+)-> #response_model=PLACEHOLDER 
+    :
+    """Returns information from a galaxy cluster selected by its id."""
     return await _get_galaxy_cluster(db, clusterID)
 
 
@@ -74,6 +77,7 @@ async def export_galaxy(
     galaxy_id: Annotated[str, Path(alias="galaxyId")],
     body: ExportGalaxyBody,
 ) -> list[ExportGalaxyClusterResponse]:
+    """Export galaxy cluster."""
     return await _export_galaxy(db, galaxy_id, body)
 
 
@@ -92,6 +96,7 @@ async def galaxies_attachCluster(
     body: AttachClusterGalaxyBody,
     local: str,
 ) -> AttachClusterGalaxyResponse:
+    """Attach a Galaxy Cluster to given Galaxy."""
     return await _attach_cluster_to_galaxy(db, attach_target_id, attach_target_type, local, body)
 
 
