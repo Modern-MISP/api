@@ -70,4 +70,5 @@ async def _get_remote_servers(db: get_db) : return None
 
 async def _add_remote_server(PLACEHOLDER) : return None
 
-async def _delete_remote_server(db: get_db, str: "serverId"): return None
+async def _delete_remote_server(db: get_db, serverId: str): return None
+
