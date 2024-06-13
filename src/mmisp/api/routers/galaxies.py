@@ -110,7 +110,7 @@ async def search_galaxies(
     deprecated=True,
     status_code=status.HTTP_200_OK,
     response_model=GetGalaxyResponse,
-    summary="View Galayx by ID.",
+    summary="View Galaxy by ID.",
     description="View Galaxy by given Galaxy ID.",
 )
 async def get_galaxy_details_depr(

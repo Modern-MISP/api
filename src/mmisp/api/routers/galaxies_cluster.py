@@ -53,7 +53,7 @@ async def import_galaxy_cluster(
 @router.get("/galaxies/clusters/{clusterID}",
     status_code=status.HTTP_200_OK,
     #response_model=PLACEHOLDER,
-    summary="gets information from a galaxy cluster",
+    summary="Gets information from a galaxy cluster",
     description="Returns information from a galaxy cluster selected by its id.",
     )
 async def get_galaxy_cluster(

@@ -10,40 +10,40 @@ from mmisp.db.database import Session, get_db
 router = APIRouter(tags=["servers"])
 
 @router.post("/servers/createBackup/{path}",
-    summary="creates a backup on the given path",
-    description="creates a backup of the current database if the given path is valid",
+    summary="Creates a backup on the given path",
+    description="Creates a backup of the current database if the given path is valid",
 )
 async def create_backup(
     TODO
 ) : return await _create_backup(db, path)
 
 @router.post("/sservers/updateBackup/{path}",
-    summary="creates a backup on the given path",
-    description="creates a backup of the current database if the given path is valid",
+    summary="Creates a backup on the given path",
+    description="Creates a backup of the current database if the given path is valid",
 )
 async def update_backup(
     TODO
 ) : return await _update_backup(db, path)
 
 @router.get("/servers/remote/getAll",
-    summary="requests a list of all remote servers",
-    description="returns a list of all currently active remote servers",
+    summary="Requests a list of all remote servers",
+    description="Returns a list of all currently active remote servers",
     )
 async def get_remote_servers(
     TODO
 ) : return await _get_remote_servers(db)
 
 @router.post("/servers/remote/add",
-    summary="adds a new remote server to the list",
-    description="adds a new remote server based on the input of an admin",
+    summary="Adds a new remote server to the list",
+    description="Adds a new remote server based on the input of an admin",
     )
 async def add_remote_server(
     TODO
 ) : return await _add_remote_server(auth, db, body)
 
 @router.delete("/servers/remote/delete/{serverId}",
-    summary="deletes a remote server by id",
-    description="deletes a remote server if the given id is valid",
+    summary="Deletes a remote server by id",
+    description="Deletes a remote server if the given id is valid",
     )
 async def delete_remote_server(
     TODO
