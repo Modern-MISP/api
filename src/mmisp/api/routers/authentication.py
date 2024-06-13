@@ -17,6 +17,8 @@ from mmisp.api_schemas.authentication import (
     StartLoginBody,
     StartLoginResponse,
     TokenResponse,
+    ChangePasswordBody,
+    ChangePasswordResponse,
 )
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.identity_provider import OIDCIdentityProvider
@@ -177,6 +179,11 @@ async def exchange_token_login(body: ExchangeTokenLoginBody) -> TokenResponse:
 
     return TokenResponse(token=encode_token(str(user_id)), reqiuredPasswordChange=False)
 
+@router.set("/auth/login/changepassword")
+async def change_password(body:ChangePasswordBody)-> ChangePasswordResponse:
+    """Changes the passwor of the user."""
+    TODO
+    return ChangePasswordResponse(TODO)
 
 async def _get_oidc_config(base_url: str) -> dict:
     async with httpx.AsyncClient() as client:
