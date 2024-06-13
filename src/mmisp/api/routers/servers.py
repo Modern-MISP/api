@@ -50,25 +50,25 @@ async def delete_remote_server(
 ) : return await _delete_remote_server(db, serverId)
 
 @router.get("/servers/getVersion")
-async def get_version(auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))]) -> dict:
+async def get_version(auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],db: Annotated[Session, Depends(get_db)]) -> dict:
     return {
         "version": importlib.metadata.version("mmisp-api"),
-        "perm_sync": await check_permissions(auth, [Permission.SYNC]),
-        "perm_sighting": await check_permissions(auth, [Permission.SIGHTING]),
-        "perm_galaxy_editor": await check_permissions(auth, [Permission.GALAXY_EDITOR]),
+        "perm_sync": await check_permissions(db, auth, [Permission.SYNC]),
+        "perm_sighting": await check_permissions(db, auth, [Permission.SIGHTING]),
+        "perm_galaxy_editor": await check_permissions(db, auth, [Permission.GALAXY_EDITOR]),
         "request_encoding": [],
         "filter_sightings": True,
     }
 
 # --- endpoint logic ---
 
-async def _create_backup(db: Session, str: "path") : return None
+async def _create_backup(db: Session, path: str) : return None
 
-async def _update_backup(db: Session, str: "path") : return None
+async def _update_backup(db: Session, path: str) : return None
 
-async def _get_remote_servers(db: get_db) : return None
+async def _get_remote_servers(db: Session) : return None
 
 async def _add_remote_server(PLACEHOLDER) : return None
 
-async def _delete_remote_server(db: get_db, serverId: str): return None
+async def _delete_remote_server(db: Session, serverId: str): return None
 
