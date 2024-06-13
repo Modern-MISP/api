@@ -175,7 +175,7 @@ async def exchange_token_login(body: ExchangeTokenLoginBody) -> TokenResponse:
     if not user_id:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
-      return TokenResponse(token=encode_token(str(user.id)), reqiuredPasswordChange=False)
+    return TokenResponse(token=encode_token(str(user_id)), reqiuredPasswordChange=False)
 
 
 async def _get_oidc_config(base_url: str) -> dict:
