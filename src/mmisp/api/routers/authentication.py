@@ -179,9 +179,9 @@ async def exchange_token_login(body: ExchangeTokenLoginBody) -> TokenResponse:
 
     return TokenResponse(token=encode_token(str(user_id)), reqiuredPasswordChange=False)
 
-@router.set("/auth/login/changepassword")
+@router.set("/auth/login/changepassword/{userId}")
 async def change_password(body:ChangePasswordBody)-> ChangePasswordResponse:
-    """Changes the passwor of the user."""
+    """Changes the password of the user."""
     TODO
     return ChangePasswordResponse(TODO)
 
