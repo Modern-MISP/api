@@ -43,7 +43,6 @@ router = APIRouter(tags=["auth_keys"])
     status_code=status.HTTP_201_CREATED,
     response_model=AddAuthKeyResponse,
     summary="Add an AuthKey.",
-    description="Create an AuthKey for a specific user and write it to the database.",
 )
 async def auth_keys_add_user(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
@@ -51,7 +50,7 @@ async def auth_keys_add_user(
     user_id: Annotated[int, Path(alias="userId")],
     body: AddAuthKeyBody,
 ) -> AddAuthKeyResponse:
-    """Create an AuthKey for a specific user and write it to the database."""
+    """Create an AuthKey for a specific user and save it in the database."""
     return await _auth_key_add(auth=auth, db=db, user_id=user_id, body=body)
 
 
@@ -148,7 +147,7 @@ async def auth_keys_get(
     deprecated=True,
     response_model=AddAuthKeyResponse,
     summary="Add an AuthKey.",
-    description="Create an AuthKey for a specific user and write it to the database.",
+    description="Create an AuthKey for a specific user and save it in the database.",
 )
 async def auth_keys_add_user_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
