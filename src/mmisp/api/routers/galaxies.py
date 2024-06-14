@@ -67,6 +67,21 @@ async def update_galaxy(
 #    return DeleteForceUpdateImportGalaxyResponse()
 
 
+@router.delete(
+    "/galaxies/{galaxyId}",
+    status_code=status.HTTP_200_OK,
+    response_model=DeleteForceUpdateImportGalaxyResponse,
+    summary="Delete a galaxy",
+    description="Delete a specific galaxy by its Id.",
+)
+async def delete_galaxy(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
+    db: Annotated[Session, Depends(get_db)],
+    galaxy_id: Annotated[str, Path(alias="galaxyId")],
+    request: Request,
+) -> DeleteForceUpdateImportGalaxyResponse:
+    return await _delete_galaxy(db, galaxy_id, request)
+
 
 @router.get(
     "/galaxies",
