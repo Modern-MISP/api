@@ -73,6 +73,11 @@ async def password_login(db: Annotated[Session, Depends(get_db)], body: Password
 
     return TokenResponse(token=encode_token(str(user.id)), reqiuredPasswordChange=False)
 
+@router.post("/auth/resetPassword")
+async def reset_password(db: Annotated[Session, Depends(get_db)]) :
+    """resets password"""
+    return None
+
 
 @router.get(
     "/auth/login/idp/{identityProviderId}/authorize", response_class=RedirectResponse, status_code=status.HTTP_302_FOUND
