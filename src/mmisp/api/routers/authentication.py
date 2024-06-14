@@ -32,6 +32,7 @@ async def set_openID_provider(db: Annotated[Session, Depends(get_db)]) :
     """sets a new OpenID provider"""
     return None
 
+
 @router.post("/auth/login/start", response_model=StartLoginResponse)
 async def start_login(db: Annotated[Session, Depends(get_db)], body: StartLoginBody) -> dict:
     """Starts the login process."""
@@ -54,6 +55,11 @@ async def start_login(db: Annotated[Session, Depends(get_db)], body: StartLoginB
         login_type = LoginType.IDENTITY_PROVIDER
 
     return {"loginType": login_type, "identityProviders": identity_providers}
+
+@router.post("/auth/login/openID")
+async def set_openID_provider(db: Annotated[Session, Depends(get_db)]) :
+    """logs a user in by openID"""
+    return None
 
 
 @router.post("/auth/login/password")
