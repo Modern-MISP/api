@@ -55,13 +55,12 @@ async def get_galaxy_details(
     status_code=status.HTTP_501_NOT_IMPLEMENTED,
     response_model=DeleteForceUpdateImportGalaxyResponse,
     summary="Update galaxies",
-    description="Force the galaxies to update with the JSON definitions. NOT YET IMPLEMENTED!",
 )
 async def update_galaxy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.WORKER_KEY, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
 ) -> DeleteForceUpdateImportGalaxyResponse:
-    """Force the galaxies to update with the JSON definitions."""
+    """Force the galaxies to update with the JSON definitions, not yet implemented."""
     raise NotImplementedError()
 
 
