@@ -57,7 +57,7 @@ async def start_login(db: Annotated[Session, Depends(get_db)], body: StartLoginB
     return {"loginType": login_type, "identityProviders": identity_providers}
 
 @router.post("/auth/login/openID")
-async def set_openID_provider(db: Annotated[Session, Depends(get_db)]) :
+async def openID_login(db: Annotated[Session, Depends(get_db)]) :
     """logs a user in by openID"""
     return None
 
