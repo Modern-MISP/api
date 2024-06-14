@@ -28,9 +28,9 @@ from mmisp.util.crypto import verify_secret
 router = APIRouter(tags=["authentication"])
 
 @router.post("/auth/openID/setOpenIDProvider")
-async def set_openID_provider(db: Annotated[Session, Depends(get_db)]) 
-"""sets a new OpenID provider""" :
-return None
+async def set_openID_provider(db: Annotated[Session, Depends(get_db)]) :
+    """sets a new OpenID provider"""
+    return None
 
 @router.post("/auth/login/start", response_model=StartLoginResponse)
 async def start_login(db: Annotated[Session, Depends(get_db)], body: StartLoginBody) -> dict:
