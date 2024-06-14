@@ -44,7 +44,6 @@ async def get_noticelist(
     status_code=status.HTTP_200_OK,
     response_model=StandardStatusIdentifiedResponse,
     summary="Disable/Enable noticelist",
-    description="Disable/Enable a specific noticelist by its ID.",
 )
 async def post_toggleEnable_noticelist(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
