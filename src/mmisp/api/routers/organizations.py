@@ -13,6 +13,7 @@ from mmisp.api_schemas.events import (
 )
 
 from mmisp.api_schemas.organisations import Organisation as OrganisationSchema
+from mmisp.db.database import Session, get_db
 from mmisp.db.models.organisation import Organisation
 
 router = APIRouter(tags=["organizations"])
