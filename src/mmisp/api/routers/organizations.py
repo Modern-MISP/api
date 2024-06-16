@@ -25,47 +25,47 @@ router = APIRouter(tags=["organizations"])
 async def add_organisation(
     TODO
 ) : 
-    """adds a new organisation"""
+    """Adds a new organisation"""
     return await _add_organisation(db, organisation)
 
 @router.get(
     "/organisations/all",
-    summary="gets a list of all organisations",
+    summary="Gets a list of all organisations",
 )
 async def get_organisations(
     TODO
 ) : 
-    """gets all organisation as a list"""
+    """Gets all organisation as a list"""
     return await _get_organisations(db)
 
 @router.get(
     "/organisations/{orgId}",
-    summary="gets an organisation by its ID",
+    summary="Gets an organisation by its ID",
 )
 async def get_organisation(
     TODO
 ) : 
-    """gets an organisation by its ID"""
+    """Gets an organisation by its ID"""
     return await _get_organisation(db, organisationID)
 
 @router.delete(
     "/organisations/delete/{orgId}",
-    summary="deletes an organisation by its ID",
+    summary="Deletes an organisation by its ID",
 )
 async def delete_organisation(
     TODO
 ) : 
-    """deletes an organisation by its ID"""
+    """Deletes an organisation by its ID"""
     return await _delete_organisation(db, organisationID)
 
 @router.post(
 "/organisations/update/{orgId}",
-summary="updates an organisation by its ID",
+summary="Updates an organisation by its ID",
 )
 async def update_organisation(
     TODO
 ) : 
-    """updates an organisation by its ID"""
+    """Updates an organisation by its ID"""
     return await _update_organisation(db, organisationID)
 
 

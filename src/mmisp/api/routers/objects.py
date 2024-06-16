@@ -31,7 +31,6 @@ router = APIRouter(tags=["objects"])
     status_code=status.HTTP_201_CREATED,
     response_model=ObjectResponse,
     summary="Add object to event",
-    description="Add a new object to a specific event using a template.",
 )
 async def add_object(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
@@ -40,6 +39,7 @@ async def add_object(
     object_template_id: Annotated[int, Path(alias="objectTemplateId")],
     body: ObjectCreateBody,
 ) -> ObjectResponse:
+    """Add a new object to a specific event using a template."""
     return await _add_object(db, event_id, object_template_id, body)
 
 
@@ -47,13 +47,13 @@ async def add_object(
     "/objects/restsearch",
     status_code=status.HTTP_200_OK,
     summary="Search objects",
-    description="Search for objects based on various filters.",
 )
 async def restsearch(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     body: ObjectSearchBody,
 ) -> ObjectSearchResponse:
+    """Search for objects based on various filters."""
     return await _restsearch(db, body)
 
 
@@ -61,13 +61,13 @@ async def restsearch(
     "/objects/{objectId}",
     status_code=status.HTTP_200_OK,
     summary="View object details",
-    description="View details of a specific object including its attributes and related event.",
 )
 async def get_object_details(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     object_id: Annotated[int, Path(alias="objectId")],
 ) -> ObjectResponse:
+    """View details of a specific object including its attributes and related event."""
     return await _get_object_details(db, object_id)
 
 
@@ -76,7 +76,6 @@ async def get_object_details(
     status_code=status.HTTP_200_OK,
     response_model=StandardStatusResponse,
     summary="Delete object",
-    description="Delete a specific object. The hardDelete parameter determines if it's a hard or soft delete.",
 )
 async def delete_object(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
@@ -84,6 +83,7 @@ async def delete_object(
     object_id: Annotated[int, Path(alias="objectId")],
     hard_delete: Annotated[bool, Path(alias="hardDelete")],
 ) -> StandardStatusResponse:
+    """Delete a specific object. The hardDelete parameter determines if it's a hard or soft delete."""
     return await _delete_object(db, object_id, hard_delete)
 
 
@@ -96,7 +96,6 @@ async def delete_object(
     status_code=status.HTTP_201_CREATED,
     response_model=ObjectResponse,
     summary="Add object to event (Deprecated)",
-    description="Deprecated. Add an object to an event using the old route.",
 )
 async def add_object_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
@@ -105,6 +104,7 @@ async def add_object_depr(
     object_template_id: Annotated[int, Path(alias="objectTemplateId")],
     body: ObjectCreateBody,
 ) -> ObjectResponse:
+    """Deprecated. Add an object to an event using the old route."""
     return await _add_object(db, event_id, object_template_id, body)
 
 
@@ -114,13 +114,13 @@ async def add_object_depr(
     status_code=status.HTTP_200_OK,
     response_model=ObjectResponse,
     summary="View object details (Deprecated)",
-    description="Deprecated. View details of a specific object using the old route.",
 )
 async def get_object_details_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     object_id: Annotated[int, Path(alias="objectId")],
 ) -> ObjectResponse:
+    """Deprecated. View details of a specific object using the old route."""
     return await _get_object_details(db, object_id)
 
 
@@ -130,9 +130,6 @@ async def get_object_details_depr(
     status_code=status.HTTP_200_OK,
     response_model=StandardStatusResponse,
     summary="Delete object (Deprecated)",
-    description="""
-    Deprecated. Delete a specific object using the old route.
-    The hardDelete parameter determines if it's a hard or soft delete.""",
 )
 async def delete_object_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
@@ -140,6 +137,9 @@ async def delete_object_depr(
     object_id: Annotated[int, Path(alias="objectId")],
     hard_delete: Annotated[bool, Path(alias="hardDelete")],
 ) -> StandardStatusResponse:
+    """
+    Deprecated. Delete a specific object using the old route.
+    The hardDelete parameter determines if it's a hard or soft delete."""
     return await _delete_object(db, object_id, hard_delete)
 
 

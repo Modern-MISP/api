@@ -17,11 +17,12 @@ router = APIRouter(tags=["users"])
     "/users",
     #response_model=UserAttributesResponse,
     summary="Add new user",
-    description="Add a new user with the given details.",
 )
 async def add_user(
     TODO
-) : return await _add_user(db, user)
+) :
+    """Add a new user with the given details."""
+    return await _add_user(db, user)
 
 @router.get("/users/view/me.json", response_model=partial(UsersViewMeResponse))
 @router.get("/users/view/me", response_model=partial(UsersViewMeResponse))
@@ -37,51 +38,56 @@ async def get_logged_in_user_info(
 @router.get(
     "/users/view/all",
     summary="Get all users",
-    description="Retrieve a list of all users.",
 )
 async def get_all_users(
    TODO
-) : return await _get_all_users(db)
+) :
+    """Retrieve a list of all users."""
+    return await _get_all_users(db)
 
 @router.get(
     "/users/view/{userId}",
     summary="Get a user by id",
-    description="Retrieve a user specified by id.",
 )
 async def get_user_by_id(
    TODO
-) : return await _get_user(db, userId)
+) :
+    """Retrieve a user specified by id."""
+    return await _get_user(db, userId)
 
 @router.delete(
     "/users/{userId}",
     #response_model=UserAttributesResponse,
     summary="Delete a user",
-    description="Delete a user by their ID.",
 )
 async def delete_user(
     TODO
-) : return await _delete_user(db, userID)
+) :
+    """Delete a user by their ID."""
+    return await _delete_user(db, userID)
 
 @router.delete(
     "/users/{userId}",
     #response_model=UserAttributesResponse,
     summary="Delete a users login token",
-    description="Delete a users login token by their ID.",
 )
 async def delete_user_token(
     TODO
-) : return await _delete_user_token(db, userID)
+) :
+    """Delete a users login token by their ID."""
+    return await _delete_user_token(db, userID)
 
 @router.put(
     "/users/{userId}",
 
     #response_model=UserAttributesResponse,
     summary="Update a user",
-    description="Update an existing user by their ID.",
 )
 async def update_user(
     TODO
-) : return await _update_user(db, userID)
+) :
+    """Update an existing user by their ID."""
+    return await _update_user(db, userID)
 
 # --- endpoint logic ---
 
