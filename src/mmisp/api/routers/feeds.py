@@ -36,7 +36,7 @@ async def add_feed(
     return await _add_feed(db, body)
 
 
-@router.post(  # @worker: also change 'status_code' and 'description'
+@router.post(  # @worker: also change 'status_code'
     "/feeds/cache_feeds/{cacheFeedsScope}",
     status_code=status.HTTP_501_NOT_IMPLEMENTED,
     response_model=FeedCacheResponse,
@@ -51,7 +51,7 @@ async def cache_feeds(
     return await _cache_feeds(db, cache_feeds_scope)
 
 
-@router.get(  # @worker: also change 'status_code' and 'description'
+@router.get(  # @worker: also change 'status_code'
     "/feeds/fetch_from_feed/{feedId}",
     status_code=status.HTTP_501_NOT_IMPLEMENTED,
     response_model=FeedFetchResponse,
@@ -113,7 +113,7 @@ async def toggle_feed(
     return await _toggle_feed(db, feed_id, body)
 
 
-@router.get(  # @worker: also change 'status_code' and 'description'
+@router.get(  # @worker: also change 'status_code'
     "/feeds/fetch_from_all_feeds",
     status_code=status.HTTP_501_NOT_IMPLEMENTED,
     response_model=FeedFetchResponse,
@@ -192,7 +192,7 @@ async def disable_feed(
     return await _disable_feed(db, feed_id)
 
 
-@router.post(  # @worker: also change 'status_code' and 'description'
+@router.post(  # @worker: also change 'status_code'
     "/feeds/cacheFeeds/{cacheFeedsScope}",
     deprecated=True,
     status_code=status.HTTP_501_NOT_IMPLEMENTED,
@@ -208,7 +208,7 @@ async def cache_feeds_depr(
     return await _cache_feeds(db, cache_feeds_scope)
 
 
-@router.post(  # @worker: also change 'status_code' and 'description'
+@router.post(  # @worker: also change 'status_code'
     "/feeds/fetchFromFeed/{feedId}",
     deprecated=True,
     status_code=status.HTTP_501_NOT_IMPLEMENTED,
@@ -224,7 +224,7 @@ async def fetch_from_feed_depr(
     return await _fetch_from_feed(db, feed_id)
 
 
-@router.post(  # @worker: also change 'status_code' and 'description'
+@router.post(  # @worker: also change 'status_code'
     "/feeds/fetchFromAllFeeds",
     deprecated=True,
     status_code=status.HTTP_501_NOT_IMPLEMENTED,
