@@ -26,7 +26,6 @@ router = APIRouter(tags=["feeds"])
     status_code=status.HTTP_201_CREATED,
     response_model=FeedResponse,
     summary="Add new feed",
-    description="Add a new feed with given details.",
 )
 async def add_feed(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
@@ -42,14 +41,13 @@ async def add_feed(
     status_code=status.HTTP_501_NOT_IMPLEMENTED,
     response_model=FeedCacheResponse,
     summary="Cache feeds",
-    description="Cache feeds based on a specific scope. NOT YET AVAILABLE!",
 )
 async def cache_feeds(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     cache_feeds_scope: Annotated[str, Path(alias="cacheFeedsScope")],
 ) -> FeedCacheResponse:
-    """Cache feeds based on a specific scope."""
+    """Cache feeds based on a specific scope. NOT YET AVAILABLE!"""
     return await _cache_feeds(db, cache_feeds_scope)
 
 
@@ -58,14 +56,13 @@ async def cache_feeds(
     status_code=status.HTTP_501_NOT_IMPLEMENTED,
     response_model=FeedFetchResponse,
     summary="Fetch from feed",
-    description="Fetch data from a specific feed by its ID. NOT YET AVAILABLE!",
 )
 async def fetch_from_feed(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     feed_id: Annotated[int, Path(alias="feedId")],
 ) -> FeedFetchResponse:
-    """Fetch data from a specific feed by its ID."""
+    """Fetch data from a specific feed by its ID. NOT YET AVAILABLE!"""
     return await _fetch_from_feed(db, feed_id)
 
 
@@ -74,7 +71,6 @@ async def fetch_from_feed(
     status_code=status.HTTP_200_OK,
     response_model=FeedResponse,
     summary="Get feed details",
-    description="Retrieve details of a specific feed by its ID.",
 )
 async def get_feed_details(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
@@ -90,7 +86,6 @@ async def get_feed_details(
     status_code=status.HTTP_200_OK,
     response_model=FeedResponse,
     summary="Update feed",
-    description="Update an existing feed by its ID.",
 )
 async def update_feed(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
@@ -107,7 +102,6 @@ async def update_feed(
     status_code=status.HTTP_200_OK,
     response_model=FeedEnableDisableResponse,
     summary="Toggle feed status",
-    description="Toggle the status of a feed between enabled and disabled.",
 )
 async def toggle_feed(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
@@ -124,13 +118,12 @@ async def toggle_feed(
     status_code=status.HTTP_501_NOT_IMPLEMENTED,
     response_model=FeedFetchResponse,
     summary="Fetch from all feeds",
-    description="Fetch data from all available feeds. NOT YET AVAILABLE!",
 )
 async def fetch_data_from_all_feeds(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
 ) -> FeedFetchResponse:
-    """Fetch data from all available feeds."""
+    """Fetch data from all available feeds. NOT YET AVAILABLE!"""
     return await _fetch_data_from_all_feeds(db)
 
 
@@ -139,7 +132,6 @@ async def fetch_data_from_all_feeds(
     status_code=status.HTTP_200_OK,
     response_model=list[FeedResponse],
     summary="Get all feeds",
-    description="Retrieve a list of all feeds.",
 )
 async def get_feeds(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
@@ -158,7 +150,6 @@ async def get_feeds(
     status_code=status.HTTP_201_CREATED,
     response_model=FeedResponse,
     summary="Add new feed (Deprecated)",
-    description="Deprecated. Add a new feed with given details using the old route.",
 )
 async def add_feed_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
@@ -175,7 +166,6 @@ async def add_feed_depr(
     status_code=status.HTTP_200_OK,
     response_model=FeedEnableDisableResponse,
     summary="Enable feed (Deprecated)",
-    description="Deprecated. Enable a specific feed by its ID using the old route.",
 )
 async def enable_feed(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
@@ -192,7 +182,6 @@ async def enable_feed(
     status_code=status.HTTP_200_OK,
     response_model=FeedEnableDisableResponse,
     summary="Disable feed (Deprecated)",
-    description="Deprecated. Disable a specific feed by its ID using the old route.",
 )
 async def disable_feed(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
@@ -209,7 +198,6 @@ async def disable_feed(
     status_code=status.HTTP_501_NOT_IMPLEMENTED,
     response_model=FeedCacheResponse,
     summary="Cache feeds",
-    description="Cache feeds based on a specific scope.",
 )
 async def cache_feeds_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.SITE_ADMIN]))],
@@ -226,7 +214,6 @@ async def cache_feeds_depr(
     status_code=status.HTTP_501_NOT_IMPLEMENTED,
     response_model=FeedFetchResponse,
     summary="Fetch from feed (Deprecated)",
-    description="Deprecated. Fetch data from a specific feed by its ID using the old route.",
 )
 async def fetch_from_feed_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.SITE_ADMIN]))],
@@ -243,7 +230,6 @@ async def fetch_from_feed_depr(
     status_code=status.HTTP_501_NOT_IMPLEMENTED,
     response_model=FeedFetchResponse,
     summary="Fetch from all feeds (Deprecated)",
-    description="Deprecated. Fetch data from all available feeds using the old route.",
 )
 async def fetch_data_from_all_feeds_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.SITE_ADMIN]))],
@@ -259,7 +245,6 @@ async def fetch_data_from_all_feeds_depr(
     status_code=status.HTTP_200_OK,
     response_model=FeedResponse,
     summary="Get feed details (Deprecated)",
-    description="Deprecated. Retrieve details of a specific feed by its ID using the old route.",
 )
 async def get_feed_details_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
@@ -276,7 +261,6 @@ async def get_feed_details_depr(
     status_code=status.HTTP_200_OK,
     response_model=FeedResponse,
     summary="Update feed (Deprecated)",
-    description="Deprecated. Update an existing feed by its ID using the old route.",
 )
 async def update_feed_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],

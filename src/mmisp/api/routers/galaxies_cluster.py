@@ -39,7 +39,6 @@ router = APIRouter(tags=["galaxies"])
     status_code=status.HTTP_200_OK,
     response_model=DeleteForceUpdateImportGalaxyResponse,
     summary="Add new galaxy cluster",
-    description="Add a new galaxy cluster to an existing galaxy.",
 )
 async def import_galaxy_cluster(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.GALAXY_EDITOR]))],
@@ -54,7 +53,6 @@ async def import_galaxy_cluster(
     status_code=status.HTTP_200_OK,
     #response_model=PLACEHOLDER,
     summary="Gets information from a galaxy cluster",
-    description="Returns information from a galaxy cluster selected by its id.",
     )
 async def get_galaxy_cluster(
     TODO
@@ -69,7 +67,6 @@ async def get_galaxy_cluster(
     status_code=status.HTTP_200_OK,
     response_model=list[ExportGalaxyClusterResponse],
     summary="Export galaxy cluster",
-    description="Export galaxy cluster.",
 )
 async def export_galaxy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
@@ -86,7 +83,6 @@ async def export_galaxy(
     status_code=status.HTTP_200_OK,
     response_model=AttachClusterGalaxyResponse,
     summary="Attach Cluster to Galaxy.",
-    description="Attach a Galaxy Cluster to given Galaxy.",
 )
 async def galaxies_attachCluster(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],

@@ -72,7 +72,6 @@ async def update_galaxy(
     status_code=status.HTTP_200_OK,
     response_model=DeleteForceUpdateImportGalaxyResponse,
     summary="Delete a galaxy",
-    description="Delete a specific galaxy by its Id.",
 )
 async def delete_galaxy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
@@ -80,6 +79,7 @@ async def delete_galaxy(
     galaxy_id: Annotated[str, Path(alias="galaxyId")],
     request: Request,
 ) -> DeleteForceUpdateImportGalaxyResponse:
+    """"Delete a specific galaxy by its Id."""
     return await _delete_galaxy(db, galaxy_id, request)
 
 
@@ -88,7 +88,6 @@ async def delete_galaxy(
     status_code=status.HTTP_200_OK,
     response_model=list[GetAllSearchGalaxiesResponse],
     summary="Get all galaxies",
-    description="Get a list with all existing galaxies.",
 )
 async def get_galaxies(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))], db: Annotated[Session, Depends(get_db)]
@@ -102,8 +101,6 @@ async def get_galaxies(
     status_code=status.HTTP_200_OK,
     response_model=list[GetAllSearchGalaxiesResponse],
     summary="Search galaxies",
-    description="Search galaxies by search term which matches with galaxy name, namespace, description, \
-        kill_chain_order or uuid.",
 )
 async def search_galaxies(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
@@ -125,7 +122,6 @@ async def search_galaxies(
     status_code=status.HTTP_200_OK,
     response_model=GetGalaxyResponse,
     summary="View Galaxy by ID.",
-    description="View Galaxy by given Galaxy ID.",
 )
 async def get_galaxy_details_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
@@ -142,7 +138,6 @@ async def get_galaxy_details_depr(
     status_code=status.HTTP_200_OK,
     response_model=DeleteForceUpdateImportGalaxyResponse,
     summary="Delete Galaxy by ID",
-    description="Delete Galaxy by GalaxyID.",
 )
 async def delete_galaxy_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],

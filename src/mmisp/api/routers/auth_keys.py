@@ -58,7 +58,6 @@ async def auth_keys_add_user(
     "/auth_keys/view/{AuthKeyId}",
     response_model=ViewAuthKeysResponse,
     summary="View an AuthKey",
-    description="View an AuthKey by its ID.",
 )
 async def auth_keys_view_auth_key(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
@@ -73,7 +72,6 @@ async def auth_keys_view_auth_key(
     "/auth_keys",
     response_model=list[SearchGetAuthKeysResponseItem],
     summary="Search for specific AuthKeys.",
-    description="Search for specific AuthKeys by parameters.",
 )
 async def search_auth_keys(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
@@ -88,7 +86,6 @@ async def search_auth_keys(
     "/auth_keys/{AuthKeyId}",
     response_model=EditAuthKeyResponse,
     summary="Edit an AuthKey.",
-    description="Edit an AuthKey by its ID.",
 )
 async def auth_keys_edit_auth_key(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
@@ -104,7 +101,6 @@ async def auth_keys_edit_auth_key(
     "/auth_keys/{AuthKeyId}",
     response_model=StandardStatusIdentifiedResponse,
     summary="Delete given AuthKey.",
-    description="Delete AuthKey by AuthKeyId from the database.",
 )
 async def auth_keys_delete_auth_key(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
@@ -128,7 +124,6 @@ async def auth_keys_delete_auth_key(
     "/auth_keys",
     response_model=list[SearchGetAuthKeysResponseItem],
     summary="Returns AuthKeys.",
-    description="Returns all AuthKeys stored in the database as a List.",
 )
 async def auth_keys_get(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
@@ -147,7 +142,6 @@ async def auth_keys_get(
     deprecated=True,
     response_model=AddAuthKeyResponse,
     summary="Add an AuthKey.",
-    description="Create an AuthKey for a specific user and save it in the database.",
 )
 async def auth_keys_add_user_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
@@ -164,7 +158,6 @@ async def auth_keys_add_user_depr(
     deprecated=True,
     response_model=EditAuthKeyResponse,
     summary="Edit AuthKey",
-    description="Edit AuthKey by AuthKey ID.",
 )
 async def auth_keys_edit_auth_key_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
@@ -181,7 +174,6 @@ async def auth_keys_edit_auth_key_depr(
     deprecated=True,
     response_model=StandardStatusIdentifiedResponse,
     summary="Delete given AuthKey.",
-    description="Delete AuthKey by AuthKeyId from the database.",
 )
 async def auth_keys_delete_auth_key_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],

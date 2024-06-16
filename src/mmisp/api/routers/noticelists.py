@@ -28,7 +28,6 @@ router = APIRouter(tags=["noticelists"])
     status_code=status.HTTP_200_OK,
     response_model=NoticelistResponse,
     summary="Get noticelist details",
-    description="Retrieve details of a specific noticelist by its ID.",
 )
 async def get_noticelist(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
@@ -43,7 +42,6 @@ async def get_noticelist(
     "/noticelists/toggleEnable/{noticelistId}",
     status_code=status.HTTP_200_OK,
     response_model=StandardStatusIdentifiedResponse,
-    summary="Disable/Enable noticelist",
 )
 async def post_toggleEnable_noticelist(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
@@ -59,7 +57,6 @@ async def post_toggleEnable_noticelist(
     status_code=status.HTTP_200_OK,
     response_model=StandardStatusResponse,
     summary="Update noticelists",
-    description="Update all noticelists.",
 )
 async def update_noticelists(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
@@ -74,7 +71,6 @@ async def update_noticelists(
     status_code=status.HTTP_200_OK,
     response_model=list[GetAllNoticelists],
     summary="Get all noticelists",
-    description="Retrieve a list of all noticelists.",
 )
 async def get_all_noticelists(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
@@ -93,13 +89,13 @@ async def get_all_noticelists(
     status_code=status.HTTP_200_OK,
     response_model=NoticelistResponse,
     summary="Get noticelist details (Deprecated)",
-    description="Deprecated. Retrieve details of a specific noticelist by its ID using the old route.",
 )
 async def get_noticelist_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     noticelist_id: Annotated[int, Path(alias="noticelistId")],
 ) -> NoticelistResponse:
+    """Deprecated. Retrieve details of a specific noticelist by its ID using the old route."""
     return await _get_noticelist(db, noticelist_id)
 
 
@@ -109,12 +105,12 @@ async def get_noticelist_depr(
     status_code=status.HTTP_200_OK,
     response_model=StandardStatusResponse,
     summary="Update noticelists (Deprecated)",
-    description="Deprecated. Update all noticelists.",
 )
 async def update_noticelist_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
 ) -> StandardStatusResponse:
+    """Deprecated. Update all noticelists."""
     return await _update_noticelists(db, True)
 
 
