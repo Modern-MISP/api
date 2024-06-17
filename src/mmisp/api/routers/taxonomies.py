@@ -38,12 +38,12 @@ router = APIRouter(tags=["taxonomies"])
     status_code=status.HTTP_200_OK,
     response_model=StandardStatusResponse,
     summary="Update taxonomies",
-    description="Update all taxonomies.",
 )
 async def update_taxonomies(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
 ) -> StandardStatusResponse:
+    """Update all taxonomies."""
     return await _update_taxonomies(db, False)
 
 
@@ -52,13 +52,13 @@ async def update_taxonomies(
     status_code=status.HTTP_200_OK,
     response_model=GetIdTaxonomyResponseWrapper,
     summary="Get taxonomy details",
-    description="Retrieve details of a specific taxonomy by its ID.",
 )
 async def get_taxonomy_details(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     taxonomy_id: Annotated[int, Path(alias="taxonomyId")],
 ) -> GetIdTaxonomyResponseWrapper:
+    """Retrieve details of a specific taxonomy by its ID."""
     return await _get_taxonomy_details(db, taxonomy_id)
 
 
@@ -80,13 +80,13 @@ async def get_taxonomies(
     status_code=status.HTTP_200_OK,
     response_model=GetTagTaxonomyResponse,
     summary="Get taxonomy inclusive tags and attributes",
-    description="Retrieve details of a specific taxonomy and its tags and attributes by its ID.",
 )
 async def get_taxonomy_details_extended(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     taxonomy_id: Annotated[int, Path(alias="taxonomyId")],
 ) -> GetTagTaxonomyResponse:
+    """Retrieve details of a specific taxonomy and its tags and attributes by its ID."""
     return await _get_taxonomy_details_extended(db, taxonomy_id)
 
 
@@ -95,13 +95,13 @@ async def get_taxonomy_details_extended(
     status_code=status.HTTP_200_OK,
     response_model=ExportTaxonomyResponse,
     summary="Export taxonomy",
-    description="Export taxonomy.",
 )
 async def export_taxonomy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     taxonomy_id: Annotated[int, Path(alias="taxonomyId")],
 ) -> ExportTaxonomyResponse:
+    "Export taxonomy."
     return await _export_taxonomy(db, taxonomy_id)
 
 
@@ -110,13 +110,13 @@ async def export_taxonomy(
     status_code=status.HTTP_200_OK,
     response_model=StandardStatusResponse,
     summary="Enable taxonomy",
-    description="Enable a specific taxonomy by its ID.",
 )
 async def enable_taxonomy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     taxonomy_id: Annotated[int, Path(alias="taxonomyId")],
 ) -> StandardStatusResponse:
+    """Enable a specific taxonomy by its ID."""
     return await _enable_taxonomy(db, taxonomy_id)
 
 
@@ -125,13 +125,13 @@ async def enable_taxonomy(
     status_code=status.HTTP_200_OK,
     response_model=StandardStatusResponse,
     summary="Disable taxonomy",
-    description="Disable a specific taxonomy by its ID.",
 )
 async def disable_taxonomies(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     taxonomy_id: Annotated[int, Path(alias="taxonomyId")],
 ) -> StandardStatusResponse:
+    """Disable a specific taxonomy by its ID."""
     return await _disable_taxonomy(db, taxonomy_id)
 
 
@@ -141,12 +141,12 @@ async def disable_taxonomies(
     status_code=status.HTTP_200_OK,
     response_model=StandardStatusResponse,
     summary="Update taxonomies",
-    description="Update all taxonomies.",
 )
 async def update_taxonomies_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
 ) -> StandardStatusResponse:
+    """Update all taxonomies."""
     return await _update_taxonomies(db, True)
 
 
@@ -156,13 +156,13 @@ async def update_taxonomies_depr(
     status_code=status.HTTP_200_OK,
     response_model=GetIdTaxonomyResponseWrapper,
     summary="Get taxonomy details",
-    description="Retrieve details of a specific taxonomy by its ID.",
 )
 async def get_taxonomy_by_id_depr(
     db: Annotated[Session, Depends(get_db)],
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     taxonomy_id: Annotated[int, Path(..., alias="taxonomyId")],
 ) -> GetIdTaxonomyResponseWrapper:
+    """Retrieve details of a specific taxonomy by its ID."""
     return await _get_taxonomy_details(db, taxonomy_id)
 
 

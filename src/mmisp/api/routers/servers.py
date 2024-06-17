@@ -11,43 +11,48 @@ router = APIRouter(tags=["servers"])
 
 @router.post("/servers/createBackup/{path}",
     summary="Creates a backup on the given path",
-    description="Creates a backup of the current database if the given path is valid",
 )
 async def create_backup(
     TODO
-) : return await _create_backup(db, path)
+) :
+    """Creates a backup of the current database if the given path is valid"""
+    return await _create_backup(db, path)
 
 @router.post("/sservers/updateBackup/{path}",
     summary="Creates a backup on the given path",
-    description="Creates a backup of the current database if the given path is valid",
 )
 async def update_backup(
     TODO
-) : return await _update_backup(db, path)
+) :
+    """Creates a backup of the current database if the given path is valid"""
+    return await _update_backup(db, path)
 
 @router.get("/servers/remote/getAll",
     summary="Requests a list of all remote servers",
-    description="Returns a list of all currently active remote servers",
     )
 async def get_remote_servers(
     TODO
-) : return await _get_remote_servers(db)
+) :
+    """Returns a list of all currently active remote servers"""
+    return await _get_remote_servers(db)
 
 @router.post("/servers/remote/add",
     summary="Adds a new remote server to the list",
-    description="Adds a new remote server based on the input of an admin",
     )
 async def add_remote_server(
     TODO
-) : return await _add_remote_server(auth, db, body)
+) :
+    """Adds a new remote server based on the input of an admin"""
+    return await _add_remote_server(auth, db, body)
 
 @router.delete("/servers/remote/delete/{serverId}",
     summary="Deletes a remote server by id",
-    description="Deletes a remote server if the given id is valid",
     )
 async def delete_remote_server(
     TODO
-) : return await _delete_remote_server(db, serverId)
+) :
+    """Deletes a remote server if the given id is valid"""
+    return await _delete_remote_server(db, serverId)
 
 @router.get("/servers/getVersion")
 async def get_version(auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],db: Annotated[Session, Depends(get_db)]) -> dict:

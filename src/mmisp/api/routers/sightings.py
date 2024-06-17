@@ -58,13 +58,13 @@ async def add_sightings_at_index(
     "/sightings/{eventId}",
     status_code=status.HTTP_200_OK,
     summary="Get sightings for event",
-    description="Retrieve all sightings associated with a specific event ID.",
 )
 async def get_sightings_at_index(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     event_id: Annotated[int, Path(alias="eventId")],
 ) -> list[SightingAttributesResponse]:
+    """Retrieve all sightings associated with a specific event ID."""
     return await _get_sightings_at_index(db, event_id)
 
 
@@ -72,13 +72,13 @@ async def get_sightings_at_index(
     "/sightings/{sightingId}",
     status_code=status.HTTP_200_OK,
     summary="Delete sighting",
-    description="Delete a specific sighting.",
 )
 async def delete_sighting(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SIGHTING]))],
     db: Annotated[Session, Depends(get_db)],
     sighting_id: Annotated[int, Path(alias="sightingId")],
 ) -> StandardStatusResponse:
+    """Delete a specific sighting."""
     return await _delete_sighting(db, sighting_id)
 
 
@@ -148,7 +148,6 @@ async def delete_sighting_depr(
     deprecated=True,
     status_code=status.HTTP_200_OK,
     summary="Get sightings for event (Deprecated)",
-    description="Deprecated. Retrieve all sightings associated with a specific event ID using the old route.",
 )
 async def get_sightings_at_index_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
