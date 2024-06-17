@@ -29,7 +29,7 @@ router = APIRouter(tags=["authentication"])
 
 @router.post("/auth/openID/setOpenIDProvider")
 async def set_openID_provider(db: Annotated[Session, Depends(get_db)]) :
-    """sets a new OpenID provider"""
+    """Sets a new OpenID provider"""
     return None
 
 
@@ -58,7 +58,7 @@ async def start_login(db: Annotated[Session, Depends(get_db)], body: StartLoginB
 
 @router.post("/auth/login/openID")
 async def openID_login(db: Annotated[Session, Depends(get_db)]) :
-    """logs a user in by openID"""
+    """Logs a user in by openID"""
     return None
 
 
@@ -75,7 +75,7 @@ async def password_login(db: Annotated[Session, Depends(get_db)], body: Password
 
 @router.post("/auth/resetPassword")
 async def reset_password(db: Annotated[Session, Depends(get_db)]) :
-    """resets password"""
+    """Resets password"""
     return None
 
 
