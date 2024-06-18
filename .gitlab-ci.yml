@@ -1,37 +1,67 @@
 default:
   tags:
-      - any-image-allowed
+      - kgr1-instance-mini
 
 variables:
   LIB_REPO_URL: https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.kit.edu/${CI_PROJECT_NAMESPACE}/lib.git
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
-  #  CI_DEBUG_SERVICES: true
+  # CI_DEBUG_SERVICES: true
   PYTHONUNBUFFERED: true
 
 stages:
+  - build_image
   - test
+  - coverage
   - docs
 
 cache:
   paths:
     - .cache/pip
 
-before_script:
-  - pip install virtualenv
-  - python -m venv .venv
-  - source .venv/bin/activate
-  - pip install -e '.[dev]'
-  - if [ "$CI_PROJECT_NAMESPACE" != "kit/kit-cert/mmisp" ] || [ "$CI_COMMIT_REF_NAME" != "main" ]; then
-      if git ls-remote --exit-code --heads $LIB_REPO_URL $CI_COMMIT_REF_NAME; then
-        pip install --force-reinstall git+${LIB_REPO_URL}@${CI_COMMIT_REF_NAME};
-      fi
-    fi
+build_image:
+  needs: []
+  before_script: []
+  stage: build_image
+  tags:
+    - kgr1-instance-standard
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  script:
+    - mkdir -p /kaniko/.docker
+    - >-
+      echo '{"auths":{"https://registry.cert.kit.edu/v2/":{"auth": "'$(echo -n ${REGISTRY_USER}:${REGISTRY_PASSWORD} | base64 -w 0)'" }}}' > /kaniko/.docker/config.json
+    - >-
+      /kaniko/executor
+      --context "${CI_PROJECT_DIR}/"
+      --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
+      --build-arg LIB_REPO_URL=${LIB_REPO_URL}
+      --build-arg BRANCH=${CI_COMMIT_BRANCH}
+      --build-arg INSTALL_LIB=true 
+      --destination ${REGISTRY_DOMAIN}/${REGISTRY_PROJECT}/api:${CI_COMMIT_BRANCH}
+      --destination ${REGISTRY_DOMAIN}/${REGISTRY_PROJECT}/api:${CI_COMMIT_SHA}
+
 
 pytest_mariadb:
+  parallel: 8
   stage: test
-  image: python:3.11
+  image: ${REGISTRY_DOMAIN}/${REGISTRY_PROJECT}/api:${CI_COMMIT_SHA}
   script:
-    - pytest tests/api/routers
+    - |
+      python -c "
+      import time
+      import mysql.connector
+      connection_available = False
+      while not connection_available:
+        try:
+          conn = mysql.connector.connect(user='root',
+            password='misp', host='db', database='mmisp-tests')
+          connection_available = True
+        except mysql.connector.errors.DatabaseError as e:
+          print(e)
+          time.sleep(3)
+      conn.close()"
+    - pytest --test-group-count $CI_NODE_TOTAL --test-group=$CI_NODE_INDEX tests/api/routers
   services:
     - name: mariadb:latest
       alias: db
@@ -48,10 +78,24 @@ pytest_mariadb:
 
 
 pytest:
+  parallel: 8
   stage: test
-  image: python:3.11
+  image: ${REGISTRY_DOMAIN}/${REGISTRY_PROJECT}/api:${CI_COMMIT_SHA}
   script:
-    - ENV_FILE=.env.test.lite pytest --cov --cov-report term --cov-report xml:coverage.xml tests/api/routers
+    - ENV_FILE=.env.test.lite pytest --test-group-count $CI_NODE_TOTAL --test-group=$CI_NODE_INDEX  --cov --cov-report term tests/api/routers
+  variables:
+    COVERAGE_FILE: ".coverage.${CI_NODE_INDEX}"
+  artifacts:
+    paths:
+      - ".coverage.*"
+
+pytest_coverage_combine:
+  stage: coverage
+  image: ${REGISTRY_DOMAIN}/${REGISTRY_PROJECT}/api:${CI_COMMIT_SHA}
+  script:
+    - coverage combine
+    - coverage xml 
+    - coverage report
   coverage: '/TOTAL.*\s+(\d+%)$/'
   artifacts:
     reports:
@@ -61,26 +105,27 @@ pytest:
 
 # also run pytest with sqlalchemy v2
 pytest_sa2:
+  parallel: 8
   stage: test
-  image: python:3.11
+  image: ${REGISTRY_DOMAIN}/${REGISTRY_PROJECT}/api:${CI_COMMIT_SHA}
   script:
     - pip install "sqlalchemy>=2.0"
-    - ENV_FILE=.env.test.lite pytest tests/api/routers
+    - ENV_FILE=.env.test.lite pytest --test-group-count $CI_NODE_TOTAL --test-group=$CI_NODE_INDEX  tests/api/routers
 
 mypy:
   stage: test
-  image: python:3.11
+  image: ${REGISTRY_DOMAIN}/${REGISTRY_PROJECT}/api:${CI_COMMIT_SHA}
   script:
     - pip install "sqlalchemy>=2.0"
     - MYPYPATH=src mypy --explicit-package-bases src/mmisp/api
 
 legacy_misp:
   stage: test
-  image: python:3.11
+  image: ${REGISTRY_DOMAIN}/${REGISTRY_PROJECT}/api:${CI_COMMIT_SHA}
   script:
-    - date
-    - while curl -s http://misp-core/ | grep -q "MISP is loading..."; do sleep 10; done
-    - curl -v http://misp-core/users/login
+    - sleep 60
+    - curl -v http://misp-core/users/heartbeat
+    - sleep 60
     - date
     - |
       python -c "
@@ -104,14 +149,21 @@ legacy_misp:
   services:
     - name: mariadb:latest
       alias: db
-    - name: hub.cert.kit.edu:5000/misp-core:latest
+      variables:
+        HEALTHCHECK_TCP_PORT: 3306
+    - name: registry.cert.kit.edu/public-gitlab-ci/misp-core:latest
       alias: misp-core
       variables:
         MYSQL_PASSWORD: misp
         MYSQL_USER: root
         DISABLE_SSL_REDIRECT: true
+        HEALTHCHECK_TCP_PORT: 80
+        ENABLE_DB_SETTINGS: "false"
+        DEBUG: 1
     - name: valkey/valkey:7.2
       alias: redis
+      variables:
+        HEALTHCHECK_TCP_PORT: 6379
   variables:
     MARIADB_ROOT_PASSWORD: misp
     MARIADB_DATABASE: misp
@@ -126,7 +178,7 @@ legacy_misp:
 generate_mkdocs:
   before_script: []
   stage: docs
-  image: hub.cert.kit.edu:5000/mkdocs
+  image: registry.cert.kit.edu/public-gitlab-ci/mkdocs
   script:
     - source /root/.venv/bin/activate; PYTHONPATH=src mkdocs build
   artifacts:

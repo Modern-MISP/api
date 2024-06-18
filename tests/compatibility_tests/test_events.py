@@ -2,6 +2,7 @@ import httpx
 from deepdiff import DeepDiff
 from icecream import ic
 
+from time import sleep
 
 def to_legacy_format(data):
     if isinstance(data, bool):
@@ -19,6 +20,7 @@ def test_get_existing_event(
     db, organisation, event, attribute, galaxy, galaxy_cluster, tag, auth_key, eventtag, client
 ) -> None:
     clear_key, auth_key = auth_key
+    ic(clear_key)
     org_id = organisation.id
 
     event_id = event.id
@@ -47,6 +49,7 @@ def test_get_existing_event(
     assert response_json["Event"]["Galaxy"][0]["GalaxyCluster"][0]["event_tag_id"] == str(eventtag.id)
 
     db.commit()
+    sleep(5)
 
     # TODO: fix this
     for attr in response_json["Event"]["Attribute"]:
@@ -56,6 +59,7 @@ def test_get_existing_event(
 
     legacy_response = httpx.get(f"http://misp-core/events/view/{event_id}?extended=true", headers=headers)
     legacy_response_json = legacy_response.json()
+    ic(legacy_response_json)
     legacy_response_json["Event"].pop("Galaxy")
 
     ic(response_json_in_legacy)
