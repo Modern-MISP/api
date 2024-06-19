@@ -1,10 +1,25 @@
+"""
+This API endpoint (`workflow.py`) is designed for interacting with workflows.
+It supports fundamental operations such as editing, deleting, and getting workflows,
+along with validating workflow graphs.
+
+Moreover, it includes endpoints for managing modules,
+such as listing them and enabling/disabling their functionalities.
+
+These operations require database access, relying on `get_db()`.
+Authorization is essential for all actions, enforced via `authorize(AuthStrategy.HYBRID)`.
+
+Responses from these endpoints are consistently formatted in JSON,
+providing detailed information about each operation's outcome.
+"""
+
 from typing import Annotated, List, Optional
 
 from fastapi import APIRouter, Depends, Path, status
 
 from mmisp.api.auth import Auth, AuthStrategy, authorize
-from mmisp.api_schemas.standard_status_response import StandardStatusResponse
-from mmisp.api_schemas.workflow_response import CheckGraphResponse
+from mmisp.api_schemas.responses.check_graph_response import CheckGraphResponse
+from mmisp.api_schemas.responses.standard_status_response import StandardStatusResponse
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.workflows import Workflow
 from mmisp.workflows import Module, Trigger, WorkflowGraph
@@ -20,11 +35,14 @@ router = APIRouter(tags=["workflows"])
 async def index(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    # TODO: Filters
-    # TODO: QuickFilters
+    name: Optional[str],
+    uuid: Optional[str],
 ) -> List[Workflow]:
     """
     Returns a list of all workflows.
+
+    - **name**: Filter by workflow name.
+    - **uuid**: Filter by workflow UUID.
 
     Filters can be applied, mainly filters for a name or a uuid.
     """
@@ -43,33 +61,29 @@ async def edit(
     """
     Edits a workflow.
 
-    - **workflow_id** the id of the workflow to edit
-    - **workflow_name** the new name
-    - **workflow_description** the new description
-    - **workflow_graph** the new workflow graph \n
     When a change it made this endpoints overrwrites the outdated workflow in the database.
-    The response is the edited workflow.
+    It is also used to add new workflows. The response is the edited workflow.
+
+    - **workflow_id** The ID of the workflow to edit.
+    - **workflow_name** The new name.
+    - **workflow_description** The new description.
+    - **workflow_graph** The new workflow graph.
     """
     return Workflow()
 
 
-@router.delete(
-    "/workflows/delete/{workflowId}",
-    status_code=status.HTTP_200_OK,
-    summary="Deletes a workflow",
-    description="Deletes a workflow. It will be removed from the database.",
-)
+@router.delete("/workflows/delete/{workflowId}", status_code=status.HTTP_200_OK, summary="Delets a workflow")
 async def delete(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     workflow_id: Annotated[int, Path(alias="workflowId")],
-) -> None:
+) -> StandardStatusResponse:
     """
-    Deletes a workflow.
+    Delets a workflow. It will be removed from the database.
 
-    - **workflow_id** the id of the workflow to delete.
+    - **workflow_id** The ID of the workflow to delete.
     """
-    return None
+    return StandardStatusResponse
 
 
 @router.get(
@@ -86,9 +100,11 @@ async def view(
     """
     Gets a workflow.
 
-    - **workflow_id** the id of the workflow to view. \n
     Is called view because it is used to display the workflow in the visual editor
     but it just returns the data of a workflow.
+
+    - **workflow_id** The ID of the workflow to view.
+
     """
     return Workflow()
 
@@ -102,44 +118,57 @@ async def executeWorkflow(
     """
     Executes a workflow.
 
-    - **workflow_id** the id of the workflow to execute. \n
     Is used for debugging.
+
+    - **workflow_id** The ID of the workflow to execute.
     """
     return None
 
 
 @router.get("/workflows/triggers", status_code=status.HTTP_200_OK, summary="Returns a list with all triggers")
 async def triggers(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))], db: Annotated[Session, Depends(get_db)]
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    db: Annotated[Session, Depends(get_db)],
+    scope: Optional[str],
+    enabled: Optional[bool],
+    blocking: Optional[bool],
+    limit: Optional[int],
+    page: Optional[int],
 ) -> List[Trigger]:
     """
-    Returns a list with all triggers.
+    Returns a list with triggers.
 
-    Returns a list with all triggers. A trigger starts a workflow.
-    It is used for the trigger overview page.
+    A trigger starts a workflow. It is used for the trigger overview page.
+
+    - **scope** Filters for the scope of the triggers (attribute, event, log etc.)
+    - **enabled** Filters whether the trigger is enabled/ disabled
+    - **blocking** Filters for blocking/ non-blocking triggers
+    - **limit**: The number of items to display per page (for pagination).
+    - **page**: The page number to display (for pagination).
     """
     return []
 
 
-@router.get(
-    "/workflows/moduleIndex",
-    status_code=status.HTTP_200_OK,
-    summary="Returns modules",
-    description="With type:all you can querry all modules. Filters can be applied.",
-)
+@router.get("/workflows/moduleIndex", status_code=status.HTTP_200_OK, summary="Returns modules")
 async def moduleIndex(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    # TODO: Add all filter parameters
-    # type: ["all", "custom"]
-    # actiontype: ["mispmodule", "blocking"]
     enabled: Optional[bool],
+    limit: Optional[int],
+    page: Optional[int],
+    type: str = "action",
+    actiontype: str = "all",
 ) -> List[Module]:
     """
-    Returns modules.
+    Retrieve modules with optional filtering.
 
-    All filter parameters are optional. No parameter means no filtering.
-    - **enabled** If this is true/false, it only return enabled/disabled modules.
+    All filter parameters are optional. If no parameters are provided, no filtering will be applied.
+
+    - **type**: Filter by type. Valid values are 'action', 'logic', 'custom', and 'all'.
+    - **actiontype**: Filter by action type. Valid values are 'all', 'mispmodule', and 'blocking'.
+    - **enabled**: If true, returns only enabled modules. If false, returns only disabled modules.
+    - **limit**: The number of items to display per page (for pagination).
+    - **page**: The page number to display (for pagination).
     """
     return []
 
@@ -153,8 +182,7 @@ async def moduleView(
     """
     Returns a singular module.
 
-    - **module_id** the id of the module \n
-    Used in the visual editor.
+    - **module_id** The ID of the module.
     """
     return Module()
 
@@ -170,14 +198,16 @@ async def toggleModule(
     is_trigger: Optional[bool] = False,
 ) -> StandardStatusResponse:
     """
-    Enables/ disables a module.
+    Enables/ disables a module. Respons with a success status.
 
-    - **module_id** the id of the module
-    - **enable** whether it should be enabled or not
-    - **is_trigger** ??? \n
     Disabled modules can't be used in the visual editor.
+
+    - **module_id**: The ID of the module.
+    - **enable**: Whether the module should be enabled or not.
+    - **is_trigger**: Indicates if the module is a trigger module.
+    Trigger modules have specific behaviors and usage within the system.
     """
-    return None  # type: ignore
+    return StandardStatusResponse()
 
 
 @router.post("/workflows/checkGraph", status_code=status.HTTP_200_OK, summary="Checks if the given graph is correct")
@@ -189,9 +219,10 @@ async def checkGraph(
     """
     Checks if the given graph is correct.
 
-    - **graph** the workflow graph to check \n
     This will check if the graph is acyclic, if any node has multiple output connections
     and if there are path warnings.
+
+    - **graph** The workflow graph to check.
     """
     return CheckGraphResponse()
 
@@ -203,8 +234,8 @@ async def toggleWorkflows(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))], db: Annotated[Session, Depends(get_db)]
 ) -> StandardStatusResponse:
     """
-    Enable/ disable the workflow feature.
+    Enable/ disable the workflow feature. Respons with a success status.
 
     Globally enables/ disables the workflow feature in your MISP instance.
     """
-    return None  # type: ignore
+    return StandardStatusResponse()
