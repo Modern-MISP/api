@@ -5,16 +5,25 @@ theme:
 
 nav:
   - index.md
+  - util_package.md
+  - api_package.md
+  - api_routers_package.md
 
 plugins:
   - search
-  - mkdocstrings
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            show_source: false
+            separate_signature: true
+            show_signature_annotations: true
   - plantuml:
       puml_url: http://plantuml:8080/
       num_workers: 4
   - build_plantuml:
       render: 'server'
-      server: http://plantuml:8080
+      server: http://plantuml:8080/
       output_format: svg
       diagram_root: docs/plantuml
   - with-pdf
