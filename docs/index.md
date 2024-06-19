@@ -23,11 +23,6 @@ database "Redis"
 
 ![api-worker-integration](diagrams/api-worker-integration.svg)
 
-<!---
-### ::: mmisp.api.config
-    options:
-      show_source: false
---->
 
 # Util
 ## ::: mmisp.util
