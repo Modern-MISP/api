@@ -56,11 +56,15 @@ async def rest_search_attributes(
     """Search for attributes based on various filters.
     
     Input:
+
     -the user's authentification status
+
     -the current database
+
     -the search body
 
     Output:
+    
     -the attributes the search finds
     """
     return await _rest_search_attributes(db, body)
