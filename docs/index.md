@@ -28,15 +28,19 @@ database "Redis"
     options:
       show_source: false
 --->
+
+# Util
 ## ::: mmisp.util
 ## ::: mmisp.util.partial
 ## ::: mmisp.util.crypto
 ## ::: mmisp.util.models
 ## ::: mmisp.util.uuid
+# API
 ## ::: mmisp.api
 ## ::: mmisp.api.config
 ## ::: mmisp.api.main
 ## ::: mmisp.api.auth
+# Routers
 ## ::: mmisp.api.routers
 ## ::: mmisp.api.routers.taxonomies
 ## ::: mmisp.api.routers.user_settings
