@@ -72,14 +72,14 @@ async def edit(
     return Workflow()
 
 
-@router.delete("/workflows/delete/{workflowId}", status_code=status.HTTP_200_OK, summary="Delets a workflow")
+@router.delete("/workflows/delete/{workflowId}", status_code=status.HTTP_200_OK, summary="Deletes a workflow")
 async def delete(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     workflow_id: Annotated[int, Path(alias="workflowId")],
 ) -> StandardStatusResponse:
     """
-    Delets a workflow. It will be removed from the database.
+    Deletes a workflow. It will be removed from the database.
 
     - **workflow_id** The ID of the workflow to delete.
     """
