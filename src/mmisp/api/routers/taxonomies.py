@@ -47,10 +47,13 @@ async def update_taxonomies(
     Update all taxonomies.
 
     Input:
+
     - auth: Authentication details
+
     - db: Database session
 
     Output:
+
     - StandardStatusResponse: Status response indicating success or failure
     """
     return await _update_taxonomies(db, False)
@@ -71,11 +74,15 @@ async def get_taxonomy_details(
     Retrieve details of a specific taxonomy by its ID.
 
     Input:
+
     - auth: Authentication details
+
     - db: Database session
+
     - taxonomy_id: ID of the taxonomy to retrieve
 
     Output:
+
     - GetIdTaxonomyResponseWrapper: Wrapper containing taxonomy details
     """
     return await _get_taxonomy_details(db, taxonomy_id)
@@ -94,10 +101,13 @@ async def get_taxonomies(
     Retrieve a list of all taxonomies.
 
     Input:
+
     - auth: Authentication details
+
     - db: Database session
 
     Output:
+
     - list[ViewTaxonomyResponse]: List of taxonomies
     """
     return await _get_all_taxonomies(db)
@@ -118,11 +128,15 @@ async def get_taxonomy_details_extended(
     Retrieve details of a specific taxonomy and its tags and attributes by its ID.
 
     Input:
+
     - auth: Authentication details
+
     - db: Database session
+
     - taxonomy_id: ID of the taxonomy to retrieve extended details for
 
     Output:
+
     - GetTagTaxonomyResponse: Response containing taxonomy attributes
     """
     return await _get_taxonomy_details_extended(db, taxonomy_id)
@@ -143,11 +157,15 @@ async def export_taxonomy(
     Export taxonomy.
 
     Input:
+
     - auth: Authentication details
+
     - db: Database session
+
     - taxonomy_id: ID of the taxonomy to export
 
     Output:
+
     - ExportTaxonomyResponse: Response containing exported taxonomy data
     """
     return await _export_taxonomy(db, taxonomy_id)
@@ -168,11 +186,15 @@ async def enable_taxonomy(
     Enable a specific taxonomy by its ID.
 
     Input:
+
     - auth: Authentication details
+
     - db: Database session
+
     - taxonomy_id: ID of the taxonomy to enable
 
     Output:
+
     - StandardStatusResponse: Status response indicating success or failure
     """
     return await _enable_taxonomy(db, taxonomy_id)
@@ -193,11 +215,15 @@ async def disable_taxonomies(
     Disable a specific taxonomy by its ID.
 
     Input:
+
     - auth: Authentication details
+
     - db: Database session
+
     - taxonomy_id: ID of the taxonomy to disable
 
     Output:
+
     - StandardStatusResponse: Status response indicating success or failure
     """
     return await _disable_taxonomy(db, taxonomy_id)
@@ -218,10 +244,13 @@ async def update_taxonomies_depr(
     Update all taxonomies.
 
     Input:
+
     - auth: Authentication details
+
     - db: Database session
 
     Output:
+
     - StandardStatusResponse: Status response indicating success or failure
     """
     return await _update_taxonomies(db, True)
@@ -243,11 +272,15 @@ async def get_taxonomy_by_id_depr(
     Retrieve details of a specific taxonomy by its ID.
 
     Input:
+
     - db: Database session
+    
     - auth: Authentication details
+
     - taxonomy_id: ID of the taxonomy to get
 
     Output:
+    
     - GetIdTaxonomyResponseWrapper: Wrapper containing taxonomy details
     """
     return await _get_taxonomy_details(db, taxonomy_id)

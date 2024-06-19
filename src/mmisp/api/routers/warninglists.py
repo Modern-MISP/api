@@ -39,11 +39,15 @@ async def add_warninglist(
     Add a new warninglist with given details.
 
     Input:
+
     - auth: Authentication details
+
     - db: Database session
+
     - body: CreateWarninglistBody, Data for creating the new warninglist
 
     Output:
+
     - WarninglistResponse: Response with details of the new warninglist
     """
     return await _add_warninglist(db, body)
@@ -63,11 +67,15 @@ async def get_warninglist_details(
     Retrieve details of a specific warninglist by its ID.
 
     Input:
+
     - auth: Authentication details
+
     - db: Database session
+
     - warninglist_id: ID of the warninglist to fetch
 
     Output:
+
     - WarninglistResponse: Response with details of the searched warninglist
     """
     return await _get_warninglist_details(db, warninglist_id)
@@ -88,11 +96,15 @@ async def post_toggleEnable(
     Disable/Enable a specific warninglist by its ID or name.
 
     Input:
+
     - auth: Authentication details
+
     - db:Database session
+
     - body: ToggleEnableWarninglistsBody, Data to toggle enable status of the warninglist
 
     Output:
+
     - ToggleEnableWarninglistsResponse: Response showing success or failure
     """
     return await _toggleEnable(db, body)
@@ -112,11 +124,15 @@ async def delete_warninglist(
     Delete a specific warninglist.
 
     Input:
+
     - auth: Authentication details
+
     - db: Database session
+
     - warninglist_id: ID of the warninglist to delete
 
     Output:
+
     - WarninglistResponse: Response showing success or failure
     """
     return await _delete_warninglist(db, warninglist_id)
@@ -139,12 +155,17 @@ async def get_all_or_selected_warninglists(
         given parameter.
 
     Input:
+
     - auth: Authentication details
+
     - db: Database session
+
     - value: str | None, Search term for filtering by value
+
     - enabled: bool | None, Status filter (enabled or disabled)
 
     Output:
+
     - GetSelectedAllWarninglistsResponse: Response containing filtered or all warninglists
     """
     return await _get_all_or_selected_warninglists(db, value, enabled)
@@ -165,11 +186,15 @@ async def get_warninglists_by_value(
         which match has the given search term as entry.
 
     Input:
+
     - auth: Authentication details
+
     - db: Database session
+
     - body: CheckValueWarninglistsBody, Data for searching warninglists by value
 
     Output:
+
     - CheckValueResponse | dict: Response with searched warninglists
     """
     return await _get_warninglists_by_value(db, body)
@@ -188,10 +213,13 @@ async def update_all_warninglists(
     Update all warninglists.
 
     Input:
+
     - auth: Authentication details
+
     - db: Database session
 
     Output:
+
     - StandardStatusResponse: Response indicating success or failure
     """
     return await _update_all_warninglists(db, False)
@@ -215,11 +243,15 @@ async def get_warninglist_details_depr(
     Deprecated. Retrieve details of a specific warninglist by its ID using the old route.
 
     Input:
+
     - auth: Authentication details
+
     - db: Database session
+
     - warninglist_id: ID of the warninglist to fetch
 
     Output:
+
     - WarninglistResponse: Response with details of the searched warninglist
     """
     return await _get_warninglist_details(db, warninglist_id)
@@ -240,11 +272,15 @@ async def search_warninglists(
     Retrieve a list of warninglists, which match given search terms using the old route.
 
     Input:
+
     - auth: Authentication details
+
     - db: Database session
+
     - body: GetSelectedWarninglistsBody, Data for filtering warninglists
 
     Output:
+
     - GetSelectedAllWarninglistsResponse: Response containing filtered warninglists
     """
     return await _get_selected_warninglists(db, body)
@@ -264,10 +300,13 @@ async def update_all_warninglists_depr(
     Deprecated. Update all warninglists.
 
     Input:
+
     - auth: Authentication details
+
     - db: Database session
 
     Output:
+    
     - StandardStatusResponse: Response indicating success or failure
     """
     return await _update_all_warninglists(db, True)

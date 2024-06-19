@@ -25,9 +25,11 @@ async def add_user(
     Adds a new user with the given details.
 
     Input:
+
     - Data representing the new user to be added
     
     Output:
+
     - Data representing the attributes of the new user
     """
     return await _add_user(db, user)
@@ -41,9 +43,11 @@ async def get_logged_in_user_info(
     Retrieves information about the logged in user.
 
     Input:
+
     - Authentication details of the logged in user
     
     Output:
+
     - Information about the logged in user
     """
     user = await db.get(User, auth.user_id)
@@ -63,9 +67,11 @@ async def get_all_users(
     Retrieves a list of all users.
 
     Input:
+
     - None
     
     Output:
+
     - List containing all users
     """
     return await _get_all_users(db)
@@ -81,9 +87,11 @@ async def get_user_by_id(
     Retrieves a user specified by id.
 
     Input:
+
     - ID of the user to get
     
     Output:
+
     - Data representing the attributes of the searched user
     """
     return await _get_user(db, userId)
@@ -100,9 +108,11 @@ async def delete_user(
     Deletes a user by their ID.
 
     Input:
+
     - ID of the user to delete
     
     Output:
+
     - Response indicating success or failure
     """
     return await _delete_user(db, userID)
@@ -119,9 +129,11 @@ async def delete_user_token(
     Deletes a users login token by their ID.
 
     Input:
+
     -ID of the user with the token to delete
     
     Output:
+
     - Response indicating success or failure
     """
     return await _delete_user_token(db, userID)
@@ -139,10 +151,13 @@ async def update_user(
     Updates an existing user by their ID.
 
     Input:
+
     - ID of the user to update
+
     - Updated data for the user
     
     Output:
+    
     - Data representing the updated attributes of the user
     """
     return await _update_user(db, userID)

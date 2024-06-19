@@ -39,11 +39,15 @@ async def add_sighting(
     """Add a new sighting for each given value.
     
     Input:
+
     - auth: Authentication details
+
     - db: Database session
+
     - body: Sighting creation data
 
     Output:
+
     - Details of the new sighting
     """
     return await _add_sighting(db, body)
@@ -62,11 +66,15 @@ async def add_sightings_at_index(
     """Add a new sighting for a specific attribute.
     
     Input:
-    - auth: Authentication details
+
+    - auth: Authentication 
+    
     - db: Database session
+
     - attribute_id: ID of the attribute
 
     Output:
+
     - Details of new sightings
     """
     return await _add_sightings_at_index(db, attribute_id)
@@ -85,11 +93,15 @@ async def get_sightings_at_index(
     """Retrieve all sightings associated with a specific event ID.
     
     Input:
+
     - auth: Authentication details
+
     - db: Database session
+
     - event_id: ID of the event
 
     Output:
+
     - Details of the sightings at index
     """
     return await _get_sightings_at_index(db, event_id)
@@ -108,11 +120,15 @@ async def delete_sighting(
     """Delete a specific sighting.
     
     Input:
+
     - auth: Authentication details
+
     - db: Database session
+
     - sighting_id: ID of the sighting
 
     Output:
+
     - Status response indicating success or failure
     """
     return await _delete_sighting(db, sighting_id)
@@ -130,10 +146,13 @@ async def get_sightings(
     """Retrieve a list of all sightings.
     
     Input:
+
     - auth: Authentication details
+
     - db: Database session
 
     Output:
+
     - Status response indicating success or failure
     """
     return await _get_sightings(db)
@@ -156,11 +175,15 @@ async def add_sighting_depr(
     """Deprecated. Add a new sighting using the old route.
     
     Input:
+
     - auth: Authentication details
+
     - db: Database session
+
     - body: Sighting creation data
 
     Output:
+
     - List of sighting attributes
     """
     return await _add_sighting(db, body)
@@ -180,11 +203,15 @@ async def add_sightings_at_index_depr(
     """Deprecated. Add a new sighting for a specific attribute using the old route.
     
     Input:
+
     - auth: Authentication details
+
     - db: Database session
+
     - attribute_id: ID of the attribute
 
     Output:
+
     - Details of the new sightings
     """
     return await _add_sightings_at_index(db, attribute_id)
@@ -204,11 +231,15 @@ async def delete_sighting_depr(
     """Deprecated. Delete a specific sighting using the old route.
     
     Input:
+
     - auth: Authentication details
+
     - db: Database session
+
     - sighting_id: ID of the sighting
 
     Output:
+
     - Status response indicating success or failure
     """
     return await _delete_sighting(db, sighting_id)
@@ -228,11 +259,15 @@ async def get_sightings_at_index_depr(
     """Deprecated. Retrieve all sightings associated with a specific event ID using the old route.
     
     Input:
+
     - auth: Authentication details
+
     - db: Database session
+
     - event_id: ID of the event
 
     Output:
+    
     - Details of the sightings at index
     """
     return await _get_sightings_at_index(db, event_id)

@@ -29,9 +29,11 @@ async def add_organisation(
     Adds a new organisation.
 
     Input:
+
     - Data representing the organisation to be added
     
     Output:
+
     - The added organisation data
     """
     return await _add_organisation(db, organisation)
@@ -49,6 +51,7 @@ async def get_organisations(
     Input: None
 
     Output:
+
     - List of all organisations
     """
     return await _get_organisations(db)
@@ -64,9 +67,11 @@ async def get_organisation(
     Gets an organisation by its ID.
 
     Input:
+
     - ID of the organisation to get
     
     Output:
+
     - Data of the searched organisation
     """
     return await _get_organisation(db, organisationID)
@@ -82,9 +87,11 @@ async def delete_organisation(
     Deletes an organisation by its ID.
 
     Input:
+
     - ID of the organisation to delete
     
     Output:
+
     - Response indicating success or failure
     """
     return await _delete_organisation(db, organisationID)
@@ -100,10 +107,13 @@ async def update_organisation(
     Updates an organisation by its ID.
 
     Input:
+
     - ID of the organisation to update
+
     - Updated data for the organisation
     
     Output:
+    
     - Updated organisation data
     """
     return await _update_organisation(db, organisationID)

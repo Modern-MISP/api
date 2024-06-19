@@ -53,11 +53,15 @@ async def create_sharing_group(
     Add a new sharing group with given details.
 
     Input:
+
     - auth: Authentication details
+
     - db: Database session
+
     - body: Request body containing details for creating the sharing group
 
     Output:
+
     - Details of the created sharing group
     """
     return await _create_sharing_group(auth, db, body)
@@ -78,11 +82,15 @@ async def get_sharing_group(
     Retrieve details of a specific sharing group.
 
     Input:
+
     - auth: Authentication details
+
     - db: Database session
+
     - id: ID of the sharing group to retrieve
 
     Output:
+
     - Representation of the sharing group details
     """
     return await _get_sharing_group(auth, db, id)
@@ -104,12 +112,17 @@ async def update_sharing_group(
     Update an existing sharing group.
 
     Input:
+
     - auth: Authentication details
+
     - db: Database session
+
     - id: ID of the sharing group to update
+
     - body: Request body containing updated details for the sharing group
 
     Output:
+
     - Representation of the updated sharing group
     """
     return await _update_sharing_group(auth, db, id, body)
@@ -130,11 +143,15 @@ async def delete_sharing_group(
     Delete a specific sharing group.
 
     Input:
+
     - auth: Authentication details
+
     - db: Database session
+
     - id: ID of the sharing group to delete
 
     Output:
+
     - Representation of the deleted sharing group
     """
     return await _delete_sharing_group(auth, db, id)
@@ -154,10 +171,13 @@ async def get_all_sharing_groups(
     Retrieve a list of all sharing groups.
 
     Input:
+
     - auth: Authentication details
+
     - db: Database session
 
     Output:
+
     - Representation of all sharing groups
     """
     return await _get_all_sharing_groups(auth, db)
@@ -178,11 +198,15 @@ async def get_sharing_group_info(
     Details of a sharing group and org.count, user_count and created_by_email.
 
     Input:
+
     - auth: Authentication details
+
     - db: Database session
+
     - id: ID of the sharing group to retrieve additional information
 
     Output:
+
     - Representation of the sharing group information
     """
     return await _get_sharing_group_info(auth, db, id)
@@ -203,12 +227,17 @@ async def add_org_to_sharing_group(
     Add an organisation to a sharing group.
 
     Input:
+
     - auth: Authentication details
+
     - db: Database session.
+
     - id: ID of the sharing group to add the organisation
+
     - body: Request body containing organisation details
 
     Output:
+
     - SharingGroupOrgSchema: Representation of the added organisation in the sharing group
     """
     return await _add_org_to_sharing_group(auth, db, id, body)
@@ -230,12 +259,17 @@ async def remove_org_from_sharing_group(
     Remove an organisation from a sharing group
 
     Input:
+
     - auth: Authentication details
+
     - db: Database session.
+
     - id: ID of the sharing group to remove the organisation
+
     - organisation_id: ID of the organisation to remove
 
     Output:
+
     - Representation of the removed organisation from the sharing group
     """
     return await _remove_org_from_sharing_group(auth, db, id, organisation_id)
@@ -257,12 +291,17 @@ async def add_server_to_sharing_group(
     Add a server to a sharing group.
 
     Input:
+
     - auth: Authentication details
+
     - db: Database session
+
     - id: ID of the sharing group to add the server
+
     - body: Request body containing server details
 
     Output:
+
     - Representation of the added server in the sharing group
     """
     return await _add_server_to_sharing_group(auth, db, id, body)
@@ -284,12 +323,17 @@ async def remove_server_from_sharing_group(
     Remove a server from a sharing group.
 
     Input:
+
     - auth: Authentication details
+
     - db: Database session
+
     - id: ID of the sharing group to remove the server
+
     - server_id: ID of the server to remove
 
     Output:
+
     - Representation of the removed server from the sharing group
     """
     return await _remove_server_from_sharing_group(auth, db, id, server_id)
@@ -314,10 +358,15 @@ async def create_sharing_group_legacy(
     Add a new sharing group with given details.
 
     Input:
+
     - auth: Authentication details
+
     - db: Database session
+
     - body: Request body containing details for creating the sharing group
+
     Output:
+
     - Representation of the created sharing group
     """
     return await _create_sharing_group_legacy(auth, db, body)
@@ -339,11 +388,15 @@ async def view_sharing_group_legacy(
     Retrieve details of a specific sharing group by its ID.
 
     Input:
+
     - auth: Authentication details
+
     - db: Database session
+
     - id: ID of the sharing group to retrieve
 
     Output:
+
     - Representation of the sharing group details
     """
     return await _view_sharing_group_legacy(auth, db, id)
@@ -366,11 +419,15 @@ async def update_sharing_group_legacy(
 
     Input:
     - auth: Authentication details
+
     - db: Database session
+
     - id: ID of the sharing group to update
+
     - body: Request body containing updated details for the sharing group
 
     Output:
+
     - ViewUpdateSharingGroupLegacyResponse: Representation of the updated sharing group.
     """
     return await _update_sharing_group_legacy(auth, db, id, body)
@@ -392,11 +449,15 @@ async def delete_sharing_group_legacy(
     Delete a specific sharing group.
 
     Input:
+
     - auth: Authentication details
+
     - db: Database session
+
     - id: ID of the sharing group to delete
 
     Output:
+
     - Representation of the deleted sharing group
     """
     return await _delete_sharing_group_legacy(auth, db, id)
@@ -420,13 +481,19 @@ async def add_org_to_sharing_group_legacy(
     Add an organisation to a sharing group.
 
     Input:
+
     - auth: Authentication details
+
     - db: Database session
+
     - id: ID of the sharing group to add the organisation
+
     - organisation_id: ID of the organisation to add
+
     - body: Request body containing additional details
 
     Output:
+
     - StandardStatusResponse: Response indicating success or failure
     """
     return await _add_org_to_sharing_group_legacy(auth, db, id, organisation_id, body)
@@ -448,12 +515,17 @@ async def remove_org_from_sharing_group_legacy(
     Remove an organisation from a sharing group.
 
     Input:
+
     - auth: Authentication details
+
     - db: Database session
+
     - id: ID of the sharing group to remove the organisation from
+
     - organisation_id: ID of the organisation to remove
 
     Output:
+
     - StandardStatusResponse: Response indicating success or failure
     """
     return await _remove_org_from_sharing_group_legacy(auth, db, id, organisation_id)
@@ -476,13 +548,19 @@ async def add_server_to_sharing_group_legacy(
     Add a server to a sharing group.
 
     Input:
+
     - auth: Authentication details
+
     - db: Database session
+
     - id: ID of the sharing group to add the server
+
     - server_id: ID of the server to add
+
     - body: Request body containing additional details
 
     Output:
+
     - StandardStatusResponse: Response indicating success or failure
     """
     return await _add_server_to_sharing_group_legacy(auth, db, id, server_id, body)
@@ -504,12 +582,17 @@ async def remove_server_from_sharing_group_legacy(
     Remove a server from a sharing group.
 
     Input:
+
     - auth: Authenticated user with 'SHARING_GROUP' permission
+
     - db: Database session
+
     - id: ID of the sharing group to remove the server from
+
     - server_id: ID of the server to remove
 
     Output:
+    
     - StandardStatusResponse: Response indicating success or failure
     """
     return await _remove_server_from_sharing_group_legacy(auth, db, id, server_id)

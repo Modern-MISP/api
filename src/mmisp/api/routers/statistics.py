@@ -20,9 +20,11 @@ async def get_statistics(
     """Gets all statistics as a list.
     
     Input:
+
     - db: Database session
 
     Output:
+
     - List of all statistics
     """
     return await _get_statistics(db)
@@ -37,9 +39,11 @@ async def get_logincount(
     """Gets the login count of the past 4 months.
     
     Input:
+
     - db: Database session
 
     Output:
+    
     - Count of all logins in the past 4 months
     """
     return await _get_logincount(db)

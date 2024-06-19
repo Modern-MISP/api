@@ -19,9 +19,11 @@ async def create_backup(
     Creates a backup of the current database if the given path is valid.
     
     Input:
+
     - path: Path where the backup will be created
     
     Output:
+
     - Response indicating the result of the backup operation
     """
     return await _create_backup(db, path)
@@ -36,9 +38,11 @@ async def update_backup(
     Creates a backup of the current database if the given path is valid.
     
     Input:
+
     - path: Path where the backup will be updated
     
     Output:
+
     - Response indicating the result of the backup update operation
     """
     return await _update_backup(db, path)
@@ -55,6 +59,7 @@ async def get_remote_servers(
     Input: None
 
     Output:
+
     - List of remote servers
     """
     return await _get_remote_servers(db)
@@ -69,9 +74,11 @@ async def add_remote_server(
     Adds a new remote server based on the input of an admin.
     
     Input:
+
     - Data containing details of the remote server to be added
     
     Output:
+
     -Response indicating the result of the server addition operation
     """
     return await _add_remote_server(auth, db, body)
@@ -86,9 +93,11 @@ async def delete_remote_server(
     Deletes a remote server if the given id is valid.
     
     Input:
+
     - Identifier of the remote server to be deleted
     
     Output:
+    
     - Response indicating the result of the server deletion operation
     """
     return await _delete_remote_server(db, serverId)
