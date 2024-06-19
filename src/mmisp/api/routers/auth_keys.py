@@ -50,7 +50,22 @@ async def auth_keys_add_user(
     user_id: Annotated[int, Path(alias="userId")],
     body: AddAuthKeyBody,
 ) -> AddAuthKeyResponse:
-    """Create an AuthKey for a specific user and save it in the database."""
+    """Create an AuthKey for a specific user and save it in the database.
+    
+    Input:
+
+    -the user's authentification status
+
+    -the current database
+
+    -the id of the user
+
+    -the body
+
+    Output:
+
+    -the added authkey
+    """
     return await _auth_key_add(auth=auth, db=db, user_id=user_id, body=body)
 
 
@@ -64,7 +79,20 @@ async def auth_keys_view_auth_key(
     db: Annotated[Session, Depends(get_db)],
     auth_key_id: Annotated[int, Path(alias="AuthKeyId")],
 ) -> ViewAuthKeysResponse:
-    """View an AuthKey by its ID."""
+    """View an AuthKey by its ID.
+    
+    Input:
+
+    -the user's authentification status
+
+    -the current database
+
+    -the id of the authkey
+
+    Output:
+
+    -the authkey
+    """
     return await _auth_keys_view(auth=auth, db=db, auth_key_id=auth_key_id)
 
 
@@ -78,7 +106,20 @@ async def search_auth_keys(
     db: Annotated[Session, Depends(get_db)],
     body: SearchAuthKeyBody,
 ) -> list[SearchGetAuthKeysResponseItem]:
-    """Search for specific AuthKeys by parameters."""
+    """Search for specific AuthKeys by parameters.
+    
+    Input:
+
+    -the user's authentification status
+
+    -the current database
+
+    -the body
+    
+    Output:
+
+    -the authkeys
+    """
     return await _search_auth_keys(auth=auth, db=db, body=body)
 
 
@@ -93,7 +134,22 @@ async def auth_keys_edit_auth_key(
     auth_key_id: Annotated[int, Path(alias="AuthKeyId")],
     body: EditAuthKeyBody,
 ) -> EditAuthKeyResponse:
-    """Edit an AuthKey by its ID."""
+    """Edit an AuthKey by its ID.
+    
+    Input:
+
+    -the user's authentification status
+
+    -the current database
+
+    -the id of the authkey
+
+    -the body
+
+    Output:
+
+    -the updated authkey
+    """
     return await _auth_keys_edit(auth=auth, db=db, auth_key_id=auth_key_id, body=body)
 
 
@@ -107,7 +163,20 @@ async def auth_keys_delete_auth_key(
     db: Annotated[Session, Depends(get_db)],
     auth_key_id: Annotated[int, Path(alias="AuthKeyId")],
 ) -> StandardStatusIdentifiedResponse:
-    """Delete AuthKey by AuthKeyId from the database."""
+    """Delete AuthKey by AuthKeyId from the database.
+    
+    Input:
+
+    -the user's authentification status
+
+    -the current database
+
+    -the id of the authkey
+
+    Output:
+
+    -the response from the api after the deleting request
+    """
     await _auth_keys_delete(auth=auth, db=db, auth_key_id=auth_key_id)
 
     return StandardStatusIdentifiedResponse(
@@ -129,7 +198,18 @@ async def auth_keys_get(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
     db: Annotated[Session, Depends(get_db)],
 ) -> list[SearchGetAuthKeysResponseItem]:
-    """Returns all AuthKeys stored in the database as a List."""
+    """Returns all AuthKeys stored in the database as a List.
+    
+    Input:
+
+    -the user's authentification status
+
+    -the current database
+    
+    Output:
+
+    -all authkeys as a list
+    """
     return await _auth_keys_get(auth=auth, db=db)
 
 
@@ -149,7 +229,22 @@ async def auth_keys_add_user_depr(
     user_id: Annotated[int, Path(alias="userId")],
     body: AddAuthKeyBody,
 ) -> AddAuthKeyResponse:
-    """Create an AuthKey for a specific user and write it to the database."""
+    """Create an AuthKey for a specific user and write it to the database.
+    
+    Input:
+
+    -the user's authentification status
+
+    -the current database
+
+    -the id of the user
+
+    -the body
+
+    Output:
+
+    -the added authkey
+    """
     return await _auth_key_add(auth=auth, db=db, user_id=user_id, body=body)
 
 
@@ -165,7 +260,22 @@ async def auth_keys_edit_auth_key_depr(
     auth_key_id: Annotated[int, Path(alias="AuthKeyId")],
     body: EditAuthKeyBody,
 ) -> EditAuthKeyResponse:
-    """Edit AuthKey by AuthKey ID."""
+    """Edit AuthKey by AuthKey ID.
+    
+    Input:
+
+    -the user's authentification status
+
+    -the current database
+
+    -the id of the authkey
+
+    -the body
+    
+    Output:
+
+    -the updated authkey
+    """
     return await _auth_keys_edit(auth=auth, db=db, auth_key_id=auth_key_id, body=body)
 
 
@@ -180,7 +290,20 @@ async def auth_keys_delete_auth_key_depr(
     db: Annotated[Session, Depends(get_db)],
     auth_key_id: Annotated[int, Path(alias="AuthKeyId")],
 ) -> StandardStatusIdentifiedResponse:
-    """Delete AuthKey by AuthKeyId from the database."""
+    """Delete AuthKey by AuthKeyId from the database.
+    
+    Input:
+
+    -the user's authentification status
+
+    -the current database
+
+    -the id of the authkey
+
+    Output:
+
+    -the response from the api after the deleting request
+    """
     await _auth_keys_delete(auth=auth, db=db, auth_key_id=auth_key_id)
 
     return StandardStatusIdentifiedResponse(
