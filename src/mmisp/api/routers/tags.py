@@ -40,7 +40,16 @@ async def add_tag(
     db: Annotated[Session, Depends(get_db)],
     body: TagCreateBody,
 ) -> TagResponse:
-    """Add a new tag with given details."""
+    """Add a new tag with given details.
+    
+    Input:
+    - auth: Authentication details
+    - db: Database session
+    - body: Tag creation details
+
+    Output:
+    - TagResponse: Details of the created tag
+    """
     return await _add_tag(db, body)
 
 
@@ -55,7 +64,16 @@ async def view_tag(
     db: Annotated[Session, Depends(get_db)],
     tag_id: Annotated[int, Path(alias="tagId")],
 ) -> TagViewResponse:
-    """View details of a specific tag."""
+    """View details of a specific tag.
+    
+    Input:
+    - auth: Authentication details
+    - db: Database session
+    - tag_id: ID of the tag to view
+
+    Output:
+    - TagViewResponse: Detailed information of the specified tag
+    """
     return await _view_tag(db, tag_id)
 
 
@@ -70,7 +88,16 @@ async def search_tags(
     db: Annotated[Session, Depends(get_db)],
     tag_search_term: Annotated[str, Path(alias="tagSearchTerm")],
 ) -> dict:
-    """Search for tags using a specific search term."""
+    """Search for tags using a specific search term.
+    
+    Input:
+    - auth: Authentication details
+    - db: Database session
+    - tag_search_term: Search term for finding tags
+
+    Output:
+    - dict: Dictionary containing search results
+    """
     return await _search_tags(db, tag_search_term)
 
 
@@ -86,7 +113,17 @@ async def update_tag(
     body: TagUpdateBody,
     tag_id: Annotated[int, Path(alias="tagId")],
 ) -> TagResponse:
-    """Edit details of a specific tag."""
+    """Edit details of a specific tag.
+    
+    Input:
+    - auth: Authentication details
+    - db: Database session
+    - body: Tag update details (TagUpdateBody)
+    - tag_id: ID of the tag to update
+
+    Output:
+    - TagResponse: Details of the updated tag
+    """
     return await _update_tag(db, body, tag_id)
 
 
@@ -101,7 +138,16 @@ async def delete_tag(
     db: Annotated[Session, Depends(get_db)],
     tag_id: Annotated[int, Path(alias="tagId")],
 ) -> TagDeleteResponse:
-    """Delete a specific tag."""
+    """Delete a specific tag.
+    
+    Input:
+    - auth: Authentication details
+    - db: Database session
+    - tag_id: ID of the tag to delete
+
+    Output:
+    - TagDeleteResponse: Confirmation of the tag deletion
+    """
     return await _delete_tag(db, tag_id)
 
 
@@ -114,7 +160,15 @@ async def get_tags(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
 ) -> TagGetResponse:
-    """Retrieve a list of all tags."""
+    """Retrieve a list of all tags.
+    
+    Input:
+    - auth: Authentication details
+    - db: Database session
+
+    Output:
+    - TagGetResponse: List of all tags
+    """
     return await _get_tags(db)
 
 
@@ -133,7 +187,16 @@ async def add_tag_depr(
     db: Annotated[Session, Depends(get_db)],
     body: TagCreateBody,
 ) -> TagResponse:
-    """Deprecated. Add a new tag using the old route."""
+    """Deprecated. Add a new tag using the old route.
+    
+    Input:
+    - auth: Authentication details
+    - db: Database session
+    - body: Tag creation details (TagCreateBody)
+
+    Output:
+    - TagResponse: Details of the created tag
+    """
     return await _add_tag(db, body)
 
 
@@ -149,7 +212,16 @@ async def view_tag_depr(
     db: Annotated[Session, Depends(get_db)],
     tag_id: Annotated[int, Path(alias="tagId")],
 ) -> TagViewResponse:
-    """Deprecated. View details of a specific tag using the old route."""
+    """Deprecated. View details of a specific tag using the old route.
+    
+    Input:
+    - auth: Authentication details
+    - db: Database session
+    - tag_id: ID of the tag to view
+
+    Output:
+    - TagViewResponse: Detailed information of the specified tag
+    """
     return await _view_tag(db, tag_id)
 
 
@@ -166,7 +238,17 @@ async def update_tag_depr(
     body: TagUpdateBody,
     tag_id: Annotated[int, Path(alias="tagId")],
 ) -> TagResponse:
-    """Deprecated. Edit a specific tag using the old route."""
+    """Deprecated. Edit a specific tag using the old route.
+    
+    Input:
+    - auth: Authentication details
+    - db: Database session
+    - body: Tag update details
+    - tag_id: ID of the tag to update
+
+    Output:
+    - TagResponse: Details of the updated tag
+    """
     return await _update_tag(db, body, tag_id)
 
 
@@ -182,7 +264,16 @@ async def delete_tag_depr(
     db: Annotated[Session, Depends(get_db)],
     tag_id: Annotated[int, Path(alias="tagId")],
 ) -> TagDeleteResponse:
-    """Deprecated. Delete a specific tag using the old route."""
+    """Deprecated. Delete a specific tag using the old route.
+    
+    Input:
+    - auth: Authentication details
+    - db: Database session
+    - tag_id: ID of the tag to delete
+
+    Output:
+    - TagDeleteResponse: Confirmation of the tag deletion
+    """
     return await _delete_tag(db, tag_id)
 
 

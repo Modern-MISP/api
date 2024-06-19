@@ -21,7 +21,15 @@ router = APIRouter(tags=["users"])
 async def add_user(
     TODO
 ) :
-    """Add a new user with the given details."""
+    """
+    Adds a new user with the given details.
+
+    Input:
+    - Data representing the new user to be added
+    
+    Output:
+    - Data representing the attributes of the new user
+    """
     return await _add_user(db, user)
 
 @router.get("/users/view/me.json", response_model=partial(UsersViewMeResponse))
@@ -29,6 +37,15 @@ async def add_user(
 async def get_logged_in_user_info(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))], db: Annotated[Session, Depends(get_db)]
 ) -> dict:
+    """
+    Retrieves information about the logged in user.
+
+    Input:
+    - Authentication details of the logged in user
+    
+    Output:
+    - Information about the logged in user
+    """
     user = await db.get(User, auth.user_id)
     organisation = await db.get(Organisation, auth.org_id)
     role = await db.get(Role, auth.role_id)
@@ -42,7 +59,15 @@ async def get_logged_in_user_info(
 async def get_all_users(
    TODO
 ) :
-    """Retrieve a list of all users."""
+    """
+    Retrieves a list of all users.
+
+    Input:
+    - None
+    
+    Output:
+    - List containing all users
+    """
     return await _get_all_users(db)
 
 @router.get(
@@ -52,7 +77,15 @@ async def get_all_users(
 async def get_user_by_id(
    TODO
 ) :
-    """Retrieve a user specified by id."""
+    """
+    Retrieves a user specified by id.
+
+    Input:
+    - ID of the user to get
+    
+    Output:
+    - Data representing the attributes of the searched user
+    """
     return await _get_user(db, userId)
 
 @router.delete(
@@ -63,7 +96,15 @@ async def get_user_by_id(
 async def delete_user(
     TODO
 ) :
-    """Delete a user by their ID."""
+    """
+    Deletes a user by their ID.
+
+    Input:
+    - ID of the user to delete
+    
+    Output:
+    - Response indicating success or failure
+    """
     return await _delete_user(db, userID)
 
 @router.delete(
@@ -74,7 +115,15 @@ async def delete_user(
 async def delete_user_token(
     TODO
 ) :
-    """Delete a users login token by their ID."""
+    """
+    Deletes a users login token by their ID.
+
+    Input:
+    -ID of the user with the token to delete
+    
+    Output:
+    - Response indicating success or failure
+    """
     return await _delete_user_token(db, userID)
 
 @router.put(
@@ -86,7 +135,16 @@ async def delete_user_token(
 async def update_user(
     TODO
 ) :
-    """Update an existing user by their ID."""
+    """
+    Updates an existing user by their ID.
+
+    Input:
+    - ID of the user to update
+    - Updated data for the user
+    
+    Output:
+    - Data representing the updated attributes of the user
+    """
     return await _update_user(db, userID)
 
 # --- endpoint logic ---

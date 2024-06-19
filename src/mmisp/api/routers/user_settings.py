@@ -35,8 +35,20 @@ async def set_user_settings(
     user_setting_name: Annotated[str, Path(alias="userSettingName")],
     body: SetUserSettingBody,
 ) -> SetUserSettingResponse:
-    """Create or Update a UserSetting by user ID and UserSettingName. \
-    If specified UserSetting doesn't exist, it is created."""
+    """
+    Create or Update a UserSetting by user ID and UserSettingName. \
+    If specified UserSetting doesn't exist, it is created.
+
+    Input:
+    - auth: Authentication details
+    - db: Database session
+    - user_id: ID of the user for whom setting is to be set
+    - user_setting_name: Name of the user setting to set
+    - body: SetUserSettingBody, Data for setting the user setting
+
+    Output:
+    - SetUserSettingResponse: Response indicating success or failure
+    """
     return await _set_user_settings(auth=auth, db=db, user_id=user_id, user_setting_name=user_setting_name, body=body)
 
 
@@ -49,7 +61,17 @@ async def view_user_settings(
     db: Annotated[Session, Depends(get_db)],
     user_setting_id: Annotated[int, Path(alias="userSettingId")],
 ) -> ViewUserSettingResponse:
-    """Displays a UserSetting by the UserSettingID."""
+    """
+    Displays a UserSetting by the UserSettingID.
+
+    Input:
+    - userSettingId: ID of the user setting to view
+    - auth: Authentication details
+    - db: Database session
+
+    Output:
+    - ViewUserSettingResponse: Response with details of the viewed user setting
+    """
     return await _view_user_settings(auth=auth, db=db, user_setting_id=user_setting_id)
 
 
@@ -63,7 +85,18 @@ async def get_user_setting_by_id(
     user_id: Annotated[int, Path(alias="userId")],
     user_setting_name: Annotated[str, Path(alias="userSettingName")],
 ) -> ViewUserSettingResponse:
-    """Displays a UserSetting by given userID and UserSetting name."""
+    """
+    Displays a UserSetting by given userID and UserSetting name.
+
+    Input:
+    - userId: ID of the user for whom setting is to be viewed
+    - userSettingName: Name of the user setting to view
+    - auth: Authentication details
+    - db: Database session
+
+    Output:
+    - ViewUserSettingResponse: Response with details of the viewed user setting
+    """
     return await _get_user_setting_by_id(auth=auth, db=db, user_id=user_id, user_setting_name=user_setting_name)
 
 
@@ -76,7 +109,17 @@ async def search_user_settings(
     db: Annotated[Session, Depends(get_db)],
     body: SearchUserSettingBody,
 ) -> list[UserSettingResponse]:
-    """Displays all UserSettings by specified parameters."""
+    """
+    Displays all UserSettings by specified parameters.
+
+    Input:
+    - body: SearchUserSettingBody, Data for searching user settings
+    - auth: Authentication details
+    - db: Database session
+
+    Output:
+    - list[UserSettingResponse]: List of UserSettingResponse objects
+    """
     return await _search_user_settings(auth=auth, db=db, body=body)
 
 
@@ -88,7 +131,16 @@ async def get_user_settings(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
 ) -> list[UserSettingResponse]:
-    """Displays all UserSettings."""
+    """
+    Displays all UserSettings.
+
+    Input:
+    - auth: Authentication details
+    - db: Database session
+
+    Output:
+    - list[UserSettingResponse]: List of UserSettingResponse objects
+    """
     return await _get_user_settings(auth=auth, db=db)
 
 
@@ -101,7 +153,17 @@ async def delete_user_settings(
     db: Annotated[Session, Depends(get_db)],
     user_setting_id: Annotated[int, Path(alias="userSettingId")],
 ) -> StandardStatusIdentifiedResponse:
-    """Deletes UserSetting by UserSetting ID."""
+    """
+    Deletes UserSetting by UserSetting ID.
+
+    Input:
+    - userSettingId: ID of the user setting to delete
+    - auth: Authentication details
+    - db: Database session
+
+    Output:
+    - StandardStatusIdentifiedResponse: Response indicating success or failure
+    """
     await _delete_user_settings(auth=auth, db=db, user_setting_id=user_setting_id)
 
     return StandardStatusIdentifiedResponse(
@@ -127,7 +189,17 @@ async def view_user_settings_depr(
     db: Annotated[Session, Depends(get_db)],
     user_setting_id: Annotated[int, Path(alias="userSettingId")],
 ) -> ViewUserSettingResponse:
-    """View UserSetting by UserSettingID."""
+    """
+    Deprecated. View UserSetting by UserSettingID.
+
+    Input:
+    - userSettingId: ID of the user setting to view
+    - auth: Authentication details
+    - db: Database session
+
+    Output:
+    - ViewUserSettingResponse: Response with details of the viewed user setting
+    """
     user_setting: UserSetting | None = await db.get(UserSetting, user_setting_id)
 
     if not user_setting or (
@@ -156,7 +228,18 @@ async def get_user_setting_by_ids(
     user_id: Annotated[int, Path(alias="userId")],
     user_setting_name: Annotated[str, Path(alias="userSettingName")],
 ) -> GetUserSettingResponse:
-    """View a UserSetting by its userID and UserSetting name."""
+    """
+    Deprecated. View a UserSetting by its userID and UserSetting name.
+
+    Input:
+    - userId: ID of the user for whom setting is to be viewed
+    - userSettingName: Name of the user setting to view
+    - auth: Authentication details
+    - db: Database session
+
+    Output:
+    - GetUserSettingResponse: Response with details of the viewed user setting
+    """
     result = await db.execute(
         select(UserSetting).filter(UserSetting.user_id == user_id, UserSetting.setting == user_setting_name).limit(1)
     )
@@ -186,7 +269,17 @@ async def delete_user_settings_depr(
     db: Annotated[Session, Depends(get_db)],
     user_setting_id: Annotated[int, Path(alias="userSettingId")],
 ) -> StandardStatusIdentifiedResponse:
-    """Delete a UserSetting by specified UserSettingID."""
+    """
+    Deprecated. Delete a UserSetting by specified UserSettingID.
+
+    Input:
+    - userSettingId: ID of the user setting to delete
+    - auth: Authentication details
+    - db: Database session
+
+    Output:
+    - StandardStatusIdentifiedResponse: Response indicating success or failure
+    """
     await _delete_user_settings(auth=auth, db=db, user_setting_id=user_setting_id)
 
     return StandardStatusIdentifiedResponse(

@@ -17,7 +17,14 @@ router = APIRouter(tags=["statistics"])
 async def get_statistics(
     TODO
 ) : 
-    """Gets all statistics as a list"""
+    """Gets all statistics as a list.
+    
+    Input:
+    - db: Database session
+
+    Output:
+    - List of all statistics
+    """
     return await _get_statistics(db)
 
 @router.get(
@@ -27,7 +34,14 @@ async def get_statistics(
 async def get_logincount(
     TODO
 ) : 
-    """Gets the login count of the past 4 months"""
+    """Gets the login count of the past 4 months.
+    
+    Input:
+    - db: Database session
+
+    Output:
+    - Count of all logins in the past 4 months
+    """
     return await _get_logincount(db)
 
 # --- endpoint logic ---

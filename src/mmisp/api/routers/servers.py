@@ -15,7 +15,15 @@ router = APIRouter(tags=["servers"])
 async def create_backup(
     TODO
 ) :
-    """Creates a backup of the current database if the given path is valid"""
+    """
+    Creates a backup of the current database if the given path is valid.
+    
+    Input:
+    - path: Path where the backup will be created
+    
+    Output:
+    - Response indicating the result of the backup operation
+    """
     return await _create_backup(db, path)
 
 @router.post("/sservers/updateBackup/{path}",
@@ -24,7 +32,15 @@ async def create_backup(
 async def update_backup(
     TODO
 ) :
-    """Creates a backup of the current database if the given path is valid"""
+    """
+    Creates a backup of the current database if the given path is valid.
+    
+    Input:
+    - path: Path where the backup will be updated
+    
+    Output:
+    - Response indicating the result of the backup update operation
+    """
     return await _update_backup(db, path)
 
 @router.get("/servers/remote/getAll",
@@ -33,7 +49,14 @@ async def update_backup(
 async def get_remote_servers(
     TODO
 ) :
-    """Returns a list of all currently active remote servers"""
+    """
+    Returns a list of all currently active remote servers.
+    
+    Input: None
+
+    Output:
+    - List of remote servers
+    """
     return await _get_remote_servers(db)
 
 @router.post("/servers/remote/add",
@@ -42,7 +65,15 @@ async def get_remote_servers(
 async def add_remote_server(
     TODO
 ) :
-    """Adds a new remote server based on the input of an admin"""
+    """
+    Adds a new remote server based on the input of an admin.
+    
+    Input:
+    - Data containing details of the remote server to be added
+    
+    Output:
+    -Response indicating the result of the server addition operation
+    """
     return await _add_remote_server(auth, db, body)
 
 @router.delete("/servers/remote/delete/{serverId}",
@@ -51,7 +82,15 @@ async def add_remote_server(
 async def delete_remote_server(
     TODO
 ) :
-    """Deletes a remote server if the given id is valid"""
+    """
+    Deletes a remote server if the given id is valid.
+    
+    Input:
+    - Identifier of the remote server to be deleted
+    
+    Output:
+    - Response indicating the result of the server deletion operation
+    """
     return await _delete_remote_server(db, serverId)
 
 @router.get("/servers/getVersion")
