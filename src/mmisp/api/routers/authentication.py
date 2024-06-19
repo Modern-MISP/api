@@ -29,13 +29,33 @@ router = APIRouter(tags=["authentication"])
 
 @router.post("/auth/openID/setOpenIDProvider")
 async def set_openID_provider(db: Annotated[Session, Depends(get_db)]) :
-    """Sets a new OpenID provider"""
+    """Sets a new OpenID provider
+    
+    Input:
+
+    -database
+
+    Output:
+
+    -openid provider
+    """
     return None
 
 
 @router.post("/auth/login/start", response_model=StartLoginResponse)
 async def start_login(db: Annotated[Session, Depends(get_db)], body: StartLoginBody) -> dict:
-    """Starts the login process."""
+    """Starts the login process.
+    
+    Input:
+
+    -database
+
+    -body
+
+    Output:
+
+    -dict
+    """
     result = await db.execute(select(User).filter(User.email == body.email).limit(1))
     user: User | None = result.scalars().first()
 
@@ -58,13 +78,33 @@ async def start_login(db: Annotated[Session, Depends(get_db)], body: StartLoginB
 
 @router.post("/auth/login/openID")
 async def openID_login(db: Annotated[Session, Depends(get_db)]) :
-    """Logs a user in by openID"""
+    """Logs a user in by openID
+    
+    Input:
+
+    -database
+
+    Output:
+
+    -login token
+    """
     return None
 
 
 @router.post("/auth/login/password")
 async def password_login(db: Annotated[Session, Depends(get_db)], body: PasswordLoginBody) -> TokenResponse:
-    """Login with password."""
+    """Login with password.
+    
+    Input:
+
+    -database
+
+    -body
+
+    Output:
+
+    -login token
+    """
     result = await db.execute(select(User).filter(User.email == body.email).limit(1))
     user: User | None = result.scalars().first()
 
@@ -75,7 +115,16 @@ async def password_login(db: Annotated[Session, Depends(get_db)], body: Password
 
 @router.post("/auth/resetPassword")
 async def reset_password(db: Annotated[Session, Depends(get_db)]) :
-    """Resets password"""
+    """Resets password
+    
+    Input:
+
+    -database
+
+    Output:
+
+    -the response form the api from resetting the password
+    """
     return None
 
 
@@ -85,7 +134,17 @@ async def reset_password(db: Annotated[Session, Depends(get_db)]) :
 async def redirect_to_idp(
     db: Annotated[Session, Depends(get_db)], identity_provider_id: Annotated[int, Path(alias="identityProviderId")]
 ) -> RedirectResponse:
-    """Redirects to Idp."""
+    """Redirects to Idp.
+    
+    Input:
+
+    -database
+
+    -identity provider id
+
+    Output:
+    -the redirection
+    """
     identity_provider: OIDCIdentityProvider | None = await db.get(OIDCIdentityProvider, identity_provider_id)
 
     if not identity_provider or not identity_provider.active:
@@ -118,7 +177,20 @@ async def redirect_to_frontend(
     identity_provider_id: Annotated[int, Path(alias="identityProviderId")],
     code: str,
 ) -> RedirectResponse:
-    """Redirects to the frontend."""
+    """Redirects to the frontend.
+    
+    Input:
+
+    -database
+
+    -identity provider id
+
+    -code
+
+    Output:
+
+    -the redirection
+    """
     identity_provider: OIDCIdentityProvider | None = await db.get(OIDCIdentityProvider, identity_provider_id)
 
     if not identity_provider or not identity_provider.active:
@@ -186,7 +258,16 @@ async def redirect_to_frontend(
 
 @router.post("/auth/login/token")
 async def exchange_token_login(body: ExchangeTokenLoginBody) -> TokenResponse:
-    """Login with exchange token."""
+    """Login with exchange token.
+    
+    Inout:
+
+    -the body
+
+    Output:
+
+    -login token
+    """
     user_id = decode_exchange_token(body.exchangeToken)
 
     if not user_id:
@@ -196,7 +277,16 @@ async def exchange_token_login(body: ExchangeTokenLoginBody) -> TokenResponse:
 
 @router.put("/auth/login/changepassword/{userId}")
 async def change_password(body:ChangePasswordBody)-> ChangePasswordResponse:
-    """Changes the password of the user."""
+    """Changes the password of the user.
+    
+    Input:
+
+    -body
+
+    Output:
+
+    -response from the api after the password change request
+    """
     #ToDo
     return ChangePasswordResponse(successful=True) #Set to True to pass the pipeline
 
