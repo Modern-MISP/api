@@ -46,7 +46,20 @@ async def get_galaxy_details(
     db: Annotated[Session, Depends(get_db)],
     galaxy_id: Annotated[str, Path(alias="galaxyId")],
 ) -> GetGalaxyResponse:
-    """"Gets the details of a galaxy."""
+    """"Gets the details of a galaxy.
+                 
+    Input:
+
+    -the user's authentification status
+
+    -the current database
+
+    -the galaxy id
+
+    Output:
+    
+    -the details of the galaxy
+    """
     return await _get_galaxy_details(db, galaxy_id)
 
 
@@ -60,7 +73,18 @@ async def update_galaxy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.WORKER_KEY, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
 ) -> DeleteForceUpdateImportGalaxyResponse:
-    """Force the galaxies to update with the JSON definitions, not yet implemented."""
+    """Force the galaxies to update with the JSON definitions, not yet implemented.
+                     
+    Input:
+
+    -the user's authentification status
+
+    -the current database
+
+    Output:
+    
+    -the updated galaxies
+    """
     raise NotImplementedError()
 
 
@@ -79,7 +103,22 @@ async def delete_galaxy(
     galaxy_id: Annotated[str, Path(alias="galaxyId")],
     request: Request,
 ) -> DeleteForceUpdateImportGalaxyResponse:
-    """"Delete a specific galaxy by its Id."""
+    """"Delete a specific galaxy by its Id.
+                     
+    Input:
+
+    -the user's authentification status
+
+    -the current database
+
+    -the galaxy id
+
+    -the request
+
+    Output:
+    
+    -the deleted galaxy
+    """
     return await _delete_galaxy(db, galaxy_id, request)
 
 
@@ -92,7 +131,18 @@ async def delete_galaxy(
 async def get_galaxies(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))], db: Annotated[Session, Depends(get_db)]
 ) -> list[GetAllSearchGalaxiesResponse]:
-    """Get a list with all existing galaxies."""
+    """Get a list with all existing galaxies.
+                     
+    Input:
+
+    -the user's authentification status
+
+    -the current database
+
+    Output:
+    
+    -all galaxies
+    """
     return await _get_galaxies(db)
 
 
@@ -107,7 +157,20 @@ async def search_galaxies(
     db: Annotated[Session, Depends(get_db)],
     body: SearchGalaxiesbyValue,
 ) -> list[GetAllSearchGalaxiesResponse]:
-    """Search galaxies by search term which matches with galaxy name, namespace, description, kill_chain_order or uuid."""
+    """Search galaxies by search term which matches with galaxy name, namespace, description, kill_chain_order or uuid."
+                     
+    Input:
+
+    -the user's authentification status
+
+    -the current database
+
+    -the request body
+
+    Output:
+    
+    -the galaxies found by search
+    """
     return await _search_galaxies(db, body)
 
 
@@ -128,7 +191,20 @@ async def get_galaxy_details_depr(
     db: Annotated[Session, Depends(get_db)],
     galaxy_id: Annotated[str, Path(alias="galaxyId")],
 ) -> GetGalaxyResponse:
-    """View Galaxy by given Galaxy ID."""
+    """View Galaxy by given Galaxy ID.
+                     
+    Input:
+
+    -the user's authentification status
+
+    -the current database
+
+    -the galaxy id
+
+    Output:
+    
+    -the details of the galaxy
+    """
     return await _get_galaxy_details(db, galaxy_id)
 
 
@@ -145,7 +221,22 @@ async def delete_galaxy_depr(
     galaxy_id: Annotated[str, Path(alias="galaxyId")],
     request: Request,
 ) -> DeleteForceUpdateImportGalaxyResponse:
-    """Delete Galaxy by GalaxyID."""
+    """Delete Galaxy by GalaxyID.
+                     
+    Input:
+
+    -the user's authentification status
+
+    -the current database
+
+    -the galaxy id
+
+    -the request
+
+    Output:
+    
+    -the deleted galaxy
+    """
     return await _delete_galaxy(db, galaxy_id, request)
 
 

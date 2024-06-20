@@ -46,7 +46,22 @@ async def import_galaxy_cluster(
     body: list[ImportGalaxyBody],
     request: Request,
 ) -> DeleteForceUpdateImportGalaxyResponse:
-    """Add a new galaxy cluster to an existing galaxy."""
+    """Add a new galaxy cluster to an existing galaxy.
+                     
+    Input:
+
+    -the user's authentification status
+
+    -the current database
+
+    -the request body
+
+    -the request
+
+    Output:
+    
+    -the new galaxy cluster
+    """
     return await _import_galaxy_cluster(db, body, request)
 
 @router.get("/galaxies/clusters/{clusterID}",
@@ -58,7 +73,22 @@ async def get_galaxy_cluster(
     TODO
 ) :
      #response_model=PLACEHOLDER
-    """Returns information from a galaxy cluster selected by its id."""
+    """Returns information from a galaxy cluster selected by its id.
+                         
+    Input:
+
+    -the user's authentification status
+
+    -the current database
+
+    -the galaxy id
+
+    -the request body
+
+    Output:
+    
+    -the information of the galaxy cluster
+    """
     return await _get_galaxy_cluster(db, clusterID)
 
 
@@ -74,7 +104,22 @@ async def export_galaxy(
     galaxy_id: Annotated[str, Path(alias="galaxyId")],
     body: ExportGalaxyBody,
 ) -> list[ExportGalaxyClusterResponse]:
-    """Export galaxy cluster."""
+    """Export galaxy cluster.
+                         
+    Input:
+
+    -the user's authentification status
+
+    -the current database
+
+    -the galaxy id
+
+    -the request body
+
+    Output:
+    
+    -the exported galaxy cluster
+    """
     return await _export_galaxy(db, galaxy_id, body)
 
 
@@ -92,7 +137,26 @@ async def galaxies_attachCluster(
     body: AttachClusterGalaxyBody,
     local: str,
 ) -> AttachClusterGalaxyResponse:
-    """Attach a Galaxy Cluster to given Galaxy."""
+    """Attach a Galaxy Cluster to given Galaxy.
+                         
+    Input:
+
+    -the user's authentification status
+
+    -the current database
+
+    -the id of the attach target
+
+    -the type of the attach target
+
+    -the request body
+
+    -local
+
+    Output:
+    
+    -the attached galaxy cluster and the attach target
+    """
     return await _attach_cluster_to_galaxy(db, attach_target_id, attach_target_type, local, body)
 
 
