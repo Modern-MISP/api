@@ -43,6 +43,21 @@ async def set_openID_provider(db: Annotated[Session, Depends(get_db)]):
     return None
 
 
+@router.post("/auth/openID/editOpenIDProvider/{openIDProvider}")
+async def edit_openID_provider(TODO):
+    """Edits an OpenID provider
+
+    Input:
+
+    -openid provider
+
+    Output:
+
+    -updated openid provider
+    """
+    return await _edit_openID_provider(db, openIDProvider)
+
+
 @router.delete(
     "/auth/openID/delete/{openIDProvider}",
     summary="Deletes an OpenID Provider by its ID",
@@ -309,4 +324,8 @@ async def _get_oidc_config(base_url: str) -> dict:
 
 
 async def _delete_openID_provider(db: Session, openIDProvider: str):
+    return None
+
+
+async def _edit_openID_provider(db: Session, openIDProvider: str):
     return None
