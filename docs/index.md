@@ -10,6 +10,7 @@ package "Modern MISP" {
 Frontend -- API
 API - Worker
 
+needs: []
 
 database "MySql"
 database "Redis"
