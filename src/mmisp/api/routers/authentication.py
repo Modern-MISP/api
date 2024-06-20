@@ -48,9 +48,9 @@ async def start_login(db: Annotated[Session, Depends(get_db)], body: StartLoginB
     
     Input:
 
-    -database
+    -the database
 
-    -body
+    -the request body
 
     Output:
 
@@ -82,11 +82,11 @@ async def openID_login(db: Annotated[Session, Depends(get_db)]) :
     
     Input:
 
-    -database
+    -the database
 
     Output:
 
-    -login token
+    -the login token
     """
     return None
 
@@ -97,13 +97,13 @@ async def password_login(db: Annotated[Session, Depends(get_db)], body: Password
     
     Input:
 
-    -database
+    -the database
 
-    -body
+    -the request body
 
     Output:
 
-    -login token
+    -the login token
     """
     result = await db.execute(select(User).filter(User.email == body.email).limit(1))
     user: User | None = result.scalars().first()
@@ -119,7 +119,7 @@ async def reset_password(db: Annotated[Session, Depends(get_db)]) :
     
     Input:
 
-    -database
+    -the database
 
     Output:
 
@@ -138,9 +138,9 @@ async def redirect_to_idp(
     
     Input:
 
-    -database
+    -the database
 
-    -identity provider id
+    -the identity provider id
 
     Output:
     -the redirection
@@ -181,11 +181,11 @@ async def redirect_to_frontend(
     
     Input:
 
-    -database
+    -the database
 
-    -identity provider id
+    -the identity provider id
 
-    -code
+    -the code
 
     Output:
 
@@ -262,11 +262,11 @@ async def exchange_token_login(body: ExchangeTokenLoginBody) -> TokenResponse:
     
     Inout:
 
-    -the body
+    -the request body
 
     Output:
 
-    -login token
+    -the login token
     """
     user_id = decode_exchange_token(body.exchangeToken)
 
@@ -281,11 +281,11 @@ async def change_password(body:ChangePasswordBody)-> ChangePasswordResponse:
     
     Input:
 
-    -body
+    -the request body
 
     Output:
 
-    -response from the api after the password change request
+    -the response from the api after the password change request
     """
     #ToDo
     return ChangePasswordResponse(successful=True) #Set to True to pass the pipeline

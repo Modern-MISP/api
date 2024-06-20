@@ -60,7 +60,7 @@ async def auth_keys_add_user(
 
     -the id of the user
 
-    -the body
+    -the request body
 
     Output:
 
@@ -114,7 +114,7 @@ async def search_auth_keys(
 
     -the current database
 
-    -the body
+    -the request body
     
     Output:
 
@@ -144,7 +144,7 @@ async def auth_keys_edit_auth_key(
 
     -the id of the authkey
 
-    -the body
+    -the request body
 
     Output:
 
@@ -239,7 +239,7 @@ async def auth_keys_add_user_depr(
 
     -the id of the user
 
-    -the body
+    -the request body
 
     Output:
 
@@ -270,7 +270,7 @@ async def auth_keys_edit_auth_key_depr(
 
     -the id of the authkey
 
-    -the body
+    -the request body
     
     Output:
 
