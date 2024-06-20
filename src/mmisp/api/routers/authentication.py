@@ -27,10 +27,11 @@ from mmisp.util.crypto import verify_secret
 
 router = APIRouter(tags=["authentication"])
 
+
 @router.post("/auth/openID/setOpenIDProvider")
-async def set_openID_provider(db: Annotated[Session, Depends(get_db)]) :
+async def set_openID_provider(db: Annotated[Session, Depends(get_db)]):
     """Sets a new OpenID provider
-    
+
     Input:
 
     -database
@@ -42,10 +43,28 @@ async def set_openID_provider(db: Annotated[Session, Depends(get_db)]) :
     return None
 
 
+@router.delete(
+    "/auth/openID/delete/{openIDProvider}",
+    summary="Deletes an OpenID Provider by its ID",
+)
+async def delete_openID_provider(TODO):
+    """Deletes an OpenID provider
+
+    Input:
+
+    -openid provider
+
+    Output:
+
+    -database
+    """
+    return await _delete_openID_provider(db, openIDProvider)
+
+
 @router.post("/auth/login/start", response_model=StartLoginResponse)
 async def start_login(db: Annotated[Session, Depends(get_db)], body: StartLoginBody) -> dict:
     """Starts the login process.
-    
+
     Input:
 
     -the database
@@ -80,7 +99,7 @@ async def start_login(db: Annotated[Session, Depends(get_db)], body: StartLoginB
 @router.post("/auth/login/password")
 async def password_login(db: Annotated[Session, Depends(get_db)], body: PasswordLoginBody) -> TokenResponse:
     """Login with password.
-    
+
     Input:
 
     -the database
@@ -99,10 +118,11 @@ async def password_login(db: Annotated[Session, Depends(get_db)], body: Password
 
     return TokenResponse(token=encode_token(str(user.id)), reqiuredPasswordChange=False)
 
+
 @router.post("/auth/login/setOwnPassword")
-async def reset_password(db: Annotated[Session, Depends(get_db)]) :
+async def reset_password(db: Annotated[Session, Depends(get_db)]):
     """Resets password
-    
+
     Input:
 
     -the database
@@ -121,7 +141,7 @@ async def redirect_to_idp(
     db: Annotated[Session, Depends(get_db)], identity_provider_id: Annotated[int, Path(alias="identityProviderId")]
 ) -> RedirectResponse:
     """Redirects to Idp.
-    
+
     Input:
 
     -the database
@@ -164,7 +184,7 @@ async def redirect_to_frontend(
     code: str,
 ) -> RedirectResponse:
     """Redirects to the frontend.
-    
+
     Input:
 
     -the database
@@ -245,7 +265,7 @@ async def redirect_to_frontend(
 @router.post("/auth/login/token")
 async def exchange_token_login(body: ExchangeTokenLoginBody) -> TokenResponse:
     """Login with exchange token.
-    
+
     Inout:
 
     -the request body
@@ -261,10 +281,11 @@ async def exchange_token_login(body: ExchangeTokenLoginBody) -> TokenResponse:
 
     return TokenResponse(token=encode_token(str(user_id)), reqiuredPasswordChange=False)
 
+
 @router.put("/auth/setPassword/{userId}")
-async def change_password(body:ChangePasswordBody)-> ChangePasswordResponse:
+async def change_password(body: ChangePasswordBody) -> ChangePasswordResponse:
     """Changes the password of the user.
-    
+
     Input:
 
     -the request body
@@ -273,11 +294,19 @@ async def change_password(body:ChangePasswordBody)-> ChangePasswordResponse:
 
     -the response from the api after the password change request
     """
-    #ToDo
-    return ChangePasswordResponse(successful=True) #Set to True to pass the pipeline
+    # ToDo
+    return ChangePasswordResponse(successful=True)  # Set to True to pass the pipeline
+
 
 async def _get_oidc_config(base_url: str) -> dict:
     async with httpx.AsyncClient() as client:
         oidc_config_response = await client.get(f"{base_url}/.well-known/openid-configuration")
 
     return oidc_config_response.json()
+
+
+# --- endpoint logic ---
+
+
+async def _delete_openID_provider(db: Session, openIDProvider: str):
+    return None
