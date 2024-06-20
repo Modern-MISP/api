@@ -37,23 +37,43 @@ database "Redis"
 ## ::: mmisp.api.auth
 # Routers
 ## ::: mmisp.api.routers
-## ::: mmisp.api.routers.taxonomies
-## ::: mmisp.api.routers.user_settings
-## ::: mmisp.api.routers.authentication
-## ::: mmisp.api.routers.events
-## ::: mmisp.api.routers.tags
-## ::: mmisp.api.routers.objects
-## ::: mmisp.api.routers.attributes
-## ::: mmisp.api.routers.jobs
-## ::: mmisp.api.routers.users
-## ::: mmisp.api.routers.feeds
-## ::: mmisp.api.routers.warninglists
-## ::: mmisp.api.routers.noticelists
-## ::: mmisp.api.routers.sightings
-## ::: mmisp.api.routers.auth_keys
-## ::: mmisp.api.routers.sharing_groups
-## ::: mmisp.api.routers.servers
-## ::: mmisp.api.routers.galaxies
-## ::: mmisp.api.routers.galaxies_cluster
-## ::: mmisp.api.routers.organizations
-## ::: mmisp.api.routers.statistics
+## Taxonomies
+### ::: mmisp.api.routers.taxonomies
+## User Settings
+### ::: mmisp.api.routers.user_settings
+## Authentication
+### ::: mmisp.api.routers.authentication
+## Events 
+### ::: mmisp.api.routers.events
+## Tags
+### ::: mmisp.api.routers.tags
+## Objects
+### ::: mmisp.api.routers.objects
+## Attributes
+### ::: mmisp.api.routers.attributes
+## Jobs
+### ::: mmisp.api.routers.jobs
+## Users
+### ::: mmisp.api.routers.users
+## Feeds
+### ::: mmisp.api.routers.feeds
+## Warninglists
+### ::: mmisp.api.routers.warninglists
+## Noticelists
+### ::: mmisp.api.routers.noticelists
+## Sightings
+### ::: mmisp.api.routers.sightings
+## Authentication Keys
+### ::: mmisp.api.routers.auth_keys
+## Sharing Groups
+### ::: mmisp.api.routers.sharing_groups
+## Servers
+### ::: mmisp.api.routers.servers
+## Galaxies
+### ::: mmisp.api.routers.galaxies
+## Galaxies Cluster 
+### ::: mmisp.api.routers.galaxies_cluster
+## Organizations
+### ::: mmisp.api.routers.organizations
+## Statistics
+### ::: mmisp.api.routers.statistics
