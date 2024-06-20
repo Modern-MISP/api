@@ -1,4 +1,4 @@
-import jsonselect
+import json
 import string
 import time
 from collections.abc import Sequence
