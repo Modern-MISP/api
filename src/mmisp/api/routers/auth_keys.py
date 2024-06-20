@@ -69,6 +69,29 @@ async def auth_keys_add_user(
     return await _auth_key_add(auth=auth, db=db, user_id=user_id, body=body)
 
 
+@router.get("auth_keys/viewown",
+    summary="View own AuthKeys"
+    #Todo Responsmodel
+) 
+async def auth_keys_view_own_auth_keys(
+    #Todo
+)-> #ResponseModel
+    :
+    """View own Authkeys.
+
+    Input:
+
+    - the user's authentification status
+
+    - the current database
+
+    - the id of the user
+
+    Output:
+
+    - the auth keys
+    """
+
 @router.get(
     "/auth_keys/view/{AuthKeyId}",
     response_model=ViewAuthKeysResponse,
