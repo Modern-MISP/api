@@ -23,7 +23,7 @@ from mmisp.api_schemas.responses.standard_status_response import StandardStatusR
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.workflow import Workflow
 from mmisp.workflows.modules import Module, Trigger
-from mmisp.workflows import WorkflowGraph
+from mmisp.workflows.graph import WorkflowGraph
 
 router = APIRouter(tags=["workflows"])
 
