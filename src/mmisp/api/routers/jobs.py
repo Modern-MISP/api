@@ -13,7 +13,18 @@ router = APIRouter(tags=["jobs"])
 async def get_job(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))], id: str
 ) -> dict:
-    """Gets a job."""
+    """Gets a job.
+                     
+    Input:
+
+    -the user's authentification status
+
+    -the id
+
+    Output:
+    
+    -dict
+    """
     async with httpx.AsyncClient() as client:
         response = await client.get(f"{config.WORKER_URL}/jobs/{id}/status")
     return response.json()

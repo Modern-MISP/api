@@ -34,7 +34,20 @@ async def get_noticelist(
     db: Annotated[Session, Depends(get_db)],
     noticelist_id: Annotated[int, Path(alias="noticelistId")],
 ) -> NoticelistResponse:
-    """Retrieve details of a specific noticelist by its ID."""
+    """Retrieve details of a specific noticelist by its ID.
+                     
+    Input:
+
+    -the user's authentification status
+
+    -the current database
+
+    -the notice list id
+
+    Output:
+    
+    -the details of the notice list
+    """
     return await _get_noticelist(db, noticelist_id)
 
 
@@ -48,7 +61,20 @@ async def post_toggleEnable_noticelist(
     db: Annotated[Session, Depends(get_db)],
     noticelist_id: Annotated[int, Path(alias="noticelistId")],
 ) -> StandardStatusIdentifiedResponse:
-    """Disable/Enable a specific noticelist by its ID."""
+    """Disable/Enable a specific noticelist by its ID.
+                         
+    Input:
+
+    -the user's authentification status
+
+    -the current database
+
+    -the notice list id
+
+    Output:
+    
+    -the enabled/disabled notice list
+    """
     return await _toggleEnable_noticelists(db, noticelist_id)
 
 
@@ -62,7 +88,18 @@ async def update_noticelists(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
 ) -> StandardStatusResponse:
-    """Update all noticelists."""
+    """Update all noticelists.
+                             
+    Input:
+
+    -the user's authentification status
+
+    -the current database
+
+    Output:
+    
+    -all updated notice lists
+    """
     return await _update_noticelists(db, False)
 
 
@@ -76,7 +113,18 @@ async def get_all_noticelists(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
 ) -> list[GetAllNoticelists]:
-    """Retrieve a list of all noticelists."""
+    """Retrieve a list of all noticelists.
+                                 
+    Input:
+
+    -the user's authentification status
+
+    -the current database
+
+    Output:
+    
+    -all notice lists as a list
+    """
     return await _get_all_noticelists(db)
 
 
@@ -95,7 +143,20 @@ async def get_noticelist_depr(
     db: Annotated[Session, Depends(get_db)],
     noticelist_id: Annotated[int, Path(alias="noticelistId")],
 ) -> NoticelistResponse:
-    """Deprecated. Retrieve details of a specific noticelist by its ID using the old route."""
+    """Deprecated. Retrieve details of a specific noticelist by its ID using the old route.
+                                 
+    Input:
+
+    -the user's authentification status
+
+    -the current database
+
+    -the id of the notice list
+
+    Output:
+    
+    -the details of the notice list
+    """
     return await _get_noticelist(db, noticelist_id)
 
 
@@ -110,7 +171,18 @@ async def update_noticelist_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
 ) -> StandardStatusResponse:
-    """Deprecated. Update all noticelists."""
+    """Deprecated. Update all noticelists.
+                                 
+    Input:
+
+    -the user's authentification status
+
+    -the current database
+
+    Output:
+    
+    -all updated notice lists
+    """
     return await _update_noticelists(db, True)
 
 

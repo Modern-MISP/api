@@ -39,7 +39,24 @@ async def add_object(
     object_template_id: Annotated[int, Path(alias="objectTemplateId")],
     body: ObjectCreateBody,
 ) -> ObjectResponse:
-    """Add a new object to a specific event using a template."""
+    """Add a new object to a specific event using a template.
+                                 
+    Input:
+
+    -the user's authentification status
+
+    -the current database
+
+    -the event id
+
+    -the object template id
+
+    -the request body
+
+    Output:
+    
+    -the added object
+    """
     return await _add_object(db, event_id, object_template_id, body)
 
 
@@ -53,7 +70,20 @@ async def restsearch(
     db: Annotated[Session, Depends(get_db)],
     body: ObjectSearchBody,
 ) -> ObjectSearchResponse:
-    """Search for objects based on various filters."""
+    """Search for objects based on various filters.
+                                 
+    Input:
+
+    -the user's authentification status
+
+    -the current database
+
+    -the request body
+
+    Output:
+    
+    -the objects found by search
+    """
     return await _restsearch(db, body)
 
 
@@ -67,7 +97,20 @@ async def get_object_details(
     db: Annotated[Session, Depends(get_db)],
     object_id: Annotated[int, Path(alias="objectId")],
 ) -> ObjectResponse:
-    """View details of a specific object including its attributes and related event."""
+    """View details of a specific object including its attributes and related event.
+                                 
+    Input:
+
+    -the user's authentification status
+
+    -the current database
+
+    -the object id
+
+    Output:
+    
+    -the details of the object
+    """
     return await _get_object_details(db, object_id)
 
 
@@ -83,7 +126,22 @@ async def delete_object(
     object_id: Annotated[int, Path(alias="objectId")],
     hard_delete: Annotated[bool, Path(alias="hardDelete")],
 ) -> StandardStatusResponse:
-    """Delete a specific object. The hardDelete parameter determines if it's a hard or soft delete."""
+    """Delete a specific object. The hardDelete parameter determines if it's a hard or soft delete.
+                                 
+    Input:
+
+    -the user's authentification status
+
+    -the current database
+
+    -the object id
+
+    -hard delete
+
+    Output:
+    
+    -the deleted object
+    """
     return await _delete_object(db, object_id, hard_delete)
 
 
@@ -104,7 +162,24 @@ async def add_object_depr(
     object_template_id: Annotated[int, Path(alias="objectTemplateId")],
     body: ObjectCreateBody,
 ) -> ObjectResponse:
-    """Deprecated. Add an object to an event using the old route."""
+    """Deprecated. Add an object to an event using the old route.
+                                 
+    Input:
+
+    -the user's authentification status
+
+    -the current database
+
+    -the event id
+
+    -the object template id
+
+    -the request body
+
+    Output:
+    
+    -the added object
+    """
     return await _add_object(db, event_id, object_template_id, body)
 
 
@@ -120,7 +195,20 @@ async def get_object_details_depr(
     db: Annotated[Session, Depends(get_db)],
     object_id: Annotated[int, Path(alias="objectId")],
 ) -> ObjectResponse:
-    """Deprecated. View details of a specific object using the old route."""
+    """Deprecated. View details of a specific object using the old route.
+                                 
+    Input:
+
+    -the user's authentification status
+
+    -the current database
+
+    -the object id
+
+    Output:
+    
+    -the details of the object
+    """
     return await _get_object_details(db, object_id)
 
 
@@ -139,7 +227,22 @@ async def delete_object_depr(
 ) -> StandardStatusResponse:
     """
     Deprecated. Delete a specific object using the old route.
-    The hardDelete parameter determines if it's a hard or soft delete."""
+    The hardDelete parameter determines if it's a hard or soft delete.
+                                 
+    Input:
+
+    -the user's authentification status
+
+    -the current database
+
+    -the object id
+
+    -hard delete
+
+    Output:
+    
+    -the deleted object
+    """
     return await _delete_object(db, object_id, hard_delete)
 
 
