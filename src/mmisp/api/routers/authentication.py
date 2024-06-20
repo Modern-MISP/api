@@ -76,20 +76,6 @@ async def start_login(db: Annotated[Session, Depends(get_db)], body: StartLoginB
 
     return {"loginType": login_type, "identityProviders": identity_providers}
 
-@router.post("/auth/login/openID")
-async def openID_login(db: Annotated[Session, Depends(get_db)]) :
-    """Logs a user in by openID
-    
-    Input:
-
-    -the database
-
-    Output:
-
-    -the login token
-    """
-    return None
-
 
 @router.post("/auth/login/password")
 async def password_login(db: Annotated[Session, Depends(get_db)], body: PasswordLoginBody) -> TokenResponse:
