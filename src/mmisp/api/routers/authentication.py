@@ -28,9 +28,9 @@ from mmisp.util.crypto import verify_secret
 router = APIRouter(tags=["authentication"])
 
 
-@router.post("/auth/openID/setOpenIDProvider")
-async def set_openID_provider(db: Annotated[Session, Depends(get_db)]):
-    """Sets a new OpenID provider
+@router.post("/auth/openID/setOpenIDConnectProvider")
+async def set_openID_Connect_provider(db: Annotated[Session, Depends(get_db)]):
+    """Sets a new OpenID Connect provider
 
     Input:
 
@@ -38,42 +38,42 @@ async def set_openID_provider(db: Annotated[Session, Depends(get_db)]):
 
     Output:
 
-    - openid provider
+    - openID Connect provider
     """
     return None
 
 
-@router.post("/auth/openID/editOpenIDProvider/{openIDProvider}")
-async def edit_openID_provider(TODO):
-    """Edits an OpenID provider
+@router.post("/auth/openID/editOpenIDConnectProvider/{openIDConnectProvider}")
+async def edit_openID_Connect_provider(TODO):
+    """Edits an OpenID Connect provider
 
     Input:
 
-    - openid provider
+    - OpenID Connect provider
 
     Output:
 
-    - updated openid provider
+    - updated OpenID Connect provider
     """
-    return await _edit_openID_provider(db, openIDProvider)
+    return await _edit_openID_Connect_provider(db, openIDConnectProvider)
 
 
 @router.delete(
-    "/auth/openID/delete/{openIDProvider}",
-    summary="Deletes an OpenID Provider by its ID",
+    "/auth/openID/delete/{openIDConnectProvider}",
+    summary="Deletes an OpenID Connect Provider by its ID",
 )
-async def delete_openID_provider(TODO):
-    """Deletes an OpenID provider
+async def delete_openID_Connect_provider(TODO):
+    """Deletes an OpenID Connect provider
 
     Input:
 
-    - openid provider
+    - OpenID Connect provider
 
     Output:
 
     - database
     """
-    return await _delete_openID_provider(db, openIDProvider)
+    return await _delete_openID_Connect_provider(db, openIDConnectProvider)
 
 
 @router.post("/auth/login/start", response_model=StartLoginResponse)
@@ -323,9 +323,9 @@ async def _get_oidc_config(base_url: str) -> dict:
 # --- endpoint logic ---
 
 
-async def _delete_openID_provider(db: Session, openIDProvider: str):
+async def _delete_openID_Connect_provider(db: Session, openIDConnectProvider: str):
     return None
 
 
-async def _edit_openID_provider(db: Session, openIDProvider: str):
+async def _edit_openID_Connect_provider(db: Session, openIDConnectProvider: str):
     return None

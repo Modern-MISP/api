@@ -28,14 +28,14 @@ async def create_backup(
     """
     return await _create_backup(db, path)
 
-@router.post("/sservers/updateBackup/{path}",
-    summary="Creates a backup on the given path",
+@router.post("/servers/updateBackup/{path}",
+    summary="Updates a backup on the given path",
 )
 async def update_backup(
     TODO
 ) :
     """
-    Creates a backup of the current database if the given path is valid.
+    Updates a backup of the current database if the given path is valid.
     
     Input:
 
@@ -123,6 +123,17 @@ async def delete_remote_server(
 
 @router.get("/servers/getVersion")
 async def get_version(auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],db: Annotated[Session, Depends(get_db)]) -> dict:
+    """
+    Gets the Version of the server.
+    
+    Input:
+
+    - Identifier of the remote server to be deleted
+    
+    Output:
+    
+    - Response indicating the result of the server deletion operation
+    """
     return {
         "version": importlib.metadata.version("mmisp-api"),
         "perm_sync": await check_permissions(db, auth, [Permission.SYNC]),
