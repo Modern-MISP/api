@@ -1,4 +1,4 @@
-import json
+import jsonselect
 import string
 import time
 from collections.abc import Sequence
@@ -54,17 +54,17 @@ async def auth_keys_add_user(
     
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
-    -the id of the user
+    - the id of the user
 
-    -the request body
+    - the request body
 
     Output:
 
-    -the added authkey
+    - the added authkey
     """
     return await _auth_key_add(auth=auth, db=db, user_id=user_id, body=body)
 
@@ -83,15 +83,15 @@ async def auth_keys_view_auth_key(
     
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
-    -the id of the authkey
+    - the id of the authkey
 
     Output:
 
-    -the authkey
+    - the authkey
     """
     return await _auth_keys_view(auth=auth, db=db, auth_key_id=auth_key_id)
 
@@ -110,15 +110,15 @@ async def search_auth_keys(
     
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
-    -the request body
+    - the request body
     
     Output:
 
-    -the authkeys
+    - the authkeys
     """
     return await _search_auth_keys(auth=auth, db=db, body=body)
 
@@ -138,17 +138,17 @@ async def auth_keys_edit_auth_key(
     
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
-    -the id of the authkey
+    - the id of the authkey
 
-    -the request body
+    - the request body
 
     Output:
 
-    -the updated authkey
+    - the updated authkey
     """
     return await _auth_keys_edit(auth=auth, db=db, auth_key_id=auth_key_id, body=body)
 
@@ -167,15 +167,15 @@ async def auth_keys_delete_auth_key(
     
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
-    -the id of the authkey
+    - the id of the authkey
 
     Output:
 
-    -the response from the api after the deleting request
+    - the response from the api after the deleting request
     """
     await _auth_keys_delete(auth=auth, db=db, auth_key_id=auth_key_id)
 
@@ -202,13 +202,13 @@ async def auth_keys_get(
     
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
     
     Output:
 
-    -all authkeys as a list
+    - all authkeys as a list
     """
     return await _auth_keys_get(auth=auth, db=db)
 
@@ -233,17 +233,17 @@ async def auth_keys_add_user_depr(
     
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
-    -the id of the user
+    - the id of the user
 
-    -the request body
+    - the request body
 
     Output:
 
-    -the added authkey
+    - the added authkey
     """
     return await _auth_key_add(auth=auth, db=db, user_id=user_id, body=body)
 
@@ -264,17 +264,17 @@ async def auth_keys_edit_auth_key_depr(
     
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
-    -the id of the authkey
+    - the id of the authkey
 
-    -the request body
+    - the request body
     
     Output:
 
-    -the updated authkey
+    - the updated authkey
     """
     return await _auth_keys_edit(auth=auth, db=db, auth_key_id=auth_key_id, body=body)
 
@@ -294,15 +294,15 @@ async def auth_keys_delete_auth_key_depr(
     
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
-    -the id of the authkey
+    - the id of the authkey
 
     Output:
 
-    -the response from the api after the deleting request
+    - the response from the api after the deleting request
     """
     await _auth_keys_delete(auth=auth, db=db, auth_key_id=auth_key_id)
 

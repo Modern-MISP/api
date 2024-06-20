@@ -38,15 +38,15 @@ async def get_noticelist(
                      
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
-    -the notice list id
+    - the notice list id
 
     Output:
     
-    -the details of the notice list
+    - the details of the notice list
     """
     return await _get_noticelist(db, noticelist_id)
 
@@ -65,15 +65,15 @@ async def post_toggleEnable_noticelist(
                          
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
-    -the notice list id
+    - the notice list id
 
     Output:
     
-    -the enabled/disabled notice list
+    - the enabled/disabled notice list
     """
     return await _toggleEnable_noticelists(db, noticelist_id)
 
@@ -92,13 +92,13 @@ async def update_noticelists(
                              
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
     Output:
     
-    -all updated notice lists
+    - all updated notice lists
     """
     return await _update_noticelists(db, False)
 
@@ -117,13 +117,13 @@ async def get_all_noticelists(
                                  
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
     Output:
     
-    -all notice lists as a list
+    - all notice lists as a list
     """
     return await _get_all_noticelists(db)
 
@@ -147,15 +147,15 @@ async def get_noticelist_depr(
                                  
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
-    -the id of the notice list
+    - the id of the notice list
 
     Output:
     
-    -the details of the notice list
+    - the details of the notice list
     """
     return await _get_noticelist(db, noticelist_id)
 
@@ -175,13 +175,13 @@ async def update_noticelist_depr(
                                  
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
     Output:
     
-    -all updated notice lists
+    - all updated notice lists
     """
     return await _update_noticelists(db, True)
 

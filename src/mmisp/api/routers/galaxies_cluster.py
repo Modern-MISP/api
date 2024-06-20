@@ -50,17 +50,17 @@ async def import_galaxy_cluster(
                      
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
-    -the request body
+    - the request body
 
-    -the request
+    - the request
 
     Output:
     
-    -the new galaxy cluster
+    - the new galaxy cluster
     """
     return await _import_galaxy_cluster(db, body, request)
 
@@ -77,17 +77,17 @@ async def get_galaxy_cluster(
                          
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
-    -the galaxy id
+    - the galaxy id
 
-    -the request body
+    - the request body
 
     Output:
     
-    -the information of the galaxy cluster
+    - the information of the galaxy cluster
     """
     return await _get_galaxy_cluster(db, clusterID)
 
@@ -108,17 +108,17 @@ async def export_galaxy(
                          
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
-    -the galaxy id
+    - the galaxy id
 
-    -the request body
+    - the request body
 
     Output:
     
-    -the exported galaxy cluster
+    - the exported galaxy cluster
     """
     return await _export_galaxy(db, galaxy_id, body)
 
@@ -141,21 +141,21 @@ async def galaxies_attachCluster(
                          
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
-    -the id of the attach target
+    - the id of the attach target
 
-    -the type of the attach target
+    - the type of the attach target
 
-    -the request body
+    - the request body
 
-    -local
+    - local
 
     Output:
     
-    -the attached galaxy cluster and the attach target
+    - the attached galaxy cluster and the attach target
     """
     return await _attach_cluster_to_galaxy(db, attach_target_id, attach_target_type, local, body)
 

@@ -17,13 +17,13 @@ async def get_job(
                      
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the id
+    - the id
 
     Output:
     
-    -dict
+    - dict
     """
     async with httpx.AsyncClient() as client:
         response = await client.get(f"{config.WORKER_URL}/jobs/{id}/status")

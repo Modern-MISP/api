@@ -80,15 +80,15 @@ async def add_event(
         
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
-    -the request body
+    - the request body
 
     Output:
 
-    -the new event
+    - the new event
     """
     return await _add_event(auth, db, body)
 
@@ -108,15 +108,15 @@ async def get_event_details(
         
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
-    -the id of the event
+    - the id of the event
 
     Output:
 
-    -the event details
+    - the event details
     """
     return await _get_event_details(db, event_id)
 
@@ -137,17 +137,17 @@ async def update_event(
         
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
-    -the id of the event
+    - the id of the event
 
-    -the request body
+    - the request body
 
     Output:
 
-    -the updated event
+    - the updated event
     """
     return await _update_event(db, event_id, body)
 
@@ -167,15 +167,15 @@ async def delete_event(
         
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
-    -the event id
+    - the event id
 
     Output:
 
-    -the deleted event
+    - the deleted event
     """
     return await _delete_event(db, event_id)
 
@@ -192,13 +192,13 @@ async def get_all_events(
         
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
     Output:
 
-    -all events as a list
+    - all events as a list
     """
     return await _get_events(db)
 
@@ -218,15 +218,15 @@ async def rest_search_events(
         
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
-    -the request body
+    - the request body
 
     Output:
     
-    -the searched events
+    - the searched events
     """
     return await _rest_search_events(db, body)
 
@@ -246,15 +246,15 @@ async def index_events(
             
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
-    -the request body
+    - the request body
 
     Output:
     
-    -the searched events
+    - the searched events
     """
     return await _index_events(db, body)
 
@@ -275,17 +275,17 @@ async def publish_event(
             
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
-    -the event id
+    - the event id
 
-    -the request
+    - the request
 
     Output:
     
-    -the published event
+    - the published event
     """
     return await _publish_event(db, event_id, request)
 
@@ -306,17 +306,17 @@ async def unpublish_event(
                
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
-    -the event id
+    - the event id
 
-    -the request
+    - the request
 
     Output:
     
-    -the unpublished event
+    - the unpublished event
     """
     return await _unpublish_event(db, event_id, request)
 
@@ -338,19 +338,19 @@ async def add_tag_to_event(
                
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
-    -the event id
+    - the event id
 
-    -the tag id
+    - the tag id
 
-    -local
+    - local
 
     Output:
     
-    -the result of adding the tag to the event given by the api
+    - the result of adding the tag to the event given by the api
     """
     return await _add_tag_to_event(db, event_id, tag_id, local)
 
@@ -371,17 +371,17 @@ async def remove_tag_from_event(
                   
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
-    -the event id
+    - the event id
 
-    -the tag id
+    - the tag id
 
     Output:
     
-    -the result of removing the tag from the event given by the api
+    - the result of removing the tag from the event given by the api
     """
     return await _remove_tag_from_event(db, event_id, tag_id)
 
@@ -402,17 +402,17 @@ async def add_attribute_via_free_text_import(
                   
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
-    -the event id
+    - the event id
 
-    -the request body
+    - the request body
 
     Output:
     
-    -the result of adding the tag to the event given by the api
+    - the result of adding the tag to the event given by the api
     """
     body_dict = body.dict()
     user = FreeTextImportWorkerUser(user_id=auth.user_id)
@@ -459,15 +459,15 @@ async def add_event_depr(
                   
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
-    -the request body
+    - the request body
 
     Output:
     
-    -the new event
+    - the new event
     """
     return await _add_event(auth, db, body)
 
@@ -488,15 +488,15 @@ async def get_event_details_depr(
                   
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
-    -the event id
+    - the event id
 
     Output:
     
-    -the event details
+    - the event details
     """
     return await _get_event_details(db, event_id)
 
@@ -518,17 +518,17 @@ async def update_event_depr(
                   
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
-    -the event id
+    - the event id
 
-    -the request body
+    - the request body
 
     Output:
     
-    -the updated event
+    - the updated event
     """
     return await _update_event(db, event_id, body=body)
 
@@ -549,15 +549,15 @@ async def delete_event_depr(
                   
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
-    -the event id
+    - the event id
 
     Output:
     
-    -the deleted event
+    - the deleted event
     """
     return await _delete_event(db, event_id)
 

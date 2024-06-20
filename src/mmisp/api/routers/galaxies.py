@@ -50,15 +50,15 @@ async def get_galaxy_details(
                  
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
-    -the galaxy id
+    - the galaxy id
 
     Output:
     
-    -the details of the galaxy
+    - the details of the galaxy
     """
     return await _get_galaxy_details(db, galaxy_id)
 
@@ -77,13 +77,13 @@ async def update_galaxy(
                      
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
     Output:
     
-    -the updated galaxies
+    - the updated galaxies
     """
     raise NotImplementedError()
 
@@ -107,17 +107,17 @@ async def delete_galaxy(
                      
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
-    -the galaxy id
+    - the galaxy id
 
-    -the request
+    - the request
 
     Output:
     
-    -the deleted galaxy
+    - the deleted galaxy
     """
     return await _delete_galaxy(db, galaxy_id, request)
 
@@ -135,13 +135,13 @@ async def get_galaxies(
                      
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
     Output:
     
-    -all galaxies
+    - all galaxies
     """
     return await _get_galaxies(db)
 
@@ -161,15 +161,15 @@ async def search_galaxies(
                      
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
-    -the request body
+    - the request body
 
     Output:
     
-    -the galaxies found by search
+    - the galaxies found by search
     """
     return await _search_galaxies(db, body)
 
@@ -195,15 +195,15 @@ async def get_galaxy_details_depr(
                      
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
-    -the galaxy id
+    - the galaxy id
 
     Output:
     
-    -the details of the galaxy
+    - the details of the galaxy
     """
     return await _get_galaxy_details(db, galaxy_id)
 
@@ -225,17 +225,17 @@ async def delete_galaxy_depr(
                      
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
-    -the galaxy id
+    - the galaxy id
 
-    -the request
+    - the request
 
     Output:
     
-    -the deleted galaxy
+    - the deleted galaxy
     """
     return await _delete_galaxy(db, galaxy_id, request)
 

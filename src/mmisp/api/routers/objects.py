@@ -43,19 +43,19 @@ async def add_object(
                                  
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
-    -the event id
+    - the event id
 
-    -the object template id
+    - the object template id
 
-    -the request body
+    - the request body
 
     Output:
     
-    -the added object
+    - the added object
     """
     return await _add_object(db, event_id, object_template_id, body)
 
@@ -74,15 +74,15 @@ async def restsearch(
                                  
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
-    -the request body
+    - the request body
 
     Output:
     
-    -the objects found by search
+    - the objects found by search
     """
     return await _restsearch(db, body)
 
@@ -101,15 +101,15 @@ async def get_object_details(
                                  
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
-    -the object id
+    - the object id
 
     Output:
     
-    -the details of the object
+    - the details of the object
     """
     return await _get_object_details(db, object_id)
 
@@ -130,17 +130,17 @@ async def delete_object(
                                  
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
-    -the object id
+    - the object id
 
-    -hard delete
+    - hard delete
 
     Output:
     
-    -the deleted object
+    - the deleted object
     """
     return await _delete_object(db, object_id, hard_delete)
 
@@ -166,19 +166,19 @@ async def add_object_depr(
                                  
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
-    -the event id
+    - the event id
 
-    -the object template id
+    - the object template id
 
-    -the request body
+    - the request body
 
     Output:
     
-    -the added object
+    - the added object
     """
     return await _add_object(db, event_id, object_template_id, body)
 
@@ -199,15 +199,15 @@ async def get_object_details_depr(
                                  
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
-    -the object id
+    - the object id
 
     Output:
     
-    -the details of the object
+    - the details of the object
     """
     return await _get_object_details(db, object_id)
 
@@ -231,17 +231,17 @@ async def delete_object_depr(
                                  
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
-    -the object id
+    - the object id
 
-    -hard delete
+    - hard delete
 
     Output:
     
-    -the deleted object
+    - the deleted object
     """
     return await _delete_object(db, object_id, hard_delete)
 

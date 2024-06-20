@@ -34,11 +34,11 @@ async def set_openID_provider(db: Annotated[Session, Depends(get_db)]):
 
     Input:
 
-    -database
+    - database
 
     Output:
 
-    -openid provider
+    - openid provider
     """
     return None
 
@@ -49,11 +49,11 @@ async def edit_openID_provider(TODO):
 
     Input:
 
-    -openid provider
+    - openid provider
 
     Output:
 
-    -updated openid provider
+    - updated openid provider
     """
     return await _edit_openID_provider(db, openIDProvider)
 
@@ -67,11 +67,11 @@ async def delete_openID_provider(TODO):
 
     Input:
 
-    -openid provider
+    - openid provider
 
     Output:
 
-    -database
+    - database
     """
     return await _delete_openID_provider(db, openIDProvider)
 
@@ -82,13 +82,13 @@ async def start_login(db: Annotated[Session, Depends(get_db)], body: StartLoginB
 
     Input:
 
-    -the database
+    - the database
 
-    -the request body
+    - the request body
 
     Output:
 
-    -dict
+    - dict
     """
     result = await db.execute(select(User).filter(User.email == body.email).limit(1))
     user: User | None = result.scalars().first()
@@ -117,13 +117,13 @@ async def password_login(db: Annotated[Session, Depends(get_db)], body: Password
 
     Input:
 
-    -the database
+    - the database
 
-    -the request body
+    - the request body
 
     Output:
 
-    -the login token
+    - the login token
     """
     result = await db.execute(select(User).filter(User.email == body.email).limit(1))
     user: User | None = result.scalars().first()
@@ -140,11 +140,11 @@ async def reset_password(db: Annotated[Session, Depends(get_db)]):
 
     Input:
 
-    -the database
+    - the database
 
     Output:
 
-    -the response form the api from resetting the user's password
+    - the response form the api from resetting the user's password
     """
     return None
 
@@ -159,12 +159,12 @@ async def redirect_to_idp(
 
     Input:
 
-    -the database
+    - the database
 
-    -the identity provider id
+    - the identity provider id
 
     Output:
-    -the redirection
+    - the redirection
     """
     identity_provider: OIDCIdentityProvider | None = await db.get(OIDCIdentityProvider, identity_provider_id)
 
@@ -202,15 +202,15 @@ async def redirect_to_frontend(
 
     Input:
 
-    -the database
+    - the database
 
-    -the identity provider id
+    - the identity provider id
 
-    -the code
+    - the code
 
     Output:
 
-    -the redirection
+    - the redirection
     """
     identity_provider: OIDCIdentityProvider | None = await db.get(OIDCIdentityProvider, identity_provider_id)
 
@@ -283,11 +283,11 @@ async def exchange_token_login(body: ExchangeTokenLoginBody) -> TokenResponse:
 
     Inout:
 
-    -the request body
+    - the request body
 
     Output:
 
-    -the login token
+    - the login token
     """
     user_id = decode_exchange_token(body.exchangeToken)
 
@@ -303,11 +303,11 @@ async def change_password(body: ChangePasswordBody) -> ChangePasswordResponse:
 
     Input:
 
-    -the request body
+    - the request body
 
     Output:
 
-    -the response from the api after the password change request
+    - the response from the api after the password change request
     """
     # ToDo
     return ChangePasswordResponse(successful=True)  # Set to True to pass the pipeline

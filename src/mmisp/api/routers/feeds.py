@@ -36,15 +36,15 @@ async def add_feed(
                   
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
-    -the request body
+    - the request body
 
     Output:
     
-    -the new feed
+    - the new feed
     """
     return await _add_feed(db, body)
 
@@ -64,15 +64,15 @@ async def cache_feeds(
                      
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
-    -the cache feeds scope
+    - the cache feeds scope
 
     Output:
     
-    -the cache feeds
+    - the cache feeds
     """
     return await _cache_feeds(db, cache_feeds_scope)
 
@@ -92,15 +92,15 @@ async def fetch_from_feed(
                      
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
-    -the feed id
+    - the feed id
 
     Output:
     
-    -the fetched feed data
+    - the fetched feed data
     """
     return await _fetch_from_feed(db, feed_id)
 
@@ -120,15 +120,15 @@ async def get_feed_details(
                      
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
-    -the feed id
+    - the feed id
 
     Output:
     
-    -the details of a feed
+    - the details of a feed
     """
     return await _get_feed_details(db, feed_id)
 
@@ -149,17 +149,17 @@ async def update_feed(
                      
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
-    -the feed id
+    - the feed id
 
-    -the request body
+    - the request body
 
     Output:
     
-    -the updated feed
+    - the updated feed
     """
     return await _update_feed(db, feed_id, body)
 
@@ -181,17 +181,17 @@ async def toggle_feed(
                      
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
-    -the feed id
+    - the feed id
 
-    -the request body
+    - the request body
 
     Output:
     
-    -the new status of the feed
+    - the new status of the feed
     """
     return await _toggle_feed(db, feed_id, body)
 
@@ -210,13 +210,13 @@ async def fetch_data_from_all_feeds(
                      
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
     Output:
     
-    -the fetched data of all available feeds
+    - the fetched data of all available feeds
     """
     return await _fetch_data_from_all_feeds(db)
 
@@ -235,13 +235,13 @@ async def get_feeds(
                      
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
     Output:
     
-    -all feeds as a list
+    - all feeds as a list
     """
     return await _get_feeds(db)
 
@@ -265,15 +265,15 @@ async def add_feed_depr(
                      
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
-    -the request body
+    - the request body
 
     Output:
     
-    -the added feed
+    - the added feed
     """
     return await _add_feed(db, body)
 
@@ -294,15 +294,15 @@ async def enable_feed(
                
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
-    -the feed id
+    - the feed id
 
     Output:
     
-    -the the enabled feed
+    - the the enabled feed
     """
     return await _enable_feed(db, feed_id)
 
@@ -323,15 +323,15 @@ async def disable_feed(
                      
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
-    -the feed id
+    - the feed id
 
     Output:
     
-    -the disabled feed
+    - the disabled feed
     """
     return await _disable_feed(db, feed_id)
 
@@ -352,15 +352,15 @@ async def cache_feeds_depr(
                      
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
-    -the cache feeds scope
+    - the cache feeds scope
 
     Output:
     
-    -the feed cache
+    - the feed cache
     """
     return await _cache_feeds(db, cache_feeds_scope)
 
@@ -381,15 +381,15 @@ async def fetch_from_feed_depr(
                      
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
-    -the feed id
+    - the feed id
 
     Output:
     
-    -the fetched feed data
+    - the fetched feed data
     """
     return await _fetch_from_feed(db, feed_id)
 
@@ -409,14 +409,14 @@ async def fetch_data_from_all_feeds_depr(
                      
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
 
     Output:
     
-    -the fetched data of all feeds
+    - the fetched data of all feeds
     """
     return await _fetch_data_from_all_feeds(db)
 
@@ -437,15 +437,15 @@ async def get_feed_details_depr(
                      
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
-    -the feed id
+    - the feed id
 
     Output:
     
-    -the details of the feed
+    - the details of the feed
     """
     return await _get_feed_details(db, feed_id)
 
@@ -468,17 +468,17 @@ async def update_feed_depr(
                      
     Input:
 
-    -the user's authentification status
+    - the user's authentification status
 
-    -the current database
+    - the current database
 
-    -the feed id
+    - the feed id
 
-    -the request body
+    - the request body
 
     Output:
     
-    -the updated feed 
+    - the updated feed 
     """
     return await _update_feed(db, feed_id, body)
 
