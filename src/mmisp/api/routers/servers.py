@@ -128,11 +128,16 @@ async def get_version(auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRI
     
     Input:
 
-    - Identifier of the remote server to be deleted
+    - auth: Authentication details
+
+    - db: Database session
     
-    Output:
+     Output:
     
-    - Response indicating the result of the server deletion operation
+    - Version of the server
+    - Permissions for sync, sighting, and galaxy editor
+    - Request encoding
+    - Filter sightings flag
     """
     return {
         "version": importlib.metadata.version("mmisp-api"),
