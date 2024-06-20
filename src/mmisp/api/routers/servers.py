@@ -67,7 +67,7 @@ async def get_remote_servers(
 @router.get("/servers/remote/{serverId}",
     summary="Requests information regarding a remote server",
     )
-async def get_remote_servers(
+async def get_remote_server(
     TODO
 ) :
     """
