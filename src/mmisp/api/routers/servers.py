@@ -64,6 +64,25 @@ async def get_remote_servers(
     """
     return await _get_remote_servers(db)
 
+@router.get("/servers/remote/{serverId}",
+    summary="Requests information regarding a remote server",
+    )
+async def get_remote_servers(
+    TODO
+) :
+    """
+    Returns information for a specific remote server chosen by its id.
+    
+    Input:
+
+    - serverId: the server's ID
+
+    Output:
+
+    - server information regarding the chosen server
+    """
+    return await _get_remote_server(db, serverId)
+
 @router.post("/servers/remote/add",
     summary="Adds a new remote server to the list",
     )
@@ -120,6 +139,8 @@ async def _create_backup(db: Session, path: str) : return None
 async def _update_backup(db: Session, path: str) : return None
 
 async def _get_remote_servers(db: Session) : return None
+
+async def _get_remote_server(db: Session, serverId: str) : return None
 
 async def _add_remote_server(PLACEHOLDER) : return None
 
