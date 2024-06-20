@@ -36,3 +36,4 @@ plugins:
       # NOTE: There's a zero width space in these parentheses because I couldn't make the copyright not show up otherwise.
       #       It's also possible to use custom templates with mkdocs-with-pdf, might be worth it, see github linked above.
       copyright: '​'
+      toc_level: 3
