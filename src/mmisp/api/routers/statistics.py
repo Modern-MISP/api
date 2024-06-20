@@ -11,8 +11,8 @@ from mmisp.db.database import Session, get_db
 router = APIRouter(tags=["statistics"])
 
 @router.get(
-    "/statistics/all",
-    summary="Gets a list of all statistics listed on the website",
+    "/statistics/getAttributes",
+    summary="Gets a list of all attribute-related statistics listed on the website",
 )
 async def get_statistics(
     TODO
@@ -30,7 +30,27 @@ async def get_statistics(
     return await _get_statistics(db)
 
 @router.get(
-    "/statistics/logincount",
+    "/statistics/getAttributes/{orgId}",
+    summary="Gets a list of attributes related to an organisation",
+)
+async def get_statistics(
+    TODO
+) : 
+    """Gets all attrtibute-related statistics by organisation as a list.
+    
+    Input:
+
+    - db: Database session
+    - orgID: organisation ID
+
+    Output:
+
+    - List of all statistics related to an organisation
+    """
+    return await _get_statistics_by_org(db, orgID)
+
+@router.get(
+    "/statistics/logincount/{orgID}",
     summary="Gets a count of all logins the past 4 months",
 )
 async def get_logincount(
@@ -52,5 +72,7 @@ async def get_logincount(
 
 async def _get_statistics(db: Session) : return None
 
-async def _get_logincount(db: Session) : return None
+async def _get_statistics_by_org(db: Session, orgID: str) : return None
+
+async def _get_logincount(db: Session, orgID: str) : return None
 
