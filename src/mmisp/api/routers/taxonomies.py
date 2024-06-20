@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Path, status
 from sqlalchemy import func, select
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
-from mmisp.api_schemas.standard_status_response import StandardStatusIdentifiedResponse, StandardStatusResponse
+from mmisp.api_schemas.responses.standard_status_response import StandardStatusIdentifiedResponse, StandardStatusResponse
 from mmisp.api_schemas.tags import TagAttributesResponse
 from mmisp.api_schemas.taxonomies import (
     ExportTaxonomyEntry,

@@ -6,7 +6,7 @@ from sqlalchemy import delete, func, or_
 from sqlalchemy.future import select
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
-from mmisp.api_schemas.standard_status_response import StandardStatusResponse
+from mmisp.api_schemas.responses.standard_status_response import StandardStatusResponse
 from mmisp.api_schemas.warninglists import (
     CheckValueResponse,
     CheckValueWarninglistsBody,

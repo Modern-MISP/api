@@ -25,7 +25,7 @@ from mmisp.api_schemas.sharing_groups import (
 from mmisp.api_schemas.sharing_groups import SharingGroup as SharingGroupSchema
 from mmisp.api_schemas.sharing_groups import SharingGroupOrg as SharingGroupOrgSchema
 from mmisp.api_schemas.sharing_groups import SharingGroupServer as SharingGroupServerSchema
-from mmisp.api_schemas.standard_status_response import StandardStatusResponse
+from mmisp.api_schemas.responses.standard_status_response import StandardStatusResponse
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.organisation import Organisation
 from mmisp.db.models.server import Server

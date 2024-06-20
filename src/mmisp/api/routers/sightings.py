@@ -14,7 +14,7 @@ from mmisp.api_schemas.sightings import (
     SightingOrganisationResponse,
     SightingsGetResponse,
 )
-from mmisp.api_schemas.standard_status_response import StandardStatusResponse
+from mmisp.api_schemas.responses.standard_status_response import StandardStatusResponse
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.attribute import Attribute
 from mmisp.db.models.event import Event
