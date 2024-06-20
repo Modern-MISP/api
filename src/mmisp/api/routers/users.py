@@ -130,7 +130,7 @@ async def delete_user_token(
 
     Input:
 
-    -ID of the user with the token to delete
+    - ID of the user with the token to delete
     
     Output:
 

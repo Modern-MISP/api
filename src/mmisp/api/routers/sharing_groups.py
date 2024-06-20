@@ -418,6 +418,7 @@ async def update_sharing_group_legacy(
     Update an existing sharing group by its ID.
 
     Input:
+    
     - auth: Authentication details
 
     - db: Database session

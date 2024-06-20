@@ -98,7 +98,7 @@ async def add_remote_server(
     
     Output:
 
-    -Response indicating the result of the server addition operation
+    - Response indicating the result of the server addition operation
     """
     return await _add_remote_server(auth, db, body)
 

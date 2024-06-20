@@ -164,6 +164,7 @@ async def redirect_to_idp(
     - the identity provider id
 
     Output:
+    
     - the redirection
     """
     identity_provider: OIDCIdentityProvider | None = await db.get(OIDCIdentityProvider, identity_provider_id)
