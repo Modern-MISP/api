@@ -180,7 +180,7 @@ async def auth_keys_view_own_auth_keys(
 
     - the auth keys
     """
-return await auth_keys_view_own_auth_keys()
+    return await auth_keys_view_own_auth_keys()
 
 
 # --- endpoint logic ---
