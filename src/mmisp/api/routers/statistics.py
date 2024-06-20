@@ -33,7 +33,7 @@ async def get_statistics(
     "/statistics/getAttributes/{orgId}",
     summary="Gets a list of attributes related to an organisation",
 )
-async def get_statistics(
+async def get_statistics_by_org(
     TODO
 ) : 
     """Gets all attrtibute-related statistics by organisation as a list.
