@@ -134,9 +134,12 @@ async def password_login(db: Annotated[Session, Depends(get_db)], body: Password
     return TokenResponse(token=encode_token(str(user.id)), reqiuredPasswordChange=False)
 
 
-@router.post("/auth/login/setOwnPassword")
-async def reset_password(db: Annotated[Session, Depends(get_db)]):
-    """Resets password
+@router.post(
+    "/auth/login/setOwnPassword",
+    summary="User sets their password to a new password",
+    )
+async def set_password(db: Annotated[Session, Depends(get_db)]):
+    """Sets the password of the user to a new password.
 
     Input:
 
@@ -144,7 +147,7 @@ async def reset_password(db: Annotated[Session, Depends(get_db)]):
 
     Output:
 
-    - the response form the api from resetting the user's password
+    - the response form the api after the password change request
     """
     return None
 
@@ -298,9 +301,12 @@ async def exchange_token_login(body: ExchangeTokenLoginBody) -> TokenResponse:
     return TokenResponse(token=encode_token(str(user_id)), reqiuredPasswordChange=False)
 
 
-@router.put("/auth/setPassword/{userId}")
+@router.put(
+    "/auth/setPassword/{userId}",
+    summary="Admin sets the password of the user to a new password",
+    )
 async def change_password(body: ChangePasswordBody) -> ChangePasswordResponse:
-    """Changes the password of the user.
+    """Set the password of the user to a new password
 
     Input:
 
