@@ -214,13 +214,10 @@ async def auth_keys_get(
     """
     return await _auth_keys_get(auth=auth, db=db)
 
-@router.get("auth_keys/viewown",
-    summary="View own AuthKeys"
-    #Todo Responsmodel
+@router.get("auth_keys/viewOwn",
+    summary="View own AuthKeys",
 ) 
-async def auth_keys_view_own_auth_keys(
-    #Todo
-) :
+async def auth_keys_view_own_auth_keys(TODO) :
     """View own Authkeys.
 
     Input:
