@@ -51,6 +51,8 @@ async def edit_openID_Connect_provider(TODO):
 
     - OpenID Connect provider
 
+    - The current database
+
     Output:
 
     - updated OpenID Connect provider
@@ -68,6 +70,8 @@ async def delete_openID_Connect_provider(TODO):
     Input:
 
     - OpenID Connect provider
+
+    - The current database
 
     Output:
 
@@ -311,6 +315,8 @@ async def change_password(body: ChangePasswordBody) -> ChangePasswordResponse:
     Input:
 
     - the request body
+
+    - The current database
 
     Output:
 

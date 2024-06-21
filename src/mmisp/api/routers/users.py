@@ -27,6 +27,8 @@ async def add_user(
     Input:
 
     - Data representing the new user to be added
+
+    - The current database
     
     Output:
 
@@ -68,7 +70,7 @@ async def get_all_users(
 
     Input:
 
-    - None
+    - The current database
     
     Output:
 
@@ -89,6 +91,8 @@ async def get_user_by_id(
     Input:
 
     - ID of the user to get
+
+    - The current database
     
     Output:
 
@@ -110,6 +114,8 @@ async def delete_user(
     Input:
 
     - ID of the user to delete
+
+    - The current database
     
     Output:
 
@@ -131,6 +137,8 @@ async def delete_user_token(
     Input:
 
     - ID of the user with the token to delete
+
+    - The current database
     
     Output:
 
@@ -155,6 +163,8 @@ async def update_user(
     - ID of the user to update
 
     - Updated data for the user
+
+    - The current database
     
     Output:
     

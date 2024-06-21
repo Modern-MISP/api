@@ -21,6 +21,8 @@ async def create_backup(
     Input:
 
     - path: Path where the backup will be created
+
+    - The current database
     
     Output:
 
@@ -40,6 +42,8 @@ async def update_backup(
     Input:
 
     - path: Path where the backup will be updated
+
+    - The current database
     
     Output:
 
@@ -56,7 +60,9 @@ async def get_remote_servers(
     """
     Returns a list of all currently active remote servers.
     
-    Input: None
+    Input:
+
+    - The current database
 
     Output:
 
@@ -77,6 +83,8 @@ async def get_remote_server(
 
     - serverId: the server's ID
 
+    - The current database
+
     Output:
 
     - server information regarding the chosen server
@@ -95,6 +103,8 @@ async def add_remote_server(
     Input:
 
     - Data containing details of the remote server to be added
+
+    - The current database
     
     Output:
 
@@ -114,6 +124,8 @@ async def delete_remote_server(
     Input:
 
     - Identifier of the remote server to be deleted
+
+    - The current database
     
     Output:
     

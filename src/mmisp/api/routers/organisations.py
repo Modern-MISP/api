@@ -31,6 +31,8 @@ async def add_organisation(
     Input:
 
     - Data representing the organisation to be added
+
+    - The current database
     
     Output:
 
@@ -48,7 +50,9 @@ async def get_organisations(
     """
     Gets all organisations as a list.
 
-    Input: None
+    Input:
+
+    - The current database
 
     Output:
 
@@ -69,6 +73,8 @@ async def get_organisation(
     Input:
 
     - ID of the organisation to get
+
+    - The current database
     
     Output:
 
@@ -89,6 +95,8 @@ async def delete_organisation(
     Input:
 
     - ID of the organisation to delete
+
+    - The current database
     
     Output:
 
@@ -111,6 +119,8 @@ async def update_organisation(
     - ID of the organisation to update
 
     - Updated data for the organisation
+
+    - The current database
     
     Output:
     
