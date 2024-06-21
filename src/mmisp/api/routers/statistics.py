@@ -11,13 +11,13 @@ from mmisp.db.database import Session, get_db
 router = APIRouter(tags=["statistics"])
 
 @router.get(
-    "/statistics/getAttributes",
-    summary="Gets a list of all attribute-related statistics listed on the website",
+    "/statistics/getUsageData",
+    summary="Gets a list of all usage-related statistics listed on the website",
 )
 async def get_statistics(
     TODO
 ) : 
-    """Gets all statistics as a list.
+    """Gets all usage statistics as a list.
     
     Input:
 
@@ -25,7 +25,7 @@ async def get_statistics(
 
     Output:
 
-    - List of all statistics
+    - List of all usage statistics
     """
     return await _get_statistics(db)
 
