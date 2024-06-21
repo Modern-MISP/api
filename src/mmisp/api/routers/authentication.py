@@ -28,9 +28,9 @@ from mmisp.util.crypto import verify_secret
 router = APIRouter(tags=["authentication"])
 
 
-@router.post("/auth/openID/setOpenIDConnectProvider")
-async def set_openID_Connect_provider(db: Annotated[Session, Depends(get_db)]):
-    """Sets a new OpenID Connect provider
+@router.post("/auth/openID/addOpenIDConnectProvider")
+async def add_openID_Connect_provider(db: Annotated[Session, Depends(get_db)]):
+    """Adds a new OpenID Connect provider
 
     Input:
 
