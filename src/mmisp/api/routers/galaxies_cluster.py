@@ -159,29 +159,6 @@ async def galaxies_attachCluster(
     """
     return await _attach_cluster_to_galaxy(db, attach_target_id, attach_target_type, local, body)
 
-@router.get("auth_keys/viewown",
-    summary="View own AuthKeys"
-    #Todo Responsmodel
-    ) 
-async def auth_keys_view_own_auth_keys(
-    #Todo
-    ) :
-    """View own Authkeys.
-
-    Input:
-
-    - the user's authentification status
-
-    - the current database
-
-    - the id of the user
-
-    Output:
-
-    - the auth keys
-    """
-    return await auth_keys_view_own_auth_keys()
-
 
 # --- endpoint logic ---
 
