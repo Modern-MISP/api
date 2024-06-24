@@ -124,7 +124,7 @@ async def delete_user(
     return await _delete_user(db, userID)
 
 @router.delete(
-    "/users/{userId}",
+    "/users/tokens/{userId}",
     #response_model=UserAttributesResponse,
     summary="Delete a users login token",
 )
