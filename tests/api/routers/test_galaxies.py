@@ -161,7 +161,7 @@ def test_get_existing_galaxy_cluster(db: Session, site_admin_user_token, galaxy,
     galaxy_cluster_id = add_galaxy_cluster_body.id
 
     headers = {"authorization": site_admin_user_token}
-    response = client.get(f"/galaxies/clusters/{clusterID}", headers=headers)
+    response = client.get(f"/galaxies/clusters/{galaxy_cluster_idD}", headers=headers)
 
     assert response.status_code == 200
 
