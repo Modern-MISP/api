@@ -13,7 +13,10 @@ from mmisp.api_schemas.noticelists import (
     NoticelistEntryResponse,
     NoticelistResponse,
 )
-from mmisp.api_schemas.responses.standard_status_response import StandardStatusIdentifiedResponse, StandardStatusResponse
+from mmisp.api_schemas.responses.standard_status_response import (
+    StandardStatusIdentifiedResponse,
+    StandardStatusResponse,
+)
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.noticelist import Noticelist, NoticelistEntry
 

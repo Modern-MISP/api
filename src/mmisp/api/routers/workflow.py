@@ -22,8 +22,8 @@ from mmisp.api_schemas.responses.check_graph_response import CheckGraphResponse
 from mmisp.api_schemas.responses.standard_status_response import StandardStatusResponse
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.workflow import Workflow
-from mmisp.workflows.modules import Module, Trigger
 from mmisp.workflows.graph import WorkflowGraph
+from mmisp.workflows.modules import Module, Trigger
 
 router = APIRouter(tags=["workflows"])
 
