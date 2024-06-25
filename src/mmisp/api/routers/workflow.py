@@ -13,7 +13,7 @@ Responses from these endpoints are consistently formatted in JSON,
 providing detailed information about each operation's outcome.
 """
 
-from typing import Annotated, List, Optional
+from typing import Annotated, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, Path, status
 
@@ -84,7 +84,9 @@ async def delete(
 
     - **workflow_id** The ID of the workflow to delete.
     """
-    return StandardStatusResponse
+    return StandardStatusResponse(
+        saved=True, success=True, message="Nothing happened, just a mockup", name="Test", url="https://example.com"
+    )
 
 
 @router.get(
@@ -179,13 +181,13 @@ async def moduleView(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     module_id: Annotated[int, Path(alias="moduleId")],
-) -> Module:
+) -> Dict[str, str]:
     """
     Returns a singular module.
 
     - **module_id** The ID of the module.
     """
-    return Module()
+    return {}
 
 
 @router.post(
@@ -208,7 +210,9 @@ async def toggleModule(
     - **is_trigger**: Indicates if the module is a trigger module.
     Trigger modules have specific behaviors and usage within the system.
     """
-    return StandardStatusResponse()
+    return StandardStatusResponse(
+        saved=True, success=True, message="Nothing happened, just a mockup", name="Test", url="https://example.com"
+    )
 
 
 @router.post("/workflows/checkGraph", status_code=status.HTTP_200_OK, summary="Checks if the given graph is correct")
@@ -239,4 +243,6 @@ async def toggleWorkflows(
 
     Globally enables/ disables the workflow feature in your MISP instance.
     """
-    return StandardStatusResponse()
+    return StandardStatusResponse(
+        saved=True, success=True, message="Nothing happened, just a mockup", name="Test", url="https://example.com"
+    )
