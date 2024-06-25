@@ -155,6 +155,35 @@ def test_import_galaxy_cluster_invalid_data(site_admin_user_token, galaxy, organ
     assert response.status_code == 403
 
 
+def test_get_existing_galaxy_cluster(db: Session, site_admin_user_token, galaxy, add_galaxy_cluster_body, client
+) -> None:
+    galaxy_id = galaxy.id
+    galaxy_cluster_id = add_galaxy_cluster_body.id
+
+    headers = {"authorization": site_admin_user_token}
+    response = client.get(f"/galaxies/clusters/{clusterID}", headers=headers)
+
+    assert response.status_code == 200
+
+    response_json = response.json()
+
+    assert response_json["id"] == str(cluster_id)
+    assert response_json["galaxy_id"] == str(galaxy_id)
+    assert response_json["type"] == add_galaxy_cluster_body.type
+    assert response_json["value"] == add_galaxy_cluster_body.value
+    assert response_json["tag_name"] == add_galaxy_cluster_body.tag_name
+
+
+def test_get_non_existing_galaxy_cluster(site_admin_user_token, client
+) -> None:
+
+    headers = {"authorization": site_admin_user_token}
+    response = client.get("/galaxies/clusters/0", headers=headers)
+    assert response.status_code == 404
+    response = client.get("/events/invalid_id", headers=headers)
+    assert response.status_code == 404
+
+
 def test_get_existing_galaxy_details(
     db: Session, site_admin_user_token, galaxy, add_galaxy_cluster_body, add_galaxy_element, client
 ) -> None:
