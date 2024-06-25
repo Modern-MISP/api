@@ -38,7 +38,7 @@ async def index(
     db: Annotated[Session, Depends(get_db)],
     name: Optional[str],
     uuid: Optional[str],
-) -> List[Workflow]:
+) -> List[Dict[str, str]]:
     """
     Returns a list of all workflows.
 
