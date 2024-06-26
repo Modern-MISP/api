@@ -66,13 +66,15 @@ async def import_galaxy_cluster(
 
 @router.get("/galaxies/clusters/{clusterID}",
     status_code=status.HTTP_200_OK,
-    #response_model=PLACEHOLDER,
+    response_model=GetGalaxyClusterResponse,
     summary="Gets information from a galaxy cluster",
     )
 async def get_galaxy_cluster(
-    TODO
-) :
-     #response_model=PLACEHOLDER
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    db: Annotated[Session, Depends(get_db)]
+    cluster_id: Annotated[int, Path(alias="clusterID")],
+) -> GetGalaxyClusterResponse :
+
     """Returns information from a galaxy cluster selected by its id.
                          
     Input:
@@ -83,13 +85,11 @@ async def get_galaxy_cluster(
 
     - the galaxy id
 
-    - the request body
-
     Output:
     
     - the information of the galaxy cluster
     """
-    return await _get_galaxy_cluster(db, clusterID)
+    return await _get_galaxy_cluster(db, cluster_id)
 
 
 @router.post(
@@ -263,9 +263,13 @@ async def _import_galaxy_cluster(
         url=str(request.url.path),
     )
 
-async def _get_galaxy_cluster(db: Session, cluster_id: str) : #response_model=PLACEHOLDER
-    #TODO
-    return None
+async def _get_galaxy_cluster(db: Session, cluster_id: int) -> GetGalaxyClusterResponse:
+    galaxy_cluster: GalaxyCluster | None = await db.get(GalaxyCluster, cluster_id)
+
+    if not galaxy_cluster:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Galaxy Cluster not found.")
+
+    return GetGalaxyClusterResponse(GalaxyCluster=galaxy_cluster.__dict__)
 
 
 async def _export_galaxy(db: Session, galaxy_id: str, body: ExportGalaxyBody) -> list[ExportGalaxyClusterResponse]:
