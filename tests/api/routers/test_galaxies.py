@@ -118,9 +118,9 @@ def add_galaxy_cluster_body2(db, galaxy2, tag):
 @pytest.fixture
 def add_galaxy_cluster_body3(db, galaxy3, tag):
     add_galaxy_cluster_body = GalaxyCluster(
-        id="777"
-        uuid="777"
-        collection_uuid="777"
+        id="777",
+        uuid="777",
+        collection_uuid="777",
         type="test",
         value="test",
         tag_name=tag.name,
