@@ -71,7 +71,7 @@ async def import_galaxy_cluster(
     )
 async def get_galaxy_cluster(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
-    db: Annotated[Session, Depends(get_db)]
+    db: Annotated[Session, Depends(get_db)],
     cluster_id: Annotated[int, Path(alias="clusterID")],
 ) -> GetGalaxyClusterResponse :
 
