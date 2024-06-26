@@ -16,6 +16,7 @@ from mmisp.db.database import Session, get_db
 from mmisp.db.models.organisation import Organisation
 from mmisp.db.models.role import Role
 from mmisp.db.models.user import User
+from mmisp.db.models.user_setting import UserSetting
 from mmisp.util.partial import partial
 
 router = APIRouter(tags=["users"])
@@ -215,8 +216,24 @@ async def _add_user(auth: Auth, db: Session, body: AddUserBody) -> AddUserRespon
 
     db.add(user)
 
+    print("test")
+
     await db.commit()
     await db.refresh(user)
+
+    print(user.id)
+
+    user_setting = UserSetting(
+        user_id=user.id,
+        setting="user_name",
+        value=body.name,
+    )
+
+    db.add(user_setting)
+
+    await db.commit()
+    await db.refresh(user_setting)
+
     return AddUserResponse(id=user.id)
 
 
