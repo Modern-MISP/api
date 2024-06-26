@@ -2,9 +2,16 @@ import time
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.future import select
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize, check_permissions
-from mmisp.api_schemas.users import AddUserBody, AddUserResponse, UsersViewMeResponse
+from mmisp.api_schemas.users import (
+    AddUserBody,
+    AddUserResponse,
+    GetAllUsersResponse,
+    GetAllUsersUser,
+    UsersViewMeResponse,
+)
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.organisation import Organisation
 from mmisp.db.models.role import Role
@@ -66,19 +73,22 @@ async def get_logged_in_user_info(
     "/users/view/all",
     summary="Get all users",
 )
-async def get_all_users(TODO):
+async def get_all_users(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    db: Annotated[Session, Depends(get_db)],
+) -> GetAllUsersResponse:
     """
     Retrieves a list of all users.
 
     Input:
 
-    - The current database
+    - None
 
     Output:
 
     - List containing all users
     """
-    return await _get_all_users(db)
+    return await _get_all_users(auth=auth, db=db)
 
 
 @router.get(
@@ -217,11 +227,44 @@ async def _add_user(auth: Auth, db: Session, body: AddUserBody) -> AddUserRespon
     return AddUserResponse(id=user.id)
 
 
-# Adds a new user and generates a new single-time password
+async def _get_all_users(
+    auth: Auth,
+    db: Session,
+) -> GetAllUsersResponse:
+    query = select(User)
 
+    if not (
+        await check_permissions(db, auth, [Permission.SITE_ADMIN])
+        or await check_permissions(db, auth, [Permission.ADMIN])
+    ):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
-async def _get_all_users(db: Session):
-    return None
+    result = await db.execute(query)
+    result = result.fetchall()
+    user_list_computed: list[GetAllUsersUser] = []
+
+    for user in result[0]:
+        user_list_computed.append(
+            GetAllUsersUser(
+                id=user.id,
+                organisation=user.org_id,
+                role=user.role_id,
+                nids=user.nids_sid,
+                name="Test",
+                email=user.email,
+                last_login=user.last_login,
+                created=user.date_created,
+                totp=user.totp,
+                contact=user.contactalert,
+                notification=user.notification_daily or user.notification_weekly or user.notification_monthly,
+                gpg_key=user.gpgkey,
+                terms=user.termsaccepted,
+            )
+        )
+
+    print(user_list_computed)
+
+    return GetAllUsersResponse(users=user_list_computed)
 
 
 async def _get_user(db: Session, userID: str):

@@ -1,4 +1,6 @@
+from icecream import ic
 from sqlalchemy.future import select
+from sqlalchemy.orm import Session
 
 from mmisp.db.models.user import User
 
@@ -46,3 +48,14 @@ def test_users_create(site_admin_user_token, site_admin_user, client, db) -> Non
     db.commit()
     user = db.execute(query).scalars().first()
     assert db.execute(query).scalars().first() is None
+
+
+def test_users_view_all(db: Session, site_admin_user_token, client) -> None:
+    headers = {"authorization": site_admin_user_token}
+    response = client.get("/users/view/all", headers=headers)
+
+    assert response.status_code == 200
+    response_json = response.json()
+    ic(type(response_json))
+    ic(isinstance(response_json, dict))
+    assert isinstance(response_json, dict)
