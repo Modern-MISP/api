@@ -65,17 +65,18 @@ async def import_galaxy_cluster(
     """
     return await _import_galaxy_cluster(db, body, request)
 
-@router.get("/galaxies/clusters/{clusterID}",
+
+@router.get(
+    "/galaxies/clusters/{clusterID}",
     status_code=status.HTTP_200_OK,
     response_model=GetGalaxyClusterResponse,
     summary="Gets information from a galaxy cluster",
-    )
+)
 async def get_galaxy_cluster(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     cluster_id: Annotated[int, Path(alias="clusterID")],
-) -> GetGalaxyClusterResponse :
-
+) -> GetGalaxyClusterResponse:
     """Returns information from a galaxy cluster selected by its id.
 
     Input:
@@ -263,6 +264,7 @@ async def _import_galaxy_cluster(
         message=f"Galaxy clusters imported. {successfully_imported_counter} imported, 0 ignored, 0 failed.",
         url=str(request.url.path),
     )
+
 
 async def _get_galaxy_cluster(db: Session, cluster_id: int) -> GetGalaxyClusterResponse:
     galaxy_cluster: GalaxyCluster | None = await db.get(GalaxyCluster, cluster_id)

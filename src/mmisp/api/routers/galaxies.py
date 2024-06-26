@@ -24,15 +24,13 @@ from mmisp.db.models.tag import Tag
 router = APIRouter(tags=["galaxies"])
 
 
-
-
 @router.get("/galaxies/{galaxyId}", status_code=status.HTTP_200_OK, response_model=GetGalaxyResponse)
 async def get_galaxy_details(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     galaxy_id: Annotated[str, Path(alias="galaxyId")],
 ) -> GetGalaxyResponse:
-    """"Gets the details of a galaxy.
+    """ "Gets the details of a galaxy.
 
     Input:
 
@@ -89,7 +87,7 @@ async def delete_galaxy(
     galaxy_id: Annotated[str, Path(alias="galaxyId")],
     request: Request,
 ) -> DeleteForceUpdateImportGalaxyResponse:
-    """"Delete a specific galaxy by its Id.
+    """ "Delete a specific galaxy by its Id.
 
     Input:
 
@@ -160,8 +158,6 @@ async def search_galaxies(
     return await _search_galaxies(db, body)
 
 
-
-
 # --- deprecated ---
 
 
@@ -229,8 +225,6 @@ async def delete_galaxy_depr(
 # --- endpoint logic ---
 
 
-
-
 async def _get_galaxy_details(db: Session, galaxy_id: str) -> GetGalaxyResponse:
     galaxy: Galaxy | None = await db.get(Galaxy, galaxy_id)
 
@@ -242,6 +236,7 @@ async def _get_galaxy_details(db: Session, galaxy_id: str) -> GetGalaxyResponse:
 
     return GetGalaxyResponse(Galaxy=galaxy_data, GalaxyCluster=galaxy_cluster_data)
 
+
 async def _prepare_galaxy_response(db: Session, galaxy: Galaxy) -> GetAllSearchGalaxiesAttributes:
     galaxy_dict = galaxy.__dict__.copy()
 
@@ -252,6 +247,7 @@ async def _prepare_galaxy_response(db: Session, galaxy: Galaxy) -> GetAllSearchG
         galaxy_dict["local_only"] = True
 
     return GetAllSearchGalaxiesAttributes(**galaxy_dict)
+
 
 async def _prepare_galaxy_cluster_response(db: Session, galaxy: Galaxy) -> list[GetGalaxyClusterResponse]:
     response_list = []
@@ -362,4 +358,3 @@ async def _search_galaxies(db: Session, body: SearchGalaxiesbyValue) -> list[Get
         response_list.append(GetAllSearchGalaxiesResponse(Galaxy=GetAllSearchGalaxiesAttributes(**galaxy_dict)))
 
     return response_list
-

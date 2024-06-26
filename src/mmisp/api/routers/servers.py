@@ -8,12 +8,12 @@ from mmisp.db.database import Session, get_db
 
 router = APIRouter(tags=["servers"])
 
-@router.post("/servers/createBackup/{path}",
+
+@router.post(
+    "/servers/createBackup/{path}",
     summary="Creates a backup on the given path",
 )
-async def create_backup(
-    TODO
-) :
+async def create_backup(TODO):
     """
     Creates a backup of the current database if the given path is valid.
 
@@ -29,12 +29,12 @@ async def create_backup(
     """
     return await _create_backup(db, path)
 
-@router.post("/servers/updateBackup/{path}",
+
+@router.post(
+    "/servers/updateBackup/{path}",
     summary="Updates a backup on the given path",
 )
-async def update_backup(
-    TODO
-) :
+async def update_backup(TODO):
     """
     Updates a backup of the current database if the given path is valid.
 
@@ -50,12 +50,12 @@ async def update_backup(
     """
     return await _update_backup(db, path)
 
-@router.get("/servers/remote/getAll",
+
+@router.get(
+    "/servers/remote/getAll",
     summary="Requests a list of all remote servers",
-    )
-async def get_remote_servers(
-    TODO
-) :
+)
+async def get_remote_servers(TODO):
     """
     Returns a list of all currently active remote servers.
 
@@ -69,12 +69,12 @@ async def get_remote_servers(
     """
     return await _get_remote_servers(db)
 
-@router.get("/servers/remote/{serverId}",
+
+@router.get(
+    "/servers/remote/{serverId}",
     summary="Requests information regarding a remote server",
-    )
-async def get_remote_server(
-    TODO
-) :
+)
+async def get_remote_server(TODO):
     """
     Returns information for a specific remote server chosen by its id.
 
@@ -90,12 +90,12 @@ async def get_remote_server(
     """
     return await _get_remote_server(db, serverId)
 
-@router.post("/servers/remote/add",
+
+@router.post(
+    "/servers/remote/add",
     summary="Adds a new remote server to the list",
-    )
-async def add_remote_server(
-    TODO
-) :
+)
+async def add_remote_server(TODO):
     """
     Adds a new remote server based on the input of an admin.
 
@@ -111,12 +111,12 @@ async def add_remote_server(
     """
     return await _add_remote_server(auth, db, body)
 
-@router.delete("/servers/remote/delete/{serverId}",
+
+@router.delete(
+    "/servers/remote/delete/{serverId}",
     summary="Deletes a remote server by id",
-    )
-async def delete_remote_server(
-    TODO
-) :
+)
+async def delete_remote_server(TODO):
     """
     Deletes a remote server if the given id is valid.
 
@@ -132,8 +132,11 @@ async def delete_remote_server(
     """
     return await _delete_remote_server(db, serverId)
 
+
 @router.get("/servers/getVersion")
-async def get_version(auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],db: Annotated[Session, Depends(get_db)]) -> dict:
+async def get_version(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))], db: Annotated[Session, Depends(get_db)]
+) -> dict:
     """
     Gets the Version of the server.
 
@@ -159,17 +162,29 @@ async def get_version(auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRI
         "filter_sightings": True,
     }
 
+
 # --- endpoint logic ---
 
-async def _create_backup(db: Session, path: str) -> None : return None
 
-async def _update_backup(db: Session, path: str) -> None : return None
+async def _create_backup(db: Session, path: str) -> None:
+    return None
 
-async def _get_remote_servers(db: Session) -> None : return None
 
-async def _get_remote_server(db: Session, serverId: str) -> None : return None
+async def _update_backup(db: Session, path: str) -> None:
+    return None
 
-async def _add_remote_server(PLACEHOLDER) -> None : return None
 
-async def _delete_remote_server(db: Session, serverId: str) -> None: return None
+async def _get_remote_servers(db: Session) -> None:
+    return None
 
+
+async def _get_remote_server(db: Session, serverId: str) -> None:
+    return None
+
+
+async def _add_remote_server(PLACEHOLDER) -> None:
+    return None
+
+
+async def _delete_remote_server(db: Session, serverId: str) -> None:
+    return None

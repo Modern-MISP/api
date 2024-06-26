@@ -69,8 +69,6 @@ async def auth_keys_add_user(
     return await _auth_key_add(auth=auth, db=db, user_id=user_id, body=body)
 
 
-
-
 @router.get(
     "/auth_keys/view/{AuthKeyId}",
     response_model=ViewAuthKeysResponse,
@@ -214,10 +212,12 @@ async def auth_keys_get(
     """
     return await _auth_keys_get(auth=auth, db=db)
 
-@router.get("auth_keys/viewOwn",
+
+@router.get(
+    "auth_keys/viewOwn",
     summary="View own AuthKeys",
 )
-async def auth_keys_view_own_auth_keys(TODO) :
+async def auth_keys_view_own_auth_keys(TODO):
     """View own Authkeys.
 
     Input:

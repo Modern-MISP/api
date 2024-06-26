@@ -141,7 +141,7 @@ async def password_login(db: Annotated[Session, Depends(get_db)], body: Password
 @router.post(
     "/auth/login/setOwnPassword",
     summary="User sets their password to a new password",
-    )
+)
 async def set_password(db: Annotated[Session, Depends(get_db)]) -> None:
     """Sets the password of the user to a new password.
 
@@ -308,7 +308,7 @@ async def exchange_token_login(body: ExchangeTokenLoginBody) -> TokenResponse:
 @router.put(
     "/auth/setPassword/{userId}",
     summary="Admin sets the password of the user to a new password",
-    )
+)
 async def change_password(body: ChangePasswordBody) -> ChangePasswordResponse:
     """Set the password of the user to a new password
 

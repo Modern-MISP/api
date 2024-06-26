@@ -1,4 +1,3 @@
-
 from fastapi import APIRouter
 
 from mmisp.db.database import Session
@@ -6,13 +5,12 @@ from mmisp.db.models.organisation import Organisation
 
 router = APIRouter(tags=["organisations"])
 
+
 @router.post(
     "/organisations",
     summary="Add a new organisation",
 )
-async def add_organisation(
-    TODO
-) :
+async def add_organisation(TODO):
     """
     Adds a new organisation.
 
@@ -28,13 +26,12 @@ async def add_organisation(
     """
     return await _add_organisation(db, organisation)
 
+
 @router.get(
     "/organisations/all",
     summary="Gets a list of all organisations",
 )
-async def get_organisations(
-    TODO
-) :
+async def get_organisations(TODO):
     """
     Gets all organisations as a list.
 
@@ -48,13 +45,12 @@ async def get_organisations(
     """
     return await _get_organisations(db)
 
+
 @router.get(
     "/organisations/{orgId}",
     summary="Gets an organisation by its ID",
 )
-async def get_organisation(
-    TODO
-) :
+async def get_organisation(TODO):
     """
     Gets an organisation by its ID.
 
@@ -70,13 +66,12 @@ async def get_organisation(
     """
     return await _get_organisation(db, organisationID)
 
+
 @router.delete(
     "/organisations/delete/{orgId}",
     summary="Deletes an organisation by its ID",
 )
-async def delete_organisation(
-    TODO
-) :
+async def delete_organisation(TODO):
     """
     Deletes an organisation by its ID.
 
@@ -92,13 +87,12 @@ async def delete_organisation(
     """
     return await _delete_organisation(db, organisationID)
 
+
 @router.post(
-"/organisations/update/{orgId}",
-summary="Updates an organisation by its ID",
+    "/organisations/update/{orgId}",
+    summary="Updates an organisation by its ID",
 )
-async def update_organisation(
-    TODO
-) :
+async def update_organisation(TODO):
     """
     Updates an organisation by its ID.
 
@@ -117,16 +111,24 @@ async def update_organisation(
     return await _update_organisation(db, organisationID)
 
 
-
 # --- endpoint logic ---
 
-async def _add_organisation(db: Session, organisation: Organisation) -> None : return None
 
-async def _get_organisations(db: Session) -> None : return None
+async def _add_organisation(db: Session, organisation: Organisation) -> None:
+    return None
 
-async def _get_organisation(db: Session, organisationID: str) -> None : return None
 
-async def _delete_organisation(db: Session, organisationID: str) -> None : return None
+async def _get_organisations(db: Session) -> None:
+    return None
 
-async def _update_organisation(db: Session, organisationID: str) -> None : return None
 
+async def _get_organisation(db: Session, organisationID: str) -> None:
+    return None
+
+
+async def _delete_organisation(db: Session, organisationID: str) -> None:
+    return None
+
+
+async def _update_organisation(db: Session, organisationID: str) -> None:
+    return None
