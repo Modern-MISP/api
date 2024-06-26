@@ -56,6 +56,20 @@ def galaxy2(db):
 
 
 @pytest.fixture
+def galaxy3(db):
+    galaxy = generate_galaxy()
+
+    db.add(galaxy)
+    db.commit()
+    db.refresh(galaxy)
+
+    yield galaxy
+
+    db.delete(galaxy)
+    db.commit()
+
+
+@pytest.fixture
 def organisation(db):
     organisation = generate_organisation()
 
@@ -102,6 +116,41 @@ def add_galaxy_cluster_body2(db, galaxy2, tag):
 
 
 @pytest.fixture
+def add_galaxy_cluster_body3(db, galaxy3, tag):
+    add_galaxy_cluster_body = GalaxyCluster(
+        id="777"
+        uuid="777"
+        collection_uuid="777"
+        type="test",
+        value="test",
+        tag_name=tag.name,
+        description="",
+        galaxy_id=galaxy2.id,
+        authors=["Me"],
+        version="1.0",
+        distribution="test",
+        sharing_group_id="777",
+        org_id="777",
+        orgc_id="777",
+        default=True,
+        locked=False,
+        extends_uuid="777",
+        extends_version="777",
+        published=True,
+        deleted=False
+    )
+
+    db.add(add_galaxy_cluster_body)
+    db.commit()
+    db.refresh(add_galaxy_cluster_body)
+
+    yield add_galaxy_cluster_body
+
+    db.delete(add_galaxy_cluster_body)
+    db.commit()
+
+
+@pytest.fixture
 def add_galaxy_element(db, add_galaxy_cluster_body):
     add_galaxy_element = GalaxyElement(
         galaxy_cluster_id=add_galaxy_cluster_body.id, key="refs", value="http://github.com"
@@ -115,6 +164,23 @@ def add_galaxy_element(db, add_galaxy_cluster_body):
 
     db.delete(add_galaxy_element)
     db.commit()
+
+
+@pytest.fixture
+def add_galaxy_element(db, add_galaxy_cluster_body3):
+    add_galaxy_element = GalaxyElement(
+        galaxy_cluster_id=add_galaxy_cluster_body3.id, key="refs", value="http://github.com"
+    )
+
+    db.add(add_galaxy_element)
+    db.commit()
+    db.refresh(add_galaxy_element)
+
+    yield add_galaxy_element
+
+    db.delete(add_galaxy_element)
+    db.commit()
+
 
 
 def test_import_galaxy_cluster_valid_data(db, site_admin_user_token, galaxy, organisation, tag, client) -> None:
@@ -155,10 +221,10 @@ def test_import_galaxy_cluster_invalid_data(site_admin_user_token, galaxy, organ
     assert response.status_code == 403
 
 
-def test_get_existing_galaxy_cluster(db: Session, site_admin_user_token, galaxy, add_galaxy_cluster_body, client
+def test_get_existing_galaxy_cluster(db: Session, site_admin_user_token, galaxy3, add_galaxy_cluster_body3, client
 ) -> None:
-    galaxy_id = galaxy.id
-    galaxy_cluster_id = add_galaxy_cluster_body.id
+    galaxy_id = galaxy3.id
+    galaxy_cluster_id = add_galaxy_cluster_body3.id
 
     headers = {"authorization": site_admin_user_token}
     response = client.get(f"/galaxies/clusters/{galaxy_cluster_id}", headers=headers)
