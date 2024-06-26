@@ -125,7 +125,7 @@ def add_galaxy_cluster_body3(db, galaxy3, tag):
         value="test",
         tag_name=tag.name,
         description="",
-        galaxy_id=galaxy2.id,
+        galaxy_id=galaxy3.id,
         authors=["Me"],
         version="1.0",
         distribution="test",
@@ -167,7 +167,7 @@ def add_galaxy_element(db, add_galaxy_cluster_body):
 
 
 @pytest.fixture
-def add_galaxy_element(db, add_galaxy_cluster_body3):
+def add_galaxy_element2(db, add_galaxy_cluster_body3):
     add_galaxy_element = GalaxyElement(
         galaxy_cluster_id=add_galaxy_cluster_body3.id, key="refs", value="http://github.com"
     )
