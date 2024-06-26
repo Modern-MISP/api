@@ -8,7 +8,6 @@ from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize, check_perm
 from mmisp.api_schemas.users import (
     AddUserBody,
     AddUserResponse,
-    GetAllUsersResponse,
     GetAllUsersUser,
     UsersViewMeResponse,
 )
@@ -77,7 +76,7 @@ async def get_logged_in_user_info(
 async def get_all_users(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-) -> GetAllUsersResponse:
+) -> list[GetAllUsersUser]:
     """
     Retrieves a list of all users.
 
@@ -240,7 +239,7 @@ async def _add_user(auth: Auth, db: Session, body: AddUserBody) -> AddUserRespon
 async def _get_all_users(
     auth: Auth,
     db: Session,
-) -> GetAllUsersResponse:
+) -> list[GetAllUsersUser]:
     query = select(User)
 
     if not (
@@ -253,6 +252,15 @@ async def _get_all_users(
     result = result.fetchall()
     user_list_computed: list[GetAllUsersUser] = []
 
+    user_name_query = select(UserSetting).where(UserSetting.setting == "user_name")
+    user_name = await db.execute(user_name_query)
+    user_name = user_name.fetchall()
+
+    user_names_by_id = {}
+
+    for name in user_name[0]:
+        user_names_by_id[name.user_id] = name.value
+
     for user in result[0]:
         user_list_computed.append(
             GetAllUsersUser(
@@ -260,7 +268,7 @@ async def _get_all_users(
                 organisation=user.org_id,
                 role=user.role_id,
                 nids=user.nids_sid,
-                name="Test",
+                name=user_names_by_id[user.id],
                 email=user.email,
                 last_login=user.last_login,
                 created=user.date_created,
@@ -272,9 +280,7 @@ async def _get_all_users(
             )
         )
 
-    print(user_list_computed)
-
-    return GetAllUsersResponse(users=user_list_computed)
+    return user_list_computed
 
 
 async def _get_user(db: Session, userID: str) -> None:

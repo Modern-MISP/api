@@ -44,7 +44,7 @@ from .generators.model_generators.organisation_generator import generate_organis
 from .generators.model_generators.role_generator import generate_org_admin_role, generate_site_admin_role
 from .generators.model_generators.sharing_group_generator import generate_sharing_group
 from .generators.model_generators.tag_generator import generate_tag
-from .generators.model_generators.user_generator import generate_user
+from .generators.model_generators.user_generator import generate_user, generate_user_name
 
 
 @pytest.fixture(autouse=True)
@@ -151,7 +151,17 @@ def site_admin_user(db, site_admin_role, instance_owner_org):
 
     db.add(user)
     db.commit()
+    db.refresh(user)
+
+    user_setting = generate_user_name()
+    user_setting.user_id = user.id
+
+    db.add(user_setting)
+    db.commit()
+
     yield user
+    db.delete(user_setting)
+    db.commit()
     db.delete(user)
     db.commit()
 
@@ -165,7 +175,17 @@ def instance_owner_org_admin_user(db, instance_owner_org, org_admin_role):
 
     db.add(user)
     db.commit()
+    db.refresh(user)
+
+    user_setting = generate_user_name()
+    user_setting.user_id = user.id
+
+    db.add(user_setting)
+    db.commit()
+
     yield user
+    db.delete(user_setting)
+    db.commit()
     db.delete(user)
     db.commit()
 
@@ -193,7 +213,17 @@ def instance_org_two_admin_user(db, instance_org_two, org_admin_role):
 
     db.add(user)
     db.commit()
+    db.refresh(user)
+
+    user_setting = generate_user_name()
+    user_setting.user_id = user.id
+
+    db.add(user_setting)
+    db.commit()
+
     yield user
+    db.delete(user_setting)
+    db.commit()
     db.delete(user)
     db.commit()
 
@@ -207,7 +237,17 @@ def instance_two_owner_org_admin_user(db, instance_two_owner_org, instance_two_s
 
     db.add(user)
     db.commit()
+    db.refresh(user)
+
+    user_setting = generate_user_name()
+    user_setting.user_id = user.id
+
+    db.add(user_setting)
+    db.commit()
+
     yield user
+    db.delete(user_setting)
+    db.commit()
     db.delete(user)
     db.commit()
 

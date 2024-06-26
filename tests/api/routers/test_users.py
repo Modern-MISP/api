@@ -1,4 +1,3 @@
-from icecream import ic
 from sqlalchemy.future import select
 from sqlalchemy.orm import Session
 
@@ -73,6 +72,25 @@ def test_users_view_all(db: Session, site_admin_user_token, client) -> None:
 
     assert response.status_code == 200
     response_json = response.json()
-    ic(type(response_json))
-    ic(isinstance(response_json, dict))
-    assert isinstance(response_json, dict)
+    assert isinstance(response_json, list)
+    response_json = response.json()
+    for user in response_json:
+        assert isinstance(response_json, list)
+        assert "id" in user
+        assert "organisation" in user
+        assert "role" in user
+        assert "nids" in user
+        assert "name" in user
+        assert "email" in user
+        assert "last_login" in user
+        assert "created" in user
+        assert "totp" in user
+        assert "contact" in user
+        assert "notification" in user
+        assert "gpg_key" in user
+        assert "terms" in user
+
+        query = select(UserSetting).where(UserSetting.setting == "user_name" and UserSetting.user_id == user.get("id"))
+        user_name = db.execute(query).scalars().first()
+        assert user_name is not None
+        assert user_name.value == user.get("name")

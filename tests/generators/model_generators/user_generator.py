@@ -1,6 +1,7 @@
 from time import time, time_ns
 
 from mmisp.db.models.user import User
+from mmisp.db.models.user_setting import UserSetting
 from mmisp.util.crypto import hash_secret
 
 
@@ -24,4 +25,11 @@ def generate_user() -> User:
         current_login=time(),
         last_login=time(),
         force_logout=False,
+    )
+
+
+def generate_user_name() -> str:
+    return UserSetting(
+        setting="user_name",
+        value=f"generated-user+{time_ns()}",
     )
