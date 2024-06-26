@@ -47,8 +47,8 @@ async def set_user_settings(
 
     - user_id: ID of the user for whom setting is to be set
 
-    - user_setting_name: Name of the user setting to 
-    
+    - user_setting_name: Name of the user setting to
+
     - body: SetUserSettingBody, Data for setting the user setting
 
     Output:
@@ -316,7 +316,7 @@ async def delete_user_settings_depr(
     - db: Database session
 
     Output:
-    
+
     - StandardStatusIdentifiedResponse: Response indicating success or failure
     """
     await _delete_user_settings(auth=auth, db=db, user_setting_id=user_setting_id)

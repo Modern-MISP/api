@@ -4,7 +4,6 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize, check_permissions
-
 from mmisp.db.database import Session, get_db
 
 router = APIRouter(tags=["servers"])
@@ -17,13 +16,13 @@ async def create_backup(
 ) :
     """
     Creates a backup of the current database if the given path is valid.
-    
+
     Input:
 
     - path: Path where the backup will be created
 
     - The current database
-    
+
     Output:
 
     - Response indicating the result of the backup operation
@@ -38,13 +37,13 @@ async def update_backup(
 ) :
     """
     Updates a backup of the current database if the given path is valid.
-    
+
     Input:
 
     - path: Path where the backup will be updated
 
     - The current database
-    
+
     Output:
 
     - Response indicating the result of the backup update operation
@@ -59,7 +58,7 @@ async def get_remote_servers(
 ) :
     """
     Returns a list of all currently active remote servers.
-    
+
     Input:
 
     - The current database
@@ -78,7 +77,7 @@ async def get_remote_server(
 ) :
     """
     Returns information for a specific remote server chosen by its id.
-    
+
     Input:
 
     - serverId: the server's ID
@@ -99,13 +98,13 @@ async def add_remote_server(
 ) :
     """
     Adds a new remote server based on the input of an admin.
-    
+
     Input:
 
     - Data containing details of the remote server to be added
 
     - The current database
-    
+
     Output:
 
     - Response indicating the result of the server addition operation
@@ -120,15 +119,15 @@ async def delete_remote_server(
 ) :
     """
     Deletes a remote server if the given id is valid.
-    
+
     Input:
 
     - Identifier of the remote server to be deleted
 
     - The current database
-    
+
     Output:
-    
+
     - Response indicating the result of the server deletion operation
     """
     return await _delete_remote_server(db, serverId)
@@ -137,15 +136,15 @@ async def delete_remote_server(
 async def get_version(auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],db: Annotated[Session, Depends(get_db)]) -> dict:
     """
     Gets the Version of the server.
-    
+
     Input:
 
     - auth: Authentication details
 
     - db: Database session
-    
+
      Output:
-    
+
     - Version of the server
     - Permissions for sync, sighting, and galaxy editor
     - Request encoding
@@ -162,15 +161,15 @@ async def get_version(auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRI
 
 # --- endpoint logic ---
 
-async def _create_backup(db: Session, path: str) : return None
+async def _create_backup(db: Session, path: str) -> None : return None
 
-async def _update_backup(db: Session, path: str) : return None
+async def _update_backup(db: Session, path: str) -> None : return None
 
-async def _get_remote_servers(db: Session) : return None
+async def _get_remote_servers(db: Session) -> None : return None
 
-async def _get_remote_server(db: Session, serverId: str) : return None
+async def _get_remote_server(db: Session, serverId: str) -> None : return None
 
-async def _add_remote_server(PLACEHOLDER) : return None
+async def _add_remote_server(PLACEHOLDER) -> None : return None
 
-async def _delete_remote_server(db: Session, serverId: str): return None
+async def _delete_remote_server(db: Session, serverId: str) -> None: return None
 

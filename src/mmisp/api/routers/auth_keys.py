@@ -51,7 +51,7 @@ async def auth_keys_add_user(
     body: AddAuthKeyBody,
 ) -> AddAuthKeyResponse:
     """Create an AuthKey for a specific user and save it in the database.
-    
+
     Input:
 
     - the user's authentification status
@@ -82,7 +82,7 @@ async def auth_keys_view_auth_key(
     auth_key_id: Annotated[int, Path(alias="AuthKeyId")],
 ) -> ViewAuthKeysResponse:
     """View an AuthKey by its ID.
-    
+
     Input:
 
     - the user's authentification status
@@ -109,7 +109,7 @@ async def search_auth_keys(
     body: SearchAuthKeyBody,
 ) -> list[SearchGetAuthKeysResponseItem]:
     """Search for specific AuthKeys by parameters.
-    
+
     Input:
 
     - the user's authentification status
@@ -117,7 +117,7 @@ async def search_auth_keys(
     - the current database
 
     - the request body
-    
+
     Output:
 
     - the authkeys
@@ -137,7 +137,7 @@ async def auth_keys_edit_auth_key(
     body: EditAuthKeyBody,
 ) -> EditAuthKeyResponse:
     """Edit an AuthKey by its ID.
-    
+
     Input:
 
     - the user's authentification status
@@ -166,7 +166,7 @@ async def auth_keys_delete_auth_key(
     auth_key_id: Annotated[int, Path(alias="AuthKeyId")],
 ) -> StandardStatusIdentifiedResponse:
     """Delete AuthKey by AuthKeyId from the database.
-    
+
     Input:
 
     - the user's authentification status
@@ -201,13 +201,13 @@ async def auth_keys_get(
     db: Annotated[Session, Depends(get_db)],
 ) -> list[SearchGetAuthKeysResponseItem]:
     """Returns all AuthKeys stored in the database as a List.
-    
+
     Input:
 
     - the user's authentification status
 
     - the current database
-    
+
     Output:
 
     - all authkeys as a list
@@ -216,7 +216,7 @@ async def auth_keys_get(
 
 @router.get("auth_keys/viewOwn",
     summary="View own AuthKeys",
-) 
+)
 async def auth_keys_view_own_auth_keys(TODO) :
     """View own Authkeys.
 
@@ -252,7 +252,7 @@ async def auth_keys_add_user_depr(
     body: AddAuthKeyBody,
 ) -> AddAuthKeyResponse:
     """Create an AuthKey for a specific user and write it to the database.
-    
+
     Input:
 
     - the user's authentification status
@@ -283,7 +283,7 @@ async def auth_keys_edit_auth_key_depr(
     body: EditAuthKeyBody,
 ) -> EditAuthKeyResponse:
     """Edit AuthKey by AuthKey ID.
-    
+
     Input:
 
     - the user's authentification status
@@ -293,7 +293,7 @@ async def auth_keys_edit_auth_key_depr(
     - the id of the authkey
 
     - the request body
-    
+
     Output:
 
     - the updated authkey
@@ -313,7 +313,7 @@ async def auth_keys_delete_auth_key_depr(
     auth_key_id: Annotated[int, Path(alias="AuthKeyId")],
 ) -> StandardStatusIdentifiedResponse:
     """Delete AuthKey by AuthKeyId from the database.
-    
+
     Input:
 
     - the user's authentification status

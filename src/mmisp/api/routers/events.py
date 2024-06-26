@@ -77,7 +77,7 @@ async def add_event(
     body: AddEventBody,
 ) -> AddEditGetEventResponse:
     """Add a new event with the given details.
-        
+
     Input:
 
     - the user's authentification status
@@ -105,7 +105,7 @@ async def get_event_details(
     event_id: Annotated[str, Path(alias="eventId")],
 ) -> AddEditGetEventResponse:
     """Retrieve details of a specific event by ist ID.
-        
+
     Input:
 
     - the user's authentification status
@@ -134,7 +134,7 @@ async def update_event(
     body: EditEventBody,
 ) -> AddEditGetEventResponse:
     """Update an existing event by its ID.
-        
+
     Input:
 
     - the user's authentification status
@@ -164,7 +164,7 @@ async def delete_event(
     event_id: Annotated[str, Path(alias="eventId")],
 ) -> DeleteEventResponse:
     """Delete an attribute by its ID.
-        
+
     Input:
 
     - the user's authentification status
@@ -189,7 +189,7 @@ async def get_all_events(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))], db: Annotated[Session, Depends(get_db)]
 ) -> list[GetAllEventsResponse]:
     """Retrieve a list of all events.
-        
+
     Input:
 
     - the user's authentification status
@@ -215,7 +215,7 @@ async def rest_search_events(
     body: SearchEventsBody,
 ) -> SearchEventsResponse:
     """Search for events based on various filters.
-        
+
     Input:
 
     - the user's authentification status
@@ -225,7 +225,7 @@ async def rest_search_events(
     - the request body
 
     Output:
-    
+
     - the searched events
     """
     return await _rest_search_events(db, body)
@@ -243,7 +243,7 @@ async def index_events(
     body: IndexEventsBody,
 ) -> list[GetAllEventsResponse]:
     """Search for events based on various filters, which are more general than the ones in 'rest search'.
-            
+
     Input:
 
     - the user's authentification status
@@ -253,7 +253,7 @@ async def index_events(
     - the request body
 
     Output:
-    
+
     - the searched events
     """
     return await _index_events(db, body)
@@ -272,7 +272,7 @@ async def publish_event(
     request: Request,
 ) -> PublishEventResponse:
     """Publish an event by ist ID.
-            
+
     Input:
 
     - the user's authentification status
@@ -284,7 +284,7 @@ async def publish_event(
     - the request
 
     Output:
-    
+
     - the published event
     """
     return await _publish_event(db, event_id, request)
@@ -303,7 +303,7 @@ async def unpublish_event(
     request: Request,
 ) -> UnpublishEventResponse:
     """Unpublish an event by its ID.
-               
+
     Input:
 
     - the user's authentification status
@@ -315,7 +315,7 @@ async def unpublish_event(
     - the request
 
     Output:
-    
+
     - the unpublished event
     """
     return await _unpublish_event(db, event_id, request)
@@ -335,7 +335,7 @@ async def add_tag_to_event(
     local: str,
 ) -> AddRemoveTagEventsResponse:
     """Add a tag to an attribute by their ids.
-               
+
     Input:
 
     - the user's authentification status
@@ -349,7 +349,7 @@ async def add_tag_to_event(
     - local
 
     Output:
-    
+
     - the result of adding the tag to the event given by the api
     """
     return await _add_tag_to_event(db, event_id, tag_id, local)
@@ -368,7 +368,7 @@ async def remove_tag_from_event(
     tag_id: Annotated[str, Path(alias="tagId")],
 ) -> AddRemoveTagEventsResponse:
     """Remove a tag to from an event by their id.
-                  
+
     Input:
 
     - the user's authentification status
@@ -380,7 +380,7 @@ async def remove_tag_from_event(
     - the tag id
 
     Output:
-    
+
     - the result of removing the tag from the event given by the api
     """
     return await _remove_tag_from_event(db, event_id, tag_id)
@@ -399,7 +399,7 @@ async def add_attribute_via_free_text_import(
     body: AddAttributeViaFreeTextImportEventBody,
 ) -> list[AddAttributeViaFreeTextImportEventResponse]:
     """Add attribute to event via free text import.
-                  
+
     Input:
 
     - the user's authentification status
@@ -411,7 +411,7 @@ async def add_attribute_via_free_text_import(
     - the request body
 
     Output:
-    
+
     - the result of adding the tag to the event given by the api
     """
     body_dict = body.dict()
@@ -430,11 +430,11 @@ async def add_attribute_via_free_text_import(
 @router.get(
     "/events/freeTextImportProcessID/{eventId}",
     status_code=status.HTTP_200_OK,
-    summary="Fetches the process ID from the current freetext Import", 
+    summary="Fetches the process ID from the current freetext Import",
 )
 async def get_pid_from_free_text_import(
     TODO
-) :
+) -> None :
     #add response model here
     """Gets the processID from the worker."""
     return None
@@ -456,7 +456,7 @@ async def add_event_depr(
     body: AddEventBody,
 ) -> AddEditGetEventResponse:
     """Deprecated. Add a new event with the given details.
-                  
+
     Input:
 
     - the user's authentification status
@@ -466,7 +466,7 @@ async def add_event_depr(
     - the request body
 
     Output:
-    
+
     - the new event
     """
     return await _add_event(auth, db, body)
@@ -485,7 +485,7 @@ async def get_event_details_depr(
     event_id: Annotated[str, Path(alias="eventId")],
 ) -> AddEditGetEventResponse:
     """Deprecated. Retrieve details of a specific attribute by its ID.
-                  
+
     Input:
 
     - the user's authentification status
@@ -495,7 +495,7 @@ async def get_event_details_depr(
     - the event id
 
     Output:
-    
+
     - the event details
     """
     return await _get_event_details(db, event_id)
@@ -515,7 +515,7 @@ async def update_event_depr(
     body: EditEventBody,
 ) -> AddEditGetEventResponse:
     """Deprecated. Update an existing event by its ID.
-                  
+
     Input:
 
     - the user's authentification status
@@ -527,7 +527,7 @@ async def update_event_depr(
     - the request body
 
     Output:
-    
+
     - the updated event
     """
     return await _update_event(db, event_id, body=body)
@@ -546,7 +546,7 @@ async def delete_event_depr(
     event_id: Annotated[str, Path(..., alias="eventId")],
 ) -> DeleteEventResponse:
     """Deprecated. Delete an existing event by its ID.
-                  
+
     Input:
 
     - the user's authentification status
@@ -556,7 +556,7 @@ async def delete_event_depr(
     - the event id
 
     Output:
-    
+
     - the deleted event
     """
     return await _delete_event(db, event_id)

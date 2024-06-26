@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import Annotated, Any
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Path
 from sqlalchemy.future import select
@@ -7,32 +7,18 @@ from starlette import status
 from starlette.requests import Request
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
-from mmisp.api_schemas.events import (
-    AddEditGetEventGalaxyClusterRelation,
-    AddEditGetEventGalaxyClusterRelationTag,
-    GetAllEventsGalaxyClusterGalaxy,
-)
 from mmisp.api_schemas.galaxies import (
-    AttachClusterGalaxyBody,
-    AttachClusterGalaxyResponse,
     DeleteForceUpdateImportGalaxyResponse,
-    ExportGalaxyBody,
-    ExportGalaxyClusterResponse,
     ExportGalaxyGalaxyElement,
     GetAllSearchGalaxiesAttributes,
     GetAllSearchGalaxiesResponse,
     GetGalaxyClusterResponse,
     GetGalaxyResponse,
-    ImportGalaxyBody,
     SearchGalaxiesbyValue,
 )
-from mmisp.api_schemas.organisations import Organisation as OrganisationSchema
 from mmisp.db.database import Session, get_db
-from mmisp.db.models.attribute import Attribute, AttributeTag
-from mmisp.db.models.event import Event, EventTag
 from mmisp.db.models.galaxy import Galaxy
-from mmisp.db.models.galaxy_cluster import GalaxyCluster, GalaxyElement, GalaxyReference
-from mmisp.db.models.organisation import Organisation
+from mmisp.db.models.galaxy_cluster import GalaxyCluster, GalaxyElement
 from mmisp.db.models.tag import Tag
 
 router = APIRouter(tags=["galaxies"])
@@ -47,7 +33,7 @@ async def get_galaxy_details(
     galaxy_id: Annotated[str, Path(alias="galaxyId")],
 ) -> GetGalaxyResponse:
     """"Gets the details of a galaxy.
-                 
+
     Input:
 
     - the user's authentification status
@@ -57,7 +43,7 @@ async def get_galaxy_details(
     - the galaxy id
 
     Output:
-    
+
     - the details of the galaxy
     """
     return await _get_galaxy_details(db, galaxy_id)
@@ -74,7 +60,7 @@ async def update_galaxy(
     db: Annotated[Session, Depends(get_db)],
 ) -> DeleteForceUpdateImportGalaxyResponse:
     """Force the galaxies to update with the JSON definitions, not yet implemented.
-                     
+
     Input:
 
     - the user's authentification status
@@ -82,7 +68,7 @@ async def update_galaxy(
     - the current database
 
     Output:
-    
+
     - the updated galaxies
     """
     raise NotImplementedError()
@@ -104,7 +90,7 @@ async def delete_galaxy(
     request: Request,
 ) -> DeleteForceUpdateImportGalaxyResponse:
     """"Delete a specific galaxy by its Id.
-                     
+
     Input:
 
     - the user's authentification status
@@ -116,7 +102,7 @@ async def delete_galaxy(
     - the request
 
     Output:
-    
+
     - the deleted galaxy
     """
     return await _delete_galaxy(db, galaxy_id, request)
@@ -132,7 +118,7 @@ async def get_galaxies(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))], db: Annotated[Session, Depends(get_db)]
 ) -> list[GetAllSearchGalaxiesResponse]:
     """Get a list with all existing galaxies.
-                     
+
     Input:
 
     - the user's authentification status
@@ -140,7 +126,7 @@ async def get_galaxies(
     - the current database
 
     Output:
-    
+
     - all galaxies
     """
     return await _get_galaxies(db)
@@ -158,7 +144,7 @@ async def search_galaxies(
     body: SearchGalaxiesbyValue,
 ) -> list[GetAllSearchGalaxiesResponse]:
     """Search galaxies by search term which matches with galaxy name, namespace, description, kill_chain_order or uuid."
-                     
+
     Input:
 
     - the user's authentification status
@@ -168,7 +154,7 @@ async def search_galaxies(
     - the request body
 
     Output:
-    
+
     - the galaxies found by search
     """
     return await _search_galaxies(db, body)
@@ -192,7 +178,7 @@ async def get_galaxy_details_depr(
     galaxy_id: Annotated[str, Path(alias="galaxyId")],
 ) -> GetGalaxyResponse:
     """View Galaxy by given Galaxy ID.
-                     
+
     Input:
 
     - the user's authentification status
@@ -202,7 +188,7 @@ async def get_galaxy_details_depr(
     - the galaxy id
 
     Output:
-    
+
     - the details of the galaxy
     """
     return await _get_galaxy_details(db, galaxy_id)
@@ -222,7 +208,7 @@ async def delete_galaxy_depr(
     request: Request,
 ) -> DeleteForceUpdateImportGalaxyResponse:
     """Delete Galaxy by GalaxyID.
-                     
+
     Input:
 
     - the user's authentification status
@@ -234,7 +220,7 @@ async def delete_galaxy_depr(
     - the request
 
     Output:
-    
+
     - the deleted galaxy
     """
     return await _delete_galaxy(db, galaxy_id, request)

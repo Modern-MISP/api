@@ -306,7 +306,7 @@ async def update_all_warninglists_depr(
     - db: Database session
 
     Output:
-    
+
     - StandardStatusResponse: Response indicating success or failure
     """
     return await _update_all_warninglists(db, True)

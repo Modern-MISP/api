@@ -418,7 +418,7 @@ async def update_sharing_group_legacy(
     Update an existing sharing group by its ID.
 
     Input:
-    
+
     - auth: Authentication details
 
     - db: Database session
@@ -593,7 +593,7 @@ async def remove_server_from_sharing_group_legacy(
     - server_id: ID of the server to remove
 
     Output:
-    
+
     - StandardStatusResponse: Response indicating success or failure
     """
     return await _remove_server_from_sharing_group_legacy(auth, db, id, server_id)

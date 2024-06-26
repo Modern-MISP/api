@@ -267,17 +267,17 @@ async def _get_all_users(
     return GetAllUsersResponse(users=user_list_computed)
 
 
-async def _get_user(db: Session, userID: str):
+async def _get_user(db: Session, userID: str) -> None:
     return None
 
 
-async def _delete_user(db: Session, userID: str):
+async def _delete_user(db: Session, userID: str) -> None:
     return None
 
 
-async def _delete_user_token(db: Session, userID: str):
+async def _delete_user_token(db: Session, userID: str) -> None:
     return None
 
 
-async def _update_user(db: Session, userID: str):
+async def _update_user(db: Session, userID: str) -> None:
     return None

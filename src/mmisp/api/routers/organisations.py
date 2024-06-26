@@ -1,19 +1,7 @@
-from collections.abc import Sequence
-from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, HTTPException, Path
-from sqlalchemy.future import select
-from starlette import status
-from starlette.requests import Request
+from fastapi import APIRouter
 
-from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
-from mmisp.api_schemas.events import (
-    AddEditGetEventGalaxyClusterRelation,
-    AddEditGetEventGalaxyClusterRelationTag,
-)
-
-from mmisp.api_schemas.organisations import Organisation as OrganisationSchema
-from mmisp.db.database import Session, get_db
+from mmisp.db.database import Session
 from mmisp.db.models.organisation import Organisation
 
 router = APIRouter(tags=["organisations"])
@@ -24,7 +12,7 @@ router = APIRouter(tags=["organisations"])
 )
 async def add_organisation(
     TODO
-) : 
+) :
     """
     Adds a new organisation.
 
@@ -33,7 +21,7 @@ async def add_organisation(
     - Data representing the organisation to be added
 
     - The current database
-    
+
     Output:
 
     - The added organisation data
@@ -46,7 +34,7 @@ async def add_organisation(
 )
 async def get_organisations(
     TODO
-) : 
+) :
     """
     Gets all organisations as a list.
 
@@ -66,7 +54,7 @@ async def get_organisations(
 )
 async def get_organisation(
     TODO
-) : 
+) :
     """
     Gets an organisation by its ID.
 
@@ -75,7 +63,7 @@ async def get_organisation(
     - ID of the organisation to get
 
     - The current database
-    
+
     Output:
 
     - Data of the searched organisation
@@ -88,7 +76,7 @@ async def get_organisation(
 )
 async def delete_organisation(
     TODO
-) : 
+) :
     """
     Deletes an organisation by its ID.
 
@@ -97,7 +85,7 @@ async def delete_organisation(
     - ID of the organisation to delete
 
     - The current database
-    
+
     Output:
 
     - Response indicating success or failure
@@ -110,7 +98,7 @@ summary="Updates an organisation by its ID",
 )
 async def update_organisation(
     TODO
-) : 
+) :
     """
     Updates an organisation by its ID.
 
@@ -121,9 +109,9 @@ async def update_organisation(
     - Updated data for the organisation
 
     - The current database
-    
+
     Output:
-    
+
     - Updated organisation data
     """
     return await _update_organisation(db, organisationID)
@@ -132,13 +120,13 @@ async def update_organisation(
 
 # --- endpoint logic ---
 
-async def _add_organisation(db: Session, organisation: Organisation) : return None
+async def _add_organisation(db: Session, organisation: Organisation) -> None : return None
 
-async def _get_organisations(db: Session) : return None
+async def _get_organisations(db: Session) -> None : return None
 
-async def _get_organisation(db: Session, organisationID: str) : return None
+async def _get_organisation(db: Session, organisationID: str) -> None : return None
 
-async def _delete_organisation(db: Session, organisationID: str) : return None
+async def _delete_organisation(db: Session, organisationID: str) -> None : return None
 
-async def _update_organisation(db: Session, organisationID: str) : return None
+async def _update_organisation(db: Session, organisationID: str) -> None : return None
 

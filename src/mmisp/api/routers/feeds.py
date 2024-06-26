@@ -33,7 +33,7 @@ async def add_feed(
     body: FeedCreateBody,
 ) -> FeedResponse:
     """Add a new feed with given details.
-                  
+
     Input:
 
     - the user's authentification status
@@ -43,7 +43,7 @@ async def add_feed(
     - the request body
 
     Output:
-    
+
     - the new feed
     """
     return await _add_feed(db, body)
@@ -61,7 +61,7 @@ async def cache_feeds(
     cache_feeds_scope: Annotated[str, Path(alias="cacheFeedsScope")],
 ) -> FeedCacheResponse:
     """Cache feeds based on a specific scope. NOT YET AVAILABLE!
-                     
+
     Input:
 
     - the user's authentification status
@@ -71,7 +71,7 @@ async def cache_feeds(
     - the cache feeds scope
 
     Output:
-    
+
     - the cache feeds
     """
     return await _cache_feeds(db, cache_feeds_scope)
@@ -89,7 +89,7 @@ async def fetch_from_feed(
     feed_id: Annotated[int, Path(alias="feedId")],
 ) -> FeedFetchResponse:
     """Fetch data from a specific feed by its ID. NOT YET AVAILABLE!
-                     
+
     Input:
 
     - the user's authentification status
@@ -99,7 +99,7 @@ async def fetch_from_feed(
     - the feed id
 
     Output:
-    
+
     - the fetched feed data
     """
     return await _fetch_from_feed(db, feed_id)
@@ -117,7 +117,7 @@ async def get_feed_details(
     feed_id: Annotated[int, Path(alias="feedId")],
 ) -> FeedResponse:
     """Retrieve details of a specific feed by its ID.
-                     
+
     Input:
 
     - the user's authentification status
@@ -127,7 +127,7 @@ async def get_feed_details(
     - the feed id
 
     Output:
-    
+
     - the details of a feed
     """
     return await _get_feed_details(db, feed_id)
@@ -146,7 +146,7 @@ async def update_feed(
     body: FeedUpdateBody,
 ) -> FeedResponse:
     """Update an existing feed by its ID.
-                     
+
     Input:
 
     - the user's authentification status
@@ -158,7 +158,7 @@ async def update_feed(
     - the request body
 
     Output:
-    
+
     - the updated feed
     """
     return await _update_feed(db, feed_id, body)
@@ -177,8 +177,8 @@ async def toggle_feed(
     body: FeedToggleBody,
 ) -> FeedEnableDisableResponse:
     """Toggle the status of a feed between enabled and disabled.
-    
-                     
+
+
     Input:
 
     - the user's authentification status
@@ -190,7 +190,7 @@ async def toggle_feed(
     - the request body
 
     Output:
-    
+
     - the new status of the feed
     """
     return await _toggle_feed(db, feed_id, body)
@@ -207,7 +207,7 @@ async def fetch_data_from_all_feeds(
     db: Annotated[Session, Depends(get_db)],
 ) -> FeedFetchResponse:
     """Fetch data from all available feeds. NOT YET AVAILABLE!
-                     
+
     Input:
 
     - the user's authentification status
@@ -215,7 +215,7 @@ async def fetch_data_from_all_feeds(
     - the current database
 
     Output:
-    
+
     - the fetched data of all available feeds
     """
     return await _fetch_data_from_all_feeds(db)
@@ -232,7 +232,7 @@ async def get_feeds(
     db: Annotated[Session, Depends(get_db)],
 ) -> list[FeedResponse]:
     """Retrieve a list of all feeds.
-                     
+
     Input:
 
     - the user's authentification status
@@ -240,7 +240,7 @@ async def get_feeds(
     - the current database
 
     Output:
-    
+
     - all feeds as a list
     """
     return await _get_feeds(db)
@@ -262,7 +262,7 @@ async def add_feed_depr(
     body: FeedCreateBody,
 ) -> FeedResponse:
     """Deprecated. Add a new feed with given details using the old route.
-                     
+
     Input:
 
     - the user's authentification status
@@ -272,7 +272,7 @@ async def add_feed_depr(
     - the request body
 
     Output:
-    
+
     - the added feed
     """
     return await _add_feed(db, body)
@@ -291,7 +291,7 @@ async def enable_feed(
     feed_id: Annotated[int, Path(alias="feedId")],
 ) -> FeedEnableDisableResponse:
     """Deprecated. Enable a specific feed by its ID using the old route.
-               
+
     Input:
 
     - the user's authentification status
@@ -301,7 +301,7 @@ async def enable_feed(
     - the feed id
 
     Output:
-    
+
     - the the enabled feed
     """
     return await _enable_feed(db, feed_id)
@@ -320,7 +320,7 @@ async def disable_feed(
     feed_id: Annotated[int, Path(alias="feedId")],
 ) -> FeedEnableDisableResponse:
     """Deprecated. Disable a specific feed by its ID using the old route.
-                     
+
     Input:
 
     - the user's authentification status
@@ -330,7 +330,7 @@ async def disable_feed(
     - the feed id
 
     Output:
-    
+
     - the disabled feed
     """
     return await _disable_feed(db, feed_id)
@@ -349,7 +349,7 @@ async def cache_feeds_depr(
     cache_feeds_scope: Annotated[str, Path(alias="cacheFeedsScope")],
 ) -> FeedCacheResponse:
     """Cache feeds based on a specific scope.
-                     
+
     Input:
 
     - the user's authentification status
@@ -359,7 +359,7 @@ async def cache_feeds_depr(
     - the cache feeds scope
 
     Output:
-    
+
     - the feed cache
     """
     return await _cache_feeds(db, cache_feeds_scope)
@@ -378,7 +378,7 @@ async def fetch_from_feed_depr(
     feed_id: Annotated[int, Path(alias="feedId")],
 ) -> FeedFetchResponse:
     """Deprecated. Fetch data from a specific feed by its ID using the old route.
-                     
+
     Input:
 
     - the user's authentification status
@@ -388,7 +388,7 @@ async def fetch_from_feed_depr(
     - the feed id
 
     Output:
-    
+
     - the fetched feed data
     """
     return await _fetch_from_feed(db, feed_id)
@@ -406,7 +406,7 @@ async def fetch_data_from_all_feeds_depr(
     db: Annotated[Session, Depends(get_db)],
 ) -> FeedFetchResponse:
     """Deprecated. Fetch data from all available feeds using the old route.
-                     
+
     Input:
 
     - the user's authentification status
@@ -415,7 +415,7 @@ async def fetch_data_from_all_feeds_depr(
 
 
     Output:
-    
+
     - the fetched data of all feeds
     """
     return await _fetch_data_from_all_feeds(db)
@@ -434,7 +434,7 @@ async def get_feed_details_depr(
     feed_id: Annotated[int, Path(alias="feedId")],
 ) -> FeedResponse:
     """Deprecated. Retrieve details of a specific feed by its ID using the old route.
-                     
+
     Input:
 
     - the user's authentification status
@@ -444,7 +444,7 @@ async def get_feed_details_depr(
     - the feed id
 
     Output:
-    
+
     - the details of the feed
     """
     return await _get_feed_details(db, feed_id)
@@ -464,8 +464,8 @@ async def update_feed_depr(
     body: FeedUpdateBody,
 ) -> FeedResponse:
     """Deprecated. Update an existing feed by its ID using the old route.
-    
-                     
+
+
     Input:
 
     - the user's authentification status
@@ -477,8 +477,8 @@ async def update_feed_depr(
     - the request body
 
     Output:
-    
-    - the updated feed 
+
+    - the updated feed
     """
     return await _update_feed(db, feed_id, body)
 

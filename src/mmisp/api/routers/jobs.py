@@ -14,7 +14,7 @@ async def get_job(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))], id: str
 ) -> dict:
     """Gets a job.
-                     
+
     Input:
 
     - the user's authentification status
@@ -22,7 +22,7 @@ async def get_job(
     - the id
 
     Output:
-    
+
     - dict
     """
     async with httpx.AsyncClient() as client:

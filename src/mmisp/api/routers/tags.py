@@ -41,7 +41,7 @@ async def add_tag(
     body: TagCreateBody,
 ) -> TagResponse:
     """Add a new tag with given details.
-    
+
     Input:
 
     - auth: Authentication details
@@ -69,7 +69,7 @@ async def view_tag(
     tag_id: Annotated[int, Path(alias="tagId")],
 ) -> TagViewResponse:
     """View details of a specific tag.
-    
+
     Input:
 
     - auth: Authentication details
@@ -97,7 +97,7 @@ async def search_tags(
     tag_search_term: Annotated[str, Path(alias="tagSearchTerm")],
 ) -> dict:
     """Search for tags using a specific search term.
-    
+
     Input:
 
     - auth: Authentication details
@@ -126,7 +126,7 @@ async def update_tag(
     tag_id: Annotated[int, Path(alias="tagId")],
 ) -> TagResponse:
     """Edit details of a specific tag.
-    
+
     Input:
 
     - auth: Authentication details
@@ -156,7 +156,7 @@ async def delete_tag(
     tag_id: Annotated[int, Path(alias="tagId")],
 ) -> TagDeleteResponse:
     """Delete a specific tag.
-    
+
     Input:
 
     - auth: Authentication details
@@ -182,7 +182,7 @@ async def get_tags(
     db: Annotated[Session, Depends(get_db)],
 ) -> TagGetResponse:
     """Retrieve a list of all tags.
-    
+
     Input:
 
     - auth: Authentication details
@@ -212,7 +212,7 @@ async def add_tag_depr(
     body: TagCreateBody,
 ) -> TagResponse:
     """Deprecated. Add a new tag using the old route.
-    
+
     Input:
 
     - auth: Authentication details
@@ -241,7 +241,7 @@ async def view_tag_depr(
     tag_id: Annotated[int, Path(alias="tagId")],
 ) -> TagViewResponse:
     """Deprecated. View details of a specific tag using the old route.
-    
+
     Input:
 
     - auth: Authentication details
@@ -271,7 +271,7 @@ async def update_tag_depr(
     tag_id: Annotated[int, Path(alias="tagId")],
 ) -> TagResponse:
     """Deprecated. Edit a specific tag using the old route.
-    
+
     Input:
 
     - auth: Authentication details
@@ -302,7 +302,7 @@ async def delete_tag_depr(
     tag_id: Annotated[int, Path(alias="tagId")],
 ) -> TagDeleteResponse:
     """Deprecated. Delete a specific tag using the old route.
-    
+
     Input:
 
     - auth: Authentication details
@@ -312,7 +312,7 @@ async def delete_tag_depr(
     - tag_id: ID of the tag to delete
 
     Output:
-    
+
     - TagDeleteResponse: Confirmation of the tag deletion
     """
     return await _delete_tag(db, tag_id)

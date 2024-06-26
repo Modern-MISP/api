@@ -1,12 +1,7 @@
-from collections.abc import Sequence
-from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, HTTPException, Path
-from sqlalchemy.future import select
-from starlette import status
-from starlette.requests import Request
+from fastapi import APIRouter
 
-from mmisp.db.database import Session, get_db
+from mmisp.db.database import Session
 
 router = APIRouter(tags=["statistics"])
 
@@ -16,9 +11,9 @@ router = APIRouter(tags=["statistics"])
 )
 async def get_statistics(
     TODO
-) : 
+) :
     """Gets all usage statistics as a list.
-    
+
     Input:
 
     - db: Database session
@@ -35,9 +30,9 @@ async def get_statistics(
 )
 async def get_statistics_by_org(
     TODO
-) : 
+) :
     """Gets all attrtibute-related statistics by organisation as a list.
-    
+
     Input:
 
     - db: Database session
@@ -55,24 +50,24 @@ async def get_statistics_by_org(
 )
 async def get_logincount(
     TODO
-) : 
+) :
     """Gets the login count of the past 4 months.
-    
+
     Input:
 
     - db: Database session
 
     Output:
-    
+
     - Count of all logins in the past 4 months
     """
     return await _get_logincount(db)
 
 # --- endpoint logic ---
 
-async def _get_statistics(db: Session) : return None
+async def _get_statistics(db: Session) -> None : return None
 
-async def _get_statistics_by_org(db: Session, orgID: str) : return None
+async def _get_statistics_by_org(db: Session, orgID: str) -> None : return None
 
-async def _get_logincount(db: Session, orgID: str) : return None
+async def _get_logincount(db: Session, orgID: str) -> None : return None
 

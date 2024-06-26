@@ -11,14 +11,14 @@ from sqlalchemy.future import select
 from mmisp.api.auth import decode_exchange_token, encode_exchange_token, encode_token
 from mmisp.api.config import config
 from mmisp.api_schemas.authentication import (
+    ChangePasswordBody,
+    ChangePasswordResponse,
     ExchangeTokenLoginBody,
     LoginType,
     PasswordLoginBody,
     StartLoginBody,
     StartLoginResponse,
     TokenResponse,
-    ChangePasswordBody,
-    ChangePasswordResponse,
 )
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.identity_provider import OIDCIdentityProvider
@@ -29,7 +29,7 @@ router = APIRouter(tags=["authentication"])
 
 
 @router.post("/auth/openID/addOpenIDConnectProvider")
-async def add_openID_Connect_provider(db: Annotated[Session, Depends(get_db)]):
+async def add_openID_Connect_provider(db: Annotated[Session, Depends(get_db)]) -> None:
     """Adds a new OpenID Connect provider
 
     Input:
@@ -142,7 +142,7 @@ async def password_login(db: Annotated[Session, Depends(get_db)], body: Password
     "/auth/login/setOwnPassword",
     summary="User sets their password to a new password",
     )
-async def set_password(db: Annotated[Session, Depends(get_db)]):
+async def set_password(db: Annotated[Session, Depends(get_db)]) -> None:
     """Sets the password of the user to a new password.
 
     Input:
@@ -171,7 +171,7 @@ async def redirect_to_idp(
     - the identity provider id
 
     Output:
-    
+
     - the redirection
     """
     identity_provider: OIDCIdentityProvider | None = await db.get(OIDCIdentityProvider, identity_provider_id)
@@ -336,9 +336,9 @@ async def _get_oidc_config(base_url: str) -> dict:
 # --- endpoint logic ---
 
 
-async def _delete_openID_Connect_provider(db: Session, openIDConnectProvider: str):
+async def _delete_openID_Connect_provider(db: Session, openIDConnectProvider: str) -> None:
     return None
 
 
-async def _edit_openID_Connect_provider(db: Session, openIDConnectProvider: str):
+async def _edit_openID_Connect_provider(db: Session, openIDConnectProvider: str) -> None:
     return None

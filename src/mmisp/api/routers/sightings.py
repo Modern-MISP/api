@@ -37,7 +37,7 @@ async def add_sighting(
     body: SightingCreateBody,
 ) -> list[SightingAttributesResponse]:
     """Add a new sighting for each given value.
-    
+
     Input:
 
     - auth: Authentication details
@@ -64,11 +64,11 @@ async def add_sightings_at_index(
     attribute_id: Annotated[int, Path(alias="attributeId")],
 ) -> SightingAttributesResponse:
     """Add a new sighting for a specific attribute.
-    
+
     Input:
 
-    - auth: Authentication 
-    
+    - auth: Authentication
+
     - db: Database session
 
     - attribute_id: ID of the attribute
@@ -91,7 +91,7 @@ async def get_sightings_at_index(
     event_id: Annotated[int, Path(alias="eventId")],
 ) -> list[SightingAttributesResponse]:
     """Retrieve all sightings associated with a specific event ID.
-    
+
     Input:
 
     - auth: Authentication details
@@ -118,7 +118,7 @@ async def delete_sighting(
     sighting_id: Annotated[int, Path(alias="sightingId")],
 ) -> StandardStatusResponse:
     """Delete a specific sighting.
-    
+
     Input:
 
     - auth: Authentication details
@@ -144,7 +144,7 @@ async def get_sightings(
     db: Annotated[Session, Depends(get_db)],
 ) -> SightingsGetResponse:
     """Retrieve a list of all sightings.
-    
+
     Input:
 
     - auth: Authentication details
@@ -173,7 +173,7 @@ async def add_sighting_depr(
     body: SightingCreateBody,
 ) -> list[SightingAttributesResponse]:
     """Deprecated. Add a new sighting using the old route.
-    
+
     Input:
 
     - auth: Authentication details
@@ -201,7 +201,7 @@ async def add_sightings_at_index_depr(
     attribute_id: Annotated[int, Path(alias="attributeId")],
 ) -> SightingAttributesResponse:
     """Deprecated. Add a new sighting for a specific attribute using the old route.
-    
+
     Input:
 
     - auth: Authentication details
@@ -229,7 +229,7 @@ async def delete_sighting_depr(
     sighting_id: Annotated[int, Path(alias="sightingId")],
 ) -> StandardStatusResponse:
     """Deprecated. Delete a specific sighting using the old route.
-    
+
     Input:
 
     - auth: Authentication details
@@ -257,7 +257,7 @@ async def get_sightings_at_index_depr(
     event_id: Annotated[int, Path(alias="eventId")],
 ) -> list[SightingAttributesResponse]:
     """Deprecated. Retrieve all sightings associated with a specific event ID using the old route.
-    
+
     Input:
 
     - auth: Authentication details
@@ -267,7 +267,7 @@ async def get_sightings_at_index_depr(
     - event_id: ID of the event
 
     Output:
-    
+
     - Details of the sightings at index
     """
     return await _get_sightings_at_index(db, event_id)

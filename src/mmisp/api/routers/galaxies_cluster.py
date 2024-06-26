@@ -10,18 +10,19 @@ from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
 from mmisp.api_schemas.events import (
     AddEditGetEventGalaxyClusterRelation,
     AddEditGetEventGalaxyClusterRelationTag,
+    GetAllEventsGalaxyClusterGalaxy,
 )
-from mmisp.api_schemas.events import GetAllEventsGalaxyClusterGalaxy
-from mmisp.api_schemas.galaxies import AttachClusterGalaxyBody
-from mmisp.api_schemas.galaxies import AttachClusterGalaxyResponse
-from mmisp.api_schemas.galaxies import DeleteForceUpdateImportGalaxyResponse
-from mmisp.api_schemas.galaxies import ExportGalaxyBody
-from mmisp.api_schemas.galaxies import ExportGalaxyClusterResponse, ExportGalaxyGalaxyElement
 from mmisp.api_schemas.galaxies import (
+    AttachClusterGalaxyBody,
+    AttachClusterGalaxyResponse,
+    DeleteForceUpdateImportGalaxyResponse,
+    ExportGalaxyBody,
+    ExportGalaxyClusterResponse,
+    ExportGalaxyGalaxyElement,
     GetAllSearchGalaxiesAttributes,
+    GetGalaxyClusterResponse,
+    ImportGalaxyBody,
 )
-from mmisp.api_schemas.galaxies import GetGalaxyClusterResponse
-from mmisp.api_schemas.galaxies import ImportGalaxyBody
 from mmisp.api_schemas.organisations import Organisation as OrganisationSchema
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.attribute import Attribute, AttributeTag
@@ -47,7 +48,7 @@ async def import_galaxy_cluster(
     request: Request,
 ) -> DeleteForceUpdateImportGalaxyResponse:
     """Add a new galaxy cluster to an existing galaxy.
-                     
+
     Input:
 
     - the user's authentification status
@@ -59,7 +60,7 @@ async def import_galaxy_cluster(
     - the request
 
     Output:
-    
+
     - the new galaxy cluster
     """
     return await _import_galaxy_cluster(db, body, request)
@@ -76,7 +77,7 @@ async def get_galaxy_cluster(
 ) -> GetGalaxyClusterResponse :
 
     """Returns information from a galaxy cluster selected by its id.
-                         
+
     Input:
 
     - the user's authentification status
@@ -86,7 +87,7 @@ async def get_galaxy_cluster(
     - the galaxy id
 
     Output:
-    
+
     - the information of the galaxy cluster
     """
     return await _get_galaxy_cluster(db, cluster_id)
@@ -105,7 +106,7 @@ async def export_galaxy(
     body: ExportGalaxyBody,
 ) -> list[ExportGalaxyClusterResponse]:
     """Export galaxy cluster.
-                         
+
     Input:
 
     - the user's authentification status
@@ -117,7 +118,7 @@ async def export_galaxy(
     - the request body
 
     Output:
-    
+
     - the exported galaxy cluster
     """
     return await _export_galaxy(db, galaxy_id, body)
@@ -138,7 +139,7 @@ async def galaxies_attachCluster(
     local: str,
 ) -> AttachClusterGalaxyResponse:
     """Attach a Galaxy Cluster to given Galaxy.
-                         
+
     Input:
 
     - the user's authentification status
@@ -154,7 +155,7 @@ async def galaxies_attachCluster(
     - local
 
     Output:
-    
+
     - the attached galaxy cluster and the attach target
     """
     return await _attach_cluster_to_galaxy(db, attach_target_id, attach_target_type, local, body)

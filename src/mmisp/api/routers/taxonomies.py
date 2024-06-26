@@ -274,13 +274,13 @@ async def get_taxonomy_by_id_depr(
     Input:
 
     - db: Database session
-    
+
     - auth: Authentication details
 
     - taxonomy_id: ID of the taxonomy to get
 
     Output:
-    
+
     - GetIdTaxonomyResponseWrapper: Wrapper containing taxonomy details
     """
     return await _get_taxonomy_details(db, taxonomy_id)
