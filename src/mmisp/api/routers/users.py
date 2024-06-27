@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Path, status
 from sqlalchemy.future import select
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize, check_permissions
+from mmisp.api_schemas.standard_status_response import StandardStatusIdentifiedResponse
 from mmisp.api_schemas.users import (
     AddUserBody,
     AddUserResponse,
@@ -122,15 +123,15 @@ async def get_user_by_id(
 
 
 @router.delete(
-    "/users/{userId}",
+    "/users/{user_id}",
     # response_model=UserAttributesResponse,
     summary="Delete a user",
 )
 async def delete_user(
+    user_id: Annotated[int, Path(alias="userId")],
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    user_id: Annotated[str, Path(alias="userId")],
-) -> None:
+) -> StandardStatusIdentifiedResponse:
     """
     Deletes a user by their ID.
 
@@ -138,13 +139,22 @@ async def delete_user(
 
     - ID of the user to delete
 
+    - auth: Authentication details of the current user
+
     - The current database
 
     Output:
-
-    - Response indicating success or failure
+    - StandardStatusIdentifiedResponse: Response indicating success or failure
     """
-    return await _delete_user(auth, db, user_id)
+    await _delete_user(user_id=user_id, auth=auth, db=db)
+    return StandardStatusIdentifiedResponse(
+        saved=True,
+        success=True,
+        name="User deleted.",
+        message="User deleted.",
+        url=f"/users/{user_id}",
+        id=user_id,
+    )
 
 
 @router.delete(
@@ -305,8 +315,16 @@ async def _get_user(auth: Auth, db: Session, userID: str) -> None:
     return None
 
 
-async def _delete_user(auth: Auth, db: Session, userID: str) -> None:
-    return None
+async def _delete_user(user_id: int, auth: Auth, db: Session) -> None:
+    if user_id != auth.user_id and not await check_permissions(db, auth, [Permission.SITE_ADMIN]):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED)
+
+    user = _get_user(db, user_id)
+    if not user:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    await db.delete(user)
+    await db.commit()
 
 
 async def _delete_user_token(auth: Auth, db: Session, userID: str) -> None:
