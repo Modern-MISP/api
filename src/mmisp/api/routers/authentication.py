@@ -8,7 +8,16 @@ from fastapi import APIRouter, Depends, HTTPException, Path, status
 from fastapi.responses import RedirectResponse
 from sqlalchemy.future import select
 
-from mmisp.api.auth import decode_exchange_token, encode_exchange_token, encode_token
+from mmisp.api.auth import (
+    Auth,
+    AuthStrategy,
+    Permission,
+    authorize,
+    check_permissions,
+    decode_exchange_token,
+    encode_exchange_token,
+    encode_token,
+)
 from mmisp.api.config import config
 from mmisp.api_schemas.authentication import (
     ChangePasswordBody,
@@ -23,7 +32,7 @@ from mmisp.api_schemas.authentication import (
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.identity_provider import OIDCIdentityProvider
 from mmisp.db.models.user import User
-from mmisp.util.crypto import verify_secret
+from mmisp.util.crypto import hash_secret, verify_secret
 
 router = APIRouter(tags=["authentication"])
 
@@ -315,7 +324,12 @@ async def exchange_token_login(body: ExchangeTokenLoginBody) -> TokenResponse:
     "/auth/setPassword/{userId}",
     summary="Admin sets the password of the user to a new password",
 )
-async def change_password(body: ChangePasswordBody) -> ChangePasswordResponse:
+async def change_password_UserId(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    db: Annotated[Session, Depends(get_db)],
+    body: ChangePasswordBody,
+    user_id: Annotated[int, Path(alias="userId")],
+) -> ChangePasswordResponse:
     """Set the password of the user to a new password
 
     Input:
@@ -328,8 +342,8 @@ async def change_password(body: ChangePasswordBody) -> ChangePasswordResponse:
 
     - the response from the api after the password change request
     """
-    # ToDo
-    return ChangePasswordResponse(successful=True)  # Set to True to pass the pipeline
+
+    return await _change_password_UserId(auth, db, user_id, body)
 
 
 async def _get_oidc_config(base_url: str) -> dict:
@@ -340,6 +354,28 @@ async def _get_oidc_config(base_url: str) -> dict:
 
 
 # --- endpoint logic ---
+async def _change_password_UserId(
+    auth: Auth, db: Session, user_id: int, body: ChangePasswordBody
+) -> ChangePasswordResponse:
+    if not (
+        await check_permissions(db, auth, [Permission.SITE_ADMIN])
+        and await check_permissions(db, auth, [Permission.ADMIN])
+    ):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED)
+
+    user = await db.get(User, user_id)
+
+    if not user:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
+
+    print(body.password)
+    print(hash_secret(body.password))
+    user.password = hash_secret(body.password)
+    user.change_pw = True
+
+    await db.commit()
+
+    return ChangePasswordResponse(successful=True)
 
 
 async def _delete_openID_Connect_provider(db: Session, open_Id_Connect_provider: str) -> None:

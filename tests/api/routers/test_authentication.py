@@ -5,13 +5,15 @@ import pytest
 import respx
 from fastapi import status
 from httpx import Response
+from icecream import ic
+from sqlalchemy.orm import Session
 
 from mmisp.api.auth import _decode_token, encode_exchange_token, encode_token
 from mmisp.api.config import config
 from mmisp.api_schemas.authentication import LoginType
 from mmisp.db.models.identity_provider import OIDCIdentityProvider
 from mmisp.db.models.user import User
-from mmisp.util.crypto import hash_secret
+from mmisp.util.crypto import hash_secret, verify_secret
 from mmisp.util.uuid import uuid
 from tests.generators.model_generators.identity_provider_generator import generate_oidc_identity_provider
 from tests.generators.model_generators.user_generator import generate_user
@@ -289,3 +291,20 @@ def test_exchange_token_login_regular_token(auth_environment: AuthEnvironment, c
     )
 
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+
+def test_change_password_userID(db: Session, site_admin_user_token, client, view_only_user) -> None:
+    newPassword = "TEST"
+
+    response = client.put(
+        "/auth/setPassword/%s" % view_only_user.id,
+        headers={"authorization": site_admin_user_token},
+        json={"password": newPassword},
+    )
+    db.refresh(view_only_user)
+
+    print(newPassword)
+    ic(response.json())
+    assert response.status_code == 200
+    assert response.json() == {"successful": True}
+    assert verify_secret(newPassword, view_only_user.password)
