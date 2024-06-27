@@ -128,3 +128,47 @@ def test_users_view_all(db: Session, site_admin_user_token, client) -> None:
         user_name = db.execute(query).scalars().first()
         assert user_name is not None
         assert user_name.value == user.get("name")
+
+
+def test_delete_user(db: Session, site_admin_user_token, client) -> None:
+    email = "test_delete@automated.com"
+    name = "test_delete_user"
+    response = client.post(
+        "/users",
+        headers={"authorization": site_admin_user_token},
+        json={
+            "email": email,
+            "password": "test",
+            "name": name,
+            "role_id": 0,
+            "org_id": 1,
+            "nids_sid": "12345",
+            "disabled": False,
+            "contact_enabled": False,
+            "notification_daily": False,
+            "notification_weekly": True,
+            "notification_monthly": True,
+            "termsaccepted": False,
+            "gpgkey": "Test",
+        },
+    )
+    json = response.json()
+    assert response.status_code == 200
+
+    user_id = json.get("id")
+
+    # Check if user exists
+    query = select(User).where(User.id == user_id)
+    user = db.execute(query).scalars().first()
+    assert user is not None
+
+    # Delete user
+    response = client.delete(f"/users/{user_id}", headers={"authorization": site_admin_user_token})
+    json = response.json()
+    assert response.status_code == 200
+    assert json.get("success") is True
+    assert json.get("id") == user_id
+
+    # Test if user is deleted
+    user = db.execute(query).scalars().first()
+    assert user is None
