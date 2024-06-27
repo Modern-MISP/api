@@ -1,3 +1,4 @@
+from icecream import ic
 from sqlalchemy.future import select
 from sqlalchemy.orm import Session
 
@@ -28,7 +29,6 @@ def test_users_create(site_admin_user_token, site_admin_user, client, db) -> Non
             "org_id": site_admin_user.org_id,
             "nids_sid": "12345",
             "disabled": False,
-            "totp": None,
             "contact_enabled": False,
             "notification_daily": False,
             "notification_weekly": True,
@@ -64,6 +64,40 @@ def test_users_create(site_admin_user_token, site_admin_user, client, db) -> Non
     db.commit()
     user = db.execute(query).scalars().first()
     assert db.execute(query).scalars().first() is None
+
+
+def test_users_edit(db: Session, site_admin_user_token, client, site_admin_user, view_only_user) -> None:
+    user_id = view_only_user.id
+    email = view_only_user.email
+    terms_accepted = view_only_user.termsaccepted
+    gpg_key = view_only_user.gpgkey
+
+    name = (
+        db.execute(select(UserSetting).where(UserSetting.setting == "user_name" and UserSetting.user_id == user_id))
+        .scalars()
+        .first()
+        .value
+    )
+
+    headers = {"authorization": site_admin_user_token}
+    body = {
+        "email": email + "test",
+        "name": name + "test",
+        "termsaccepted": not terms_accepted,
+        "gpgkey": gpg_key + "test",
+    }
+    response = client.put(f"users/{user_id}", headers=headers, json=body)
+
+    assert response.status_code == 200
+    response_json = response.json()
+    response_user = response_json.get("user")
+    ic(response_user, response_user.get("id"), response_user.get("email"))
+    assert response_user.get("id") == str(user_id)
+    assert response_user.get("email") == email + "test"
+    assert response_user.get("termsaccepted") is not terms_accepted
+    assert response_user.get("gpgkey") == gpg_key + "test"
+    assert response_user.get("org_id") == str(view_only_user.org_id)
+    assert response_json.get("name") == name + "test"
 
 
 def test_users_view_all(db: Session, site_admin_user_token, client) -> None:

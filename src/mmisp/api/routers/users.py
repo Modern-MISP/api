@@ -9,7 +9,12 @@ from mmisp.api_schemas.users import (
     AddUserBody,
     AddUserResponse,
     GetAllUsersUser,
+    UserAttributesBody,
     UsersViewMeResponse,
+    UserWithName,
+)
+from mmisp.api_schemas.users import (
+    User as UserSchema,
 )
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.organisation import Organisation
@@ -177,7 +182,8 @@ async def update_user(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     user_id: Annotated[str, Path(alias="userId")],
-) -> None:
+    body: UserAttributesBody,
+) -> UserWithName:
     """
     Updates an existing user by their ID.
 
@@ -193,7 +199,7 @@ async def update_user(
 
     - Data representing the updated attributes of the user
     """
-    return await _update_user(auth, db, user_id)
+    return await _update_user(auth, db, user_id, body)
 
 
 # --- endpoint logic ---
@@ -231,12 +237,8 @@ async def _add_user(auth: Auth, db: Session, body: AddUserBody) -> AddUserRespon
 
     db.add(user)
 
-    print("test")
-
     await db.commit()
     await db.refresh(user)
-
-    print(user.id)
 
     user_setting = UserSetting(
         user_id=user.id,
@@ -311,5 +313,64 @@ async def _delete_user_token(auth: Auth, db: Session, userID: str) -> None:
     return None
 
 
-async def _update_user(auth: Auth, db: Session, userID: str) -> None:
-    return None
+async def _update_user(auth: Auth, db: Session, userID: str, body: UserAttributesBody) -> UserWithName:
+    if not (
+        await check_permissions(db, auth, [Permission.SITE_ADMIN])
+        and await check_permissions(db, auth, [Permission.ADMIN])
+    ):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED)
+
+    user = await db.get(User, userID)
+    name = await db.execute(
+        select(UserSetting).where(UserSetting.setting == "user_name" and UserSetting.user_id == user.id)
+    )
+    name = name.first()[0]
+
+    body = body.dict()
+
+    print(body.keys())
+
+    for key in body.keys():
+        if key == "name" and body[key] is not None:
+            name.value = body[key]
+            db.commit()
+            db.refresh(name)
+        elif body[key] is not None:
+            setattr(user, key, body[key])
+
+    await db.commit()
+    await db.refresh(user)
+
+    user_schema = UserSchema(
+        id=user.id,
+        org_id=user.org_id,
+        email=user.email,
+        autoalert=user.autoalert,
+        invited_by=user.invited_by,
+        gpgkey=user.gpgkey,
+        certif_public=user.certif_public,
+        termsaccepted=user.termsaccepted,
+        role_id=user.role_id,
+        change_pw=user.change_pw == 1,
+        contactalert=user.contactalert,
+        disabled=user.disabled,
+        expiration=user.expiration,
+        current_login=user.current_login,
+        last_login=user.last_login,
+        force_logout=user.force_logout,
+        date_created=user.date_created,
+        date_modified=user.date_modified,
+        external_auth_required=user.external_auth_required,
+        external_auth_key=user.external_auth_key,
+        last_api_access=user.last_api_access,
+        notification_daily=user.notification_daily,
+        notification_weekly=user.notification_weekly,
+        notification_monthly=user.notification_monthly,
+        totp=user.totp,
+        hotp_counter=user.hotp_counter,
+        last_pw_change=user.last_pw_change,
+    )
+
+    user_return = UserWithName(user=user_schema, name=name.value)
+
+    return user_return
