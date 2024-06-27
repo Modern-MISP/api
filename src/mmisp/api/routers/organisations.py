@@ -2,9 +2,9 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Path
 
+from mmisp.api.auth import Auth, AuthStrategy, authorize
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.organisation import Organisation
-from mmisp.util.auth import Auth, AuthStrategy, authorize
 
 router = APIRouter(tags=["organisations"])
 
@@ -16,7 +16,7 @@ router = APIRouter(tags=["organisations"])
 async def add_organisation(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    body: Organisation,
+    body: None,
 ) -> None:
     """
     Adds a new organisation.
