@@ -41,7 +41,11 @@ from .generators.model_generators.attribute_generator import generate_attribute
 from .generators.model_generators.event_generator import generate_event
 from .generators.model_generators.galaxy_generator import generate_galaxy
 from .generators.model_generators.organisation_generator import generate_organisation
-from .generators.model_generators.role_generator import generate_org_admin_role, generate_site_admin_role
+from .generators.model_generators.role_generator import (
+    generate_org_admin_role,
+    generate_read_only_role,
+    generate_site_admin_role,
+)
 from .generators.model_generators.sharing_group_generator import generate_sharing_group
 from .generators.model_generators.tag_generator import generate_tag
 from .generators.model_generators.user_generator import generate_user, generate_user_name
@@ -102,6 +106,16 @@ def site_admin_role(db):
 
 
 @pytest.fixture
+def user_role(db):
+    role = generate_read_only_role()
+    db.add(role)
+    db.commit()
+    yield role
+    db.delete(role)
+    db.commit()
+
+
+@pytest.fixture
 def org_admin_role(db):
     role = generate_org_admin_role()
     db.add(role)
@@ -148,6 +162,30 @@ def site_admin_user(db, site_admin_role, instance_owner_org):
     user.org_id = instance_owner_org.id
     user.server_id = 0
     user.role_id = site_admin_role.id
+
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+
+    user_setting = generate_user_name()
+    user_setting.user_id = user.id
+
+    db.add(user_setting)
+    db.commit()
+
+    yield user
+    db.delete(user_setting)
+    db.commit()
+    db.delete(user)
+    db.commit()
+
+
+@pytest.fixture
+def view_only_user(db, user_role, instance_owner_org):
+    user = generate_user()
+    user.org_id = instance_owner_org.id
+    user.server_id = 0
+    user.role_id = user_role.id
 
     db.add(user)
     db.commit()
