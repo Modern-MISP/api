@@ -1,7 +1,7 @@
 import importlib
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Path
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize, check_permissions
 from mmisp.db.database import Session, get_db
@@ -13,7 +13,11 @@ router = APIRouter(tags=["servers"])
     "/servers/createBackup/{path}",
     summary="Creates a backup on the given path",
 )
-async def create_backup(TODO):
+async def create_backup(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    db: Annotated[Session, Depends(get_db)],
+    path: Annotated[int, Path(alias="path")],
+) -> None:
     """
     Creates a backup of the current database if the given path is valid.
 
@@ -27,14 +31,18 @@ async def create_backup(TODO):
 
     - Response indicating the result of the backup operation
     """
-    return await _create_backup(db, path)
+    return await _create_backup(auth, db, path)
 
 
 @router.post(
     "/servers/updateBackup/{path}",
     summary="Updates a backup on the given path",
 )
-async def update_backup(TODO):
+async def update_backup(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    db: Annotated[Session, Depends(get_db)],
+    path: Annotated[int, Path(alias="path")],
+) -> None:
     """
     Updates a backup of the current database if the given path is valid.
 
@@ -48,14 +56,17 @@ async def update_backup(TODO):
 
     - Response indicating the result of the backup update operation
     """
-    return await _update_backup(db, path)
+    return await _update_backup(auth, db, path)
 
 
 @router.get(
     "/servers/remote/getAll",
     summary="Requests a list of all remote servers",
 )
-async def get_remote_servers(TODO):
+async def get_remote_servers(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    db: Annotated[Session, Depends(get_db)],
+) -> None:
     """
     Returns a list of all currently active remote servers.
 
@@ -67,14 +78,18 @@ async def get_remote_servers(TODO):
 
     - List of remote servers
     """
-    return await _get_remote_servers(db)
+    return await _get_remote_servers(auth, db)
 
 
 @router.get(
     "/servers/remote/{serverId}",
     summary="Requests information regarding a remote server",
 )
-async def get_remote_server(TODO):
+async def get_remote_server(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    db: Annotated[Session, Depends(get_db)],
+    server_Id: Annotated[int, Path(alias="serverId")],
+) -> None:
     """
     Returns information for a specific remote server chosen by its id.
 
@@ -88,14 +103,18 @@ async def get_remote_server(TODO):
 
     - server information regarding the chosen server
     """
-    return await _get_remote_server(db, serverId)
+    return await _get_remote_server(auth, db, server_Id)
 
 
 @router.post(
     "/servers/remote/add",
     summary="Adds a new remote server to the list",
 )
-async def add_remote_server(TODO):
+async def add_remote_server(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    db: Annotated[Session, Depends(get_db)],
+    body: None,
+) -> None:
     """
     Adds a new remote server based on the input of an admin.
 
@@ -116,7 +135,11 @@ async def add_remote_server(TODO):
     "/servers/remote/delete/{serverId}",
     summary="Deletes a remote server by id",
 )
-async def delete_remote_server(TODO):
+async def delete_remote_server(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    db: Annotated[Session, Depends(get_db)],  #
+    server_Id: Annotated[int, Path(alias="serverId")],
+) -> None:
     """
     Deletes a remote server if the given id is valid.
 
@@ -130,7 +153,7 @@ async def delete_remote_server(TODO):
 
     - Response indicating the result of the server deletion operation
     """
-    return await _delete_remote_server(db, serverId)
+    return await _delete_remote_server(auth, db, server_Id)
 
 
 @router.get("/servers/getVersion")
@@ -166,15 +189,15 @@ async def get_version(
 # --- endpoint logic ---
 
 
-async def _create_backup(db: Session, path: str) -> None:
+async def _create_backup(auth: Auth, db: Session, path: str) -> None:
     return None
 
 
-async def _update_backup(db: Session, path: str) -> None:
+async def _update_backup(auth: Auth, db: Session, path: str) -> None:
     return None
 
 
-async def _get_remote_servers(db: Session) -> None:
+async def _get_remote_servers(auth: Auth, db: Session) -> None:
     return None
 
 
@@ -182,9 +205,9 @@ async def _get_remote_server(db: Session, serverId: str) -> None:
     return None
 
 
-async def _add_remote_server(PLACEHOLDER) -> None:
+async def _add_remote_server(auth: Auth, db: Session, body: None) -> None:
     return None
 
 
-async def _delete_remote_server(db: Session, serverId: str) -> None:
+async def _delete_remote_server(auth: Auth, db: Session, serverId: str) -> None:
     return None

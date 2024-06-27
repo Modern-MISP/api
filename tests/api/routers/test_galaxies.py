@@ -137,7 +137,7 @@ def add_galaxy_cluster_body3(db, galaxy3, tag):
         extends_uuid="777",
         extends_version="777",
         published=True,
-        deleted=False
+        deleted=False,
     )
 
     db.add(add_galaxy_cluster_body)
@@ -182,7 +182,6 @@ def add_galaxy_element2(db, add_galaxy_cluster_body3):
     db.commit()
 
 
-
 def test_import_galaxy_cluster_valid_data(db, site_admin_user_token, galaxy, organisation, tag, client) -> None:
     org_id = organisation.id
     galaxy_id = galaxy.id
@@ -221,7 +220,8 @@ def test_import_galaxy_cluster_invalid_data(site_admin_user_token, galaxy, organ
     assert response.status_code == 403
 
 
-def test_get_existing_galaxy_cluster(db: Session, site_admin_user_token, galaxy3, add_galaxy_cluster_body3, client
+def test_get_existing_galaxy_cluster(
+    db: Session, site_admin_user_token, galaxy3, add_galaxy_cluster_body3, client
 ) -> None:
     galaxy_id = galaxy3.id
     galaxy_cluster_id = add_galaxy_cluster_body3.id
@@ -233,16 +233,14 @@ def test_get_existing_galaxy_cluster(db: Session, site_admin_user_token, galaxy3
 
     response_json = response.json()
 
-    assert response_json["id"] == str(cluster_id)
+    assert response_json["id"] == str(galaxy_cluster_id)
     assert response_json["galaxy_id"] == str(galaxy_id)
     assert response_json["type"] == add_galaxy_cluster_body.type
     assert response_json["value"] == add_galaxy_cluster_body.value
     assert response_json["tag_name"] == add_galaxy_cluster_body.tag_name
 
 
-def test_get_non_existing_galaxy_cluster(site_admin_user_token, client
-) -> None:
-
+def test_get_non_existing_galaxy_cluster(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.get("/galaxies/clusters/0", headers=headers)
     assert response.status_code == 404

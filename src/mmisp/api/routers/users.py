@@ -1,7 +1,7 @@
 import time
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Path, status
 from sqlalchemy.future import select
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize, check_permissions
@@ -95,7 +95,11 @@ async def get_all_users(
     "/users/view/{userId}",
     summary="Get a user by id",
 )
-async def get_user_by_id(TODO):
+async def get_user_by_id(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    db: Annotated[Session, Depends(get_db)],
+    user_id: Annotated[str, Path(alias="userId")],
+) -> None:
     """
     Retrieves a user specified by id.
 
@@ -109,7 +113,7 @@ async def get_user_by_id(TODO):
 
     - Data representing the attributes of the searched user
     """
-    return await _get_user(db, userId)
+    return await _get_user(auth, db, user_id)
 
 
 @router.delete(
@@ -117,7 +121,11 @@ async def get_user_by_id(TODO):
     # response_model=UserAttributesResponse,
     summary="Delete a user",
 )
-async def delete_user(TODO):
+async def delete_user(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    db: Annotated[Session, Depends(get_db)],
+    user_id: Annotated[str, Path(alias="userId")],
+) -> None:
     """
     Deletes a user by their ID.
 
@@ -131,7 +139,7 @@ async def delete_user(TODO):
 
     - Response indicating success or failure
     """
-    return await _delete_user(db, userID)
+    return await _delete_user(auth, db, user_id)
 
 
 @router.delete(
@@ -139,7 +147,11 @@ async def delete_user(TODO):
     # response_model=UserAttributesResponse,
     summary="Delete a users login token",
 )
-async def delete_user_token(TODO):
+async def delete_user_token(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    db: Annotated[Session, Depends(get_db)],
+    user_id: Annotated[str, Path(alias="userId")],
+) -> None:
     """
     Deletes a users login token by their ID.
 
@@ -153,7 +165,7 @@ async def delete_user_token(TODO):
 
     - Response indicating success or failure
     """
-    return await _delete_user_token(db, userID)
+    return await _delete_user_token(auth, db, user_id)
 
 
 @router.put(
@@ -161,7 +173,11 @@ async def delete_user_token(TODO):
     # response_model=UserAttributesResponse,
     summary="Update a user",
 )
-async def update_user(TODO):
+async def update_user(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    db: Annotated[Session, Depends(get_db)],
+    user_id: Annotated[str, Path(alias="userId")],
+) -> None:
     """
     Updates an existing user by their ID.
 
@@ -177,7 +193,7 @@ async def update_user(TODO):
 
     - Data representing the updated attributes of the user
     """
-    return await _update_user(db, userID)
+    return await _update_user(auth, db, user_id)
 
 
 # --- endpoint logic ---
@@ -283,17 +299,17 @@ async def _get_all_users(
     return user_list_computed
 
 
-async def _get_user(db: Session, userID: str) -> None:
+async def _get_user(auth: Auth, db: Session, userID: str) -> None:
     return None
 
 
-async def _delete_user(db: Session, userID: str) -> None:
+async def _delete_user(auth: Auth, db: Session, userID: str) -> None:
     return None
 
 
-async def _delete_user_token(db: Session, userID: str) -> None:
+async def _delete_user_token(auth: Auth, db: Session, userID: str) -> None:
     return None
 
 
-async def _update_user(db: Session, userID: str) -> None:
+async def _update_user(auth: Auth, db: Session, userID: str) -> None:
     return None
