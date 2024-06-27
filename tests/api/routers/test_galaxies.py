@@ -126,7 +126,7 @@ def add_galaxy_cluster_body3(db, galaxy3, tag):
         tag_name=tag.name,
         description="",
         galaxy_id=galaxy3.id,
-        authors=["Me"],
+        authors="Me",
         version="1.0",
         distribution="test",
         sharing_group_id="777",

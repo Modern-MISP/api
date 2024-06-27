@@ -268,11 +268,38 @@ async def _import_galaxy_cluster(
 
 async def _get_galaxy_cluster(db: Session, cluster_id: int) -> GetGalaxyClusterResponse:
     galaxy_cluster: GalaxyCluster | None = await db.get(GalaxyCluster, cluster_id)
-
+    
     if not galaxy_cluster:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Galaxy Cluster not found.")
 
-    return GetGalaxyClusterResponse(GalaxyCluster=galaxy_cluster.__dict__)
+    galaxy_cluster_data = await _map_galaxy_cluster_to_response(galaxy_cluster)
+
+    return galaxy_cluster_data
+
+
+async def _map_galaxy_cluster_to_response(galaxy_cluster: GalaxyCluster) -> GetGalaxyClusterResponse:
+    return GetGalaxyClusterResponse(
+        collection_uuid=galaxy_cluster.collection_uuid,
+        type=galaxy_cluster.type,
+        value=galaxy_cluster.value,
+        tag_name=galaxy_cluster.tag_name,
+        description=galaxy_cluster.description,
+        galaxy_id=galaxy_cluster.galaxy_id,
+        source=galaxy_cluster.source,
+        authors=galaxy_cluster.authors,
+        version=galaxy_cluster.version,
+        distribution=galaxy_cluster.distribution,
+        sharing_group_id=galaxy_cluster.sharing_group_id,
+        org_id=galaxy_cluster.org_id,
+        orgc_id=galaxy_cluster.orgc_id,
+        default=galaxy_cluster.default,
+        locked=galaxy_cluster.locked,
+        extends_uuid=galaxy_cluster.extends_uuid,
+        extends_version=galaxy_cluster.extends_version,
+        published=galaxy_cluster.published,
+        deleted=galaxy_cluster.deleted,
+        GalaxyElement=galaxy_cluster.GalaxyElement
+    )
 
 
 async def _export_galaxy(db: Session, galaxy_id: str, body: ExportGalaxyBody) -> list[ExportGalaxyClusterResponse]:
