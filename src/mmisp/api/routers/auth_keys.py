@@ -217,7 +217,10 @@ async def auth_keys_get(
     "auth_keys/viewOwn",
     summary="View own AuthKeys",
 )
-async def auth_keys_view_own_auth_keys(TODO):
+async def auth_keys_view_own_auth_keys(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
+    db: Annotated[Session, Depends(get_db)],
+) -> None:
     """View own Authkeys.
 
     Input:
@@ -232,7 +235,7 @@ async def auth_keys_view_own_auth_keys(TODO):
 
     - the auth keys
     """
-    return await auth_keys_view_own_auth_keys()
+    return await _auth_keys_view_own_auth_keys(auth=auth, db=db)
 
 
 #  --- deprecated ---
@@ -613,3 +616,7 @@ async def _auth_keys_get(
         )
 
     return auth_keys_computed
+
+
+async def _auth_keys_view_own_auth_keys(auth: Auth, db: Session) -> None:
+    return None

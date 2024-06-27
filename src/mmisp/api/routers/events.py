@@ -433,10 +433,12 @@ async def add_attribute_via_free_text_import(
     status_code=status.HTTP_200_OK,
     summary="Fetches the process ID from the current freetext Import",
 )
-async def get_pid_from_free_text_import(TODO) -> None:
+async def get_pid_from_free_text_import(
+    db: Annotated[Session, Depends(get_db)], event_Id: Annotated[int, Path(alias="eventId")]
+) -> None:
     # add response model here
     """Gets the processID from the worker."""
-    return None
+    return _get_pid_from_free_text_import(db, event_Id)
 
 
 # --- deprecated ---
@@ -1203,3 +1205,7 @@ async def _prepare_all_events_event_tag_response(
         event_tag_response_list.append(GetAllEventsEventTag(**event_tag_dict))
 
     return event_tag_response_list
+
+
+def _get_pid_from_free_text_import(db: Session, event_id: int) -> None:
+    return None

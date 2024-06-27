@@ -44,7 +44,10 @@ async def add_openID_Connect_provider(db: Annotated[Session, Depends(get_db)]) -
 
 
 @router.post("/auth/openID/editOpenIDConnectProvider/{openIDConnectProvider}")
-async def edit_openID_Connect_provider(TODO):
+async def edit_openID_Connect_provider(
+    db: Annotated[Session, Depends(get_db)],
+    open_Id_Connect_provider: Annotated[int, Path(alias="openIDConnectProvider")],
+) -> None:
     """Edits an OpenID Connect provider
 
     Input:
@@ -57,14 +60,17 @@ async def edit_openID_Connect_provider(TODO):
 
     - updated OpenID Connect provider
     """
-    return await _edit_openID_Connect_provider(db, openIDConnectProvider)
+    return await _edit_openID_Connect_provider(db, open_Id_Connect_provider)
 
 
 @router.delete(
     "/auth/openID/delete/{openIDConnectProvider}",
     summary="Deletes an OpenID Connect Provider by its ID",
 )
-async def delete_openID_Connect_provider(TODO):
+async def delete_openID_Connect_provider(
+    db: Annotated[Session, Depends(get_db)],
+    open_Id_Connect_provider: Annotated[int, Path(alias="openIDConnectProvider")],
+) -> None:
     """Deletes an OpenID Connect provider
 
     Input:
@@ -77,7 +83,7 @@ async def delete_openID_Connect_provider(TODO):
 
     - database
     """
-    return await _delete_openID_Connect_provider(db, openIDConnectProvider)
+    return await _delete_openID_Connect_provider(db, open_Id_Connect_provider)
 
 
 @router.post("/auth/login/start", response_model=StartLoginResponse)
@@ -336,9 +342,9 @@ async def _get_oidc_config(base_url: str) -> dict:
 # --- endpoint logic ---
 
 
-async def _delete_openID_Connect_provider(db: Session, openIDConnectProvider: str) -> None:
+async def _delete_openID_Connect_provider(db: Session, open_Id_Connect_provider: str) -> None:
     return None
 
 
-async def _edit_openID_Connect_provider(db: Session, openIDConnectProvider: str) -> None:
+async def _edit_openID_Connect_provider(db: Session, open_Id_Connect_provider: str) -> None:
     return None
