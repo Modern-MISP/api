@@ -1,3 +1,4 @@
+import json
 import time
 from typing import Annotated
 
@@ -253,7 +254,7 @@ async def _add_user(auth: Auth, db: Session, body: AddUserBody) -> AddUserRespon
     user_setting = UserSetting(
         user_id=user.id,
         setting="user_name",
-        value=body.name,
+        value=json.dumps({"name": str(body.name)}),
     )
 
     db.add(user_setting)
@@ -285,9 +286,8 @@ async def _get_all_users(
     user_name = user_name.fetchall()
 
     user_names_by_id = {}
-
     for name in user_name[0]:
-        user_names_by_id[name.user_id] = name.value
+        user_names_by_id[name.user_id] = json.loads(name.value)["name"]
 
     for user in result[0]:
         user_list_computed.append(
@@ -350,7 +350,7 @@ async def _update_user(auth: Auth, db: Session, userID: str, body: UserAttribute
 
     for key in body.keys():
         if key == "name" and body[key] is not None:
-            name.value = body[key]
+            name.value = json.dumps({"name": str(body[key])})
             db.commit()
             db.refresh(name)
         elif body[key] is not None:
@@ -389,6 +389,6 @@ async def _update_user(auth: Auth, db: Session, userID: str, body: UserAttribute
         last_pw_change=user.last_pw_change,
     )
 
-    user_return = UserWithName(user=user_schema, name=name.value)
+    user_return = UserWithName(user=user_schema, name=json.loads(name.value)["name"])
 
     return user_return

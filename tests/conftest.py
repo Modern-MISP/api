@@ -48,7 +48,8 @@ from .generators.model_generators.role_generator import (
 )
 from .generators.model_generators.sharing_group_generator import generate_sharing_group
 from .generators.model_generators.tag_generator import generate_tag
-from .generators.model_generators.user_generator import generate_user, generate_user_name
+from .generators.model_generators.user_generator import generate_user
+from .generators.model_generators.user_setting_generator import generate_user_name
 
 
 @pytest.fixture(autouse=True)

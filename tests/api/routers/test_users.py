@@ -1,3 +1,6 @@
+import json
+from time import time
+
 from icecream import ic
 from sqlalchemy.future import select
 from sqlalchemy.orm import Session
@@ -15,8 +18,8 @@ def test_users_me(site_admin_user_token, site_admin_user, client) -> None:
 
 
 def test_users_create(site_admin_user_token, site_admin_user, client, db) -> None:
-    email = "test@automated.com"
-    name = "test_user"
+    email = "test@automated.com" + str(time())
+    name = "test_user" + str(time())
 
     response = client.post(
         "/users",
@@ -39,13 +42,13 @@ def test_users_create(site_admin_user_token, site_admin_user, client, db) -> Non
     )
 
     # Check if the Status Code is 200
-    json = response.json()
+    json_str = response.json()
     assert response.status_code == 200
 
     # Check if the User_setting user_name is created
-    query = select(UserSetting).where(UserSetting.user_id == json.get("id") and UserSetting.setting == "user_name")
+    query = select(UserSetting).where(UserSetting.user_id == json_str.get("id") and UserSetting.setting == "user_name")
     user_setting = db.execute(query).scalars().first()
-    assert user_setting.value == name
+    assert json.loads(user_setting.value)["name"] == name
 
     # delete the user_setting
     db.delete(user_setting)
@@ -54,7 +57,7 @@ def test_users_create(site_admin_user_token, site_admin_user, client, db) -> Non
     assert user_setting is None
 
     # Check if the User is created
-    query = select(User).where(User.id == json.get("id"))
+    query = select(User).where(User.id == json_str.get("id"))
     user = db.execute(query).scalars().first()
     assert user is not None
     assert user.email == email
@@ -127,7 +130,7 @@ def test_users_view_all(db: Session, site_admin_user_token, client) -> None:
         query = select(UserSetting).where(UserSetting.setting == "user_name" and UserSetting.user_id == user.get("id"))
         user_name = db.execute(query).scalars().first()
         assert user_name is not None
-        assert user_name.value == user.get("name")
+        assert json.loads(user_name.value)["name"] == user.get("name")
 
 
 def test_delete_user(db: Session, site_admin_user_token, client) -> None:
