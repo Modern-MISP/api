@@ -1,9 +1,8 @@
 import json
 import time
-from typing import Annotated, cast
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Path, status
-from sqlalchemy import Row
 from sqlalchemy.future import select
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize, check_permissions
@@ -344,13 +343,14 @@ async def _update_user(auth: Auth, db: Session, userID: str, body: UserAttribute
     if not user:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="User not found")
 
-    name = cast(
-        "Row[tuple[UserSetting]]",
-        await db.execute(
-            select(UserSetting).where(UserSetting.setting == "user_name" and UserSetting.user_id == user.id)
-        ),
+    name_result = await db.execute(
+        select(UserSetting).where(UserSetting.setting == "user_name" and UserSetting.user_id == user.id)
     )
-    name = name.first()[0]
+
+    name = name_result.scalars().first()
+
+    if not name:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="User name not found")
 
     settings = body.dict()
 
