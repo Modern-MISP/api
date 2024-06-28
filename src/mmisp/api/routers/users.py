@@ -3,7 +3,7 @@ import time
 from typing import Annotated, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Path, status
-from sqlalchemy import ColumnElement, Row
+from sqlalchemy import Row
 from sqlalchemy.future import select
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize, check_permissions
@@ -347,9 +347,7 @@ async def _update_user(auth: Auth, db: Session, userID: str, body: UserAttribute
     name = cast(
         "Row[tuple[UserSetting]]",
         await db.execute(
-            select(UserSetting).where(
-                cast("ColumnElement[bool]", UserSetting.setting == "user_name" and UserSetting.user_id == user.id)
-            )
+            select(UserSetting).where(UserSetting.setting == "user_name" and UserSetting.user_id == user.id)
         ),
     )
     name = name.first()[0]
