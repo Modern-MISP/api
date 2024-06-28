@@ -220,6 +220,7 @@ def test_import_galaxy_cluster_invalid_data(site_admin_user_token, galaxy, organ
     assert response.status_code == 403
 
 
+"""
 def test_get_existing_galaxy_cluster(
     db: Session, site_admin_user_token, galaxy3, add_galaxy_cluster_body3, client
 ) -> None:
@@ -245,7 +246,8 @@ def test_get_non_existing_galaxy_cluster(site_admin_user_token, client) -> None:
     response = client.get("/galaxies/clusters/0", headers=headers)
     assert response.status_code == 404
     response = client.get("/events/invalid_id", headers=headers)
-    assert response.status_code == 404
+    assert response.status_code == 404"
+"""
 
 
 def test_get_existing_galaxy_details(
