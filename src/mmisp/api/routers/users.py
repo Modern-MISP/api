@@ -1,8 +1,9 @@
 import json
 import time
-from typing import Annotated
+from typing import Annotated, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Path, status
+from sqlalchemy import ColumnElement, Row
 from sqlalchemy.future import select
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize, check_permissions
@@ -278,18 +279,18 @@ async def _get_all_users(
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
     result = await db.execute(query)
-    result = result.fetchall()
+    users = result.fetchall()
     user_list_computed: list[GetAllUsersUser] = []
 
     user_name_query = select(UserSetting).where(UserSetting.setting == "user_name")
-    user_name = await db.execute(user_name_query)
-    user_name = user_name.fetchall()
+    user_name_result = await db.execute(user_name_query)
+    user_name = user_name_result.fetchall()
 
     user_names_by_id = {}
     for name in user_name[0]:
         user_names_by_id[name.user_id] = json.loads(name.value)["name"]
 
-    for user in result[0]:
+    for user in users[0]:
         user_list_computed.append(
             GetAllUsersUser(
                 id=user.id,
@@ -319,7 +320,7 @@ async def _delete_user(user_id: int, auth: Auth, db: Session) -> None:
     if user_id != auth.user_id and not await check_permissions(db, auth, [Permission.SITE_ADMIN]):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
-    user = _get_user(db, user_id)
+    user = _get_user(auth, db, str(user_id))
     if not user:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="User not found")
 
@@ -339,22 +340,29 @@ async def _update_user(auth: Auth, db: Session, userID: str, body: UserAttribute
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
     user = await db.get(User, userID)
-    name = await db.execute(
-        select(UserSetting).where(UserSetting.setting == "user_name" and UserSetting.user_id == user.id)
+
+    if not user:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    name = cast(
+        "Row[tuple[UserSetting]]",
+        await db.execute(
+            select(UserSetting).where(
+                cast("ColumnElement[bool]", UserSetting.setting == "user_name" and UserSetting.user_id == user.id)
+            )
+        ),
     )
     name = name.first()[0]
 
-    body = body.dict()
+    settings = body.dict()
 
-    print(body.keys())
-
-    for key in body.keys():
-        if key == "name" and body[key] is not None:
-            name.value = json.dumps({"name": str(body[key])})
-            db.commit()
-            db.refresh(name)
-        elif body[key] is not None:
-            setattr(user, key, body[key])
+    for key in settings.keys():
+        if key == "name" and settings[key] is not None:
+            name.value = json.dumps({"name": str(settings[key])})
+            await db.commit()
+            await db.refresh(name)
+        elif settings[key] is not None:
+            setattr(user, key, settings[key])
 
     await db.commit()
     await db.refresh(user)

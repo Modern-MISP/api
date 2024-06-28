@@ -16,7 +16,7 @@ router = APIRouter(tags=["servers"])
 async def create_backup(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    path: Annotated[int, Path(alias="path")],
+    path: Annotated[str, Path(alias="path")],
 ) -> None:
     """
     Creates a backup of the current database if the given path is valid.
@@ -41,7 +41,7 @@ async def create_backup(
 async def update_backup(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    path: Annotated[int, Path(alias="path")],
+    path: Annotated[str, Path(alias="path")],
 ) -> None:
     """
     Updates a backup of the current database if the given path is valid.
@@ -88,7 +88,7 @@ async def get_remote_servers(
 async def get_remote_server(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    server_Id: Annotated[int, Path(alias="serverId")],
+    server_Id: Annotated[str, Path(alias="serverId")],
 ) -> None:
     """
     Returns information for a specific remote server chosen by its id.
@@ -138,7 +138,7 @@ async def add_remote_server(
 async def delete_remote_server(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],  #
-    server_Id: Annotated[int, Path(alias="serverId")],
+    server_Id: Annotated[str, Path(alias="serverId")],
 ) -> None:
     """
     Deletes a remote server if the given id is valid.
@@ -201,7 +201,7 @@ async def _get_remote_servers(auth: Auth, db: Session) -> None:
     return None
 
 
-async def _get_remote_server(db: Session, serverId: str) -> None:
+async def _get_remote_server(auth: Auth, db: Session, serverId: str) -> None:
     return None
 
 

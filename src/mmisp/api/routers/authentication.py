@@ -55,7 +55,7 @@ async def add_openID_Connect_provider(db: Annotated[Session, Depends(get_db)]) -
 @router.post("/auth/openID/editOpenIDConnectProvider/{openIDConnectProvider}")
 async def edit_openID_Connect_provider(
     db: Annotated[Session, Depends(get_db)],
-    open_Id_Connect_provider: Annotated[int, Path(alias="openIDConnectProvider")],
+    open_Id_Connect_provider: Annotated[str, Path(alias="openIDConnectProvider")],
 ) -> None:
     """Edits an OpenID Connect provider
 
@@ -78,7 +78,7 @@ async def edit_openID_Connect_provider(
 )
 async def delete_openID_Connect_provider(
     db: Annotated[Session, Depends(get_db)],
-    open_Id_Connect_provider: Annotated[int, Path(alias="openIDConnectProvider")],
+    open_Id_Connect_provider: Annotated[str, Path(alias="openIDConnectProvider")],
 ) -> None:
     """Deletes an OpenID Connect provider
 

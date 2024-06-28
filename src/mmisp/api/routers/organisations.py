@@ -4,7 +4,6 @@ from fastapi import APIRouter, Depends, Path
 
 from mmisp.api.auth import Auth, AuthStrategy, authorize
 from mmisp.db.database import Session, get_db
-from mmisp.db.models.organisation import Organisation
 
 router = APIRouter(tags=["organisations"])
 
@@ -61,7 +60,7 @@ async def get_organisations(
 )
 async def get_organisation(
     db: Annotated[Session, Depends(get_db)],
-    organisation_id: Annotated[int, Path(alias="orgId")],
+    organisation_id: Annotated[str, Path(alias="orgId")],
 ) -> None:
     """
     Gets an organisation by its ID.
@@ -86,7 +85,7 @@ async def get_organisation(
 async def delete_organisation(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    organisation_id: Annotated[int, Path(alias="orgId")],
+    organisation_id: Annotated[str, Path(alias="orgId")],
 ) -> None:
     """
     Deletes an organisation by its ID.
@@ -111,7 +110,7 @@ async def delete_organisation(
 async def update_organisation(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    organisation_id: Annotated[int, Path(alias="orgId")],
+    organisation_id: Annotated[str, Path(alias="orgId")],
 ) -> None:
     """
     Updates an organisation by its ID.
@@ -134,7 +133,7 @@ async def update_organisation(
 # --- endpoint logic ---
 
 
-async def _add_organisation(auth: Auth, db: Session, organisation: Organisation) -> None:
+async def _add_organisation(auth: Auth, db: Session, body: None) -> None:
     return None
 
 
