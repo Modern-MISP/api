@@ -245,7 +245,7 @@ def test_get_non_existing_galaxy_cluster(site_admin_user_token, client) -> None:
     response = client.get("/galaxies/clusters/0", headers=headers)
     assert response.status_code == 404
     response = client.get("/events/invalid_id", headers=headers)
-    assert response.status_code == 404"
+    assert response.status_code == 404
 
 
 def test_get_existing_galaxy_details(
