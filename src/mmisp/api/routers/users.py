@@ -106,7 +106,7 @@ async def get_user_by_id(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     user_id: Annotated[str, Path(alias="userId")],
-) -> None:
+) -> GetAllUsersUser:
     """
     Retrieves a user specified by id.
 
@@ -121,6 +121,7 @@ async def get_user_by_id(
     - Data representing the attributes of the searched user
     """
     return await _get_user(auth, db, user_id)
+
 
 
 @router.delete(
@@ -311,8 +312,47 @@ async def _get_all_users(
     return user_list_computed
 
 
-async def _get_user(auth: Auth, db: Session, userID: str) -> None:
-    return None
+async def _get_user(auth: Auth, db: Session, userID: str) -> GetAllUsersUser:
+
+    if not (
+        await check_permissions(db, auth, [Permission.SITE_ADMIN])
+        or await check_permissions(db, auth, [Permission.ADMIN])
+    ):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED)
+
+    query = select(User).where(User.id == userID)
+
+    result = await db.execute(query)
+    user = result.scalar_one_or_none()
+    
+    if user is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    user_name_query = select(UserSetting).where(
+        UserSetting.setting == "user_name",
+        UserSetting.user_id == userID
+    )
+    user_name_result = await db.execute(user_name_query)
+    user_name = user_name_result.scalar_one_or_none()
+    
+    if user_name is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="User name not found")
+
+    return GetAllUsersUser(
+        id=user.id,
+        organisation=user.org_id,
+        role=user.role_id,
+        nids=user.nids_sid,
+        name=user_name.value,
+        email=user.email,
+        last_login=user.last_login,
+        created=user.date_created,
+        totp=user.totp,
+        contact=user.contactalert,
+        notification=user.notification_daily or user.notification_weekly or user.notification_monthly,
+        gpg_key=user.gpgkey,
+        terms=user.termsaccepted,
+    )
 
 
 async def _delete_user(user_id: int, auth: Auth, db: Session) -> None:
