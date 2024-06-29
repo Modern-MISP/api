@@ -235,9 +235,9 @@ def test_get_existing_galaxy_cluster(
 
     assert response_json["id"] == str(galaxy_cluster_id)
     assert response_json["galaxy_id"] == str(galaxy_id)
-    assert response_json["type"] == add_galaxy_cluster_body.type
-    assert response_json["value"] == add_galaxy_cluster_body.value
-    assert response_json["tag_name"] == add_galaxy_cluster_body.tag_name
+    assert response_json["type"] == add_galaxy_cluster_body3.type
+    assert response_json["value"] == add_galaxy_cluster_body3.value
+    assert response_json["tag_name"] == add_galaxy_cluster_body3.tag_name
 
 
 def test_get_non_existing_galaxy_cluster(site_admin_user_token, client) -> None:
