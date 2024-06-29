@@ -128,7 +128,7 @@ def add_galaxy_cluster_body3(db, galaxy3, tag):
         galaxy_id=galaxy3.id,
         authors="Me",
         version="1.0",
-        distribution="test",
+        distribution="187",
         sharing_group_id="777",
         org_id="777",
         orgc_id="777",
@@ -220,7 +220,6 @@ def test_import_galaxy_cluster_invalid_data(site_admin_user_token, galaxy, organ
     assert response.status_code == 403
 
 
-"""
 def test_get_existing_galaxy_cluster(
     db: Session, site_admin_user_token, galaxy3, add_galaxy_cluster_body3, client
 ) -> None:
@@ -247,7 +246,6 @@ def test_get_non_existing_galaxy_cluster(site_admin_user_token, client) -> None:
     assert response.status_code == 404
     response = client.get("/events/invalid_id", headers=headers)
     assert response.status_code == 404"
-"""
 
 
 def test_get_existing_galaxy_details(
