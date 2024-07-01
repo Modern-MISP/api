@@ -23,7 +23,9 @@ from mmisp.api_schemas.authentication import (
     ChangeLoginInfoResponse,
     ChangePasswordBody,
     ExchangeTokenLoginBody,
+    IdentityProviderBody,
     IdentityProviderEditBody,
+    IdentityProviderInfo,
     LoginType,
     PasswordLoginBody,
     StartLoginBody,
@@ -42,8 +44,8 @@ router = APIRouter(tags=["authentication"])
 async def add_openID_Connect_provider(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    body: None,
-) -> None:
+    body: IdentityProviderBody,
+) -> IdentityProviderInfo:
     """Adds a new OpenID Connect provider
 
     Input:
@@ -385,8 +387,27 @@ async def _change_password_UserId(
     return ChangeLoginInfoResponse(successful=True)
 
 
-async def _add_openID_Connect_provider(auth: Auth, db: Session, body: None) -> None:
-    return None
+async def _add_openID_Connect_provider(auth: Auth, db: Session, body: IdentityProviderBody) -> IdentityProviderInfo:
+    if not (
+        await check_permissions(db, auth, [Permission.SITE_ADMIN])
+        and await check_permissions(db, auth, [Permission.ADMIN])
+    ):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED)
+
+    oidc_provider = OIDCIdentityProvider(
+        name=body.name,
+        org_id=body.org_id,
+        active=body.active,
+        base_url=body.base_url,
+        client_id=body.client_id,
+        client_secret=body.client_secret,
+        scope=body.scope,
+    )
+    db.add(oidc_provider)
+    await db.commit()
+    await db.refresh(oidc_provider)
+
+    return IdentityProviderInfo(id=oidc_provider.id, name=oidc_provider.name)
 
 
 async def _delete_openID_Connect_provider(db: Session, open_Id_Connect_provider_Id: str) -> ChangeLoginInfoResponse:

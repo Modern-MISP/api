@@ -347,3 +347,31 @@ def test_openid_delete_provider(db: Session, site_admin_user_token, client, auth
         db.query(OIDCIdentityProvider).where(OIDCIdentityProvider.id == auth_environment.identity_provider.id).first()
         is None
     )
+
+
+def test_openid_add_provider(db: Session, site_admin_user_token, client) -> None:
+    response = client.post(
+        "/auth/openID/addOpenIDConnectProvider",
+        headers={"authorization": site_admin_user_token},
+        json={
+            "name": "Test",
+            "org_id": 1,
+            "active": True,
+            "base_url": "http://test.com",
+            "client_id": "test",
+            "client_secret": "test",
+        },
+    )
+
+    assert response.status_code == 200
+    response = response.json()
+    assert response["name"] == "Test"
+    oidc_provider = db.query(OIDCIdentityProvider).where(OIDCIdentityProvider.id == response["id"]).first()
+    assert oidc_provider is not None
+    assert oidc_provider.name == "Test"
+    assert oidc_provider.org_id == 1
+    assert oidc_provider.active is True
+    assert oidc_provider.base_url == "http://test.com"
+    assert oidc_provider.client_id == "test"
+    assert oidc_provider.client_secret == "test"
+    db.delete(oidc_provider)
