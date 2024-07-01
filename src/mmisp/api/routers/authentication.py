@@ -459,8 +459,6 @@ async def _set_own_password(auth: Auth, db: Session, body: ChangePasswordBody) -
 
     old_password = body.oldPassword
 
-    print(old_password, user.password)
-
     if old_password is None:
         raise HTTPException(status.HTTP_400_BAD_REQUEST)
 
