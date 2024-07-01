@@ -308,3 +308,42 @@ def test_change_password_userID(db: Session, site_admin_user_token, client, view
     assert response.status_code == 200
     assert response.json() == {"successful": True}
     assert verify_secret(newPassword, view_only_user.password)
+
+
+def test_openid_edit_provider(db: Session, site_admin_user_token, client, auth_environment: AuthEnvironment) -> None:
+    response = client.post(
+        f"/auth/openID/editOpenIDConnectProvider/{auth_environment.identity_provider.id}",
+        headers={"authorization": site_admin_user_token},
+        json={
+            "name": "Test",
+            "org_id": 1,
+            "active": True,
+            "base_url": "http://test.com",
+            "client_id": "test",
+            "client_secret": "test",
+        },
+    )
+    db.refresh(auth_environment.identity_provider)
+
+    assert response.status_code == 200
+    assert response.json() == {"successful": True}
+    assert auth_environment.identity_provider.name == "Test"
+    assert auth_environment.identity_provider.org_id == 1
+    assert auth_environment.identity_provider.active is True
+    assert auth_environment.identity_provider.base_url == "http://test.com"
+    assert auth_environment.identity_provider.client_id == "test"
+    assert auth_environment.identity_provider.client_secret == "test"
+
+
+def test_openid_delete_provider(db: Session, site_admin_user_token, client, auth_environment: AuthEnvironment) -> None:
+    response = client.delete(
+        f"/auth/openID/delete/{auth_environment.identity_provider.id}",
+        headers={"authorization": site_admin_user_token},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"successful": True}
+    assert (
+        db.query(OIDCIdentityProvider).where(OIDCIdentityProvider.id == auth_environment.identity_provider.id).first()
+        is None
+    )

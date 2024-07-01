@@ -20,9 +20,10 @@ from mmisp.api.auth import (
 )
 from mmisp.api.config import config
 from mmisp.api_schemas.authentication import (
+    ChangeLoginInfoResponse,
     ChangePasswordBody,
-    ChangePasswordResponse,
     ExchangeTokenLoginBody,
+    IdentityProviderEditBody,
     LoginType,
     PasswordLoginBody,
     StartLoginBody,
@@ -38,7 +39,11 @@ router = APIRouter(tags=["authentication"])
 
 
 @router.post("/auth/openID/addOpenIDConnectProvider")
-async def add_openID_Connect_provider(db: Annotated[Session, Depends(get_db)]) -> None:
+async def add_openID_Connect_provider(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    db: Annotated[Session, Depends(get_db)],
+    body: None,
+) -> None:
     """Adds a new OpenID Connect provider
 
     Input:
@@ -49,14 +54,16 @@ async def add_openID_Connect_provider(db: Annotated[Session, Depends(get_db)]) -
 
     - openID Connect provider
     """
-    return None
+    return await _add_openID_Connect_provider(auth, db, body)
 
 
 @router.post("/auth/openID/editOpenIDConnectProvider/{openIDConnectProvider}")
 async def edit_openID_Connect_provider(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    open_Id_Connect_provider: Annotated[str, Path(alias="openIDConnectProvider")],
-) -> None:
+    open_Id_Connect_provider_Id: Annotated[str, Path(alias="openIDConnectProvider")],
+    body: IdentityProviderEditBody,
+) -> ChangeLoginInfoResponse:
     """Edits an OpenID Connect provider
 
     Input:
@@ -69,7 +76,7 @@ async def edit_openID_Connect_provider(
 
     - updated OpenID Connect provider
     """
-    return await _edit_openID_Connect_provider(db, open_Id_Connect_provider)
+    return await _edit_openID_Connect_provider(auth, db, open_Id_Connect_provider_Id, body)
 
 
 @router.delete(
@@ -78,8 +85,8 @@ async def edit_openID_Connect_provider(
 )
 async def delete_openID_Connect_provider(
     db: Annotated[Session, Depends(get_db)],
-    open_Id_Connect_provider: Annotated[str, Path(alias="openIDConnectProvider")],
-) -> None:
+    open_Id_Connect_provider_Id: Annotated[str, Path(alias="openIDConnectProvider")],
+) -> ChangeLoginInfoResponse:
     """Deletes an OpenID Connect provider
 
     Input:
@@ -92,7 +99,7 @@ async def delete_openID_Connect_provider(
 
     - database
     """
-    return await _delete_openID_Connect_provider(db, open_Id_Connect_provider)
+    return await _delete_openID_Connect_provider(db, open_Id_Connect_provider_Id)
 
 
 @router.post("/auth/login/start", response_model=StartLoginResponse)
@@ -329,7 +336,7 @@ async def change_password_UserId(
     db: Annotated[Session, Depends(get_db)],
     body: ChangePasswordBody,
     user_id: Annotated[int, Path(alias="userId")],
-) -> ChangePasswordResponse:
+) -> ChangeLoginInfoResponse:
     """Set the password of the user to a new password
 
     Input:
@@ -356,7 +363,7 @@ async def _get_oidc_config(base_url: str) -> dict:
 # --- endpoint logic ---
 async def _change_password_UserId(
     auth: Auth, db: Session, user_id: int, body: ChangePasswordBody
-) -> ChangePasswordResponse:
+) -> ChangeLoginInfoResponse:
     if not (
         await check_permissions(db, auth, [Permission.SITE_ADMIN])
         and await check_permissions(db, auth, [Permission.ADMIN])
@@ -375,12 +382,49 @@ async def _change_password_UserId(
 
     await db.commit()
 
-    return ChangePasswordResponse(successful=True)
+    return ChangeLoginInfoResponse(successful=True)
 
 
-async def _delete_openID_Connect_provider(db: Session, open_Id_Connect_provider: str) -> None:
+async def _add_openID_Connect_provider(auth: Auth, db: Session, body: None) -> None:
     return None
 
 
-async def _edit_openID_Connect_provider(db: Session, open_Id_Connect_provider: str) -> None:
-    return None
+async def _delete_openID_Connect_provider(db: Session, open_Id_Connect_provider_Id: str) -> ChangeLoginInfoResponse:
+    query = select(OIDCIdentityProvider).where(OIDCIdentityProvider.id == open_Id_Connect_provider_Id)
+    oidc = await db.execute(query)
+    oidc_provider = oidc.scalars().first()
+
+    if not oidc_provider:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
+
+    await db.delete(oidc_provider)
+    await db.commit()
+
+    return ChangeLoginInfoResponse(successful=True)
+
+
+async def _edit_openID_Connect_provider(
+    auth: Auth, db: Session, open_Id_Connect_provider_Id: str, body: IdentityProviderEditBody
+) -> ChangeLoginInfoResponse:
+    if not (
+        await check_permissions(db, auth, [Permission.SITE_ADMIN])
+        and await check_permissions(db, auth, [Permission.ADMIN])
+    ):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED)
+
+    query = select(OIDCIdentityProvider).where(OIDCIdentityProvider.id == open_Id_Connect_provider_Id)
+    oidc = await db.execute(query)
+    oidc_provider = oidc.scalars().first()
+
+    if not oidc_provider:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
+
+    settings = body.dict(exclude_unset=True)
+
+    for key in settings.keys():
+        if settings[key] is not None:
+            setattr(oidc_provider, key, settings[key])
+
+    await db.commit()
+
+    return ChangeLoginInfoResponse(successful=True)
