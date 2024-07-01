@@ -123,7 +123,6 @@ async def get_user_by_id(
     return await _get_user(auth, db, user_id)
 
 
-
 @router.delete(
     "/users/{user_id}",
     # response_model=UserAttributesResponse,
@@ -313,7 +312,6 @@ async def _get_all_users(
 
 
 async def _get_user(auth: Auth, db: Session, userID: str) -> GetAllUsersUser:
-
     if not (
         await check_permissions(db, auth, [Permission.SITE_ADMIN])
         or await check_permissions(db, auth, [Permission.ADMIN])
@@ -324,17 +322,14 @@ async def _get_user(auth: Auth, db: Session, userID: str) -> GetAllUsersUser:
 
     result = await db.execute(query)
     user = result.scalar_one_or_none()
-    
+
     if user is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="User not found")
 
-    user_name_query = select(UserSetting).where(
-        UserSetting.setting == "user_name",
-        UserSetting.user_id == userID
-    )
+    user_name_query = select(UserSetting).where(UserSetting.setting == "user_name", UserSetting.user_id == userID)
     user_name_result = await db.execute(user_name_query)
     user_name = user_name_result.scalar_one_or_none()
-    
+
     if user_name is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="User name not found")
 
