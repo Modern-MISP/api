@@ -214,13 +214,13 @@ async def auth_keys_get(
 
 
 @router.get(
-    "auth_keys/viewOwn",
+    "/auth_keys/viewOwn",
     summary="View own AuthKeys",
 )
 async def auth_keys_view_own_auth_keys(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
     db: Annotated[Session, Depends(get_db)],
-) -> None:
+) -> list[SearchGetAuthKeysResponseItem]:
     """View own Authkeys.
 
     Input:
@@ -235,7 +235,7 @@ async def auth_keys_view_own_auth_keys(
 
     - the auth keys
     """
-    return await _auth_keys_view_own_auth_keys(auth=auth, db=db)
+    return await _auth_keys_view_own(auth=auth, db=db)
 
 
 #  --- deprecated ---
@@ -618,5 +618,8 @@ async def _auth_keys_get(
     return auth_keys_computed
 
 
-async def _auth_keys_view_own_auth_keys(auth: Auth, db: Session) -> None:
-    return None
+async def _auth_keys_view_own(auth: Auth, db: Session) -> list[SearchGetAuthKeysResponseItem]:
+    own_key = await _search_auth_keys(auth, db, SearchAuthKeyBody(user_id=auth.user_id))
+    if own_key is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
+    return own_key

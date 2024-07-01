@@ -149,3 +149,17 @@ def test_delete_auth_key_depr(auth_key, site_admin_user_token, client) -> None:
     assert json["success"]
     assert "delete" in json["url"]
     assert json["id"] == str(auth_key.id)
+
+
+def test_view_own_auth_keys(site_admin_user_token, client) -> None:
+    headers = {"authorization": site_admin_user_token}
+    response = client.get("/auth_keys/viewOwn", headers=headers)
+
+    ic(response.json())
+
+    assert response.status_code == 200
+    response_json = response.json()
+    ic(response_json)
+    assert isinstance(response_json, list)
+    for auth_key in response_json:
+        assert isinstance(auth_key, list)
