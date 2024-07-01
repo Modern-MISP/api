@@ -21,9 +21,8 @@ from mmisp.api.auth import Auth, AuthStrategy, authorize
 from mmisp.api_schemas.responses.check_graph_response import CheckGraphResponse
 from mmisp.api_schemas.responses.standard_status_response import StandardStatusResponse
 from mmisp.db.database import Session, get_db
-from mmisp.db.models.workflow import Workflow
 from mmisp.workflows.graph import WorkflowGraph
-from mmisp.workflows.modules import Module, Trigger
+from mmisp.workflows.legacy import GraphFactory
 
 router = APIRouter(tags=["workflows"])
 
@@ -47,7 +46,7 @@ async def index(
 
     Filters can be applied, mainly filters for a name or a uuid.
     """
-    return []
+    return {{}}
 
 
 @router.post("/workflows/edit/{workflowId}", status_code=status.HTTP_200_OK, summary="Edits a workflow")
@@ -57,8 +56,8 @@ async def edit(
     workflow_id: Annotated[int, Path(alias="workflowId")],
     workflow_name: str,
     workflow_description: str,
-    workflow_graph: WorkflowGraph,
-) -> Workflow:
+    workflow_graph: Annotated[WorkflowGraph, Depends(GraphFactory.jsondict2graph)],
+) -> Dict[str, str]:
     """
     Edits a workflow.
 
@@ -70,7 +69,7 @@ async def edit(
     - **workflow_description** The new description.
     - **workflow_graph** The new workflow graph.
     """
-    return Workflow()
+    return {}
 
 
 @router.delete("/workflows/delete/{workflowId}", status_code=status.HTTP_200_OK, summary="Deletes a workflow")
@@ -99,7 +98,7 @@ async def view(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     workflow_id: Annotated[int, Path(alias="workflowId")],
-) -> Workflow:
+) -> Dict[str, str]:
     """
     Gets a workflow.
 
@@ -109,7 +108,7 @@ async def view(
     - **workflow_id** The ID of the workflow to view.
 
     """
-    return Workflow()
+    return {}
 
 
 @router.post("/workflows/executeWorkflow/{workflowId}", status_code=status.HTTP_200_OK, summary="Executes a workflow")
@@ -117,7 +116,7 @@ async def executeWorkflow(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     workflow_id: Annotated[int, Path(alias="workflowId")],
-) -> None:
+) -> StandardStatusResponse:
     """
     Executes a workflow.
 
@@ -125,7 +124,9 @@ async def executeWorkflow(
 
     - **workflow_id** The ID of the workflow to execute.
     """
-    return None
+    return StandardStatusResponse(
+        saved=True, success=True, message="Nothing happened, just a mockup", name="Test", url="https://example.com"
+    )
 
 
 @router.get("/workflows/triggers", status_code=status.HTTP_200_OK, summary="Returns a list with all triggers")
@@ -137,7 +138,7 @@ async def triggers(
     blocking: Optional[bool],
     limit: Optional[int],
     page: Optional[int],
-) -> List[Trigger]:
+) -> List[Dict[str, str]]:
     """
     Returns a list with triggers.
 
@@ -149,7 +150,7 @@ async def triggers(
     - **limit**: The number of items to display per page (for pagination).
     - **page**: The page number to display (for pagination).
     """
-    return []
+    return {{}}
 
 
 @router.get("/workflows/moduleIndex", status_code=status.HTTP_200_OK, summary="Returns modules")
@@ -161,7 +162,7 @@ async def moduleIndex(
     page: Optional[int],
     type: str = "action",
     actiontype: str = "all",
-) -> List[Module]:
+) -> List[Dict[str, str]]:
     """
     Retrieve modules with optional filtering.
 
@@ -173,7 +174,7 @@ async def moduleIndex(
     - **limit**: The number of items to display per page (for pagination).
     - **page**: The page number to display (for pagination).
     """
-    return []
+    return {{}}
 
 
 @router.get("/workflows/moduleView/{moduleId}", status_code=status.HTTP_200_OK, summary="Returns a singular module")
@@ -219,7 +220,7 @@ async def toggleModule(
 async def checkGraph(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    graph: WorkflowGraph,
+    workflow_graph: Annotated[WorkflowGraph, Depends(GraphFactory.jsondict2graph)],
 ) -> CheckGraphResponse:
     """
     Checks if the given graph is correct.
