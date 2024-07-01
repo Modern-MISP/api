@@ -1,5 +1,4 @@
 import json
-import time
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Path, status
@@ -233,17 +232,13 @@ async def _add_user(auth: Auth, db: Session, body: AddUserBody) -> AddUserRespon
         role_id=body.role_id,
         change_pw=True,
         disabled=body.disabled,
-        last_login=int(time.time()),
         force_logout=False,
-        date_created=int(time.time()),
-        date_modified=int(time.time()),
         external_auth_required=False,
         notification_daily=body.notification_daily,
         notification_weekly=body.notification_weekly,
         notification_monthly=body.notification_monthly,
         totp=body.totp,
         hotp_counter=None,
-        last_pw_change=int(time.time()),
     )
 
     db.add(user)

@@ -1,5 +1,4 @@
 from collections.abc import Sequence
-from time import time
 from typing import Annotated
 from urllib.parse import urlencode
 
@@ -299,7 +298,6 @@ async def redirect_to_frontend(
 
     if not user.sub:
         user.sub = user_info["sub"]
-        user.date_modified = int(time())
         await db.commit()
 
     exchange_token = encode_exchange_token(str(user.id))
@@ -377,8 +375,6 @@ async def _change_password_UserId(
     if not user:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
-    print(body.password)
-    print(hash_secret(body.password))
     user.password = hash_secret(body.password)
     user.change_pw = True
 

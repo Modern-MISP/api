@@ -362,7 +362,7 @@ def test_openid_add_provider(db: Session, site_admin_user_token, client) -> None
             "client_secret": "test",
         },
     )
-
+    ic(response.json())
     assert response.status_code == 200
     response = response.json()
     assert response["name"] == "Test"
