@@ -375,3 +375,18 @@ def test_openid_add_provider(db: Session, site_admin_user_token, client) -> None
     assert oidc_provider.client_id == "test"
     assert oidc_provider.client_secret == "test"
     db.delete(oidc_provider)
+
+
+def test_set_own_password(db: Session, client, password_auth_user, password) -> None:
+    password_auth_user.password = hash_secret("testPw")
+    db.commit()
+    response = client.post(
+        "/auth/login/setOwnPassword",
+        headers={"authorization": encode_token(str(password_auth_user.id))},
+        json={"password": password, "oldPassword": "testPw"},
+    )
+    db.refresh(password_auth_user)
+
+    assert response.status_code == 200
+    assert response.json() == {"successful": True}
+    assert verify_secret(password, password_auth_user.password)

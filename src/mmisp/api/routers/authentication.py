@@ -165,7 +165,11 @@ async def password_login(db: Annotated[Session, Depends(get_db)], body: Password
     "/auth/login/setOwnPassword",
     summary="User sets their password to a new password",
 )
-async def set_password(db: Annotated[Session, Depends(get_db)]) -> None:
+async def set_password(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    db: Annotated[Session, Depends(get_db)],
+    body: ChangePasswordBody,
+) -> ChangeLoginInfoResponse:
     """Sets the password of the user to a new password.
 
     Input:
@@ -176,7 +180,7 @@ async def set_password(db: Annotated[Session, Depends(get_db)]) -> None:
 
     - the response form the api after the password change request
     """
-    return None
+    return await _set_own_password(auth, db, body)
 
 
 @router.get(
@@ -441,6 +445,33 @@ async def _edit_openID_Connect_provider(
     for key in settings.keys():
         if settings[key] is not None:
             setattr(oidc_provider, key, settings[key])
+
+    await db.commit()
+
+    return ChangeLoginInfoResponse(successful=True)
+
+
+async def _set_own_password(auth: Auth, db: Session, body: ChangePasswordBody) -> ChangeLoginInfoResponse:
+    user = await db.get(User, auth.user_id)
+
+    if not user:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
+
+    old_password = body.oldPassword
+
+    print(old_password, user.password)
+
+    if old_password is None:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST)
+
+    if not verify_secret(old_password, user.password):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED)
+
+    if old_password.lower() in body.password.lower():
+        return ChangeLoginInfoResponse(successful=False)
+
+    user.password = hash_secret(body.password)
+    user.change_pw = False
 
     await db.commit()
 
