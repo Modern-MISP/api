@@ -13,18 +13,38 @@ Responses from these endpoints are consistently formatted in JSON,
 providing detailed information about each operation's outcome.
 """
 
-from typing import Annotated, Dict, List, Optional
+from collections.abc import Sequence
+from time import time
+from typing import Annotated, Any, Dict, List, Optional
 
-from fastapi import APIRouter, Depends, Path, status
+from fastapi import APIRouter, Depends, HTTPException, Path, status
+from sqlalchemy.future import select
 
 from mmisp.api.auth import Auth, AuthStrategy, authorize
 from mmisp.api_schemas.responses.check_graph_response import CheckGraphResponse
-from mmisp.api_schemas.responses.standard_status_response import StandardStatusResponse
+from mmisp.api_schemas.responses.standard_status_response import (
+    StandardStatusIdentifiedResponse,
+    StandardStatusResponse,
+)
+from mmisp.api_schemas.workflows import WorkflowEditRequest, WorkflowStatusResponse
 from mmisp.db.database import Session, get_db
+from mmisp.db.models.workflow import Workflow
+from mmisp.util.models import update_record
+from mmisp.workflows.fastapi import workflow_entity_to_json_dict
 from mmisp.workflows.graph import WorkflowGraph
 from mmisp.workflows.legacy import GraphFactory
 
 router = APIRouter(tags=["workflows"])
+
+
+def __create_new_workflow(name: str, description: str, data: dict, trigger_id: str) -> Workflow:
+    return Workflow(
+        name=name,
+        description=description,
+        timestamp=time.time(),
+        trigger_id=trigger_id,
+        data=data,
+    )
 
 
 @router.get(
@@ -35,9 +55,9 @@ router = APIRouter(tags=["workflows"])
 async def index(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    name: Optional[str],
-    uuid: Optional[str],
-) -> List[Dict[str, str]]:
+    name: str | None = None,
+    uuid: str | None = None,
+) -> List[dict]:
     """
     Returns a list of all workflows.
 
@@ -46,7 +66,16 @@ async def index(
 
     Filters can be applied, mainly filters for a name or a uuid.
     """
-    return {{}}
+    result = await db.execute(select(Workflow))
+    workflows: Sequence[Workflow] = result.scalars().all()
+
+    result: List[Dict[str, str]] = []
+
+    for workflow in workflows:
+        json = workflow_entity_to_json_dict(workflow)
+        result.append(json)
+
+    return result
 
 
 @router.post("/workflows/edit/{workflowId}", status_code=status.HTTP_200_OK, summary="Edits a workflow")
@@ -54,10 +83,8 @@ async def edit(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     workflow_id: Annotated[int, Path(alias="workflowId")],
-    workflow_name: str,
-    workflow_description: str,
-    workflow_graph: Annotated[WorkflowGraph, Depends(GraphFactory.jsondict2graph)],
-) -> Dict[str, str]:
+    request: WorkflowEditRequest,
+) -> Dict[str, Any]:
     """
     Edits a workflow.
 
@@ -69,7 +96,25 @@ async def edit(
     - **workflow_description** The new description.
     - **workflow_graph** The new workflow graph.
     """
-    return {}
+    new_data = {
+        "name": request.workflow_name,
+        "description": request.workflow_description,
+        "graph": GraphFactory.jsondict2graph(request.workflow_graph),
+    }
+
+    workflow: Workflow | None = await db.get(Workflow, workflow_id)
+
+    if not workflow:
+        workflow = Workflow()
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+    else:
+        update_record(workflow, new_data)
+        await db.commit()
+        await db.refresh(workflow)
+
+    return workflow_entity_to_json_dict(workflow)
 
 
 @router.delete("/workflows/delete/{workflowId}", status_code=status.HTTP_200_OK, summary="Deletes a workflow")
@@ -77,14 +122,31 @@ async def delete(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     workflow_id: Annotated[int, Path(alias="workflowId")],
-) -> StandardStatusResponse:
+) -> StandardStatusIdentifiedResponse:
     """
     Deletes a workflow. It will be removed from the database.
 
     - **workflow_id** The ID of the workflow to delete.
     """
-    return StandardStatusResponse(
-        saved=True, success=True, message="Nothing happened, just a mockup", name="Test", url="https://example.com"
+    workflow: Workflow = await db.get(Workflow, workflow_id)
+    if workflow is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=WorkflowStatusResponse(
+                name="Invalid Workflow.", message="Invalid Workflow.", url=f"/workflows/delete/{workflow_id}"
+            ).dict(),
+        )
+
+    await db.delete(workflow)
+    await db.commit()
+
+    return WorkflowStatusResponse(
+        saved=True,
+        success=True,
+        message="Workflow deleted.",
+        name="Workflow deleted.",
+        url=f"/workflows/delete/{workflow_id}",
+        id=workflow_id,
     )
 
 
@@ -98,7 +160,7 @@ async def view(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     workflow_id: Annotated[int, Path(alias="workflowId")],
-) -> Dict[str, str]:
+) -> Dict[str, Any]:
     """
     Gets a workflow.
 
@@ -108,7 +170,18 @@ async def view(
     - **workflow_id** The ID of the workflow to view.
 
     """
-    return {}
+    result = await db.execute(select(Workflow).where(Workflow.id == workflow_id).limit(1))
+    workflow: Workflow = result.scalars().first()
+    if workflow is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=WorkflowStatusResponse(
+                name="Invalid Workflow.",
+                message="Invalid Workflow.",
+                url=f"/workflows/view/{workflow_id}",
+            ).dict(),
+        )
+    return workflow_entity_to_json_dict(workflow)
 
 
 @router.post("/workflows/executeWorkflow/{workflowId}", status_code=status.HTTP_200_OK, summary="Executes a workflow")
@@ -162,7 +235,7 @@ async def moduleIndex(
     page: Optional[int],
     type: str = "action",
     actiontype: str = "all",
-) -> List[Dict[str, str]]:
+) -> List[Dict[str, Any]]:
     """
     Retrieve modules with optional filtering.
 
@@ -182,7 +255,7 @@ async def moduleView(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     module_id: Annotated[int, Path(alias="moduleId")],
-) -> Dict[str, str]:
+) -> Dict[str, Any]:
     """
     Returns a singular module.
 
