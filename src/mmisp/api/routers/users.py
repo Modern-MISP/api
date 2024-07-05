@@ -22,6 +22,7 @@ from mmisp.db.models.organisation import Organisation
 from mmisp.db.models.role import Role
 from mmisp.db.models.user import User
 from mmisp.db.models.user_setting import UserSetting
+from mmisp.util.crypto import hash_secret
 from mmisp.util.partial import partial
 
 router = APIRouter(tags=["users"])
@@ -225,7 +226,7 @@ async def _add_user(auth: Auth, db: Session, body: AddUserBody) -> AddUserRespon
     user = User(
         org_id=body.org_id,
         email=body.email,
-        password=body.password,
+        password=hash_secret(body.password),
         invited_by=auth.user_id,
         gpgkey=body.gpgkey,
         termsaccepted=body.termsaccepted,
