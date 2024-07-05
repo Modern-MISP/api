@@ -10,31 +10,6 @@ router = APIRouter(tags=["servers"])
 
 
 @router.post(
-    "/servers/createBackup/{path}",
-    summary="Creates a backup on the given path",
-)
-async def create_backup(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
-    db: Annotated[Session, Depends(get_db)],
-    path: Annotated[str, Path(alias="path")],
-) -> None:
-    """
-    Creates a backup of the current database if the given path is valid.
-
-    Input:
-
-    - path: Path where the backup will be created
-
-    - The current database
-
-    Output:
-
-    - Response indicating the result of the backup operation
-    """
-    return await _create_backup(auth, db, path)
-
-
-@router.post(
     "/servers/updateBackup/{path}",
     summary="Updates a backup on the given path",
 )
@@ -188,9 +163,6 @@ async def get_version(
 
 # --- endpoint logic ---
 
-
-async def _create_backup(auth: Auth, db: Session, path: str) -> None:
-    return None
 
 
 async def _update_backup(auth: Auth, db: Session, path: str) -> None:
