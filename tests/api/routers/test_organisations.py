@@ -30,7 +30,7 @@ def organisation(db):
     db.commit()
 
 
-def test_add_organisation_by_id(db: Session, site_admin_user_token, client, organisation) -> None:
+def test_get_organisation_by_id(db: Session, site_admin_user_token, client, organisation) -> None:
     org_id = organisation.id
 
     headers = {"authorization": site_admin_user_token}
