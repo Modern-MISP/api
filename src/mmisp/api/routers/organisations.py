@@ -43,8 +43,9 @@ async def add_organisation(
     summary="Gets a list of all organisations",
 )
 async def get_organisations(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-) -> None:
+) -> list[GetOrganisationResponse]:
     """
     Gets all organisations as a list.
 
@@ -56,7 +57,7 @@ async def get_organisations(
 
     - List of all organisations
     """
-    return await _get_organisations(db)
+    return await _get_organisations(auth, db)
 
 
 @router.get(
@@ -145,8 +146,39 @@ async def _add_organisation(auth: Auth, db: Session, body: None) -> None:
     return None
 
 
-async def _get_organisations(db: Session) -> None:
-    return None
+async def _get_organisations(auth: Auth, db: Session) -> list[GetOrganisationResponse]:
+    if not (
+        await check_permissions(db, auth, [Permission.SITE_ADMIN])
+        or await check_permissions(db, auth, [Permission.ADMIN])
+    ):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED)
+
+    query = select(Organisation)
+    result = await db.execute(query)
+    organisations = result.fetchall()
+    org_list_computed: list[GetOrganisationResponse] = []
+
+    for organisation in organisations[0]:
+        org_list_computed.append(
+            GetOrganisationResponse(
+                id=organisation.id,
+                name=organisation.name,
+                date_created=organisation.date_created,
+                date_modified=organisation.date_modified,
+                description=organisation.description,
+                type=organisation.type,
+                nationality=organisation.nationality,
+                sector=organisation.sector,
+                created_by=organisation.created_by,
+                uuid=organisation.uuid,
+                contacts=organisation.contacts,
+                local=organisation.local,
+                restricted_to_domain=organisation.restricted_to_domain,
+                landingpage=organisation.landingpage
+            )
+        )
+
+    return org_list_computed
 
 
 async def _get_organisation(auth: Auth, db: Session, organisationID: str) -> GetOrganisationResponse:
