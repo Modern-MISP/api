@@ -30,6 +30,20 @@ def organisation(db):
     db.commit()
 
 
+@pytest.fixture
+def organisation2(db):
+    organisation = generate_organisation()
+
+    db.add(organisation)
+    db.commit()
+    db.refresh(organisation)
+
+    yield organisation
+
+    db.delete(organisation)
+    db.commit()
+
+
 def test_get_organisation_by_id(db: Session, site_admin_user_token, client, organisation) -> None:
     org_id = organisation.id
 
@@ -45,3 +59,19 @@ def test_get_organisation_by_id(db: Session, site_admin_user_token, client, orga
     assert response_json["description"] == organisation.description
     assert response_json["nationality"] == organisation.nationality
     assert response_json["sector"] == organisation.sector
+
+
+def test_get_all_organisations(db: Session, site_admin_user_token, client, organisation, organisation2) -> None:
+    headers = {"authorization": site_admin_user_token}
+    response = client.get("/organisations/all", headers=headers)
+
+    assert response.status_code == 200
+    response_json = response.json()
+    assert isinstance(response_json, list)
+    response_json = response.json()
+    for organisation in response_json:
+        assert "id" in organisation
+        assert "name" in organisation
+        assert "description" in organisation
+        assert "nationality" in organisation
+        assert "sector" in organisation
