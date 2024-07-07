@@ -95,7 +95,7 @@ async def delete_organisation(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     organisation_id: Annotated[str, Path(alias="orgId")],
-) -> None:
+) -> DeleteForceUpdateOrganisationResponse:
     """
     Deletes an organisation by its ID.
 
@@ -214,8 +214,30 @@ async def _get_organisation(auth: Auth, db: Session, organisationID: str) -> Get
     )
 
 
-async def _delete_organisation(auth: Auth, db: Session, organisationID: str) -> None:
-    return None
+async def _delete_organisation(auth: Auth, db: Session, organisationID: str) -> DeleteForceUpdateOrganisationResponse:
+    if not (
+        await check_permissions(db, auth, [Permission.SITE_ADMIN])
+        and await check_permissions(db, auth, [Permission.ADMIN])
+    ):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED)
+
+
+    organisation = await db.get(Organisation, organisationID)
+
+    if not organisation:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=DeleteForceUpdateOrganisationResponse(
+                saved=False, success=False, name="Invalid organisation.", message="Invalid organisation.", url=f"/organisations/{organisationID}"
+            ).dict(),
+        )
+
+    await db.delete(organisation)
+    await db.commit()
+
+    return DeleteForceUpdateOrganisationResponse(
+        saved=True, success=True, name="Organisation deleted", message="Organisation deleted", url=f"/organisations/{organisationID}"
+    )
 
 
 async def _update_organisation(auth: Auth, db: Session, organisationID: str) -> None:
