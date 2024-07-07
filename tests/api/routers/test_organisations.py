@@ -75,3 +75,15 @@ def test_get_all_organisations(db: Session, site_admin_user_token, client, organ
         assert "description" in organisation
         assert "nationality" in organisation
         assert "sector" in organisation
+
+
+def test_delete_organisation(db: Session, site_admin_user_token, client, organisation) -> None:
+    org_id = organisation.id
+
+    headers = {"authorization": site_admin_user_token}
+    response = client.delete(f"/organisations/delete/{org_id}", headers=headers)
+
+    assert response.status_code == 200
+    response_json = response.json()
+    assert response_json["saved"]
+    assert response_json["name"] == "Organisation deleted"
