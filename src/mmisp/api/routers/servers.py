@@ -9,31 +9,6 @@ from mmisp.db.database import Session, get_db
 router = APIRouter(tags=["servers"])
 
 
-@router.post(
-    "/servers/updateBackup/{path}",
-    summary="Updates a backup on the given path",
-)
-async def update_backup(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
-    db: Annotated[Session, Depends(get_db)],
-    path: Annotated[str, Path(alias="path")],
-) -> None:
-    """
-    Updates a backup of the current database if the given path is valid.
-
-    Input:
-
-    - path: Path where the backup will be updated
-
-    - The current database
-
-    Output:
-
-    - Response indicating the result of the backup update operation
-    """
-    return await _update_backup(auth, db, path)
-
-
 @router.get(
     "/servers/remote/getAll",
     summary="Requests a list of all remote servers",
@@ -162,11 +137,6 @@ async def get_version(
 
 
 # --- endpoint logic ---
-
-
-
-async def _update_backup(auth: Auth, db: Session, path: str) -> None:
-    return None
 
 
 async def _get_remote_servers(auth: Auth, db: Session) -> None:
