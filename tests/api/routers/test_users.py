@@ -163,11 +163,13 @@ def test_users_view_all(db: Session, site_admin_user_token, client) -> None:
         assert user_name is not None
         assert json.loads(user_name.value)["name"] == user.get("name")
 
-"""
-def test_delete_user(db: Session, site_admin_user_token, client) -> None:
-    email = "test_delete@automated.com"
-    name = "test_delete_user"
-    response = client.post(
+
+def test_delete_user(site_admin_user_token, site_admin_user, client, db) -> None:
+    email = "test@automated.com" + str(time())
+    name = "test_user" + str(time())
+
+    # Creates a new user
+    create_response = client.post(
         "/users",
         headers={"authorization": site_admin_user_token},
         json={
@@ -175,7 +177,7 @@ def test_delete_user(db: Session, site_admin_user_token, client) -> None:
             "password": "test",
             "name": name,
             "role_id": 0,
-            "org_id": 1,
+            "org_id": site_admin_user.org_id,
             "nids_sid": "12345",
             "disabled": False,
             "contact_enabled": False,
@@ -186,24 +188,37 @@ def test_delete_user(db: Session, site_admin_user_token, client) -> None:
             "gpgkey": "Test",
         },
     )
-    json = response.json()
-    assert response.status_code == 200
 
-    user_id = json.get("id")
+    # Check if the user was created
+    assert create_response.status_code == 200
+    created_user = create_response.json()
+    user_id = created_user.get("id")
+    assert user_id is not None
 
-    # Check if user exists
-    query = select(User).where(User.id == user_id)
-    user = db.execute(query).scalars().first()
+    # Check the user and user setting creation
+    user_setting_query = select(UserSetting).where(UserSetting.user_id == user_id, UserSetting.setting == "user_name")
+    user_setting = db.execute(user_setting_query).scalars().first()
+    assert user_setting is not None
+    assert json.loads(user_setting.value)["name"] == name
+
+    user_query = select(User).where(User.id == user_id)
+    user = db.execute(user_query).scalars().first()
     assert user is not None
+    assert user.email == email
 
-    # Delete user
-    response = client.delete(f"/users/{user_id}", headers={"authorization": site_admin_user_token})
-    json = response.json()
-    assert response.status_code == 200
-    assert json.get("success") is True
-    assert json.get("id") == user_id
+    # Api delete call
+    delete_response = client.delete(f"/users/{user_id}", headers={"authorization": site_admin_user_token})
 
-    # Test if user is deleted
-    user = db.execute(query).scalars().first()
+    # Shows the error message if the status code is not 200
+    if delete_response.status_code != 200:
+        print("Error during user deletion:")
+        print(delete_response.json())
+    assert delete_response.status_code == 200
+    db.commit()
+
+    # Check if the user and user setting were deleted from the database
+    user_setting = db.execute(user_setting_query).scalars().first()
+    assert user_setting is None
+
+    user = db.execute(user_query).scalars().first()
     assert user is None
-"""

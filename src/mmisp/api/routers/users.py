@@ -129,7 +129,7 @@ async def get_user_by_id(
     summary="Delete a user",
 )
 async def delete_user(
-    user_id: Annotated[int, Path(alias="userId")],
+    user_id: Annotated[str, Path(alias="user_id")],
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
 ) -> StandardStatusIdentifiedResponse:
@@ -153,7 +153,7 @@ async def delete_user(
         success=True,
         name="User deleted.",
         message="User deleted.",
-        url=f"/users/{user_id}",
+        url="/users/{user_id}",
         id=user_id,
     )
 
@@ -346,16 +346,25 @@ async def _get_user(auth: Auth, db: Session, userID: str) -> GetAllUsersUser:
     )
 
 
-async def _delete_user(user_id: int, auth: Auth, db: Session) -> None:
-    if user_id != auth.user_id and not await check_permissions(db, auth, [Permission.SITE_ADMIN]):
+async def _delete_user(user_id: str, auth: Auth, db: Session) -> None:
+    if not (
+        await check_permissions(db, auth, [Permission.SITE_ADMIN])
+        or await check_permissions(db, auth, [Permission.ADMIN])
+    ):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
-    user = _get_user(auth, db, str(user_id))
+    user = await db.get(User, user_id)
     if not user:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="User not found")
 
+    user_settings = await db.execute(select(UserSetting).where(UserSetting.user_id == user.id))
+    for setting in user_settings.scalars():
+        await db.delete(setting)
+        await db.commit()
+
     await db.delete(user)
     await db.commit()
+    return None
 
 
 async def _delete_user_token(auth: Auth, db: Session, userID: str) -> None:
