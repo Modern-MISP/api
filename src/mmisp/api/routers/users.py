@@ -125,7 +125,6 @@ async def get_user_by_id(
 
 @router.delete(
     "/users/{user_id}",
-    # response_model=UserAttributesResponse,
     summary="Delete a user",
 )
 async def delete_user(
@@ -147,15 +146,7 @@ async def delete_user(
     Output:
     - StandardStatusIdentifiedResponse: Response indicating success or failure
     """
-    await _delete_user(user_id=user_id, auth=auth, db=db)
-    return StandardStatusIdentifiedResponse(
-        saved=True,
-        success=True,
-        name="User deleted.",
-        message="User deleted.",
-        url="/users/{user_id}",
-        id=user_id,
-    )
+    return await _delete_user(user_id=user_id, auth=auth, db=db)
 
 
 @router.delete(
@@ -346,7 +337,7 @@ async def _get_user(auth: Auth, db: Session, userID: str) -> GetAllUsersUser:
     )
 
 
-async def _delete_user(user_id: str, auth: Auth, db: Session) -> None:
+async def _delete_user(user_id: str, auth: Auth, db: Session) -> StandardStatusIdentifiedResponse:
     if not (
         await check_permissions(db, auth, [Permission.SITE_ADMIN])
         or await check_permissions(db, auth, [Permission.ADMIN])
@@ -364,7 +355,15 @@ async def _delete_user(user_id: str, auth: Auth, db: Session) -> None:
 
     await db.delete(user)
     await db.commit()
-    return None
+
+    return StandardStatusIdentifiedResponse(
+        saved=True,
+        success=True,
+        name="User deleted.",
+        message="User deleted.",
+        url=f"/users/{user_id}",
+        id=user_id,
+    )
 
 
 async def _delete_user_token(auth: Auth, db: Session, userID: str) -> None:
