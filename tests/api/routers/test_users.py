@@ -141,7 +141,6 @@ def test_users_view_all(db: Session, site_admin_user_token, client) -> None:
     assert response.status_code == 200
     response_json = response.json()
     assert isinstance(response_json, list)
-    response_json = response.json()
     for user in response_json:
         assert isinstance(response_json, list)
         assert "id" in user
