@@ -5,9 +5,8 @@ from fastapi import APIRouter, Depends, HTTPException, Path, status
 from sqlalchemy.future import select
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize, check_permissions
-from mmisp.api_schemas.servers import (
-    GetRemoteServersResponse,
-)
+from mmisp.api_schemas.servers import AddServer, AddServerResponse, GetRemoteServersResponse
+from mmisp.api_schemas.standard_status_response import StandardStatusIdentifiedResponse
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.server import Server
 
@@ -68,8 +67,8 @@ async def get_remote_server_by_id(
 async def add_remote_server(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    body: None,
-) -> None:
+    body: AddServer,
+) -> AddServerResponse:
     """
     Adds a new remote server based on the input of an admin.
 
@@ -87,14 +86,14 @@ async def add_remote_server(
 
 
 @router.delete(
-    "/servers/remote/delete/{serverId}",
+    "/servers/remote/delete/{server_id}",
     summary="Deletes a remote server by id",
 )
 async def delete_remote_server(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
-    db: Annotated[Session, Depends(get_db)],  #
-    server_Id: Annotated[str, Path(alias="serverId")],
-) -> None:
+    db: Annotated[Session, Depends(get_db)],
+    server_id: Annotated[str, Path(alias="server_id")],
+) -> StandardStatusIdentifiedResponse:
     """
     Deletes a remote server if the given id is valid.
 
@@ -108,7 +107,7 @@ async def delete_remote_server(
 
     - Response indicating the result of the server deletion operation
     """
-    return await _delete_remote_server(auth, db, server_Id)
+    return await _delete_remote_server(auth=auth, db=db, server_id=server_id)
 
 
 @router.get("/servers/getVersion")
@@ -219,9 +218,62 @@ async def _get_remote_server_by_id(auth: Auth, db: Session, serverId: str) -> Ge
     )
 
 
-async def _add_remote_server(auth: Auth, db: Session, body: None) -> None:
-    return None
+async def _add_remote_server(auth: Auth, db: Session, body: AddServer) -> StandardStatusIdentifiedResponse:
+    if not (
+        await check_permissions(db, auth, [Permission.SITE_ADMIN])
+        and await check_permissions(db, auth, [Permission.ADMIN])
+    ):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED)
+
+    server = Server(
+        name=body.name,
+        url="default_url",
+        priority=1,
+        authkey="default_authkey",
+        org_id=2,
+        remote_org_id=3,
+        internal=False,
+        push=False,
+        pull=False,
+        pull_rules="default_pull_rules",
+        push_rules="default_push_rules",
+        push_galaxy_clusters=False,
+        caching_enabled=False,
+        unpublish_event=False,
+        publish_without_email=False,
+        self_signed=False,
+        skip_proxy=False,
+    )
+    db.add(server)
+    await db.commit()
+    await db.refresh(server)
+
+    return AddServerResponse(
+        id=server.id,
+    )
 
 
-async def _delete_remote_server(auth: Auth, db: Session, serverId: str) -> None:
-    return None
+async def _delete_remote_server(auth: Auth, db: Session, server_id: str) -> StandardStatusIdentifiedResponse:
+    if not (
+        await check_permissions(db, auth, [Permission.SITE_ADMIN])
+        or await check_permissions(db, auth, [Permission.ADMIN])
+    ):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED)
+
+    server_to_delete = await db.get(Server, server_id)
+
+    if not server_to_delete:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Remote server not found")
+
+    # Delete
+    await db.delete(server_to_delete)
+    await db.commit()
+
+    return StandardStatusIdentifiedResponse(
+        saved=True,
+        success=True,
+        name="Remote server deleted.",
+        message="Remote server deleted successfully.",
+        url=f"/servers/remote/delete/{server_id}",
+        id=server_id,
+    )
