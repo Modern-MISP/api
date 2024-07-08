@@ -158,7 +158,7 @@ async def password_login(db: Annotated[Session, Depends(get_db)], body: Password
     if not user or user.external_auth_required or not verify_secret(body.password, user.password):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
-    return TokenResponse(token=encode_token(str(user.id)), reqiuredPasswordChange=False)
+    return TokenResponse(token=encode_token(str(user.id)), reqiuredPasswordChange=user.change_pw)
 
 
 @router.post(
