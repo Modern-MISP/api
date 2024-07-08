@@ -218,7 +218,7 @@ async def _get_remote_server_by_id(auth: Auth, db: Session, serverId: str) -> Ge
     )
 
 
-async def _add_remote_server(auth: Auth, db: Session, body: AddServer) -> StandardStatusIdentifiedResponse:
+async def _add_remote_server(auth: Auth, db: Session, body: AddServer) -> AddServerResponse:
     if not (
         await check_permissions(db, auth, [Permission.SITE_ADMIN])
         and await check_permissions(db, auth, [Permission.ADMIN])
