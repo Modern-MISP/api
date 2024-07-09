@@ -266,6 +266,33 @@ async def _import_galaxy_cluster(
     )
 
 
+async def _process_galaxy_cluster_dict(cluster_dict: dict) -> dict:
+    cluster_dict["authors"] = cluster_dict["authors"].split(" ")
+
+    int_fields_to_convert = ["sharing_group_id", "org_id", "orgc_id", "extends_version"]
+    for field in int_fields_to_convert:
+        if cluster_dict.get(field) is not None:
+            cluster_dict[field] = str(cluster_dict[field])
+        else:
+            cluster_dict[field] = "0"
+
+    if cluster_dict.get("collection_uuid") is None:
+        cluster_dict["collection_uuid"] = ""
+    if cluster_dict.get("extends_uuid") is None:
+        cluster_dict["extends_uuid"] = ""
+    if cluster_dict.get("distribution") is None:
+        cluster_dict["distribution"] = "0"
+    else:
+        cluster_dict["distribution"] = str(cluster_dict["distribution"])
+
+    bool_fields_to_convert = ["default", "locked", "published", "deleted"]
+    for field in bool_fields_to_convert:
+        if cluster_dict.get(field) is None:
+            cluster_dict[field] = False
+
+    return cluster_dict
+
+
 async def _get_galaxy_cluster(db: Session, cluster_id: int) -> GetGalaxyClusterResponse:
     result = await db.execute(
         select(GalaxyCluster).filter(GalaxyCluster.id == cluster_id)
@@ -276,29 +303,7 @@ async def _get_galaxy_cluster(db: Session, cluster_id: int) -> GetGalaxyClusterR
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Galaxy cluster not found")
 
     galaxy_cluster_dict = galaxy_cluster.__dict__.copy()
-
-    galaxy_cluster_dict["authors"] = galaxy_cluster_dict["authors"].split(" ")
-
-    int_fields_to_convert = ["sharing_group_id", "org_id", "orgc_id", "extends_version"]
-    for field in int_fields_to_convert:
-        if galaxy_cluster_dict.get(field) is not None:
-            galaxy_cluster_dict[field] = str(galaxy_cluster_dict[field])
-        else:
-            galaxy_cluster_dict[field] = "0"
-
-    if galaxy_cluster_dict.get("collection_uuid") is None:
-        galaxy_cluster_dict["collection_uuid"] = ""
-    if galaxy_cluster_dict.get("extends_uuid") is None:
-        galaxy_cluster_dict["extends_uuid"] = ""
-    if galaxy_cluster_dict.get("distribution") is None:
-        galaxy_cluster_dict["distribution"] = "0"
-    else:
-        galaxy_cluster_dict["distribution"] = str(galaxy_cluster_dict["distribution"])
-
-    bool_fields_to_convert = ["default", "locked", "published", "deleted"]
-    for field in bool_fields_to_convert:
-        if galaxy_cluster_dict.get(field) is None:
-            galaxy_cluster_dict[field] = False
+    galaxy_cluster_dict = await _process_galaxy_cluster_dict(galaxy_cluster_dict)
 
     result = await db.execute(
         select(GalaxyElement).filter(GalaxyElement.galaxy_cluster_id == cluster_id)
@@ -400,7 +405,7 @@ async def _prepare_galaxy_response(db: Session, galaxy: Galaxy) -> GetAllSearchG
     return GetAllSearchGalaxiesAttributes(**galaxy_dict)
 
 
-async def _prepare_galaxy_cluster_response(db: Session, galaxy: Galaxy) -> list[GetGalaxyClusterResponse]:
+async def _prepare_galaxy_cluster_response(db: Session, galaxy: Galaxy) -> List[GetGalaxyClusterResponse]:
     response_list = []
 
     result = await db.execute(select(GalaxyCluster).filter(GalaxyCluster.galaxy_id == galaxy.id))
@@ -409,29 +414,7 @@ async def _prepare_galaxy_cluster_response(db: Session, galaxy: Galaxy) -> list[
     if len(galaxy_cluster_list) > 0:
         for galaxy_cluster in galaxy_cluster_list:
             galaxy_cluster_dict = galaxy_cluster.__dict__.copy()
-
-            galaxy_cluster_dict["authors"] = galaxy_cluster_dict["authors"].split(" ")
-
-            int_fields_to_convert = ["sharing_group_id", "org_id", "orgc_id", "extends_version"]
-            for field in int_fields_to_convert:
-                if galaxy_cluster_dict.get(field) is not None:
-                    galaxy_cluster_dict[field] = str(galaxy_cluster_dict[field])
-                else:
-                    galaxy_cluster_dict[field] = "0"
-
-            if galaxy_cluster_dict.get("collection_uuid") is None:
-                galaxy_cluster_dict["collection_uuid"] = ""
-            if galaxy_cluster_dict.get("extends_uuid") is None:
-                galaxy_cluster_dict["extends_uuid"] = ""
-            if galaxy_cluster_dict.get("distribution") is None:
-                galaxy_cluster_dict["distribution"] = "0"
-            else:
-                galaxy_cluster_dict["distribution"] = str(galaxy_cluster_dict["distribution"])
-
-            bool_fields_to_convert = ["default", "locked", "published", "deleted"]
-            for field in bool_fields_to_convert:
-                if galaxy_cluster_dict.get(field) is None:
-                    galaxy_cluster_dict[field] = False
+            galaxy_cluster_dict = await _process_galaxy_cluster_dict(galaxy_cluster_dict)
 
             result = await db.execute(
                 select(GalaxyElement).filter(GalaxyElement.galaxy_cluster_id == galaxy_cluster.id)
