@@ -405,7 +405,7 @@ async def _prepare_galaxy_response(db: Session, galaxy: Galaxy) -> GetAllSearchG
     return GetAllSearchGalaxiesAttributes(**galaxy_dict)
 
 
-async def _prepare_galaxy_cluster_response(db: Session, galaxy: Galaxy) -> List[GetGalaxyClusterResponse]:
+async def _prepare_galaxy_cluster_response(db: Session, galaxy: Galaxy) -> list[GetGalaxyClusterResponse]:
     response_list = []
 
     result = await db.execute(select(GalaxyCluster).filter(GalaxyCluster.galaxy_id == galaxy.id))
