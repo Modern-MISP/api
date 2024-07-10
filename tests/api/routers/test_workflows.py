@@ -8,7 +8,10 @@ from sqlalchemy.future import select
 from mmisp.db.models.workflow import Workflow
 from mmisp.workflows.legacy import GraphFactory
 
-from ...generators.model_generators.workflow_generator import generate_workflows, genrerate_workflow_with_id
+from ...generators.model_generators.workflow_generator import (
+    generate_workflows,
+    genrerate_workflow_with_id,
+)
 
 
 @pytest.fixture
@@ -160,14 +163,3 @@ def test_workflow_delete_invalid_id(client, site_admin_user_token, db) -> None:
     assert detail_dict["detail"]["name"] == "Invalid Workflow."
     assert detail_dict["detail"]["message"] == "Invalid Workflow."
     assert detail_dict["detail"]["url"] == f"/workflows/delete/{id}"
-
-
-def test_db(db):
-    workflow = genrerate_workflow_with_id(3)
-    db.add(workflow)
-    db.commit()
-    assert 1
-
-
-def test_api(site_admin_user_token, client):
-    assert 1

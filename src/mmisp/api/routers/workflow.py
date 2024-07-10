@@ -14,25 +14,58 @@ providing detailed information about each operation's outcome.
 """
 
 from collections.abc import Sequence
+from json import loads
 from time import time
-from typing import Annotated, Any, Dict, List, Optional
+from typing import Annotated, Any, Dict, List
 
-from fastapi import APIRouter, Depends, HTTPException, Path, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    Path,
+    status,
+)
 from sqlalchemy.future import select
+from starlette.requests import (
+    AwaitableOrContextManager,
+    Request,
+)
 
 from mmisp.api.auth import Auth, AuthStrategy, authorize
-from mmisp.api_schemas.responses.check_graph_response import CheckGraphResponse
+from mmisp.api_schemas.responses.check_graph_response import (
+    CheckGraphResponse,
+)
 from mmisp.api_schemas.responses.standard_status_response import (
     StandardStatusIdentifiedResponse,
     StandardStatusResponse,
+    StandartResponse,
 )
-from mmisp.api_schemas.workflows import WorkflowEditRequest, WorkflowStatusResponse
+from mmisp.api_schemas.workflows import (
+    GraphRequest,
+    ModuleIndexRequest,
+    TriggerRequest,
+)
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.workflow import Workflow
 from mmisp.util.models import update_record
-from mmisp.workflows.fastapi import workflow_entity_to_json_dict
-from mmisp.workflows.graph import WorkflowGraph
+from mmisp.workflows.fastapi import (
+    module_entity_to_json_dict,
+    trigger_entity_to_json_dict,
+    workflow_entity_to_json_dict,
+)
+from mmisp.workflows.graph import (
+    Graph,
+    WorkflowGraph,
+)
 from mmisp.workflows.legacy import GraphFactory
+from mmisp.workflows.modules import (
+    Module,
+    ModuleAction,
+    ModuleLogic,
+    Node,
+    NodeRegistry,
+    Trigger,
+)
 
 router = APIRouter(tags=["workflows"])
 
@@ -78,12 +111,16 @@ async def index(
     return result
 
 
-@router.post("/workflows/edit/{workflowId}", status_code=status.HTTP_200_OK, summary="Edits a workflow")
+@router.post(
+    "/workflows/edit/{workflowId}",
+    status_code=status.HTTP_200_OK,
+    summary="Edits a workflow",
+)
 async def edit(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     workflow_id: Annotated[int, Path(alias="workflowId")],
-    request: WorkflowEditRequest,
+    request: Request,
 ) -> Dict[str, Any]:
     """
     Edits a workflow.
@@ -96,10 +133,19 @@ async def edit(
     - **workflow_description** The new description.
     - **workflow_graph** The new workflow graph.
     """
+
+    # Forms conversion to useable data
+    form_data = await request.form()
+    parsed_data = __parse_nested_form_data(form_data)
+
+    name = parsed_data.get("data").get("Workflow").get("name")
+    description = parsed_data.get("data").get("Workflow").get("description")
+    data = loads(parsed_data.get("data").get("Workflow").get("data"))
+
     new_data = {
-        "name": request.workflow_name,
-        "description": request.workflow_description,
-        "graph": GraphFactory.jsondict2graph(request.workflow_graph),
+        "name": name,
+        "description": description,
+        "data": GraphFactory.jsondict2graph(data),
     }
 
     workflow: Workflow | None = await db.get(Workflow, workflow_id)
@@ -117,7 +163,22 @@ async def edit(
     return workflow_entity_to_json_dict(workflow)
 
 
-@router.delete("/workflows/delete/{workflowId}", status_code=status.HTTP_200_OK, summary="Deletes a workflow")
+def __parse_nested_form_data(form_data: AwaitableOrContextManager) -> Dict[str, Any]:
+    parsed = {}
+    for key, value in form_data.items():
+        keys = key.replace("]", "").split("[")
+        current = parsed
+        for k in keys[:-1]:
+            current = current.setdefault(k, {})
+        current[keys[-1]] = value
+    return parsed
+
+
+@router.delete(
+    "/workflows/delete/{workflowId}",
+    status_code=status.HTTP_200_OK,
+    summary="Deletes a workflow",
+)
 async def delete(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -132,7 +193,7 @@ async def delete(
     if workflow is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=WorkflowStatusResponse(
+            detail=StandartResponse(
                 name="Invalid Workflow.", message="Invalid Workflow.", url=f"/workflows/delete/{workflow_id}"
             ).dict(),
         )
@@ -140,7 +201,7 @@ async def delete(
     await db.delete(workflow)
     await db.commit()
 
-    return WorkflowStatusResponse(
+    return StandardStatusIdentifiedResponse(
         saved=True,
         success=True,
         message="Workflow deleted.",
@@ -175,7 +236,7 @@ async def view(
     if workflow is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=WorkflowStatusResponse(
+            detail=StandartResponse(
                 name="Invalid Workflow.",
                 message="Invalid Workflow.",
                 url=f"/workflows/view/{workflow_id}",
@@ -184,7 +245,11 @@ async def view(
     return workflow_entity_to_json_dict(workflow)
 
 
-@router.post("/workflows/executeWorkflow/{workflowId}", status_code=status.HTTP_200_OK, summary="Executes a workflow")
+@router.post(
+    "/workflows/executeWorkflow/{workflowId}",
+    status_code=status.HTTP_200_OK,
+    summary="Executes a workflow",
+)
 async def executeWorkflow(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -202,16 +267,16 @@ async def executeWorkflow(
     )
 
 
-@router.get("/workflows/triggers", status_code=status.HTTP_200_OK, summary="Returns a list with all triggers")
+@router.post(
+    "/workflows/triggers",
+    status_code=status.HTTP_200_OK,
+    summary="Returns a list with all triggers",
+)
 async def triggers(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    scope: Optional[str],
-    enabled: Optional[bool],
-    blocking: Optional[bool],
-    limit: Optional[int],
-    page: Optional[int],
-) -> List[Dict[str, str]]:
+    body: TriggerRequest | None = None,
+) -> List[Dict[str, Any]]:
     """
     Returns a list with triggers.
 
@@ -223,18 +288,42 @@ async def triggers(
     - **limit**: The number of items to display per page (for pagination).
     - **page**: The page number to display (for pagination).
     """
-    return {{}}
+    all_modules: List[Node] = NodeRegistry.modules.values()
+
+    result = []
+
+    for trigger in all_modules:
+        if __filter_triggers(trigger, body):
+            workflow = await __get_workflow_by_trigger_id(db, trigger.id)
+            disabled = False
+            workflow_json = {}
+            if workflow:
+                workflow_json = workflow_entity_to_json_dict(workflow)["Workflow"]
+                graph: WorkflowGraph = workflow.data
+                disabled = graph.root.disabled
+            json = trigger_entity_to_json_dict(trigger, workflow_json, disabled)
+            result.append(json)
+
+    return result
 
 
-@router.get("/workflows/moduleIndex", status_code=status.HTTP_200_OK, summary="Returns modules")
+def __filter_triggers(trigger: Trigger, request: TriggerRequest) -> bool:
+    if issubclass(trigger, Module):
+        return False
+    return True
+
+
+async def __get_workflow_by_trigger_id(db: Session, trigger_id: str) -> Workflow | None:
+    result = await db.execute(select(Workflow).where(Workflow.trigger_id == trigger_id).limit(1))
+    workflow: Workflow = result.scalars().first()
+    return workflow
+
+
+@router.post("/workflows/moduleIndex", status_code=status.HTTP_200_OK, summary="Returns modules")
 async def moduleIndex(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    enabled: Optional[bool],
-    limit: Optional[int],
-    page: Optional[int],
-    type: str = "action",
-    actiontype: str = "all",
+    body: ModuleIndexRequest | None = None,
 ) -> List[Dict[str, Any]]:
     """
     Retrieve modules with optional filtering.
@@ -247,53 +336,125 @@ async def moduleIndex(
     - **limit**: The number of items to display per page (for pagination).
     - **page**: The page number to display (for pagination).
     """
-    return {{}}
+    all_modules = NodeRegistry.modules.values()
+
+    response: List[dict] = []
+
+    for module in all_modules:
+        if __index_filter_modules(module=module, request=body):
+            module_json = module_entity_to_json_dict(module)
+            response.append(module_json)
+
+    return response
 
 
-@router.get("/workflows/moduleView/{moduleId}", status_code=status.HTTP_200_OK, summary="Returns a singular module")
+def __index_filter_modules(module: Module, request: ModuleIndexRequest) -> bool:
+    if issubclass(module, Trigger):
+        return False
+    if request is None:
+        return True
+    if request.type == "action" and not issubclass(module, ModuleAction):
+        return False
+    if request.type == "logic" and not issubclass(module, ModuleLogic):
+        return False
+
+    if request.actiontype == "blocking" and not module.blocking:
+        return False
+
+    return True
+
+
+@router.get(
+    "/workflows/moduleView/{moduleId}",
+    status_code=status.HTTP_200_OK,
+    summary="Returns a singular module",
+)
 async def moduleView(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    module_id: Annotated[int, Path(alias="moduleId")],
+    module_id: Annotated[str, Path(alias="moduleId")],
 ) -> Dict[str, Any]:
     """
     Returns a singular module.
 
     - **module_id** The ID of the module.
     """
-    return {}
+
+    all_modules = NodeRegistry.modules.values()
+
+    for module in all_modules:
+        if module.id == module_id:
+            return module_entity_to_json_dict(module)
+
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail=StandartResponse(
+            name="Invalid trigger ID",
+            message="Invalid trigger ID",
+            url=f"/workflows/moduleView/{module_id}",
+        ),
+    )
 
 
 @router.post(
-    "/workflows/toggleModule/{moduleId}/{enable}", status_code=status.HTTP_200_OK, summary="Enables/ disables a module"
+    "/workflows/toggleModule/{nodeId}/{enable}/{isTrigger}",
+    status_code=status.HTTP_200_OK,
+    summary="Enables/ disables a module",
 )
 async def toggleModule(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    module_id: Annotated[int, Path(alias="moduleId")],
+    node_id: Annotated[str, Path(alias="nodeId")],
     enable: Annotated[bool, Path(alias="enable")],
-    is_trigger: Optional[bool] = False,
+    is_trigger: Annotated[bool, Path(alias="isTrigger")],
 ) -> StandardStatusResponse:
     """
     Enables/ disables a module. Respons with a success status.
 
     Disabled modules can't be used in the visual editor.
 
+    Note that the legacy misp accepted all node ID's and never threw an error.
+
     - **module_id**: The ID of the module.
     - **enable**: Whether the module should be enabled or not.
     - **is_trigger**: Indicates if the module is a trigger module.
     Trigger modules have specific behaviors and usage within the system.
     """
+
+    if not is_trigger:
+        raise HTTPException(
+            status_code=status.HTTP_501_NOT_IMPLEMENTED,
+        )
+
+    workflow: Workflow | None = await __get_workflow_by_trigger_id(db, node_id)
+    if not workflow:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+    graph_json = GraphFactory.graph2jsondict(workflow.data)
+    graph_json["1"]["data"]["disabled"] = not enable
+    workflow.enabled = enable
+    graph = GraphFactory.jsondict2graph(graph_json)
+    workflow.data = graph
+
+    await db.commit()
+    await db.refresh(workflow)
+
     return StandardStatusResponse(
         saved=True, success=True, message="Nothing happened, just a mockup", name="Test", url="https://example.com"
     )
 
 
-@router.post("/workflows/checkGraph", status_code=status.HTTP_200_OK, summary="Checks if the given graph is correct")
+@router.post(
+    "/workflows/checkGraph",
+    status_code=status.HTTP_200_OK,
+    summary="Checks if the given graph is correct",
+)
 async def checkGraph(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    workflow_graph: Annotated[WorkflowGraph, Depends(GraphFactory.jsondict2graph)],
+    workflow_graph: GraphRequest,
+    # workflow_graph: Annotated[WorkflowGraph, Depends(GraphFactory.jsondict2graph)],
 ) -> CheckGraphResponse:
     """
     Checks if the given graph is correct.
@@ -303,11 +464,18 @@ async def checkGraph(
 
     - **graph** The workflow graph to check.
     """
-    return CheckGraphResponse()
+
+    graph: Graph = GraphFactory.jsondict2graph(workflow_graph.workflow_graph)
+
+    # Error handling
+
+    return graph.check()
 
 
 @router.post(
-    "/workflows/toggleWorkflows", status_code=status.HTTP_200_OK, summary="Enable/ disable the workflow feature"
+    "/workflows/toggleWorkflows",
+    status_code=status.HTTP_200_OK,
+    summary="Enable/ disable the workflow feature",
 )
 async def toggleWorkflows(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))], db: Annotated[Session, Depends(get_db)]
