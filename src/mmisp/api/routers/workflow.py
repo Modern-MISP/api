@@ -13,10 +13,10 @@ Responses from these endpoints are consistently formatted in JSON,
 providing detailed information about each operation's outcome.
 """
 
+import time
 from collections.abc import Sequence
 from json import loads
-from time import time
-from typing import Annotated, Any, Dict, List
+from typing import Annotated, Any, Dict, List, cast
 
 from fastapi import (
     APIRouter,
@@ -60,7 +60,6 @@ from mmisp.workflows.modules import (
     Module,
     ModuleAction,
     ModuleLogic,
-    Node,
     NodeRegistry,
     Trigger,
 )
@@ -72,7 +71,7 @@ def __create_new_workflow(name: str, description: str, data: dict, trigger_id: s
     return Workflow(
         name=name,
         description=description,
-        timestamp=time.time(),
+        timestamp=int(time.time()),
         trigger_id=trigger_id,
         data=data,
     )
@@ -97,10 +96,10 @@ async def index(
 
     Filters can be applied, mainly filters for a name or a uuid.
     """
-    result = await db.execute(select(Workflow))
-    workflows: Sequence[Workflow] = result.scalars().all()
+    db_result = await db.execute(select(Workflow))
+    workflows: Sequence[Workflow] = db_result.scalars().all()
 
-    result: List[Dict[str, str]] = []
+    result: List[dict] = []
 
     for workflow in workflows:
         json = workflow_entity_to_json_dict(workflow)
@@ -135,7 +134,7 @@ async def edit(
     # Forms conversion to useable data
     form_data = await request.form()
 
-    data = loads(form_data["data[Workflow][data]"])
+    data = loads(str(form_data["data[Workflow][data]"]))
     new_data = {
         "name": form_data["data[Workflow][name]"],
         "description": form_data["data[Workflow][description]"],
@@ -172,7 +171,7 @@ async def delete(
 
     - **workflow_id** The ID of the workflow to delete.
     """
-    workflow: Workflow = await db.get(Workflow, workflow_id)
+    workflow: Workflow | None = await db.get(Workflow, workflow_id)
     if workflow is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -215,7 +214,7 @@ async def view(
 
     """
     result = await db.execute(select(Workflow).where(Workflow.id == workflow_id).limit(1))
-    workflow: Workflow = result.scalars().first()
+    workflow: Workflow | None = result.scalars().first()
     if workflow is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -271,26 +270,27 @@ async def triggers(
     - **limit**: The number of items to display per page (for pagination).
     - **page**: The page number to display (for pagination).
     """
-    all_modules: List[Node] = NodeRegistry.modules.values()
+    all_nodes = NodeRegistry.modules.values()
 
     result = []
 
-    for trigger in all_modules:
-        if __filter_triggers(trigger, body):
+    for node in all_nodes:
+        if __filter_triggers(node, body):
+            trigger = cast(Trigger, node)
             workflow = await __get_workflow_by_trigger_id(db, trigger.id)
             disabled = False
             workflow_json = {}
             if workflow:
                 workflow_json = workflow_entity_to_json_dict(workflow)["Workflow"]
-                graph: WorkflowGraph = workflow.data
-                disabled = graph.root.disabled
+                data = cast(WorkflowGraph, workflow.data)
+                disabled = cast(Trigger, data.root).disabled
             json = trigger_entity_to_json_dict(trigger, workflow_json, disabled)
             result.append(json)
 
     return result
 
 
-def __filter_triggers(trigger: Trigger, request: TriggerRequest) -> bool:
+def __filter_triggers(trigger: type[Any], request: TriggerRequest | None) -> bool:
     if issubclass(trigger, Module):
         return False
     return True
@@ -319,19 +319,20 @@ async def moduleIndex(
     - **limit**: The number of items to display per page (for pagination).
     - **page**: The page number to display (for pagination).
     """
-    all_modules = NodeRegistry.modules.values()
+    all_nodes = NodeRegistry.modules.values()
 
     response: List[dict] = []
 
-    for module in all_modules:
-        if __index_filter_modules(module=module, request=body):
+    for node in all_nodes:
+        if __index_filter_modules(node, request=body):
+            module = cast(Module, node)
             module_json = module_entity_to_json_dict(module)
             response.append(module_json)
 
     return response
 
 
-def __index_filter_modules(module: Module, request: ModuleIndexRequest) -> bool:
+def __index_filter_modules(module: type[Any], request: ModuleIndexRequest | None) -> bool:
     if issubclass(module, Trigger):
         return False
     if request is None:
@@ -363,10 +364,11 @@ async def moduleView(
     - **module_id** The ID of the module.
     """
 
-    all_modules = NodeRegistry.modules.values()
+    all_nodes = NodeRegistry.modules.values()
 
-    for module in all_modules:
-        if module.id == module_id:
+    for node in all_nodes:
+        if node.id == module_id:
+            module = cast(Module, node)
             return module_entity_to_json_dict(module)
 
     raise HTTPException(
@@ -390,7 +392,7 @@ async def toggleModule(
     node_id: Annotated[str, Path(alias="nodeId")],
     enable: Annotated[bool, Path(alias="enable")],
     is_trigger: Annotated[bool, Path(alias="isTrigger")],
-) -> StandardStatusResponse:
+) -> StandartResponse:
     """
     Enables/ disables a module. Respons with a success status.
 
@@ -414,9 +416,9 @@ async def toggleModule(
     if not workflow:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=StandardStatusResponse(
+            detail=StandartResponse(
                 name="Invalid trigger ID",
-                msg="Invalid trigger ID",
+                message="Invalid trigger ID",
                 url=f"/workflows/toggleModule/{node_id}/{enable}/{is_trigger}",
             ),
         )
@@ -425,7 +427,7 @@ async def toggleModule(
     # ugly hack :(
     # graph: WorkflowGraph = workflow.data.root.disabled = not enable
 
-    graph_json = GraphFactory.graph2jsondict(workflow.data)
+    graph_json = GraphFactory.graph2jsondict(cast(Graph, workflow.data))
     graph_json["1"]["data"]["disabled"] = not enable
     graph = GraphFactory.jsondict2graph(graph_json)
 
@@ -464,11 +466,7 @@ async def checkGraph(
     - **graph** The workflow graph to check.
     """
 
-    graph: Graph = GraphFactory.jsondict2graph()
-
-    # Error handling
-
-    return graph.check()
+    pass
 
 
 @router.post(
