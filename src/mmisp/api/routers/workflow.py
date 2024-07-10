@@ -27,7 +27,6 @@ from fastapi import (
 )
 from sqlalchemy.future import select
 from starlette.requests import (
-    AwaitableOrContextManager,
     Request,
 )
 
@@ -41,7 +40,6 @@ from mmisp.api_schemas.responses.standard_status_response import (
     StandartResponse,
 )
 from mmisp.api_schemas.workflows import (
-    GraphRequest,
     ModuleIndexRequest,
     TriggerRequest,
 )
@@ -136,15 +134,11 @@ async def edit(
 
     # Forms conversion to useable data
     form_data = await request.form()
-    parsed_data = __parse_nested_form_data(form_data)
 
-    name = parsed_data.get("data").get("Workflow").get("name")
-    description = parsed_data.get("data").get("Workflow").get("description")
-    data = loads(parsed_data.get("data").get("Workflow").get("data"))
-
+    data = loads(form_data["data[Workflow][data]"])
     new_data = {
-        "name": name,
-        "description": description,
+        "name": form_data["data[Workflow][name]"],
+        "description": form_data["data[Workflow][description]"],
         "data": GraphFactory.jsondict2graph(data),
     }
 
@@ -161,17 +155,6 @@ async def edit(
         await db.refresh(workflow)
 
     return workflow_entity_to_json_dict(workflow)
-
-
-def __parse_nested_form_data(form_data: AwaitableOrContextManager) -> Dict[str, Any]:
-    parsed = {}
-    for key, value in form_data.items():
-        keys = key.replace("]", "").split("[")
-        current = parsed
-        for k in keys[:-1]:
-            current = current.setdefault(k, {})
-        current[keys[-1]] = value
-    return parsed
 
 
 @router.delete(
@@ -426,22 +409,38 @@ async def toggleModule(
             status_code=status.HTTP_501_NOT_IMPLEMENTED,
         )
 
+    # this does not exist in legacy misp, they just accept every node ID
     workflow: Workflow | None = await __get_workflow_by_trigger_id(db, node_id)
     if not workflow:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
+            detail=StandardStatusResponse(
+                name="Invalid trigger ID",
+                msg="Invalid trigger ID",
+                url=f"/workflows/toggleModule/{node_id}/{enable}/{is_trigger}",
+            ),
         )
+
+    # probaby a stupid way to create a new graph but whitout this (the code below) it won't work
+    # ugly hack :(
+    # graph: WorkflowGraph = workflow.data.root.disabled = not enable
+
     graph_json = GraphFactory.graph2jsondict(workflow.data)
     graph_json["1"]["data"]["disabled"] = not enable
-    workflow.enabled = enable
     graph = GraphFactory.jsondict2graph(graph_json)
+
     workflow.data = graph
+    workflow.enabled = enable
 
     await db.commit()
     await db.refresh(workflow)
 
     return StandardStatusResponse(
-        saved=True, success=True, message="Nothing happened, just a mockup", name="Test", url="https://example.com"
+        saved=True,
+        success=True,
+        message=f"Enabled module {node_id}",
+        name=f"Enabled module {node_id}",
+        url=f"/workflows/toggle_module/{node_id}",
     )
 
 
@@ -453,7 +452,7 @@ async def toggleModule(
 async def checkGraph(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    workflow_graph: GraphRequest,
+    request: Request,
     # workflow_graph: Annotated[WorkflowGraph, Depends(GraphFactory.jsondict2graph)],
 ) -> CheckGraphResponse:
     """
@@ -465,7 +464,7 @@ async def checkGraph(
     - **graph** The workflow graph to check.
     """
 
-    graph: Graph = GraphFactory.jsondict2graph(workflow_graph.workflow_graph)
+    graph: Graph = GraphFactory.jsondict2graph()
 
     # Error handling
 
@@ -473,12 +472,13 @@ async def checkGraph(
 
 
 @router.post(
-    "/workflows/toggleWorkflows",
+    "/workflows/toggleWorkflows/{enabled}",
     status_code=status.HTTP_200_OK,
     summary="Enable/ disable the workflow feature",
 )
 async def toggleWorkflows(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))], db: Annotated[Session, Depends(get_db)]
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    db: Annotated[Session, Depends(get_db)],
 ) -> StandardStatusResponse:
     """
     Enable/ disable the workflow feature. Respons with a success status.
@@ -488,3 +488,18 @@ async def toggleWorkflows(
     return StandardStatusResponse(
         saved=True, success=True, message="Nothing happened, just a mockup", name="Test", url="https://example.com"
     )
+
+
+@router.get(
+    "workflows/workflowsSetting",
+    status_code=status.HTTP_200_OK,
+    summary="Status whether the workflow setting is globally enabled/ disabled",
+)
+async def workflowsSetting(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    db: Annotated[Session, Depends(get_db)],
+) -> bool:
+    """
+    Returns whether the workflows are globally enabled/ disabled.
+    """
+    return True
