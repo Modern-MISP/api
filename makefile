@@ -22,7 +22,7 @@ up:
 
 dev:
 	source .venv/bin/activate; \
-	uvicorn mmisp.api.main:app --reload --port 4000
+	uvicorn mmisp.api.main:app --reload --port 4000 --log-level debug
 
 dev/native:
 	uvicorn mmisp.api.main:app --reload --port 4000
