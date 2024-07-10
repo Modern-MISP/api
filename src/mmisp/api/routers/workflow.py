@@ -55,12 +55,16 @@ from mmisp.workflows.graph import (
     Graph,
     WorkflowGraph,
 )
-from mmisp.workflows.legacy import GraphFactory
+from mmisp.workflows.legacy import (
+    GraphFactory,
+    GraphValidation,
+)
 from mmisp.workflows.modules import (
+    MODULE_REGISTRY,
+    TRIGGER_REGISTRY,
     Module,
     ModuleAction,
     ModuleLogic,
-    NodeRegistry,
     Trigger,
 )
 
@@ -270,13 +274,13 @@ async def triggers(
     - **limit**: The number of items to display per page (for pagination).
     - **page**: The page number to display (for pagination).
     """
-    all_nodes = NodeRegistry.modules.values()
+    all_triggers = TRIGGER_REGISTRY.modules.values()
 
     result = []
 
-    for node in all_nodes:
-        if __filter_triggers(node, body):
-            trigger = cast(Trigger, node)
+    for type_trigger in all_triggers:
+        if __filter_triggers(type_trigger, body):
+            trigger = cast(Trigger, type_trigger)
             workflow = await __get_workflow_by_trigger_id(db, trigger.id)
             disabled = False
             workflow_json = {}
@@ -290,7 +294,7 @@ async def triggers(
     return result
 
 
-def __filter_triggers(trigger: type[Any], request: TriggerRequest | None) -> bool:
+def __filter_triggers(trigger: type[Trigger], request: TriggerRequest | None) -> bool:
     if issubclass(trigger, Module):
         return False
     return True
@@ -319,20 +323,19 @@ async def moduleIndex(
     - **limit**: The number of items to display per page (for pagination).
     - **page**: The page number to display (for pagination).
     """
-    all_nodes = NodeRegistry.modules.values()
+    all_modules = MODULE_REGISTRY.modules.values()
 
     response: List[dict] = []
 
-    for node in all_nodes:
-        if __index_filter_modules(node, request=body):
-            module = cast(Module, node)
-            module_json = module_entity_to_json_dict(module)
+    for module in all_modules:
+        if __index_filter_modules(module, request=body):
+            module_json = module_entity_to_json_dict(cast(Module, module))
             response.append(module_json)
 
     return response
 
 
-def __index_filter_modules(module: type[Any], request: ModuleIndexRequest | None) -> bool:
+def __index_filter_modules(module: type[Module], request: ModuleIndexRequest | None) -> bool:
     if issubclass(module, Trigger):
         return False
     if request is None:
@@ -364,12 +367,11 @@ async def moduleView(
     - **module_id** The ID of the module.
     """
 
-    all_nodes = NodeRegistry.modules.values()
+    all_modules = MODULE_REGISTRY.modules.values()
 
-    for node in all_nodes:
-        if node.id == module_id:
-            module = cast(Module, node)
-            return module_entity_to_json_dict(module)
+    for module in all_modules:
+        if module.id == module_id:
+            return module_entity_to_json_dict(cast(Module, module))
 
     raise HTTPException(
         status_code=status.HTTP_404_NOT_FOUND,
@@ -455,7 +457,6 @@ async def checkGraph(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     request: Request,
-    # workflow_graph: Annotated[WorkflowGraph, Depends(GraphFactory.jsondict2graph)],
 ) -> CheckGraphResponse:
     """
     Checks if the given graph is correct.
@@ -465,8 +466,12 @@ async def checkGraph(
 
     - **graph** The workflow graph to check.
     """
+    form_data = await request.form()
+    data = loads(str(form_data["graph"]))
+    graph = GraphFactory.jsondict2graph(data)
 
-    pass
+    result = graph.check()
+    return GraphValidation.report(result)
 
 
 @router.post(
