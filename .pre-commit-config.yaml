@@ -19,3 +19,11 @@ repos:
       - id: ruff
       # Run the formatter
       - id: ruff-format
+
+  # idk what this is but this just throws an setup error and i dont know why :(
+  # - repo: https://github.com/alessandrojcm/commitlint-pre-commit-hook
+  #   rev: v9.10.0
+  #   hooks:
+  #     - id: commitlint
+  #       stages: [commit-msg]
+  #       additional_dependencies: ["@commitlint/config-conventional"]
