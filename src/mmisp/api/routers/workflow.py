@@ -527,7 +527,7 @@ async def toggleModule(
     graph_json["1"]["data"]["disabled"] = not enable
     graph = GraphFactory.jsondict2graph(graph_json)
 
-    workflow.data = graph
+    workflow.data = cast(WorkflowGraph, graph)
     workflow.enabled = enable
 
     await db.commit()
