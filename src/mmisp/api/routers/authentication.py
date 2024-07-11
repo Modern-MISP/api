@@ -158,7 +158,10 @@ async def password_login(db: Annotated[Session, Depends(get_db)], body: Password
     if not user or user.external_auth_required or not verify_secret(body.password, user.password):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
-    return TokenResponse(token=encode_token(str(user.id)), reqiuredPasswordChange=user.change_pw)
+    if user.change_pw:
+        raise HTTPException(status.HTTP_403_FORBIDDEN)
+
+    return TokenResponse(token=encode_token(str(user.id)))
 
 
 @router.post(
@@ -328,7 +331,7 @@ async def exchange_token_login(body: ExchangeTokenLoginBody) -> TokenResponse:
     if not user_id:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
-    return TokenResponse(token=encode_token(str(user_id)), reqiuredPasswordChange=False)
+    return TokenResponse(token=encode_token(str(user_id)))
 
 
 @router.put(
