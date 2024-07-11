@@ -303,8 +303,6 @@ def test_change_password_userID(db: Session, site_admin_user_token, client, view
     )
     db.refresh(view_only_user)
 
-    print(newPassword)
-    ic(response.json())
     assert response.status_code == 200
     assert response.json() == {"successful": True}
     assert verify_secret(newPassword, view_only_user.password)
@@ -382,11 +380,11 @@ def test_set_own_password(db: Session, client, password_auth_user, password) -> 
     db.commit()
     response = client.post(
         "/auth/login/setOwnPassword",
-        headers={"authorization": encode_token(str(password_auth_user.id))},
-        json={"password": password, "oldPassword": "testPw"},
+        json={"email": password_auth_user.email, "password": password, "oldPassword": "testPw"},
     )
     db.refresh(password_auth_user)
 
     assert response.status_code == 200
-    assert response.json() == {"successful": True}
+    response_json = response.json()
+    assert response_json.get("token") is not None
     assert verify_secret(password, password_auth_user.password)

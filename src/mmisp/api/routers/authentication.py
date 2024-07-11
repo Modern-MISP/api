@@ -27,6 +27,7 @@ from mmisp.api_schemas.authentication import (
     IdentityProviderInfo,
     LoginType,
     PasswordLoginBody,
+    SetPasswordBody,
     StartLoginBody,
     StartLoginResponse,
     TokenResponse,
@@ -152,16 +153,7 @@ async def password_login(db: Annotated[Session, Depends(get_db)], body: Password
 
     - the login token
     """
-    result = await db.execute(select(User).filter(User.email == body.email).limit(1))
-    user: User | None = result.scalars().first()
-
-    if not user or user.external_auth_required or not verify_secret(body.password, user.password):
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED)
-
-    if user.change_pw:
-        raise HTTPException(status.HTTP_403_FORBIDDEN)
-
-    return TokenResponse(token=encode_token(str(user.id)))
+    return await _password_login(db, body)
 
 
 @router.post(
@@ -169,10 +161,9 @@ async def password_login(db: Annotated[Session, Depends(get_db)], body: Password
     summary="User sets their password to a new password",
 )
 async def set_password(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     body: ChangePasswordBody,
-) -> ChangeLoginInfoResponse:
+) -> TokenResponse:
     """Sets the password of the user to a new password.
 
     Input:
@@ -183,7 +174,7 @@ async def set_password(
 
     - the response form the api after the password change request
     """
-    return await _set_own_password(auth, db, body)
+    return await _set_own_password(db, body)
 
 
 @router.get(
@@ -341,7 +332,7 @@ async def exchange_token_login(body: ExchangeTokenLoginBody) -> TokenResponse:
 async def change_password_UserId(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    body: ChangePasswordBody,
+    body: SetPasswordBody,
     user_id: Annotated[int, Path(alias="userId")],
 ) -> ChangeLoginInfoResponse:
     """Set the password of the user to a new password
@@ -369,7 +360,7 @@ async def _get_oidc_config(base_url: str) -> dict:
 
 # --- endpoint logic ---
 async def _change_password_UserId(
-    auth: Auth, db: Session, user_id: int, body: ChangePasswordBody
+    auth: Auth, db: Session, user_id: int, body: SetPasswordBody
 ) -> ChangeLoginInfoResponse:
     if not (
         await check_permissions(db, auth, [Permission.SITE_ADMIN])
@@ -454,26 +445,36 @@ async def _edit_openID_Connect_provider(
     return ChangeLoginInfoResponse(successful=True)
 
 
-async def _set_own_password(auth: Auth, db: Session, body: ChangePasswordBody) -> ChangeLoginInfoResponse:
-    user = await db.get(User, auth.user_id)
+async def _password_login(db: Session, body: PasswordLoginBody) -> TokenResponse:
+    result = await db.execute(select(User).filter(User.email == body.email).limit(1))
+    user: User | None = result.scalars().first()
 
-    if not user:
-        raise HTTPException(status.HTTP_404_NOT_FOUND)
+    if not user or user.external_auth_required or not verify_secret(body.password, user.password):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
+    if user.change_pw:
+        raise HTTPException(status.HTTP_403_FORBIDDEN)
+
+    return TokenResponse(token=encode_token(str(user.id)))
+
+
+async def _set_own_password(db: Session, body: ChangePasswordBody) -> TokenResponse:
+    result = await db.execute(select(User).filter(User.email == body.email).limit(1))
+    user: User | None = result.scalars().first()
     old_password = body.oldPassword
+
+    if not user or user.external_auth_required or not verify_secret(old_password, user.password):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
     if old_password is None:
         raise HTTPException(status.HTTP_400_BAD_REQUEST)
 
-    if not verify_secret(old_password, user.password):
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED)
-
     if old_password.lower() in body.password.lower():
-        return ChangeLoginInfoResponse(successful=False)
+        raise HTTPException(status.HTTP_400_BAD_REQUEST)
 
     user.password = hash_secret(body.password)
     user.change_pw = False
 
     await db.commit()
 
-    return ChangeLoginInfoResponse(successful=True)
+    return TokenResponse(token=encode_token(str(user.id)))
