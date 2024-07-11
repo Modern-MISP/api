@@ -44,6 +44,7 @@ from mmisp.api_schemas.workflows import (
     TriggerRequest,
 )
 from mmisp.db.database import Session, get_db
+from mmisp.db.models.admin_setting import AdminSetting
 from mmisp.db.models.workflow import Workflow
 from mmisp.util.models import update_record
 from mmisp.workflows.fastapi import (
@@ -52,6 +53,7 @@ from mmisp.workflows.fastapi import (
     workflow_entity_to_json_dict,
 )
 from mmisp.workflows.graph import (
+    Apperance,
     Graph,
     WorkflowGraph,
 )
@@ -71,16 +73,6 @@ from mmisp.workflows.modules import (
 router = APIRouter(tags=["workflows"])
 
 
-def __create_new_workflow(name: str, description: str, data: dict, trigger_id: str) -> Workflow:
-    return Workflow(
-        name=name,
-        description=description,
-        timestamp=int(time.time()),
-        trigger_id=trigger_id,
-        data=data,
-    )
-
-
 @router.get(
     "/workflows/index",
     status_code=status.HTTP_200_OK,
@@ -93,23 +85,27 @@ async def index(
     uuid: str | None = None,
 ) -> List[dict]:
     """
-    Returns a list of all workflows.
+    Returns a list of all workflows in the JSON format.
 
     - **name**: Filter by workflow name.
     - **uuid**: Filter by workflow UUID.
 
     Filters can be applied, mainly filters for a name or a uuid.
     """
-    db_result = await db.execute(select(Workflow))
-    workflows: Sequence[Workflow] = db_result.scalars().all()
+    workflows = await query_all_workflows(db)
 
     result: List[dict] = []
-
     for workflow in workflows:
         json = workflow_entity_to_json_dict(workflow)
         result.append(json)
 
     return result
+
+
+async def query_all_workflows(db: Session) -> Sequence[Workflow]:
+    db_result = await db.execute(select(Workflow))
+    workflows: Sequence[Workflow] = db_result.scalars().all()
+    return workflows
 
 
 @router.post(
@@ -139,25 +135,42 @@ async def edit(
     form_data = await request.form()
 
     data = loads(str(form_data["data[Workflow][data]"]))
-    new_data = {
-        "name": form_data["data[Workflow][name]"],
-        "description": form_data["data[Workflow][description]"],
-        "data": GraphFactory.jsondict2graph(data),
-    }
 
+    workflow = await edit_workflow(
+        workflow_id=workflow_id,
+        db=db,
+        name=str(form_data["data[Workflow][name]"]),
+        description=str(form_data["data[Workflow][description]"]),
+        data=GraphFactory.jsondict2graph(data),
+    )
+    if not workflow:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
+    return workflow_entity_to_json_dict(workflow)
+
+
+async def edit_workflow(
+    workflow_id: int,
+    db: Session,
+    name: str,
+    description: str,
+    data: Graph,
+) -> Workflow | None:
     workflow: Workflow | None = await db.get(Workflow, workflow_id)
 
     if not workflow:
-        workflow = Workflow()
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-        )
-    else:
-        update_record(workflow, new_data)
-        await db.commit()
-        await db.refresh(workflow)
+        return None
 
-    return workflow_entity_to_json_dict(workflow)
+    new_data = {
+        "name": name,
+        "description": description,
+        "data": data,
+    }
+
+    update_record(workflow, new_data)
+    await db.commit()
+    await db.refresh(workflow)
+    return workflow
 
 
 @router.delete(
@@ -175,8 +188,8 @@ async def delete(
 
     - **workflow_id** The ID of the workflow to delete.
     """
-    workflow: Workflow | None = await db.get(Workflow, workflow_id)
-    if workflow is None:
+    success = await delete_workflow(workflow_id, db)
+    if not success:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=StandartResponse(
@@ -184,17 +197,23 @@ async def delete(
             ).dict(),
         )
 
-    await db.delete(workflow)
-    await db.commit()
-
     return StandardStatusIdentifiedResponse(
-        saved=True,
-        success=True,
+        saved=success,
+        success=success,
         message="Workflow deleted.",
         name="Workflow deleted.",
         url=f"/workflows/delete/{workflow_id}",
         id=workflow_id,
     )
+
+
+async def delete_workflow(workflow_id: int, db: Session) -> bool:
+    workflow: Workflow | None = await db.get(Workflow, workflow_id)
+    if workflow is None:
+        return False
+    await db.delete(workflow)
+    await db.commit()
+    return True
 
 
 @router.get(
@@ -217,8 +236,7 @@ async def view(
     - **workflow_id** The ID of the workflow to view.
 
     """
-    result = await db.execute(select(Workflow).where(Workflow.id == workflow_id).limit(1))
-    workflow: Workflow | None = result.scalars().first()
+    workflow = await get_workflow_by_id(workflow_id, db)
     if workflow is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -229,6 +247,69 @@ async def view(
             ).dict(),
         )
     return workflow_entity_to_json_dict(workflow)
+
+
+async def get_workflow_by_id(workflow_id: int, db: Session) -> Workflow | None:
+    result = await db.execute(select(Workflow).where(Workflow.id == workflow_id).limit(1))
+    workflow: Workflow | None = result.scalars().first()
+    return workflow
+
+
+@router.post(
+    "/workflows/editor/{triggerId}",
+    status_code=status.HTTP_200_OK,
+    summary="Create a new workflow",
+)
+async def editor(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    db: Annotated[Session, Depends(get_db)],
+    trigger_id: Annotated[str, Path(alias="triggerId")],
+) -> StandartResponse:
+    await create_workflow(db, trigger_id)
+
+    return StandartResponse(name="Created workflow", message="Created workflow", url=f"/workflows/editor/{trigger_id}")
+
+
+async def create_workflow(db: Session, trigger_id: str) -> None:
+    new_workflow = __create_new_workflow_object(
+        name=f"Workflow for trigger {trigger_id}",
+        trigger_id=trigger_id,
+    )
+
+    db.add(new_workflow)
+    await db.commit()
+    await db.refresh(new_workflow)
+
+
+def __create_new_workflow_object(name: str, trigger_id: str, description: str = "") -> Workflow:
+    nt = TRIGGER_REGISTRY.lookup(trigger_id)
+
+    new_trigger = nt(
+        id=nt.id,
+        name=nt.name,
+        blocking=nt.blocking,
+        scope=nt.scope,
+        overhead=nt.overhead,
+        apperance=Apperance((0.0, 0.0), False, "block-type-trigger", "1"),
+        graph_id=1,
+        inputs={},
+        outputs={},
+    )
+    new_graph = WorkflowGraph(
+        root=new_trigger,
+        nodes={
+            1: new_trigger,
+        },
+        frames={},
+    )
+
+    return Workflow(
+        name=name,
+        description=description,
+        timestamp=int(time.time()),
+        trigger_id=trigger_id,
+        data=new_graph,
+    )
 
 
 @router.post(
@@ -248,6 +329,7 @@ async def executeWorkflow(
 
     - **workflow_id** The ID of the workflow to execute.
     """
+    # TODO: Need more info.
     return StandardStatusResponse(
         saved=True, success=True, message="Nothing happened, just a mockup", name="Test", url="https://example.com"
     )
@@ -278,12 +360,14 @@ async def triggers(
 
     result = []
 
+    # too ugly to get it's own function :(
     for type_trigger in all_triggers:
         if __filter_triggers(type_trigger, body):
             trigger = cast(Trigger, type_trigger)
-            workflow = await __get_workflow_by_trigger_id(db, trigger.id)
             disabled = False
             workflow_json = {}
+            # needs to query the corresponding workflow for the trigger to get the disabled field :(
+            workflow = await get_workflow_by_trigger_id(trigger.id, db)
             if workflow:
                 workflow_json = workflow_entity_to_json_dict(workflow)["Workflow"]
                 data = cast(WorkflowGraph, workflow.data)
@@ -297,13 +381,23 @@ async def triggers(
 def __filter_triggers(trigger: type[Trigger], request: TriggerRequest | None) -> bool:
     if issubclass(trigger, Module):
         return False
+    if request is None:
+        return True
+    if request.scope is not None and request.scope is not trigger.scope:
+        return False
+    if request.enabled is not None and request.enabled is trigger.disabled:
+        return False
+    if request.blocking is not None and request.blocking is not trigger.blocking:
+        return False
     return True
 
 
-async def __get_workflow_by_trigger_id(db: Session, trigger_id: str) -> Workflow | None:
+async def get_workflow_by_trigger_id(
+    trigger_id: str,
+    db: Session,
+) -> Workflow | None:
     result = await db.execute(select(Workflow).where(Workflow.trigger_id == trigger_id).limit(1))
-    workflow: Workflow = result.scalars().first()
-    return workflow
+    return result.scalars().first()
 
 
 @router.post("/workflows/moduleIndex", status_code=status.HTTP_200_OK, summary="Returns modules")
@@ -328,14 +422,14 @@ async def moduleIndex(
     response: List[dict] = []
 
     for module in all_modules:
-        if __index_filter_modules(module, request=body):
+        if __filter_index_modules(module, request=body):
             module_json = module_entity_to_json_dict(cast(Module, module))
             response.append(module_json)
 
     return response
 
 
-def __index_filter_modules(module: type[Module], request: ModuleIndexRequest | None) -> bool:
+def __filter_index_modules(module: type[Module], request: ModuleIndexRequest | None) -> bool:
     if issubclass(module, Trigger):
         return False
     if request is None:
@@ -414,7 +508,7 @@ async def toggleModule(
         )
 
     # this does not exist in legacy misp, they just accept every node ID
-    workflow: Workflow | None = await __get_workflow_by_trigger_id(db, node_id)
+    workflow: Workflow | None = await get_workflow_by_trigger_id(node_id, db)
     if not workflow:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -429,7 +523,7 @@ async def toggleModule(
     # ugly hack :(
     # graph: WorkflowGraph = workflow.data.root.disabled = not enable
 
-    graph_json = GraphFactory.graph2jsondict(cast(Graph, workflow.data))
+    graph_json = GraphFactory.graph2jsondict(cast(WorkflowGraph, workflow.data))
     graph_json["1"]["data"]["disabled"] = not enable
     graph = GraphFactory.jsondict2graph(graph_json)
 
@@ -438,12 +532,12 @@ async def toggleModule(
 
     await db.commit()
     await db.refresh(workflow)
-
+    enabled_text = "Enabled" if (enable) else "Disabled"
     return StandardStatusResponse(
         saved=True,
         success=True,
-        message=f"Enabled module {node_id}",
-        name=f"Enabled module {node_id}",
+        message=f"{enabled_text} module {node_id}",
+        name=f"{enabled_text} module {node_id}",
         url=f"/workflows/toggle_module/{node_id}",
     )
 
@@ -482,19 +576,54 @@ async def checkGraph(
 async def toggleWorkflows(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
+    enabled: Annotated[bool, Path(alias="enabled")],
 ) -> StandardStatusResponse:
     """
     Enable/ disable the workflow feature. Respons with a success status.
 
     Globally enables/ disables the workflow feature in your MISP instance.
     """
+    await set_admin_setting(workflow_setting_name, str(enabled), db)
     return StandardStatusResponse(
-        saved=True, success=True, message="Nothing happened, just a mockup", name="Test", url="https://example.com"
+        saved=True,
+        success=True,
+        message=f"Workflows globally enabled: {enabled}",
+        name=f"Workflows globally enabled: {enabled}",
+        url=f"/workflows/toggleWorkflows/{enabled}",
     )
 
 
+# find better place to store that
+workflow_setting_name = "worfklow_feature_enabled"
+
+
+# Should be moved to lib
+async def set_admin_setting(setting_name: str, value: str, db: Session) -> None:
+    setting_db = await db.execute(select(AdminSetting).where(AdminSetting.setting == setting_name))
+    setting: AdminSetting | None = setting_db.scalars().first()
+
+    if setting is None:
+        new_setting = AdminSetting(setting=setting_name, value=value)
+        db.add(new_setting)
+        await db.commit()
+        await db.refresh(new_setting)
+        return
+
+    setting.value = value
+    await db.commit()
+    await db.refresh(setting)
+
+
+async def get_admin_setting(setting_name: str, db: Session) -> str:
+    setting_db = await db.execute(select(AdminSetting).where(AdminSetting.setting == setting_name))
+    setting: AdminSetting | None = cast(AdminSetting | None, setting_db.scalars().first())
+    if setting is None:
+        raise Exception()
+    return str(setting.value)
+
+
 @router.get(
-    "workflows/workflowsSetting",
+    "/workflows/workflowsSetting",
     status_code=status.HTTP_200_OK,
     summary="Status whether the workflow setting is globally enabled/ disabled",
 )
@@ -505,4 +634,5 @@ async def workflowsSetting(
     """
     Returns whether the workflows are globally enabled/ disabled.
     """
-    return True
+    value = await get_admin_setting(workflow_setting_name, db)
+    return value == "True"

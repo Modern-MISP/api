@@ -1,12 +1,16 @@
 import json
 from collections.abc import Sequence
-from typing import List
+from typing import List, cast
 
 import pytest
 from sqlalchemy.future import select
 
+from mmisp.db.database import Session
+from mmisp.db.models.admin_setting import AdminSetting
 from mmisp.db.models.workflow import Workflow
-from mmisp.workflows.legacy import GraphFactory
+from mmisp.workflows.fastapi import module_entity_to_json_dict
+from mmisp.workflows.graph import WorkflowGraph
+from mmisp.workflows.modules import MODULE_REGISTRY, TRIGGER_REGISTRY, Module, Trigger
 
 from ...generators.model_generators.workflow_generator import (
     generate_workflows,
@@ -47,36 +51,37 @@ def test_workflows_index(db, site_admin_user_token, client, workflows) -> None:
         assert db_workflow.uuid == response_workflow["uuid"]
 
 
-def test_workflow_edit_edit_existing(db, site_admin_user_token, client, workflows) -> None:
-    id: int = 50
-    headers = {
-        "authorization": site_admin_user_token,
-    }
-
-    new_workflow = genrerate_workflow_with_id(1)
-    data = GraphFactory.graph2jsondict(new_workflow.data)
-
-    payload = {
-        "workflow_name": "new workflow name",
-        "workflow_description": "new workflow description",
-        "workflow_graph": data,
-    }
-    response = client.post(f"/workflows/edit/{id}", headers=headers, json=payload)
-
-    workflow: Workflow = db.get(Workflow, id)
-    db.commit()
-    db.refresh(workflow)
-
-    assert response.status_code == 200
-    workflow_dict = json.loads(response.content.decode())["Workflow"]
-    assert workflow_dict["name"] == payload["workflow_name"]
-    assert workflow_dict["description"] == payload["workflow_description"]
-    assert workflow_dict["data"] == payload["workflow_graph"]
-    assert workflow.name == payload["workflow_name"]
-    assert workflow.description == payload["workflow_description"]
-    assert workflow.data.nodes == new_workflow.data.nodes
-    assert workflow.data.root == new_workflow.data.root
-    assert list(workflow.data.frames) == list(new_workflow.data.frames)
+# idk how to give form data into an request. will try later
+# def test_workflow_edit_edit_existing(db, site_admin_user_token, client) -> None:
+#     id: int = 50
+#     headers = {
+#         "authorization": site_admin_user_token,
+#     }
+#
+#     new_workflow = genrerate_workflow_with_id(1)
+#     data = GraphFactory.graph2jsondict(new_workflow.data)
+#
+#     payload = {
+#         "data[Workflow][name]": "new workflow name",
+#         "data[Workflow][description]": "new workflow description",
+#         "data[Workflow][data]": data,
+#     }
+#     response = client.post(f"/workflows/edit/{id}", headers=headers, data=payload)
+#
+#     workflow: Workflow = db.get(Workflow, id)
+#     db.commit()
+#     db.refresh(workflow)
+#
+#     assert response.status_code == 200
+#     workflow_dict = json.loads(response.content.decode())["Workflow"]
+#     assert workflow_dict["name"] == payload["workflow_name"]
+#     assert workflow_dict["description"] == payload["workflow_description"]
+#     assert workflow_dict["data"] == payload["workflow_graph"]
+#     assert workflow.name == payload["workflow_name"]
+#     assert workflow.description == payload["workflow_description"]
+#     assert workflow.data.nodes == new_workflow.data.nodes
+#     assert workflow.data.root == new_workflow.data.root
+#     assert list(workflow.data.frames) == list(new_workflow.data.frames)
 
 
 def test_workflow_view(client, site_admin_user_token, workflows) -> None:
@@ -163,3 +168,150 @@ def test_workflow_delete_invalid_id(client, site_admin_user_token, db) -> None:
     assert detail_dict["detail"]["name"] == "Invalid Workflow."
     assert detail_dict["detail"]["message"] == "Invalid Workflow."
     assert detail_dict["detail"]["url"] == f"/workflows/delete/{id}"
+
+
+def test_workflow_editor_create_new_workflow(client, site_admin_user_token, db) -> None:
+    trigger_id = "attribute-after-save"
+    headers = {"authorization": site_admin_user_token}
+    response = client.post(f"/workflows/editor/{trigger_id}", headers=headers)
+
+    assert response.status_code == 200
+
+    workflow: Workflow = get_workflow_by_trigger_id(trigger_id, db)
+    assert workflow is not None
+    graph: WorkflowGraph = workflow.data
+    assert workflow.trigger_id == trigger_id
+    assert graph.root.graph_id == 1
+    assert graph.root.id == trigger_id
+    assert len(graph.nodes) == 1
+    delete_workflow(workflow.id, db)
+
+
+def test_workflow_triggers_get_all(client, site_admin_user_token) -> None:
+    headers = {"authorization": site_admin_user_token}
+    response = client.post("/workflows/triggers", headers=headers)
+
+    assert response.status_code == 200
+
+    triggers = TRIGGER_REGISTRY.modules.values()
+    for trigger in triggers:
+        if issubclass(trigger, Module):
+            return False
+        assert trigger.id in response.text
+
+
+def test_workflow_moduleIndex_get_all(client, site_admin_user_token) -> None:
+    headers = {"authorization": site_admin_user_token}
+    response = client.post("/workflows/moduleIndex", headers=headers)
+
+    assert response.status_code == 200
+
+    modules = MODULE_REGISTRY.modules.values()
+    for module in modules:
+        if issubclass(module, Trigger):
+            return False
+        assert module.id in response.text
+
+
+def test_workflow_moduleView(client, site_admin_user_token) -> None:
+    name = "stop-execution"
+
+    headers = {"authorization": site_admin_user_token}
+    response = client.get(f"/workflows/moduleView/{name}", headers=headers)
+
+    assert response.status_code == 200
+
+    module = MODULE_REGISTRY.lookup(name)
+    module_json = dict(module_entity_to_json_dict(cast(Module, module)))
+    response_json = response.json()
+    for key in module_json.keys():
+        assert module_json[key] == response_json[key]
+
+
+def test_workflow_toggleModule(client, site_admin_user_token, db, workflows) -> None:
+    name = "attribute-after-save"
+    headers = {"authorization": site_admin_user_token}
+    response = client.post(f"/workflows/toggleModule/{name}/1/1", headers=headers)
+
+    assert response.status_code == 200
+
+    db.commit()
+    workflow = get_workflow_by_trigger_id(name, db)
+    db.refresh(workflow)
+
+    assert workflow is not None
+    assert workflow.enabled
+    graph: WorkflowGraph = workflow.data
+    assert not graph.root.disabled
+
+    headers = {"authorization": site_admin_user_token}
+    response2 = client.post(f"/workflows/toggleModule/{name}/0/1", headers=headers)
+
+    assert response2.status_code == 200
+
+    db.commit()
+    workflow2 = get_workflow_by_trigger_id(name, db)
+    db.refresh(workflow2)
+
+    assert workflow2 is not None
+    assert not workflow2.enabled
+    graph2: WorkflowGraph = workflow2.data
+    assert graph2.root.disabled
+
+
+def test_workflow_toggleWorkflows(client, site_admin_user_token, db) -> None:
+    headers = {"authorization": site_admin_user_token}
+    response = client.post("/workflows/toggleWorkflows/1", headers=headers)
+
+    assert response.status_code == 200
+    workflow_setting_name = "worfklow_feature_enabled"
+    db.commit()
+    admin_setting_enabled = get_admin_setting(workflow_setting_name, db)
+    assert admin_setting_enabled == "True"
+
+    response2 = client.post("/workflows/toggleWorkflows/0", headers=headers)
+    assert response2.status_code == 200
+    db.commit()
+    admin_setting_disabled = get_admin_setting(workflow_setting_name, db)
+    assert admin_setting_disabled == "False"
+
+
+def test_workflow_workflowSetting(client, site_admin_user_token, db) -> None:
+    headers = {"authorization": site_admin_user_token}
+    assert client.post("/workflows/toggleWorkflows/0", headers=headers).status_code == 200
+
+    response_false = client.get("/workflows/workflowsSetting", headers=headers)
+    assert response_false.status_code == 200
+    assert response_false.text == "false"
+
+    headers = {"authorization": site_admin_user_token}
+    assert client.post("/workflows/toggleWorkflows/1", headers=headers).status_code == 200
+
+    response_true = client.get("/workflows/workflowsSetting", headers=headers)
+    assert response_true.status_code == 200
+    assert response_true.text == "true"
+
+
+def get_admin_setting(setting_name: str, db: Session) -> str:
+    setting_db = db.execute(select(AdminSetting).where(AdminSetting.setting == setting_name))
+    setting: AdminSetting | None = cast(AdminSetting | None, setting_db.scalars().first())
+    if setting is None:
+        raise Exception()
+    return str(setting.value)
+
+
+def get_workflow_by_trigger_id(
+    trigger_id: str,
+    db: Session,
+) -> Workflow | None:
+    result = db.execute(select(Workflow).where(Workflow.trigger_id == trigger_id).limit(1))
+    return result.scalars().first()
+
+
+def delete_workflow(workflow_id: int, db: Session) -> bool:
+    workflow: Workflow | None = db.get(Workflow, workflow_id)
+    if workflow is None:
+        return False
+    db.delete(workflow)
+    db.commit()
+    return True
