@@ -4,7 +4,6 @@ from datetime import date
 from time import gmtime
 from typing import Annotated, Any
 
-import httpx
 from fastapi import APIRouter, Depends, HTTPException, Path
 from sqlalchemy.future import select
 from sqlalchemy.sql import Select
@@ -15,8 +14,6 @@ from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
 from mmisp.api.config import config
 from mmisp.api_schemas.attributes import GetDescribeTypesAttributes
 from mmisp.api_schemas.events import (
-    AddAttributeViaFreeTextImportEventBody,
-    AddAttributeViaFreeTextImportEventResponse,
     AddEditGetEventAttribute,
     AddEditGetEventDetails,
     AddEditGetEventEventReport,
@@ -31,9 +28,6 @@ from mmisp.api_schemas.events import (
     AddRemoveTagEventsResponse,
     DeleteEventResponse,
     EditEventBody,
-    FreeTextImportWorkerBody,
-    FreeTextImportWorkerData,
-    FreeTextImportWorkerUser,
     GetAllEventsEventTag,
     GetAllEventsEventTagTag,
     GetAllEventsGalaxyCluster,
@@ -384,61 +378,6 @@ async def remove_tag_from_event(
     - the result of removing the tag from the event given by the api
     """
     return await _remove_tag_from_event(db, event_id, tag_id)
-
-
-@router.post(
-    "/events/freeTextImport/{eventId}",
-    status_code=status.HTTP_200_OK,
-    response_model=list[AddAttributeViaFreeTextImportEventResponse],
-    summary="Add attribute to event",
-)
-async def add_attribute_via_free_text_import(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
-    db: Annotated[Session, Depends(get_db)],
-    event_id: Annotated[str, Path(alias="eventId")],
-    body: AddAttributeViaFreeTextImportEventBody,
-) -> list[AddAttributeViaFreeTextImportEventResponse]:
-    """Add attribute to event via free text import.
-
-    Input:
-
-    - the user's authentification status
-
-    - the current database
-
-    - the event id
-
-    - the request body
-
-    Output:
-
-    - the result of adding the tag to the event given by the api
-    """
-    body_dict = body.dict()
-    user = FreeTextImportWorkerUser(user_id=auth.user_id)
-    if user is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="no user")
-    data = FreeTextImportWorkerData(data=body_dict["Attribute"]["value"])
-    worker_body = FreeTextImportWorkerBody(user=user, data=data).dict()
-    print(worker_body)
-    async with httpx.AsyncClient() as client:
-        response = await client.post(f"{config.WORKER_URL}/job/processFreeText", json=worker_body)
-    response_json = response.json()
-    print(response_json)
-    return await _add_attribute_via_free_text_import(db, event_id, response_json)
-
-
-@router.get(
-    "/events/freeTextImportProcessID/{eventId}",
-    status_code=status.HTTP_200_OK,
-    summary="Fetches the process ID from the current freetext Import",
-)
-async def get_pid_from_free_text_import(
-    db: Annotated[Session, Depends(get_db)], event_Id: Annotated[int, Path(alias="eventId")]
-) -> None:
-    # add response model here
-    """Gets the processID from the worker."""
-    return _get_pid_from_free_text_import(db, event_Id)
 
 
 # --- deprecated ---
@@ -796,34 +735,6 @@ async def _remove_tag_from_event(db: Session, event_id: str, tag_id: str) -> Add
     await db.commit()
 
     return AddRemoveTagEventsResponse(saved=True, success="Tag removed", check_publish=True)
-
-
-async def _add_attribute_via_free_text_import(
-    db: Session, event_id: str, response_json: Any
-) -> list[AddAttributeViaFreeTextImportEventResponse]:
-    event: Event | None = await db.get(Event, event_id)
-
-    if not event:
-        raise HTTPException(status.HTTP_404_NOT_FOUND)
-
-    response_list = []
-
-    for attribute in response_json["attributes"]:
-        value = attribute["Items"]["value"]
-        attribute_type = attribute["Items"]["default_type"]
-        category = GetDescribeTypesAttributes().sane_defaults[attribute_type]["default_category"].value
-
-        new_attribute = Attribute(event_id=event_id, value=value, type=attribute_type, category=category)
-
-        db.add(new_attribute)
-
-        await db.commit()
-
-        attribute_response_dict = new_attribute.__dict__.copy()
-        attribute_response_dict["original_value"] = new_attribute.value
-        response_list.append(AddAttributeViaFreeTextImportEventResponse(**attribute_response_dict))
-
-    return response_list
 
 
 async def _prepare_event_response(db: Session, event: Event) -> AddEditGetEventDetails:
