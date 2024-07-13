@@ -163,6 +163,9 @@ def site_admin_user(db, site_admin_role, instance_owner_org):
     user.org_id = instance_owner_org.id
     user.server_id = 0
     user.role_id = site_admin_role.id
+    user.gpgkey = "testkey"
+    user.newsread = 5
+
 
     db.add(user)
     db.commit()
@@ -319,6 +322,20 @@ def organisation(db):
     db.delete(organisation)
     db.commit()
 
+@pytest.fixture
+def organisation2(db):
+    organisation = generate_organisation()
+
+    db.add(organisation)
+    db.commit()
+    db.refresh(organisation)
+
+    yield organisation
+
+    db.delete(organisation)
+    db.commit()
+
+
 
 @pytest.fixture
 def event(db, organisation, site_admin_user):
@@ -355,6 +372,56 @@ def event2(db, organisation, site_admin_user):
     db.delete(event)
     db.commit()
 
+@pytest.fixture
+def event3(db, organisation, site_admin_user):
+    org_id = organisation.id
+    event = generate_event()
+    event.org_id = org_id
+    event.orgc_id = org_id
+    event.user_id = site_admin_user.id
+
+    db.add(event)
+    db.commit()
+    db.refresh(event)
+
+    yield event
+
+    db.delete(event)
+    db.commit()
+
+@pytest.fixture
+def event4(db, organisation, site_admin_user):
+    org_id = organisation.id
+    event = generate_event()
+    event.org_id = org_id
+    event.orgc_id = org_id
+    event.user_id = site_admin_user.id
+
+    db.add(event)
+    db.commit()
+    db.refresh(event)
+
+    yield event
+
+    db.delete(event)
+    db.commit()
+
+@pytest.fixture
+def event5(db, organisation, site_admin_user):
+    org_id = organisation.id
+    event = generate_event()
+    event.org_id = org_id
+    event.orgc_id = org_id
+    event.user_id = site_admin_user.id
+
+    db.add(event)
+    db.commit()
+    db.refresh(event)
+
+    yield event
+
+    db.delete(event)
+    db.commit()
 
 @pytest.fixture
 def attribute(db, event):
@@ -387,6 +454,21 @@ def attribute2(db, event):
     db.delete(attribute)
     db.commit()
 
+@pytest.fixture
+def attribute3(db, event):
+    event_id = event.id
+    attribute = generate_attribute(event_id)
+    event.attribute_count += 1
+
+    db.add(attribute)
+    db.commit()
+    db.refresh(attribute)
+
+    yield attribute
+
+    db.delete(attribute)
+    event.attribute_count -= 1
+    db.commit()
 
 @pytest.fixture
 def tag(db):
