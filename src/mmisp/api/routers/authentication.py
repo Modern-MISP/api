@@ -22,6 +22,7 @@ from mmisp.api_schemas.authentication import (
     ChangeLoginInfoResponse,
     ChangePasswordBody,
     ExchangeTokenLoginBody,
+    GetIdentityProviderResponse,
     IdentityProviderBody,
     IdentityProviderEditBody,
     IdentityProviderInfo,
@@ -38,6 +39,44 @@ from mmisp.db.models.user import User
 from mmisp.util.crypto import hash_secret, verify_secret
 
 router = APIRouter(tags=["authentication"])
+
+
+@router.get("/auth/openID/getAllOpenIDConnectProviders")
+async def get_all_open_id_connect_providers(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    db: Annotated[Session, Depends(get_db)],
+) -> list[GetIdentityProviderResponse]:
+    """
+    Fetches all OpenID Connect providers
+
+    Input:
+    - Authorization token
+    - Database session
+
+    Output:
+    - List of OpenID Connect providers
+    """
+    return await _get_all_open_id_connect_providers(auth, db)
+
+
+@router.get("/auth/openID/getOpenIDConnectProvider/{providerId}")
+async def get_open_id_connect_provider_by_id(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    db: Annotated[Session, Depends(get_db)],
+    provider_id: Annotated[str, Path(alias="providerId")],
+) -> GetIdentityProviderResponse:
+    """
+    Fetches a single OpenID Connect provider by its ID
+
+    Input:
+    - Authorization token
+    - Database session
+    - Provider ID
+
+    Output:
+    - OpenID Connect provider details
+    """
+    return await _get_open_id_connect_provider_by_id(auth, db, provider_id)
 
 
 @router.post("/auth/openID/addOpenIDConnectProvider")
@@ -359,6 +398,57 @@ async def _get_oidc_config(base_url: str) -> dict:
 
 
 # --- endpoint logic ---
+async def _get_all_open_id_connect_providers(auth: Auth, db: Session) -> list[GetIdentityProviderResponse]:
+    if not (
+        await check_permissions(db, auth, [Permission.SITE_ADMIN])
+        and await check_permissions(db, auth, [Permission.ADMIN])
+    ):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED)
+
+    query = select(OIDCIdentityProvider)
+    result = await db.execute(query)
+    oidc_providers = result.scalars().all()
+
+    return [
+        GetIdentityProviderResponse(
+            id=provider.id,
+            name=provider.name,
+            org_id=provider.org_id,
+            active=provider.active,
+            base_url=provider.base_url,
+            client_id=provider.client_id,
+            client_secret=provider.client_secret,
+            scope=provider.scope,
+        )
+        for provider in oidc_providers
+    ]
+
+
+async def _get_open_id_connect_provider_by_id(auth: Auth, db: Session, provider_id: str) -> GetIdentityProviderResponse:
+    if not (
+        await check_permissions(db, auth, [Permission.SITE_ADMIN])
+        and await check_permissions(db, auth, [Permission.ADMIN])
+    ):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED)
+
+    query = select(OIDCIdentityProvider).where(OIDCIdentityProvider.id == provider_id)
+    result = await db.execute(query)
+    provider = result.scalar_one_or_none()
+
+    if not provider:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="OpenID Connect provider not found")
+    return GetIdentityProviderResponse(
+        id=provider.id,
+        name=provider.name,
+        org_id=provider.org_id,
+        active=provider.active,
+        base_url=provider.base_url,
+        client_id=provider.client_id,
+        client_secret=provider.client_secret,
+        scope=provider.scope,
+    )
+
+
 async def _change_password_UserId(
     auth: Auth, db: Session, user_id: int, body: SetPasswordBody
 ) -> ChangeLoginInfoResponse:

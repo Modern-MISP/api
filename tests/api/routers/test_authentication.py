@@ -388,3 +388,91 @@ def test_set_own_password(db: Session, client, password_auth_user, password) -> 
     response_json = response.json()
     assert response_json.get("token") is not None
     assert verify_secret(password, password_auth_user.password)
+
+
+def test_get_all_open_id_connect_providers(db: Session, client, site_admin_user_token) -> None:
+    response = client.post(
+        "/auth/openID/addOpenIDConnectProvider",
+        headers={"authorization": site_admin_user_token},
+        json={
+            "name": "Test",
+            "org_id": 1,
+            "active": True,
+            "base_url": "http://test.com",
+            "client_id": "test",
+            "client_secret": "test",
+        },
+    )
+    ic(response.json())
+    assert response.status_code == 200
+    response = response.json()
+    assert response["name"] == "Test"
+    oidc_provider = db.query(OIDCIdentityProvider).where(OIDCIdentityProvider.id == response["id"]).first()
+    assert oidc_provider is not None
+    assert oidc_provider.name == "Test"
+    assert oidc_provider.org_id == 1
+    assert oidc_provider.active is True
+    assert oidc_provider.base_url == "http://test.com"
+    assert oidc_provider.client_id == "test"
+    assert oidc_provider.client_secret == "test"
+    response = client.get("/auth/openID/getAllOpenIDConnectProviders", headers={"authorization": site_admin_user_token})
+
+    assert response.status_code == status.HTTP_200_OK
+    result = response.json()
+    ic(result)
+
+    assert isinstance(result, list)
+    assert result[len(result) - 1] is not None
+    provider = result[len(result) - 1]
+    assert provider["name"] == oidc_provider.name
+    assert provider["org_id"] == str(oidc_provider.org_id)
+    assert provider["active"] == oidc_provider.active
+    assert provider["base_url"] == oidc_provider.base_url
+    assert provider["client_id"] == oidc_provider.client_id
+    assert provider["client_secret"] == oidc_provider.client_secret
+    assert provider["scope"] == oidc_provider.scope
+    db.delete(oidc_provider)
+
+
+def test_get_open_id_connect_provider_by_id(db: Session, client, site_admin_user_token) -> None:
+    response = client.post(
+        "/auth/openID/addOpenIDConnectProvider",
+        headers={"authorization": site_admin_user_token},
+        json={
+            "name": "Test",
+            "org_id": 1,
+            "active": True,
+            "base_url": "http://test.com",
+            "client_id": "test",
+            "client_secret": "test",
+        },
+    )
+    ic(response.json())
+    assert response.status_code == 200
+    response = response.json()
+    assert response["name"] == "Test"
+    oidc_provider = db.query(OIDCIdentityProvider).where(OIDCIdentityProvider.id == response["id"]).first()
+    assert oidc_provider is not None
+    assert oidc_provider.name == "Test"
+    assert oidc_provider.org_id == 1
+    assert oidc_provider.active is True
+    assert oidc_provider.base_url == "http://test.com"
+    assert oidc_provider.client_id == "test"
+    assert oidc_provider.client_secret == "test"
+    provider_id = oidc_provider.id
+    response = client.get(
+        f"/auth/openID/getOpenIDConnectProvider/{provider_id}", headers={"authorization": site_admin_user_token}
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    json = response.json()
+
+    assert json["id"] == str(provider_id)
+    assert json["name"] == oidc_provider.name
+    assert json["org_id"] == str(oidc_provider.org_id)
+    assert json["active"] == oidc_provider.active
+    assert json["base_url"] == oidc_provider.base_url
+    assert json["client_id"] == oidc_provider.client_id
+    assert json["client_secret"] == oidc_provider.client_secret
+    assert json["scope"] == oidc_provider.scope
+    db.delete(oidc_provider)
