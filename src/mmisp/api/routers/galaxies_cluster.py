@@ -335,7 +335,11 @@ async def _get_galaxy_cluster(db: Session, cluster_id: int) -> GetGalaxyClusterR
     galaxy_cluster_dict = await _process_galaxy_cluster_dict(galaxy_cluster_dict)
 
     # Get the Galaxy
-    galaxy_cluster_dict["Galaxy"] = await _prepare_galaxy_response(db, await db.get(Galaxy, galaxy_cluster.galaxy_id))
+    galaxy = await db.get(Galaxy, galaxy_cluster.galaxy_id)
+    if galaxy is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Galaxy not found")
+
+    galaxy_cluster_dict["Galaxy"] = await _prepare_galaxy_response(db, galaxy)
 
     # Get the GalaxyElements
     result = await db.execute(select(GalaxyElement).filter(GalaxyElement.galaxy_cluster_id == cluster_id))
@@ -475,7 +479,7 @@ async def _prepare_galaxy_cluster_response(db: Session, galaxy: Galaxy) -> list[
 
     if len(galaxy_cluster_list) > 0:
         for galaxy_cluster in galaxy_cluster_list:
-            response_list = await _get_galaxy_cluster(db, galaxy_cluster.id)
+            response_list.append(await _get_galaxy_cluster(db, galaxy_cluster.id))
 
     return response_list
 
