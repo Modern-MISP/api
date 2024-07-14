@@ -140,6 +140,58 @@ async def get_version(
     }
 
 
+# --- deprecated ---
+
+
+@router.get(
+    "/servers/",
+    deprecated=True,
+    summary="Requests a list of all remote servers",
+)
+async def get_remote_servers_depr(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    db: Annotated[Session, Depends(get_db)],
+) -> list[GetRemoteServersResponse]:
+    """Deprecated
+    Returns a list of all currently active remote servers.
+
+    Input:
+
+    - The current database
+
+    Output:
+
+    - List of remote servers
+    """
+    return await _get_remote_servers(auth, db)
+
+
+@router.post(
+    "/servers/add",
+    deprecated=True,
+    summary="Adds a new remote server to the list",
+)
+async def add_remote_server_depr(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    db: Annotated[Session, Depends(get_db)],
+    body: AddServer,
+) -> AddServerResponse:
+    """
+    Adds a new remote server based on the input of an admin.
+
+    Input:
+
+    - Data containing details of the remote server to be added
+
+    - The current database
+
+    Output:
+
+    - Response indicating the result of the server addition operation
+    """
+    return await _add_remote_server(auth, db, body)
+
+
 # --- endpoint logic ---
 
 
