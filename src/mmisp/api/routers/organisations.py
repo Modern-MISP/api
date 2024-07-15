@@ -314,14 +314,20 @@ async def _update_organisation(
             ).dict(),
         )
     org.name = body.name
-    org.description = body.description
+    if body.description is not None:
+        org.description = body.description
     org.type = body.type
-    org.nationality = body.nationality
-    org.sector = body.sector
-    org.contacts = body.contacts
+    if body.nationality is not None:
+        org.nationality = body.nationality
+    if body.sector is not None:
+        org.sector = body.sector
+    if body.contacts is not None:
+        org.contacts = body.contacts
     org.local = body.local
-    org.restricted_to_domain = body.restricted_to_domain
-    org.landingpage = body.landingpage
+    if body.restricted_to_domain is not None:
+        org.restricted_to_domain = body.restricted_to_domain
+    if body.landingpage is not None:
+        org.landingpage = body.landingpage
 
     await db.commit()
     await db.refresh(org)
