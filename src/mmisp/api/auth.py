@@ -125,7 +125,7 @@ def authorize(
         auth = Auth(user_id=user.id, org_id=user.org_id, role_id=user.role_id, auth_key_id=auth_key_id)
 
         if not await check_permissions(db, auth, permissions):
-            raise HTTPException(status.HTTP_403_UNAUTHORIZED)
+            raise HTTPException(status.HTTP_403_FORBIDDEN)
 
         return auth
 

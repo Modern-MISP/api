@@ -45,7 +45,7 @@ router = APIRouter(tags=["auth_keys"])
     summary="Add an AuthKey.",
 )
 async def auth_keys_add_user(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     user_id: Annotated[int, Path(alias="userId")],
     body: AddAuthKeyBody,
@@ -75,7 +75,7 @@ async def auth_keys_add_user(
     summary="View an AuthKey",
 )
 async def auth_keys_view_auth_key(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     auth_key_id: Annotated[int, Path(alias="AuthKeyId")],
 ) -> ViewAuthKeysResponse:
@@ -102,7 +102,7 @@ async def auth_keys_view_auth_key(
     summary="Search for specific AuthKeys.",
 )
 async def search_auth_keys(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     body: SearchAuthKeyBody,
 ) -> list[SearchGetAuthKeysResponseItem]:
@@ -129,7 +129,7 @@ async def search_auth_keys(
     summary="Edit an AuthKey.",
 )
 async def auth_keys_edit_auth_key(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     auth_key_id: Annotated[int, Path(alias="AuthKeyId")],
     body: EditAuthKeyBody,
@@ -159,7 +159,7 @@ async def auth_keys_edit_auth_key(
     summary="Delete given AuthKey.",
 )
 async def auth_keys_delete_auth_key(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     auth_key_id: Annotated[int, Path(alias="AuthKeyId")],
 ) -> StandardStatusIdentifiedResponse:
@@ -195,7 +195,7 @@ async def auth_keys_delete_auth_key(
     summary="Returns AuthKeys.",
 )
 async def auth_keys_get(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
 ) -> list[SearchGetAuthKeysResponseItem]:
     """Returns all AuthKeys stored in the database as a List.
@@ -218,7 +218,7 @@ async def auth_keys_get(
     summary="View own AuthKeys",
 )
 async def auth_keys_view_own_auth_keys(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
 ) -> list[SearchGetAuthKeysResponseItem]:
     """View own Authkeys.
@@ -249,7 +249,7 @@ async def auth_keys_view_own_auth_keys(
     summary="Add an AuthKey.",
 )
 async def auth_keys_add_user_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     user_id: Annotated[int, Path(alias="userId")],
     body: AddAuthKeyBody,
@@ -280,7 +280,7 @@ async def auth_keys_add_user_depr(
     summary="Edit AuthKey",
 )
 async def auth_keys_edit_auth_key_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     auth_key_id: Annotated[int, Path(alias="AuthKeyId")],
     body: EditAuthKeyBody,
@@ -311,7 +311,7 @@ async def auth_keys_edit_auth_key_depr(
     summary="Delete given AuthKey.",
 )
 async def auth_keys_delete_auth_key_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     auth_key_id: Annotated[int, Path(alias="AuthKeyId")],
 ) -> StandardStatusIdentifiedResponse:
