@@ -7,6 +7,7 @@ from mmisp.util.uuid import uuid
 def generate_organisation() -> Organisation:
     return Organisation(
         name=f"unique-{time()}-{uuid()}",
+        uuid=uuid(),
         description="auto-generated org",
         type="another free text description",
         nationality="earthian",
