@@ -208,7 +208,7 @@ async def delete(
 
 
 async def delete_workflow(workflow_id: int, db: Session) -> bool:
-    workflow: Workflow | None = await db.get(Workflow, workflow_id)
+    workflow = await get_workflow_by_id(workflow_id, db)
     if workflow is None:
         return False
     await db.delete(workflow)
@@ -250,27 +250,44 @@ async def view(
 
 
 async def get_workflow_by_id(workflow_id: int, db: Session) -> Workflow | None:
-    result = await db.execute(select(Workflow).where(Workflow.id == workflow_id).limit(1))
-    workflow: Workflow | None = result.scalars().first()
-    return workflow
+    return await db.get(Workflow, workflow_id)
 
 
 @router.post(
     "/workflows/editor/{triggerId}",
     status_code=status.HTTP_200_OK,
-    summary="Create a new workflow",
+    summary="Creates a new workflow",
 )
 async def editor(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     trigger_id: Annotated[str, Path(alias="triggerId")],
 ) -> StandartResponse:
-    await create_workflow(db, trigger_id)
+    """
+    Creates a new workflow.
+    In MISP this loaded the editor and send the editor HTML.
+    But it also created a workflow if you tried to edit a not-existing workflow.
+    We use is ONLY for creating, because we don't need the rest.
 
-    return StandartResponse(name="Created workflow", message="Created workflow", url=f"/workflows/editor/{trigger_id}")
+    - **workflow_id** The ID of the workflow to create.
+    """
+    workflow = await get_workflow_by_trigger_id(trigger_id, db)
+    if workflow is None:
+        await create_workflow(trigger_id, db)
+        return StandartResponse(
+            name="Created workflow.",
+            message="Created workflow.",
+            url=f"/workflows/editor/{trigger_id}",
+        )
+    else:
+        return StandartResponse(
+            name="Workflow already exists.",
+            message="Workflow already exists.",
+            url=f"/workflows/editor/{trigger_id}",
+        )
 
 
-async def create_workflow(db: Session, trigger_id: str) -> None:
+async def create_workflow(trigger_id: str, db: Session) -> None:
     new_workflow = __create_new_workflow_object(
         name=f"Workflow for trigger {trigger_id}",
         trigger_id=trigger_id,
@@ -329,10 +346,7 @@ async def executeWorkflow(
 
     - **workflow_id** The ID of the workflow to execute.
     """
-    # TODO: Need more info.
-    return StandardStatusResponse(
-        saved=True, success=True, message="Nothing happened, just a mockup", name="Test", url="https://example.com"
-    )
+    raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED)
 
 
 @router.post(
@@ -383,11 +397,11 @@ def __filter_triggers(trigger: type[Trigger], request: TriggerRequest | None) ->
         return False
     if request is None:
         return True
-    if request.scope is not None and request.scope is not trigger.scope:
+    if request.scope is not trigger.scope:
         return False
-    if request.enabled is not None and request.enabled is trigger.disabled:
+    if request.enabled is trigger.disabled:
         return False
-    if request.blocking is not None and request.blocking is not trigger.blocking:
+    if request.blocking is not trigger.blocking:
         return False
     return True
 

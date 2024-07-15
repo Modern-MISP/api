@@ -127,8 +127,7 @@ def test_workflow_delete_success(client, site_admin_user_token, db) -> None:
     db.add(workflow)
     db.commit()
 
-    db_result = db.execute(select(Workflow).where(Workflow.id == id))
-    workflow: Workflow = db_result.scalars().first()
+    workflow = db.get(Workflow, id)
 
     assert isinstance(workflow, Workflow)
     assert workflow.id == id
@@ -136,10 +135,8 @@ def test_workflow_delete_success(client, site_admin_user_token, db) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.delete(f"/workflows/delete/{id}", headers=headers)
 
-    db.commit()
-
-    db_result2 = db.execute(select(Workflow).where(Workflow.id == id))
-    workflow2: Workflow = db_result2.scalars().first()
+    db.expire(workflow)
+    workflow2 = db.get(Workflow, id)
 
     assert response.status_code == 200
     assert workflow2 is None
@@ -149,9 +146,7 @@ def test_workflow_delete_success(client, site_admin_user_token, db) -> None:
     assert detail_dict["name"] == "Workflow deleted."
     assert detail_dict["message"] == "Workflow deleted."
     assert detail_dict["url"] == f"/workflows/delete/{id}"
-    assert (
-        detail_dict["id"] == f"{id}"
-    )  # WARUM IST DAS JETZT EIN STRING?? in lib.api_schemas.workflows.DeleteWorkflowResponse ist es ein int :(
+    assert detail_dict["id"] == f"{id}"
 
 
 def test_workflow_delete_invalid_id(client, site_admin_user_token, db) -> None:
@@ -204,7 +199,7 @@ def test_workflow_triggers_get_all(client, site_admin_user_token) -> None:
     triggers = TRIGGER_REGISTRY.modules.values()
     for trigger in triggers:
         if issubclass(trigger, Module):
-            return False
+            continue
         assert trigger.id in response.text
 
 
