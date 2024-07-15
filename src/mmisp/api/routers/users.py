@@ -13,6 +13,7 @@ from mmisp.api_schemas.users import (
     AddUserResponse,
     GetAllUsersElement,
     GetAllUsersUser,
+    GetUser,
     UserAttributesBody,
     UsersViewMeResponse,
     UserWithName,
@@ -109,7 +110,7 @@ async def get_user_by_id(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     user_id: Annotated[str, Path(alias="userId")],
-) -> GetAllUsersUser:
+) -> GetUser:
     """
     Retrieves a user specified by id.
 
@@ -360,48 +361,50 @@ async def _get_all_users(
     roles_by_id = await get_roles_by_id(db)
     organisations_by_id = await get_organisations_by_id(db)
 
-    for user in users[0]:
+    for user in users:
         user_list_computed.append(
             GetAllUsersElement(
                 User=GetAllUsersUser(
-                    id=user.id,
-                    org_id=user.org_id,
-                    server_id=user.server_id,
-                    email=user.email,
-                    autoalert=user.autoalert,
-                    auth_key=user.authkey,
-                    invited_by=user.invited_by,
-                    gpg_key=user.gpgkey,
-                    certif_public=user.certif_public,
-                    nids=user.nids_sid,
-                    termsaccepted=user.termsaccepted,
-                    newsread=user.newsread,
-                    role=user.role_id,
-                    change_pw=bool(user.change_pw),
-                    contactalert=user.contactalert,
-                    disabled=user.disabled,
-                    expiration=user.expiration,
-                    current_login=user.current_login,
-                    last_login=user.last_login,
-                    last_api_access=user.last_api_access,
-                    force_logout=user.force_logout,
-                    created=user.date_created,
-                    modified=user.date_modified,
-                    last_pw_change=user.last_pw_change,
-                    name=user_names_by_id[user.id],
-                    totp=(user.totp is not None),
-                    contact=user.contactalert,
-                    notification=(user.notification_daily or user.notification_weekly or user.notification_monthly),
+                    id=user[0].id,
+                    org_id=user[0].org_id,
+                    server_id=user[0].server_id,
+                    email=user[0].email,
+                    autoalert=user[0].autoalert,
+                    auth_key=user[0].authkey,
+                    invited_by=user[0].invited_by,
+                    gpg_key=user[0].gpgkey,
+                    certif_public=user[0].certif_public,
+                    nids_sid=user[0].nids_sid,
+                    termsaccepted=user[0].termsaccepted,
+                    newsread=user[0].newsread,
+                    role_id=user[0].role_id,
+                    change_pw=bool(user[0].change_pw),
+                    contactalert=user[0].contactalert,
+                    disabled=user[0].disabled,
+                    expiration=user[0].expiration,
+                    current_login=user[0].current_login,
+                    last_login=user[0].last_login,
+                    last_api_access=user[0].last_api_access,
+                    force_logout=user[0].force_logout,
+                    date_created=user[0].date_created,
+                    date_modified=user[0].date_modified,
+                    last_pw_change=user[0].last_pw_change,
+                    name=user_names_by_id[user[0].id],
+                    totp=(user[0].totp is not None),
+                    contact=user[0].contactalert,
+                    notification=(
+                        user[0].notification_daily or user[0].notification_weekly or user[0].notification_monthly
+                    ),
                 ),
                 Role=RoleUsersResponse(
-                    id=user.role_id,
-                    name=roles_by_id[user.role_id].name,
-                    perm_auth=roles_by_id[user.role_id].perm_auth,
-                    perm_site_admin=roles_by_id[user.role_id].perm_site_admin,
+                    id=user[0].role_id,
+                    name=roles_by_id[user[0].role_id].name,
+                    perm_auth=roles_by_id[user[0].role_id].perm_auth,
+                    perm_site_admin=roles_by_id[user[0].role_id].perm_site_admin,
                 ),
                 Organisation=OrganisationUsersResponse(
-                    id=user.org_id,
-                    name=organisations_by_id[user.org_id].name,
+                    id=user[0].org_id,
+                    name=organisations_by_id[user[0].org_id].name,
                 ),
             )
         )
@@ -415,8 +418,8 @@ async def get_user_names_by_id(db: Session) -> dict:
     user_name = user_name_result.fetchall()
 
     user_names_by_id = {}
-    for name in user_name[0]:
-        user_names_by_id[name.user_id] = json.loads(name.value)["name"]
+    for name in user_name:
+        user_names_by_id[name[0].user_id] = json.loads(name[0].value)["name"]
     return user_names_by_id
 
 
@@ -426,8 +429,8 @@ async def get_roles_by_id(db: Session) -> dict:
     roles = roles_result.fetchall()
 
     roles_by_id = {}
-    for role in roles[0]:
-        roles_by_id[role.id] = role
+    for role in roles:
+        roles_by_id[role[0].id] = role[0]
     return roles_by_id
 
 
@@ -437,12 +440,12 @@ async def get_organisations_by_id(db: Session) -> dict:
     organisations = organisations_result.fetchall()
 
     organisations_by_id = {}
-    for organisation in organisations[0]:
-        organisations_by_id[organisation.id] = organisation
+    for organisation in organisations:
+        organisations_by_id[organisation[0].id] = organisation[0]
     return organisations_by_id
 
 
-async def _get_user(auth: Auth, db: Session, userID: str) -> GetAllUsersUser:
+async def _get_user(auth: Auth, db: Session, userID: str) -> GetUser:
     if not (
         await check_permissions(db, auth, [Permission.SITE_ADMIN])
         or await check_permissions(db, auth, [Permission.ADMIN])
@@ -464,7 +467,7 @@ async def _get_user(auth: Auth, db: Session, userID: str) -> GetAllUsersUser:
     if user_name is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="User name not found")
 
-    return GetAllUsersUser(
+    return GetUser(
         id=user.id,
         organisation=user.org_id,
         role=user.role_id,
