@@ -10,6 +10,7 @@ from mmisp.db.models.admin_setting import AdminSetting
 from mmisp.db.models.workflow import Workflow
 from mmisp.workflows.fastapi import module_entity_to_json_dict
 from mmisp.workflows.graph import WorkflowGraph
+from mmisp.workflows.legacy import GraphFactory
 from mmisp.workflows.modules import MODULE_REGISTRY, TRIGGER_REGISTRY, Module, Trigger
 
 from ...generators.model_generators.workflow_generator import (
@@ -52,36 +53,43 @@ def test_workflows_index(db, site_admin_user_token, client, workflows) -> None:
 
 
 # idk how to give form data into an request. will try later
-# def test_workflow_edit_edit_existing(db, site_admin_user_token, client) -> None:
-#     id: int = 50
-#     headers = {
-#         "authorization": site_admin_user_token,
-#     }
-#
-#     new_workflow = genrerate_workflow_with_id(1)
-#     data = GraphFactory.graph2jsondict(new_workflow.data)
-#
-#     payload = {
-#         "data[Workflow][name]": "new workflow name",
-#         "data[Workflow][description]": "new workflow description",
-#         "data[Workflow][data]": data,
-#     }
-#     response = client.post(f"/workflows/edit/{id}", headers=headers, data=payload)
-#
-#     workflow: Workflow = db.get(Workflow, id)
-#     db.commit()
-#     db.refresh(workflow)
-#
-#     assert response.status_code == 200
-#     workflow_dict = json.loads(response.content.decode())["Workflow"]
-#     assert workflow_dict["name"] == payload["workflow_name"]
-#     assert workflow_dict["description"] == payload["workflow_description"]
-#     assert workflow_dict["data"] == payload["workflow_graph"]
-#     assert workflow.name == payload["workflow_name"]
-#     assert workflow.description == payload["workflow_description"]
-#     assert workflow.data.nodes == new_workflow.data.nodes
-#     assert workflow.data.root == new_workflow.data.root
-#     assert list(workflow.data.frames) == list(new_workflow.data.frames)
+def test_workflow_edit_edit_existing(db, site_admin_user_token, client) -> None:
+    id: int = 50
+    headers = {
+        "authorization": site_admin_user_token,
+        "accept": "application/json",
+    }
+
+    new_workflow = genrerate_workflow_with_id(id)
+    db.add(new_workflow)
+    db.commit()
+    db.refresh(new_workflow)
+    data = json.dumps(GraphFactory.graph2jsondict(new_workflow.data))
+
+    payload = {
+        "data[Workflow][name]": "new workflow name",
+        "data[Workflow][description]": "new workflow description",
+        "data[Workflow][data]": data,
+    }
+    response = client.post(f"/workflows/edit/{id}", headers=headers, data=payload)
+
+    assert response.status_code == 200
+
+    workflow: Workflow = db.get(Workflow, id)
+    db.commit()
+    db.refresh(new_workflow)
+    workflow_dict = json.loads(response.content.decode())["Workflow"]
+    assert workflow_dict["name"] == payload["data[Workflow][name]"]
+    assert workflow_dict["description"] == payload["data[Workflow][description]"]
+    assert workflow_dict["data"] == json.loads(data)
+    assert workflow.name == payload["data[Workflow][name]"]
+    assert workflow.description == payload["data[Workflow][description]"]
+    assert workflow.data.nodes == new_workflow.data.nodes
+    assert workflow.data.root == new_workflow.data.root
+    assert list(workflow.data.frames) == list(new_workflow.data.frames)
+
+    db.delete(new_workflow)
+    db.commit()
 
 
 def test_workflow_view(client, site_admin_user_token, workflows) -> None:
