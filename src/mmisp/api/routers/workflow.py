@@ -563,6 +563,7 @@ async def checkGraph(
     form_data = await request.form()
     data = loads(str(form_data["graph"]))
     graph = GraphFactory.jsondict2graph(data)
+    await graph.initialize_graph_modules(db)
 
     result = graph.check()
     return GraphValidation.report(result)
