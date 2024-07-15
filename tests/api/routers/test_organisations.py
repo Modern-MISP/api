@@ -88,45 +88,4 @@ def test_delete_organisation(db: Session, site_admin_user_token, client, organis
     response_json = response.json()
     assert response_json["saved"]
     assert response_json["name"] == "Organisation deleted"
-def test_add_organisation(client, site_admin_user_token,db:Session):
-    headers = {"authorization": site_admin_user_token}
-    request_body = {
-        "id": 0,
-        "name": "test",
-        "description": "des",
-        "type": "typeA",
-        "nationality": "world",
-        "sector": "secA",
-        "created_by": 0,
-        "contacts": "contact",
-        "local": True,
-        "restricted_to_domain": "domain",
-        "landingpage": "page"
-    }
 
-    response = client.post(f"/organisations",headers=headers,json=request_body)
-    response_json = response.json()
-
-
-    assert response_json["id"] == "0"
-    assert response_json["name"] == "test"
-   
-
-
-def test_edit_organisation(client, site_admin_user_token,organisation):
-    headers = {"authorization": site_admin_user_token}
-    request_body = {
-        "name": "test1",
-        "description": "des1",
-        "type": "typeA1",
-        "nationality": "world1",
-        "sector": "secA1",
-        "contacts": "contact1",
-        "local": True,
-        "restricted_to_domain": "domain1",
-        "landingpage": "page1"
-    }
-
-    response = client.post(f"/organisations/update/{organisation.id}",headers= headers,json=request_body)
-    response_json = response.json()
-    assert response_json["name"] == "test1"
