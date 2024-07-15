@@ -14,7 +14,7 @@ router = APIRouter(tags=["logs"])
 
 @router.post(
     "/admin/logs/index",
-    status_code=status.HTTP_201_CREATED,
+    status_code=status.HTTP_200_OK,
     summary="Add object to event",
     description="Add a new object to a specific event using a template.",
 )
