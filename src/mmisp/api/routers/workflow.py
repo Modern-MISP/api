@@ -165,6 +165,13 @@ async def edit_workflow(
     }
 
     update_record(workflow, new_data)
+    await workflow.data.initialize_graph_modules(db)
+    result = workflow.data.check()
+    if not result.is_valid():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=GraphValidation.report(result).dict(),
+        )
     await db.commit()
     await db.refresh(workflow)
     return workflow

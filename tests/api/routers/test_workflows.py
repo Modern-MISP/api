@@ -91,6 +91,30 @@ def test_workflow_edit_edit_existing(db, site_admin_user_token, client) -> None:
     db.commit()
 
 
+def test_edit_workflow_invalid(db, site_admin_user_token, client, workflows) -> None:
+    headers = {
+        "authorization": site_admin_user_token,
+        "accept": "application/json",
+    }
+
+    new_workflow = workflows[1]
+    data = GraphFactory.graph2jsondict(new_workflow.data)
+    id: int = new_workflow.id
+
+    data["1"]["outputs"]["output_1"]["connections"] = [{"node": "1", "output": "input_1"}]
+
+    data_enc = json.dumps(data)
+
+    payload = {
+        "data[Workflow][name]": "new workflow name",
+        "data[Workflow][description]": "new workflow description",
+        "data[Workflow][data]": data_enc,
+    }
+    response = client.post(f"/workflows/edit/{id}", headers=headers, data=payload)
+
+    assert response.status_code == 400
+
+
 def test_workflow_view(client, site_admin_user_token, workflows) -> None:
     id: int = 50
     headers = {"authorization": site_admin_user_token}
