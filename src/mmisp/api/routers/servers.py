@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Path, status
 from sqlalchemy.future import select
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize, check_permissions
-from mmisp.api_schemas.servers import AddServer, AddServerResponse, GetRemoteServersResponse
+from mmisp.api_schemas.servers import AddServer, AddServerResponse, GetRemoteServersResponse, EditServer
 from mmisp.api_schemas.standard_status_response import StandardStatusIdentifiedResponse
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.server import Server
@@ -138,6 +138,33 @@ async def get_version(
         "request_encoding": [],
         "filter_sightings": True,
     }
+
+@router.post(
+    "/servers/remote/edit/{org_Id}",
+    summary="Edits remote servers by org id",
+)
+async def update_remote_server(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    db: Annotated[Session, Depends(get_db)],
+    organisation_id: Annotated[str, Path(alias="org_Id")],
+    body: EditServer,
+) -> list[GetRemoteServersResponse]:
+    """
+    Edits servers given by org_id.
+
+    Input:
+
+    - org_id
+
+    - The current database
+
+    - auth: Authentication details
+
+    Output:
+
+    - Updated servers as a list
+    """
+    return await _edit_servers_by_id(auth=auth,db=db,org_id=organisation_id,body=body)
 
 
 # --- deprecated ---
@@ -329,3 +356,44 @@ async def _delete_remote_server(auth: Auth, db: Session, server_id: str) -> Stan
         url=f"/servers/remote/delete/{server_id}",
         id=server_id,
     )
+async def _edit_servers_by_id(auth: Auth, db: Session, org_id: str, body: EditServer)->list[GetRemoteServersResponse]:
+    if not (
+        await check_permissions(db, auth, [Permission.SITE_ADMIN])
+        or await check_permissions(db, auth, [Permission.ADMIN])
+    ):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED)
+    int_orgId = 0
+    try:
+        int_orgId = int(org_id)
+
+    except ValueError:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Organisation not found")
+
+    query = select(Server)
+    server_result = await db.execute(query)
+    server_list = server_result.fetchall()
+    response = []
+    for server in server_list:
+        if(server[0].org_id == int_orgId):
+            server[0].name = body.name
+            server[0].url = body.url
+            server[0].priority = body.priority
+            server[0].authkey= body.authkey
+            server[0].remote_org_id = body.remote_org_id
+            server[0].internal = body.internal
+            server[0].push = body.push
+            server[0].pull = body.pull
+            server[0].pull_rules = body.pull_rules
+            server[0].push_rules = body.push_rules
+            server[0].push_galaxy_clusters = body.push_galaxy_clusters
+            server[0].caching_enabled = body.caching_enabled
+            server[0].unpublish_event = body.unpublish_event
+            server[0].publish_without_email = body.publish_without_email
+            server[0].self_signed = body.self_signed
+            server[0].skip_proxy = body.skip_proxy
+            await db.commit()
+            await db.refresh(server[0])
+            response.append(server[0])
+
+    return response
+
