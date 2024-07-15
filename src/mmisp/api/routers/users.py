@@ -5,10 +5,13 @@ from fastapi import APIRouter, Depends, HTTPException, Path, status
 from sqlalchemy.future import select
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize, check_permissions
+from mmisp.api_schemas.organisations import OrganisationUsersResponse
+from mmisp.api_schemas.roles import RoleUsersResponse
 from mmisp.api_schemas.standard_status_response import StandardStatusIdentifiedResponse
 from mmisp.api_schemas.users import (
     AddUserBody,
     AddUserResponse,
+    GetAllUsersElement,
     GetAllUsersUser,
     UserAttributesBody,
     UsersViewMeResponse,
@@ -83,7 +86,7 @@ async def get_logged_in_user_info(
 async def get_all_users(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-) -> list[GetAllUsersUser]:
+) -> list[GetAllUsersElement]:
     """
     Retrieves a list of all users.
 
@@ -340,7 +343,7 @@ async def _add_user(auth: Auth, db: Session, body: AddUserBody) -> AddUserRespon
 async def _get_all_users(
     auth: Auth,
     db: Session,
-) -> list[GetAllUsersUser]:
+) -> list[GetAllUsersElement]:
     query = select(User)
 
     if not (
@@ -351,8 +354,62 @@ async def _get_all_users(
 
     result = await db.execute(query)
     users = result.fetchall()
-    user_list_computed: list[GetAllUsersUser] = []
+    user_list_computed: list[GetAllUsersElement] = []
 
+    user_names_by_id = await get_user_names_by_id(db)
+    roles_by_id = await get_roles_by_id(db)
+    organisations_by_id = await get_organisations_by_id(db)
+
+    for user in users[0]:
+        user_list_computed.append(
+            GetAllUsersElement(
+                User=GetAllUsersUser(
+                    id=user.id,
+                    org_id=user.org_id,
+                    server_id=user.server_id,
+                    email=user.email,
+                    autoalert=user.autoalert,
+                    auth_key=user.authkey,
+                    invited_by=user.invited_by,
+                    gpg_key=user.gpgkey,
+                    certif_public=user.certif_public,
+                    nids=user.nids_sid,
+                    termsaccepted=user.termsaccepted,
+                    newsread=user.newsread,
+                    role=user.role_id,
+                    change_pw=bool(user.change_pw),
+                    contactalert=user.contactalert,
+                    disabled=user.disabled,
+                    expiration=user.expiration,
+                    current_login=user.current_login,
+                    last_login=user.last_login,
+                    last_api_access=user.last_api_access,
+                    force_logout=user.force_logout,
+                    created=user.date_created,
+                    modified=user.date_modified,
+                    last_pw_change=user.last_pw_change,
+                    name=user_names_by_id[user.id],
+                    totp=(user.totp is not None),
+                    contact=user.contactalert,
+                    notification=(user.notification_daily or user.notification_weekly or user.notification_monthly),
+                ),
+                Role=RoleUsersResponse(
+                    id=user.role_id,
+                    name=roles_by_id[user.role_id].name,
+                    perm_auth=roles_by_id[user.role_id].perm_auth,
+                    perm_site_admin=roles_by_id[user.role_id].perm_site_admin,
+                ),
+                Organisation=OrganisationUsersResponse(
+                    id=user.org_id,
+                    name=organisations_by_id[user.org_id].name,
+                ),
+            )
+        )
+
+    return user_list_computed
+
+
+async def get_user_names_by_id(db: Session) -> dict:
     user_name_query = select(UserSetting).where(UserSetting.setting == "user_name")
     user_name_result = await db.execute(user_name_query)
     user_name = user_name_result.fetchall()
@@ -360,27 +417,29 @@ async def _get_all_users(
     user_names_by_id = {}
     for name in user_name[0]:
         user_names_by_id[name.user_id] = json.loads(name.value)["name"]
+    return user_names_by_id
 
-    for user in users[0]:
-        user_list_computed.append(
-            GetAllUsersUser(
-                id=user.id,
-                organisation=user.org_id,
-                role=user.role_id,
-                nids=user.nids_sid,
-                name=user_names_by_id[user.id],
-                email=user.email,
-                last_login=user.last_login,
-                created=user.date_created,
-                totp=user.totp,
-                contact=user.contactalert,
-                notification=user.notification_daily or user.notification_weekly or user.notification_monthly,
-                gpg_key=user.gpgkey,
-                terms=user.termsaccepted,
-            )
-        )
 
-    return user_list_computed
+async def get_roles_by_id(db: Session) -> dict:
+    roles_query = select(Role)
+    roles_result = await db.execute(roles_query)
+    roles = roles_result.fetchall()
+
+    roles_by_id = {}
+    for role in roles[0]:
+        roles_by_id[role.id] = role
+    return roles_by_id
+
+
+async def get_organisations_by_id(db: Session) -> dict:
+    organisations_query = select(Organisation)
+    organisations_result = await db.execute(organisations_query)
+    organisations = organisations_result.fetchall()
+
+    organisations_by_id = {}
+    for organisation in organisations[0]:
+        organisations_by_id[organisation.id] = organisation
+    return organisations_by_id
 
 
 async def _get_user(auth: Auth, db: Session, userID: str) -> GetAllUsersUser:
