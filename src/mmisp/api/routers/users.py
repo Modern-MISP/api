@@ -264,6 +264,7 @@ async def get_user_by_id_depr(
 
 @router.delete(
     "/admin/users/delete/{userId}",
+    deprecated=True,
     summary="Delete a user",
 )
 async def delete_user_depr(
