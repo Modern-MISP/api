@@ -39,10 +39,6 @@ from mmisp.api_schemas.responses.standard_status_response import (
     StandardStatusResponse,
     StandartResponse,
 )
-from mmisp.api_schemas.workflows import (
-    ModuleIndexRequest,
-    TriggerRequest,
-)
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.admin_setting import AdminSetting
 from mmisp.db.models.workflow import Workflow
@@ -66,6 +62,7 @@ from mmisp.workflows.modules import (
     TRIGGER_REGISTRY,
     Module,
     ModuleAction,
+    ModuleConfiguration,
     ModuleLogic,
     Trigger,
 )
@@ -236,7 +233,7 @@ async def view(
     - **workflow_id** The ID of the workflow to view.
 
     """
-    workflow = await get_workflow_by_id(workflow_id, db)
+    workflow: Workflow | None = await get_workflow_by_id(workflow_id, db)
     if workflow is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -246,6 +243,9 @@ async def view(
                 url=f"/workflows/view/{workflow_id}",
             ).dict(),
         )
+
+    await workflow.data.initialize_graph_modules(db)
+
     return workflow_entity_to_json_dict(workflow)
 
 
@@ -349,7 +349,7 @@ async def executeWorkflow(
     raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED)
 
 
-@router.post(
+@router.get(
     "/workflows/triggers",
     status_code=status.HTTP_200_OK,
     summary="Returns a list with all triggers",
@@ -357,7 +357,6 @@ async def executeWorkflow(
 async def triggers(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    body: TriggerRequest | None = None,
 ) -> List[Dict[str, Any]]:
     """
     Returns a list with triggers.
@@ -376,7 +375,7 @@ async def triggers(
 
     # too ugly to get it's own function :(
     for type_trigger in all_triggers:
-        if __filter_triggers(type_trigger, body):
+        if __filter_triggers(type_trigger):
             trigger = cast(Trigger, type_trigger)
             disabled = False
             workflow_json = {}
@@ -392,18 +391,8 @@ async def triggers(
     return result
 
 
-def __filter_triggers(trigger: type[Trigger], request: TriggerRequest | None) -> bool:
-    if issubclass(trigger, Module):
-        return False
-    if request is None:
-        return True
-    if request.scope is not trigger.scope:
-        return False
-    if request.enabled is trigger.disabled:
-        return False
-    if request.blocking is not trigger.blocking:
-        return False
-    return True
+def __filter_triggers(trigger: type[Trigger]) -> bool:
+    return not issubclass(trigger, Module)
 
 
 async def get_workflow_by_trigger_id(
@@ -414,11 +403,11 @@ async def get_workflow_by_trigger_id(
     return result.scalars().first()
 
 
-@router.post("/workflows/moduleIndex", status_code=status.HTTP_200_OK, summary="Returns modules")
+@router.get("/workflows/moduleIndex/type:{type}", status_code=status.HTTP_200_OK, summary="Returns modules")
 async def moduleIndex(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    body: ModuleIndexRequest | None = None,
+    type: Annotated[str, Path()],
 ) -> List[Dict[str, Any]]:
     """
     Retrieve modules with optional filtering.
@@ -436,24 +425,38 @@ async def moduleIndex(
     response: List[dict] = []
 
     for module in all_modules:
-        if __filter_index_modules(module, request=body):
-            module_json = module_entity_to_json_dict(cast(Module, module))
+        # FIXME modules/triggers are in both registries now. This is wrong
+        # and should be fixed in lib properly. Band-aid fix here.
+        if issubclass(module, Trigger):
+            continue
+        instance = cast(Module, __create_module_or_trigger_object(module))
+        if __filter_index_modules(instance, type):
+            await instance.initialize_for_visual_editor(db)
+            module_json = module_entity_to_json_dict(instance)
             response.append(module_json)
 
     return response
 
 
-def __filter_index_modules(module: type[Module], request: ModuleIndexRequest | None) -> bool:
+def __create_module_or_trigger_object(module: type[Module | Trigger]) -> Module | Trigger:
+    # FIXME it's a little hacky, but we initialize `apperance` into
+    # None because it's nowhere used when returning module-data only.
     if issubclass(module, Trigger):
-        return False
-    if request is None:
-        return True
-    if request.type == "action" and not issubclass(module, ModuleAction):
-        return False
-    if request.type == "logic" and not issubclass(module, ModuleLogic):
-        return False
+        return module(inputs={}, outputs={}, graph_id=0, apperance=None)  # type:ignore[call-arg,arg-type]
+    return module(
+        configuration=ModuleConfiguration({}),
+        inputs={},
+        outputs={},
+        graph_id=0,
+        apperance=None,  # type:ignore[call-arg,arg-type]
+        on_demand_filter=None,
+    )
 
-    if request.actiontype == "blocking" and not module.blocking:
+
+def __filter_index_modules(module: Module, type: str) -> bool:
+    if type == "action" and not isinstance(module, ModuleAction):
+        return False
+    if type == "logic" and not isinstance(module, ModuleLogic):
         return False
 
     return True
@@ -479,7 +482,10 @@ async def moduleView(
 
     for module in all_modules:
         if module.id == module_id:
-            return module_entity_to_json_dict(cast(Module, module))
+            instance = __create_module_or_trigger_object(module)
+            if isinstance(instance, Module):
+                await instance.initialize_for_visual_editor(db)
+            return module_entity_to_json_dict(instance)
 
     raise HTTPException(
         status_code=status.HTTP_404_NOT_FOUND,
