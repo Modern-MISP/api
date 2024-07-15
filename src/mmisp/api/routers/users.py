@@ -204,6 +204,90 @@ async def update_user(
     return await _update_user(auth, db, user_id, body)
 
 
+# --- deprecated ---
+
+
+@router.put(
+    "/admin/users/edit/{userId}",
+    deprecated=True,
+    summary="Update a user",
+)
+async def update_user_depr(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    db: Annotated[Session, Depends(get_db)],
+    user_id: Annotated[str, Path(alias="userId")],
+    body: UserAttributesBody,
+) -> UserWithName:
+    """
+    Deprecated. Updates an existing user using the old route.
+
+    Input:
+
+    - ID of the user to update
+
+    - Updated data for the user
+
+    - The current database
+
+    Output:
+
+    - Data representing the updated attributes of the user
+    """
+    return await _update_user(auth, db, user_id, body)
+
+
+@router.get(
+    "/admin/users/view/{userId}",
+    deprecated=True,
+    summary="Get a user by id",
+)
+async def get_user_by_id_depr(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    db: Annotated[Session, Depends(get_db)],
+    user_id: Annotated[str, Path(alias="userId")],
+) -> GetAllUsersUser:
+    """
+    Deprecated. Retrieves a user specified by id with the old route.
+
+    Input:
+
+    - ID of the user to get
+
+    - The current database
+
+    Output:
+
+    - Data representing the attributes of the searched user
+    """
+    return await _get_user(auth, db, user_id)
+
+
+@router.delete(
+    "/admin/users/delete/{userId}",
+    summary="Delete a user",
+)
+async def delete_user_depr(
+    user_id: Annotated[str, Path(alias="userId")],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    db: Annotated[Session, Depends(get_db)],
+) -> StandardStatusIdentifiedResponse:
+    """
+    Deprecated. Deletes a user by their ID with the old route.
+
+    Input:
+
+    - ID of the user to delete
+
+    - auth: Authentication details of the current user
+
+    - The current database
+
+    Output:
+    - StandardStatusIdentifiedResponse: Response indicating success or failure
+    """
+    return await _delete_user(user_id=user_id, auth=auth, db=db)
+
+
 # --- endpoint logic ---
 
 
