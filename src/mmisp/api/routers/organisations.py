@@ -1,19 +1,19 @@
+import uuid
+from datetime import datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Path, status
 from sqlalchemy.future import select
-from sqlalchemy import DateTime
-
-from datetime import datetime
-import uuid
-
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize, check_permissions
-from mmisp.api_schemas.standard_status_response import StandardStatusIdentifiedResponse
-from mmisp.api_schemas.organisations import GetOrganisationResponse, DeleteForceUpdateOrganisationResponse, AddOrganisation, EditOrganisation
+from mmisp.api_schemas.organisations import (
+    AddOrganisation,
+    DeleteForceUpdateOrganisationResponse,
+    EditOrganisation,
+    GetOrganisationResponse,
+)
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.organisation import Organisation
-from mmisp.util.partial import partial
 
 router = APIRouter(tags=["organisations"])
 
@@ -126,8 +126,7 @@ async def update_organisation(
     db: Annotated[Session, Depends(get_db)],
     organisation_id: Annotated[str, Path(alias="orgId")],
     body: EditOrganisation,
-    ) -> GetOrganisationResponse:
-
+) -> GetOrganisationResponse:
     """
     Updates an organisation by its ID.
 
@@ -143,7 +142,7 @@ async def update_organisation(
 
     - Updated organisation data
     """
-    return await _update_organisation(auth, db, organisation_id,body)
+    return await _update_organisation(auth, db, organisation_id, body)
 
 
 # --- endpoint logic ---
@@ -155,40 +154,40 @@ async def _add_organisation(auth: Auth, db: Session, body: AddOrganisation) -> G
         or await check_permissions(db, auth, [Permission.ADMIN])
     ):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
-    org = Organisation(id = body.id,
-                       name = body.name,
-                       date_created = datetime.now(),
-                       date_modified = datetime.now(),
-                       description= body.description,
-                       type = body.type,
-                       nationality = body.nationality,
-                       sector = body.sector,
-                       created_by = body.created_by,
-                       uuid = uuid.uuid4().hex,
-                       contacts = body.contacts,
-                       local = body.local,
-                       restricted_to_domain = body.restricted_to_domain,
-                       landingpage = body.landingpage
-                       )
+    org = Organisation(
+        id=body.id,
+        name=body.name,
+        date_created=datetime.now(),
+        date_modified=datetime.now(),
+        description=body.description,
+        type=body.type,
+        nationality=body.nationality,
+        sector=body.sector,
+        created_by=body.created_by,
+        uuid=uuid.uuid4().hex,
+        contacts=body.contacts,
+        local=body.local,
+        restricted_to_domain=body.restricted_to_domain,
+        landingpage=body.landingpage,
+    )
     db.add(org)
     await db.commit()
     return GetOrganisationResponse(
-        id = org.id,
-        name = org.name,
-        date_created = org.date_created,
-        date_modified = org.date_modified,
-        description = org.description,
-        type = org.type,
-        nationality = org.nationality,
-        sector = org.sector,
-        created_by = org.created_by,
-        uuid = org.uuid,
-        contacts = org.contacts,
-        local = org.local,
-        restricted_to_domain = org.restricted_to_domain,
-        landingpage = org.landingpage,
+        id=org.id,
+        name=org.name,
+        date_created=org.date_created,
+        date_modified=org.date_modified,
+        description=org.description,
+        type=org.type,
+        nationality=org.nationality,
+        sector=org.sector,
+        created_by=org.created_by,
+        uuid=org.uuid,
+        contacts=org.contacts,
+        local=org.local,
+        restricted_to_domain=org.restricted_to_domain,
+        landingpage=org.landingpage,
     )
-
 
 
 async def _get_organisations(auth: Auth, db: Session) -> list[GetOrganisationResponse]:
@@ -206,7 +205,7 @@ async def _get_organisations(auth: Auth, db: Session) -> list[GetOrganisationRes
     for organisation in organisations[0]:
         org_list_computed.append(
             GetOrganisationResponse(
-                id=organisation.id,
+                id=str(organisation.id),
                 name=organisation.name,
                 date_created=organisation.date_created,
                 date_modified=organisation.date_modified,
@@ -219,7 +218,7 @@ async def _get_organisations(auth: Auth, db: Session) -> list[GetOrganisationRes
                 contacts=organisation.contacts,
                 local=organisation.local,
                 restricted_to_domain=organisation.restricted_to_domain,
-                landingpage=organisation.landingpage
+                landingpage=organisation.landingpage,
             )
         )
 
@@ -232,7 +231,7 @@ async def _get_organisation(auth: Auth, db: Session, organisationID: str) -> Get
         or await check_permissions(db, auth, [Permission.ADMIN])
     ):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
-    
+
     query = select(Organisation).where(Organisation.id == organisationID)
 
     result = await db.execute(query)
@@ -255,7 +254,7 @@ async def _get_organisation(auth: Auth, db: Session, organisationID: str) -> Get
         contacts=organisation.contacts,
         local=organisation.local,
         restricted_to_domain=organisation.restricted_to_domain,
-        landingpage=organisation.landingpage
+        landingpage=organisation.landingpage,
     )
 
 
@@ -266,14 +265,17 @@ async def _delete_organisation(auth: Auth, db: Session, organisationID: str) -> 
     ):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
-
     organisation = await db.get(Organisation, organisationID)
 
     if not organisation:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=DeleteForceUpdateOrganisationResponse(
-                saved=False, success=False, name="Invalid organisation.", message="Invalid organisation.", url=f"/organisations/{organisationID}"
+                saved=False,
+                success=False,
+                name="Invalid organisation.",
+                message="Invalid organisation.",
+                url=f"/organisations/{organisationID}",
             ).dict(),
         )
 
@@ -281,11 +283,17 @@ async def _delete_organisation(auth: Auth, db: Session, organisationID: str) -> 
     await db.commit()
 
     return DeleteForceUpdateOrganisationResponse(
-        saved=True, success=True, name="Organisation deleted", message="Organisation deleted", url=f"/organisations/{organisationID}"
+        saved=True,
+        success=True,
+        name="Organisation deleted",
+        message="Organisation deleted",
+        url=f"/organisations/{organisationID}",
     )
 
 
-async def _update_organisation(auth: Auth, db: Session, organisationID: str, body) -> GetOrganisationResponse:
+async def _update_organisation(
+    auth: Auth, db: Session, organisationID: str, body: EditOrganisation
+) -> GetOrganisationResponse:
     if not (
         await check_permissions(db, auth, [Permission.SITE_ADMIN])
         and await check_permissions(db, auth, [Permission.ADMIN])
@@ -298,7 +306,11 @@ async def _update_organisation(auth: Auth, db: Session, organisationID: str, bod
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=DeleteForceUpdateOrganisationResponse(
-                saved=False, success=False, name="Invalid organisation.", message="Invalid organisation.", url=f"/organisations/{organisationID}"
+                saved=False,
+                success=False,
+                name="Invalid organisation.",
+                message="Invalid organisation.",
+                url=f"/organisations/{organisationID}",
             ).dict(),
         )
     org.name = body.name
@@ -314,18 +326,18 @@ async def _update_organisation(auth: Auth, db: Session, organisationID: str, bod
     await db.commit()
     await db.refresh(org)
     return GetOrganisationResponse(
-                                    id= org.id,
-                                    name = org.name,
-                                    date_created = org.date_created,
-                                    date_modified = org.date_modified,
-                                    description = org.description,
-                                    type = org.type,
-                                    nationality = org.nationality,
-                                    sector = org.sector,
-                                    created_by = org.created_by,
-                                    uuid = org.uuid,
-                                    contacts = org.contacts,
-                                    local = org.local,
-                                    restricted_to_domain = org.restricted_to_domain,
-                                    landingpage = org.landingpage,
+        id=org.id,
+        name=org.name,
+        date_created=org.date_created,
+        date_modified=org.date_modified,
+        description=org.description,
+        type=org.type,
+        nationality=org.nationality,
+        sector=org.sector,
+        created_by=org.created_by,
+        uuid=org.uuid,
+        contacts=org.contacts,
+        local=org.local,
+        restricted_to_domain=org.restricted_to_domain,
+        landingpage=org.landingpage,
     )

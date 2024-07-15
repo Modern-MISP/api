@@ -14,7 +14,7 @@ def test_users_me(site_admin_user_token, site_admin_user, client) -> None:
 
     assert response.status_code == 200
     json = response.json()
-    assert json.get("User").get("id") == str(site_admin_user.id)
+    assert json.get("User").get("id") == site_admin_user.id
 
 
 def test_users_create(site_admin_user_token, site_admin_user, client, db) -> None:
@@ -114,24 +114,47 @@ def test_user_view_by_ID(db: Session, site_admin_user_token, client) -> None:
     user = response.json()
 
     assert isinstance(user, dict)
-    assert "id" in user
-    assert "organisation" in user
-    assert "role" in user
-    assert "nids" in user
-    assert "name" in user
-    assert "email" in user
-    assert "last_login" in user
-    assert "created" in user
-    assert "totp" in user
-    assert "contact" in user
-    assert "notification" in user
-    assert "gpg_key" in user
-    assert "terms" in user
+    assert "id" in user["User"]
+    assert "org_id" in user["User"]
+    assert "server_id" in user["User"]
+    assert "email" in user["User"]
+    assert "autoalert" in user["User"]
+    assert "auth_key" in user["User"]
+    assert "invited_by" in user["User"]
+    assert "gpg_key" in user["User"]
+    assert "certif_public" in user["User"]
+    assert "nids_sid" in user["User"]
+    assert "termsaccepted" in user["User"]
+    assert "newsread" in user["User"]
+    assert "role_id" in user["User"]
+    assert "change_pw" in user["User"]
+    assert "contactalert" in user["User"]
+    assert "disabled" in user["User"]
+    assert "expiration" in user["User"]
+    assert "current_login" in user["User"]
+    assert "last_login" in user["User"]
+    assert "last_api_access" in user["User"]
+    assert "force_logout" in user["User"]
+    assert "date_created" in user["User"]
+    assert "date_modified" in user["User"]
+    assert "last_pw_change" in user["User"]
+    assert "name" in user["User"]
+    assert "totp" in user["User"]
+    assert "contact" in user["User"]
+    assert "notification" in user["User"]
+
+    assert "id" in user["Role"]
+    assert "name" in user["Role"]
+    assert "perm_auth" in user["Role"]
+    assert "perm_site_admin" in user["Role"]
+
+    assert "id" in user["Organisation"]
+    assert "name" in user["Organisation"]
 
     query = select(UserSetting).where(UserSetting.setting == "user_name" and UserSetting.user_id == user.get("id"))
     user_name = db.execute(query).scalars().first()
     assert user_name is not None
-    assert user_name.value == user.get("name")
+    assert json.loads(user_name.value)["name"] == user["User"].get("name")
 
 
 def test_users_view_all(db: Session, site_admin_user_token, client) -> None:

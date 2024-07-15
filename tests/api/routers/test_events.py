@@ -1,4 +1,5 @@
 import sqlalchemy as sa
+from icecream import ic
 
 from mmisp.db.models.log import Log
 
@@ -44,6 +45,7 @@ def test_add_event_date_empty_string(db, site_admin_user_token, client) -> None:
 def test_get_existing_event(
     organisation, event, attribute, galaxy, galaxy_cluster, tag, site_admin_user_token, eventtag, client
 ) -> None:
+    ic("test")
     org_id = organisation.id
 
     event_id = event.id
@@ -54,7 +56,9 @@ def test_get_existing_event(
     galaxy_cluster_id = galaxy_cluster.id
 
     headers = {"authorization": site_admin_user_token}
+    ic("event_id", event_id)
     response = client.get(f"/events/{event_id}", headers=headers)
+    ic("response", response)
 
     assert response.status_code == 200
     response_json = response.json()

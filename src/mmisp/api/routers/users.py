@@ -11,11 +11,9 @@ from mmisp.api_schemas.standard_status_response import StandardStatusIdentifiedR
 from mmisp.api_schemas.users import (
     AddUserBody,
     AddUserResponse,
-    GetAllUsersElement,
-    GetAllUsersUser,
-    GetUser,
+    GetUsersElement,
+    GetUsersUser,
     UserAttributesBody,
-    UsersViewMeResponse,
     UserWithName,
 )
 from mmisp.api_schemas.users import (
@@ -57,11 +55,11 @@ async def add_user(
     return await _add_user(auth=auth, db=db, body=body)
 
 
-@router.get("/users/view/me.json", response_model=partial(UsersViewMeResponse))
-@router.get("/users/view/me", response_model=partial(UsersViewMeResponse))
+@router.get("/users/view/me.json", response_model=partial(GetUsersElement))
+@router.get("/users/view/me", response_model=partial(GetUsersElement))
 async def get_logged_in_user_info(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))], db: Annotated[Session, Depends(get_db)]
-) -> dict:
+) -> GetUsersElement:
     """
     Retrieves information about the logged in user.
 
@@ -73,11 +71,8 @@ async def get_logged_in_user_info(
 
     - Information about the logged in user
     """
-    user = await db.get(User, auth.user_id)
-    organisation = await db.get(Organisation, auth.org_id)
-    role = await db.get(Role, auth.role_id)
 
-    return {"User": user.__dict__, "Organisation": organisation.__dict__, "Role": role.__dict__}
+    return await _get_user(auth, db, str(auth.user_id))
 
 
 @router.get(
@@ -87,7 +82,7 @@ async def get_logged_in_user_info(
 async def get_all_users(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-) -> list[GetAllUsersElement]:
+) -> list[GetUsersElement]:
     """
     Retrieves a list of all users.
 
@@ -110,7 +105,7 @@ async def get_user_by_id(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     user_id: Annotated[str, Path(alias="userId")],
-) -> GetUser:
+) -> GetUsersElement:
     """
     Retrieves a user specified by id.
 
@@ -249,7 +244,7 @@ async def get_user_by_id_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     user_id: Annotated[str, Path(alias="userId")],
-) -> GetAllUsersUser:
+) -> GetUsersElement:
     """
     Deprecated. Retrieves a user specified by id with the old route.
 
@@ -344,7 +339,7 @@ async def _add_user(auth: Auth, db: Session, body: AddUserBody) -> AddUserRespon
 async def _get_all_users(
     auth: Auth,
     db: Session,
-) -> list[GetAllUsersElement]:
+) -> list[GetUsersElement]:
     query = select(User)
 
     if not (
@@ -355,7 +350,7 @@ async def _get_all_users(
 
     result = await db.execute(query)
     users = result.fetchall()
-    user_list_computed: list[GetAllUsersElement] = []
+    user_list_computed: list[GetUsersElement] = []
 
     user_names_by_id = await get_user_names_by_id(db)
     roles_by_id = await get_roles_by_id(db)
@@ -363,8 +358,8 @@ async def _get_all_users(
 
     for user in users:
         user_list_computed.append(
-            GetAllUsersElement(
-                User=GetAllUsersUser(
+            GetUsersElement(
+                User=GetUsersUser(
                     id=user[0].id,
                     org_id=user[0].org_id,
                     server_id=user[0].server_id,
@@ -445,7 +440,7 @@ async def get_organisations_by_id(db: Session) -> dict:
     return organisations_by_id
 
 
-async def _get_user(auth: Auth, db: Session, userID: str) -> GetUser:
+async def _get_user(auth: Auth, db: Session, userID: str) -> GetUsersElement:
     if not (
         await check_permissions(db, auth, [Permission.SITE_ADMIN])
         or await check_permissions(db, auth, [Permission.ADMIN])
@@ -467,20 +462,61 @@ async def _get_user(auth: Auth, db: Session, userID: str) -> GetUser:
     if user_name is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="User name not found")
 
-    return GetUser(
-        id=user.id,
-        organisation=user.org_id,
-        role=user.role_id,
-        nids=user.nids_sid,
-        name=user_name.value,
-        email=user.email,
-        last_login=user.last_login,
-        created=user.date_created,
-        totp=user.totp,
-        contact=user.contactalert,
-        notification=user.notification_daily or user.notification_weekly or user.notification_monthly,
-        gpg_key=user.gpgkey,
-        terms=user.termsaccepted,
+    role_query = select(Role).where(Role.id == user.role_id)
+    role_result = await db.execute(role_query)
+    role = role_result.scalar_one_or_none()
+
+    if role is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Role not found")
+
+    organisation_query = select(Organisation).where(Organisation.id == user.org_id)
+    organisation_result = await db.execute(organisation_query)
+    organisation = organisation_result.scalar_one_or_none()
+
+    if organisation is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Organisation not found")
+
+    return GetUsersElement(
+        User=GetUsersUser(
+            id=user.id,
+            org_id=user.org_id,
+            server_id=user.server_id,
+            email=user.email,
+            autoalert=user.autoalert,
+            auth_key=user.authkey,
+            invited_by=user.invited_by,
+            gpg_key=user.gpgkey,
+            certif_public=user.certif_public,
+            nids_sid=user.nids_sid,
+            termsaccepted=user.termsaccepted,
+            newsread=user.newsread,
+            role_id=user.role_id,
+            change_pw=bool(user.change_pw),
+            contactalert=user.contactalert,
+            disabled=user.disabled,
+            expiration=user.expiration,
+            current_login=user.current_login,
+            last_login=user.last_login,
+            last_api_access=user.last_api_access,
+            force_logout=user.force_logout,
+            date_created=user.date_created,
+            date_modified=user.date_modified,
+            last_pw_change=user.last_pw_change,
+            name=json.loads(user_name.value).get("name"),
+            totp=(user.totp is not None),
+            contact=user.contactalert,
+            notification=(user.notification_daily or user.notification_weekly or user.notification_monthly),
+        ),
+        Role=RoleUsersResponse(
+            id=role.id,
+            name=role.name,
+            perm_auth=role.perm_auth,
+            perm_site_admin=role.perm_site_admin,
+        ),
+        Organisation=OrganisationUsersResponse(
+            id=organisation.id,
+            name=organisation.name,
+        ),
     )
 
 
