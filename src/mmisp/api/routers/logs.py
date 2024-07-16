@@ -13,16 +13,22 @@ router = APIRouter(tags=["logs"])
 
 
 @router.post(
-    "/admin/logs/index",
+    "/logs/index",
     status_code=status.HTTP_200_OK,
-    summary="Add object to event",
-    description="Add a new object to a specific event using a template.",
+    summary="List logs",
 )
 async def add_object(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
     request: LogsRequest,
 ) -> List[Any]:
+    """
+    List logs, filter can be applied.
+
+    - **model** the source for the log creation (f.e. 'User', 'Workflow', 'AuthKey', ...)
+    - **action** the action in which the log was created
+    - **model_id** the id of the model
+    """
     logs = await query_logs(request, db)
 
     result = []
