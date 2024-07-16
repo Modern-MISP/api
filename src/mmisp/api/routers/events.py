@@ -80,7 +80,7 @@ async def add_event(
     db: Annotated[Session, Depends(get_db)],
     body: AddEventBody,
 ) -> AddEditGetEventResponse:
-    """Add a new event with the given details.
+    """Add a new event with the gi ven details.
 
     Input:
 
