@@ -41,6 +41,16 @@ from mmisp.api_schemas.events import (
     SearchEventsResponse,
     UnpublishEventResponse,
 )
+from mmisp.api_schemas.jobs import (
+    AddAttributeViaFreeTextImportEventBody,
+    AddAttributeViaFreeTextImportEventResponse,
+    FreeTextImportWorkerBody,
+    FreeTextImportWorkerData,
+    FreeTextImportWorkerUser,
+    FreeTextProcessID,
+    ProcessFreeTextResponse,
+    AttributeType
+)
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.attribute import Attribute, AttributeTag
 from mmisp.db.models.event import Event, EventReport, EventTag
@@ -378,6 +388,72 @@ async def remove_tag_from_event(
     - the result of removing the tag from the event given by the api
     """
     return await _remove_tag_from_event(db, event_id, tag_id)
+
+
+@router.post("/events/freeTextImport",
+    status_code=status.HTTP_200_OK,
+    response_model=FreeTextProcessID,
+    summary="start the freetext import process via worker",
+)
+async def start_freeTextImport(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
+    body: AddAttributeViaFreeTextImportEventBody,
+) -> FreeTextProcessID:
+    """Starts the freetext import process by submitting the freetext to the worker.
+
+    Input:
+
+    - the user's authentification status
+
+    - the body of the freetext
+
+    Output:
+
+    - dict
+    """
+    body_dict = body.dict()
+    user = FreeTextImportWorkerUser(user_id=auth.user_id)
+
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="no user")
+    
+    data = FreeTextImportWorkerData(data=body_dict["Attribute"]["value"])
+    worker_body = FreeTextImportWorkerBody(user=user, data=data).dict()
+
+    async with httpx.AsyncClient() as client:
+        response = await client.post(f"{config.WORKER_URL}/job/processFreeText", json=worker_body)
+
+    response_data = response.json()
+    job_id = response_data["job_id"]
+
+    return FreeTextProcessID(id=job_id)
+
+
+@router.post(
+    "/events/freeTextImport/{eventID}",
+    status_code=status.HTTP_200_OK,
+    summary="Start the freetext import process via worker",
+)
+async def start_freetext_import(
+    event_id: Annotated[str, Path(alias="eventID")],
+    body: dict,
+    db: Annotated[Session, Depends(get_db)]
+) -> list[AddAttributeViaFreeTextImportEventResponse]:
+    """Adds the Attributes the user has selected
+
+    Input:
+
+    - the current database
+
+    - the event id
+
+    - the selected Attributes
+
+    Output:
+
+    - the processed data to be viewed and selected by the user
+    """
+    return await _add_attribute_via_free_text_import(db, event_id, body)
 
 
 # --- deprecated ---
@@ -1118,5 +1194,34 @@ async def _prepare_all_events_event_tag_response(
     return event_tag_response_list
 
 
-def _get_pid_from_free_text_import(db: Session, event_id: int) -> None:
-    return None
+async def _add_attribute_via_free_text_import(
+    db: Session, event_id: str, body: dict
+) -> list[AddAttributeViaFreeTextImportEventResponse]:
+    event: Event | None = await db.get(Event, event_id)
+
+    if not event:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
+
+    response_list = []
+
+    parsed_response = ProcessFreeTextResponse.parse_obj(dict)
+
+    for attribute in parsed_response.attributes:
+        value = attribute.value
+        attribute_type = attribute.default_type
+        category = GetDescribeTypesAttributes().sane_defaults[attribute_type]["default_category"].value
+        
+        value1, value2 = value, ""
+
+        new_attribute = Attribute(event_id=event_id, value1=value1, value2=value2, type=attribute_type, category=category)
+
+        db.add(new_attribute)
+
+        await db.commit()
+
+        attribute_response_dict = new_attribute.__dict__.copy()
+        attribute_response_dict["value"] = new_attribute.value1
+        attribute_response_dict["original_value"] = new_attribute.value1
+        response_list.append(AddAttributeViaFreeTextImportEventResponse(**attribute_response_dict))
+
+    return response_list
