@@ -455,11 +455,16 @@ async def _get_user(auth: Auth, db: Session, userID: str) -> GetUsersElement:
     if user is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="User not found")
 
-    user_name_query = select(UserSetting).where(UserSetting.setting == "user_name", UserSetting.user_id == userID)
-    user_name_result = await db.execute(user_name_query)
-    user_name = user_name_result.scalar_one_or_none()
+    user_settings_query = select(UserSetting).where(UserSetting.user_id == userID)
+    user_settings_result = await db.execute(user_settings_query)
+    user_settings = user_settings_result.scalars().all()
 
-    if user_name is None:
+    user_settings_dict = {}
+
+    for setting in user_settings:
+        user_settings_dict[setting.setting] = json.loads(setting.value)
+
+    if user_settings is None or user_settings_dict.get("user_name") is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="User name not found")
 
     role_query = select(Role).where(Role.id == user.role_id)
@@ -502,21 +507,21 @@ async def _get_user(auth: Auth, db: Session, userID: str) -> GetUsersElement:
             date_created=user.date_created,
             date_modified=user.date_modified,
             last_pw_change=user.last_pw_change,
-            name=json.loads(user_name.value).get("name"),
             totp=(user.totp is not None),
+            hotp_counter=user.hotp_counter,
+            notification_daily=user.notification_daily,
+            notification_weekly=user.notification_weekly,
+            notification_monthly=user.notification_monthly,
+            external_auth_required=user.external_auth_required,
+            external_auth_key=user.external_auth_key,
+            sub=user.sub,
+            name=user_settings_dict["user_name"]["name"],
             contact=user.contactalert,
             notification=(user.notification_daily or user.notification_weekly or user.notification_monthly),
         ),
-        Role=RoleUsersResponse(
-            id=role.id,
-            name=role.name,
-            perm_auth=role.perm_auth,
-            perm_site_admin=role.perm_site_admin,
-        ),
-        Organisation=OrganisationUsersResponse(
-            id=organisation.id,
-            name=organisation.name,
-        ),
+        Role=RoleUsersResponse(**role.__dict__),
+        Organisation=OrganisationUsersResponse(**organisation.__dict__),
+        UserSetting=user_settings_dict,
     )
 
 

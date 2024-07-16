@@ -330,7 +330,7 @@ async def _get_galaxies(db: Session) -> list[GetAllSearchGalaxiesResponse]:
     response_list = []
 
     if not galaxies:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No galaxies found.")
+        return response_list
 
     for galaxy in galaxies:
         response_list.append(GetAllSearchGalaxiesResponse(Galaxy=await _prepare_galaxy_response(db, galaxy)))
