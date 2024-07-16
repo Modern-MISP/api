@@ -1,7 +1,7 @@
 from typing import Annotated, Any, List
 
 from fastapi import APIRouter, Depends, status
-from sqlalchemy import select
+from sqlalchemy import desc, select
 
 from mmisp.api.auth import Auth, AuthStrategy, authorize
 from mmisp.api_schemas.logs import LogsRequest
@@ -45,7 +45,7 @@ async def query_logs(request: LogsRequest, db: Session) -> List[Log]:
         query = query.filter(Log.model_id == request.model_id)
 
     query = query.offset((request.page - 1) * request.limit).limit(request.limit)
-    query = query.order_by(Log.created.desc())
+    query = query.order_by(desc(Log.created))
 
     db_result = await db.execute(query)
     return db_result.scalars().all()
