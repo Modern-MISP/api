@@ -4,6 +4,7 @@ from datetime import date
 from time import gmtime
 from typing import Annotated, Any
 
+import httpx
 from fastapi import APIRouter, Depends, HTTPException, Path
 from sqlalchemy.future import select
 from sqlalchemy.sql import Select
