@@ -27,7 +27,7 @@ def test_get_statistics(client,
                         ) -> None:
     response = client.get(f"/statistics/getUsageData")
     response_json = response.json()
-    assert response_json["users"] == 2
+    assert response_json["users"] == 3
     assert response_json["eventCreatorOrgs"] == 1
     assert response_json["events"] == 5
     assert response_json["organisations"] == 2
