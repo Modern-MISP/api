@@ -14,7 +14,6 @@ from mmisp.api.auth import (
     authorize,
     check_permissions,
     decode_exchange_token,
-    encode_exchange_token,
     encode_token,
 )
 from mmisp.api.config import config
@@ -41,9 +40,25 @@ from mmisp.util.crypto import hash_secret, verify_secret
 router = APIRouter(tags=["authentication"])
 
 
+@router.get("/auth/openID/getAllOpenIDConnectProvidersInfo")
+async def get_all_open_id_connect_providers_info(
+    db: Annotated[Session, Depends(get_db)],
+) -> list[IdentityProviderInfo]:
+    """
+    Fetches all OpenID Connect providers
+
+    Input:
+    - Authorization token
+    - Database session
+
+    Output:
+    - List of OpenID Connect providers
+    """
+    return await _get_all_open_id_connect_providers_info(db)
+
+
 @router.get("/auth/openID/getAllOpenIDConnectProviders")
 async def get_all_open_id_connect_providers(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
 ) -> list[GetIdentityProviderResponse]:
     """
@@ -56,7 +71,7 @@ async def get_all_open_id_connect_providers(
     Output:
     - List of OpenID Connect providers
     """
-    return await _get_all_open_id_connect_providers(auth, db)
+    return await _get_all_open_id_connect_providers(db)
 
 
 @router.get("/auth/openID/getOpenIDConnectProvider/{providerId}")
@@ -235,38 +250,18 @@ async def redirect_to_idp(
 
     - the redirection
     """
-    identity_provider: OIDCIdentityProvider | None = await db.get(OIDCIdentityProvider, identity_provider_id)
-
-    if not identity_provider or not identity_provider.active:
-        raise HTTPException(status.HTTP_404_NOT_FOUND)
-
-    oidc_config = await _get_oidc_config(identity_provider.base_url)
-
-    query_params = {
-        "scope": "openid profile email",
-        "response_type": "code",
-        "client_id": identity_provider.client_id,
-        "redirect_uri": f"{config.OWN_URL}/auth/login/idp/{identity_provider.id}/callback",
-    }
-
-    authorization_endpoint = oidc_config["authorization_endpoint"]
-
-    url = f"{authorization_endpoint}?{urlencode(query_params)}"
+    url = await get_idp_url(db, identity_provider_id)
 
     return RedirectResponse(url=url, status_code=status.HTTP_302_FOUND)
 
 
-@router.get(
-    "/auth/login/idp/{identityProviderId}/callback", response_class=RedirectResponse, status_code=status.HTTP_302_FOUND
-)
-@router.post(
-    "/auth/login/idp/{identityProviderId}/callback", response_class=RedirectResponse, status_code=status.HTTP_302_FOUND
-)
+@router.get("/auth/login/idp/{identityProviderName}/callback")
+@router.post("/auth/login/idp/{identityProviderName}/callback")
 async def redirect_to_frontend(
     db: Annotated[Session, Depends(get_db)],
-    identity_provider_id: Annotated[int, Path(alias="identityProviderId")],
+    identity_provider_name: Annotated[str, Path(alias="identityProviderName")],
     code: str,
-) -> RedirectResponse:
+) -> TokenResponse:
     """Redirects to the frontend.
 
     Input:
@@ -281,7 +276,10 @@ async def redirect_to_frontend(
 
     - the redirection
     """
-    identity_provider: OIDCIdentityProvider | None = await db.get(OIDCIdentityProvider, identity_provider_id)
+    identity_provider_result = await db.execute(
+        select(OIDCIdentityProvider).where(OIDCIdentityProvider.name == identity_provider_name)
+    )
+    identity_provider: OIDCIdentityProvider | None = identity_provider_result.scalars().one_or_none()
 
     if not identity_provider or not identity_provider.active:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
@@ -292,9 +290,8 @@ async def redirect_to_frontend(
     body_params = {
         "grant_type": "authorization_code",
         "scope": "openid profile email",
-        "client_secret": identity_provider.client_secret,
         "client_id": identity_provider.client_id,
-        "redirect_uri": f"{config.OWN_URL}/auth/login/idp/{identity_provider.id}/callback",
+        "redirect_uri": f"{config.OWN_URL}/login/oidc/{identity_provider.name}/callback",
         "code": code,
     }
 
@@ -303,6 +300,7 @@ async def redirect_to_frontend(
             token_endpoint,
             content=urlencode(body_params),
             headers={"content-type": "application/x-www-form-urlencoded"},
+            auth=httpx.BasicAuth(username=identity_provider.client_id, password=identity_provider.client_secret),
         )
 
     access_token: str = token_response.json().get("access_token", None)
@@ -319,6 +317,7 @@ async def redirect_to_frontend(
         )
 
     user_info: dict = user_info_response.json()
+    print(user_info)
 
     if not user_info.get("email", None) or not user_info.get("sub", None):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
@@ -338,10 +337,8 @@ async def redirect_to_frontend(
         user.sub = user_info["sub"]
         await db.commit()
 
-    exchange_token = encode_exchange_token(str(user.id))
-
-    return RedirectResponse(
-        url=f"{config.DASHBOARD_URL}?exchangeToken={exchange_token}", status_code=status.HTTP_302_FOUND
+    return TokenResponse(
+        token=encode_token(str(user.id)),
     )
 
 
@@ -401,12 +398,49 @@ async def _get_oidc_config(base_url: str) -> dict:
     return oidc_config_response.json()
 
 
-async def _get_all_open_id_connect_providers(auth: Auth, db: Session) -> list[GetIdentityProviderResponse]:
-    if not (
-        await check_permissions(db, auth, [Permission.SITE_ADMIN])
-        and await check_permissions(db, auth, [Permission.ADMIN])
-    ):
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED)
+# --- endpoint logic ---
+async def _get_all_open_id_connect_providers_info(db: Session) -> list[IdentityProviderInfo]:
+    query = select(OIDCIdentityProvider)
+    result = await db.execute(query)
+    oidc_providers = result.scalars().all()
+
+    return [
+        IdentityProviderInfo(
+            id=provider.id,
+            name=provider.name,
+            url=await get_idp_url(db, provider.id),
+        )
+        for provider in oidc_providers
+    ]
+
+
+async def get_idp_url(db: Session, identity_provider_id: int) -> str:
+    identity_provider: OIDCIdentityProvider | None = await db.get(OIDCIdentityProvider, identity_provider_id)
+
+    if not identity_provider or not identity_provider.active:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
+
+    oidc_config = await _get_oidc_config(identity_provider.base_url)
+
+    query_params = {
+        "scope": "openid profile email",
+        "response_type": "code",
+        "client_id": identity_provider.client_id,
+        "redirect_uri": f"{config.OWN_URL}/login/oidc/{identity_provider.name}/callback",
+    }
+
+    authorization_endpoint = oidc_config["authorization_endpoint"]
+
+    url = f"{authorization_endpoint}?{urlencode(query_params)}"
+    return url
+
+
+async def _get_all_open_id_connect_providers(db: Session) -> list[GetIdentityProviderResponse]:
+    # if not (
+    #    await check_permissions(db, auth, [Permission.SITE_ADMIN])
+    #    and await check_permissions(db, auth, [Permission.ADMIN])
+    # ):
+    #    raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
     query = select(OIDCIdentityProvider)
     result = await db.execute(query)
