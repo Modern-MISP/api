@@ -30,7 +30,7 @@ from starlette.requests import (
     Request,
 )
 
-from mmisp.api.auth import Auth, AuthStrategy, authorize
+from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
 from mmisp.api_schemas.responses.check_graph_response import (
     CheckGraphResponse,
 )
@@ -76,7 +76,7 @@ router = APIRouter(tags=["workflows"])
     summary="Returns a list of all workflows",
 )
 async def index(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     name: str | None = None,
     uuid: str | None = None,
@@ -111,7 +111,7 @@ async def query_all_workflows(db: Session) -> Sequence[Workflow]:
     summary="Edits a workflow",
 )
 async def edit(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     workflow_id: Annotated[int, Path(alias="workflowId")],
     request: Request,
@@ -183,7 +183,7 @@ async def edit_workflow(
     summary="Deletes a workflow",
 )
 async def delete(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     workflow_id: Annotated[int, Path(alias="workflowId")],
 ) -> StandardStatusIdentifiedResponse:
@@ -227,7 +227,7 @@ async def delete_workflow(workflow_id: int, db: Session) -> bool:
     description="",
 )
 async def view(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     workflow_id: Annotated[int, Path(alias="workflowId")],
 ) -> Dict[str, Any]:
@@ -266,7 +266,7 @@ async def get_workflow_by_id(workflow_id: int, db: Session) -> Workflow | None:
     summary="Creates a new workflow",
 )
 async def editor(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     trigger_id: Annotated[str, Path(alias="triggerId")],
 ) -> StandartResponse:
@@ -342,7 +342,7 @@ def __create_new_workflow_object(name: str, trigger_id: str, description: str = 
     summary="Executes a workflow",
 )
 async def executeWorkflow(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     workflow_id: Annotated[int, Path(alias="workflowId")],
 ) -> StandardStatusResponse:
@@ -362,7 +362,7 @@ async def executeWorkflow(
     summary="Returns a list with all triggers",
 )
 async def triggers(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
 ) -> List[Dict[str, Any]]:
     """
@@ -412,7 +412,7 @@ async def get_workflow_by_trigger_id(
 
 @router.get("/workflows/moduleIndex/type:{type}", status_code=status.HTTP_200_OK, summary="Returns modules")
 async def moduleIndex(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     type: Annotated[str, Path()],
 ) -> List[Dict[str, Any]]:
@@ -475,7 +475,7 @@ def __filter_index_modules(module: Module, type: str) -> bool:
     summary="Returns a singular module",
 )
 async def moduleView(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     module_id: Annotated[str, Path(alias="moduleId")],
 ) -> Dict[str, Any]:
@@ -510,7 +510,7 @@ async def moduleView(
     summary="Enables/ disables a module",
 )
 async def toggleModule(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     node_id: Annotated[str, Path(alias="nodeId")],
     enable: Annotated[bool, Path(alias="enable")],
@@ -575,7 +575,7 @@ async def toggleModule(
     summary="Checks if the given graph is correct",
 )
 async def checkGraph(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     request: Request,
 ) -> CheckGraphResponse:
@@ -602,7 +602,7 @@ async def checkGraph(
     summary="Enable/ disable the workflow feature",
 )
 async def toggleWorkflows(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     enabled: Annotated[bool, Path(alias="enabled")],
 ) -> StandardStatusResponse:
@@ -656,7 +656,7 @@ async def get_admin_setting(setting_name: str, db: Session) -> str:
     summary="Status whether the workflow setting is globally enabled/ disabled",
 )
 async def workflowsSetting(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
 ) -> bool:
     """
@@ -672,7 +672,7 @@ async def workflowsSetting(
     summary="Status whether the workflow setting is globally enabled/ disabled",
 )
 async def toggleDebugField(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     workflow_id: Annotated[int, Path(alias="workflowId")],
     enabled: Annotated[bool, Path(alias="enabled")],

@@ -3,7 +3,7 @@ from typing import Annotated, Any, List, Sequence
 from fastapi import APIRouter, Depends, status
 from sqlalchemy import desc, select
 
-from mmisp.api.auth import Auth, AuthStrategy, authorize
+from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
 from mmisp.api_schemas.logs import LogsRequest
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.log import Log
@@ -18,7 +18,7 @@ router = APIRouter(tags=["logs"])
     summary="List logs",
 )
 async def logs_index(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     request: LogsRequest,
 ) -> List[Any]:
