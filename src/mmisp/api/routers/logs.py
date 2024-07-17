@@ -1,6 +1,6 @@
 from typing import Annotated, Any, List, Sequence
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, HTTPException, Path, status
 from sqlalchemy import desc, select
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
@@ -55,3 +55,21 @@ async def query_logs(request: LogsRequest, db: Session) -> Sequence[Log]:
 
     db_result = await db.execute(query)
     return db_result.scalars().all()
+
+
+@router.get(
+    "/logs/index/{logId}",
+    status_code=status.HTTP_200_OK,
+    summary="Get single log",
+)
+async def log_by_id(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
+    db: Annotated[Session, Depends(get_db)],
+    log_id: Annotated[int, Path(alias="logId")],
+) -> dict:
+    log = await db.get(Log, log_id)
+    if log is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail={"message": f"Could not a log with id {log_id}"}
+        )
+    return log_to_json_dict(log)
