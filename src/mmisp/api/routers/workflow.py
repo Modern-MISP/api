@@ -646,7 +646,7 @@ async def get_admin_setting(setting_name: str, db: Session) -> str:
     setting_db = await db.execute(select(AdminSetting).where(AdminSetting.setting == setting_name))
     setting: AdminSetting | None = cast(AdminSetting | None, setting_db.scalars().first())
     if setting is None:
-        raise Exception()
+        return "False"
     return str(setting.value)
 
 
