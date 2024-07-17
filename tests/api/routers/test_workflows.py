@@ -47,7 +47,7 @@ def test_workflows_index(db, site_admin_user_token, client, workflows) -> None:
     for count in range(0, len(workflows)):
         db_workflow = workflows[count]
         response_workflow = json_dict[count]["Workflow"]
-        assert db_workflow.id == response_workflow["id"]
+        assert str(db_workflow.id) == response_workflow["id"]
         assert db_workflow.uuid == response_workflow["uuid"]
 
 
@@ -122,10 +122,9 @@ def test_workflow_view(client, site_admin_user_token, workflows) -> None:
 
     assert response.status_code == 200
     workflow_dict = json.loads(response.content.decode())["Workflow"]
-    assert workflow_dict["id"] == id
+    assert workflow_dict["id"] == str(id)
     assert workflow_dict["name"] == "Workflow for testing"
     assert workflow_dict["data"]["1"]["class"] == "block-type-trigger"
-    assert 1
 
 
 def test_workflow_view_invalid_id(db, client, site_admin_user_token) -> None:
