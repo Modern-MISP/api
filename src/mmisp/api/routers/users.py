@@ -24,7 +24,6 @@ from mmisp.db.models.organisation import Organisation
 from mmisp.db.models.role import Role
 from mmisp.db.models.user import User
 from mmisp.db.models.user_setting import UserSetting
-from mmisp.util.crypto import hash_secret
 from mmisp.util.partial import partial
 
 router = APIRouter(tags=["users"])
@@ -38,7 +37,7 @@ async def add_user(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     body: AddUserBody,
-) -> GetUsersUser:
+) -> AddUserResponse:
     """
     Adds a new user with the given details.
 
@@ -207,7 +206,8 @@ async def update_user(
 
 
 @router.post(
-    "/users/add",
+    "/admin/users/add",
+    deprecated=True,
     summary="Add new user",
 )
 async def add_user_deprecated(
@@ -348,21 +348,35 @@ async def _add_user(auth: Auth, db: Session, body: AddUserBody) -> AddUserRespon
 
     user = User(
         org_id=body.org_id,
+        server_id=body.server_id,
         email=body.email,
-        password=hash_secret(body.password),
-        invited_by=auth.user_id,
-        gpgkey=body.gpgkey,
+        autoalert=body.autoalert,
+        authkey=body.auth_key,
+        invited_by=body.invited_by,
+        gpgkey=body.gpg_key,
+        certif_public=body.certif_public,
+        nids_sid=body.nids_sid,
         termsaccepted=body.termsaccepted,
+        newsread=body.newsread,
         role_id=body.role_id,
         change_pw=True,
+        contactalert=body.contactalert,
         disabled=body.disabled,
+        expiration=body.expiration,
+        current_login=body.current_login,
         force_logout=False,
+        date_created=body.date_created,
+        date_modified=body.date_modified,
+        sub=body.sub,
         external_auth_required=False,
+        external_auth_key=body.external_auth_key,
+        last_api_access=body.last_api_access,
         notification_daily=body.notification_daily,
         notification_weekly=body.notification_weekly,
         notification_monthly=body.notification_monthly,
         totp=body.totp,
         hotp_counter=None,
+        last_pw_change=body.last_pw_change,
     )
 
     db.add(user)
@@ -381,7 +395,39 @@ async def _add_user(auth: Auth, db: Session, body: AddUserBody) -> AddUserRespon
     await db.commit()
     await db.refresh(user_setting)
 
-    return AddUserResponse(id=user.id)
+    return AddUserResponse(
+        id=user.id,
+        org_id=user.org_id,
+        server_id=user.server_id,
+        email=user.email,
+        autoalert=user.autoalert,
+        authkey=user.authkey,
+        invited_by=user.invited_by,
+        gpgkey=user.gpgkey,
+        certif_public=user.certif_public,
+        nids_sid=user.nids_sid,
+        termsaccepted=user.termsaccepted,
+        newsread=user.newsread,
+        role_id=user.role_id,
+        change_pw=user.change_pw,
+        contactalert=user.contactalert,
+        disabled=user.disabled,
+        expiration=user.expiration,
+        current_login=user.current_login,
+        force_logout=user.force_logout,
+        date_created=user.date_created,
+        date_modified=user.date_modified,
+        sub=user.sub,
+        external_auth_required=user.external_auth_required,
+        external_auth_key=user.external_auth_key,
+        last_api_access=user.last_api_access,
+        notification_daily=user.notification_daily,
+        notification_weekly=user.notification_weekly,
+        notification_monthly=user.notification_monthly,
+        totp=user.totp,
+        hotp_counter=user.hotp_counter,
+        last_pw_change=user.last_pw_change,
+    )
 
 
 async def _get_all_users(

@@ -154,6 +154,7 @@ async def update_organisation(
 @router.get(
     "/organisations",
     summary="Gets a list of all organisations",
+    deprecated=True,
 )
 async def get_organisations_deprecated(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
