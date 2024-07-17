@@ -2,6 +2,7 @@ import uuid
 from datetime import datetime
 from typing import Annotated
 
+import sqlalchemy
 from fastapi import APIRouter, Depends, HTTPException, Path, status
 from sqlalchemy.future import select
 
@@ -10,10 +11,12 @@ from mmisp.api_schemas.organisations import (
     AddOrganisation,
     DeleteForceUpdateOrganisationResponse,
     EditOrganisation,
+    GetAllOrganisationResponse,
     GetOrganisationResponse,
 )
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.organisation import Organisation
+from mmisp.db.models.user import User
 
 router = APIRouter(tags=["organisations"])
 
@@ -50,7 +53,7 @@ async def add_organisation(
 async def get_organisations(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-) -> list[GetOrganisationResponse]:
+) -> list[GetAllOrganisationResponse]:
     """
     Gets all organisations as a list.
 
@@ -145,6 +148,31 @@ async def update_organisation(
     return await _update_organisation(auth, db, organisation_id, body)
 
 
+# --- deprecated ---
+
+
+@router.get(
+    "/organisations",
+    summary="Gets a list of all organisations",
+)
+async def get_organisations_deprecated(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    db: Annotated[Session, Depends(get_db)],
+) -> list[GetAllOrganisationResponse]:
+    """
+    Gets all organisations as a list.
+
+    Input:
+
+    - The current database
+
+    Output:
+
+    - List of all organisations
+    """
+    return await _get_organisations(auth, db)
+
+
 # --- endpoint logic ---
 
 
@@ -190,7 +218,7 @@ async def _add_organisation(auth: Auth, db: Session, body: AddOrganisation) -> G
     )
 
 
-async def _get_organisations(auth: Auth, db: Session) -> list[GetOrganisationResponse]:
+async def _get_organisations(auth: Auth, db: Session) -> list[GetAllOrganisationResponse]:
     if not (
         await check_permissions(db, auth, [Permission.SITE_ADMIN])
         or await check_permissions(db, auth, [Permission.ADMIN])
@@ -200,11 +228,19 @@ async def _get_organisations(auth: Auth, db: Session) -> list[GetOrganisationRes
     query = select(Organisation)
     result = await db.execute(query)
     organisations = result.fetchall()
-    org_list_computed: list[GetOrganisationResponse] = []
+    org_list_computed: list[GetAllOrganisationResponse] = []
 
     for organisation in organisations[0]:
+        query_created_by = select(User).where(User.id == Organisation.created_by)
+        result_created_by = await db.execute(query_created_by)
+        created_by = result_created_by.scalar_one_or_none()
+
+        query_user_count = select(sqlalchemy.func.count(User.id)).where(User.org_id == organisation.id)
+        result_user_count = await db.execute(query_user_count)
+        user_count = result_user_count.scalar_one_or_none()
+
         org_list_computed.append(
-            GetOrganisationResponse(
+            GetAllOrganisationResponse(
                 id=str(organisation.id),
                 name=organisation.name,
                 date_created=organisation.date_created,
@@ -219,6 +255,8 @@ async def _get_organisations(auth: Auth, db: Session) -> list[GetOrganisationRes
                 local=organisation.local,
                 restricted_to_domain=organisation.restricted_to_domain,
                 landingpage=organisation.landingpage,
+                user_count=user_count,
+                created_by_email=created_by.email if created_by else "Unknown",
             )
         )
 

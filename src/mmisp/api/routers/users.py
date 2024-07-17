@@ -38,7 +38,7 @@ async def add_user(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     body: AddUserBody,
-) -> AddUserResponse:
+) -> GetUsersUser:
     """
     Adds a new user with the given details.
 
@@ -206,6 +206,31 @@ async def update_user(
 # --- deprecated ---
 
 
+@router.post(
+    "/users/add",
+    summary="Add new user",
+)
+async def add_user_deprecated(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    db: Annotated[Session, Depends(get_db)],
+    body: AddUserBody,
+) -> AddUserResponse:
+    """
+    Adds a new user with the given details.
+
+    Input:
+
+    - Data representing the new user to be added
+
+    - The current database
+
+    Output:
+
+    - Data representing the attributes of the new user
+    """
+    return await _add_user(auth=auth, db=db, body=body)
+
+
 @router.put(
     "/admin/users/edit/{userId}",
     deprecated=True,
@@ -259,6 +284,29 @@ async def get_user_by_id_depr(
     - Data representing the attributes of the searched user
     """
     return await _get_user(auth, db, user_id)
+
+
+@router.get(
+    "/admin/users",
+    deprecated=True,
+    summary="Get all users",
+)
+async def get_all_users_deprecated(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    db: Annotated[Session, Depends(get_db)],
+) -> list[GetUsersElement]:
+    """
+    Retrieves a list of all users.
+
+    Input:
+
+    - None
+
+    Output:
+
+    - List containing all users
+    """
+    return await _get_all_users(auth=auth, db=db)
 
 
 @router.delete(
