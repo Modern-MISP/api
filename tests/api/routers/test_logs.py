@@ -1,3 +1,5 @@
+import json
+
 import pytest
 
 from mmisp.api_schemas.logs import LogsRequest
@@ -5,41 +7,46 @@ from mmisp.db.database import Session
 from mmisp.db.models.log import Log
 
 
-@pytest.mark.parametrize("insert_test_logs", [1], indirect=True)
-def test_logs_index(site_admin_user_token, client, insert_test_logs) -> None:
-    json = LogsRequest(model="Workflow", model_id=12345678).dict()
+def test_logs_index(site_admin_user_token, client, log_entry) -> None:
+    json_req = LogsRequest(model="Workflow", model_id=12345678).dict()
     headers = {"authorization": site_admin_user_token}
-    response = client.post("/logs/index", headers=headers, json=json)
+    response = client.post("/logs/index", headers=headers, json=json_req)
 
     assert response.status_code == 200
-    assert "12345678" in response.text
+    json_dict = json.loads(response.content.decode())
+
+    assert len(json_dict) == 1
+    assert json_dict[0]["Log"]["id"] == 1
+    assert json_dict[0]["Log"]["model"] == "Workflow"
+
+
+def test_logs_noresult(site_admin_user_token, client, log_entry) -> None:
+    json_req = LogsRequest(model="User", model_id=12345678).dict()
+    headers = {"authorization": site_admin_user_token}
+    response = client.post("/logs/index", headers=headers, json=json_req)
+
+    assert response.status_code == 200
+    json_dict = json.loads(response.content.decode())
+
+    assert len(json_dict) == 0
 
 
 @pytest.fixture()
-def insert_test_logs(db: Session, request):
-    n = request.param
+def log_entry(db: Session):
+    log = Log(
+        model="Workflow",
+        model_id=12345678,
+        action="action",
+        user_id=1,
+        email="admin@admin.test",
+        org="awhlud",
+        change="data(a -> b)",
+        ip="127.000.000.1",
+    )
+    db.add(log)
+    db.commit()
 
-    logs = []
+    yield log
 
-    for i in range(n):
-        log = Log(
-            model="Workflow",
-            model_id=12345678,
-            action="action",
-            user_id=1,
-            email="admin@admin.test",
-            org="awhlud",
-            change=f"{i}",
-            ip="127.000.000.1",
-        )
-        logs.append(log)
-        db.add(log)
-        db.commit()
-        db.refresh(log)
-
-    yield logs
-
-    for log in logs:
-        db.delete(log)
-        db.commit()
-        db.refresh(log)
+    db.delete(log)
+    db.commit()
