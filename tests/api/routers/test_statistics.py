@@ -31,7 +31,7 @@ def test_get_statistics(client,
     assert response_json["eventCreatorOrgs"] == 1
     assert response_json["events"] == 5
     assert response_json["organisations"] == 3
-    assert response_json["localOrganisations"] == 2
+    assert response_json["localOrganisations"] == 3
     assert response_json["attributes"] == 3
     assert response_json["eventAttributes"] == 2
     assert response_json["usersWithGPGKeys"] == 1
