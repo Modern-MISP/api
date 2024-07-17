@@ -1,4 +1,4 @@
-from typing import Annotated, Any, List
+from typing import Annotated, Any, List, Sequence
 
 from fastapi import APIRouter, Depends, status
 from sqlalchemy import desc, select
@@ -40,7 +40,7 @@ async def logs_index(
     return result
 
 
-async def query_logs(request: LogsRequest, db: Session) -> List[Log]:
+async def query_logs(request: LogsRequest, db: Session) -> Sequence[Log]:
     query = select(Log)
 
     if request.model:
