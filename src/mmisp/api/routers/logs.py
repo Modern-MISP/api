@@ -51,7 +51,7 @@ async def query_logs(request: LogsRequest, db: Session) -> Sequence[Log]:
         query = query.filter(Log.model_id == request.model_id)
 
     query = query.offset((request.page - 1) * request.limit).limit(request.limit)
-    query = query.order_by(desc(Log.created))
+    query = query.order_by(desc(Log.id))
 
     db_result = await db.execute(query)
     return db_result.scalars().all()
