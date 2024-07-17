@@ -664,3 +664,37 @@ async def workflowsSetting(
     """
     value = await get_admin_setting(workflow_setting_name, db)
     return value == "True"
+
+
+@router.post(
+    "/workflows/toggleDebugField/{workflowId}/{enabled}",
+    status_code=status.HTTP_200_OK,
+    summary="Status whether the workflow setting is globally enabled/ disabled",
+)
+async def toggleDebugField(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    db: Annotated[Session, Depends(get_db)],
+    workflow_id: Annotated[int, Path(alias="workflowId")],
+    enabled: Annotated[bool, Path(alias="enabled")],
+) -> StandardStatusIdentifiedResponse:
+    success = await toggleWorkflowDebugField(workflow_id, enabled, db)
+    enabled_string = "Enabled" if success else "Disabled"
+    return StandardStatusIdentifiedResponse(
+        saved=success,
+        success=success,
+        name=f"{enabled_string} debug mode",
+        message=f"{enabled_string} debug mode",
+        # toggle_debug is from old MISP, even though the 'workflows/debugToggleField' endpoint is called
+        url=f"/workflows/toggle_debug/{workflow_id}",
+        id=f"{workflow_id}",
+    )
+
+
+async def toggleWorkflowDebugField(workflow_id: int, debug_enabled: bool, db: Session) -> bool:
+    workflow = await get_workflow_by_id(workflow_id, db)
+    if workflow is None:
+        return False
+    workflow.debug_enabled = debug_enabled
+    await db.commit()
+    await db.refresh(workflow)
+    return True
