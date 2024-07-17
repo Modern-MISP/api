@@ -17,7 +17,7 @@ router = APIRouter(tags=["logs"])
     status_code=status.HTTP_200_OK,
     summary="List logs",
 )
-async def add_object(
+async def logs_index(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
     request: LogsRequest,
