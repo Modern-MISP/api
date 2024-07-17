@@ -16,7 +16,7 @@ def test_logs_index(site_admin_user_token, client, log_entry) -> None:
     json_dict = json.loads(response.content.decode())
 
     assert len(json_dict) == 1
-    assert json_dict[0]["Log"]["id"] == str(1)
+    assert json_dict[0]["Log"]["id"] == 1
     assert json_dict[0]["Log"]["model"] == "Workflow"
 
 
