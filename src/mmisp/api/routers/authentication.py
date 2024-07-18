@@ -15,7 +15,6 @@ from mmisp.api.auth import (
     decode_exchange_token,
     encode_token,
 )
-from mmisp.api.config import config
 from mmisp.api_schemas.authentication import (
     ChangeLoginInfoResponse,
     ChangePasswordBody,
@@ -405,7 +404,6 @@ async def get_idp_url(db: Session, identity_provider_id: int) -> str:
         "scope": "openid profile email",
         "response_type": "code",
         "client_id": identity_provider.client_id,
-        "redirect_uri": f"{config.OWN_URL}/login/oidc/{identity_provider.name}/callback",
     }
 
     authorization_endpoint = oidc_config["authorization_endpoint"]
