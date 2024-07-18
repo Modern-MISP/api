@@ -509,7 +509,7 @@ def blocking_publish_workflow(db):
         timestamp=0,
         enabled=True,
         trigger_id=trigger.id,
-        debug_enabled=True,
+        debug_enabled=False,
         data=WorkflowGraph(
             nodes={1: trigger, 2: publish},
             root=trigger,
