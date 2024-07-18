@@ -200,7 +200,7 @@ async def _add_sighting(db: Session, body: SightingCreateBody) -> list[SightingA
             logger = ApplicationLogger(db)
             virtual_user = await create_virtual_root_user(db)
             if wf := await workflow_by_trigger_id("sighting-after-save", db):
-                await execute_workflow(wf, virtual_user, sighting, db, logger)
+                await execute_workflow(wf, virtual_user, attribute, db, logger)
 
             organisation: Organisation | None = await db.get(Organisation, sighting.org_id)
 
@@ -248,7 +248,7 @@ async def _add_sightings_at_index(db: Session, attribute_id: int) -> SightingAtt
     logger = ApplicationLogger(db)
     virtual_user = await create_virtual_root_user(db)
     if wf := await workflow_by_trigger_id("sighting-after-save", db):
-        await execute_workflow(wf, virtual_user, sighting, db, logger)
+        await execute_workflow(wf, virtual_user, attribute, db, logger)
 
     organisation: Organisation | None = await db.get(Organisation, sighting.org_id)
 
