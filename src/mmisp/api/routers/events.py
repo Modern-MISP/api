@@ -50,7 +50,6 @@ from mmisp.api_schemas.jobs import (
     FreeTextImportWorkerUser,
     FreeTextProcessID,
     ProcessFreeTextResponse,
-    AttributeType
 )
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.attribute import Attribute, AttributeTag
@@ -391,7 +390,8 @@ async def remove_tag_from_event(
     return await _remove_tag_from_event(db, event_id, tag_id)
 
 
-@router.post("/events/freeTextImport",
+@router.post(
+    "/events/freeTextImport",
     status_code=status.HTTP_200_OK,
     response_model=FreeTextProcessID,
     summary="start the freetext import process via worker",
@@ -417,12 +417,16 @@ async def start_freeTextImport(
 
     if user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="no user")
-    
+
     data = FreeTextImportWorkerData(data=body_dict["Attribute"]["value"])
     worker_body = FreeTextImportWorkerBody(user=user, data=data).dict()
 
     async with httpx.AsyncClient() as client:
-        response = await client.post(f"{config.WORKER_URL}/job/processFreeText", json=worker_body)
+        response = await client.post(
+            f"{config.WORKER_URL}/job/processFreeText",
+            json=worker_body,
+            headers={"Authorization": f"Bearer {config.WORKER_KEY}"},
+        )
 
     response_data = response.json()
     job_id = response_data["job_id"]
@@ -436,9 +440,7 @@ async def start_freeTextImport(
     summary="Start the freetext import process via worker",
 )
 async def start_freetext_import(
-    event_id: Annotated[str, Path(alias="eventID")],
-    body: dict,
-    db: Annotated[Session, Depends(get_db)]
+    event_id: Annotated[str, Path(alias="eventID")], body: dict, db: Annotated[Session, Depends(get_db)]
 ) -> list[AddAttributeViaFreeTextImportEventResponse]:
     """Adds the Attributes the user has selected
 
@@ -1211,10 +1213,12 @@ async def _add_attribute_via_free_text_import(
         value = attribute.value
         attribute_type = attribute.default_type
         category = GetDescribeTypesAttributes().sane_defaults[attribute_type]["default_category"].value
-        
+
         value1, value2 = value, ""
 
-        new_attribute = Attribute(event_id=event_id, value1=value1, value2=value2, type=attribute_type, category=category)
+        new_attribute = Attribute(
+            event_id=event_id, value1=value1, value2=value2, type=attribute_type, category=category
+        )
 
         db.add(new_attribute)
 

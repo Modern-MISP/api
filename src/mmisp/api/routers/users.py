@@ -413,6 +413,8 @@ async def _get_all_users(
     organisations_by_id = await get_organisations_by_id(db)
 
     for user in users:
+        if user_names_by_id[user[0].id] is None:
+            user_names_by_id[user[0].id] = "Unknown"
         user_list_computed.append(
             GetUsersElement(
                 User=GetUsersUser(
@@ -471,8 +473,6 @@ async def get_user_names_by_id(db: Session) -> dict:
     user_names_by_id = {}
     for name in user_name:
         user_names_by_id[name[0].user_id] = json.loads(name[0].value)["name"]
-        if user_names_by_id[name[0].user_id] is None:
-            user_names_by_id[name[0].user_id] = "Unknown"
     return user_names_by_id
 
 
