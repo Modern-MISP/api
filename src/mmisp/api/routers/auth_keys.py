@@ -1,6 +1,7 @@
 import json
 import string
 import time
+from datetime import datetime
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, Annotated, Any, Tuple
 
@@ -385,6 +386,8 @@ async def _auth_key_add(auth: Auth, db: Session, user_id: int, body: AddAuthKeyB
     auth_key_string = generate(size=40, alphabet=string.ascii_letters + string.digits)
     hashed_auth_key = hash_secret(auth_key_string)
 
+    expiration_int = parse_date(body.expiration) if body.expiration else None
+
     auth_key = AuthKey(
         uuid=body.uuid,
         read_only=body.read_only,
@@ -395,7 +398,7 @@ async def _auth_key_add(auth: Auth, db: Session, user_id: int, body: AddAuthKeyB
         authkey_start=auth_key_string[:4],
         authkey_end=auth_key_string[-4:],
         created=int(time.time()),
-        expiration=body.expiration,
+        expiration=expiration_int,
     )
 
     db.add(auth_key)
@@ -624,6 +627,11 @@ async def _auth_keys_edit(auth: Auth, db: Session, auth_key_id: int, body: EditA
     update = body.dict()
     update["allowed_ips"] = json.dumps(body.allowed_ips) if body.allowed_ips else None
 
+    if body.expiration:
+        update["expiration"] = parse_date(body.expiration)
+    else:
+        update["expiration"] = None
+    
     update_record(auth_key, update)
 
     await db.commit()
@@ -728,3 +736,19 @@ async def _auth_keys_view_own_depr(auth: Auth, db: Session) -> list[SearchGetAut
     if own_key is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
     return own_key
+
+
+def parse_date(date_str: str) -> int:
+    if not isinstance(date_str, str):
+        raise ValueError("Input must be a string")
+    
+    if len(date_str) != 10 or date_str[4] != '-' or date_str[7] != '-':
+        raise ValueError("Date must be in the format yyyy-mm-dd")
+    
+    try:
+        dt = datetime.strptime(date_str, "%Y-%m-%d")
+    except ValueError:
+        raise ValueError("Invalid date format")
+    
+    unix_timestamp = int(dt.timestamp())
+    return unix_timestamp
