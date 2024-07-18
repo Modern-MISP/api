@@ -287,7 +287,7 @@ def test_workflow_toggleWorkflows(client, site_admin_user_token, db) -> None:
     response = client.post("/workflows/toggleWorkflows/1", headers=headers)
 
     assert response.status_code == 200
-    workflow_setting_name = "worfklow_feature_enabled"
+    workflow_setting_name = "workflow_feature_enabled"
     db.commit()
     admin_setting_enabled = get_admin_setting(workflow_setting_name, db)
     assert admin_setting_enabled == "True"
