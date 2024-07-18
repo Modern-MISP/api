@@ -63,7 +63,7 @@ async def query_logs(request: LogsRequest, db: Session) -> Sequence[Log]:
     summary="Get single log",
 )
 async def log_by_id(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     log_id: Annotated[int, Path(alias="logId")],
 ) -> dict:
