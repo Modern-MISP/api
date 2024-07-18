@@ -17,7 +17,7 @@ def test_users_me(site_admin_user_token, site_admin_user, client) -> None:
     assert json.get("User").get("id") == site_admin_user.id
 
 
-def test_users_create(site_admin_user_token, site_admin_user, client, db) -> None:
+def test_users_create(site_admin_user_token, site_admin_user, site_admin_role, client, db) -> None:
     email = "test@automated.com" + str(time())
     name = "test_user" + str(time())
 
@@ -25,22 +25,23 @@ def test_users_create(site_admin_user_token, site_admin_user, client, db) -> Non
         "/users",
         headers={"authorization": site_admin_user_token},
         json={
+            "authkey": "test",
             "email": email,
             "password": "test",
             "name": name,
-            "role_id": 0,
-            "org_id": site_admin_user.org_id,
+            "role": site_admin_role.id,
+            "org": site_admin_user.org_id,
             "nids_sid": "12345",
             "disabled": False,
-            "contact_enabled": False,
+            "contactalert": False,
+            "invited_by": site_admin_user.id,
             "notification_daily": False,
             "notification_weekly": True,
             "notification_monthly": True,
             "termsaccepted": False,
-            "gpgkey": "Test",
         },
     )
-
+    ic(response.json())
     # Check if the Status Code is 200
     json_str = response.json()
     assert response.status_code == 200
@@ -214,7 +215,7 @@ def test_users_view_all(db: Session, site_admin_user_token, client) -> None:
     assert len(response_json) == count
 
 
-def test_delete_user(site_admin_user_token, site_admin_user, client, db) -> None:
+def test_delete_user(site_admin_user_token, site_admin_role, site_admin_user, client, db) -> None:
     email = "test@automated.com" + str(time())
     name = "test_user" + str(time())
 
@@ -223,19 +224,20 @@ def test_delete_user(site_admin_user_token, site_admin_user, client, db) -> None
         "/users",
         headers={"authorization": site_admin_user_token},
         json={
+            "authkey": "test",
             "email": email,
             "password": "test",
             "name": name,
-            "role_id": 0,
-            "org_id": site_admin_user.org_id,
+            "role": site_admin_role.id,
+            "org": site_admin_user.org_id,
             "nids_sid": "12345",
             "disabled": False,
-            "contact_enabled": False,
+            "contactalert": False,
+            "invited_by": site_admin_user.id,
             "notification_daily": False,
             "notification_weekly": True,
             "notification_monthly": True,
             "termsaccepted": False,
-            "gpgkey": "Test",
         },
     )
 
