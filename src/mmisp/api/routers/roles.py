@@ -6,6 +6,7 @@ from sqlalchemy.future import select
 from mmisp.api_schemas.roles import RoleAttributeResponse
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.role import Role
+from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize, check_permissions
 
 router = APIRouter(tags=["roles"])
 

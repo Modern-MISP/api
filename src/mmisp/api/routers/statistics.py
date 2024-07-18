@@ -12,6 +12,7 @@ from mmisp.db.models.organisation import Organisation
 from mmisp.db.models.user import User
 
 from mmisp.api_schemas.statistics import UsageDataResponseModel, OrgDataResponseModel
+from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize, check_permissions
 
 
 from mmisp.db.database import Session, get_db
