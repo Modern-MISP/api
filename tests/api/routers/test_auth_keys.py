@@ -127,7 +127,7 @@ def test_get_all_auth_keys(site_admin_user_token, client) -> None:
 
 def test_delete_auth_key(auth_key, site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.delete(f"/auth_keys/{auth_key.id}", headers=headers)
+    response = client.post(f"/auth_keys/{auth_key.id}", headers=headers)
 
     assert response.status_code == 200
     json = response.json()
@@ -140,7 +140,7 @@ def test_delete_auth_key(auth_key, site_admin_user_token, client) -> None:
 
 def test_delete_auth_key_depr(auth_key, site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.delete(f"/auth_keys/delete/{auth_key.id}", headers=headers)
+    response = client.post(f"/auth_keys/delete/{auth_key.id}", headers=headers)
 
     assert response.status_code == 200
     json = response.json()
