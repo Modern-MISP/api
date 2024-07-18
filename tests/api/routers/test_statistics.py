@@ -24,8 +24,10 @@ def test_get_statistics(client,
                         attribute,
                         attribute2,
                         attribute3,
+                        site_admin_user_token
                         ) -> None:
-    response = client.get(f"/statistics/getUsageData")
+    headers = {"authorization": site_admin_user_token}
+    response = client.get(f"/statistics/getUsageData", headers=headers)
     response_json = response.json()
     assert response_json["users"] == 2
     assert response_json["eventCreatorOrgs"] == 1
@@ -39,8 +41,10 @@ def test_get_statistics(client,
 
 def test_get_statistics_by_org_users(client,
                               site_admin_user,
+                              site_admin_user_token
                              ):
-    response = client.get(f"/statistics/getAttributes/{site_admin_user.org_id}")
+    headers = {"authorization": site_admin_user_token}
+    response = client.get(f"/statistics/getAttributes/{site_admin_user.org_id}", headers=headers)
     response_json = response.json()
 
     assert response_json["users"] == 1
@@ -50,8 +54,10 @@ def test_get_statistics_by_org_users(client,
 def test_get_statistics_by_org_event_attribute(client,
                               attribute,
                               event,
+                              site_admin_user_token
                              ):
-    response = client.get(f"/statistics/getAttributes/{event.org_id}")
+    headers = {"authorization": site_admin_user_token}
+    response = client.get(f"/statistics/getAttributes/{event.org_id}", headers=headers)
     response_json = response.json()
 
     assert response_json["users"] == 0
@@ -60,7 +66,9 @@ def test_get_statistics_by_org_event_attribute(client,
 
 def test_get_logincount(client,
                         site_admin_user,
+                        site_admin_user_token
                         ):
-    response = client.get(f"/statistics/logincount/{site_admin_user.org_id}")
+    headers = {"authorization": site_admin_user_token}
+    response = client.get(f"/statistics/logincount/{site_admin_user.org_id}", headers=headers)
     response_json = response.json()
     assert response_json == 5

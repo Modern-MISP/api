@@ -24,6 +24,7 @@ router = APIRouter(tags=["statistics"])
     summary="Gets a list of all usage-related statistics listed on the website",
 )
 async def get_statistics(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
 ) -> UsageDataResponseModel:
     """Gets all usage statistics as a list.
@@ -44,6 +45,7 @@ async def get_statistics(
     summary="Gets a list of attributes related to an organisation",
 )
 async def get_statistics_by_org(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     org_id: Annotated[str, Path(alias="orgId")],
 ) -> OrgDataResponseModel:
@@ -66,6 +68,7 @@ async def get_statistics_by_org(
     summary="Gets a count of all logins the past 4 months",
 )
 async def get_logincount(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     org_id: Annotated[str, Path(alias="orgID")],
 ) -> int:
