@@ -622,7 +622,7 @@ async def toggleWorkflows(
 
 
 # find better place to store that
-workflow_setting_name = "worfklow_feature_enabled"
+workflow_setting_name = "workflow_feature_enabled"
 
 
 # Should be moved to lib
