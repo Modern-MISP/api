@@ -4,7 +4,6 @@ from urllib.parse import urlencode
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Path, status
-from fastapi.responses import RedirectResponse
 from sqlalchemy.future import select
 
 from mmisp.api.auth import (
@@ -230,29 +229,6 @@ async def set_password(
     - the response form the api after the password change request
     """
     return await _set_own_password(db, body)
-
-
-@router.get(
-    "/auth/login/idp/{identityProviderId}/authorize", response_class=RedirectResponse, status_code=status.HTTP_302_FOUND
-)
-async def redirect_to_idp(
-    db: Annotated[Session, Depends(get_db)], identity_provider_id: Annotated[int, Path(alias="identityProviderId")]
-) -> RedirectResponse:
-    """Redirects to Idp.
-
-    Input:
-
-    - the database
-
-    - the identity provider id
-
-    Output:
-
-    - the redirection
-    """
-    url = await get_idp_url(db, identity_provider_id)
-
-    return RedirectResponse(url=url, status_code=status.HTTP_302_FOUND)
 
 
 @router.get("/auth/login/idp/{identityProviderName}/callback")
