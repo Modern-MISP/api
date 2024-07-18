@@ -327,7 +327,7 @@ async def _delete_galaxy(db: Session, galaxy_id: str, request: Request) -> Delet
 async def _get_galaxies(db: Session) -> list[GetAllSearchGalaxiesResponse]:
     result = await db.execute(select(Galaxy))
     galaxies = result.scalars().all()
-    response_list = []
+    response_list: list[GetAllSearchGalaxiesResponse] = []
 
     if not galaxies:
         return response_list
