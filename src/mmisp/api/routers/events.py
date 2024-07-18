@@ -440,6 +440,7 @@ async def start_freeTextImport(
     summary="Start the freetext import process via worker",
 )
 async def start_freetext_import(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     event_id: Annotated[str, Path(alias="eventID")], body: dict, db: Annotated[Session, Depends(get_db)]
 ) -> list[AddAttributeViaFreeTextImportEventResponse]:
     """Adds the Attributes the user has selected
