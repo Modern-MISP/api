@@ -22,6 +22,7 @@ from mmisp.api_schemas.authentication import (
     ExchangeTokenLoginBody,
     GetIdentityProviderResponse,
     IdentityProviderBody,
+    IdentityProviderCallbackBody,
     IdentityProviderEditBody,
     IdentityProviderInfo,
     LoginType,
@@ -236,7 +237,7 @@ async def set_password(
 async def redirect_to_frontend(
     db: Annotated[Session, Depends(get_db)],
     identity_provider_name: Annotated[str, Path(alias="identityProviderName")],
-    code: str,
+    body: IdentityProviderCallbackBody,
 ) -> TokenResponse:
     """Redirects to the frontend.
 
@@ -267,9 +268,10 @@ async def redirect_to_frontend(
         "grant_type": "authorization_code",
         "scope": "openid profile email",
         "client_id": identity_provider.client_id,
-        "redirect_uri": f"{config.OWN_URL}/login/oidc/{identity_provider.name}/callback",
-        "code": code,
+        "redirect_uri": body.redirect_uri,
+        "code": body.code,
     }
+    print(body_params)
 
     async with httpx.AsyncClient() as client:
         token_response = await client.post(
@@ -280,6 +282,7 @@ async def redirect_to_frontend(
         )
 
     access_token: str = token_response.json().get("access_token", None)
+    print(access_token)
 
     if not access_token:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
