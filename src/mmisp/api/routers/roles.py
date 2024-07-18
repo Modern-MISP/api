@@ -15,6 +15,7 @@ router = APIRouter(tags=["roles"])
     summary="Get all roles",
 )
 async def get_all_roles(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
 ) -> list[RoleAttributeResponse]:
     """
