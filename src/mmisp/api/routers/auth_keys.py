@@ -536,6 +536,76 @@ async def _search_auth_keys(
     return auth_keys_computed
 
 
+async def _search_auth_keys_depr(
+    auth: Auth,
+    db: Session,
+    body: SearchAuthKeyBody,
+) -> list[SearchGetAuthKeysResponse]:
+    query = select(AuthKey, User).join(User, AuthKey.user_id == User.id)
+
+    if not await check_permissions(db, auth, [Permission.SITE_ADMIN]):
+        query = query.filter(User.org_id == auth.org_id)
+    if not await check_permissions(db, auth, [Permission.ADMIN]):
+        query = query.filter(AuthKey.user_id == auth.user_id)
+
+    if body.id:
+        query = query.filter(AuthKey.id == body.id)
+    if body.uuid:
+        query = query.filter(AuthKey.uuid == body.uuid)
+    if body.authkey_start:
+        query = query.filter(AuthKey.authkey_start == body.authkey_start)
+    if body.authkey_end:
+        query = query.filter(AuthKey.authkey_end == body.authkey_end)
+    if body.created:
+        query = query.filter(AuthKey.created == int(body.created))
+    if body.expiration:
+        query = query.filter(AuthKey.expiration == int(body.expiration))
+    if body.read_only:
+        query = query.filter(AuthKey.read_only.is_(body.read_only))
+    if body.user_id:
+        query = query.filter(AuthKey.user_id == int(body.user_id))
+    if body.comment:
+        query = query.filter(AuthKey.comment == body.comment)
+    if body.allowed_ips:
+        if isinstance(body.allowed_ips, list):
+            body.allowed_ips = json.dumps(body.allowed_ips)
+
+        query = query.filter(AuthKey.allowed_ips == body.allowed_ips)
+
+    result = await db.execute(query.limit(body.limit).offset((body.page - 1) * body.limit))
+    auth_keys_and_users: Sequence[Row[Tuple[AuthKey, User]]] = result.all()
+    auth_keys_computed: list[SearchGetAuthKeysResponse] = []
+
+    for auth_key_and_user in auth_keys_and_users:
+        auth_keys_computed.append(
+            SearchGetAuthKeysResponse(
+                AuthKey=SearchGetAuthKeysResponseAuthKey(
+                    id=auth_key_and_user.AuthKey.id,
+                    uuid=auth_key_and_user.AuthKey.uuid,
+                    authkey_start=auth_key_and_user.AuthKey.authkey_start,
+                    authkey_end=auth_key_and_user.AuthKey.authkey_end,
+                    created=auth_key_and_user.AuthKey.created,
+                    expiration=auth_key_and_user.AuthKey.expiration,
+                    read_only=auth_key_and_user.AuthKey.read_only,
+                    user_id=auth_key_and_user.AuthKey.user_id,
+                    comment=auth_key_and_user.AuthKey.comment,
+                    allowed_ips=json.loads(auth_key_and_user.AuthKey.allowed_ips)
+                    if auth_key_and_user.AuthKey.allowed_ips
+                    else None,
+                    unique_ips=json.loads(auth_key_and_user.AuthKey.unique_ips)
+                    if auth_key_and_user.AuthKey.unique_ips
+                    else [],
+                ),
+                User=SearchGetAuthKeysResponseItemUser(
+                    id=auth_key_and_user.User.id,
+                    email=auth_key_and_user.User.email,
+                ),
+            )
+        )
+
+    return auth_keys_computed
+
+
 async def _auth_keys_edit(auth: Auth, db: Session, auth_key_id: int, body: EditAuthKeyBody) -> EditAuthKeyResponseCompl:
     auth_key: AuthKey | None = await db.get(AuthKey, auth_key_id)
 
@@ -654,7 +724,7 @@ async def _auth_keys_view_own(auth: Auth, db: Session) -> list[SearchGetAuthKeys
 
 
 async def _auth_keys_view_own_depr(auth: Auth, db: Session) -> list[SearchGetAuthKeysResponse]:
-    own_key = await _search_auth_keys(auth, db, SearchAuthKeyBody(user_id=auth.user_id))
+    own_key = await _search_auth_keys_depr(auth, db, SearchAuthKeyBody(user_id=auth.user_id))
     if own_key is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
     return own_key
