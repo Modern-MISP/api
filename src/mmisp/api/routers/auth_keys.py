@@ -386,7 +386,7 @@ async def _auth_key_add(auth: Auth, db: Session, user_id: int, body: AddAuthKeyB
     auth_key_string = generate(size=40, alphabet=string.ascii_letters + string.digits)
     hashed_auth_key = hash_secret(auth_key_string)
 
-    expiration_int = parse_date(body.expiration) if body.expiration else None
+    expiration_int = parse_date(str(body.expiration)) if body.expiration else None
 
     auth_key = AuthKey(
         uuid=body.uuid,
