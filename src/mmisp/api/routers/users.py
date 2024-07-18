@@ -471,6 +471,8 @@ async def get_user_names_by_id(db: Session) -> dict:
     user_names_by_id = {}
     for name in user_name:
         user_names_by_id[name[0].user_id] = json.loads(name[0].value)["name"]
+        if user_names_by_id[name[0].user_id] is None:
+            user_names_by_id[name[0].user_id] = "Unknown"
     return user_names_by_id
 
 
@@ -519,6 +521,9 @@ async def _get_user(auth: Auth, db: Session, userID: str) -> GetUsersElement:
 
     for setting in user_settings:
         user_settings_dict[setting.setting] = json.loads(setting.value)
+
+    if user_settings_dict.get("user_name") is None:
+        user_settings_dict["user_name"] = {"name": user.email}
 
     if user_settings is None or user_settings_dict.get("user_name") is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="User name not found")
