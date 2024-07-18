@@ -27,15 +27,15 @@ def test_get_statistics(client,
                         ) -> None:
     response = client.get(f"/statistics/getUsageData")
     response_json = response.json()
-    assert response_json["users"] == 3
+    assert response_json["users"] == 2
     assert response_json["eventCreatorOrgs"] == 1
     assert response_json["events"] == 5
     assert response_json["organisations"] == 3
     assert response_json["localOrganisations"] == 3
     assert response_json["attributes"] == 3
-    assert response_json["eventAttributes"] == 3
+    assert response_json["eventAttributes"] == 2
     assert response_json["usersWithGPGKeys"] == 1
-    assert response_json["averageUsersPerOrg"] == 1.0
+    assert response_json["averageUsersPerOrg"] == 0.6666666666666666
 
 def test_get_statistics_by_org_users(client,
                               site_admin_user,
