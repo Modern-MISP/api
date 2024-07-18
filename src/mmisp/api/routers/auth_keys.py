@@ -332,7 +332,7 @@ async def auth_keys_edit_auth_key_depr(
     return await _auth_keys_edit(auth=auth, db=db, auth_key_id=auth_key_id, body=body)
 
 
-@router.delete(
+@router.post(
     "/auth_keys/delete/{AuthKeyId}",
     deprecated=True,
     response_model=StandardStatusIdentifiedResponse,
