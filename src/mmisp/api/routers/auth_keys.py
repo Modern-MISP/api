@@ -17,10 +17,12 @@ from mmisp.api_schemas.auth_keys import (
     AddAuthKeyResponse,
     AddAuthKeyResponseAuthKey,
     EditAuthKeyBody,
-    EditAuthKeyResponse,
-    EditAuthKeyResponseAuthKey,
+    EditAuthKeyResponseCompl,
+    EditAuthKeyResponseCompleteAuthKey,
     EditAuthKeyResponseUser,
     SearchAuthKeyBody,
+    SearchGetAuthKeysResponse,
+    SearchGetAuthKeysResponseAuthKey,
     SearchGetAuthKeysResponseItem,
     SearchGetAuthKeysResponseItemAuthKey,
     SearchGetAuthKeysResponseItemUser,
@@ -125,7 +127,7 @@ async def search_auth_keys(
 
 @router.put(
     "/auth_keys/{AuthKeyId}",
-    response_model=EditAuthKeyResponse,
+    response_model=EditAuthKeyResponseCompl,
     summary="Edit an AuthKey.",
 )
 async def auth_keys_edit_auth_key(
@@ -133,7 +135,7 @@ async def auth_keys_edit_auth_key(
     db: Annotated[Session, Depends(get_db)],
     auth_key_id: Annotated[int, Path(alias="AuthKeyId")],
     body: EditAuthKeyBody,
-) -> EditAuthKeyResponse:
+) -> EditAuthKeyResponseCompl:
     """Edit an AuthKey by its ID.
 
     Input:
@@ -191,13 +193,13 @@ async def auth_keys_delete_auth_key(
 
 @router.get(
     "/auth_keys",
-    response_model=list[SearchGetAuthKeysResponseItem],
+    response_model=list[SearchGetAuthKeysResponse],
     summary="Returns AuthKeys.",
 )
 async def auth_keys_get(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-) -> list[SearchGetAuthKeysResponseItem]:
+) -> list[SearchGetAuthKeysResponse]:
     """Returns all AuthKeys stored in the database as a List.
 
     Input:
@@ -248,6 +250,13 @@ async def auth_keys_view_own_auth_keys(
     response_model=AddAuthKeyResponse,
     summary="Add an AuthKey.",
 )
+@router.post(
+    "/auth_keys/add/{userId}",
+    status_code=status.HTTP_201_CREATED,
+    deprecated=True,
+    response_model=AddAuthKeyResponse,
+    summary="Add an AuthKey.",
+)
 async def auth_keys_add_user_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -276,7 +285,7 @@ async def auth_keys_add_user_depr(
 @router.post(
     "/auth_keys/edit/{AuthKeyId}",
     deprecated=True,
-    response_model=EditAuthKeyResponse,
+    response_model=EditAuthKeyResponseCompl,
     summary="Edit AuthKey",
 )
 async def auth_keys_edit_auth_key_depr(
@@ -284,7 +293,7 @@ async def auth_keys_edit_auth_key_depr(
     db: Annotated[Session, Depends(get_db)],
     auth_key_id: Annotated[int, Path(alias="AuthKeyId")],
     body: EditAuthKeyBody,
-) -> EditAuthKeyResponse:
+) -> EditAuthKeyResponseCompl:
     """Edit AuthKey by AuthKey ID.
 
     Input:
@@ -508,7 +517,7 @@ async def _search_auth_keys(
     return auth_keys_computed
 
 
-async def _auth_keys_edit(auth: Auth, db: Session, auth_key_id: int, body: EditAuthKeyBody) -> EditAuthKeyResponse:
+async def _auth_keys_edit(auth: Auth, db: Session, auth_key_id: int, body: EditAuthKeyBody) -> EditAuthKeyResponseCompl:
     auth_key: AuthKey | None = await db.get(AuthKey, auth_key_id)
 
     if not auth_key or (
@@ -531,8 +540,8 @@ async def _auth_keys_edit(auth: Auth, db: Session, auth_key_id: int, body: EditA
     await db.commit()
     await db.refresh(auth_key)
     await db.refresh(user)
-    return EditAuthKeyResponse(
-        AuthKey=EditAuthKeyResponseAuthKey(
+    return EditAuthKeyResponseCompl(
+        AuthKey=EditAuthKeyResponseCompleteAuthKey(
             id=auth_key.id,
             uuid=auth_key.uuid,
             authkey_start=auth_key.authkey_start,
@@ -575,7 +584,7 @@ async def _auth_keys_delete(auth: Auth, db: Session, auth_key_id: int) -> None:
 async def _auth_keys_get(
     auth: Auth,
     db: Session,
-) -> list[SearchGetAuthKeysResponseItem]:
+) -> list[SearchGetAuthKeysResponse]:
     query = select(AuthKey, User).join(User, AuthKey.user_id == User.id)
 
     if not await check_permissions(db, auth, [Permission.SITE_ADMIN]):
@@ -586,12 +595,12 @@ async def _auth_keys_get(
     result = await db.execute(query)
     auth_keys_and_users: Sequence[Any] = result.all()
 
-    auth_keys_computed: list[SearchGetAuthKeysResponseItem] = []
+    auth_keys_computed: list[SearchGetAuthKeysResponse] = []
 
     for auth_key_and_user in auth_keys_and_users:
         auth_keys_computed.append(
-            SearchGetAuthKeysResponseItem(
-                AuthKey=SearchGetAuthKeysResponseItemAuthKey(
+            SearchGetAuthKeysResponse(
+                AuthKey=SearchGetAuthKeysResponseAuthKey(
                     id=auth_key_and_user.AuthKey.id,
                     uuid=auth_key_and_user.AuthKey.uuid,
                     authkey_start=auth_key_and_user.AuthKey.authkey_start,
