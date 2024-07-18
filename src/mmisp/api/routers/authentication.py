@@ -270,7 +270,6 @@ async def redirect_to_frontend(
         "redirect_uri": body.redirect_uri,
         "code": body.code,
     }
-    print(body_params)
 
     async with httpx.AsyncClient() as client:
         token_response = await client.post(
@@ -281,7 +280,6 @@ async def redirect_to_frontend(
         )
 
     access_token: str = token_response.json().get("access_token", None)
-    print(access_token)
 
     if not access_token:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
@@ -295,7 +293,6 @@ async def redirect_to_frontend(
         )
 
     user_info: dict = user_info_response.json()
-    print(user_info)
 
     if not user_info.get("email", None) or not user_info.get("sub", None):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
