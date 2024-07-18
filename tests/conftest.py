@@ -1,5 +1,6 @@
 import asyncio
 import string
+import uuid
 from contextlib import ExitStack
 from typing import Generator
 
@@ -18,7 +19,10 @@ from mmisp.db.database import Base
 from mmisp.db.models.event import EventTag
 from mmisp.db.models.galaxy_cluster import GalaxyCluster
 from mmisp.db.models.sharing_group import SharingGroupOrg, SharingGroupServer
+from mmisp.db.models.workflow import Workflow
 from mmisp.util.crypto import hash_secret
+from mmisp.workflows.graph import Apperance, WorkflowGraph
+from mmisp.workflows.modules import ModuleConfiguration, ModuleStopExecution, TriggerEventPublish
 from tests.generators.model_generators.auth_key_generator import generate_auth_key
 from tests.generators.model_generators.server_generator import generate_server
 
@@ -473,4 +477,44 @@ def auth_key(db, site_admin_user):
     yield clear_key, auth_key
 
     db.delete(auth_key)
+    db.commit()
+
+
+@pytest.fixture
+def blocking_publish_workflow(db):
+    trigger = TriggerEventPublish(
+        graph_id=1,
+        inputs={},
+        outputs={1: []},
+        apperance=Apperance((0, 0), False, "", None),
+    )
+    publish = ModuleStopExecution(
+        inputs={1: [(1, trigger)]},
+        graph_id=2,
+        outputs={},
+        apperance=Apperance((0, 0), False, "", None),
+        on_demand_filter=None,
+        configuration=ModuleConfiguration({"message": "Stopped publish of {{Event.id}}"}),
+    )
+    trigger.outputs[1].append((1, publish))
+
+    wf = Workflow(
+        id=1,
+        uuid=str(uuid.uuid4()),
+        name="Demo workflow",
+        description="",
+        timestamp=0,
+        enabled=True,
+        trigger_id=trigger.id,
+        debug_enabled=True,
+        data=WorkflowGraph(
+            nodes={1: trigger, 2: publish},
+            root=trigger,
+            frames=[],
+        ),
+    )
+    db.add(wf)
+    db.commit()
+    yield wf
+    db.delete(wf)
     db.commit()

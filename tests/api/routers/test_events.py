@@ -154,6 +154,18 @@ def test_publish_existing_event(organisation, event, site_admin_user_token, clie
     assert response_json["id"] == str(event_id)
 
 
+def test_publish_existing_event_workflow_blocked(
+    organisation, event, site_admin_user_token, client, blocking_publish_workflow
+) -> None:
+    event_id = event.id
+
+    headers = {"authorization": site_admin_user_token}
+    response = client.post(f"/events/publish/{event_id}", headers=headers)
+
+    assert response.status_code == 400
+    assert response.json() == {"detail": ["Stopped publish of 1"]}
+
+
 def test_publish_invalid_event(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.post("/events/publish/0", headers=headers)
