@@ -125,6 +125,7 @@ async def edit_openID_Connect_provider(
     summary="Deletes an OpenID Connect Provider by its ID",
 )
 async def delete_openID_Connect_provider(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     open_Id_Connect_provider_Id: Annotated[str, Path(alias="openIDConnectProvider")],
 ) -> ChangeLoginInfoResponse:
@@ -390,6 +391,9 @@ async def change_password_UserId(
     return await _change_password_UserId(auth, db, user_id, body)
 
 
+# --- endpoint logic ---
+
+
 async def _get_oidc_config(base_url: str) -> dict:
     async with httpx.AsyncClient() as client:
         oidc_config_response = await client.get(f"{base_url}/.well-known/openid-configuration")
@@ -397,7 +401,6 @@ async def _get_oidc_config(base_url: str) -> dict:
     return oidc_config_response.json()
 
 
-# --- endpoint logic ---
 async def _get_all_open_id_connect_providers(auth: Auth, db: Session) -> list[GetIdentityProviderResponse]:
     if not (
         await check_permissions(db, auth, [Permission.SITE_ADMIN])
