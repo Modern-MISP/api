@@ -441,7 +441,9 @@ async def start_freeTextImport(
 )
 async def start_freetext_import(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
-    event_id: Annotated[str, Path(alias="eventID")], body: dict, db: Annotated[Session, Depends(get_db)]
+    event_id: Annotated[str, Path(alias="eventID")],
+    body: ProcessFreeTextResponse,
+    db: Annotated[Session, Depends(get_db)],
 ) -> list[AddAttributeViaFreeTextImportEventResponse]:
     """Adds the Attributes the user has selected
 
@@ -1199,7 +1201,7 @@ async def _prepare_all_events_event_tag_response(
 
 
 async def _add_attribute_via_free_text_import(
-    db: Session, event_id: str, body: dict
+    db: Session, event_id: str, body: ProcessFreeTextResponse
 ) -> list[AddAttributeViaFreeTextImportEventResponse]:
     event: Event | None = await db.get(Event, event_id)
 
@@ -1208,7 +1210,7 @@ async def _add_attribute_via_free_text_import(
 
     response_list = []
 
-    parsed_response = ProcessFreeTextResponse.parse_obj(dict)
+    parsed_response = ProcessFreeTextResponse.parse_obj(body)
 
     for attribute in parsed_response.attributes:
         value = attribute.value
