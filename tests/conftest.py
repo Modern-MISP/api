@@ -16,6 +16,7 @@ from mmisp.api.auth import encode_token
 from mmisp.api.main import init_app
 from mmisp.db.config import config
 from mmisp.db.database import Base
+from mmisp.db.models.admin_setting import AdminSetting
 from mmisp.db.models.event import EventTag
 from mmisp.db.models.galaxy_cluster import GalaxyCluster
 from mmisp.db.models.sharing_group import SharingGroupOrg, SharingGroupServer
@@ -482,6 +483,8 @@ def auth_key(db, site_admin_user):
 
 @pytest.fixture
 def blocking_publish_workflow(db):
+    setting = AdminSetting(setting="workflow_feature_enabled", value="True")
+    db.add(setting)
     trigger = TriggerEventPublish(
         graph_id=1,
         inputs={},
@@ -517,4 +520,5 @@ def blocking_publish_workflow(db):
     db.commit()
     yield wf
     db.delete(wf)
+    db.delete(setting)
     db.commit()
