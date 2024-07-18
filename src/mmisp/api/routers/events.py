@@ -56,8 +56,10 @@ from mmisp.db.models.object import Object
 from mmisp.db.models.organisation import Organisation
 from mmisp.db.models.tag import Tag
 from mmisp.db.models.user import User
+from mmisp.lib.logging import ApplicationLogger
 from mmisp.util.models import update_record
 from mmisp.util.partial import partial
+from mmisp.workflows.execution import create_virtual_root_user, execute_workflow, workflow_by_trigger_id
 
 router = APIRouter(tags=["events"])
 
@@ -352,9 +354,20 @@ async def _add_event(auth: Auth, db: Session, body: AddEventBody) -> AddEditGetE
         }
     )
 
+    logger = ApplicationLogger(db)
+    virtual_user = await create_virtual_root_user(db)
+    if wf := await workflow_by_trigger_id("event-before-save", db):
+        execution_result, messages = await execute_workflow(wf, virtual_user, new_event, db, logger)
+
+        if not execution_result:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=messages)
+
     db.add(new_event)
     await db.commit()
     await db.refresh(new_event)
+
+    if wf := await workflow_by_trigger_id("event-after-save-new", db):
+        await execute_workflow(wf, virtual_user, new_event, db, logger)
 
     event_data = await _prepare_event_response(db, new_event)
 
@@ -380,8 +393,18 @@ async def _update_event(db: Session, event_id: str, body: EditEventBody) -> AddE
 
     update_record(event, body.dict())
 
+    logger = ApplicationLogger(db)
+    virtual_user = await create_virtual_root_user(db)
+    if wf := await workflow_by_trigger_id("event-before-save", db):
+        execution_result, messages = await execute_workflow(wf, virtual_user, event, db, logger)
+
+        if not execution_result:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=messages)
+
     await db.commit()
     await db.refresh(event)
+    if wf := await workflow_by_trigger_id("event-after-save", db):
+        await execute_workflow(wf, virtual_user, event, db, logger)
 
     event_data = await _prepare_event_response(db, event)
 
@@ -470,6 +493,14 @@ async def _publish_event(db: Session, event_id: str, request: Request) -> Publis
 
     if not event:
         return PublishEventResponse(name="Invalid event.", message="Invalid event.", url=str(request.url.path))
+
+    if wf := await workflow_by_trigger_id("event-publish", db):
+        execution_result, messages = await execute_workflow(
+            wf, await create_virtual_root_user(db), event, db, ApplicationLogger(db)
+        )
+
+        if not execution_result:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=messages)
 
     setattr(event, "published", True)
     setattr(event, "publish_timestamp", timegm(gmtime()))

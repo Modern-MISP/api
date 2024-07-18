@@ -20,6 +20,8 @@ from mmisp.db.models.attribute import Attribute
 from mmisp.db.models.event import Event
 from mmisp.db.models.organisation import Organisation
 from mmisp.db.models.sighting import Sighting
+from mmisp.lib.logging import ApplicationLogger
+from mmisp.workflows.execution import create_virtual_root_user, execute_workflow, workflow_by_trigger_id
 
 router = APIRouter(tags=["sightings"])
 
@@ -195,6 +197,10 @@ async def _add_sighting(db: Session, body: SightingCreateBody) -> list[SightingA
             db.add(sighting)
             await db.flush()
             await db.refresh(sighting)
+            logger = ApplicationLogger(db)
+            virtual_user = await create_virtual_root_user(db)
+            if wf := await workflow_by_trigger_id("sighting-after-save", db):
+                await execute_workflow(wf, virtual_user, sighting, db, logger)
 
             organisation: Organisation | None = await db.get(Organisation, sighting.org_id)
 
@@ -238,6 +244,11 @@ async def _add_sightings_at_index(db: Session, attribute_id: int) -> SightingAtt
     db.add(sighting)
     await db.commit()
     await db.refresh(sighting)
+
+    logger = ApplicationLogger(db)
+    virtual_user = await create_virtual_root_user(db)
+    if wf := await workflow_by_trigger_id("sighting-after-save", db):
+        await execute_workflow(wf, virtual_user, sighting, db, logger)
 
     organisation: Organisation | None = await db.get(Organisation, sighting.org_id)
 

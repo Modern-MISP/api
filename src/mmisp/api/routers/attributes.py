@@ -35,7 +35,9 @@ from mmisp.db.models.attribute import Attribute, AttributeTag
 from mmisp.db.models.event import Event
 from mmisp.db.models.object import Object
 from mmisp.db.models.tag import Tag
+from mmisp.lib.logging import ApplicationLogger
 from mmisp.util.models import update_record
+from mmisp.workflows.execution import create_virtual_root_user, execute_workflow, workflow_by_trigger_id
 
 router = APIRouter(tags=["attributes"])
 
@@ -326,6 +328,12 @@ async def _add_attribute(db: Session, event_id: str, body: AddAttributeBody) -> 
     await db.commit()
 
     await db.refresh(new_attribute)
+
+    logger = ApplicationLogger(db)
+    virtual_user = await create_virtual_root_user(db)
+    if wf := await workflow_by_trigger_id("attribute-after-save", db):
+        await execute_workflow(wf, virtual_user, new_attribute, db, logger)
+
     setattr(event, "attribute_count", event.attribute_count + 1)
 
     attribute_data = _prepare_attribute_response_add(new_attribute)
@@ -351,6 +359,11 @@ async def _update_attribute(db: Session, attribute_id: str, body: EditAttributeB
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     update_record(attribute, body.dict())
+
+    logger = ApplicationLogger(db)
+    virtual_user = await create_virtual_root_user(db)
+    if wf := await workflow_by_trigger_id("attribute-after-save", db):
+        await execute_workflow(wf, virtual_user, attribute, db, logger)
 
     await db.commit()
     await db.refresh(attribute)
@@ -484,6 +497,11 @@ async def _restore_attribute(db: Session, attribute_id: str) -> GetAttributeResp
 
     await db.commit()
     await db.refresh(attribute)
+
+    logger = ApplicationLogger(db)
+    virtual_user = await create_virtual_root_user(db)
+    if wf := await workflow_by_trigger_id("attribute-after-save", db):
+        await execute_workflow(wf, virtual_user, attribute, db, logger)
 
     attribute_data = await _prepare_get_attribute_details_response(db, str(attribute.id), attribute)
 
