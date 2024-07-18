@@ -497,7 +497,7 @@ def blocking_publish_workflow(db):
         outputs={},
         apperance=Apperance((0, 0), False, "", None),
         on_demand_filter=None,
-        configuration=ModuleConfiguration({"message": "Stopped publish of {{Event.id}}"}),
+        configuration=ModuleConfiguration({"message": "Stopped publish of {{Event.info}}"}),
     )
     trigger.outputs[1].append((1, publish))
 

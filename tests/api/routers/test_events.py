@@ -163,7 +163,7 @@ def test_publish_existing_event_workflow_blocked(
     response = client.post(f"/events/publish/{event_id}", headers=headers)
 
     assert response.status_code == 400
-    assert response.json() == {"detail": ["Stopped publish of 1"]}
+    assert response.json() == {"detail": ["Stopped publish of test event"]}
 
 
 def test_publish_invalid_event(site_admin_user_token, client) -> None:
