@@ -171,6 +171,7 @@ async def galaxies_attachCluster(
     summary="Gets information from a galaxy cluster",
 )
 async def get_galaxy_cluster_view(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     cluster_id: Annotated[int, Path(alias="galaxyClusterId")],
 ) -> GetGalaxyClusterResponse:
