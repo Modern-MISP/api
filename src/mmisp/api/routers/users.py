@@ -413,8 +413,6 @@ async def _get_all_users(
     organisations_by_id = await get_organisations_by_id(db)
 
     for user in users:
-        if user_names_by_id[user[0].id] is None:
-            user_names_by_id[user[0].id] = "Unknown"
         user_list_computed.append(
             GetUsersElement(
                 User=GetUsersUser(
