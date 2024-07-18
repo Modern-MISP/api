@@ -163,3 +163,17 @@ def test_view_own_auth_keys(site_admin_user_token, client) -> None:
     assert isinstance(response_json, list)
     for auth_key in response_json:
         assert isinstance(auth_key, list)
+
+
+def test_view_own_auth_keys_depr(site_admin_user_token, client) -> None:
+    headers = {"authorization": site_admin_user_token}
+    response = client.get("/auth_keys/index/{userId}", headers=headers)
+
+    ic(response.json())
+
+    assert response.status_code == 200
+    response_json = response.json()
+    ic(response_json)
+    assert isinstance(response_json, list)
+    for auth_key in response_json:
+        assert isinstance(auth_key, list)

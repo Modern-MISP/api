@@ -243,13 +243,32 @@ async def auth_keys_view_own_auth_keys(
 #  --- deprecated ---
 
 
-@router.post(
-    "/auth_keys/add/{userId}",
-    status_code=status.HTTP_201_CREATED,
+@router.get(
+    "/auth_keys/index/{userId}",
     deprecated=True,
-    response_model=AddAuthKeyResponse,
-    summary="Add an AuthKey.",
+    summary="View own AuthKeys",
 )
+async def auth_keys_view_own_auth_keys_depr(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    db: Annotated[Session, Depends(get_db)],
+) -> list[SearchGetAuthKeysResponse]:
+    """Deprecated. View own Authkeys by the old route.
+
+    Input:
+
+    - the user's authentification status
+
+    - the current database
+
+    - the id of the user
+
+    Output:
+
+    - the auth keys
+    """
+    return await _auth_keys_view_own_depr(auth=auth, db=db)
+
+
 @router.post(
     "/auth_keys/add/{userId}",
     status_code=status.HTTP_201_CREATED,
@@ -628,6 +647,13 @@ async def _auth_keys_get(
 
 
 async def _auth_keys_view_own(auth: Auth, db: Session) -> list[SearchGetAuthKeysResponseItem]:
+    own_key = await _search_auth_keys(auth, db, SearchAuthKeyBody(user_id=auth.user_id))
+    if own_key is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
+    return own_key
+
+
+async def _auth_keys_view_own_depr(auth: Auth, db: Session) -> list[SearchGetAuthKeysResponse]:
     own_key = await _search_auth_keys(auth, db, SearchAuthKeyBody(user_id=auth.user_id))
     if own_key is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
