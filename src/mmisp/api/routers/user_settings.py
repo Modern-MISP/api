@@ -25,13 +25,13 @@ router = APIRouter(tags=["user_settings"])
 
 
 @router.post(
-    "/user_settings/setSetting/{userId}/{userSettingName}",
+    "/user_settings/setSetting/me/{userSettingName}",
     summary="Set user setting.",
 )
 async def set_user_settings(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
-    user_id: Annotated[int, Path(alias="userId")],
+    # user_id: Annotated[int, Path(alias="userId")],
     user_setting_name: Annotated[str, Path(alias="userSettingName")],
     body: SetUserSettingBody,
 ) -> SetUserSettingResponse:
@@ -55,7 +55,9 @@ async def set_user_settings(
 
     - SetUserSettingResponse: Response indicating success or failure
     """
-    return await _set_user_settings(auth=auth, db=db, user_id=user_id, user_setting_name=user_setting_name, body=body)
+    return await _set_user_settings(
+        auth=auth, db=db, user_id=auth.user_id, user_setting_name=user_setting_name, body=body
+    )
 
 
 @router.get(
@@ -86,13 +88,12 @@ async def view_user_settings(
 
 
 @router.get(
-    "/user_settings/{userId}/{userSettingName}",
+    "/user_settings/me/{userSettingName}",
     summary="View UserSetting.",
 )
 async def get_user_setting_by_id(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    user_id: Annotated[int, Path(alias="userId")],
     user_setting_name: Annotated[str, Path(alias="userSettingName")],
 ) -> ViewUserSettingResponse:
     """
@@ -112,7 +113,7 @@ async def get_user_setting_by_id(
 
     - ViewUserSettingResponse: Response with details of the viewed user setting
     """
-    return await _get_user_setting_by_id(auth=auth, db=db, user_id=user_id, user_setting_name=user_setting_name)
+    return await _get_user_setting_by_id(auth=auth, db=db, user_id=auth.user_id, user_setting_name=user_setting_name)
 
 
 @router.post(

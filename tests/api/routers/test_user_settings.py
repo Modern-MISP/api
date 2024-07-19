@@ -13,7 +13,7 @@ def test_set_user_setting(db, site_admin_user, site_admin_user_token, client) ->
 
     headers = {"authorization": site_admin_user_token}
     response = client.post(
-        f"/user_settings/setSetting/{user_id}/{setting}",
+        f"/user_settings/setSetting/me/{setting}",
         json=body,
         headers=headers,
     )
@@ -44,7 +44,7 @@ def test_set_user_setting_override_existing(
 
     headers = {"authorization": instance_owner_org_admin_user_token}
     response = client.post(
-        f"/user_settings/setSetting/{user_setting.user_id}/{user_setting.setting}",
+        f"/user_settings/setSetting/me/{user_setting.setting}",
         json=body,
         headers=headers,
     )
@@ -133,7 +133,7 @@ def test_get_existing_user_setting_details(
     db.refresh(user_setting)
 
     headers = {"authorization": instance_owner_org_admin_user_token}
-    response = client.get(f"/user_settings/{user_setting.user_id}/{user_setting.setting}", headers=headers)
+    response = client.get(f"/user_settings/me/{user_setting.setting}", headers=headers)
 
     db.delete(user_setting)
     db.commit()
@@ -155,7 +155,7 @@ def test_get_user_setting_by_invalid_us_name_uid(
     db.commit()
 
     headers = {"authorization": instance_owner_org_admin_user_token}
-    response = client.get(f"/user_settings/{user_setting.user_id}/invalid", headers=headers)
+    response = client.get("/user_settings/me/invalid", headers=headers)
 
     db.delete(user_setting)
     db.commit()
@@ -180,7 +180,7 @@ def test_get_user_setting_without_perms2(
     db.commit()
 
     headers = {"authorization": instance_org_two_admin_user_token}
-    response = client.get(f"/user_settings/{user_setting.user_id}/{user_setting.setting}", headers=headers)
+    response = client.get(f"/user_settings/me/{user_setting.setting}", headers=headers)
 
     db.delete(user_setting)
     db.commit()
