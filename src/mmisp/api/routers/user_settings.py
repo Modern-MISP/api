@@ -121,7 +121,7 @@ async def get_user_setting_by_id(
     if user_id is not None:
         return await _get_user_setting_by_id(auth=auth, db=db, user_id=auth.user_id, user_setting_name=user_setting_name)
     
-return await _get_user_setting_by_id(auth=auth, db=db, user_id=1, user_setting_name=user_setting_name)
+    return await _get_user_setting_by_id(auth=auth, db=db, user_id=1, user_setting_name=user_setting_name)
 
 
 
