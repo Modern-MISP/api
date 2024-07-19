@@ -11,6 +11,7 @@ from mmisp.api_schemas.standard_status_response import StandardStatusIdentifiedR
 from mmisp.api_schemas.users import (
     AddUserBody,
     AddUserResponse,
+    AddUserResponseData,
     GetUsersElement,
     GetUsersUser,
     UserAttributesBody,
@@ -346,6 +347,10 @@ async def _add_user(auth: Auth, db: Session, body: AddUserBody) -> AddUserRespon
     ):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
+    user_result = await db.execute(select(User).where(User.email == body.email))
+    if user_result.scalar_one_or_none() is not None:
+        raise HTTPException(status.HTTP_406_NOT_ACCEPTABLE, detail="User already exists with this email")
+
     org = await db.get(Organisation, body.org)
 
     if not org:
@@ -389,7 +394,7 @@ async def _add_user(auth: Auth, db: Session, body: AddUserBody) -> AddUserRespon
     await db.commit()
     await db.refresh(user_setting)
 
-    return AddUserResponse(**user.__dict__)
+    return AddUserResponse(User=AddUserResponseData(**user.__dict__))
 
 
 async def _get_all_users(
@@ -640,18 +645,74 @@ async def _update_user(auth: Auth, db: Session, userID: str, body: UserAttribute
 
     settings = body.dict()
 
-    for key in settings.keys():
-        if key == "name" and settings[key] is not None:
-            name.value = json.dumps({"name": str(settings[key])})
-            await db.commit()
-            await db.refresh(name)
-        elif settings[key] is not None:
-            setattr(user, key, settings[key])
+    if settings.get("name") is not None:
+        name.value = json.dumps({"name": str(settings["name"])})
+        await db.commit()
+        await db.refresh(name)
+    if settings.get("org") is not None:
+        user.org_id = settings["org"]
+    if settings.get("role") is not None:
+        user.role_id = settings["role"]
+    if settings.get("authkey") is not None:
+        user.authkey = settings["authkey"]
+    if settings.get("email") is not None:
+        user.email = settings["email"]
+    if settings.get("autoalert") is not None:
+        user.autoalert = settings["autoalert"]
+    if settings.get("invited_by") is not None:
+        user.invited_by = settings["invited_by"]
+    if settings.get("pgpkey") is not None:
+        user.gpgkey = settings["pgpkey"]
+    if settings.get("certif_public") is not None:
+        user.certif_public = settings["certif_public"]
+    if settings.get("termsaccepted") is not None:
+        user.termsaccepted = settings["termsaccepted"]
+    if settings.get("role") is not None:
+        user.role_id = settings["role"]
+    if settings.get("change_pw") is not None:
+        user.change_pw = settings["change_pw"]
+    if settings.get("contactalert") is not None:
+        user.contactalert = settings["contactalert"]
+    if settings.get("disabled") is not None:
+        user.disabled = settings["disabled"]
+    if settings.get("expiration") is not None:
+        user.expiration = settings["expiration"]
+    if settings.get("current_login") is not None:
+        user.current_login = settings["current_login"]
+    if settings.get("last_login") is not None:
+        user.last_login = settings["last_login"]
+    if settings.get("force_logout") is not None:
+        user.force_logout = settings["force_logout"]
+    if settings.get("date_created") is not None:
+        user.date_created = settings["date_created"]
+    if settings.get("date_modified") is not None:
+        user.date_modified = settings["date_modified"]
+    if settings.get("external_auth_required") is not None:
+        user.external_auth_required = settings["external_auth_required"]
+    if settings.get("external_auth_key") is not None:
+        user.external_auth_key = settings["external_auth_key"]
+    if settings.get("last_api_access") is not None:
+        user.last_api_access = settings["last_api_access"]
+    if settings.get("notification_daily") is not None:
+        user.notification_daily = settings["notification_daily"]
+    if settings.get("notification_weekly") is not None:
+        user.notification_weekly = settings["notification_weekly"]
+    if settings.get("notification_monthly") is not None:
+        user.notification_monthly = settings["notification_monthly"]
+    if settings.get("totp") is not None:
+        user.totp = settings["totp"]
+    if settings.get("hotp_counter") is not None:
+        user.hotp_counter = settings["hotp_counter"]
+    if settings.get("last_pw_change") is not None:
+        user.last_pw_change = settings["last_pw_change"]
+    if settings.get("nids_sid") is not None:
+        user.nids_sid = settings["nids_sid"]
 
     await db.commit()
     await db.refresh(user)
 
     user_schema = UserSchema(
+        authkey=user.authkey,
         id=user.id,
         org_id=user.org_id,
         email=user.email,
@@ -679,6 +740,7 @@ async def _update_user(auth: Auth, db: Session, userID: str, body: UserAttribute
         totp=user.totp,
         hotp_counter=user.hotp_counter,
         last_pw_change=user.last_pw_change,
+        nids_sid=user.nids_sid,
     )
 
     user_return = UserWithName(user=user_schema, name=json.loads(name.value)["name"])

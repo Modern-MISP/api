@@ -1,18 +1,7 @@
-import pytest
-import sqlalchemy as sa
-from icecream import ic
-from sqlalchemy.orm import Session
-from sqlalchemy.sql import text
-import json
 from time import time
-from datetime import date
 
-from icecream import ic
-from sqlalchemy.future import select
+import pytest
 from sqlalchemy.orm import Session
-
-from mmisp.db.models.organisation import Organisation
-from mmisp.api_schemas.organisations import Organisation, AddOrganisation
 
 from ...generators.model_generators.organisation_generator import generate_organisation
 
@@ -88,12 +77,14 @@ def test_delete_organisation(db: Session, site_admin_user_token, client, organis
     response_json = response.json()
     assert response_json["saved"]
     assert response_json["name"] == "Organisation deleted"
-    
-def test_add_organisation(client, site_admin_user_token,db:Session):
+
+
+def test_add_organisation(client, site_admin_user_token, db: Session):
+    name = "test" + str(time())
     headers = {"authorization": site_admin_user_token}
     request_body = {
         "id": 0,
-        "name": "test",
+        "name": name,
         "description": "des",
         "type": "typeA",
         "nationality": "world",
@@ -102,19 +93,17 @@ def test_add_organisation(client, site_admin_user_token,db:Session):
         "contacts": "contact",
         "local": True,
         "restricted_to_domain": "domain",
-        "landingpage": "page"
+        "landingpage": "page",
     }
 
-    response = client.post(f"/organisations",headers=headers,json=request_body)
+    response = client.post("/organisations", headers=headers, json=request_body)
     response_json = response.json()
 
-
     assert response_json["id"] == "0"
-    assert response_json["name"] == "test"
-   
+    assert response_json["name"] == name
 
 
-def test_edit_organisation(client, site_admin_user_token,organisation):
+def test_edit_organisation(client, site_admin_user_token, organisation):
     headers = {"authorization": site_admin_user_token}
     request_body = {
         "name": "test1",
@@ -125,9 +114,9 @@ def test_edit_organisation(client, site_admin_user_token,organisation):
         "contacts": "contact1",
         "local": True,
         "restricted_to_domain": "domain1",
-        "landingpage": "page1"
+        "landingpage": "page1",
     }
 
-    response = client.post(f"/organisations/update/{organisation.id}",headers= headers,json=request_body)
+    response = client.post(f"/organisations/update/{organisation.id}", headers=headers, json=request_body)
     response_json = response.json()
     assert response_json["name"] == "test1"

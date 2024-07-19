@@ -1,4 +1,5 @@
 from collections.abc import Sequence
+from datetime import datetime
 from typing import Annotated
 from urllib.parse import urlencode
 
@@ -460,10 +461,6 @@ async def _get_open_id_connect_provider_by_id(auth: Auth, db: Session, provider_
     )
 
 
-"""async def _get_password_requirements(db: Session) -> :
-    return RequirementResponse()"""
-
-
 async def _change_password_UserId(
     auth: Auth, db: Session, user_id: int, body: SetPasswordBody
 ) -> ChangeLoginInfoResponse:
@@ -564,6 +561,8 @@ async def _password_login(db: Session, body: PasswordLoginBody) -> TokenResponse
         user.force_logout = False
         await db.commit()
 
+    user.last_login = int(datetime.now().timestamp())
+    await db.commit()
     return TokenResponse(token=encode_token(str(user.id)))
 
 

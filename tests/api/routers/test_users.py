@@ -45,9 +45,10 @@ def test_users_create(site_admin_user_token, site_admin_user, site_admin_role, c
     # Check if the Status Code is 200
     json_str = response.json()
     assert response.status_code == 200
+    user_id = json_str.get("User").get("id")
 
     # Check if the User_setting user_name is created
-    query = select(UserSetting).where(UserSetting.user_id == json_str.get("id") and UserSetting.setting == "user_name")
+    query = select(UserSetting).where(UserSetting.user_id == user_id and UserSetting.setting == "user_name")
     user_setting = db.execute(query).scalars().first()
     assert json.loads(user_setting.value)["name"] == name
 
@@ -58,7 +59,7 @@ def test_users_create(site_admin_user_token, site_admin_user, site_admin_role, c
     assert user_setting is None
 
     # Check if the User is created
-    query = select(User).where(User.id == json_str.get("id"))
+    query = select(User).where(User.id == user_id)
     user = db.execute(query).scalars().first()
     assert user is not None
     assert user.email == email
@@ -76,19 +77,14 @@ def test_users_edit(db: Session, site_admin_user_token, client, site_admin_user,
     terms_accepted = view_only_user.termsaccepted
     gpg_key = view_only_user.gpgkey
 
-    name = (
-        db.execute(select(UserSetting).where(UserSetting.setting == "user_name" and UserSetting.user_id == user_id))
-        .scalars()
-        .first()
-        .value
-    )
+    name = "test" + str(time())
 
     headers = {"authorization": site_admin_user_token}
     body = {
         "email": email + "test",
         "name": name + "test",
         "termsaccepted": not terms_accepted,
-        "gpgkey": gpg_key + "test",
+        "pgpkey": gpg_key + "test",
     }
     response = client.put(f"users/{user_id}", headers=headers, json=body)
 
@@ -113,6 +109,7 @@ def test_user_view_by_ID(db: Session, site_admin_user_token, client) -> None:
 
     assert response.status_code == 200
     user = response.json()
+    ic(user)
 
     assert isinstance(user, dict)
     assert "id" in user["User"]
@@ -153,7 +150,8 @@ def test_user_view_by_ID(db: Session, site_admin_user_token, client) -> None:
     assert "name" in user["Organisation"]
 
     query = select(UserSetting).where(UserSetting.setting == "user_name" and UserSetting.user_id == user.get("id"))
-    user_name = db.execute(query).scalars().first()
+    user_name = db.execute(query).scalars().one_or_none()
+    ic(json.loads(user_name.value)["name"])
     assert user_name is not None
     assert json.loads(user_name.value)["name"] == user["User"].get("name")
 
