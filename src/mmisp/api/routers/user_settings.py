@@ -56,9 +56,13 @@ async def set_user_settings(
 
     - SetUserSettingResponse: Response indicating success or failure
     """
-    return await _set_user_settings(
+    if user_id is not None:
+        return await _set_user_settings(
         auth=auth, db=db, user_id=auth.user_id, user_setting_name=user_setting_name, body=body
-    )
+     )
+   return await _set_user_settings(
+        auth=auth, db=db, user_id=1, user_setting_name=user_setting_name, body=body
+     ) 
 
 
 @router.get(
@@ -114,7 +118,11 @@ async def get_user_setting_by_id(
 
     - ViewUserSettingResponse: Response with details of the viewed user setting
     """
-    return await _get_user_setting_by_id(auth=auth, db=db, user_id=auth.user_id, user_setting_name=user_setting_name)
+    if user_id is not None:
+        return await _get_user_setting_by_id(auth=auth, db=db, user_id=auth.user_id, user_setting_name=user_setting_name)
+    
+return await _get_user_setting_by_id(auth=auth, db=db, user_id=1, user_setting_name=user_setting_name)
+
 
 
 @router.post(
@@ -339,7 +347,7 @@ async def delete_user_settings_depr(
 async def _set_user_settings(
     auth: Auth,
     db: Session,
-    user_id:  Optional[int],
+    user_id: int,
     user_setting_name: str,
     body: SetUserSettingBody,
 ) -> SetUserSettingResponse:
