@@ -242,7 +242,7 @@ def test_delete_user(site_admin_user_token, site_admin_role, site_admin_user, cl
     # Check if the user was created
     assert create_response.status_code == 200
     created_user = create_response.json()
-    user_id = created_user.get("id")
+    user_id = created_user.get("User").get("id")
     assert user_id is not None
 
     # Check the user and user setting creation
