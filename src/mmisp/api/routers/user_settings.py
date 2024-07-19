@@ -19,6 +19,7 @@ from mmisp.api_schemas.user_settings import (
     ViewUserSettingResponseUserSetting,
 )
 from mmisp.db.database import Session, get_db
+from typing import Optional
 from mmisp.db.models.user_setting import SettingName, UserSetting
 
 router = APIRouter(tags=["user_settings"])
