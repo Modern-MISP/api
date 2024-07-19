@@ -56,7 +56,7 @@ async def set_user_settings(
     - SetUserSettingResponse: Response indicating success or failure
     """
     return await _set_user_settings(
-        auth=auth, db=db, user_id=auth.user_id, user_setting_name=user_setting_name, body=body
+        auth=auth, db=db, user_id=(int)auth.user_id, user_setting_name=user_setting_name, body=body
     )
 
 
@@ -113,7 +113,7 @@ async def get_user_setting_by_id(
 
     - ViewUserSettingResponse: Response with details of the viewed user setting
     """
-    return await _get_user_setting_by_id(auth=auth, db=db, user_id=auth.user_id, user_setting_name=user_setting_name)
+    return await _get_user_setting_by_id(auth=auth, db=db, user_id=(int)auth.user_id, user_setting_name=user_setting_name)
 
 
 @router.post(
