@@ -176,22 +176,44 @@ def test_password_login_idp_user(auth_environment: AuthEnvironment, client) -> N
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
+def test_add_open_id_provider(db: Session, site_admin_user_token, client) -> None:
+    response = client.post(
+        "/auth/openID/addOpenIDConnectProvider",
+        headers={"authorization": site_admin_user_token},
+        json={
+            "name": "Test",
+            "org_id": 1,
+            "active": True,
+            "base_url": "http://test.com",
+            "client_id": "test",
+            "client_secret": "test",
+        },
+    )
+
+    assert response.status_code == 200
+    response = response.json()
+    assert response["name"] == "Test"
+    oidc_provider = db.query(OIDCIdentityProvider).where(OIDCIdentityProvider.id == response["id"]).first()
+    assert oidc_provider is not None
+    db.delete(oidc_provider)
+
+
 @respx.mock
-def test_redirect_to_idp_correct(auth_environment: AuthEnvironment, client) -> None:
+def test_get_open_id_providers_info(auth_environment: AuthEnvironment, client) -> None:
+    ic(auth_environment.identity_provider.base_url)
     route = respx.get(f"{auth_environment.identity_provider.base_url}/.well-known/openid-configuration").mock(
         return_value=Response(200, json=auth_environment.well_known_oidc_config)
     )
 
-    response = client.get(f"/auth/login/idp/{auth_environment.identity_provider.id}/authorize", follow_redirects=False)
+    response = client.get("/auth/openID/getAllOpenIDConnectProvidersInfo")
 
-    assert response.status_code == status.HTTP_302_FOUND
-    assert response.headers["location"].startswith(auth_environment.well_known_oidc_config["authorization_endpoint"])
+    assert response.status_code == 200
+    response = response.json()
+    ic(response)
+    assert response[0]["name"] == auth_environment.identity_provider.name
+    assert response[0]["url"] is not None
+    assert auth_environment.identity_provider.base_url in response[0]["url"]
     assert route.called
-
-
-def test_redirect_to_idp_not_existing(client) -> None:
-    response = client.get("/auth/login/idp/-1/authorize")
-    assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
 @respx.mock
@@ -212,22 +234,33 @@ def test_redirect_to_frontend_correct(auth_environment: AuthEnvironment, client)
         )
     )
 
-    response = client.get(
-        f"/auth/login/idp/{auth_environment.identity_provider.id}/callback?code=test-code", follow_redirects=False
+    response = client.post(
+        f"/auth/login/idp/{auth_environment.identity_provider.name}/callback",
+        json={
+            "code": "test-code",
+            "redirect_uri": f"{config.DASHBOARD_URL}/login/oidc/{auth_environment.identity_provider.name}/callback",
+        },
+        follow_redirects=False,
     )
 
-    assert response.status_code == status.HTTP_302_FOUND
+    assert response.status_code == 200
+    response = response.json()
 
-    location = response.headers["location"]
-
-    assert location.startswith(config.DASHBOARD_URL)
+    assert response["token"] is not None
+    assert _decode_token(response["token"]) == auth_environment.external_auth_user.id
     assert config_route.called
     assert token_route.called
     assert info_route.called
 
 
 def test_redirect_to_frontend_idp_does_not_exist(client) -> None:
-    response = client.get("/auth/login/idp/-1/callback?code=test-code")
+    response = client.post(
+        "/auth/login/idp/-1/callback",
+        json={"code": "test-code", "redirect_uri": f"{config.DASHBOARD_URL}/login/oidc/-1/callback"},
+        follow_redirects=False,
+    )
+    json = response.json()
+    ic(json)
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
@@ -240,7 +273,16 @@ def test_redirect_to_frontend_no_access_token(auth_environment: AuthEnvironment,
         return_value=Response(200, json={})
     )
 
-    response = client.get(f"/auth/login/idp/{auth_environment.identity_provider.id}/callback?code=test-code")
+    response = client.post(
+        f"/auth/login/idp/{auth_environment.identity_provider.name}/callback",
+        json={
+            "code": "",
+            "redirect_uri": f"{config.DASHBOARD_URL}/login/oidc/{auth_environment.identity_provider.name}/callback",
+        },
+        follow_redirects=False,
+    )
+
+    ic(response.json())
 
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
     assert config_route.called
@@ -265,7 +307,14 @@ def test_redirect_to_frontend_invalid_sub(auth_environment: AuthEnvironment, cli
         )
     )
 
-    response = client.get(f"/auth/login/idp/{auth_environment.identity_provider.id}/callback?code=test-code")
+    response = client.post(
+        f"/auth/login/idp/{auth_environment.identity_provider.name}/callback",
+        json={
+            "code": "test-code",
+            "redirect_uri": f"{config.DASHBOARD_URL}/login/oidc/{auth_environment.identity_provider.name}/callback",
+        },
+        follow_redirects=False,
+    )
 
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
     assert config_route.called
