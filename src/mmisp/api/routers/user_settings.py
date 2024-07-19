@@ -338,7 +338,7 @@ async def delete_user_settings_depr(
 async def _set_user_settings(
     auth: Auth,
     db: Session,
-    user_id:  Optional int,
+    user_id:  Optional[int],
     user_setting_name: str,
     body: SetUserSettingBody,
 ) -> SetUserSettingResponse:
