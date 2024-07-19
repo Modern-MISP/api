@@ -60,7 +60,7 @@ async def set_user_settings(
         return await _set_user_settings(
         auth=auth, db=db, user_id=auth.user_id, user_setting_name=user_setting_name, body=body
      )
-   return await _set_user_settings(
+    return await _set_user_settings(
         auth=auth, db=db, user_id=1, user_setting_name=user_setting_name, body=body
      ) 
 
