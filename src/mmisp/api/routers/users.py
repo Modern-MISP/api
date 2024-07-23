@@ -445,7 +445,7 @@ async def _get_all_users(
                     date_created=user[0].date_created,
                     date_modified=user[0].date_modified,
                     last_pw_change=user[0].last_pw_change,
-                    name=user_names_by_id[user[0].id],
+                    name=user_names_by_id.get(user[0].id, user[0].email),
                     totp=(user[0].totp is not None),
                     contact=user[0].contactalert,
                     notification=(
