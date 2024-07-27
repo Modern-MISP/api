@@ -403,6 +403,8 @@ async def get_idp_url(db: Session, identity_provider_id: int) -> str:
         "response_type": "code",
         "client_id": identity_provider.client_id,
     }
+    print(identity_provider.base_url)
+    print(oidc_config)
 
     authorization_endpoint = oidc_config["authorization_endpoint"]
 
