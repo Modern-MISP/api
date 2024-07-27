@@ -12,6 +12,7 @@ from mmisp.api_schemas.organisations import (
     DeleteForceUpdateOrganisationResponse,
     EditOrganisation,
     GetAllOrganisationResponse,
+    GetAllOrganisationsOrganisation,
     GetOrganisationResponse,
 )
 from mmisp.db.database import Session, get_db
@@ -242,22 +243,24 @@ async def _get_organisations(auth: Auth, db: Session) -> list[GetAllOrganisation
 
         org_list_computed.append(
             GetAllOrganisationResponse(
-                id=str(organisation.id),
-                name=organisation.name,
-                date_created=organisation.date_created,
-                date_modified=organisation.date_modified,
-                description=organisation.description,
-                type=organisation.type,
-                nationality=organisation.nationality,
-                sector=organisation.sector,
-                created_by=organisation.created_by,
-                uuid=organisation.uuid,
-                contacts=organisation.contacts,
-                local=organisation.local,
-                restricted_to_domain=organisation.restricted_to_domain,
-                landingpage=organisation.landingpage,
-                user_count=user_count,
-                created_by_email=created_by.email if created_by else "Unknown",
+                Organisation=GetAllOrganisationsOrganisation(
+                    id=str(organisation.id),
+                    name=organisation.name,
+                    date_created=organisation.date_created,
+                    date_modified=organisation.date_modified,
+                    description=organisation.description,
+                    type=organisation.type,
+                    nationality=organisation.nationality,
+                    sector=organisation.sector,
+                    created_by=organisation.created_by,
+                    uuid=organisation.uuid,
+                    contacts=organisation.contacts,
+                    local=organisation.local,
+                    restricted_to_domain=organisation.restricted_to_domain,
+                    landingpage=organisation.landingpage,
+                    user_count=user_count,
+                    created_by_email=created_by.email if created_by else "Unknown",
+                )
             )
         )
 

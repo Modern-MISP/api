@@ -3,10 +3,13 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 from sqlalchemy.future import select
 
-from mmisp.api_schemas.roles import RoleAttributeResponse
+from mmisp.api.auth import Auth, AuthStrategy, authorize
+from mmisp.api_schemas.roles import (
+    GetRolesResponse,
+    RoleAttributeResponse,
+)
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.role import Role
-from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize, check_permissions
 
 router = APIRouter(tags=["roles"])
 
@@ -18,7 +21,7 @@ router = APIRouter(tags=["roles"])
 async def get_all_roles(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-) -> list[RoleAttributeResponse]:
+) -> list[GetRolesResponse]:
     """
     Get all roles and their details.
 
@@ -36,13 +39,13 @@ async def get_all_roles(
 # --- endpoint logic ---
 
 
-async def _get_roles(db: Session) -> list[RoleAttributeResponse]:
+async def _get_roles(db: Session) -> list[GetRolesResponse]:
     query = select(Role)
 
     result = await db.execute(query)
     roles = result.scalars().all()
-    role_list: list[RoleAttributeResponse] = []
+    role_list: list[GetRolesResponse] = []
 
     for role in roles:
-        role_list.append(RoleAttributeResponse(**role.__dict__))
+        role_list.append(GetRolesResponse(Role=RoleAttributeResponse(**role.__dict__)))
     return role_list

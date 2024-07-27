@@ -59,12 +59,15 @@ def test_get_all_organisations(db: Session, site_admin_user_token, client, organ
     response_json = response.json()
     assert isinstance(response_json, list)
     response_json = response.json()
+    print(response_json)
     for organisation in response_json:
-        assert "id" in organisation
-        assert "name" in organisation
-        assert "description" in organisation
-        assert "nationality" in organisation
-        assert "sector" in organisation
+        print(organisation)
+        organisation_data = organisation["Organisation"]
+        assert "id" in organisation_data
+        assert "name" in organisation_data
+        assert "description" in organisation_data
+        assert "nationality" in organisation_data
+        assert "sector" in organisation_data
 
 
 def test_delete_organisation(db: Session, site_admin_user_token, client, organisation) -> None:
