@@ -25,6 +25,7 @@ from mmisp.db.models.organisation import Organisation
 from mmisp.db.models.role import Role
 from mmisp.db.models.user import User
 from mmisp.db.models.user_setting import UserSetting
+from mmisp.util.crypto import hash_secret
 from mmisp.util.partial import partial
 
 router = APIRouter(tags=["users"])
@@ -362,7 +363,7 @@ async def _add_user(auth: Auth, db: Session, body: AddUserBody) -> AddUserRespon
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Role not found")
 
     user = User(
-        password=body.password,
+        password=hash_secret(body.password),
         org_id=org.id,
         role_id=role.id,
         email=body.email,
