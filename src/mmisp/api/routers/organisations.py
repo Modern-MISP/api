@@ -221,12 +221,6 @@ async def _add_organisation(auth: Auth, db: Session, body: AddOrganisation) -> G
 
 
 async def _get_organisations(auth: Auth, db: Session) -> list[GetAllOrganisationResponse]:
-    if not (
-        await check_permissions(db, auth, [Permission.SITE_ADMIN])
-        or await check_permissions(db, auth, [Permission.ADMIN])
-    ):
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED)
-
     query = select(Organisation)
     result = await db.execute(query)
     organisations = result.fetchall()

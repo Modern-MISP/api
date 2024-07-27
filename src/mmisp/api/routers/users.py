@@ -506,6 +506,7 @@ async def _get_user(auth: Auth, db: Session, userID: str) -> GetUsersElement:
     if not (
         await check_permissions(db, auth, [Permission.SITE_ADMIN])
         or await check_permissions(db, auth, [Permission.ADMIN])
+        or str(auth.user_id) == userID
     ):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
