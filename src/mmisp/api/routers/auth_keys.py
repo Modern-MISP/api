@@ -627,7 +627,9 @@ async def _auth_keys_edit(auth: Auth, db: Session, auth_key_id: int, body: EditA
     update = body.dict()
     update["allowed_ips"] = json.dumps(body.allowed_ips) if body.allowed_ips else None
 
-    if body.expiration:
+    if body.expiration == "":
+        update["expiration"] = None
+    elif body.expiration:
         update["expiration"] = parse_date(body.expiration)
     else:
         update["expiration"] = None
