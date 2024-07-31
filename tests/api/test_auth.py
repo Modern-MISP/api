@@ -5,7 +5,10 @@ import pytest
 from fastapi import HTTPException
 from icecream import ic
 
-from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize, check_permissions, encode_exchange_token
+from mmisp.api.auth import (
+    Auth, AuthStrategy, Permission, authorize, check_permissions, encode_exchange_token,
+    _get_user, user_login_allowed, encode_token, decode_exchange_token, _check_api_key
+)
 from mmisp.api.config import config
 from mmisp.db.database import get_db
 
@@ -138,3 +141,24 @@ async def test_check_permissions_site_admin(site_admin_user) -> None:
     )
 
     ["" async for _ in it_db]
+
+
+@pytest.mark.asyncio
+async def test_user_login_allowed(db, site_admin_user) -> None:
+    adb = await anext(get_db())
+    user, auth_key_id = await user_login_allowed(adb, site_admin_user.id, False)
+    assert user.id == site_admin_user.id
+    assert auth_key_id is None
+
+
+@pytest.mark.asyncio
+def test_encode_token(site_admin_user) -> None:
+    token = encode_token(site_admin_user.id)
+    assert token
+
+
+@pytest.mark.asyncio
+def test_decode_exchange_token(site_admin_user) -> None:
+    token = encode_exchange_token(site_admin_user.id)
+    user_id = decode_exchange_token(token)
+    assert user_id == site_admin_user.id
