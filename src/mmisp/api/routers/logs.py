@@ -12,12 +12,47 @@ from mmisp.workflows.fastapi import log_to_json_dict
 router = APIRouter(tags=["logs"])
 
 
+@router.get(
+    "/logs/index",
+    status_code=status.HTTP_200_OK,
+    summary="List logs",
+)
+async def logs_index_get(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
+    db: Annotated[Session, Depends(get_db)],
+    page: int | None = None,
+    limit: int | None = None,
+    model: str | None = None,
+    action: str | None = None,
+    model_id: str | None = None,
+) -> List[Any]:
+    """
+    List logs, filter can be applied.
+
+    - **page** the page for pagination
+    - **limit** the limit for pagination
+    """
+    request = LogsRequest(
+        model=model,
+        action=action,
+        model_id=model_id,
+    )
+
+    if page is not None:
+        request.page = page
+    if limit is not None:
+        request.limit = limit
+
+    logs = await query_logs(request, db)
+    return transform_logs_to_response(logs)
+
+
 @router.post(
     "/logs/index",
     status_code=status.HTTP_200_OK,
     summary="List logs",
 )
-async def logs_index(
+async def logs_index_post(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     request: LogsRequest,
@@ -28,9 +63,14 @@ async def logs_index(
     - **model** the source for the log creation (f.e. 'User', 'Workflow', 'AuthKey', ...)
     - **action** the action in which the log was created
     - **model_id** the id of the model
+    - **page** the page for pagination
+    - **limit** the limit for pagination
     """
     logs = await query_logs(request, db)
+    return transform_logs_to_response(logs)
 
+
+def transform_logs_to_response(logs: Sequence[Log]) -> dict:
     result = []
 
     for log in logs:
