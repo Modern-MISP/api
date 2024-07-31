@@ -179,3 +179,33 @@ async def test_get_user(db, site_admin_user_token, site_admin_user) -> None:
     user, auth_key_id = await _get_user(adb, site_admin_user_token, AuthStrategy.JWT, [], False)
     assert user.id == site_admin_user.id
     assert auth_key_id is None
+
+
+@pytest.mark.asyncio
+async def test_authorize_readonly_route(db) -> None:
+    it_db = get_db()
+    adb = await anext(it_db)
+    ic(adb)
+
+    try:
+        await authorize(AuthStrategy.API_KEY, is_readonly_route=True)(db=adb, authorization="readonly_key")
+        pytest.fail()
+    except HTTPException:
+        pass
+
+    ["" async for _ in it_db]
+
+
+@pytest.mark.asyncio
+async def test_authorize_api_key_verification_failure(db) -> None:
+    it_db = get_db()
+    adb = await anext(it_db)
+    ic(adb)
+
+    try:
+        await authorize(AuthStrategy.API_KEY)(db=adb, authorization="invalid_key")
+        pytest.fail()
+    except HTTPException:
+        pass
+
+    ["" async for _ in it_db]
