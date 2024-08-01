@@ -145,8 +145,7 @@ async def test_check_permissions_site_admin(site_admin_user) -> None:
 
 @pytest.mark.asyncio
 async def test_user_login_allowed(db, site_admin_user) -> None:
-    adb = await anext(get_db())
-    user, auth_key_id = await user_login_allowed(adb, site_admin_user.id, False)
+    user, auth_key_id = await user_login_allowed(db, site_admin_user.id, False)
     assert user.id == site_admin_user.id
     assert auth_key_id is None
 
