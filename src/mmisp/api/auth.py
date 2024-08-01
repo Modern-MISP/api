@@ -70,7 +70,7 @@ async def _get_user(
         user_id = _decode_token(authorization)
 
         if user_id:
-            return await user_login_allowed(db, user_id, False)
+            return await user_login_allowed(db, user_id, False), None
 
     # check for API_KEY
     if strategy in [AuthStrategy.API_KEY, AuthStrategy.HYBRID, AuthStrategy.ALL]:
@@ -82,14 +82,12 @@ async def _get_user(
             # only users with this permission are allowed to use api keys
             permissions.append(Permission.AUTH)
 
-            return await user_login_allowed(db, user_id, True, auth_key_id)
+            return await user_login_allowed(db, user_id, True), auth_key_id
 
     raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
 
-async def user_login_allowed(
-    db: Session, user_id: int, api_login: bool, auth_key_id: int | None = None
-) -> tuple[User, int | None]:
+async def user_login_allowed(db: Session, user_id: int, api_login: bool) -> tuple[User, int | None]:
     user = await db.get(User, user_id)
     if user is not None:
         if not api_login and user.force_logout:
@@ -97,7 +95,7 @@ async def user_login_allowed(
         if user.disabled:
             raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail="User has been disabled")
 
-        return user, auth_key_id
+        return user
     else:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
