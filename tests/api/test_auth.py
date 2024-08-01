@@ -209,3 +209,36 @@ async def test_authorize_api_key_verification_failure(db) -> None:
         pass
 
     ["" async for _ in it_db]
+
+
+@pytest.mark.asyncio
+async def test_authorize_all_strategy_with_api_key(db, site_admin_user, auth_key) -> None:
+    it_db = get_db()
+    adb = await anext(it_db)
+    ic(adb)
+
+    clear_key, auth_key = auth_key
+
+    auth: Auth | Any = await authorize(AuthStrategy.ALL)(db=adb, authorization=clear_key)
+
+    assert auth.user_id == site_admin_user.id
+    assert auth.role_id == site_admin_user.role_id
+    assert auth.org_id == site_admin_user.org_id
+    assert auth.auth_key_id == auth_key.id
+    assert not auth.is_worker
+
+    ["" async for _ in it_db]
+
+@pytest.mark.asyncio
+async def test_authorize_jwt_decoding_failure(db) -> None:
+    it_db = get_db()
+    adb = await anext(it_db)
+    ic(adb)
+
+    try:
+        await authorize(AuthStrategy.JWT)(db=adb, authorization="invalid_token")
+        pytest.fail()
+    except HTTPException:
+        pass
+
+    ["" async for _ in it_db]
