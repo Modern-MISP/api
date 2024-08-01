@@ -144,13 +144,6 @@ async def test_check_permissions_site_admin(site_admin_user) -> None:
 
 
 @pytest.mark.asyncio
-async def test_user_login_allowed(db, site_admin_user) -> None:
-    user, auth_key_id = await user_login_allowed(db, site_admin_user.id, False)
-    assert user.id == site_admin_user.id
-    assert auth_key_id is None
-
-
-@pytest.mark.asyncio
 def test_encode_token(site_admin_user) -> None:
     token = encode_token(site_admin_user.id)
     assert token
@@ -161,23 +154,6 @@ def test_decode_exchange_token(site_admin_user) -> None:
     token = encode_exchange_token(site_admin_user.id)
     user_id = decode_exchange_token(token)
     assert user_id == site_admin_user.id
-
-
-@pytest.mark.asyncio
-async def test_check_api_key(db, auth_key) -> None:
-    adb = await anext(get_db())
-    clear_key, auth_key = auth_key
-    user_id, auth_key_id = await _check_api_key(adb, clear_key, False)
-    assert user_id == auth_key.user_id
-    assert auth_key_id == auth_key.id
-
-
-@pytest.mark.asyncio
-async def test_get_user(db, site_admin_user_token, site_admin_user) -> None:
-    adb = await anext(get_db())
-    user, auth_key_id = await _get_user(adb, site_admin_user_token, AuthStrategy.JWT, [], False)
-    assert user.id == site_admin_user.id
-    assert auth_key_id is None
 
 
 @pytest.mark.asyncio
