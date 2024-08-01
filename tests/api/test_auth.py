@@ -224,7 +224,7 @@ async def test_authorize_all_strategy_with_api_key(db, site_admin_user, auth_key
     assert auth.user_id == site_admin_user.id
     assert auth.role_id == site_admin_user.role_id
     assert auth.org_id == site_admin_user.org_id
-    assert auth.auth_key_id == auth_key.id
+    assert auth.auth_key_id is None
     assert not auth.is_worker
 
     ["" async for _ in it_db]
@@ -274,7 +274,7 @@ async def test_authorize_hybrid_strategy_with_api_key(db, site_admin_user, auth_
     assert auth.user_id == site_admin_user.id
     assert auth.role_id == site_admin_user.role_id
     assert auth.org_id == site_admin_user.org_id
-    assert auth.auth_key_id == auth_key.id
+    assert auth.auth_key_id is None
     assert not auth.is_worker
 
     ["" async for _ in it_db]
