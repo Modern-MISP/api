@@ -229,6 +229,7 @@ async def test_authorize_all_strategy_with_api_key(db, site_admin_user, auth_key
 
     ["" async for _ in it_db]
 
+
 @pytest.mark.asyncio
 async def test_authorize_jwt_decoding_failure(db) -> None:
     it_db = get_db()
@@ -259,6 +260,7 @@ async def test_authorize_hybrid_strategy_with_jwt(db, site_admin_user_token, sit
 
     ["" async for _ in it_db]
 
+
 @pytest.mark.asyncio
 async def test_authorize_hybrid_strategy_with_api_key(db, site_admin_user, auth_key) -> None:
     it_db = get_db()
@@ -277,6 +279,7 @@ async def test_authorize_hybrid_strategy_with_api_key(db, site_admin_user, auth_
 
     ["" async for _ in it_db]
 
+
 @pytest.mark.asyncio
 async def test_authorize_all_strategy_with_worker_key(db) -> None:
     it_db = get_db()
@@ -292,6 +295,7 @@ async def test_authorize_all_strategy_with_worker_key(db) -> None:
     assert auth.is_worker
 
     ["" async for _ in it_db]
+
 
 @pytest.mark.asyncio
 async def test_authorize_all_strategy_with_jwt(db, site_admin_user_token, site_admin_user) -> None:
