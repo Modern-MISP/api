@@ -78,16 +78,9 @@ router = APIRouter(tags=["workflows"])
 async def index(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
-    name: str | None = None,
-    uuid: str | None = None,
 ) -> List[dict]:
     """
     Returns a list of all workflows in the JSON format.
-
-    - **name**: Filter by workflow name.
-    - **uuid**: Filter by workflow UUID.
-
-    Filters can be applied, mainly filters for a name or a uuid.
     """
     workflows = await query_all_workflows(db)
 
@@ -384,7 +377,7 @@ async def triggers(
     for type_trigger in all_triggers:
         if __filter_triggers(type_trigger):
             trigger = cast(Trigger, type_trigger)
-            disabled = False
+            disabled = True
             workflow_json = {}
             # needs to query the corresponding workflow for the trigger to get the disabled field :(
             workflow = await get_workflow_by_trigger_id(trigger.id, db)
@@ -543,7 +536,7 @@ async def toggleModule(
                 name="Invalid trigger ID",
                 message="Invalid trigger ID",
                 url=f"/workflows/toggleModule/{node_id}/{enable}/{is_trigger}",
-            ),
+            ).dict(),
         )
 
     # probaby a stupid way to create a new graph but whitout this (the code below) it won't work
@@ -667,11 +660,11 @@ async def workflowsSetting(
 
 
 @router.post(
-    "/workflows/toggleDebugField/{workflowId}/{enabled}",
+    "/workflows/debugToggleField/{workflowId}/{enabled}",
     status_code=status.HTTP_200_OK,
     summary="Status whether the workflow setting is globally enabled/ disabled",
 )
-async def toggleDebugField(
+async def debugToggleField(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     workflow_id: Annotated[int, Path(alias="workflowId")],
