@@ -58,8 +58,7 @@ from mmisp.workflows.legacy import (
     GraphValidation,
 )
 from mmisp.workflows.modules import (
-    MODULE_REGISTRY,
-    TRIGGER_REGISTRY,
+    NODE_REGISTRY,
     Module,
     ModuleAction,
     ModuleConfiguration,
@@ -299,7 +298,7 @@ async def create_workflow(trigger_id: str, db: Session) -> None:
 
 
 def __create_new_workflow_object(name: str, trigger_id: str, description: str = "") -> Workflow:
-    nt = TRIGGER_REGISTRY.lookup(trigger_id)
+    nt = NODE_REGISTRY.triggers[trigger_id]
 
     new_trigger = nt(
         id=nt.id,
@@ -369,30 +368,25 @@ async def triggers(
     - **limit**: The number of items to display per page (for pagination).
     - **page**: The page number to display (for pagination).
     """
-    all_triggers = TRIGGER_REGISTRY.modules.values()
+    all_triggers = NODE_REGISTRY.triggers.values()
 
     result = []
 
     # too ugly to get it's own function :(
     for type_trigger in all_triggers:
-        if __filter_triggers(type_trigger):
-            trigger = cast(Trigger, type_trigger)
-            disabled = True
-            workflow_json = {}
-            # needs to query the corresponding workflow for the trigger to get the disabled field :(
-            workflow = await get_workflow_by_trigger_id(trigger.id, db)
-            if workflow:
-                workflow_json = workflow_entity_to_json_dict(workflow)["Workflow"]
-                data = cast(WorkflowGraph, workflow.data)
-                disabled = cast(Trigger, data.root).disabled
-            json = trigger_entity_to_json_dict(trigger, workflow_json, disabled)
-            result.append(json)
+        trigger = cast(Trigger, type_trigger)
+        disabled = True
+        workflow_json = {}
+        # needs to query the corresponding workflow for the trigger to get the disabled field :(
+        workflow = await get_workflow_by_trigger_id(trigger.id, db)
+        if workflow:
+            workflow_json = workflow_entity_to_json_dict(workflow)["Workflow"]
+            data = cast(WorkflowGraph, workflow.data)
+            disabled = cast(Trigger, data.root).disabled
+        json = trigger_entity_to_json_dict(trigger, workflow_json, disabled)
+        result.append(json)
 
     return result
-
-
-def __filter_triggers(trigger: type[Trigger]) -> bool:
-    return not issubclass(trigger, Module)
 
 
 async def get_workflow_by_trigger_id(
@@ -420,7 +414,7 @@ async def moduleIndex(
     - **limit**: The number of items to display per page (for pagination).
     - **page**: The page number to display (for pagination).
     """
-    all_modules = MODULE_REGISTRY.modules.values()
+    all_modules = NODE_REGISTRY.all().values()
 
     response: List[dict] = []
 
@@ -478,7 +472,7 @@ async def moduleView(
     - **module_id** The ID of the module.
     """
 
-    all_modules = MODULE_REGISTRY.modules.values()
+    all_modules = NODE_REGISTRY.modules.values()
 
     for module in all_modules:
         if module.id == module_id:

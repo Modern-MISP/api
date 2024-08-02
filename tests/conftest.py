@@ -32,7 +32,7 @@ from mmisp.workflows.modules import (
     ModuleStopExecution,
     TriggerEventBeforeSave,
     TriggerEventPublish,
-    module_node,
+    workflow_node,
 )
 from tests.generators.model_generators.auth_key_generator import generate_auth_key
 from tests.generators.model_generators.server_generator import generate_server
@@ -546,7 +546,7 @@ def unsupported_workflow(db):
     )
 
     @dataclass
-    @module_node
+    @workflow_node
     class MockupModule(ModuleAction):
         id: str = "demo"
         name: str = "Demo :: Dumb Module"

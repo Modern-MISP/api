@@ -10,7 +10,7 @@ from mmisp.db.models.admin_setting import AdminSetting
 from mmisp.db.models.workflow import Workflow
 from mmisp.workflows.graph import WorkflowGraph
 from mmisp.workflows.legacy import GraphFactory
-from mmisp.workflows.modules import MODULE_REGISTRY, TRIGGER_REGISTRY, Module, Trigger
+from mmisp.workflows.modules import NODE_REGISTRY, Module, Trigger
 
 from ...generators.model_generators.workflow_generator import (
     generate_workflows,
@@ -218,7 +218,7 @@ def test_workflow_triggers_get_all(client, site_admin_user_token) -> None:
 
     assert response.status_code == 200
 
-    triggers = TRIGGER_REGISTRY.modules.values()
+    triggers = NODE_REGISTRY.all().values()
     for trigger in triggers:
         if issubclass(trigger, Module):
             assert trigger.id not in response.text
@@ -232,7 +232,8 @@ def test_workflow_moduleIndex_get_all(client, site_admin_user_token) -> None:
 
     assert response.status_code == 200
 
-    modules = MODULE_REGISTRY.modules.values()
+    modules = NODE_REGISTRY.all().values()
+    print(modules)
     for module in modules:
         if issubclass(module, Trigger):
             assert module.id not in response.text
@@ -248,7 +249,7 @@ def test_workflow_moduleView(client, site_admin_user_token) -> None:
 
     assert response.status_code == 200
 
-    assert name in MODULE_REGISTRY.modules
+    assert name in NODE_REGISTRY.all()
 
 
 def test_workflow_toggleModule(client, site_admin_user_token, db, workflows) -> None:
