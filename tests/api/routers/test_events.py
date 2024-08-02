@@ -23,6 +23,22 @@ def test_add_event_valid_data(db, site_admin_user_token, client) -> None:
     delete_event(db, response_json["Event"]["id"])
 
 
+def test_add_event_date_empty_string(db, site_admin_user_token, client) -> None:
+    request_body = {"info": "test event", "date": ""}
+    headers = {"authorization": site_admin_user_token}
+    response = client.post("/events", json=request_body, headers=headers)
+
+    assert response.status_code == 200
+    response_json = response.json()
+    assert response_json["Event"]["info"] == request_body["info"]
+    assert "id" in response_json["Event"]["Org"]
+    assert "name" in response_json["Event"]["Org"]
+    assert "uuid" in response_json["Event"]["Org"]
+    assert "local" in response_json["Event"]["Org"]
+
+    delete_event(db, response_json["Event"]["id"])
+
+
 def test_get_existing_event(
     organisation, event, attribute, galaxy, galaxy_cluster, tag, site_admin_user_token, eventtag, client
 ) -> None:

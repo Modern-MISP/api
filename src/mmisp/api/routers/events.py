@@ -347,7 +347,7 @@ async def _add_event(auth: Auth, db: Session, body: AddEventBody) -> AddEditGetE
             **body.dict(),
             "org_id": int(body.org_id) if body.org_id is not None else auth.org_id,
             "orgc_id": int(body.orgc_id) if body.orgc_id is not None else auth.org_id,
-            "date": body.date if body.date is not None else date.today(),
+            "date": body.date if body.date else date.today(),
             "analysis": body.analysis if body.analysis is not None else "0",
             "timestamp": int(body.timestamp) if body.timestamp is not None else timegm(gmtime()),
             "threat_level_id": int(body.threat_level_id) if body.threat_level_id is not None else 4,
