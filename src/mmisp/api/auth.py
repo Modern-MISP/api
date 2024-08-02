@@ -87,7 +87,7 @@ async def _get_user(
     raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
 
-async def user_login_allowed(db: Session, user_id: int, api_login: bool) -> tuple[User, int | None]:
+async def user_login_allowed(db: Session, user_id: int, api_login: bool) -> User:
     user = await db.get(User, user_id)
     if user is not None:
         if not api_login and user.force_logout:
