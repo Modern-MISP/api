@@ -741,9 +741,6 @@ async def _auth_keys_view_own_depr(auth: Auth, db: Session) -> list[SearchGetAut
 
 
 def parse_date(date_str: str) -> int:
-    if not isinstance(date_str, str):
-        raise ValueError("Input must be a string")
-    
     if len(date_str) != 10 or date_str[4] != '-' or date_str[7] != '-':
         raise ValueError("Date must be in the format yyyy-mm-dd")
     
