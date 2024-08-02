@@ -358,7 +358,14 @@ async def _update_attribute(db: Session, attribute_id: str, body: EditAttributeB
     if not attribute:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
-    update_record(attribute, body.dict())
+    # first_seen/last_seen being an empty string is accepted by legacy MISP
+    # and implies "field is not set".
+    payload = body.dict()
+    for seen in ["first_seen", "last_seen"]:
+        if seen in payload and not payload[seen]:
+            payload[seen] = None
+
+    update_record(attribute, payload)
 
     logger = ApplicationLogger(db)
     virtual_user = await create_virtual_root_user(db)
