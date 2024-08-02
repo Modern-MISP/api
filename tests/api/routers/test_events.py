@@ -89,6 +89,30 @@ def test_update_existing_event(event, site_admin_user_token, client) -> None:
     assert response_json["Event"]["info"] == request_body["info"]
 
 
+def test_update_existing_event_has_rolled_back_transaction(
+    event, site_admin_user_token, client, failing_before_save_workflow, db
+) -> None:
+    request_body = {"info": "updated info"}
+    event_id = event.id
+
+    headers = {"authorization": site_admin_user_token}
+    response = client.put(f"events/{event_id}", json=request_body, headers=headers)
+
+    assert response.status_code == 400
+    db.refresh(event)
+    assert event.info == "test event"
+    assert len(db.execute(sa.select(Log).where(Log.model == "Workflow")).scalars().all()) == 3
+    assert db.execute(sa.select(Log.title).where(Log.model == "Workflow")).scalars().all() == [
+        "Started executing workflow for trigger `Event Before Save` (1)",
+        "Executed node `stop-execution`\n"
+        "Node `stop-execution` from Workflow `Before save workflow` (1) executed "
+        "successfully with status: partial-success",
+        "Finished executing workflow for trigger `Event Before Save` (1). Outcome: " "blocked",
+    ]
+    db.execute(sa.delete(Log))
+    db.commit()
+
+
 def test_update_non_existing_event(site_admin_user_token, client) -> None:
     request_body = {"info": "updated event"}
     headers = {"authorization": site_admin_user_token}

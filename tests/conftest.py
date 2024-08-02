@@ -30,6 +30,7 @@ from mmisp.workflows.modules import (
     ModuleAction,
     ModuleConfiguration,
     ModuleStopExecution,
+    TriggerEventBeforeSave,
     TriggerEventPublish,
     module_node,
 )
@@ -577,6 +578,49 @@ def unsupported_workflow(db):
         debug_enabled=False,
         data=WorkflowGraph(
             nodes={1: trigger, 2: module},
+            root=trigger,
+            frames=[],
+        ),
+    )
+    db.add(wf)
+    db.commit()
+    yield wf
+    db.delete(wf)
+    db.delete(setting)
+    db.commit()
+
+
+@pytest.fixture
+def failing_before_save_workflow(db):
+    setting = AdminSetting(setting="workflow_feature_enabled", value="True")
+    db.add(setting)
+    trigger = TriggerEventBeforeSave(
+        graph_id=1,
+        inputs={},
+        outputs={1: []},
+        apperance=Apperance((0, 0), False, "", None),
+    )
+    stop = ModuleStopExecution(
+        inputs={1: [(1, trigger)]},
+        graph_id=2,
+        outputs={},
+        apperance=Apperance((0, 0), False, "", None),
+        on_demand_filter=None,
+        configuration=ModuleConfiguration({"message": "Stopped publish of {{Event.info}}"}),
+    )
+    trigger.outputs[1].append((1, stop))
+
+    wf = Workflow(
+        id=1,
+        uuid=str(uuid.uuid4()),
+        name="Before save workflow",
+        description="",
+        timestamp=0,
+        enabled=True,
+        trigger_id=trigger.id,
+        debug_enabled=True,
+        data=WorkflowGraph(
+            nodes={1: trigger, 2: stop},
             root=trigger,
             frames=[],
         ),
