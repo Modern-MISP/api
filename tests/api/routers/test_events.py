@@ -222,6 +222,9 @@ def test_publish_existing_event_workflow_blocked(
     db.refresh(event)
     assert not event.published
 
+    # Terminate transaction to get new DB state.
+    db.commit()
+
     assert len(db.execute(sa.select(Log).where(Log.model == "Workflow")).scalars().all()) == 3
     assert db.execute(sa.select(Log.title).where(Log.model == "Workflow")).scalars().all() == [
         "Started executing workflow for trigger `Event Publish` (1)",
@@ -254,6 +257,8 @@ def test_unsupported_module_breaks_publish(
 
     db.refresh(event)
     assert not event.published
+    # Terminate transaction to get new DB state.
+    db.commit()
     assert len(db.execute(sa.select(Log).where(Log.model == "Workflow")).scalars().all()) == 1
     assert db.execute(sa.select(Log.title).where(Log.model == "Workflow")).scalars().all() == [
         "Workflow was not executed, because it contained unsupported modules with the following IDs: demo"
