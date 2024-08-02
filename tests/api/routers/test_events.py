@@ -1,5 +1,7 @@
 import sqlalchemy as sa
 
+from mmisp.db.models.log import Log
+
 
 def delete_event(db, id):
     stmt = sa.sql.text("DELETE FROM events WHERE id=:id")
@@ -171,15 +173,69 @@ def test_publish_existing_event(organisation, event, site_admin_user_token, clie
 
 
 def test_publish_existing_event_workflow_blocked(
-    organisation, event, site_admin_user_token, client, blocking_publish_workflow
+    organisation, event, site_admin_user_token, client, blocking_publish_workflow, db
 ) -> None:
+    event_id = event.id
+
+    # Ensure clean slate, other tests also log and there's
+    # no centralized cleaning up for that so far.
+    db.execute(sa.delete(Log))
+    db.commit()
+
+    assert len(db.execute(sa.select(Log).where(Log.model == "Workflow")).scalars().all()) == 0
+
+    headers = {"authorization": site_admin_user_token}
+    response = client.post(f"/events/publish/{event_id}", headers=headers)
+
+    assert response.status_code == 400
+    assert response.json() == {
+        "message": (
+            "Workflow 'event-publish' is blocking and failed with the following errors:\n"
+            "Stopped publish of test event"
+        )
+    }
+
+    db.refresh(event)
+    assert not event.published
+
+    assert len(db.execute(sa.select(Log).where(Log.model == "Workflow")).scalars().all()) == 3
+    assert db.execute(sa.select(Log.title).where(Log.model == "Workflow")).scalars().all() == [
+        "Started executing workflow for trigger `Event Publish` (1)",
+        (
+            "Executed node `stop-execution`\nNode `stop-execution` from Workflow `Demo workflow` "
+            "(1) executed successfully with status: partial-success"
+        ),
+        "Finished executing workflow for trigger `Event Publish` (1). Outcome: blocked",
+    ]
+
+    db.execute(sa.delete(Log))
+    db.commit()
+
+
+def test_unsupported_module_breaks_publish(
+    organisation, event, site_admin_user_token, client, unsupported_workflow, db
+):
     event_id = event.id
 
     headers = {"authorization": site_admin_user_token}
     response = client.post(f"/events/publish/{event_id}", headers=headers)
 
     assert response.status_code == 400
-    assert response.json() == {"detail": ["Stopped publish of test event"]}
+    assert response.json() == {
+        "message": (
+            "Workflow 'event-publish' is blocking and failed with the following errors:\n"
+            "Workflow could not be executed, because it contains unsupported modules with the following IDs: demo"
+        )
+    }
+
+    db.refresh(event)
+    assert not event.published
+    assert len(db.execute(sa.select(Log).where(Log.model == "Workflow")).scalars().all()) == 1
+    assert db.execute(sa.select(Log.title).where(Log.model == "Workflow")).scalars().all() == [
+        "Workflow was not executed, because it contained unsupported modules with the following IDs: demo"
+    ]
+    db.execute(sa.delete(Log))
+    db.commit()
 
 
 def test_publish_invalid_event(site_admin_user_token, client) -> None:
