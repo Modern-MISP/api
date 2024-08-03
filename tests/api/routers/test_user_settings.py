@@ -324,7 +324,7 @@ def test_delete_user_setting_lesser_perms(
     assert response.status_code == 404
 
 
-def test_get_user_setting_deprecated_endpoint(
+def test_get_user_setting_depr(
     db, instance_owner_org_admin_user, instance_owner_org_admin_user_token, client
 ) -> None:
     user_setting = generate_user_setting()
