@@ -322,3 +322,26 @@ def test_delete_user_setting_lesser_perms(
     db.commit()
 
     assert response.status_code == 404
+
+
+def test_get_user_setting_deprecated_endpoint(
+    db, instance_owner_org_admin_user, instance_owner_org_admin_user_token, client
+) -> None:
+    user_setting = generate_user_setting()
+    user_setting.user_id = instance_owner_org_admin_user.id
+
+    db.add(user_setting)
+    db.commit()
+    db.refresh(user_setting)
+
+    headers = {"authorization": instance_owner_org_admin_user_token}
+    response = client.get(f"/user_settings/view/{user_setting.id}", headers=headers)
+
+    db.delete(user_setting)
+    db.commit()
+
+    assert response.status_code == 200
+    json = response.json()
+
+    assert json["UserSetting"]["id"] == str(user_setting.id)
+    assert isinstance(json["UserSetting"], dict)
