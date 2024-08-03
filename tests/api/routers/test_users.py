@@ -357,3 +357,69 @@ def test_users_delete_non_existent_user(site_admin_user_token, client) -> None:
     response = client.delete("/users/999999999999", headers=headers)
     assert response.status_code == 404
     assert response.json().get("detail") == "User not found"
+
+
+def test_delete_user_token_stub(site_admin_user_token, client) -> None:
+    headers = {"authorization": site_admin_user_token}
+    response = client.delete("/users/tokens/1", headers=headers)
+    assert response.status_code == 200
+
+
+def test_get_user_not_found(site_admin_user_token, client, db) -> None:
+    user_id = "non_existent_user_id"
+
+    response = client.get(
+        f"/users/view/{user_id}",
+        headers={"authorization": site_admin_user_token},
+    )
+    assert response.status_code == 404
+    assert response.json().get("detail") == "User not found"
+
+
+def test_update_user_not_found(site_admin_user_token, client, db) -> None:
+    user_id = "non_existent_user_id"
+
+    response = client.put(
+        f"/users/{user_id}",
+        headers={"authorization": site_admin_user_token},
+        json={"email": "new_email@test.com"}
+    )
+    assert response.status_code == 404
+    assert response.json().get("detail") == "User not found"
+
+
+def test_update_user_attributes(site_admin_user_token, client, db, view_only_user) -> None:
+    user_id = view_only_user.id
+    headers = {"authorization": site_admin_user_token}
+    body = {
+        "authkey": "new_authkey",
+        "email": "new_email@test.com",
+        "autoalert": True,
+        "pgpkey": "new_pgpkey",
+        "certif_public": "new_certif_public",
+        "termsaccepted": True,
+        "change_pw": False,
+        "contactalert": True,
+        "disabled": False,
+        "expiration": "2024-12-31T23:59:59",
+        "force_logout": True,
+        "external_auth_required": True,
+        "external_auth_key": "new_external_auth_key",
+        "notification_daily": True,
+        "notification_weekly": False,
+        "notification_monthly": False,
+        "totp": "new_totp",
+        "hotp_counter": "5",
+        "nids_sid": 54321
+    }
+
+    response = client.put(
+        f"/users/{user_id}",
+        headers=headers,
+        json=body
+    )
+    assert response.status_code == 200
+    response_user = response.json().get("user")
+    for key, value in body.items():
+        if key in response_user:
+            assert response_user[key] == value
