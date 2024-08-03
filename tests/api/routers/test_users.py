@@ -272,3 +272,88 @@ def test_delete_user(site_admin_user_token, site_admin_role, site_admin_user, cl
 
     user = db.execute(user_query).scalars().first()
     assert user is None
+
+
+def test_users_me_unauthorized(client) -> None:
+    response = client.get("/users/view/me")
+    assert response.status_code == 403
+
+
+def test_users_create_missing_fields(site_admin_user_token, client) -> None:
+    response = client.post(
+        "/users",
+        headers={"authorization": site_admin_user_token},
+        json={
+            "authkey": "test",
+            "email": "",
+            "password": "",
+            "name": "",
+            "role": "",
+            "org": "",
+            "nids_sid": "12345",
+            "disabled": False,
+            "contactalert": False,
+            "invited_by": "",
+            "notification_daily": False,
+            "notification_weekly": True,
+            "notification_monthly": True,
+            "termsaccepted": False,
+        },
+    )
+    assert response.status_code == 404
+
+
+def test_users_create_duplicate_email(site_admin_user_token, site_admin_user, site_admin_role, client, db) -> None:
+    email = site_admin_user.email
+    name = "test_user" + str(time())
+
+    response = client.post(
+        "/users",
+        headers={"authorization": site_admin_user_token},
+        json={
+            "authkey": "test",
+            "email": email,
+            "password": "test",
+            "name": name,
+            "role": site_admin_role.id,
+            "org": site_admin_user.org_id,
+            "nids_sid": "12345",
+            "disabled": False,
+            "contactalert": False,
+            "invited_by": site_admin_user.id,
+            "notification_daily": False,
+            "notification_weekly": True,
+            "notification_monthly": True,
+            "termsaccepted": False,
+        },
+    )
+    assert response.status_code == 406
+    assert response.json().get("detail") == "User already exists with this email"
+
+
+def test_users_edit_unauthorized(client, view_only_user) -> None:
+    user_id = view_only_user.id
+    email = view_only_user.email
+
+    response = client.put(f"users/{user_id}", json={"email": email + "test"})
+    assert response.status_code == 403
+
+
+def test_user_view_by_invalid_ID(site_admin_user_token, client) -> None:
+    headers = {"authorization": site_admin_user_token}
+    response = client.get("/users/view/invalid_id", headers=headers)
+    assert response.status_code == 404
+
+
+def test_user_view_non_existent_ID(site_admin_user_token, client) -> None:
+    headers = {"authorization": site_admin_user_token}
+    response = client.get("/users/view/999999999999", headers=headers)
+    assert response.status_code == 404
+    assert response.json().get("detail") == "User not found"
+
+
+def test_users_delete_non_existent_user(site_admin_user_token, client) -> None:
+    headers = {"authorization": site_admin_user_token}
+    response = client.delete("/users/999999999999", headers=headers)
+    assert response.status_code == 404
+    assert response.json().get("detail") == "User not found"
