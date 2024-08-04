@@ -70,7 +70,7 @@ async def logs_index_post(
     return transform_logs_to_response(logs)
 
 
-def transform_logs_to_response(logs: Sequence[Log]) -> dict:
+def transform_logs_to_response(logs: Sequence[Log]) -> List[Any]:
     result = []
 
     for log in logs:
