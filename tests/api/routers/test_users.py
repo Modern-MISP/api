@@ -480,11 +480,8 @@ def test_users_edit_no_permission(db: Session, read_only_user_token, client, sit
 
 
 def test_user_view_by_ID_no_permission(db: Session, read_only_user_token, client) -> None:
-    user_id = db.execute(select(User.id)).scalars().first()
-    assert user_id is not None
-
     headers = {"authorization": read_only_user_token}
-    response = client.get(f"/users/view/{user_id}", headers=headers)
+    response = client.get(f"/users/view/{2}", headers=headers)
 
     assert response.status_code == 401
 
