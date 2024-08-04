@@ -312,7 +312,8 @@ async def redirect_to_frontend(
     if not user.sub:
         user.sub = user_info["sub"]
         await db.commit()
-
+    user.last_login = int(datetime.now().timestamp())
+    await db.commit() 
     return TokenResponse(
         token=encode_token(str(user.id)),
     )
