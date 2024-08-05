@@ -472,7 +472,7 @@ async def moduleView(
     - **module_id** The ID of the module.
     """
 
-    all_modules = NODE_REGISTRY.modules.values()
+    all_modules = NODE_REGISTRY.all().values()
 
     for module in all_modules:
         if module.id == module_id:
@@ -487,7 +487,7 @@ async def moduleView(
             name="Invalid trigger ID",
             message="Invalid trigger ID",
             url=f"/workflows/moduleView/{module_id}",
-        ),
+        ).dict(),
     )
 
 
