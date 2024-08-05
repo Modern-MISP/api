@@ -393,7 +393,26 @@ async def _edit_servers_by_id(auth: Auth, db: Session, org_id: str, body: EditSe
             server[0].skip_proxy = body.skip_proxy
             await db.commit()
             await db.refresh(server[0])
-            response.append(server[0])
+            remote_server = GetRemoteServersResponse(
+                id=server[0].id,
+                name=server[0].name,
+                url=server[0].url,
+                authkey=server[0].authkey,
+                org_id=server[0].org_id,
+                push=server[0].push,
+                pull=server[0].pull,
+                push_sightings=server[0].push_sightings,
+                push_galaxy_clusters=server[0].push_galaxy_clusters,
+                pull_galaxy_clusters=server[0].pull_galaxy_clusters,
+                remote_org_id=server[0].remote_org_id,
+                publish_without_email=server[0].publish_without_email,
+                unpublish_event=server[0].unpublish_event,
+                self_signed=server[0].self_signed,
+                internal=server[0].internal,
+                skip_proxy=server[0].skip_proxy,
+                caching_enabled=server[0].caching_enabled,
+                priority=server[0].priority
+            )
+            response.append(remote_server)
 
     return response
-

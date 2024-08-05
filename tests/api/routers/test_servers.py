@@ -233,3 +233,52 @@ def test_create_server_with_missing_fields(site_admin_user_token, client) -> Non
         },
     )
     assert response.status_code == 422
+
+def test_edit_server(db,site_admin_user_token,client, instance_two_server)->None:
+        request= {
+            "name": "server",
+            "url": "test.url",
+            "priority": 1,
+            "authkey": "abc",
+            "remote_org_id": 10,
+            "internal": False,
+            "push": True,
+            "pull": True,
+            "pull_rules": "rule1",
+            "push_rules": "rule2",
+            "push_galaxy_clusters": True,
+            "caching_enabled": True,
+            "unpublish_event": False,
+            "publish_without_email": True,
+            "self_signed": False,
+            "skip_proxy": True,
+        }
+        edit_response = client.post(f"/servers/remote/edit/{instance_two_server.org_id}",
+        headers={"authorization": site_admin_user_token},
+        json= request,
+        )
+        
+
+        edit_response_json = edit_response.json()
+        assert isinstance(edit_response_json, list)
+        assert edit_response_json[len(edit_response_json) - 1] is not None
+        serv = edit_response_json[len(edit_response_json) - 1]
+        assert serv["id"] == instance_two_server.id
+        assert serv["name"] == request["name"]
+        assert serv["url"] == request["url"]
+        assert serv["authkey"] == request["authkey"]
+        assert serv["org_id"] == instance_two_server.org_id
+        assert serv["push"] == request["push"]
+        assert serv["pull"] == request["pull"]
+        assert serv["push_sightings"] == instance_two_server.push_sightings
+        assert serv["push_galaxy_clusters"] == request["push_galaxy_clusters"]
+        assert serv["pull_galaxy_clusters"] == instance_two_server.pull_galaxy_clusters
+        assert serv["remote_org_id"] == request["remote_org_id"]
+        assert serv["publish_without_email"] == request["publish_without_email"]
+        assert serv["unpublish_event"] == request["unpublish_event"]
+        assert serv["self_signed"] == request["self_signed"]
+        assert serv["internal"] == request["internal"]
+        assert serv["skip_proxy"] == request["skip_proxy"]
+        assert serv["caching_enabled"] == request["caching_enabled"]
+        assert serv["priority"] == request["priority"]
+
