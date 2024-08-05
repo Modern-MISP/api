@@ -211,3 +211,25 @@ def test_delete_remote_server_generated(site_admin_user_token, client, db, gener
     db.commit()
     server_deleted = db.execute(query).scalars().first()
     assert server_deleted is None
+
+
+def test_unauthorized_access(client, server) -> None:
+    response = client.get(f"/servers/remote/{server.id}")
+    assert response.status_code == 403
+
+
+def test_invalid_server_id(site_admin_user_token, client) -> None:
+    invalid_id = 99999
+    response = client.get(f"/servers/remote/{invalid_id}", headers={"authorization": site_admin_user_token})
+    assert response.status_code == 404
+
+
+def test_create_server_with_missing_fields(site_admin_user_token, client) -> None:
+    response = client.post(
+        "/servers/remote/add",
+        headers={"authorization": site_admin_user_token},
+        json={
+            "name": "missing_fields_server",
+        },
+    )
+    assert response.status_code == 422
