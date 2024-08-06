@@ -66,6 +66,8 @@ from mmisp.workflows.modules import (
     Trigger,
 )
 
+from ..error import LegacyMISPCompatibleHTTPException
+
 router = APIRouter(tags=["workflows"])
 
 
@@ -160,9 +162,10 @@ async def edit_workflow(
     await workflow.data.initialize_graph_modules(db)
     result = workflow.data.check()
     if not result.is_valid():
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=GraphValidation.report(result).dict(),
+        report = GraphValidation.report_as_str(result, workflow.data)
+        raise LegacyMISPCompatibleHTTPException(
+            status=status.HTTP_400_BAD_REQUEST,
+            message=f"Refusing to save invalid graph:\n{report}",
         )
     await db.commit()
     await db.refresh(workflow)
