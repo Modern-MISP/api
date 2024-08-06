@@ -32,12 +32,12 @@ def test_get_statistics(client,
     assert response_json["users"] == 2
     assert response_json["eventCreatorOrgs"] == 1
     assert response_json["events"] == 5
-    assert response_json["organisations"] <= 3
-    assert response_json["localOrganisations"] <= 3
-    assert response_json["attributes"] <= 3
+    assert response_json["organisations"] == 2
+    assert response_json["localOrganisations"] == 2
+    assert response_json["attributes"] == 2
     assert response_json["eventAttributes"] == 2
     assert response_json["usersWithGPGKeys"] == 1
-    assert response_json["averageUsersPerOrg"] == 0.6666666666666666
+    assert response_json["averageUsersPerOrg"] == 1.0
 
 def test_get_statistics_by_org_users(client,
                               site_admin_user,
