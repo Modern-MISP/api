@@ -56,6 +56,7 @@ from mmisp.db.models.object import Object
 from mmisp.db.models.organisation import Organisation
 from mmisp.db.models.tag import Tag
 from mmisp.db.models.user import User
+from mmisp.lib.actions import action_publish_event
 from mmisp.lib.logging import ApplicationLogger
 from mmisp.util.models import update_record
 from mmisp.util.partial import partial
@@ -502,11 +503,7 @@ async def _publish_event(db: Session, event_id: str, request: Request) -> Publis
         if not execution_result:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=messages)
 
-    setattr(event, "published", True)
-    setattr(event, "publish_timestamp", timegm(gmtime()))
-
-    await db.commit()
-    await db.refresh(event)
+    await action_publish_event(db, event)
 
     return PublishEventResponse(
         saved=True, success=True, name="Job queued", message="Job queued", url=str(request.url.path), id=str(event_id)
