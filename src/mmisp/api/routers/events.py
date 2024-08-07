@@ -238,7 +238,6 @@ async def rest_search_events(
 @router.post(
     "/events/index",
     status_code=status.HTTP_200_OK,
-    response_model=list[IndexEventsAttributes],
     summary="Search events",
 )
 async def index_events(
