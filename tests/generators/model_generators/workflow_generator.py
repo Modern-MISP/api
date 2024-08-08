@@ -13,14 +13,22 @@ def generate_workflows() -> List[Workflow]:
     workflows: List[Workflow] = []
     for json_workflow in json_workflows:
         workflow: Workflow = json_dict_to_workflow_entity(json_workflow)
-        workflows.append(workflow)
+        workflows.append(
+            Workflow(
+                name=workflow.name,
+                description=workflow.description,
+                timestamp=workflow.timestamp,
+                data=workflow.data,
+                trigger_id=workflow.trigger_id,
+            )
+        )
     return workflows
 
 
 def genrerate_workflow_with_id(id: int) -> Workflow:
     workflow = loads("""{
     "Workflow": {
-        "id": "1234",
+        "id": "78132549",
         "uuid": "17fa92d1-7b40-444c-8629-a0686965d38b",
         "name": "Workflow for testing",
         "description": "",
@@ -292,7 +300,7 @@ def event_after_save_workflow() -> Dict[str, Any]:
 def attribute_after_save_workflow() -> Dict[str, Any]:
     return loads("""{
     "Workflow": {
-        "id": "15",
+        "id": "1347617125",
         "uuid": "17fa92d1-7b40-444c-8629-a0686965d38b",
         "name": "Workflow for trigger attribute-after-save",
         "description": "",

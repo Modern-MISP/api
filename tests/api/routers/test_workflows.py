@@ -5,6 +5,7 @@ from typing import List, cast
 import pytest
 from sqlalchemy.future import select
 
+from mmisp.api_schemas.responses.check_graph_response import CheckGraphResponse
 from mmisp.db.database import Session
 from mmisp.db.models.admin_setting import AdminSetting
 from mmisp.db.models.workflow import Workflow
@@ -51,7 +52,6 @@ def test_workflows_index(db, site_admin_user_token, client, workflows) -> None:
         assert db_workflow.uuid == response_workflow["uuid"]
 
 
-# idk how to give form data into an request. will try later
 def test_workflow_edit_edit_existing(db, site_admin_user_token, client) -> None:
     id: int = 50
     headers = {
@@ -91,7 +91,36 @@ def test_workflow_edit_edit_existing(db, site_admin_user_token, client) -> None:
     db.commit()
 
 
-def test_edit_workflow_invalid(db, site_admin_user_token, client, workflows) -> None:
+def test_check_graph(db, site_admin_user_token, client):
+    id: int = 50
+    headers = {
+        "authorization": site_admin_user_token,
+        "accept": "application/json",
+    }
+
+    new_workflow = genrerate_workflow_with_id(id)
+    db.add(new_workflow)
+    db.commit()
+    db.refresh(new_workflow)
+    data = json.dumps(GraphFactory.graph2jsondict(new_workflow.data))
+
+    payload = {
+        "graph": data,
+    }
+    response = client.post("/workflows/checkGraph", headers=headers, data=payload)
+
+    assert response.status_code == 200
+    check_graph_json = json.loads(response.text)
+    check_graph_response: CheckGraphResponse = CheckGraphResponse(**check_graph_json)
+    assert check_graph_response.is_acyclic.is_acyclic
+    assert not check_graph_response.multiple_output_connection.has_multiple_output_connection
+    assert not check_graph_response.path_warnings.has_path_warnings
+    assert check_graph_response.unsupported_modules == []
+    db.delete(new_workflow)
+    db.commit()
+
+
+def test_edit_workflow_invalid(site_admin_user_token, client, workflows) -> None:
     headers = {
         "authorization": site_admin_user_token,
         "accept": "application/json",
