@@ -300,7 +300,7 @@ def test_workflow_toggleWorkflows(client, site_admin_user_token, db) -> None:
     assert admin_setting_disabled == "False"
 
 
-def test_workflow_workflowSetting(client, site_admin_user_token, db) -> None:
+def test_workflow_workflowSetting(client, site_admin_user_token) -> None:
     headers = {"authorization": site_admin_user_token}
     assert client.post("/workflows/toggleWorkflows/0", headers=headers).status_code == 200
 
@@ -314,6 +314,26 @@ def test_workflow_workflowSetting(client, site_admin_user_token, db) -> None:
     response_true = client.get("/workflows/workflowsSetting", headers=headers)
     assert response_true.status_code == 200
     assert response_true.text == "true"
+
+
+def test_workflow_debugToggle(client, site_admin_user_token, db, workflows) -> None:
+    id: int = 50
+    headers = {"authorization": site_admin_user_token}
+    assert client.post(f"/workflows/debugToggleField/{id}/0", headers=headers).status_code == 200
+
+    workflow_disabled: Workflow | None = db.get(Workflow, id)
+    assert workflow_disabled is not None
+    assert not workflow_disabled.debug_enabled
+
+    headers = {"authorization": site_admin_user_token}
+    assert client.post(f"/workflows/debugToggleField/{id}/1", headers=headers).status_code == 200
+
+    db.commit()
+    workflow_enabled: Workflow | None = db.get(Workflow, id)
+    db.refresh(workflow_enabled)
+
+    assert workflow_enabled is not None
+    assert workflow_enabled.debug_enabled
 
 
 def get_admin_setting(setting_name: str, db: Session) -> str:

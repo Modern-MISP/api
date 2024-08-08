@@ -567,7 +567,7 @@ async def toggleModule(
 async def checkGraph(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
-    request: Request,
+    request: Request,  # 'Request' because it gets form data from the frontend.
 ) -> CheckGraphResponse:
     """
     Checks if the given graph is correct.
@@ -599,7 +599,8 @@ async def toggleWorkflows(
     """
     Enable/ disable the workflow feature. Respons with a success status.
 
-    Globally enables/ disables the workflow feature in your MISP instance.
+    Globally enables/ disables the workflow feature in your MISP instance, not a single workflow.
+    A single workflow is enabled through it's corresponding trigger.
     """
     await set_admin_setting(workflow_setting_name, str(enabled), db)
     return StandardStatusResponse(
