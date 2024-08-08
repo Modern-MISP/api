@@ -352,12 +352,12 @@ async def _add_user(auth: Auth, db: Session, body: AddUserBody) -> AddUserRespon
     if user_result.scalar_one_or_none() is not None:
         raise HTTPException(status.HTTP_406_NOT_ACCEPTABLE, detail="User already exists with this email")
 
-    org = await db.get(Organisation, body.org)
+    org = await db.get(Organisation, body.org_id)
 
     if not org:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Organisation not found")
 
-    role = await db.get(Role, body.role)
+    role = await db.get(Role, body.role_id)
 
     if not role:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Role not found")
@@ -651,10 +651,10 @@ async def _update_user(auth: Auth, db: Session, userID: str, body: UserAttribute
         name.value = json.dumps({"name": str(settings["name"])})
         await db.commit()
         await db.refresh(name)
-    if settings.get("org") is not None:
-        user.org_id = settings["org"]
-    if settings.get("role") is not None:
-        user.role_id = settings["role"]
+    if settings.get("org_id") is not None:
+        user.org_id = settings["org_id"]
+    if settings.get("role_id") is not None:
+        user.role_id = settings["role_id"]
     if settings.get("authkey") is not None:
         user.authkey = settings["authkey"]
     if settings.get("email") is not None:
@@ -663,8 +663,8 @@ async def _update_user(auth: Auth, db: Session, userID: str, body: UserAttribute
         user.autoalert = settings["autoalert"]
     if settings.get("invited_by") is not None:
         user.invited_by = settings["invited_by"]
-    if settings.get("pgpkey") is not None:
-        user.gpgkey = settings["pgpkey"]
+    if settings.get("gpgkey") is not None:
+        user.gpgkey = settings["gpgkey"]
     if settings.get("certif_public") is not None:
         user.certif_public = settings["certif_public"]
     if settings.get("termsaccepted") is not None:
