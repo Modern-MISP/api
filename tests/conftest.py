@@ -79,7 +79,7 @@ def connection(event_loop):
 
     engine = create_engine(url, echo=True)
     #    Base.metadata.drop_all(engine)
-    Base.metadata.drop_all(engine)
+    # Base.metadata.drop_all(engine)
     Base.metadata.create_all(engine)
     yield sessionmaker(autocommit=False, autoflush=False, expire_on_commit=False, bind=engine)
     Base.metadata.drop_all(engine)
