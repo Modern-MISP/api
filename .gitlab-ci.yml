@@ -37,7 +37,7 @@ build_image:
       --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
       --build-arg LIB_REPO_URL=${LIB_REPO_URL}
       --build-arg BRANCH=${CI_COMMIT_BRANCH}
-      --build-arg INSTALL_LIB=true 
+      --build-arg INSTALL_LIB=true
       --destination ${REGISTRY_DOMAIN}/${REGISTRY_PROJECT}/api:${CI_COMMIT_BRANCH}
       --destination ${REGISTRY_DOMAIN}/${REGISTRY_PROJECT}/api:${CI_COMMIT_SHA}
 
@@ -94,7 +94,7 @@ pytest_coverage_combine:
   image: ${REGISTRY_DOMAIN}/${REGISTRY_PROJECT}/api:${CI_COMMIT_SHA}
   script:
     - coverage combine
-    - coverage xml 
+    - coverage xml
     - coverage report
   coverage: '/TOTAL.*\s+(\d+%)$/'
   artifacts:
@@ -123,28 +123,7 @@ legacy_misp:
   stage: test
   image: ${REGISTRY_DOMAIN}/${REGISTRY_PROJECT}/api:${CI_COMMIT_SHA}
   script:
-    - sleep 60
-    - curl -v http://misp-core/users/heartbeat
-    - sleep 60
-    - date
-    - |
-      python -c "
-      import time
-      import mysql.connector
-      from icecream import ic
-      conn = mysql.connector.connect(user='root', password='misp', host='db', database='misp')
-      conn.autocommit = True
-      value = 1
-      while value < 120:
-          cursor = conn.cursor();
-          cursor.execute(\"SELECT description, \`change\` FROM logs ORDER by id DESC LIMIT 5\");
-          print(cursor.fetchall())
-          cursor.execute(\"SELECT value FROM admin_settings WHERE setting='db_version'\");
-          value = int(cursor.fetchone()[0])
-          print('DB Version is', value)
-          cursor.close()
-          time.sleep(5)
-      conn.close()"
+    - while [ ! -f "$MISP_READY_FILE" ]; do sleep 10; done
     - pytest tests/compatibility_tests
   services:
     - name: mariadb:latest
@@ -174,6 +153,7 @@ legacy_misp:
     WORKER_URL: https://worker.mmisp.service
     DASHBOARD_URL: https://dashboard.mmisp.service
     DEBUG: true
+    MISP_READY_FILE: '${CI_PROJECT_DIR}/misp_ready'
 
 generate_mkdocs:
   before_script: []
