@@ -56,6 +56,7 @@ from mmisp.db.models.object import Object
 from mmisp.db.models.organisation import Organisation
 from mmisp.db.models.tag import Tag
 from mmisp.db.models.user import User
+from mmisp.lib.actions import action_publish_event
 from mmisp.util.models import update_record
 from mmisp.util.partial import partial
 
@@ -479,11 +480,7 @@ async def _publish_event(db: Session, event_id: str, request: Request) -> Publis
 
     await execute_blocking_workflow("event-publish", db, event)
 
-    setattr(event, "published", True)
-    setattr(event, "publish_timestamp", timegm(gmtime()))
-
-    await db.commit()
-    await db.refresh(event)
+    await action_publish_event(db, event)
 
     return PublishEventResponse(
         saved=True, success=True, name="Job queued", message="Job queued", url=str(request.url.path), id=str(event_id)
