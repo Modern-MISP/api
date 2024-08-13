@@ -7,6 +7,7 @@ from sqlalchemy import and_, select
 from sqlalchemy.sql.expression import Select
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
+from mmisp.api_schemas.responses.standard_status_response import StandardStatusResponse
 from mmisp.api_schemas.sightings import (
     SightingAttributesResponse,
     SightingCreateBody,
@@ -14,12 +15,13 @@ from mmisp.api_schemas.sightings import (
     SightingOrganisationResponse,
     SightingsGetResponse,
 )
-from mmisp.api_schemas.standard_status_response import StandardStatusResponse
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.attribute import Attribute
 from mmisp.db.models.event import Event
 from mmisp.db.models.organisation import Organisation
 from mmisp.db.models.sighting import Sighting
+
+from ..workflow import execute_workflow
 
 router = APIRouter(tags=["sightings"])
 
@@ -195,6 +197,7 @@ async def _add_sighting(db: Session, body: SightingCreateBody) -> list[SightingA
             db.add(sighting)
             await db.flush()
             await db.refresh(sighting)
+            await execute_workflow("sighting-after-save", db, attribute)
 
             organisation: Organisation | None = await db.get(Organisation, sighting.org_id)
 
@@ -238,6 +241,7 @@ async def _add_sightings_at_index(db: Session, attribute_id: int) -> SightingAtt
     db.add(sighting)
     await db.commit()
     await db.refresh(sighting)
+    await execute_workflow("sighting-after-save", db, attribute)
 
     organisation: Organisation | None = await db.get(Organisation, sighting.org_id)
 

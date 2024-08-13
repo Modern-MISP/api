@@ -27,7 +27,7 @@ from mmisp.api_schemas.auth_keys import (
     ViewAuthKeyResponseWrapper,
     ViewAuthKeysResponse,
 )
-from mmisp.api_schemas.standard_status_response import StandardStatusIdentifiedResponse
+from mmisp.api_schemas.responses.standard_status_response import StandardStatusIdentifiedResponse
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.auth_key import AuthKey
 from mmisp.db.models.user import User

@@ -1,7 +1,9 @@
 import asyncio
 import string
+import uuid
 from contextlib import ExitStack
-from typing import Generator
+from dataclasses import dataclass
+from typing import Generator, Self, Tuple
 
 import pytest
 from fastapi.testclient import TestClient
@@ -9,16 +11,29 @@ from icecream import ic
 from nanoid import generate
 from sqlalchemy import create_engine
 from sqlalchemy.engine.url import make_url
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session, sessionmaker
 
 from mmisp.api.auth import encode_token
 from mmisp.api.main import init_app
 from mmisp.db.config import config
 from mmisp.db.database import Base
+from mmisp.db.models.admin_setting import AdminSetting
 from mmisp.db.models.event import EventTag
 from mmisp.db.models.galaxy_cluster import GalaxyCluster
 from mmisp.db.models.sharing_group import SharingGroupOrg, SharingGroupServer
+from mmisp.db.models.workflow import Workflow
 from mmisp.util.crypto import hash_secret
+from mmisp.workflows.graph import Apperance, WorkflowGraph
+from mmisp.workflows.input import WorkflowInput
+from mmisp.workflows.modules import (
+    ModuleAction,
+    ModuleConfiguration,
+    ModuleStopExecution,
+    TriggerEventBeforeSave,
+    TriggerEventPublish,
+    workflow_node,
+)
 from tests.generators.model_generators.auth_key_generator import generate_auth_key
 from tests.generators.model_generators.server_generator import generate_server
 
@@ -64,8 +79,10 @@ def connection(event_loop):
 
     engine = create_engine(url, echo=True)
     #    Base.metadata.drop_all(engine)
+    # Base.metadata.drop_all(engine)
     Base.metadata.create_all(engine)
     yield sessionmaker(autocommit=False, autoflush=False, expire_on_commit=False, bind=engine)
+    Base.metadata.drop_all(engine)
 
 
 @pytest.fixture(scope="function")
@@ -471,4 +488,146 @@ def auth_key(db, site_admin_user):
     yield clear_key, auth_key
 
     db.delete(auth_key)
+    db.commit()
+
+
+@pytest.fixture
+def blocking_publish_workflow(db):
+    setting = AdminSetting(setting="workflow_feature_enabled", value="True")
+    db.add(setting)
+    trigger = TriggerEventPublish(
+        graph_id=1,
+        inputs={},
+        outputs={1: []},
+        apperance=Apperance((0, 0), False, "", None),
+    )
+    publish = ModuleStopExecution(
+        inputs={1: [(1, trigger)]},
+        graph_id=2,
+        outputs={},
+        apperance=Apperance((0, 0), False, "", None),
+        on_demand_filter=None,
+        configuration=ModuleConfiguration({"message": "Stopped publish of {{Event.info}}"}),
+    )
+    trigger.outputs[1].append((1, publish))
+
+    wf = Workflow(
+        id=1,
+        uuid=str(uuid.uuid4()),
+        name="Demo workflow",
+        description="",
+        timestamp=0,
+        enabled=True,
+        trigger_id=trigger.id,
+        debug_enabled=True,
+        data=WorkflowGraph(
+            nodes={1: trigger, 2: publish},
+            root=trigger,
+            frames=[],
+        ),
+    )
+    db.add(wf)
+    db.commit()
+    yield wf
+    db.delete(wf)
+    db.delete(setting)
+    db.commit()
+
+
+@pytest.fixture
+def unsupported_workflow(db):
+    setting = AdminSetting(setting="workflow_feature_enabled", value="True")
+    db.add(setting)
+    trigger = TriggerEventPublish(
+        graph_id=1,
+        inputs={},
+        outputs={1: []},
+        apperance=Apperance((0, 0), False, "", None),
+    )
+
+    @dataclass
+    @workflow_node
+    class MockupModule(ModuleAction):
+        id: str = "demo"
+        name: str = "Demo :: Dumb Module"
+        description: str = "..."
+        icon: str = "none"
+        supported: bool = False
+
+        async def exec(self: Self, payload: WorkflowInput, db: AsyncSession) -> Tuple[bool, Self | None]:
+            return True, None
+
+    module = MockupModule(
+        graph_id=2,
+        inputs={0: [(0, trigger)]},
+        outputs={},
+        configuration=ModuleConfiguration({}),
+        on_demand_filter=None,
+        apperance=Apperance((0, 0), False, "mock", None),
+    )
+    trigger.outputs[1].append((1, module))
+
+    wf = Workflow(
+        id=1,
+        uuid=str(uuid.uuid4()),
+        name="Demo workflow",
+        description="",
+        timestamp=0,
+        enabled=True,
+        trigger_id=trigger.id,
+        debug_enabled=False,
+        data=WorkflowGraph(
+            nodes={1: trigger, 2: module},
+            root=trigger,
+            frames=[],
+        ),
+    )
+    db.add(wf)
+    db.commit()
+    yield wf
+    db.delete(wf)
+    db.delete(setting)
+    db.commit()
+
+
+@pytest.fixture
+def failing_before_save_workflow(db):
+    setting = AdminSetting(setting="workflow_feature_enabled", value="True")
+    db.add(setting)
+    trigger = TriggerEventBeforeSave(
+        graph_id=1,
+        inputs={},
+        outputs={1: []},
+        apperance=Apperance((0, 0), False, "", None),
+    )
+    stop = ModuleStopExecution(
+        inputs={1: [(1, trigger)]},
+        graph_id=2,
+        outputs={},
+        apperance=Apperance((0, 0), False, "", None),
+        on_demand_filter=None,
+        configuration=ModuleConfiguration({"message": "Stopped publish of {{Event.info}}"}),
+    )
+    trigger.outputs[1].append((1, stop))
+
+    wf = Workflow(
+        id=1,
+        uuid=str(uuid.uuid4()),
+        name="Before save workflow",
+        description="",
+        timestamp=0,
+        enabled=True,
+        trigger_id=trigger.id,
+        debug_enabled=True,
+        data=WorkflowGraph(
+            nodes={1: trigger, 2: stop},
+            root=trigger,
+            frames=[],
+        ),
+    )
+    db.add(wf)
+    db.commit()
+    yield wf
+    db.delete(wf)
+    db.delete(setting)
     db.commit()

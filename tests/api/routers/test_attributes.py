@@ -160,6 +160,7 @@ def test_edit_existing_attribute(db: Session, site_admin_user_token, sharing_gro
         "distribution": "1",
         "comment": "new comment",
         "disable_correlation": False,
+        "first_seen": "",
     }
     event.sharing_group_id = sharing_group.id
     db.commit()
@@ -199,6 +200,9 @@ def test_edit_existing_attribute(db: Session, site_admin_user_token, sharing_gro
     assert "first_seen" in response_json["Attribute"]
     assert "last_seen" in response_json["Attribute"]
     assert "tag" in response_json["Attribute"]
+    assert "first_seen" in response_json["Attribute"]
+
+    assert response_json["Attribute"]["first_seen"] is None
 
 
 def test_edit_non_existing_attribute(site_admin_user_token, client) -> None:

@@ -56,8 +56,11 @@ from mmisp.db.models.object import Object
 from mmisp.db.models.organisation import Organisation
 from mmisp.db.models.tag import Tag
 from mmisp.db.models.user import User
+from mmisp.lib.actions import action_publish_event
 from mmisp.util.models import update_record
 from mmisp.util.partial import partial
+
+from ..workflow import execute_blocking_workflow, execute_workflow
 
 router = APIRouter(tags=["events"])
 
@@ -344,7 +347,7 @@ async def _add_event(auth: Auth, db: Session, body: AddEventBody) -> AddEditGetE
             **body.dict(),
             "org_id": int(body.org_id) if body.org_id is not None else auth.org_id,
             "orgc_id": int(body.orgc_id) if body.orgc_id is not None else auth.org_id,
-            "date": body.date if body.date is not None else date.today(),
+            "date": body.date if body.date else date.today(),
             "analysis": body.analysis if body.analysis is not None else "0",
             "timestamp": int(body.timestamp) if body.timestamp is not None else timegm(gmtime()),
             "threat_level_id": int(body.threat_level_id) if body.threat_level_id is not None else 4,
@@ -352,9 +355,11 @@ async def _add_event(auth: Auth, db: Session, body: AddEventBody) -> AddEditGetE
         }
     )
 
+    await execute_blocking_workflow("event-before-save", db, new_event)
     db.add(new_event)
     await db.commit()
     await db.refresh(new_event)
+    await execute_workflow("event-after-save", db, new_event)
 
     event_data = await _prepare_event_response(db, new_event)
 
@@ -380,8 +385,10 @@ async def _update_event(db: Session, event_id: str, body: EditEventBody) -> AddE
 
     update_record(event, body.dict())
 
+    await execute_blocking_workflow("event-before-save", db, event)
     await db.commit()
     await db.refresh(event)
+    await execute_workflow("event-after-save", db, event)
 
     event_data = await _prepare_event_response(db, event)
 
@@ -471,11 +478,9 @@ async def _publish_event(db: Session, event_id: str, request: Request) -> Publis
     if not event:
         return PublishEventResponse(name="Invalid event.", message="Invalid event.", url=str(request.url.path))
 
-    setattr(event, "published", True)
-    setattr(event, "publish_timestamp", timegm(gmtime()))
+    await execute_blocking_workflow("event-publish", db, event)
 
-    await db.commit()
-    await db.refresh(event)
+    await action_publish_event(db, event)
 
     return PublishEventResponse(
         saved=True, success=True, name="Job queued", message="Job queued", url=str(request.url.path), id=str(event_id)

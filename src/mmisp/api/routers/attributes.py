@@ -37,6 +37,8 @@ from mmisp.db.models.object import Object
 from mmisp.db.models.tag import Tag
 from mmisp.util.models import update_record
 
+from ..workflow import execute_workflow
+
 router = APIRouter(tags=["attributes"])
 
 
@@ -326,6 +328,9 @@ async def _add_attribute(db: Session, event_id: str, body: AddAttributeBody) -> 
     await db.commit()
 
     await db.refresh(new_attribute)
+
+    await execute_workflow("attribute-after-save", db, new_attribute)
+
     setattr(event, "attribute_count", event.attribute_count + 1)
 
     attribute_data = _prepare_attribute_response_add(new_attribute)
@@ -350,7 +355,16 @@ async def _update_attribute(db: Session, attribute_id: str, body: EditAttributeB
     if not attribute:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
-    update_record(attribute, body.dict())
+    # first_seen/last_seen being an empty string is accepted by legacy MISP
+    # and implies "field is not set".
+    payload = body.dict()
+    for seen in ["first_seen", "last_seen"]:
+        if seen in payload and not payload[seen]:
+            payload[seen] = None
+
+    update_record(attribute, payload)
+
+    await execute_workflow("attribute-after-save", db, attribute)
 
     await db.commit()
     await db.refresh(attribute)
@@ -484,6 +498,8 @@ async def _restore_attribute(db: Session, attribute_id: str) -> GetAttributeResp
 
     await db.commit()
     await db.refresh(attribute)
+
+    await execute_workflow("attribute-after-save", db, attribute)
 
     attribute_data = await _prepare_get_attribute_details_response(db, str(attribute.id), attribute)
 

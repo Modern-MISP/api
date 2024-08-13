@@ -3,12 +3,16 @@ import importlib.resources
 import itertools
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
+from typing import Any
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 import mmisp.db.all_models  # noqa: F401
 from mmisp.db.database import sessionmanager
+
+from .error import LegacyMISPCompatibleHTTPException
 
 router_pkg = "mmisp.api.routers"
 all_routers = (
@@ -23,6 +27,10 @@ fastapi_routers = []
 for m in router_module_names:
     mod = importlib.import_module(m)
     fastapi_routers.append(mod.router)
+
+
+def legacy_misp_exception_handler(request: Any, exc: LegacyMISPCompatibleHTTPException) -> JSONResponse:
+    return JSONResponse(status_code=exc.status, content={"message": exc.message})
 
 
 def init_app(*, init_db: bool = True) -> FastAPI:
@@ -51,6 +59,8 @@ def init_app(*, init_db: bool = True) -> FastAPI:
     # include Routes
     for r in fastapi_routers:
         app.include_router(r)
+
+    app.add_exception_handler(LegacyMISPCompatibleHTTPException, legacy_misp_exception_handler)
 
     return app
 
