@@ -1,4 +1,45 @@
 import sqlalchemy as sa
+from icecream import ic
+import respx
+from httpx import Response
+import pytest
+
+from mmisp.api.config import config
+
+
+@respx.mock
+@pytest.mark.asyncio
+async def test_freetext_import_stub(client, site_admin_user_token):
+    response = client.post(
+        "/events/freeTextImport/123",
+        json={
+            "value": "I spilled my coffee fuuuuu",
+            "returnMetaAttributes": False
+        },
+        headers={"Authorization": site_admin_user_token}
+    )
+    assert response.status_code == 501
+    assert response.json() == {"detail": "returnMetaAttributes = false is not implemented"}
+
+
+@respx.mock
+@pytest.mark.asyncio
+async def test_freetext_import(client, site_admin_user_token):
+    respx.post(f"{config.WORKER_URL}/job/processFreeText").mock(
+        return_value=Response(200, json={"job_id": "777"})
+    )
+    
+    response = client.post(
+        "/events/freeTextImport/123",
+        json={
+            "value": "security leak at website.com",
+            "returnMetaAttributes": True
+        },
+        headers={"Authorization": site_admin_user_token}
+    )
+    
+    assert response.status_code == 307
+    assert response.json() == {"id": "777"}
 
 from mmisp.db.models.log import Log
 
@@ -44,6 +85,7 @@ def test_add_event_date_empty_string(db, site_admin_user_token, client) -> None:
 def test_get_existing_event(
     organisation, event, attribute, galaxy, galaxy_cluster, tag, site_admin_user_token, eventtag, client
 ) -> None:
+    ic("test")
     org_id = organisation.id
 
     event_id = event.id
@@ -54,7 +96,9 @@ def test_get_existing_event(
     galaxy_cluster_id = galaxy_cluster.id
 
     headers = {"authorization": site_admin_user_token}
+    ic("event_id", event_id)
     response = client.get(f"/events/{event_id}", headers=headers)
+    ic("response", response)
 
     assert response.status_code == 200
     response_json = response.json()

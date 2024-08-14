@@ -5,13 +5,15 @@ import pytest
 import respx
 from fastapi import status
 from httpx import Response
+from icecream import ic
+from sqlalchemy.orm import Session
 
 from mmisp.api.auth import _decode_token, encode_exchange_token, encode_token
 from mmisp.api.config import config
 from mmisp.api_schemas.authentication import LoginType
 from mmisp.db.models.identity_provider import OIDCIdentityProvider
 from mmisp.db.models.user import User
-from mmisp.util.crypto import hash_secret
+from mmisp.util.crypto import hash_secret, verify_secret
 from mmisp.util.uuid import uuid
 from tests.generators.model_generators.identity_provider_generator import generate_oidc_identity_provider
 from tests.generators.model_generators.user_generator import generate_user
@@ -174,22 +176,44 @@ def test_password_login_idp_user(auth_environment: AuthEnvironment, client) -> N
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
+def test_add_open_id_provider(db: Session, site_admin_user_token, client) -> None:
+    response = client.post(
+        "/auth/openID/addOpenIDConnectProvider",
+        headers={"authorization": site_admin_user_token},
+        json={
+            "name": "Test",
+            "org_id": 1,
+            "active": True,
+            "base_url": "http://test.com",
+            "client_id": "test",
+            "client_secret": "test",
+        },
+    )
+
+    assert response.status_code == 200
+    response = response.json()
+    assert response["name"] == "Test"
+    oidc_provider = db.query(OIDCIdentityProvider).where(OIDCIdentityProvider.id == response["id"]).first()
+    assert oidc_provider is not None
+    db.delete(oidc_provider)
+
+
 @respx.mock
-def test_redirect_to_idp_correct(auth_environment: AuthEnvironment, client) -> None:
+def test_get_open_id_providers_info(auth_environment: AuthEnvironment, client) -> None:
+    ic(auth_environment.identity_provider.base_url)
     route = respx.get(f"{auth_environment.identity_provider.base_url}/.well-known/openid-configuration").mock(
         return_value=Response(200, json=auth_environment.well_known_oidc_config)
     )
 
-    response = client.get(f"/auth/login/idp/{auth_environment.identity_provider.id}/authorize", follow_redirects=False)
+    response = client.get("/auth/openID/getAllOpenIDConnectProvidersInfo")
 
-    assert response.status_code == status.HTTP_302_FOUND
-    assert response.headers["location"].startswith(auth_environment.well_known_oidc_config["authorization_endpoint"])
+    assert response.status_code == 200
+    response = response.json()
+    ic(response)
+    assert response[0]["name"] == auth_environment.identity_provider.name
+    assert response[0]["url"] is not None
+    assert auth_environment.identity_provider.base_url in response[0]["url"]
     assert route.called
-
-
-def test_redirect_to_idp_not_existing(client) -> None:
-    response = client.get("/auth/login/idp/-1/authorize")
-    assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
 @respx.mock
@@ -210,22 +234,33 @@ def test_redirect_to_frontend_correct(auth_environment: AuthEnvironment, client)
         )
     )
 
-    response = client.get(
-        f"/auth/login/idp/{auth_environment.identity_provider.id}/callback?code=test-code", follow_redirects=False
+    response = client.post(
+        f"/auth/login/idp/{auth_environment.identity_provider.name}/callback",
+        json={
+            "code": "test-code",
+            "redirect_uri": f"{config.DASHBOARD_URL}/login/oidc/{auth_environment.identity_provider.name}/callback",
+        },
+        follow_redirects=False,
     )
 
-    assert response.status_code == status.HTTP_302_FOUND
+    assert response.status_code == 200
+    response = response.json()
 
-    location = response.headers["location"]
-
-    assert location.startswith(config.DASHBOARD_URL)
+    assert response["token"] is not None
+    assert _decode_token(response["token"]) == auth_environment.external_auth_user.id
     assert config_route.called
     assert token_route.called
     assert info_route.called
 
 
 def test_redirect_to_frontend_idp_does_not_exist(client) -> None:
-    response = client.get("/auth/login/idp/-1/callback?code=test-code")
+    response = client.post(
+        "/auth/login/idp/-1/callback",
+        json={"code": "test-code", "redirect_uri": f"{config.DASHBOARD_URL}/login/oidc/-1/callback"},
+        follow_redirects=False,
+    )
+    json = response.json()
+    ic(json)
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
@@ -238,7 +273,16 @@ def test_redirect_to_frontend_no_access_token(auth_environment: AuthEnvironment,
         return_value=Response(200, json={})
     )
 
-    response = client.get(f"/auth/login/idp/{auth_environment.identity_provider.id}/callback?code=test-code")
+    response = client.post(
+        f"/auth/login/idp/{auth_environment.identity_provider.name}/callback",
+        json={
+            "code": "",
+            "redirect_uri": f"{config.DASHBOARD_URL}/login/oidc/{auth_environment.identity_provider.name}/callback",
+        },
+        follow_redirects=False,
+    )
+
+    ic(response.json())
 
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
     assert config_route.called
@@ -263,7 +307,14 @@ def test_redirect_to_frontend_invalid_sub(auth_environment: AuthEnvironment, cli
         )
     )
 
-    response = client.get(f"/auth/login/idp/{auth_environment.identity_provider.id}/callback?code=test-code")
+    response = client.post(
+        f"/auth/login/idp/{auth_environment.identity_provider.name}/callback",
+        json={
+            "code": "test-code",
+            "redirect_uri": f"{config.DASHBOARD_URL}/login/oidc/{auth_environment.identity_provider.name}/callback",
+        },
+        follow_redirects=False,
+    )
 
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
     assert config_route.called
@@ -289,3 +340,188 @@ def test_exchange_token_login_regular_token(auth_environment: AuthEnvironment, c
     )
 
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+
+def test_change_password_userID(db: Session, site_admin_user_token, client, view_only_user) -> None:
+    newPassword = "TEST"
+
+    response = client.put(
+        "/auth/setPassword/%s" % view_only_user.id,
+        headers={"authorization": site_admin_user_token},
+        json={"password": newPassword},
+    )
+    db.refresh(view_only_user)
+
+    assert response.status_code == 200
+    assert response.json() == {"successful": True}
+    assert verify_secret(newPassword, view_only_user.password)
+
+
+def test_openid_edit_provider(db: Session, site_admin_user_token, client, auth_environment: AuthEnvironment) -> None:
+    response = client.post(
+        f"/auth/openID/editOpenIDConnectProvider/{auth_environment.identity_provider.id}",
+        headers={"authorization": site_admin_user_token},
+        json={
+            "name": "Test",
+            "org_id": 1,
+            "active": True,
+            "base_url": "http://test.com",
+            "client_id": "test",
+            "client_secret": "test",
+        },
+    )
+    db.refresh(auth_environment.identity_provider)
+
+    assert response.status_code == 200
+    assert response.json() == {"successful": True}
+    assert auth_environment.identity_provider.name == "Test"
+    assert auth_environment.identity_provider.org_id == 1
+    assert auth_environment.identity_provider.active is True
+    assert auth_environment.identity_provider.base_url == "http://test.com"
+    assert auth_environment.identity_provider.client_id == "test"
+    assert auth_environment.identity_provider.client_secret == "test"
+
+
+def test_openid_delete_provider(db: Session, site_admin_user_token, client, auth_environment: AuthEnvironment) -> None:
+    response = client.delete(
+        f"/auth/openID/delete/{auth_environment.identity_provider.id}",
+        headers={"authorization": site_admin_user_token},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"successful": True}
+    assert (
+        db.query(OIDCIdentityProvider).where(OIDCIdentityProvider.id == auth_environment.identity_provider.id).first()
+        is None
+    )
+
+
+def test_openid_add_provider(db: Session, site_admin_user_token, client) -> None:
+    response = client.post(
+        "/auth/openID/addOpenIDConnectProvider",
+        headers={"authorization": site_admin_user_token},
+        json={
+            "name": "Test",
+            "org_id": 1,
+            "active": True,
+            "base_url": "http://test.com",
+            "client_id": "test",
+            "client_secret": "test",
+        },
+    )
+    ic(response.json())
+    assert response.status_code == 200
+    response = response.json()
+    assert response["name"] == "Test"
+    oidc_provider = db.query(OIDCIdentityProvider).where(OIDCIdentityProvider.id == response["id"]).first()
+    assert oidc_provider is not None
+    assert oidc_provider.name == "Test"
+    assert oidc_provider.org_id == 1
+    assert oidc_provider.active is True
+    assert oidc_provider.base_url == "http://test.com"
+    assert oidc_provider.client_id == "test"
+    assert oidc_provider.client_secret == "test"
+    db.delete(oidc_provider)
+
+
+def test_set_own_password(db: Session, client, password_auth_user, password) -> None:
+    password_auth_user.password = hash_secret("testPw")
+    db.commit()
+    response = client.post(
+        "/auth/login/setOwnPassword",
+        json={"email": password_auth_user.email, "password": password, "oldPassword": "testPw"},
+    )
+    db.refresh(password_auth_user)
+
+    assert response.status_code == 200
+    response_json = response.json()
+    assert response_json.get("token") is not None
+    assert verify_secret(password, password_auth_user.password)
+
+
+def test_get_all_open_id_connect_providers(db: Session, client, site_admin_user_token) -> None:
+    response = client.post(
+        "/auth/openID/addOpenIDConnectProvider",
+        headers={"authorization": site_admin_user_token},
+        json={
+            "name": "Test",
+            "org_id": 1,
+            "active": True,
+            "base_url": "http://test.com",
+            "client_id": "test",
+            "client_secret": "test",
+        },
+    )
+    ic(response.json())
+    assert response.status_code == 200
+    response = response.json()
+    assert response["name"] == "Test"
+    oidc_provider = db.query(OIDCIdentityProvider).where(OIDCIdentityProvider.id == response["id"]).first()
+    assert oidc_provider is not None
+    assert oidc_provider.name == "Test"
+    assert oidc_provider.org_id == 1
+    assert oidc_provider.active is True
+    assert oidc_provider.base_url == "http://test.com"
+    assert oidc_provider.client_id == "test"
+    assert oidc_provider.client_secret == "test"
+    response = client.get("/auth/openID/getAllOpenIDConnectProviders", headers={"authorization": site_admin_user_token})
+
+    assert response.status_code == status.HTTP_200_OK
+    result = response.json()
+    ic(result)
+
+    assert isinstance(result, list)
+    assert result[len(result) - 1] is not None
+    provider = result[len(result) - 1]
+    assert provider["name"] == oidc_provider.name
+    assert provider["org_id"] == str(oidc_provider.org_id)
+    assert provider["active"] == oidc_provider.active
+    assert provider["base_url"] == oidc_provider.base_url
+    assert provider["client_id"] == oidc_provider.client_id
+    assert provider["client_secret"] == oidc_provider.client_secret
+    assert provider["scope"] == oidc_provider.scope
+    db.delete(oidc_provider)
+
+
+def test_get_open_id_connect_provider_by_id(db: Session, client, site_admin_user_token) -> None:
+    response = client.post(
+        "/auth/openID/addOpenIDConnectProvider",
+        headers={"authorization": site_admin_user_token},
+        json={
+            "name": "Test",
+            "org_id": 1,
+            "active": True,
+            "base_url": "http://test.com",
+            "client_id": "test",
+            "client_secret": "test",
+        },
+    )
+    ic(response.json())
+    assert response.status_code == 200
+    response = response.json()
+    assert response["name"] == "Test"
+    oidc_provider = db.query(OIDCIdentityProvider).where(OIDCIdentityProvider.id == response["id"]).first()
+    assert oidc_provider is not None
+    assert oidc_provider.name == "Test"
+    assert oidc_provider.org_id == 1
+    assert oidc_provider.active is True
+    assert oidc_provider.base_url == "http://test.com"
+    assert oidc_provider.client_id == "test"
+    assert oidc_provider.client_secret == "test"
+    provider_id = oidc_provider.id
+    response = client.get(
+        f"/auth/openID/getOpenIDConnectProvider/{provider_id}", headers={"authorization": site_admin_user_token}
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    json = response.json()
+
+    assert json["id"] == str(provider_id)
+    assert json["name"] == oidc_provider.name
+    assert json["org_id"] == str(oidc_provider.org_id)
+    assert json["active"] == oidc_provider.active
+    assert json["base_url"] == oidc_provider.base_url
+    assert json["client_id"] == oidc_provider.client_id
+    assert json["client_secret"] == oidc_provider.client_secret
+    assert json["scope"] == oidc_provider.scope
+    db.delete(oidc_provider)

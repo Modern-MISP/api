@@ -64,19 +64,13 @@ async def _get_user(
 ) -> tuple[User, int | None]:
     user_id: int | None = None
     auth_key_id: int | None = None
-    user: User | None = None
 
     # check for JWT
     if strategy in [AuthStrategy.JWT, AuthStrategy.HYBRID, AuthStrategy.ALL]:
         user_id = _decode_token(authorization)
 
         if user_id:
-            user = await db.get(User, user_id)
-
-            if user is not None:
-                return user, None
-            else:
-                raise HTTPException(status.HTTP_401_UNAUTHORIZED)
+            return await user_login_allowed(db, user_id, False), None
 
     # check for API_KEY
     if strategy in [AuthStrategy.API_KEY, AuthStrategy.HYBRID, AuthStrategy.ALL]:
@@ -88,14 +82,22 @@ async def _get_user(
             # only users with this permission are allowed to use api keys
             permissions.append(Permission.AUTH)
 
-            user = await db.get(User, user_id)
-
-            if user is not None:
-                return user, auth_key_id
-            else:
-                raise HTTPException(status.HTTP_401_UNAUTHORIZED)
+            return await user_login_allowed(db, user_id, True), auth_key_id
 
     raise HTTPException(status.HTTP_401_UNAUTHORIZED)
+
+
+async def user_login_allowed(db: Session, user_id: int, api_login: bool) -> User:
+    user = await db.get(User, user_id)
+    if user is not None:
+        if not api_login and user.force_logout:
+            raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail="User has been logged out")
+        if user.disabled:
+            raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail="User has been disabled")
+
+        return user
+    else:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
 
 def authorize(
@@ -125,7 +127,7 @@ def authorize(
         auth = Auth(user_id=user.id, org_id=user.org_id, role_id=user.role_id, auth_key_id=auth_key_id)
 
         if not await check_permissions(db, auth, permissions):
-            raise HTTPException(status.HTTP_403_UNAUTHORIZED)
+            raise HTTPException(status.HTTP_403_FORBIDDEN)
 
         return auth
 

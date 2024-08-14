@@ -13,10 +13,7 @@ from starlette.requests import Request
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
 from mmisp.api.config import config
-from mmisp.api_schemas.attributes import GetDescribeTypesAttributes
 from mmisp.api_schemas.events import (
-    AddAttributeViaFreeTextImportEventBody,
-    AddAttributeViaFreeTextImportEventResponse,
     AddEditGetEventAttribute,
     AddEditGetEventDetails,
     AddEditGetEventEventReport,
@@ -31,9 +28,6 @@ from mmisp.api_schemas.events import (
     AddRemoveTagEventsResponse,
     DeleteEventResponse,
     EditEventBody,
-    FreeTextImportWorkerBody,
-    FreeTextImportWorkerData,
-    FreeTextImportWorkerUser,
     GetAllEventsEventTag,
     GetAllEventsEventTagTag,
     GetAllEventsGalaxyCluster,
@@ -46,6 +40,13 @@ from mmisp.api_schemas.events import (
     SearchEventsBody,
     SearchEventsResponse,
     UnpublishEventResponse,
+)
+from mmisp.api_schemas.jobs import (
+    AddAttributeViaFreeTextImportEventBody,
+    FreeTextImportWorkerBody,
+    FreeTextImportWorkerData,
+    FreeTextImportWorkerUser,
+    FreeTextProcessID,
 )
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.attribute import Attribute, AttributeTag
@@ -70,13 +71,26 @@ router = APIRouter(tags=["events"])
     status_code=status.HTTP_200_OK,
     response_model=AddEditGetEventResponse,
     summary="Add new event",
-    description="Add a new event with the given details.",
 )
 async def add_event(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
     body: AddEventBody,
 ) -> AddEditGetEventResponse:
+    """Add a new event with the gi ven details.
+
+    Input:
+
+    - the user's authentification status
+
+    - the current database
+
+    - the request body
+
+    Output:
+
+    - the new event
+    """
     return await _add_event(auth, db, body)
 
 
@@ -85,13 +99,26 @@ async def add_event(
     status_code=status.HTTP_200_OK,
     response_model=AddEditGetEventResponse,
     summary="Get event details",
-    description="Retrieve details of a specific attribute by ist ID.",
 )
 async def get_event_details(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     event_id: Annotated[str, Path(alias="eventId")],
 ) -> AddEditGetEventResponse:
+    """Retrieve details of a specific event by ist ID.
+
+    Input:
+
+    - the user's authentification status
+
+    - the current database
+
+    - the id of the event
+
+    Output:
+
+    - the event details
+    """
     return await _get_event_details(db, event_id)
 
 
@@ -100,7 +127,6 @@ async def get_event_details(
     status_code=status.HTTP_200_OK,
     response_model=AddEditGetEventResponse,
     summary="Update an event",
-    description="Update an existing event by its ID.",
 )
 async def update_event(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
@@ -108,6 +134,22 @@ async def update_event(
     event_id: Annotated[str, Path(alias="eventId")],
     body: EditEventBody,
 ) -> AddEditGetEventResponse:
+    """Update an existing event by its ID.
+
+    Input:
+
+    - the user's authentification status
+
+    - the current database
+
+    - the id of the event
+
+    - the request body
+
+    Output:
+
+    - the updated event
+    """
     return await _update_event(db, event_id, body)
 
 
@@ -116,13 +158,26 @@ async def update_event(
     status_code=status.HTTP_200_OK,
     response_model=DeleteEventResponse,
     summary="Delete an event",
-    description="Delete an attribute by its ID.",
 )
 async def delete_event(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
     event_id: Annotated[str, Path(alias="eventId")],
 ) -> DeleteEventResponse:
+    """Delete an attribute by its ID.
+
+    Input:
+
+    - the user's authentification status
+
+    - the current database
+
+    - the event id
+
+    Output:
+
+    - the deleted event
+    """
     return await _delete_event(db, event_id)
 
 
@@ -130,11 +185,22 @@ async def delete_event(
     "/events",
     status_code=status.HTTP_200_OK,
     summary="Get all events",
-    description="Retrieve a list of all events.",
 )
 async def get_all_events(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))], db: Annotated[Session, Depends(get_db)]
 ) -> list[GetAllEventsResponse]:
+    """Retrieve a list of all events.
+
+    Input:
+
+    - the user's authentification status
+
+    - the current database
+
+    Output:
+
+    - all events as a list
+    """
     return await _get_events(db)
 
 
@@ -143,28 +209,53 @@ async def get_all_events(
     status_code=status.HTTP_200_OK,
     response_model=partial(SearchEventsResponse),
     summary="Search events",
-    description="Search for events based on various filters.",
 )
 async def rest_search_events(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     body: SearchEventsBody,
 ) -> SearchEventsResponse:
+    """Search for events based on various filters.
+
+    Input:
+
+    - the user's authentification status
+
+    - the current database
+
+    - the request body
+
+    Output:
+
+    - the searched events
+    """
     return await _rest_search_events(db, body)
 
 
 @router.post(
     "/events/index",
     status_code=status.HTTP_200_OK,
-    response_model=list[IndexEventsAttributes],
     summary="Search events",
-    description="Search for events based on various filters, which are more general than the ones in 'rest search'.",
 )
 async def index_events(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     body: IndexEventsBody,
 ) -> list[GetAllEventsResponse]:
+    """Search for events based on various filters, which are more general than the ones in 'rest search'.
+
+    Input:
+
+    - the user's authentification status
+
+    - the current database
+
+    - the request body
+
+    Output:
+
+    - the searched events
+    """
     return await _index_events(db, body)
 
 
@@ -173,7 +264,6 @@ async def index_events(
     status_code=status.HTTP_200_OK,
     response_model=PublishEventResponse,
     summary="Publish an event",
-    description="Publish an event by ist ID.",
 )
 async def publish_event(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.PUBLISH]))],
@@ -181,6 +271,22 @@ async def publish_event(
     event_id: Annotated[str, Path(alias="eventId")],
     request: Request,
 ) -> PublishEventResponse:
+    """Publish an event by ist ID.
+
+    Input:
+
+    - the user's authentification status
+
+    - the current database
+
+    - the event id
+
+    - the request
+
+    Output:
+
+    - the published event
+    """
     return await _publish_event(db, event_id, request)
 
 
@@ -189,7 +295,6 @@ async def publish_event(
     status_code=status.HTTP_200_OK,
     response_model=UnpublishEventResponse,
     summary="Unpublish an event",
-    description="Unpublish an event by its ID.",
 )
 async def unpublish_event(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
@@ -197,6 +302,22 @@ async def unpublish_event(
     event_id: Annotated[str, Path(alias="eventId")],
     request: Request,
 ) -> UnpublishEventResponse:
+    """Unpublish an event by its ID.
+
+    Input:
+
+    - the user's authentification status
+
+    - the current database
+
+    - the event id
+
+    - the request
+
+    Output:
+
+    - the unpublished event
+    """
     return await _unpublish_event(db, event_id, request)
 
 
@@ -205,7 +326,6 @@ async def unpublish_event(
     status_code=status.HTTP_200_OK,
     response_model=AddRemoveTagEventsResponse,
     summary="Add tag to event",
-    description="Add a tag to an attribute by their ids.",
 )
 async def add_tag_to_event(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
@@ -214,6 +334,24 @@ async def add_tag_to_event(
     tag_id: Annotated[str, Path(alias="tagId")],
     local: str,
 ) -> AddRemoveTagEventsResponse:
+    """Add a tag to an attribute by their ids.
+
+    Input:
+
+    - the user's authentification status
+
+    - the current database
+
+    - the event id
+
+    - the tag id
+
+    - local
+
+    Output:
+
+    - the result of adding the tag to the event given by the api
+    """
     return await _add_tag_to_event(db, event_id, tag_id, local)
 
 
@@ -221,8 +359,7 @@ async def add_tag_to_event(
     "/events/removeTag/{eventId}/{tagId}",
     status_code=status.HTTP_200_OK,
     response_model=AddRemoveTagEventsResponse,
-    summary="Add tag to event",
-    description="Add a tag to an event by their ids.",
+    summary="Remove tag of event",
 )
 async def remove_tag_from_event(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
@@ -230,34 +367,73 @@ async def remove_tag_from_event(
     event_id: Annotated[str, Path(alias="eventId")],
     tag_id: Annotated[str, Path(alias="tagId")],
 ) -> AddRemoveTagEventsResponse:
+    """Remove a tag to from an event by their id.
+
+    Input:
+
+    - the user's authentification status
+
+    - the current database
+
+    - the event id
+
+    - the tag id
+
+    Output:
+
+    - the result of removing the tag from the event given by the api
+    """
     return await _remove_tag_from_event(db, event_id, tag_id)
 
 
 @router.post(
-    "/events/freeTextImport/{eventId}",
-    status_code=status.HTTP_200_OK,
-    response_model=list[AddAttributeViaFreeTextImportEventResponse],
-    summary="Add attribute to event",
-    description="Add attribute to event via free text import.",
+    "/events/freeTextImport/{eventID}",
+    status_code=status.HTTP_307_TEMPORARY_REDIRECT,
+    response_model=FreeTextProcessID,
+    summary="start the freetext import process via worker",
 )
-async def add_attribute_via_free_text_import(
+async def start_freeTextImport(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
-    db: Annotated[Session, Depends(get_db)],
-    event_id: Annotated[str, Path(alias="eventId")],
+    event_id: Annotated[str, Path(alias="eventID")],
     body: AddAttributeViaFreeTextImportEventBody,
-) -> list[AddAttributeViaFreeTextImportEventResponse]:
+) -> FreeTextProcessID:
+    """Starts the freetext import process by submitting the freetext to the worker.
+
+    Input:
+
+    - the user's authentification status
+
+    - the body of the freetext
+
+    Output:
+
+    - dict
+    """
     body_dict = body.dict()
+    if body_dict["returnMetaAttributes"] is False:
+        raise HTTPException(
+            status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="returnMetaAttributes = false is not implemented"
+        )
+
     user = FreeTextImportWorkerUser(user_id=auth.user_id)
+
     if user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="no user")
-    data = FreeTextImportWorkerData(data=body_dict["Attribute"]["value"])
+
+    data = FreeTextImportWorkerData(data=body_dict["value"])
     worker_body = FreeTextImportWorkerBody(user=user, data=data).dict()
-    print(worker_body)
+
     async with httpx.AsyncClient() as client:
-        response = await client.post(f"{config.WORKER_URL}/job/processFreeText", json=worker_body)
-    response_json = response.json()
-    print(response_json)
-    return await _add_attribute_via_free_text_import(db, event_id, response_json)
+        response = await client.post(
+            f"{config.WORKER_URL}/job/processFreeText",
+            json=worker_body,
+            headers={"Authorization": f"Bearer {config.WORKER_KEY}"},
+        )
+
+    response_data = response.json()
+    job_id = response_data["job_id"]
+
+    return FreeTextProcessID(id=job_id)
 
 
 # --- deprecated ---
@@ -269,13 +445,26 @@ async def add_attribute_via_free_text_import(
     status_code=status.HTTP_200_OK,
     response_model=AddEditGetEventResponse,
     summary="Add new event (Deprecated)",
-    description="Deprecated. Add a new event with the given details.",
 )
 async def add_event_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
     body: AddEventBody,
 ) -> AddEditGetEventResponse:
+    """Deprecated. Add a new event with the given details.
+
+    Input:
+
+    - the user's authentification status
+
+    - the current database
+
+    - the request body
+
+    Output:
+
+    - the new event
+    """
     return await _add_event(auth, db, body)
 
 
@@ -285,13 +474,26 @@ async def add_event_depr(
     status_code=status.HTTP_200_OK,
     response_model=AddEditGetEventResponse,
     summary="Get event details (Deprecated)",
-    description="Deprecated. Retrieve details of a specific attribute by its ID.",
 )
 async def get_event_details_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     event_id: Annotated[str, Path(alias="eventId")],
 ) -> AddEditGetEventResponse:
+    """Deprecated. Retrieve details of a specific attribute by its ID.
+
+    Input:
+
+    - the user's authentification status
+
+    - the current database
+
+    - the event id
+
+    Output:
+
+    - the event details
+    """
     return await _get_event_details(db, event_id)
 
 
@@ -301,7 +503,6 @@ async def get_event_details_depr(
     status_code=status.HTTP_200_OK,
     response_model=AddEditGetEventResponse,
     summary="Update an event (Deprecated)",
-    description="Deprecated. Update an existing event by its ID.",
 )
 async def update_event_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
@@ -309,6 +510,22 @@ async def update_event_depr(
     event_id: Annotated[str, Path(alias="eventId")],
     body: EditEventBody,
 ) -> AddEditGetEventResponse:
+    """Deprecated. Update an existing event by its ID.
+
+    Input:
+
+    - the user's authentification status
+
+    - the current database
+
+    - the event id
+
+    - the request body
+
+    Output:
+
+    - the updated event
+    """
     return await _update_event(db, event_id, body=body)
 
 
@@ -318,13 +535,26 @@ async def update_event_depr(
     status_code=status.HTTP_200_OK,
     response_model=DeleteEventResponse,
     summary="Delete an event (Deprecated)",
-    description="Deprecated. Delete an existing event by its ID.",
 )
 async def delete_event_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
     event_id: Annotated[str, Path(..., alias="eventId")],
 ) -> DeleteEventResponse:
+    """Deprecated. Delete an existing event by its ID.
+
+    Input:
+
+    - the user's authentification status
+
+    - the current database
+
+    - the event id
+
+    Output:
+
+    - the deleted event
+    """
     return await _delete_event(db, event_id)
 
 
@@ -561,34 +791,6 @@ async def _remove_tag_from_event(db: Session, event_id: str, tag_id: str) -> Add
     await db.commit()
 
     return AddRemoveTagEventsResponse(saved=True, success="Tag removed", check_publish=True)
-
-
-async def _add_attribute_via_free_text_import(
-    db: Session, event_id: str, response_json: Any
-) -> list[AddAttributeViaFreeTextImportEventResponse]:
-    event: Event | None = await db.get(Event, event_id)
-
-    if not event:
-        raise HTTPException(status.HTTP_404_NOT_FOUND)
-
-    response_list = []
-
-    for attribute in response_json["attributes"]:
-        value = attribute["Items"]["value"]
-        attribute_type = attribute["Items"]["default_type"]
-        category = GetDescribeTypesAttributes().sane_defaults[attribute_type]["default_category"].value
-
-        new_attribute = Attribute(event_id=event_id, value=value, type=attribute_type, category=category)
-
-        db.add(new_attribute)
-
-        await db.commit()
-
-        attribute_response_dict = new_attribute.__dict__.copy()
-        attribute_response_dict["original_value"] = new_attribute.value
-        response_list.append(AddAttributeViaFreeTextImportEventResponse(**attribute_response_dict))
-
-    return response_list
 
 
 async def _prepare_event_response(db: Session, event: Event) -> AddEditGetEventDetails:

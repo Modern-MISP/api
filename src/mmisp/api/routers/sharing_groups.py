@@ -43,13 +43,27 @@ LOCAL_INSTANCE_SERVER = {"id": 0, "name": "Local instance", "url": config.OWN_UR
     status_code=status.HTTP_201_CREATED,
     response_model=partial(SharingGroupSchema),
     summary="Add a new sharing group",
-    description="Add a new sharing group with given details.",
 )
 async def create_sharing_group(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
     body: CreateSharingGroupBody,
 ) -> dict:
+    """
+    Add a new sharing group with given details.
+
+    Input:
+
+    - auth: Authentication details
+
+    - db: Database session
+
+    - body: Request body containing details for creating the sharing group
+
+    Output:
+
+    - Details of the created sharing group
+    """
     return await _create_sharing_group(auth, db, body)
 
 
@@ -58,13 +72,27 @@ async def create_sharing_group(
     status_code=status.HTTP_200_OK,
     response_model=partial(SharingGroupSchema),
     summary="Get sharing group details",
-    description="Retrieve details of a specific sharing group.",
 )
 async def get_sharing_group(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
     id: int,
 ) -> dict:
+    """
+    Retrieve details of a specific sharing group.
+
+    Input:
+
+    - auth: Authentication details
+
+    - db: Database session
+
+    - id: ID of the sharing group to retrieve
+
+    Output:
+
+    - Representation of the sharing group details
+    """
     return await _get_sharing_group(auth, db, id)
 
 
@@ -73,7 +101,6 @@ async def get_sharing_group(
     status_code=status.HTTP_200_OK,
     response_model=partial(SharingGroupSchema),
     summary="Update sharing group",
-    description="Update an existing sharing group.",
 )
 async def update_sharing_group(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
@@ -81,6 +108,23 @@ async def update_sharing_group(
     id: int,
     body: UpdateSharingGroupBody,
 ) -> dict:
+    """
+    Update an existing sharing group.
+
+    Input:
+
+    - auth: Authentication details
+
+    - db: Database session
+
+    - id: ID of the sharing group to update
+
+    - body: Request body containing updated details for the sharing group
+
+    Output:
+
+    - Representation of the updated sharing group
+    """
     return await _update_sharing_group(auth, db, id, body)
 
 
@@ -89,13 +133,27 @@ async def update_sharing_group(
     status_code=status.HTTP_200_OK,
     response_model=partial(SharingGroupSchema),
     summary="Delete sharing group",
-    description="Delete a specific sharing group.",
 )
 async def delete_sharing_group(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
     id: int,
 ) -> dict:
+    """
+    Delete a specific sharing group.
+
+    Input:
+
+    - auth: Authentication details
+
+    - db: Database session
+
+    - id: ID of the sharing group to delete
+
+    Output:
+
+    - Representation of the deleted sharing group
+    """
     return await _delete_sharing_group(auth, db, id)
 
 
@@ -104,12 +162,24 @@ async def delete_sharing_group(
     status_code=status.HTTP_200_OK,
     response_model=partial(GetAllSharingGroupsResponse),
     summary="Get all sharing groups",
-    description="Retrieve a list of all sharing groups.",
 )
 async def get_all_sharing_groups(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
 ) -> dict:
+    """
+    Retrieve a list of all sharing groups.
+
+    Input:
+
+    - auth: Authentication details
+
+    - db: Database session
+
+    Output:
+
+    - Representation of all sharing groups
+    """
     return await _get_all_sharing_groups(auth, db)
 
 
@@ -118,13 +188,27 @@ async def get_all_sharing_groups(
     status_code=status.HTTP_200_OK,
     response_model=partial(GetSharingGroupInfoResponse),
     summary="Additional infos from a sharing group",
-    description="Details of a sharing group and org.count, user_count and created_by_email.",
 )
 async def get_sharing_group_info(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
     id: int,
 ) -> dict:
+    """
+    Details of a sharing group and org.count, user_count and created_by_email.
+
+    Input:
+
+    - auth: Authentication details
+
+    - db: Database session
+
+    - id: ID of the sharing group to retrieve additional information
+
+    Output:
+
+    - Representation of the sharing group information
+    """
     return await _get_sharing_group_info(auth, db, id)
 
 
@@ -132,7 +216,6 @@ async def get_sharing_group_info(
     "/sharing_groups/{id}/organisations",
     status_code=status.HTTP_200_OK,
     summary="Add an organisation",
-    description="Add an organisation to a sharing group.",
 )
 async def add_org_to_sharing_group(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
@@ -140,6 +223,23 @@ async def add_org_to_sharing_group(
     id: int,
     body: AddOrgToSharingGroupBody,
 ) -> SharingGroupOrgSchema:
+    """
+    Add an organisation to a sharing group.
+
+    Input:
+
+    - auth: Authentication details
+
+    - db: Database session.
+
+    - id: ID of the sharing group to add the organisation
+
+    - body: Request body containing organisation details
+
+    Output:
+
+    - SharingGroupOrgSchema: Representation of the added organisation in the sharing group
+    """
     return await _add_org_to_sharing_group(auth, db, id, body)
 
 
@@ -148,7 +248,6 @@ async def add_org_to_sharing_group(
     status_code=status.HTTP_200_OK,
     response_model=partial(SharingGroupOrgSchema),
     summary="Remove an organisation",
-    description="Remove an organisation from a sharing group.",
 )
 async def remove_org_from_sharing_group(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
@@ -156,6 +255,23 @@ async def remove_org_from_sharing_group(
     id: int,
     organisation_id: Annotated[int, Path(alias="organisationId")],
 ) -> dict:
+    """
+    Remove an organisation from a sharing group
+
+    Input:
+
+    - auth: Authentication details
+
+    - db: Database session.
+
+    - id: ID of the sharing group to remove the organisation
+
+    - organisation_id: ID of the organisation to remove
+
+    Output:
+
+    - Representation of the removed organisation from the sharing group
+    """
     return await _remove_org_from_sharing_group(auth, db, id, organisation_id)
 
 
@@ -164,7 +280,6 @@ async def remove_org_from_sharing_group(
     status_code=status.HTTP_200_OK,
     response_model=partial(SharingGroupServerSchema),
     summary="Add a server",
-    description="Add a server to a sharing group.",
 )
 async def add_server_to_sharing_group(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
@@ -172,6 +287,23 @@ async def add_server_to_sharing_group(
     id: int,
     body: AddServerToSharingGroupBody,
 ) -> dict:
+    """
+    Add a server to a sharing group.
+
+    Input:
+
+    - auth: Authentication details
+
+    - db: Database session
+
+    - id: ID of the sharing group to add the server
+
+    - body: Request body containing server details
+
+    Output:
+
+    - Representation of the added server in the sharing group
+    """
     return await _add_server_to_sharing_group(auth, db, id, body)
 
 
@@ -180,7 +312,6 @@ async def add_server_to_sharing_group(
     status_code=status.HTTP_200_OK,
     response_model=partial(SharingGroupServerSchema),
     summary="Remove a server",
-    description="Remove a server from a sharing group.",
 )
 async def remove_server_from_sharing_group(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
@@ -188,6 +319,23 @@ async def remove_server_from_sharing_group(
     id: int,
     server_id: Annotated[int, Path(alias="serverId")],
 ) -> dict:
+    """
+    Remove a server from a sharing group.
+
+    Input:
+
+    - auth: Authentication details
+
+    - db: Database session
+
+    - id: ID of the sharing group to remove the server
+
+    - server_id: ID of the server to remove
+
+    Output:
+
+    - Representation of the removed server from the sharing group
+    """
     return await _remove_server_from_sharing_group(auth, db, id, server_id)
 
 
@@ -200,13 +348,27 @@ async def remove_server_from_sharing_group(
     status_code=status.HTTP_201_CREATED,
     response_model=partial(CreateSharingGroupLegacyResponse),
     summary="Add new sharing group",
-    description="Add a new sharing group with given details.",
 )
 async def create_sharing_group_legacy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
     body: CreateSharingGroupLegacyBody,
 ) -> dict:
+    """
+    Add a new sharing group with given details.
+
+    Input:
+
+    - auth: Authentication details
+
+    - db: Database session
+
+    - body: Request body containing details for creating the sharing group
+
+    Output:
+
+    - Representation of the created sharing group
+    """
     return await _create_sharing_group_legacy(auth, db, body)
 
 
@@ -216,13 +378,27 @@ async def create_sharing_group_legacy(
     status_code=status.HTTP_200_OK,
     response_model=partial(ViewUpdateSharingGroupLegacyResponse),
     summary="Get sharing groups details",
-    description="Retrieve details of a specific sharing group by its ID.",
 )
 async def view_sharing_group_legacy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
     id: Annotated[int, Path(alias="sharingGroupId")],
 ) -> dict:
+    """
+    Retrieve details of a specific sharing group by its ID.
+
+    Input:
+
+    - auth: Authentication details
+
+    - db: Database session
+
+    - id: ID of the sharing group to retrieve
+
+    Output:
+
+    - Representation of the sharing group details
+    """
     return await _view_sharing_group_legacy(auth, db, id)
 
 
@@ -231,7 +407,6 @@ async def view_sharing_group_legacy(
     deprecated=True,
     status_code=status.HTTP_200_OK,
     summary="Update sharing group",
-    description="Update an existing sharing group by its ID.",
 )
 async def update_sharing_group_legacy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
@@ -239,6 +414,23 @@ async def update_sharing_group_legacy(
     id: Annotated[int, Path(alias="sharingGroupId")],
     body: UpdateSharingGroupLegacyBody,
 ) -> ViewUpdateSharingGroupLegacyResponse:
+    """
+    Update an existing sharing group by its ID.
+
+    Input:
+
+    - auth: Authentication details
+
+    - db: Database session
+
+    - id: ID of the sharing group to update
+
+    - body: Request body containing updated details for the sharing group
+
+    Output:
+
+    - ViewUpdateSharingGroupLegacyResponse: Representation of the updated sharing group.
+    """
     return await _update_sharing_group_legacy(auth, db, id, body)
 
 
@@ -248,13 +440,27 @@ async def update_sharing_group_legacy(
     deprecated=True,
     response_model=partial(DeleteSharingGroupLegacyResponse),
     summary="Delete sharing group",
-    description="Delete a specific sharing group.",
 )
 async def delete_sharing_group_legacy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
     id: Annotated[int, Path(alias="sharingGroupId")],
 ) -> dict:
+    """
+    Delete a specific sharing group.
+
+    Input:
+
+    - auth: Authentication details
+
+    - db: Database session
+
+    - id: ID of the sharing group to delete
+
+    Output:
+
+    - Representation of the deleted sharing group
+    """
     return await _delete_sharing_group_legacy(auth, db, id)
 
 
@@ -264,7 +470,6 @@ async def delete_sharing_group_legacy(
     deprecated=True,
     response_model=partial(StandardStatusResponse),
     summary="Add an organisation",
-    description="Add an organisation to a sharing group.",
 )
 async def add_org_to_sharing_group_legacy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
@@ -273,6 +478,25 @@ async def add_org_to_sharing_group_legacy(
     organisation_id: Annotated[int, Path(alias="organisationId")],
     body: AddOrgToSharingGroupLegacyBody = AddOrgToSharingGroupLegacyBody(),
 ) -> StandardStatusResponse:
+    """
+    Add an organisation to a sharing group.
+
+    Input:
+
+    - auth: Authentication details
+
+    - db: Database session
+
+    - id: ID of the sharing group to add the organisation
+
+    - organisation_id: ID of the organisation to add
+
+    - body: Request body containing additional details
+
+    Output:
+
+    - StandardStatusResponse: Response indicating success or failure
+    """
     return await _add_org_to_sharing_group_legacy(auth, db, id, organisation_id, body)
 
 
@@ -281,7 +505,6 @@ async def add_org_to_sharing_group_legacy(
     status_code=status.HTTP_200_OK,
     deprecated=True,
     summary="Remove an organisation",
-    description="Remove an organisation from a sharing group.",
 )
 async def remove_org_from_sharing_group_legacy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
@@ -289,6 +512,23 @@ async def remove_org_from_sharing_group_legacy(
     id: Annotated[int, Path(alias="sharingGroupId")],
     organisation_id: Annotated[int, Path(alias="organisationId")],
 ) -> StandardStatusResponse:
+    """
+    Remove an organisation from a sharing group.
+
+    Input:
+
+    - auth: Authentication details
+
+    - db: Database session
+
+    - id: ID of the sharing group to remove the organisation from
+
+    - organisation_id: ID of the organisation to remove
+
+    Output:
+
+    - StandardStatusResponse: Response indicating success or failure
+    """
     return await _remove_org_from_sharing_group_legacy(auth, db, id, organisation_id)
 
 
@@ -297,7 +537,6 @@ async def remove_org_from_sharing_group_legacy(
     status_code=status.HTTP_200_OK,
     deprecated=True,
     summary="Add a server",
-    description="Add a server to a sharing group.",
 )
 async def add_server_to_sharing_group_legacy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
@@ -306,6 +545,25 @@ async def add_server_to_sharing_group_legacy(
     server_id: Annotated[int, Path(alias="serverId")],
     body: AddServerToSharingGroupLegacyBody = AddServerToSharingGroupLegacyBody(),
 ) -> StandardStatusResponse:
+    """
+    Add a server to a sharing group.
+
+    Input:
+
+    - auth: Authentication details
+
+    - db: Database session
+
+    - id: ID of the sharing group to add the server
+
+    - server_id: ID of the server to add
+
+    - body: Request body containing additional details
+
+    Output:
+
+    - StandardStatusResponse: Response indicating success or failure
+    """
     return await _add_server_to_sharing_group_legacy(auth, db, id, server_id, body)
 
 
@@ -314,7 +572,6 @@ async def add_server_to_sharing_group_legacy(
     deprecated=True,
     response_model=partial(StandardStatusResponse),
     summary="Remove a server",
-    description="Remove a server to a sharing group.",
 )
 async def remove_server_from_sharing_group_legacy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
@@ -322,6 +579,23 @@ async def remove_server_from_sharing_group_legacy(
     id: Annotated[int, Path(alias="sharingGroupId")],
     server_id: Annotated[int, Path(alias="serverId")],
 ) -> StandardStatusResponse:
+    """
+    Remove a server from a sharing group.
+
+    Input:
+
+    - auth: Authenticated user with 'SHARING_GROUP' permission
+
+    - db: Database session
+
+    - id: ID of the sharing group to remove the server from
+
+    - server_id: ID of the server to remove
+
+    Output:
+
+    - StandardStatusResponse: Response indicating success or failure
+    """
     return await _remove_server_from_sharing_group_legacy(auth, db, id, server_id)
 
 

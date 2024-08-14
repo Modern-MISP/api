@@ -41,10 +41,15 @@ from .generators.model_generators.attribute_generator import generate_attribute
 from .generators.model_generators.event_generator import generate_event
 from .generators.model_generators.galaxy_generator import generate_galaxy
 from .generators.model_generators.organisation_generator import generate_organisation
-from .generators.model_generators.role_generator import generate_org_admin_role, generate_site_admin_role
+from .generators.model_generators.role_generator import (
+    generate_org_admin_role,
+    generate_read_only_role,
+    generate_site_admin_role,
+)
 from .generators.model_generators.sharing_group_generator import generate_sharing_group
 from .generators.model_generators.tag_generator import generate_tag
 from .generators.model_generators.user_generator import generate_user
+from .generators.model_generators.user_setting_generator import generate_user_name
 
 
 @pytest.fixture(autouse=True)
@@ -102,6 +107,16 @@ def site_admin_role(db):
 
 
 @pytest.fixture
+def user_role(db):
+    role = generate_read_only_role()
+    db.add(role)
+    db.commit()
+    yield role
+    db.delete(role)
+    db.commit()
+
+
+@pytest.fixture
 def org_admin_role(db):
     role = generate_org_admin_role()
     db.add(role)
@@ -148,10 +163,47 @@ def site_admin_user(db, site_admin_role, instance_owner_org):
     user.org_id = instance_owner_org.id
     user.server_id = 0
     user.role_id = site_admin_role.id
+    user.gpgkey = "testkey"
+    user.newsread = 5
+
 
     db.add(user)
     db.commit()
+    db.refresh(user)
+
+    user_setting = generate_user_name()
+    user_setting.user_id = user.id
+
+    db.add(user_setting)
+    db.commit()
+
     yield user
+    db.delete(user_setting)
+    db.commit()
+    db.delete(user)
+    db.commit()
+
+
+@pytest.fixture
+def view_only_user(db, user_role, instance_owner_org):
+    user = generate_user()
+    user.org_id = instance_owner_org.id
+    user.server_id = 0
+    user.role_id = user_role.id
+
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+
+    user_setting = generate_user_name()
+    user_setting.user_id = user.id
+
+    db.add(user_setting)
+    db.commit()
+
+    yield user
+    db.delete(user_setting)
+    db.commit()
     db.delete(user)
     db.commit()
 
@@ -165,7 +217,17 @@ def instance_owner_org_admin_user(db, instance_owner_org, org_admin_role):
 
     db.add(user)
     db.commit()
+    db.refresh(user)
+
+    user_setting = generate_user_name()
+    user_setting.user_id = user.id
+
+    db.add(user_setting)
+    db.commit()
+
     yield user
+    db.delete(user_setting)
+    db.commit()
     db.delete(user)
     db.commit()
 
@@ -193,7 +255,17 @@ def instance_org_two_admin_user(db, instance_org_two, org_admin_role):
 
     db.add(user)
     db.commit()
+    db.refresh(user)
+
+    user_setting = generate_user_name()
+    user_setting.user_id = user.id
+
+    db.add(user_setting)
+    db.commit()
+
     yield user
+    db.delete(user_setting)
+    db.commit()
     db.delete(user)
     db.commit()
 
@@ -207,7 +279,17 @@ def instance_two_owner_org_admin_user(db, instance_two_owner_org, instance_two_s
 
     db.add(user)
     db.commit()
+    db.refresh(user)
+
+    user_setting = generate_user_name()
+    user_setting.user_id = user.id
+
+    db.add(user_setting)
+    db.commit()
+
     yield user
+    db.delete(user_setting)
+    db.commit()
     db.delete(user)
     db.commit()
 
@@ -239,6 +321,20 @@ def organisation(db):
 
     db.delete(organisation)
     db.commit()
+
+@pytest.fixture
+def organisation2(db):
+    organisation = generate_organisation()
+
+    db.add(organisation)
+    db.commit()
+    db.refresh(organisation)
+
+    yield organisation
+
+    db.delete(organisation)
+    db.commit()
+
 
 
 @pytest.fixture
@@ -276,6 +372,56 @@ def event2(db, organisation, site_admin_user):
     db.delete(event)
     db.commit()
 
+@pytest.fixture
+def event3(db, organisation, site_admin_user):
+    org_id = organisation.id
+    event = generate_event()
+    event.org_id = org_id
+    event.orgc_id = org_id
+    event.user_id = site_admin_user.id
+
+    db.add(event)
+    db.commit()
+    db.refresh(event)
+
+    yield event
+
+    db.delete(event)
+    db.commit()
+
+@pytest.fixture
+def event4(db, organisation, site_admin_user):
+    org_id = organisation.id
+    event = generate_event()
+    event.org_id = org_id
+    event.orgc_id = org_id
+    event.user_id = site_admin_user.id
+
+    db.add(event)
+    db.commit()
+    db.refresh(event)
+
+    yield event
+
+    db.delete(event)
+    db.commit()
+
+@pytest.fixture
+def event5(db, organisation, site_admin_user):
+    org_id = organisation.id
+    event = generate_event()
+    event.org_id = org_id
+    event.orgc_id = org_id
+    event.user_id = site_admin_user.id
+
+    db.add(event)
+    db.commit()
+    db.refresh(event)
+
+    yield event
+
+    db.delete(event)
+    db.commit()
 
 @pytest.fixture
 def attribute(db, event):
@@ -308,6 +454,21 @@ def attribute2(db, event):
     db.delete(attribute)
     db.commit()
 
+@pytest.fixture
+def attribute3(db, event):
+    event_id = event.id
+    attribute = generate_attribute(event_id)
+    event.attribute_count += 1
+
+    db.add(attribute)
+    db.commit()
+    db.refresh(attribute)
+
+    yield attribute
+
+    db.delete(attribute)
+    event.attribute_count -= 1
+    db.commit()
 
 @pytest.fixture
 def tag(db):

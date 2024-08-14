@@ -1,6 +1,7 @@
 import json
 import string
 import time
+from datetime import datetime
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, Annotated, Any, Tuple
 
@@ -17,10 +18,12 @@ from mmisp.api_schemas.auth_keys import (
     AddAuthKeyResponse,
     AddAuthKeyResponseAuthKey,
     EditAuthKeyBody,
-    EditAuthKeyResponse,
-    EditAuthKeyResponseAuthKey,
+    EditAuthKeyResponseCompl,
+    EditAuthKeyResponseCompleteAuthKey,
     EditAuthKeyResponseUser,
     SearchAuthKeyBody,
+    SearchGetAuthKeysResponse,
+    SearchGetAuthKeysResponseAuthKey,
     SearchGetAuthKeysResponseItem,
     SearchGetAuthKeysResponseItemAuthKey,
     SearchGetAuthKeysResponseItemUser,
@@ -43,14 +46,29 @@ router = APIRouter(tags=["auth_keys"])
     status_code=status.HTTP_201_CREATED,
     response_model=AddAuthKeyResponse,
     summary="Add an AuthKey.",
-    description="Create an AuthKey for a specific user and write it to the database.",
 )
 async def auth_keys_add_user(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     user_id: Annotated[int, Path(alias="userId")],
     body: AddAuthKeyBody,
 ) -> AddAuthKeyResponse:
+    """Create an AuthKey for a specific user and save it in the database.
+
+    Input:
+
+    - the user's authentification status
+
+    - the current database
+
+    - the id of the user
+
+    - the request body
+
+    Output:
+
+    - the added authkey
+    """
     return await _auth_key_add(auth=auth, db=db, user_id=user_id, body=body)
 
 
@@ -58,13 +76,26 @@ async def auth_keys_add_user(
     "/auth_keys/view/{AuthKeyId}",
     response_model=ViewAuthKeysResponse,
     summary="View an AuthKey",
-    description="View an AuthKey by its ID.",
 )
 async def auth_keys_view_auth_key(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     auth_key_id: Annotated[int, Path(alias="AuthKeyId")],
 ) -> ViewAuthKeysResponse:
+    """View an AuthKey by its ID.
+
+    Input:
+
+    - the user's authentification status
+
+    - the current database
+
+    - the id of the authkey
+
+    Output:
+
+    - the authkey
+    """
     return await _auth_keys_view(auth=auth, db=db, auth_key_id=auth_key_id)
 
 
@@ -72,28 +103,56 @@ async def auth_keys_view_auth_key(
     "/auth_keys",
     response_model=list[SearchGetAuthKeysResponseItem],
     summary="Search for specific AuthKeys.",
-    description="Search for specific AuthKeys by parameters.",
 )
 async def search_auth_keys(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     body: SearchAuthKeyBody,
 ) -> list[SearchGetAuthKeysResponseItem]:
+    """Search for specific AuthKeys by parameters.
+
+    Input:
+
+    - the user's authentification status
+
+    - the current database
+
+    - the request body
+
+    Output:
+
+    - the authkeys
+    """
     return await _search_auth_keys(auth=auth, db=db, body=body)
 
 
 @router.put(
     "/auth_keys/{AuthKeyId}",
-    response_model=EditAuthKeyResponse,
+    response_model=EditAuthKeyResponseCompl,
     summary="Edit an AuthKey.",
-    description="Edit an AuthKey by its ID.",
 )
 async def auth_keys_edit_auth_key(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     auth_key_id: Annotated[int, Path(alias="AuthKeyId")],
     body: EditAuthKeyBody,
-) -> EditAuthKeyResponse:
+) -> EditAuthKeyResponseCompl:
+    """Edit an AuthKey by its ID.
+
+    Input:
+
+    - the user's authentification status
+
+    - the current database
+
+    - the id of the authkey
+
+    - the request body
+
+    Output:
+
+    - the updated authkey
+    """
     return await _auth_keys_edit(auth=auth, db=db, auth_key_id=auth_key_id, body=body)
 
 
@@ -101,13 +160,26 @@ async def auth_keys_edit_auth_key(
     "/auth_keys/{AuthKeyId}",
     response_model=StandardStatusIdentifiedResponse,
     summary="Delete given AuthKey.",
-    description="Delete AuthKey by AuthKeyId from the database.",
 )
 async def auth_keys_delete_auth_key(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     auth_key_id: Annotated[int, Path(alias="AuthKeyId")],
 ) -> StandardStatusIdentifiedResponse:
+    """Delete AuthKey by AuthKeyId from the database.
+
+    Input:
+
+    - the user's authentification status
+
+    - the current database
+
+    - the id of the authkey
+
+    Output:
+
+    - the response from the api after the deleting request
+    """
     await _auth_keys_delete(auth=auth, db=db, auth_key_id=auth_key_id)
 
     return StandardStatusIdentifiedResponse(
@@ -122,18 +194,80 @@ async def auth_keys_delete_auth_key(
 
 @router.get(
     "/auth_keys",
-    response_model=list[SearchGetAuthKeysResponseItem],
+    response_model=list[SearchGetAuthKeysResponse],
     summary="Returns AuthKeys.",
-    description="Returns all AuthKeys stored in the database as a List.",
 )
 async def auth_keys_get(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-) -> list[SearchGetAuthKeysResponseItem]:
+) -> list[SearchGetAuthKeysResponse]:
+    """Returns all AuthKeys stored in the database as a List.
+
+    Input:
+
+    - the user's authentification status
+
+    - the current database
+
+    Output:
+
+    - all authkeys as a list
+    """
     return await _auth_keys_get(auth=auth, db=db)
 
 
+@router.get(
+    "/auth_keys/viewOwn",
+    summary="View own AuthKeys",
+)
+async def auth_keys_view_own_auth_keys(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    db: Annotated[Session, Depends(get_db)],
+) -> list[SearchGetAuthKeysResponseItem]:
+    """View own Authkeys.
+
+    Input:
+
+    - the user's authentification status
+
+    - the current database
+
+    - the id of the user
+
+    Output:
+
+    - the auth keys
+    """
+    return await _auth_keys_view_own(auth=auth, db=db)
+
+
 #  --- deprecated ---
+
+
+@router.get(
+    "/auth_keys/index/{userId}",
+    deprecated=True,
+    summary="View own AuthKeys",
+)
+async def auth_keys_view_own_auth_keys_depr(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    db: Annotated[Session, Depends(get_db)],
+) -> list[SearchGetAuthKeysResponse]:
+    """Deprecated. View own Authkeys by the old route.
+
+    Input:
+
+    - the user's authentification status
+
+    - the current database
+
+    - the id of the user
+
+    Output:
+
+    - the auth keys
+    """
+    return await _auth_keys_view_own_depr(auth=auth, db=db)
 
 
 @router.post(
@@ -142,45 +276,88 @@ async def auth_keys_get(
     deprecated=True,
     response_model=AddAuthKeyResponse,
     summary="Add an AuthKey.",
-    description="Create an AuthKey for a specific user and write it to the database.",
 )
 async def auth_keys_add_user_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     user_id: Annotated[int, Path(alias="userId")],
     body: AddAuthKeyBody,
 ) -> AddAuthKeyResponse:
+    """Create an AuthKey for a specific user and write it to the database.
+
+    Input:
+
+    - the user's authentification status
+
+    - the current database
+
+    - the id of the user
+
+    - the request body
+
+    Output:
+
+    - the added authkey
+    """
     return await _auth_key_add(auth=auth, db=db, user_id=user_id, body=body)
 
 
 @router.post(
     "/auth_keys/edit/{AuthKeyId}",
     deprecated=True,
-    response_model=EditAuthKeyResponse,
+    response_model=EditAuthKeyResponseCompl,
     summary="Edit AuthKey",
-    description="Edit AuthKey by AuthKey ID.",
 )
 async def auth_keys_edit_auth_key_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     auth_key_id: Annotated[int, Path(alias="AuthKeyId")],
     body: EditAuthKeyBody,
-) -> EditAuthKeyResponse:
+) -> EditAuthKeyResponseCompl:
+    """Edit AuthKey by AuthKey ID.
+
+    Input:
+
+    - the user's authentification status
+
+    - the current database
+
+    - the id of the authkey
+
+    - the request body
+
+    Output:
+
+    - the updated authkey
+    """
     return await _auth_keys_edit(auth=auth, db=db, auth_key_id=auth_key_id, body=body)
 
 
-@router.delete(
+@router.post(
     "/auth_keys/delete/{AuthKeyId}",
     deprecated=True,
     response_model=StandardStatusIdentifiedResponse,
     summary="Delete given AuthKey.",
-    description="Delete AuthKey by AuthKeyId from the database.",
 )
 async def auth_keys_delete_auth_key_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.AUTH]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     auth_key_id: Annotated[int, Path(alias="AuthKeyId")],
 ) -> StandardStatusIdentifiedResponse:
+    """Delete AuthKey by AuthKeyId from the database.
+
+    Input:
+
+    - the user's authentification status
+
+    - the current database
+
+    - the id of the authkey
+
+    Output:
+
+    - the response from the api after the deleting request
+    """
     await _auth_keys_delete(auth=auth, db=db, auth_key_id=auth_key_id)
 
     return StandardStatusIdentifiedResponse(
@@ -209,6 +386,8 @@ async def _auth_key_add(auth: Auth, db: Session, user_id: int, body: AddAuthKeyB
     auth_key_string = generate(size=40, alphabet=string.ascii_letters + string.digits)
     hashed_auth_key = hash_secret(auth_key_string)
 
+    expiration_int = parse_date(str(body.expiration)) if body.expiration else None
+
     auth_key = AuthKey(
         uuid=body.uuid,
         read_only=body.read_only,
@@ -219,7 +398,7 @@ async def _auth_key_add(auth: Auth, db: Session, user_id: int, body: AddAuthKeyB
         authkey_start=auth_key_string[:4],
         authkey_end=auth_key_string[-4:],
         created=int(time.time()),
-        expiration=body.expiration,
+        expiration=expiration_int,
     )
 
     db.add(auth_key)
@@ -360,7 +539,77 @@ async def _search_auth_keys(
     return auth_keys_computed
 
 
-async def _auth_keys_edit(auth: Auth, db: Session, auth_key_id: int, body: EditAuthKeyBody) -> EditAuthKeyResponse:
+async def _search_auth_keys_depr(
+    auth: Auth,
+    db: Session,
+    body: SearchAuthKeyBody,
+) -> list[SearchGetAuthKeysResponse]:
+    query = select(AuthKey, User).join(User, AuthKey.user_id == User.id)
+
+    if not await check_permissions(db, auth, [Permission.SITE_ADMIN]):
+        query = query.filter(User.org_id == auth.org_id)
+    if not await check_permissions(db, auth, [Permission.ADMIN]):
+        query = query.filter(AuthKey.user_id == auth.user_id)
+
+    if body.id:
+        query = query.filter(AuthKey.id == body.id)
+    if body.uuid:
+        query = query.filter(AuthKey.uuid == body.uuid)
+    if body.authkey_start:
+        query = query.filter(AuthKey.authkey_start == body.authkey_start)
+    if body.authkey_end:
+        query = query.filter(AuthKey.authkey_end == body.authkey_end)
+    if body.created:
+        query = query.filter(AuthKey.created == int(body.created))
+    if body.expiration:
+        query = query.filter(AuthKey.expiration == int(body.expiration))
+    if body.read_only:
+        query = query.filter(AuthKey.read_only.is_(body.read_only))
+    if body.user_id:
+        query = query.filter(AuthKey.user_id == int(body.user_id))
+    if body.comment:
+        query = query.filter(AuthKey.comment == body.comment)
+    if body.allowed_ips:
+        if isinstance(body.allowed_ips, list):
+            body.allowed_ips = json.dumps(body.allowed_ips)
+
+        query = query.filter(AuthKey.allowed_ips == body.allowed_ips)
+
+    result = await db.execute(query.limit(body.limit).offset((body.page - 1) * body.limit))
+    auth_keys_and_users: Sequence[Row[Tuple[AuthKey, User]]] = result.all()
+    auth_keys_computed: list[SearchGetAuthKeysResponse] = []
+
+    for auth_key_and_user in auth_keys_and_users:
+        auth_keys_computed.append(
+            SearchGetAuthKeysResponse(
+                AuthKey=SearchGetAuthKeysResponseAuthKey(
+                    id=auth_key_and_user.AuthKey.id,
+                    uuid=auth_key_and_user.AuthKey.uuid,
+                    authkey_start=auth_key_and_user.AuthKey.authkey_start,
+                    authkey_end=auth_key_and_user.AuthKey.authkey_end,
+                    created=auth_key_and_user.AuthKey.created,
+                    expiration=auth_key_and_user.AuthKey.expiration,
+                    read_only=auth_key_and_user.AuthKey.read_only,
+                    user_id=auth_key_and_user.AuthKey.user_id,
+                    comment=auth_key_and_user.AuthKey.comment,
+                    allowed_ips=json.loads(auth_key_and_user.AuthKey.allowed_ips)
+                    if auth_key_and_user.AuthKey.allowed_ips
+                    else None,
+                    unique_ips=json.loads(auth_key_and_user.AuthKey.unique_ips)
+                    if auth_key_and_user.AuthKey.unique_ips
+                    else [],
+                ),
+                User=SearchGetAuthKeysResponseItemUser(
+                    id=auth_key_and_user.User.id,
+                    email=auth_key_and_user.User.email,
+                ),
+            )
+        )
+
+    return auth_keys_computed
+
+
+async def _auth_keys_edit(auth: Auth, db: Session, auth_key_id: int, body: EditAuthKeyBody) -> EditAuthKeyResponseCompl:
     auth_key: AuthKey | None = await db.get(AuthKey, auth_key_id)
 
     if not auth_key or (
@@ -378,13 +627,20 @@ async def _auth_keys_edit(auth: Auth, db: Session, auth_key_id: int, body: EditA
     update = body.dict()
     update["allowed_ips"] = json.dumps(body.allowed_ips) if body.allowed_ips else None
 
+    if body.expiration == "":
+        update["expiration"] = None
+    elif body.expiration:
+        update["expiration"] = parse_date(body.expiration)
+    else:
+        update["expiration"] = None
+    
     update_record(auth_key, update)
 
     await db.commit()
     await db.refresh(auth_key)
     await db.refresh(user)
-    return EditAuthKeyResponse(
-        AuthKey=EditAuthKeyResponseAuthKey(
+    return EditAuthKeyResponseCompl(
+        AuthKey=EditAuthKeyResponseCompleteAuthKey(
             id=auth_key.id,
             uuid=auth_key.uuid,
             authkey_start=auth_key.authkey_start,
@@ -427,7 +683,7 @@ async def _auth_keys_delete(auth: Auth, db: Session, auth_key_id: int) -> None:
 async def _auth_keys_get(
     auth: Auth,
     db: Session,
-) -> list[SearchGetAuthKeysResponseItem]:
+) -> list[SearchGetAuthKeysResponse]:
     query = select(AuthKey, User).join(User, AuthKey.user_id == User.id)
 
     if not await check_permissions(db, auth, [Permission.SITE_ADMIN]):
@@ -438,12 +694,12 @@ async def _auth_keys_get(
     result = await db.execute(query)
     auth_keys_and_users: Sequence[Any] = result.all()
 
-    auth_keys_computed: list[SearchGetAuthKeysResponseItem] = []
+    auth_keys_computed: list[SearchGetAuthKeysResponse] = []
 
     for auth_key_and_user in auth_keys_and_users:
         auth_keys_computed.append(
-            SearchGetAuthKeysResponseItem(
-                AuthKey=SearchGetAuthKeysResponseItemAuthKey(
+            SearchGetAuthKeysResponse(
+                AuthKey=SearchGetAuthKeysResponseAuthKey(
                     id=auth_key_and_user.AuthKey.id,
                     uuid=auth_key_and_user.AuthKey.uuid,
                     authkey_start=auth_key_and_user.AuthKey.authkey_start,
@@ -468,3 +724,30 @@ async def _auth_keys_get(
         )
 
     return auth_keys_computed
+
+
+async def _auth_keys_view_own(auth: Auth, db: Session) -> list[SearchGetAuthKeysResponseItem]:
+    own_key = await _search_auth_keys(auth, db, SearchAuthKeyBody(user_id=auth.user_id))
+    if own_key is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
+    return own_key
+
+
+async def _auth_keys_view_own_depr(auth: Auth, db: Session) -> list[SearchGetAuthKeysResponse]:
+    own_key = await _search_auth_keys_depr(auth, db, SearchAuthKeyBody(user_id=auth.user_id))
+    if own_key is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
+    return own_key
+
+
+def parse_date(date_str: str) -> int:
+    if len(date_str) != 10 or date_str[4] != '-' or date_str[7] != '-':
+        raise ValueError("Date must be in the format yyyy-mm-dd")
+    
+    try:
+        dt = datetime.strptime(date_str, "%Y-%m-%d")
+    except ValueError:
+        raise ValueError("Invalid date format")
+    
+    unix_timestamp = int(dt.timestamp())
+    return unix_timestamp

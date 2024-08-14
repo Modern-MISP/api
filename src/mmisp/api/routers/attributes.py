@@ -46,13 +46,26 @@ router = APIRouter(tags=["attributes"])
     "/attributes/restSearch",
     status_code=status.HTTP_200_OK,
     summary="Search attributes",
-    description="Search for attributes based on various filters.",
 )
 async def rest_search_attributes(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     body: SearchAttributesBody,
 ) -> SearchAttributesResponse:
+    """Search for attributes based on various filters.
+
+    Input:
+
+    - the user's authentification status
+
+    - the current database
+
+    - the search body
+
+    Output:
+
+    - the attributes the search finds
+    """
     return await _rest_search_attributes(db, body)
 
 
@@ -61,7 +74,6 @@ async def rest_search_attributes(
     status_code=status.HTTP_200_OK,
     response_model=AddAttributeResponse,
     summary="Add new attribute",
-    description="Add a new attribute with the given details.",
 )
 async def add_attribute(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
@@ -69,6 +81,22 @@ async def add_attribute(
     event_id: Annotated[str, Path(alias="eventId")],
     body: AddAttributeBody,
 ) -> AddAttributeResponse:
+    """Add a new attribute with the given details.
+
+    Input:
+
+    - the user's authentification status
+
+    - the current database
+
+    - the id of the event
+
+    - the body for adding an attribute
+
+    Output:
+
+    - the response of the added attribute from the api
+    """
     return await _add_attribute(db, event_id, body)
 
 
@@ -77,11 +105,20 @@ async def add_attribute(
     status_code=status.HTTP_200_OK,
     response_model=GetDescribeTypesResponse,
     summary="Get all attribute describe types",
-    description="Retrieve a list of all available attribute types and categories.",
 )
 async def get_attributes_describe_types(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
 ) -> GetDescribeTypesResponse:
+    """Retrieve a list of all available attribute types and categories.
+
+    Input:
+
+    - the user's authentification status
+
+    Output:
+
+    - the attributes describe types
+    """
     return GetDescribeTypesResponse(result=GetDescribeTypesAttributes())
 
 
@@ -90,13 +127,26 @@ async def get_attributes_describe_types(
     status_code=status.HTTP_200_OK,
     response_model=GetAttributeResponse,
     summary="Get attribute details",
-    description="Retrieve details of a specific attribute by its ID.",
 )
 async def get_attribute_details(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     attribute_id: Annotated[str, Path(alias="attributeId")],
 ) -> GetAttributeResponse:
+    """Retrieve details of a specific attribute by its ID.
+
+    Input:
+
+    - the user's authentification status
+
+    - the current database
+
+    - the id of the attribute
+
+    Output:
+
+    - the attribute details
+    """
     return await _get_attribute_details(db, attribute_id)
 
 
@@ -105,7 +155,6 @@ async def get_attribute_details(
     status_code=status.HTTP_200_OK,
     response_model=EditAttributeResponse,
     summary="Update an attribute",
-    description="Update an existing attribute by its ID.",
 )
 async def update_attribute(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
@@ -113,6 +162,22 @@ async def update_attribute(
     attribute_id: Annotated[str, Path(alias="attributeId")],
     body: EditAttributeBody,
 ) -> EditAttributeResponse:
+    """Update an existing attribute by its ID.
+
+    Input:
+
+    - the user's authentification status
+
+    - the current database
+
+    - the id of the attribute
+
+    - the body for editing the attribute
+
+    Output:
+
+    - the response from the api for the edit request
+    """
     return await _update_attribute(db, attribute_id, body)
 
 
@@ -121,13 +186,26 @@ async def update_attribute(
     status_code=status.HTTP_200_OK,
     response_model=DeleteAttributeResponse,
     summary="Delete an Attribute",
-    description="Delete an attribute by its ID.",
 )
 async def delete_attribute(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
     attribute_id: Annotated[str, Path(alias="attributeId")],
 ) -> DeleteAttributeResponse:
+    """Delete an attribute by its ID.
+
+    Input:
+
+    - the user's authentification status
+
+    - the current database
+
+    - the id of the attribute
+
+    Output:
+
+    - the response from the api for the delete request
+    """
     return await _delete_attribute(db, attribute_id)
 
 
@@ -135,11 +213,20 @@ async def delete_attribute(
     "/attributes",
     status_code=status.HTTP_200_OK,
     summary="Get all Attributes",
-    description="Retrieve a list of all attributes.",
 )
 async def get_attributes(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))], db: Annotated[Session, Depends(get_db)]
 ) -> list[GetAllAttributesResponse]:
+    """Retrieve a list of all attributes.
+
+    Input:
+
+    - the user's authentification status
+
+    Output:
+
+    - the list of all attributes
+    """
     return await _get_attributes(db)
 
 
@@ -148,7 +235,6 @@ async def get_attributes(
     status_code=status.HTTP_200_OK,
     response_model=DeleteSelectedAttributeResponse,
     summary="Delete the selected attributes",
-    description="Deletes the attributes associated with the event from the list in the body.",
 )
 async def delete_selected_attributes(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
@@ -157,6 +243,24 @@ async def delete_selected_attributes(
     body: DeleteSelectedAttributeBody,
     request: Request,
 ) -> DeleteSelectedAttributeResponse:
+    """Deletes the attributes associated with the event from the list in the body.
+
+    Input:
+
+    - the user's authentification status
+
+    - the current database
+
+    - the id of the event
+
+    - the body for deleting the selected attributes
+
+    - the request
+
+    Output:
+
+    - the response from the api for the deleting of the selection
+    """
     return await _delete_selected_attributes(db, event_id, body, request)
 
 
@@ -164,7 +268,6 @@ async def delete_selected_attributes(
     "/attributes/attributeStatistics/{context}/{percentage}",
     status_code=status.HTTP_200_OK,
     summary="Get attribute statistics",
-    description="Get the count/percentage of attributes per category/type.",
 )
 async def get_attributes_statistics(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
@@ -172,6 +275,22 @@ async def get_attributes_statistics(
     context: Literal["type"] | Literal["category"],
     percentage: bool,
 ) -> GetAttributeStatisticsCategoriesResponse | GetAttributeStatisticsTypesResponse:  # type: ignore
+    """Get the count/percentage of attributes per category/type.
+
+    Input:
+
+    - the user's authentification status
+
+    - the current database
+
+    - the context
+
+    - percentage
+
+    Output:
+
+    - the attributes statistics for one category/type
+    """
     return await _get_attribute_statistics(db, context, percentage)
 
 
@@ -180,13 +299,26 @@ async def get_attributes_statistics(
     status_code=status.HTTP_200_OK,
     response_model=GetAttributeResponse,
     summary="Restore an attribute",
-    description="Restore an attribute by its ID.",
 )
 async def restore_attribute(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
     attribute_id: Annotated[str, Path(alias="attributeId")],
 ) -> GetAttributeResponse:
+    """Restore an attribute by its ID.
+
+    Input:
+
+    - the user's authentification status
+
+    - the current database
+
+    - the id of the attribute
+
+    Output:
+
+    - the restored attribute
+    """
     return await _restore_attribute(db, attribute_id)
 
 
@@ -195,7 +327,6 @@ async def restore_attribute(
     status_code=status.HTTP_200_OK,
     response_model=AddRemoveTagAttributeResponse,
     summary="Add tag to attribute",
-    description="Add a tag to an attribute by there ids.",
 )
 async def add_tag_to_attribute(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.TAGGER]))],
@@ -204,6 +335,24 @@ async def add_tag_to_attribute(
     tag_id: Annotated[str, Path(alias="tagId")],
     local: str,
 ) -> AddRemoveTagAttributeResponse:
+    """Add a tag to an attribute by there ids.
+
+    Input:
+
+    - the user's authentification status
+
+    - the current database
+
+    - the id of the attribute
+
+    - the id of the tag
+
+    - local
+
+    Output:
+
+    - the response from the api for adding a tag to an attribute
+    """
     return await _add_tag_to_attribute(db, attribute_id, tag_id, local)
 
 
@@ -212,7 +361,6 @@ async def add_tag_to_attribute(
     status_code=status.HTTP_200_OK,
     response_model=AddRemoveTagAttributeResponse,
     summary="Remove tag from attribute",
-    description="Remove a tag from an attribute by there ids.",
 )
 async def remove_tag_from_attribute(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.TAGGER]))],
@@ -220,6 +368,22 @@ async def remove_tag_from_attribute(
     attribute_id: Annotated[str, Path(alias="attributeId")],
     tag_id: Annotated[str, Path(alias="tagId")],
 ) -> AddRemoveTagAttributeResponse:
+    """Remove a tag from an attribute by there ids.
+
+    Input:
+
+    - the user's authentification status
+
+    - the current database
+
+    - the id of the attribute
+
+    - the id of the tag
+
+    Output:
+
+    - the response from the api for removing a tag to an attribute
+    """
     return await _remove_tag_from_attribute(db, attribute_id, tag_id)
 
 
@@ -232,7 +396,6 @@ async def remove_tag_from_attribute(
     status_code=status.HTTP_200_OK,
     response_model=AddAttributeResponse,
     summary="Add new attribute (Deprecated)",
-    description="Deprecated. Add a new attribute with the given details using the old route.",
 )
 async def add_attribute_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
@@ -240,6 +403,22 @@ async def add_attribute_depr(
     event_id: Annotated[str, Path(alias="eventId")],
     body: AddAttributeBody,
 ) -> AddAttributeResponse:
+    """Deprecated. Add a new attribute with the given details using the old route.
+
+    Input:
+
+    - the user's authentification status
+
+    - the current database
+
+    - the id of the event
+
+    - the body
+
+    Output:
+
+    - the attribute
+    """
     return await _add_attribute(db, event_id, body)
 
 
@@ -249,13 +428,26 @@ async def add_attribute_depr(
     status_code=status.HTTP_200_OK,
     response_model=GetAttributeResponse,
     summary="Get attribute details (Deprecated)",
-    description="Deprecated. Retrieve details of a specific attribute by its ID using the old route.",
 )
 async def get_attribute_details_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     attribute_id: Annotated[str, Path(alias="attributeId")],
 ) -> GetAttributeResponse:
+    """Deprecated. Retrieve details of a specific attribute by its ID using the old route.
+
+    Input:
+
+    - the user's authentification status
+
+    - the current database
+
+    - the id of the attribute
+
+    Output:
+
+    - the details of an attribute
+    """
     return await _get_attribute_details(db, attribute_id)
 
 
@@ -265,7 +457,6 @@ async def get_attribute_details_depr(
     status_code=status.HTTP_200_OK,
     response_model=EditAttributeResponse,
     summary="Update an attribute (Deprecated)",
-    description="Deprecated. Update an existing attribute by its ID using the old route.",
 )
 async def update_attribute_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
@@ -273,6 +464,22 @@ async def update_attribute_depr(
     attribute_id: Annotated[str, Path(alias="attributeId")],
     body: EditAttributeBody,
 ) -> EditAttributeResponse:
+    """Deprecated. Update an existing attribute by its ID using the old route.
+
+    Input:
+
+    - the user's authentification status
+
+    - the current database
+
+    - the id of the attribute
+
+    - the body
+
+    Output:
+
+    - the updated version af an attribute
+    """
     return await _update_attribute(db, attribute_id, body)
 
 
@@ -282,13 +489,26 @@ async def update_attribute_depr(
     status_code=status.HTTP_200_OK,
     response_model=DeleteAttributeResponse,
     summary="Delete an Attribute (Deprecated)",
-    description="Deprecated. Delete an attribute by its ID using the old route.",
 )
 async def delete_attribute_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
     attribute_id: Annotated[str, Path(alias="attributeId")],
 ) -> DeleteAttributeResponse:
+    """Deprecated. Delete an attribute by its ID using the old route.
+
+    Input:
+
+    - the user's authentification status
+
+    - the current database
+
+    - the id of the attribute
+
+    Output:
+
+    - the response from the api for the deleting request
+    """
     return await _delete_attribute(db, attribute_id)
 
 

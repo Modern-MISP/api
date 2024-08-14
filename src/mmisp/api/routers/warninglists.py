@@ -29,13 +29,27 @@ router = APIRouter(tags=["warninglists"])
     "/warninglists/new",
     status_code=status.HTTP_201_CREATED,
     summary="Add a new warninglist",
-    description="Add a new warninglist with given details.",
 )
 async def add_warninglist(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WARNINGLIST]))],
     db: Annotated[Session, Depends(get_db)],
     body: CreateWarninglistBody,
 ) -> WarninglistResponse:
+    """
+    Add a new warninglist with given details.
+
+    Input:
+
+    - auth: Authentication details
+
+    - db: Database session
+
+    - body: CreateWarninglistBody, Data for creating the new warninglist
+
+    Output:
+
+    - WarninglistResponse: Response with details of the new warninglist
+    """
     return await _add_warninglist(db, body)
 
 
@@ -43,13 +57,27 @@ async def add_warninglist(
     "/warninglists/{warninglistId}",
     status_code=status.HTTP_200_OK,
     summary="Get warninglist details",
-    description="Retrieve details of a specific warninglist by its ID.",
 )
 async def get_warninglist_details(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     warninglist_id: Annotated[int, Path(alias="warninglistId")],
 ) -> WarninglistResponse:
+    """
+    Retrieve details of a specific warninglist by its ID.
+
+    Input:
+
+    - auth: Authentication details
+
+    - db: Database session
+
+    - warninglist_id: ID of the warninglist to fetch
+
+    Output:
+
+    - WarninglistResponse: Response with details of the searched warninglist
+    """
     return await _get_warninglist_details(db, warninglist_id)
 
 
@@ -58,13 +86,27 @@ async def get_warninglist_details(
     status_code=status.HTTP_200_OK,
     response_model_exclude_unset=True,
     summary="Disable/Enable warninglist",
-    description="Disable/Enable a specific warninglist by its ID or name.",
 )
 async def post_toggleEnable(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     body: ToggleEnableWarninglistsBody,
 ) -> ToggleEnableWarninglistsResponse:
+    """
+    Disable/Enable a specific warninglist by its ID or name.
+
+    Input:
+
+    - auth: Authentication details
+
+    - db:Database session
+
+    - body: ToggleEnableWarninglistsBody, Data to toggle enable status of the warninglist
+
+    Output:
+
+    - ToggleEnableWarninglistsResponse: Response showing success or failure
+    """
     return await _toggleEnable(db, body)
 
 
@@ -72,13 +114,27 @@ async def post_toggleEnable(
     "/warninglists/{id}",
     status_code=status.HTTP_200_OK,
     summary="Delete warninglist",
-    description="Delete a specific warninglist.",
 )
 async def delete_warninglist(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     warninglist_id: Annotated[int, Path(alias="id")],
 ) -> WarninglistResponse:
+    """
+    Delete a specific warninglist.
+
+    Input:
+
+    - auth: Authentication details
+
+    - db: Database session
+
+    - warninglist_id: ID of the warninglist to delete
+
+    Output:
+
+    - WarninglistResponse: Response showing success or failure
+    """
     return await _delete_warninglist(db, warninglist_id)
 
 
@@ -86,9 +142,6 @@ async def delete_warninglist(
     "/warninglists",
     status_code=status.HTTP_200_OK,
     summary="Get all warninglists, or selected ones by value and status",
-    description="Receive a list of all warning lists, or when setting the path parameters value and enabled, receive a \
-        list of warninglists for which the value matches either the name, description, or type and enabled matches \
-        given parameter.",
 )
 async def get_all_or_selected_warninglists(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
@@ -96,6 +149,25 @@ async def get_all_or_selected_warninglists(
     value: str | None = None,
     enabled: bool | None = None,
 ) -> GetSelectedAllWarninglistsResponse:
+    """
+    Receive a list of all warning lists, or when setting the path parameters value and enabled, receive a \
+        list of warninglists for which the value matches either the name, description, or type and enabled matches \
+        given parameter.
+
+    Input:
+
+    - auth: Authentication details
+
+    - db: Database session
+
+    - value: str | None, Search term for filtering by value
+
+    - enabled: bool | None, Status filter (enabled or disabled)
+
+    Output:
+
+    - GetSelectedAllWarninglistsResponse: Response containing filtered or all warninglists
+    """
     return await _get_all_or_selected_warninglists(db, value, enabled)
 
 
@@ -103,14 +175,28 @@ async def get_all_or_selected_warninglists(
     "/warninglists/checkValue",
     status_code=status.HTTP_200_OK,
     summary="Get a list of ID and name of enabled warninglists",
-    description="Retrieve a list of ID and name of enabled warninglists, \
-        which match has the given search term as entry.",
 )
 async def get_warninglists_by_value(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     body: CheckValueWarninglistsBody,
 ) -> CheckValueResponse | dict:
+    """
+    Retrieve a list of ID and name of enabled warninglists, \
+        which match has the given search term as entry.
+
+    Input:
+
+    - auth: Authentication details
+
+    - db: Database session
+
+    - body: CheckValueWarninglistsBody, Data for searching warninglists by value
+
+    Output:
+
+    - CheckValueResponse | dict: Response with searched warninglists
+    """
     return await _get_warninglists_by_value(db, body)
 
 
@@ -118,12 +204,24 @@ async def get_warninglists_by_value(
     "/warninglists",
     status_code=status.HTTP_200_OK,
     summary="Update warninglists",
-    description="Update all warninglists.",
 )
 async def update_all_warninglists(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
 ) -> StandardStatusResponse:
+    """
+    Update all warninglists.
+
+    Input:
+
+    - auth: Authentication details
+
+    - db: Database session
+
+    Output:
+
+    - StandardStatusResponse: Response indicating success or failure
+    """
     return await _update_all_warninglists(db, False)
 
 
@@ -135,13 +233,27 @@ async def update_all_warninglists(
     deprecated=True,
     status_code=status.HTTP_200_OK,
     summary="Get warninglist details (Deprecated)",
-    description="Deprecated. Retrieve details of a specific warninglist by its ID using the old route.",
 )
 async def get_warninglist_details_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     warninglist_id: Annotated[int, Path(alias="warninglistId")],
 ) -> WarninglistResponse:
+    """
+    Deprecated. Retrieve details of a specific warninglist by its ID using the old route.
+
+    Input:
+
+    - auth: Authentication details
+
+    - db: Database session
+
+    - warninglist_id: ID of the warninglist to fetch
+
+    Output:
+
+    - WarninglistResponse: Response with details of the searched warninglist
+    """
     return await _get_warninglist_details(db, warninglist_id)
 
 
@@ -150,13 +262,27 @@ async def get_warninglist_details_depr(
     deprecated=True,
     status_code=status.HTTP_200_OK,
     summary="Get selected warninglists (Deprecated)",
-    description="Retrieve a list of warninglists, which match given search terms using the old route.",
 )
 async def search_warninglists(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     body: GetSelectedWarninglistsBody,
 ) -> GetSelectedAllWarninglistsResponse:
+    """
+    Retrieve a list of warninglists, which match given search terms using the old route.
+
+    Input:
+
+    - auth: Authentication details
+
+    - db: Database session
+
+    - body: GetSelectedWarninglistsBody, Data for filtering warninglists
+
+    Output:
+
+    - GetSelectedAllWarninglistsResponse: Response containing filtered warninglists
+    """
     return await _get_selected_warninglists(db, body)
 
 
@@ -165,12 +291,24 @@ async def search_warninglists(
     deprecated=True,
     status_code=status.HTTP_200_OK,
     summary="Update warninglists (Deprecated)",
-    description="Deprecated. Update all warninglists.",
 )
 async def update_all_warninglists_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
 ) -> StandardStatusResponse:
+    """
+    Deprecated. Update all warninglists.
+
+    Input:
+
+    - auth: Authentication details
+
+    - db: Database session
+
+    Output:
+
+    - StandardStatusResponse: Response indicating success or failure
+    """
     return await _update_all_warninglists(db, True)
 
 

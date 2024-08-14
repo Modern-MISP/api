@@ -19,89 +19,187 @@ from mmisp.api_schemas.user_settings import (
     ViewUserSettingResponseUserSetting,
 )
 from mmisp.db.database import Session, get_db
+from typing import Optional
 from mmisp.db.models.user_setting import SettingName, UserSetting
 
 router = APIRouter(tags=["user_settings"])
 
 
 @router.post(
-    "/user_settings/setSetting/{userId}/{userSettingName}",
+    "/user_settings/setSetting/me/{userSettingName}",
     summary="Set user setting.",
-    description="Create or Update a UserSetting by user ID and UserSettingName. \
-    If specified UserSetting doesn't exist, it is created.",
 )
 async def set_user_settings(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
-    user_id: Annotated[int, Path(alias="userId")],
+    # user_id: Annotated[int, Path(alias="userId")],
     user_setting_name: Annotated[str, Path(alias="userSettingName")],
     body: SetUserSettingBody,
 ) -> SetUserSettingResponse:
-    return await _set_user_settings(auth=auth, db=db, user_id=user_id, user_setting_name=user_setting_name, body=body)
+    """
+    Create or Update a UserSetting by user ID and UserSettingName. \
+    If specified UserSetting doesn't exist, it is created.
+
+    Input:
+
+    - auth: Authentication details
+
+    - db: Database session
+
+    - user_id: ID of the user for whom setting is to be set
+
+    - user_setting_name: Name of the user setting to
+
+    - body: SetUserSettingBody, Data for setting the user setting
+
+    Output:
+
+    - SetUserSettingResponse: Response indicating success or failure
+    """
+    if auth.user_id is not None:
+        return await _set_user_settings(
+        auth=auth, db=db, user_id=auth.user_id, user_setting_name=user_setting_name, body=body
+     )
+    return await _set_user_settings(
+        auth=auth, db=db, user_id=1, user_setting_name=user_setting_name, body=body
+     ) 
 
 
 @router.get(
     "/user_settings/{userSettingId}",
     summary="View UserSetting by ID.",
-    description="Displays a UserSetting by the UserSettingID.",
 )
 async def view_user_settings(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     user_setting_id: Annotated[int, Path(alias="userSettingId")],
 ) -> ViewUserSettingResponse:
+    """
+    Displays a UserSetting by the UserSettingID.
+
+    Input:
+
+    - userSettingId: ID of the user setting to view
+
+    - auth: Authentication details
+
+    - db: Database session
+
+    Output:
+
+    - ViewUserSettingResponse: Response with details of the viewed user setting
+    """
     return await _view_user_settings(auth=auth, db=db, user_setting_id=user_setting_id)
 
 
 @router.get(
-    "/user_settings/{userId}/{userSettingName}",
+    "/user_settings/me/{userSettingName}",
     summary="View UserSetting.",
-    description="Displays a UserSetting by given userID and UserSetting name.",
 )
 async def get_user_setting_by_id(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    user_id: Annotated[int, Path(alias="userId")],
     user_setting_name: Annotated[str, Path(alias="userSettingName")],
 ) -> ViewUserSettingResponse:
-    return await _get_user_setting_by_id(auth=auth, db=db, user_id=user_id, user_setting_name=user_setting_name)
+    """
+    Displays a UserSetting by given userID and UserSetting name.
+
+    Input:
+
+    - userId: ID of the user for whom setting is to be viewed
+
+    - userSettingName: Name of the user setting to view
+
+    - auth: Authentication details
+
+    - db: Database session
+
+    Output:
+
+    - ViewUserSettingResponse: Response with details of the viewed user setting
+    """
+    if auth.user_id is not None:
+        return await _get_user_setting_by_id(auth=auth, db=db, user_id=auth.user_id, user_setting_name=user_setting_name)
+    
+    return await _get_user_setting_by_id(auth=auth, db=db, user_id=1, user_setting_name=user_setting_name)
+
 
 
 @router.post(
     "/user_settings",
     summary="Displays all UserSettings.",
-    description="Displays all UserSettings by specified parameters.",
 )
 async def search_user_settings(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     body: SearchUserSettingBody,
 ) -> list[UserSettingResponse]:
+    """
+    Displays all UserSettings by specified parameters.
+
+    Input:
+
+    - body: SearchUserSettingBody, Data for searching user settings
+
+    - auth: Authentication details
+
+    - db: Database session
+
+    Output:
+
+    - list[UserSettingResponse]: List of UserSettingResponse objects
+    """
     return await _search_user_settings(auth=auth, db=db, body=body)
 
 
 @router.get(
     "/user_settings",
     summary="Displays all UserSettings.",
-    description="Displays all UserSettings.",
 )
 async def get_user_settings(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
 ) -> list[UserSettingResponse]:
+    """
+    Displays all UserSettings.
+
+    Input:
+
+    - auth: Authentication details
+
+    - db: Database session
+
+    Output:
+
+    - list[UserSettingResponse]: List of UserSettingResponse objects
+    """
     return await _get_user_settings(auth=auth, db=db)
 
 
 @router.delete(
     "/user_settings/{userSettingId}",
     summary="Deletes a UserSetting.",
-    description="Deletes UserSetting by UserSetting ID.",
 )
 async def delete_user_settings(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
     user_setting_id: Annotated[int, Path(alias="userSettingId")],
 ) -> StandardStatusIdentifiedResponse:
+    """
+    Deletes UserSetting by UserSetting ID.
+
+    Input:
+
+    - userSettingId: ID of the user setting to delete
+
+    - auth: Authentication details
+
+    - db: Database session
+
+    Output:
+
+    - StandardStatusIdentifiedResponse: Response indicating success or failure
+    """
     await _delete_user_settings(auth=auth, db=db, user_setting_id=user_setting_id)
 
     return StandardStatusIdentifiedResponse(
@@ -121,13 +219,27 @@ async def delete_user_settings(
     "/user_settings/view/{userSettingId}",
     deprecated=True,
     summary="View UserSetting by ID.",
-    description="View UserSetting by UserSettingID.",
 )
 async def view_user_settings_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     user_setting_id: Annotated[int, Path(alias="userSettingId")],
 ) -> ViewUserSettingResponse:
+    """
+    Deprecated. View UserSetting by UserSettingID.
+
+    Input:
+
+    - userSettingId: ID of the user setting to view
+
+    - auth: Authentication details
+
+    - db: Database session
+
+    Output:
+
+    - ViewUserSettingResponse: Response with details of the viewed user setting
+    """
     user_setting: UserSetting | None = await db.get(UserSetting, user_setting_id)
 
     if not user_setting or (
@@ -149,7 +261,6 @@ async def view_user_settings_depr(
     "/user_settings/getSetting/{userId}/{userSettingName}",
     deprecated=True,
     summary="View a UserSetting.",
-    description="View a UserSetting by its userID and UserSetting name.",
 )
 async def get_user_setting_by_ids(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
@@ -157,6 +268,23 @@ async def get_user_setting_by_ids(
     user_id: Annotated[int, Path(alias="userId")],
     user_setting_name: Annotated[str, Path(alias="userSettingName")],
 ) -> GetUserSettingResponse:
+    """
+    Deprecated. View a UserSetting by its userID and UserSetting name.
+
+    Input:
+
+    - userId: ID of the user for whom setting is to be viewed
+
+    - userSettingName: Name of the user setting to view
+
+    - auth: Authentication details
+
+    - db: Database session
+
+    Output:
+
+    - GetUserSettingResponse: Response with details of the viewed user setting
+    """
     result = await db.execute(
         select(UserSetting).filter(UserSetting.user_id == user_id, UserSetting.setting == user_setting_name).limit(1)
     )
@@ -180,13 +308,27 @@ async def get_user_setting_by_ids(
     "/user_settings/delete/{userSettingId}",
     deprecated=True,
     summary="Delete UserSetting.",
-    description="Delete a UserSetting by specified UserSettingID.",
 )
 async def delete_user_settings_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
     user_setting_id: Annotated[int, Path(alias="userSettingId")],
 ) -> StandardStatusIdentifiedResponse:
+    """
+    Deprecated. Delete a UserSetting by specified UserSettingID.
+
+    Input:
+
+    - userSettingId: ID of the user setting to delete
+
+    - auth: Authentication details
+
+    - db: Database session
+
+    Output:
+
+    - StandardStatusIdentifiedResponse: Response indicating success or failure
+    """
     await _delete_user_settings(auth=auth, db=db, user_setting_id=user_setting_id)
 
     return StandardStatusIdentifiedResponse(
