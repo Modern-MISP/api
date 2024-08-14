@@ -42,7 +42,7 @@ database "Redis"
 ### ::: mmisp.api.routers.user_settings
 ## Authentication
 ### ::: mmisp.api.routers.authentication
-## Events 
+## Events
 ### ::: mmisp.api.routers.events
 ## Tags
 ### ::: mmisp.api.routers.tags
@@ -70,9 +70,9 @@ database "Redis"
 ### ::: mmisp.api.routers.servers
 ## Galaxies
 ### ::: mmisp.api.routers.galaxies
-## Galaxies Cluster 
+## Galaxies Cluster
 ### ::: mmisp.api.routers.galaxies_cluster
-## Organizations
-### ::: mmisp.api.routers.organizations
+## Organisations
+### ::: mmisp.api.routers.organisations
 ## Statistics
 ### ::: mmisp.api.routers.statistics
