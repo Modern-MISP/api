@@ -2,7 +2,6 @@ import uuid
 from datetime import datetime
 from typing import Annotated
 
-import sqlalchemy
 from fastapi import APIRouter, Depends, HTTPException, Path, status
 from sqlalchemy.future import select
 
@@ -17,7 +16,6 @@ from mmisp.api_schemas.organisations import (
 )
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.organisation import Organisation
-from mmisp.db.models.user import User
 
 router = APIRouter(tags=["organisations"])
 
@@ -227,14 +225,6 @@ async def _get_organisations(auth: Auth, db: Session) -> list[GetAllOrganisation
     org_list_computed: list[GetAllOrganisationResponse] = []
 
     for organisation in organisations[0]:
-        query_created_by = select(User).where(User.id == Organisation.created_by)
-        result_created_by = await db.execute(query_created_by)
-        created_by = result_created_by.scalar_one_or_none()
-
-        query_user_count = select(sqlalchemy.func.count(User.id)).where(User.org_id == organisation.id)
-        result_user_count = await db.execute(query_user_count)
-        user_count = result_user_count.scalar_one_or_none()
-
         org_list_computed.append(
             GetAllOrganisationResponse(
                 Organisation=GetAllOrganisationsOrganisation(
@@ -252,8 +242,8 @@ async def _get_organisations(auth: Auth, db: Session) -> list[GetAllOrganisation
                     local=organisation.local,
                     restricted_to_domain=organisation.restricted_to_domain,
                     landingpage=organisation.landingpage,
-                    user_count=user_count,
-                    created_by_email=created_by.email if created_by else "Unknown",
+                    user_count=organisation.user_count,
+                    created_by_email=organisation.creator.email if organisation.creator is not None else "",
                 )
             )
         )
