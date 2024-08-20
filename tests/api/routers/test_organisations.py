@@ -68,6 +68,7 @@ def test_get_all_organisations(db: Session, site_admin_user_token, client, organ
         assert "description" in organisation_data
         assert "nationality" in organisation_data
         assert "sector" in organisation_data
+        assert "user_count" in organisation_data
 
 
 def test_delete_organisation(db: Session, site_admin_user_token, client, organisation) -> None:
