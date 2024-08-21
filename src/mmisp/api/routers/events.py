@@ -7,6 +7,7 @@ from typing import Annotated, Any
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Path
 from sqlalchemy.future import select
+from sqlalchemy.orm import selectinload
 from sqlalchemy.sql import Select
 from starlette import status
 from starlette.requests import Request
@@ -324,7 +325,6 @@ async def unpublish_event(
 @router.post(
     "/events/addTag/{eventId}/{tagId}/local:{local}",
     status_code=status.HTTP_200_OK,
-    response_model=AddRemoveTagEventsResponse,
     summary="Add tag to event",
 )
 async def add_tag_to_event(
@@ -654,7 +654,11 @@ async def _delete_event(db: Session, event_id: str) -> DeleteEventResponse:
 
 
 async def _get_events(db: Session) -> list[GetAllEventsResponse]:
-    result = await db.execute(select(Event))
+    result = await db.execute(
+        select(Event).options(
+            selectinload(Event.org), selectinload(Event.orgc), selectinload(Event.tags), selectinload(Event.eventtags)
+        )
+    )
     events: Sequence[Event] = result.scalars().all()
 
     if not events:
@@ -682,8 +686,6 @@ async def _rest_search_events(db: Session, body: SearchEventsBody) -> SearchEven
 
 
 async def _index_events(db: Session, body: IndexEventsBody) -> list[GetAllEventsResponse]:
-    query: Select = select(Event)
-
     limit = 25
     offset = 0
 
@@ -692,7 +694,14 @@ async def _index_events(db: Session, body: IndexEventsBody) -> list[GetAllEvents
     if body.page:
         offset = limit * (body.page - 1)
 
-    query = query.limit(limit).offset(offset)
+    query: Select = (
+        select(Event)
+        .options(
+            selectinload(Event.org), selectinload(Event.orgc), selectinload(Event.tags), selectinload(Event.eventtags)
+        )
+        .limit(limit)
+        .offset(offset)
+    )
 
     result = await db.execute(query)
     events: Sequence[Event] = result.scalars().all()
@@ -1083,24 +1092,18 @@ async def _prepare_all_events_response(db: Session, event: Event, request_type: 
     event_dict = event.__dict__.copy()
     event_dict["sharing_group_id"] = "0"
 
-    org = await db.get(Organisation, event.org_id)
-    org_dict = org.__dict__.copy()
-
-    orgc = await db.get(Organisation, event.orgc_id)
-    orgc_dict = orgc.__dict__.copy()
+    org_dict = event.org.__dict__.copy()
+    orgc_dict = event.orgc.__dict__.copy()
 
     event_dict["Org"] = GetAllEventsOrg(**org_dict)
     event_dict["Orgc"] = GetAllEventsOrg(**orgc_dict)
 
-    result = await db.execute(select(EventTag).filter(EventTag.event_id == event.id))
-    event_tag_list = result.scalars().all()
-    event_dict["EventTag"] = await _prepare_all_events_event_tag_response(db, event_tag_list)
+    event_dict["EventTag"] = await _prepare_all_events_event_tag_response(db, event.eventtags)
 
-    event_dict["GalaxyCluster"] = await _prepare_all_events_galaxy_cluster_response(db, event_tag_list)
+    event_dict["GalaxyCluster"] = await _prepare_all_events_galaxy_cluster_response(db, event.tags)
     event_dict["date"] = str(event_dict["date"])
-    user = await db.get(User, event.user_id)
-    if user is not None:
-        event_dict["event_creator_email"] = user.email
+    if event.user_id:
+        event_dict["event_creator_email"] = event.creator.email
 
     response_strategy = {"get_all": GetAllEventsResponse, "index": IndexEventsAttributes}
 
@@ -1111,19 +1114,13 @@ async def _prepare_all_events_response(db: Session, event: Event, request_type: 
 
     raise ValueError(f"Unknown request_type: {request_type}")
 
-    return GetAllEventsResponse(**event_dict)
-
 
 async def _prepare_all_events_galaxy_cluster_response(
-    db: Session, event_tag_list: Sequence[EventTag]
+    db: Session, event_tag_list: Sequence[Tag]
 ) -> list[GetAllEventsGalaxyCluster]:
     galaxy_cluster_response_list = []
 
-    for event_tag in event_tag_list:
-        tag = await db.get(Tag, event_tag.tag_id)
-        if tag is None:
-            continue
-
+    for tag in event_tag_list:
         if tag.is_galaxy:
             result = await db.execute(select(GalaxyCluster).filter(GalaxyCluster.tag_name == tag.name))
             galaxy_cluster_list = result.scalars().all()
@@ -1140,14 +1137,14 @@ async def _prepare_all_events_galaxy_cluster_response(
                 galaxy_cluster_dict["authors"] = galaxy_cluster.authors.split(" ")
 
                 result = await db.execute(select(Tag).filter(Tag.name == galaxy_cluster.tag_name).limit(1))
-                tag = result.scalars().first()
+                gtag = result.scalars().first()
 
                 galaxy_cluster_dict["tag_id"] = 0
                 galaxy_cluster_dict["extends_uuid"] = ""
                 galaxy_cluster_dict["collection_uuid"] = ""
 
-                if tag:
-                    galaxy_cluster_dict["tag_id"] = tag.id
+                if gtag:
+                    galaxy_cluster_dict["tag_id"] = gtag.id
                     galaxy_cluster_dict["extends_uuid"] = ""
                     galaxy_cluster_dict["collection_uuid"] = ""
 
