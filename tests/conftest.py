@@ -166,7 +166,6 @@ def site_admin_user(db, site_admin_role, instance_owner_org):
     user.gpgkey = "testkey"
     user.newsread = 5
 
-
     db.add(user)
     db.commit()
     db.refresh(user)
@@ -322,6 +321,7 @@ def organisation(db):
     db.delete(organisation)
     db.commit()
 
+
 @pytest.fixture
 def organisation2(db):
     organisation = generate_organisation()
@@ -334,7 +334,6 @@ def organisation2(db):
 
     db.delete(organisation)
     db.commit()
-
 
 
 @pytest.fixture
@@ -372,6 +371,7 @@ def event2(db, organisation, site_admin_user):
     db.delete(event)
     db.commit()
 
+
 @pytest.fixture
 def event3(db, organisation, site_admin_user):
     org_id = organisation.id
@@ -388,6 +388,7 @@ def event3(db, organisation, site_admin_user):
 
     db.delete(event)
     db.commit()
+
 
 @pytest.fixture
 def event4(db, organisation, site_admin_user):
@@ -406,6 +407,7 @@ def event4(db, organisation, site_admin_user):
     db.delete(event)
     db.commit()
 
+
 @pytest.fixture
 def event5(db, organisation, site_admin_user):
     org_id = organisation.id
@@ -422,6 +424,7 @@ def event5(db, organisation, site_admin_user):
 
     db.delete(event)
     db.commit()
+
 
 @pytest.fixture
 def attribute(db, event):
@@ -454,6 +457,7 @@ def attribute2(db, event):
     db.delete(attribute)
     db.commit()
 
+
 @pytest.fixture
 def attribute3(db, event):
     event_id = event.id
@@ -469,6 +473,7 @@ def attribute3(db, event):
     db.delete(attribute)
     event.attribute_count -= 1
     db.commit()
+
 
 @pytest.fixture
 def tag(db):

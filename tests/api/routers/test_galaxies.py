@@ -84,9 +84,16 @@ def organisation(db):
 
 
 @pytest.fixture
-def add_galaxy_cluster_body(db, galaxy, tag):
+def add_galaxy_cluster_body(db, galaxy, tag, organisation):
     add_galaxy_cluster_body = GalaxyCluster(
-        type="test", value="test", tag_name=tag.name, description="", galaxy_id=galaxy.id, authors="Me"
+        type="test",
+        value="test",
+        tag_name=tag.name,
+        description="",
+        galaxy_id=galaxy.id,
+        authors="Me",
+        org_id=organisation.id,
+        orgc_id=organisation.id,
     )
 
     db.add(add_galaxy_cluster_body)
@@ -100,9 +107,16 @@ def add_galaxy_cluster_body(db, galaxy, tag):
 
 
 @pytest.fixture
-def add_galaxy_cluster_body2(db, galaxy2, tag):
+def add_galaxy_cluster_body2(db, galaxy2, tag, organisation):
     add_galaxy_cluster_body = GalaxyCluster(
-        type="test", value="test", tag_name=tag.name, description="", galaxy_id=galaxy2.id, authors="Me"
+        type="test",
+        value="test",
+        tag_name=tag.name,
+        description="",
+        galaxy_id=galaxy2.id,
+        authors="Me",
+        org_id=organisation.id,
+        orgc_id=organisation.id,
     )
 
     db.add(add_galaxy_cluster_body)
@@ -116,7 +130,7 @@ def add_galaxy_cluster_body2(db, galaxy2, tag):
 
 
 @pytest.fixture
-def add_galaxy_cluster_body3(db, galaxy3, tag):
+def add_galaxy_cluster_body3(db, galaxy3, tag, organisation):
     add_galaxy_cluster_body = GalaxyCluster(
         id="777",
         uuid="777",
@@ -130,8 +144,8 @@ def add_galaxy_cluster_body3(db, galaxy3, tag):
         version="1.0",
         distribution="187",
         sharing_group_id="777",
-        org_id="777",
-        orgc_id="777",
+        org_id=organisation.id,
+        orgc_id=organisation.id,
         default=True,
         locked=False,
         extends_uuid="777",
@@ -228,6 +242,7 @@ def test_get_existing_galaxy_cluster(
 
     headers = {"authorization": site_admin_user_token}
     response = client.get(f"/galaxies/clusters/{galaxy_cluster_id}", headers=headers)
+    ic(response.text)
 
     assert response.status_code == 200
 
@@ -359,6 +374,7 @@ def test_export_existing_galaxy(
 
     headers = {"authorization": site_admin_user_token}
     response = client.post(f"/galaxies/export/{galaxy_id}", json=request_body, headers=headers)
+    ic(response.text)
 
     assert response.status_code == 200
 
@@ -396,9 +412,7 @@ def test_export_non_existing_galaxy(
     assert response.status_code == 404
 
 
-def test_attach_cluster(
-    site_admin_user_token, galaxy, organisation, tag, add_galaxy_cluster_body, event, client
-) -> None:
+def test_attach_cluster(site_admin_user_token, organisation, add_galaxy_cluster_body, event, client) -> None:
     galaxy_cluster_id1 = add_galaxy_cluster_body.id
     event_id = event.id
 
