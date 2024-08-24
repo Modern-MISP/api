@@ -3,19 +3,21 @@ from time import time
 
 import pytest
 from icecream import ic
-from sqlalchemy.future import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from mmisp.api.auth import encode_token
 from mmisp.db.models.user import User
 from mmisp.db.models.user_setting import UserSetting
-from mmisp.api.auth import encode_token
+
 
 @pytest.fixture
 def read_only_user_token(view_only_user):
     return encode_token(view_only_user.id)
 
 
-def test_users_me(site_admin_user_token, site_admin_user, client) -> None:
+@pytest.mark.asyncio
+async def test_users_me(site_admin_user_token, site_admin_user, client) -> None:
     response = client.get("/users/view/me", headers={"authorization": site_admin_user_token})
 
     assert response.status_code == 200
@@ -23,7 +25,8 @@ def test_users_me(site_admin_user_token, site_admin_user, client) -> None:
     assert json.get("User").get("id") == site_admin_user.id
 
 
-def test_users_create(site_admin_user_token, site_admin_user, site_admin_role, client, db) -> None:
+@pytest.mark.asyncio
+async def test_users_create(site_admin_user_token, site_admin_user, site_admin_role, client, db) -> None:
     email = "test@automated.com" + str(time())
     name = "test_user" + str(time())
 
@@ -55,29 +58,30 @@ def test_users_create(site_admin_user_token, site_admin_user, site_admin_role, c
 
     # Check if the User_setting user_name is created
     query = select(UserSetting).where(UserSetting.user_id == user_id and UserSetting.setting == "user_name")
-    user_setting = db.execute(query).scalars().first()
+    user_setting = (await db.execute(query)).scalars().first()
     assert json.loads(user_setting.value)["name"] == name
 
     # delete the user_setting
-    db.delete(user_setting)
-    db.commit()
-    user_setting = db.execute(query).scalars().first()
+    await db.delete(user_setting)
+    await db.commit()
+    user_setting = (await db.execute(query)).scalars().first()
     assert user_setting is None
 
     # Check if the User is created
     query = select(User).where(User.id == user_id)
-    user = db.execute(query).scalars().first()
+    user = (await db.execute(query)).scalars().first()
     assert user is not None
     assert user.email == email
 
     # delete the user
-    db.delete(user)
-    db.commit()
-    user = db.execute(query).scalars().first()
-    assert db.execute(query).scalars().first() is None
+    await db.delete(user)
+    await db.commit()
+    user = (await db.execute(query)).scalars().first()
+    assert (await db.execute(query)).scalars().first() is None
 
 
-def test_users_edit(db: Session, site_admin_user_token, client, site_admin_user, view_only_user) -> None:
+@pytest.mark.asyncio
+async def test_users_edit(db: Session, site_admin_user_token, client, site_admin_user, view_only_user) -> None:
     user_id = view_only_user.id
     email = view_only_user.email
     terms_accepted = view_only_user.termsaccepted
@@ -106,8 +110,9 @@ def test_users_edit(db: Session, site_admin_user_token, client, site_admin_user,
     assert response_json.get("name") == name + "test"
 
 
-def test_user_view_by_ID(db: Session, site_admin_user_token, client) -> None:
-    user_id = db.execute(select(User.id)).scalars().first()
+@pytest.mark.asyncio
+async def test_user_view_by_ID(db: Session, site_admin_user_token, client) -> None:
+    user_id = (await db.execute(select(User.id))).scalars().first()
     assert user_id is not None
 
     headers = {"authorization": site_admin_user_token}
@@ -156,13 +161,14 @@ def test_user_view_by_ID(db: Session, site_admin_user_token, client) -> None:
     assert "name" in user["Organisation"]
 
     query = select(UserSetting).where(UserSetting.setting == "user_name" and UserSetting.user_id == user.get("id"))
-    user_name = db.execute(query).scalars().one_or_none()
+    user_name = (await db.execute(query)).scalars().one_or_none()
     ic(json.loads(user_name.value)["name"])
     assert user_name is not None
     assert json.loads(user_name.value)["name"] == user["User"].get("name")
 
 
-def test_users_view_all(db: Session, site_admin_user_token, client) -> None:
+@pytest.mark.asyncio
+async def test_users_view_all(db: Session, site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.get("/users/view/all", headers=headers)
 
@@ -211,15 +217,16 @@ def test_users_view_all(db: Session, site_admin_user_token, client) -> None:
         query = select(UserSetting).filter(
             UserSetting.setting == "user_name", UserSetting.user_id == user["User"]["id"]
         )
-        user_name = db.execute(query).scalars().one_or_none()
+        user_name = (await db.execute(query)).scalars().one_or_none()
         assert user_name is not None
         assert json.loads(user_name.value)["name"] == user["User"]["name"]
 
-    count = db.query(User).count()
+    count = (await db.execute(select(func.count()).select_from(User))).scalar()
     assert len(response_json) == count
 
 
-def test_delete_user(site_admin_user_token, site_admin_role, site_admin_user, client, db) -> None:
+@pytest.mark.asyncio
+async def test_delete_user(site_admin_user_token, site_admin_role, site_admin_user, client, db) -> None:
     email = "test@automated.com" + str(time())
     name = "test_user" + str(time())
 
@@ -253,12 +260,12 @@ def test_delete_user(site_admin_user_token, site_admin_role, site_admin_user, cl
 
     # Check the user and user setting creation
     user_setting_query = select(UserSetting).where(UserSetting.user_id == user_id, UserSetting.setting == "user_name")
-    user_setting = db.execute(user_setting_query).scalars().first()
+    user_setting = (await db.execute(user_setting_query)).scalars().first()
     assert user_setting is not None
     assert json.loads(user_setting.value)["name"] == name
 
     user_query = select(User).where(User.id == user_id)
-    user = db.execute(user_query).scalars().first()
+    user = (await db.execute(user_query)).scalars().first()
     assert user is not None
     assert user.email == email
 
@@ -270,22 +277,24 @@ def test_delete_user(site_admin_user_token, site_admin_role, site_admin_user, cl
         print("Error during user deletion:")
         print(delete_response.json())
     assert delete_response.status_code == 200
-    db.commit()
+    await db.commit()
 
     # Check if the user and user setting were deleted from the database
-    user_setting = db.execute(user_setting_query).scalars().first()
+    user_setting = (await db.execute(user_setting_query)).scalars().first()
     assert user_setting is None
 
-    user = db.execute(user_query).scalars().first()
+    user = (await db.execute(user_query)).scalars().first()
     assert user is None
 
 
-def test_users_me_unauthorized(client) -> None:
+@pytest.mark.asyncio
+async def test_users_me_unauthorized(client) -> None:
     response = client.get("/users/view/me")
     assert response.status_code == 403
 
 
-def test_users_create_missing_fields(site_admin_user_token, client) -> None:
+@pytest.mark.asyncio
+async def test_users_create_missing_fields(site_admin_user_token, client) -> None:
     response = client.post(
         "/users",
         headers={"authorization": site_admin_user_token},
@@ -309,7 +318,10 @@ def test_users_create_missing_fields(site_admin_user_token, client) -> None:
     assert response.status_code == 404
 
 
-def test_users_create_duplicate_email(site_admin_user_token, site_admin_user, site_admin_role, client, db) -> None:
+@pytest.mark.asyncio
+async def test_users_create_duplicate_email(
+    site_admin_user_token, site_admin_user, site_admin_role, client, db
+) -> None:
     email = site_admin_user.email
     name = "test_user" + str(time())
 
@@ -337,7 +349,8 @@ def test_users_create_duplicate_email(site_admin_user_token, site_admin_user, si
     assert response.json().get("detail") == "User already exists with this email"
 
 
-def test_users_edit_unauthorized(client, view_only_user) -> None:
+@pytest.mark.asyncio
+async def test_users_edit_unauthorized(client, view_only_user) -> None:
     user_id = view_only_user.id
     email = view_only_user.email
 
@@ -345,33 +358,38 @@ def test_users_edit_unauthorized(client, view_only_user) -> None:
     assert response.status_code == 403
 
 
-def test_user_view_by_invalid_ID(site_admin_user_token, client) -> None:
+@pytest.mark.asyncio
+async def test_user_view_by_invalid_ID(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.get("/users/view/invalid_id", headers=headers)
     assert response.status_code == 404
 
 
-def test_user_view_non_existent_ID(site_admin_user_token, client) -> None:
+@pytest.mark.asyncio
+async def test_user_view_non_existent_ID(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.get("/users/view/999999999999", headers=headers)
     assert response.status_code == 404
     assert response.json().get("detail") == "User not found"
 
 
-def test_users_delete_non_existent_user(site_admin_user_token, client) -> None:
+@pytest.mark.asyncio
+async def test_users_delete_non_existent_user(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.delete("/users/999999999999", headers=headers)
     assert response.status_code == 404
     assert response.json().get("detail") == "User not found"
 
 
-def test_delete_user_token_stub(site_admin_user_token, client) -> None:
+@pytest.mark.asyncio
+async def test_delete_user_token_stub(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.delete("/users/tokens/1", headers=headers)
     assert response.status_code == 200
 
 
-def test_get_user_not_found(site_admin_user_token, client, db) -> None:
+@pytest.mark.asyncio
+async def test_get_user_not_found(site_admin_user_token, client, db) -> None:
     user_id = "non_existent_user_id"
 
     response = client.get(
@@ -382,19 +400,19 @@ def test_get_user_not_found(site_admin_user_token, client, db) -> None:
     assert response.json().get("detail") == "User not found"
 
 
-def test_update_user_not_found(site_admin_user_token, client, db) -> None:
+@pytest.mark.asyncio
+async def test_update_user_not_found(site_admin_user_token, client, db) -> None:
     user_id = "non_existent_user_id"
 
     response = client.put(
-        f"/users/{user_id}",
-        headers={"authorization": site_admin_user_token},
-        json={"email": "new_email@test.com"}
+        f"/users/{user_id}", headers={"authorization": site_admin_user_token}, json={"email": "new_email@test.com"}
     )
     assert response.status_code == 404
     assert response.json().get("detail") == "User not found"
 
 
-def test_update_user_attributes(site_admin_user_token, client, db, view_only_user) -> None:
+@pytest.mark.asyncio
+async def test_update_user_attributes(site_admin_user_token, client, db, view_only_user) -> None:
     user_id = view_only_user.id
     headers = {"authorization": site_admin_user_token}
     body = {
@@ -416,14 +434,10 @@ def test_update_user_attributes(site_admin_user_token, client, db, view_only_use
         "notification_monthly": False,
         "totp": "new_totp",
         "hotp_counter": "5",
-        "nids_sid": 54321
+        "nids_sid": 54321,
     }
 
-    response = client.put(
-        f"/users/{user_id}",
-        headers=headers,
-        json=body
-    )
+    response = client.put(f"/users/{user_id}", headers=headers, json=body)
     assert response.status_code == 200
     response_user = response.json().get("user")
     for key, value in body.items():
@@ -431,7 +445,8 @@ def test_update_user_attributes(site_admin_user_token, client, db, view_only_use
             assert response_user[key] == value
 
 
-def test_users_create_no_permission(read_only_user_token, site_admin_user, site_admin_role, client, db) -> None:
+@pytest.mark.asyncio
+async def test_users_create_no_permission(read_only_user_token, site_admin_user, site_admin_role, client, db) -> None:
     email = "test@automated.com" + str(time())
     name = "test_user" + str(time())
 
@@ -459,7 +474,10 @@ def test_users_create_no_permission(read_only_user_token, site_admin_user, site_
     assert response.status_code == 401
 
 
-def test_users_edit_no_permission(db: Session, read_only_user_token, client, site_admin_user, view_only_user) -> None:
+@pytest.mark.asyncio
+async def test_users_edit_no_permission(
+    db: Session, read_only_user_token, client, site_admin_user, view_only_user
+) -> None:
     user_id = view_only_user.id
     email = view_only_user.email
     terms_accepted = view_only_user.termsaccepted
@@ -479,14 +497,16 @@ def test_users_edit_no_permission(db: Session, read_only_user_token, client, sit
     assert response.status_code == 401
 
 
-def test_user_view_by_ID_no_permission(db: Session, read_only_user_token, client) -> None:
+@pytest.mark.asyncio
+async def test_user_view_by_ID_no_permission(db: Session, read_only_user_token, client) -> None:
     headers = {"authorization": read_only_user_token}
     response = client.get(f"/users/view/{2}", headers=headers)
 
     assert response.status_code == 401
 
 
-def test_users_view_all_unauthorized(db: Session, read_only_user_token, client) -> None:
+@pytest.mark.asyncio
+async def test_users_view_all_unauthorized(db: Session, read_only_user_token, client) -> None:
     headers = {"authorization": read_only_user_token}
     response = client.get("/users/view/all", headers=headers)
 

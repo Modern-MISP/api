@@ -944,11 +944,16 @@ async def _prepare_attribute_response(
     return attribute_response_list
 
 
-async def _prepare_tag_response(db: Session, tag_list: Sequence[Any]) -> list[AddEditGetEventTag]:
+async def _prepare_tag_response(
+    db: Session, tag_list: Sequence[EventTag | AttributeTag | Tag]
+) -> list[AddEditGetEventTag]:
     tag_response_list = []
 
     for attribute_or_event_tag in tag_list:
-        tag = await db.get(Tag, int(attribute_or_event_tag.tag_id))
+        if isinstance(attribute_or_event_tag, Tag):
+            tag: Tag | None = attribute_or_event_tag
+        else:
+            tag = await db.get(Tag, int(attribute_or_event_tag.tag_id))
         if tag is None:
             continue
 

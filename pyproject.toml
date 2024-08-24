@@ -34,7 +34,7 @@ dev = [
   "mypy==1.10.0",
   "pre-commit==3.6.0",
   "pytest==8.0.0",
-  "pytest-asyncio==0.23.5.post1",
+  "pytest-asyncio==0.21.2",
   "pytest-test-groups",
   "pytest-cov==4.1.0",
   "respx==0.20.2",
@@ -42,7 +42,7 @@ dev = [
   "icecream",
   "types-Pygments",
   "types-passlib",
-  "deepdiff",
+  "deepdiff==7.0.1",
 ]
 
 [tool.ruff]

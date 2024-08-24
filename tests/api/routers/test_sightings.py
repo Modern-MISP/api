@@ -1,27 +1,28 @@
 from typing import Any
 
 import pytest
+import pytest_asyncio
 import sqlalchemy as sa
 from icecream import ic
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import text
 
 from mmisp.db.models.attribute import Attribute
-from tests.generators.sighting_generator import (
+from mmisp.tests.generators.sighting_generator import (
     generate_valid_random_sighting_data,
     generate_valid_random_sighting_with_filter_data,
 )
 
 
-@pytest.fixture(autouse=True)
-def check_counts_stay_constant(db):
-    count_attributes = db.execute(text("SELECT COUNT(*) FROM attributes")).first()[0]
-    count_events = db.execute(text("SELECT COUNT(*) FROM events")).first()[0]
-    count_sightings = db.execute(text("SELECT COUNT(*) FROM sightings")).first()[0]
+@pytest_asyncio.fixture(autouse=True)
+async def check_counts_stay_constant(db):
+    count_attributes = (await db.execute(text("SELECT COUNT(*) FROM attributes"))).first()[0]
+    count_events = (await db.execute(text("SELECT COUNT(*) FROM events"))).first()[0]
+    count_sightings = (await db.execute(text("SELECT COUNT(*) FROM sightings"))).first()[0]
     yield
-    ncount_attributes = db.execute(text("SELECT COUNT(*) FROM attributes")).first()[0]
-    ncount_events = db.execute(text("SELECT COUNT(*) FROM events")).first()[0]
-    ncount_sightings = db.execute(text("SELECT COUNT(*) FROM sightings")).first()[0]
+    ncount_attributes = (await db.execute(text("SELECT COUNT(*) FROM attributes"))).first()[0]
+    ncount_events = (await db.execute(text("SELECT COUNT(*) FROM events"))).first()[0]
+    ncount_sightings = (await db.execute(text("SELECT COUNT(*) FROM sightings"))).first()[0]
 
     assert count_attributes == ncount_attributes
     assert count_events == ncount_events
@@ -41,14 +42,14 @@ def sighting_data(request: Any) -> dict[str, Any]:
     return request.param
 
 
-def delete_sighting(db, sighting_id):
+async def delete_sighting(db, sighting_id):
     stmt = sa.sql.text("DELETE FROM sightings WHERE id=:id")
-    db.execute(stmt, {"id": sighting_id})
-    db.commit()
+    await db.execute(stmt, {"id": sighting_id})
+    await db.commit()
 
 
-@pytest.fixture
-def attributes_sighting_data(db, sighting_data, sharing_group, event):
+@pytest_asyncio.fixture
+async def attributes_sighting_data(db, sighting_data, sharing_group, event):
     attributes = []
     for val in sighting_data["values"]:
         attribute = Attribute(
@@ -61,19 +62,19 @@ def attributes_sighting_data(db, sighting_data, sharing_group, event):
         )
 
         db.add(attribute)
-        db.commit()
+        await db.commit()
         attributes.append(attribute)
         ic(attribute.asdict())
 
     yield attributes
 
     for a in attributes:
-        db.delete(a)
-    db.commit()
+        await db.delete(a)
+    await db.commit()
 
 
-@pytest.fixture
-def first_attribute_sighting_data(db, sighting_data, sharing_group, event):
+@pytest_asyncio.fixture
+async def first_attribute_sighting_data(db, sighting_data, sharing_group, event):
     attribute = Attribute(
         event_id=event.id,
         category="other",
@@ -84,16 +85,17 @@ def first_attribute_sighting_data(db, sighting_data, sharing_group, event):
     )
 
     db.add(attribute)
-    db.commit()
+    await db.commit()
     ic(attribute.asdict())
 
     yield attribute
 
-    db.delete(attribute)
-    db.commit()
+    await db.delete(attribute)
+    await db.commit()
 
 
-def test_add_sighting(
+@pytest.mark.asyncio
+async def test_add_sighting(
     attributes_sighting_data, sighting_data: dict[str, Any], db: Session, site_admin_user_token, client
 ) -> None:
     attributes = attributes_sighting_data
@@ -115,10 +117,11 @@ def test_add_sighting(
             assert str(a.id) in response_attribute_ids
 
     for sighting in response_data:
-        delete_sighting(db, sighting["id"])
+        await delete_sighting(db, sighting["id"])
 
 
-def test_add_sighting_with_invalid_data(
+@pytest.mark.asyncio
+async def test_add_sighting_with_invalid_data(
     attributes_sighting_data, sighting_data: dict[str, Any], db: Session, site_admin_user_token, client
 ) -> None:
     attributes = attributes_sighting_data
@@ -134,14 +137,15 @@ def test_add_sighting_with_invalid_data(
     assert response_third.status_code == 201
 
     for sighting in response_first.json():
-        delete_sighting(db, sighting["id"])
+        await delete_sighting(db, sighting["id"])
     for sighting in response_second.json():
-        delete_sighting(db, sighting["id"])
+        await delete_sighting(db, sighting["id"])
     for sighting in response_third.json():
-        delete_sighting(db, sighting["id"])
+        await delete_sighting(db, sighting["id"])
 
 
-def test_add_sighting_missing_required_fields(
+@pytest.mark.asyncio
+async def test_add_sighting_missing_required_fields(
     attributes_sighting_data, sighting_data: dict[str, Any], db: Session, site_admin_user_token, client
 ) -> None:
     attributes = attributes_sighting_data
@@ -156,7 +160,8 @@ def test_add_sighting_missing_required_fields(
     assert response.json()["detail"][0]["msg"] == "field required"
 
 
-def test_add_sightings_at_index_success(
+@pytest.mark.asyncio
+async def test_add_sightings_at_index_success(
     first_attribute_sighting_data,
     sighting_data: dict[str, Any],
     db: Session,
@@ -177,10 +182,11 @@ def test_add_sightings_at_index_success(
     assert "event_id" in response_data
     assert "attribute_id" in response_data
 
-    delete_sighting(db, response_data["id"])
+    await delete_sighting(db, response_data["id"])
 
 
-def test_add_sighting_at_index_invalid_attribute(
+@pytest.mark.asyncio
+async def test_add_sighting_at_index_invalid_attribute(
     first_attribute_sighting_data,
     sighting_data: dict[str, Any],
     db: Session,
@@ -201,7 +207,8 @@ def test_add_sighting_at_index_invalid_attribute(
     assert response.json()["detail"] == "Attribute not found."
 
 
-def test_get_sighting_success(
+@pytest.mark.asyncio
+async def test_get_sighting_success(
     first_attribute_sighting_data, sighting_data: dict[str, Any], db: Session, event, site_admin_user_token, client
 ) -> None:
     attribute = first_attribute_sighting_data
@@ -214,7 +221,8 @@ def test_get_sighting_success(
     assert response.status_code == 200
 
 
-def test_delete_sighting_success(
+@pytest.mark.asyncio
+async def test_delete_sighting_success(
     first_attribute_sighting_data, sighting_data: dict[str, Any], db: Session, site_admin_user_token, client
 ) -> None:
     attribute = first_attribute_sighting_data
@@ -237,7 +245,8 @@ def test_delete_sighting_success(
     assert response_data["name"] == "Sighting successfully deleted."
 
 
-def test_delete_sighting_invalid_id(
+@pytest.mark.asyncio
+async def test_delete_sighting_invalid_id(
     first_attribute_sighting_data, sighting_data: dict[str, Any], db: Session, site_admin_user_token, client
 ) -> None:
     attribute = first_attribute_sighting_data
@@ -258,10 +267,11 @@ def test_delete_sighting_invalid_id(
     assert "detail" in response_data
     assert response_data["detail"] == "Sighting not found."
 
-    delete_sighting(db, real_sighting_id)
+    await delete_sighting(db, real_sighting_id)
 
 
-def test_get_all_sightings_success(
+@pytest.mark.asyncio
+async def test_get_all_sightings_success(
     first_attribute_sighting_data, sighting_data: dict[str, Any], db: Session, site_admin_user_token, client
 ) -> None:
     attribute = first_attribute_sighting_data
@@ -276,10 +286,11 @@ def test_get_all_sightings_success(
     response = client.get("/sightings", headers=headers)
     assert response.status_code == 200
     assert isinstance(response.json()["sightings"], list)
-    delete_sighting(db, real_sighting_id)
+    await delete_sighting(db, real_sighting_id)
 
 
-def test_get_sightings_response_format(
+@pytest.mark.asyncio
+async def test_get_sightings_response_format(
     first_attribute_sighting_data, sighting_data: dict[str, Any], db: Session, site_admin_user_token, client
 ) -> None:
     attribute = first_attribute_sighting_data
@@ -308,4 +319,4 @@ def test_get_sightings_response_format(
 
     ic(response_data)
     for x in response_data["sightings"]:
-        delete_sighting(db, x["id"])
+        await delete_sighting(db, x["id"])

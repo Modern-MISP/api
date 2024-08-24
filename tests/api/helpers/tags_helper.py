@@ -2,7 +2,7 @@ import random
 import string
 from typing import Any
 
-from sqlalchemy import func
+from sqlalchemy import func, select
 
 from mmisp.api_schemas.tags import TagCreateBody
 from mmisp.db.models.tag import Tag
@@ -59,9 +59,9 @@ def generate_invalid_tag_data() -> Any:
     return {"name": input_list[0], "colour": input_list[1], "exportable": input_list[2]}
 
 
-def get_non_existing_tags(db, number: int = 5) -> list:
+async def get_non_existing_tags(db, number: int = 5) -> list:
     tag_ids: list[int] = []
-    largest_id = db.query(func.max(Tag.id)).scalar()
+    largest_id = (await db.execute(select(func.max(Tag.id)))).scalar()
     print(largest_id)
     if not largest_id:
         largest_id = 1
@@ -79,10 +79,10 @@ def get_invalid_tags(number: int = 5) -> list:
     return invalid_tags
 
 
-def remove_tags(db, ids: list[int]) -> None:
+async def remove_tags(db, ids: list[int]) -> None:
     for id in ids:
-        tag = db.get(Tag, id)
+        tag = await db.get(Tag, id)
         if tag is not None:
-            db.delete(tag)
+            await db.delete(tag)
 
-    db.commit()
+    await db.commit()

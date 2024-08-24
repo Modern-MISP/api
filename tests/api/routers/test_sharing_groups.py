@@ -1,50 +1,55 @@
 from datetime import datetime
 from time import time_ns
-from typing import Any
 from uuid import uuid4
 
 import pytest
+import pytest_asyncio
 import sqlalchemy as sa
 from fastapi import status
 from icecream import ic
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from mmisp.db.models.sharing_group import SharingGroup, SharingGroupOrg, SharingGroupServer
 from mmisp.util.uuid import uuid
 
 
-def delete_sharing_group_server(db, sharing_group_id):
+async def delete_sharing_group_server(db, sharing_group_id):
     stmt = sa.sql.text("DELETE FROM sharing_group_servers WHERE sharing_group_id=:id")
-    db.execute(stmt, {"id": sharing_group_id})
-    db.commit()
+    await db.execute(stmt, {"id": sharing_group_id})
+    await db.commit()
 
 
-def delete_sharing_group_orgs(db, sharing_group_id):
+async def delete_sharing_group_orgs(db, sharing_group_id):
     stmt = sa.sql.text("DELETE FROM sharing_group_orgs WHERE sharing_group_id=:id")
-    db.execute(stmt, {"id": sharing_group_id})
-    db.commit()
-    db.commit()
+    await db.execute(stmt, {"id": sharing_group_id})
+    await db.commit()
+    await db.commit()
 
 
-def delete_sharing_group(db, sharing_group_id):
+async def delete_sharing_group(db, sharing_group_id):
     stmt = sa.sql.text("DELETE FROM sharing_groups WHERE id=:id")
-    db.execute(stmt, {"id": sharing_group_id})
-    db.commit()
+    await db.execute(stmt, {"id": sharing_group_id})
+    await db.commit()
 
 
-@pytest.fixture(autouse=True)
-def check_counts_stay_constant(db):
-    count_sharing_groups = db.execute(sa.sql.text("SELECT COUNT(*) FROM sharing_groups")).first()[0]
-    count_sharing_groups_orgs = db.execute(sa.sql.text("SELECT COUNT(*) FROM sharing_group_orgs")).first()[0]
-    count_sharing_groups_servers = db.execute(sa.sql.text("SELECT COUNT(*) FROM sharing_group_servers")).first()[0]
+@pytest_asyncio.fixture(autouse=True)
+async def check_counts_stay_constant(db):
+    count_sharing_groups = (await db.execute(sa.sql.text("SELECT COUNT(*) FROM sharing_groups"))).first()[0]
+    count_sharing_groups_orgs = (await db.execute(sa.sql.text("SELECT COUNT(*) FROM sharing_group_orgs"))).first()[0]
+    count_sharing_groups_servers = (
+        await db.execute(sa.sql.text("SELECT COUNT(*) FROM sharing_group_servers"))
+    ).first()[0]
     yield
-    ncount_sharing_groups = db.execute(sa.sql.text("SELECT COUNT(*) FROM sharing_groups")).first()[0]
-    ncount_sharing_groups_orgs = db.execute(sa.sql.text("SELECT COUNT(*) FROM sharing_group_orgs")).first()[0]
-    ncount_sharing_groups_servers = db.execute(sa.sql.text("SELECT COUNT(*) FROM sharing_group_servers")).first()[0]
+    ncount_sharing_groups = (await db.execute(sa.sql.text("SELECT COUNT(*) FROM sharing_groups"))).first()[0]
+    ncount_sharing_groups_orgs = (await db.execute(sa.sql.text("SELECT COUNT(*) FROM sharing_group_orgs"))).first()[0]
+    ncount_sharing_groups_servers = (
+        await db.execute(sa.sql.text("SELECT COUNT(*) FROM sharing_group_servers"))
+    ).first()[0]
 
-    sharing_groups = db.execute(sa.sql.text("SELECT * FROM sharing_groups")).all()
-    sharing_groups_orgs = db.execute(sa.sql.text("SELECT * FROM sharing_group_orgs")).all()
-    sharing_groups_servers = db.execute(sa.sql.text("SELECT * FROM sharing_group_servers")).all()
+    sharing_groups = (await db.execute(sa.sql.text("SELECT * FROM sharing_groups"))).all()
+    sharing_groups_orgs = (await db.execute(sa.sql.text("SELECT * FROM sharing_group_orgs"))).all()
+    sharing_groups_servers = (await db.execute(sa.sql.text("SELECT * FROM sharing_group_servers"))).all()
 
     ic(sharing_groups)
     ic(sharing_groups_orgs)
@@ -55,7 +60,8 @@ def check_counts_stay_constant(db):
     assert count_sharing_groups_servers == ncount_sharing_groups_servers
 
 
-def test_create_valid_sharing_group(db: Session, site_admin_user_token, instance_owner_org, client) -> None:
+@pytest.mark.asyncio
+async def test_create_valid_sharing_group(db: Session, site_admin_user_token, instance_owner_org, client) -> None:
     body = {"name": f"Test Sharing Group {uuid()}{time_ns()}", "description": "description", "releasability": "yes"}
 
     response = client.post("/sharing_groups", headers={"authorization": site_admin_user_token}, json=body)
@@ -66,21 +72,26 @@ def test_create_valid_sharing_group(db: Session, site_admin_user_token, instance
     assert json["organisation_uuid"] == instance_owner_org.uuid
 
     db_sharing_group_org: SharingGroupOrg = (
-        db.query(SharingGroupOrg).filter(SharingGroupOrg.sharing_group_id == json["id"]).first()
+        (await db.execute(select(SharingGroupOrg).filter(SharingGroupOrg.sharing_group_id == json["id"])))
+        .scalars()
+        .first()
     )
     db_sharing_group_server: SharingGroupServer = (
-        db.query(SharingGroupServer).filter(SharingGroupServer.sharing_group_id == json["id"]).first()
+        (await db.execute(select(SharingGroupServer).filter(SharingGroupServer.sharing_group_id == json["id"])))
+        .scalars()
+        .first()
     )
     ic(db_sharing_group_org.asdict())
     assert db_sharing_group_org.org_id == instance_owner_org.id
     assert db_sharing_group_server
 
-    delete_sharing_group(db, json["id"])
-    delete_sharing_group_orgs(db, json["id"])
-    delete_sharing_group_server(db, json["id"])
+    await delete_sharing_group(db, json["id"])
+    await delete_sharing_group_orgs(db, json["id"])
+    await delete_sharing_group_server(db, json["id"])
 
 
-def test_create_valid_sharing_group_with_org_id_overwrite(
+@pytest.mark.asyncio
+async def test_create_valid_sharing_group_with_org_id_overwrite(
     db: Session, instance_two_owner_org, site_admin_user_token, client
 ) -> None:
     body = {
@@ -97,21 +108,26 @@ def test_create_valid_sharing_group_with_org_id_overwrite(
     assert json["org_id"] == str(instance_two_owner_org.id)
     assert json["organisation_uuid"] == instance_two_owner_org.uuid
 
-    db_sharing_group_org: SharingGroupOrg | Any = (
-        db.query(SharingGroupOrg).filter(SharingGroupOrg.sharing_group_id == json["id"]).first()
+    db_sharing_group_org: SharingGroupOrg = (
+        (await db.execute(select(SharingGroupOrg).filter(SharingGroupOrg.sharing_group_id == json["id"])))
+        .scalars()
+        .first()
     )
-    db_sharing_group_server: SharingGroupServer | None = (
-        db.query(SharingGroupServer).filter(SharingGroupServer.sharing_group_id == json["id"]).first()
+    db_sharing_group_server: SharingGroupServer = (
+        (await db.execute(select(SharingGroupServer).filter(SharingGroupServer.sharing_group_id == json["id"])))
+        .scalars()
+        .first()
     )
 
     assert db_sharing_group_org.org_id == instance_two_owner_org.id
     assert db_sharing_group_server
-    delete_sharing_group(db, json["id"])
-    delete_sharing_group_orgs(db, json["id"])
-    delete_sharing_group_server(db, json["id"])
+    await delete_sharing_group(db, json["id"])
+    await delete_sharing_group_orgs(db, json["id"])
+    await delete_sharing_group_server(db, json["id"])
 
 
-def test_create_sharing_group_with_org_id_overwrite_but_not_enough_permissions(
+@pytest.mark.asyncio
+async def test_create_sharing_group_with_org_id_overwrite_but_not_enough_permissions(
     db, instance_two_owner_org, instance_owner_org_admin_user_token, instance_owner_org, client
 ) -> None:
     body = {
@@ -128,12 +144,13 @@ def test_create_sharing_group_with_org_id_overwrite_but_not_enough_permissions(
     assert json["org_id"] == str(instance_owner_org.id)
     assert json["organisation_uuid"] == instance_owner_org.uuid
 
-    delete_sharing_group(db, json["id"])
-    delete_sharing_group_orgs(db, json["id"])
-    delete_sharing_group_server(db, json["id"])
+    await delete_sharing_group(db, json["id"])
+    await delete_sharing_group_orgs(db, json["id"])
+    await delete_sharing_group_server(db, json["id"])
 
 
-def test_get_own_created_sharing_group(
+@pytest.mark.asyncio
+async def test_get_own_created_sharing_group(
     db: Session, sharing_group, instance_owner_org, instance_owner_org_admin_user_token, client
 ) -> None:
     response = client.get(
@@ -146,7 +163,8 @@ def test_get_own_created_sharing_group(
     assert json["id"] == str(sharing_group.id)
 
 
-def test_get_sharing_group_with_access_through_sharing_group_org(
+@pytest.mark.asyncio
+async def test_get_sharing_group_with_access_through_sharing_group_org(
     db: Session, sharing_group, sharing_group_org_two, instance_org_two_admin_user_token, client
 ) -> None:
     assert sharing_group_org_two
@@ -161,13 +179,14 @@ def test_get_sharing_group_with_access_through_sharing_group_org(
     assert json["id"] == str(sharing_group.id)
 
 
-def test_get_sharing_group_with_access_through_sharing_group_server(
+@pytest.mark.asyncio
+async def test_get_sharing_group_with_access_through_sharing_group_server(
     db: Session, sharing_group, sharing_group_server_all_orgs, instance_org_two_admin_user_token, client
 ) -> None:
     assert sharing_group
     assert sharing_group_server_all_orgs
     sharing_group_server_all_orgs.server_id = 0
-    db.commit()
+    await db.commit()
     response = client.get(
         f"/sharing_groups/{sharing_group.id}",
         headers={"authorization": instance_org_two_admin_user_token},
@@ -178,7 +197,8 @@ def test_get_sharing_group_with_access_through_sharing_group_server(
     assert json["id"] == str(sharing_group.id)
 
 
-def test_get_sharing_group_with_access_through_site_admin(
+@pytest.mark.asyncio
+async def test_get_sharing_group_with_access_through_site_admin(
     db: Session, sharing_group, site_admin_user_token, client
 ) -> None:
     response = client.get(
@@ -191,7 +211,8 @@ def test_get_sharing_group_with_access_through_site_admin(
     assert json["id"] == str(sharing_group.id)
 
 
-def test_get_sharing_group_with_no_access(
+@pytest.mark.asyncio
+async def test_get_sharing_group_with_no_access(
     db: Session, sharing_group, sharing_group_server, instance_org_two, instance_org_two_admin_user_token, client
 ) -> None:
     response = client.get(
@@ -204,7 +225,10 @@ def test_get_sharing_group_with_no_access(
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
-def test_update_own_sharing_group(db: Session, sharing_group, instance_owner_org_admin_user_token, client) -> None:
+@pytest.mark.asyncio
+async def test_update_own_sharing_group(
+    db: Session, sharing_group, instance_owner_org_admin_user_token, client
+) -> None:
     new_description = f"this is a new description + {datetime.utcnow()}"
 
     response = client.put(
@@ -221,7 +245,8 @@ def test_update_own_sharing_group(db: Session, sharing_group, instance_owner_org
     assert json["description"] == new_description
 
 
-def test_update_sharing_group_with_access_through_site_admin(
+@pytest.mark.asyncio
+async def test_update_sharing_group_with_access_through_site_admin(
     db: Session, sharing_group, site_admin_user_token, client
 ) -> None:
     new_description = f"this is a new description + {datetime.utcnow()}"
@@ -240,7 +265,8 @@ def test_update_sharing_group_with_access_through_site_admin(
     assert json["description"] == new_description
 
 
-def test_update_sharing_group_no_access_although_sharing_group_org_exists(
+@pytest.mark.asyncio
+async def test_update_sharing_group_no_access_although_sharing_group_org_exists(
     db: Session, sharing_group, sharing_group_org, instance_org_two_admin_user_token, client
 ) -> None:
     assert sharing_group_org
@@ -255,7 +281,8 @@ def test_update_sharing_group_no_access_although_sharing_group_org_exists(
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
-def test_delete_own_sharing_group(
+@pytest.mark.asyncio
+async def test_delete_own_sharing_group(
     db: Session, sharing_group, sharing_group_org, sharing_group_server, instance_owner_org_admin_user_token, client
 ) -> None:
     sharing_group_id = sharing_group.id
@@ -271,11 +298,11 @@ def test_delete_own_sharing_group(
     json = response.json()
     assert json["id"] == str(sharing_group_id)
 
-    db.invalidate()
+    await db.invalidate()
 
-    db_sharing_group: SharingGroup | None = db.get(SharingGroup, sharing_group_id)
-    db_sharing_group_org: SharingGroupOrg | None = db.get(SharingGroupOrg, sharing_group_org_id)
-    db_sharing_group_server: SharingGroupServer | None = db.get(SharingGroupServer, sharing_group_server_id)
+    db_sharing_group: SharingGroup | None = await db.get(SharingGroup, sharing_group_id)
+    db_sharing_group_org: SharingGroupOrg | None = await db.get(SharingGroupOrg, sharing_group_org_id)
+    db_sharing_group_server: SharingGroupServer | None = await db.get(SharingGroupServer, sharing_group_server_id)
 
     assert not db_sharing_group
     assert not db_sharing_group_org
@@ -289,7 +316,8 @@ def test_delete_own_sharing_group(
     assert second_response.status_code == status.HTTP_404_NOT_FOUND
 
 
-def test_delete_sharing_group_with_access_through_site_admin(
+@pytest.mark.asyncio
+async def test_delete_sharing_group_with_access_through_site_admin(
     db: Session, sharing_group, instance_org_two, site_admin_user_token, client
 ) -> None:
     response = client.delete(
@@ -309,7 +337,8 @@ def test_delete_sharing_group_with_access_through_site_admin(
     assert second_response.status_code == status.HTTP_404_NOT_FOUND
 
 
-def test_delete_sharing_group_no_access_although_sharing_group_org_exists(
+@pytest.mark.asyncio
+async def test_delete_sharing_group_no_access_although_sharing_group_org_exists(
     db: Session,
     sharing_group,
     sharing_group_org_two,
@@ -326,7 +355,8 @@ def test_delete_sharing_group_no_access_although_sharing_group_org_exists(
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
-def test_list_own_sharing_group(db: Session, sharing_group, instance_owner_org_admin_user_token, client) -> None:
+@pytest.mark.asyncio
+async def test_list_own_sharing_group(db: Session, sharing_group, instance_owner_org_admin_user_token, client) -> None:
     response = client.get(
         "/sharing_groups",
         headers={"authorization": instance_owner_org_admin_user_token},
@@ -343,7 +373,8 @@ def test_list_own_sharing_group(db: Session, sharing_group, instance_owner_org_a
     assert sharing_group_item["deletable"]
 
 
-def test_list_own_sharing_group_site_admin(
+@pytest.mark.asyncio
+async def test_list_own_sharing_group_site_admin(
     db: Session, sharing_group, instance_owner_org, site_admin_user_token, client
 ) -> None:
     response = client.get(
@@ -363,7 +394,8 @@ def test_list_own_sharing_group_site_admin(
     assert sharing_group_item["deletable"]
 
 
-def test_list_sharing_group_with_access_through_sharing_group_org(
+@pytest.mark.asyncio
+async def test_list_sharing_group_with_access_through_sharing_group_org(
     db: Session, sharing_group_org_two, instance_org_two_admin_user_token, site_admin_user_token, client
 ) -> None:
     response = client.get(
@@ -395,7 +427,8 @@ def test_list_sharing_group_with_access_through_sharing_group_org(
     assert not sharing_group_item["deletable"]
 
 
-def test_list_sharing_group_with_access_through_sharing_group_server(
+@pytest.mark.asyncio
+async def test_list_sharing_group_with_access_through_sharing_group_server(
     db: Session,
     sharing_group,
     sharing_group_server_all_orgs,
@@ -406,7 +439,7 @@ def test_list_sharing_group_with_access_through_sharing_group_server(
     assert sharing_group_server_all_orgs
 
     sharing_group_server_all_orgs.server_id = 0
-    db.commit()
+    await db.commit()
 
     response = client.get(
         "/sharing_groups",
@@ -434,7 +467,8 @@ def test_list_sharing_group_with_access_through_sharing_group_server(
     assert not sharing_group_item["deletable"]
 
 
-def test_list_sharing_group_with_no_access(
+@pytest.mark.asyncio
+async def test_list_sharing_group_with_no_access(
     db: Session, sharing_group, sharing_group_server, instance_org_two, instance_org_two_admin_user_token, client
 ) -> None:
     response = client.get(
@@ -452,7 +486,8 @@ def test_list_sharing_group_with_no_access(
     assert not sharing_group_item
 
 
-def test_get_own_created_sharing_group_info(
+@pytest.mark.asyncio
+async def test_get_own_created_sharing_group_info(
     db: Session, sharing_group, instance_owner_org_admin_user_token, client
 ) -> None:
     response = client.get(
@@ -467,7 +502,8 @@ def test_get_own_created_sharing_group_info(
     assert json["SharingGroup"]["org_count"] == 0
 
 
-def test_get_sharing_group_info_with_access_through_sharing_group_org(
+@pytest.mark.asyncio
+async def test_get_sharing_group_info_with_access_through_sharing_group_org(
     sharing_group, sharing_group_org_two, instance_org_two_admin_user_token, client
 ) -> None:
     assert sharing_group_org_two
@@ -483,11 +519,12 @@ def test_get_sharing_group_info_with_access_through_sharing_group_org(
     assert json["SharingGroup"]["org_count"] == 1
 
 
-def test_get_sharing_group_info_with_access_through_sharing_group_server(
+@pytest.mark.asyncio
+async def test_get_sharing_group_info_with_access_through_sharing_group_server(
     db, sharing_group, sharing_group_server_all_orgs, instance_org_two_admin_user_token, client
 ) -> None:
     sharing_group_server_all_orgs.server_id = 0
-    db.commit()
+    await db.commit()
 
     assert sharing_group_server_all_orgs
     response = client.get(
@@ -502,7 +539,8 @@ def test_get_sharing_group_info_with_access_through_sharing_group_server(
     assert json["SharingGroup"]["org_count"] == 0
 
 
-def test_get_sharing_group_info_with_access_through_site_admin(
+@pytest.mark.asyncio
+async def test_get_sharing_group_info_with_access_through_site_admin(
     db: Session, site_admin_user_token, sharing_group, client
 ) -> None:
     response = client.get(
@@ -517,7 +555,8 @@ def test_get_sharing_group_info_with_access_through_site_admin(
     assert json["SharingGroup"]["org_count"] == 0
 
 
-def test_get_sharing_group_info_with_no_access(
+@pytest.mark.asyncio
+async def test_get_sharing_group_info_with_no_access(
     db: Session, sharing_group_server, sharing_group, instance_org_two, instance_org_two_admin_user_token, client
 ) -> None:
     response = client.get(
@@ -528,7 +567,8 @@ def test_get_sharing_group_info_with_no_access(
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
-def test_add_org_to_own_sharing_group(
+@pytest.mark.asyncio
+async def test_add_org_to_own_sharing_group(
     db: Session, sharing_group, instance_owner_org, instance_owner_org_admin_user_token, client
 ) -> None:
     response = client.patch(
@@ -541,10 +581,11 @@ def test_add_org_to_own_sharing_group(
     json = response.json()
     ic(json)
     assert json["org_id"] == str(999)
-    delete_sharing_group_orgs(db, sharing_group.id)
+    await delete_sharing_group_orgs(db, sharing_group.id)
 
 
-def test_patch_org_to_own_sharing_group(
+@pytest.mark.asyncio
+async def test_patch_org_to_own_sharing_group(
     db: Session, sharing_group_org, instance_owner_org, instance_owner_org_admin_user_token, sharing_group, client
 ) -> None:
     response = client.patch(
@@ -559,10 +600,11 @@ def test_patch_org_to_own_sharing_group(
     assert json["org_id"] == str(999)
     assert json["extend"]
 
-    delete_sharing_group_orgs(db, sharing_group.id)
+    await delete_sharing_group_orgs(db, sharing_group.id)
 
 
-def test_add_org_to_sharing_group_using_site_admin(
+@pytest.mark.asyncio
+async def test_add_org_to_sharing_group_using_site_admin(
     db: Session, instance_org_two, site_admin_user_token, sharing_group, client
 ) -> None:
     response = client.patch(
@@ -575,10 +617,11 @@ def test_add_org_to_sharing_group_using_site_admin(
     json = response.json()
     assert json["sharing_group_id"] == str(sharing_group.id)
 
-    delete_sharing_group_orgs(db, sharing_group.id)
+    await delete_sharing_group_orgs(db, sharing_group.id)
 
 
-def test_add_org_to_sharing_group_with_no_access(
+@pytest.mark.asyncio
+async def test_add_org_to_sharing_group_with_no_access(
     db: Session, sharing_group2, sharing_group_org, instance_owner_org, instance_owner_org_admin_user_token, client
 ) -> None:
     response = client.patch(
@@ -590,7 +633,8 @@ def test_add_org_to_sharing_group_with_no_access(
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
-def test_remove_org_from_own_sharing_group(
+@pytest.mark.asyncio
+async def test_remove_org_from_own_sharing_group(
     db: Session, instance_owner_org, sharing_group, sharing_group_org, instance_owner_org_admin_user_token, client
 ) -> None:
     sharing_group_org_id = sharing_group_org.id
@@ -602,14 +646,15 @@ def test_remove_org_from_own_sharing_group(
 
     assert response.status_code == status.HTTP_200_OK
 
-    db.invalidate()
+    await db.invalidate()
 
-    db_sharing_group_org = db.get(SharingGroupOrg, sharing_group_org_id)
+    db_sharing_group_org = await db.get(SharingGroupOrg, sharing_group_org_id)
 
     assert not db_sharing_group_org
 
 
-def test_add_server_to_own_sharing_group(db, sharing_group, instance_owner_org_admin_user_token, client) -> None:
+@pytest.mark.asyncio
+async def test_add_server_to_own_sharing_group(db, sharing_group, instance_owner_org_admin_user_token, client) -> None:
     response = client.patch(
         f"/sharing_groups/{sharing_group.id}/servers",
         headers={"authorization": instance_owner_org_admin_user_token},
@@ -620,10 +665,11 @@ def test_add_server_to_own_sharing_group(db, sharing_group, instance_owner_org_a
     json = response.json()
     assert json["sharing_group_id"] == str(sharing_group.id)
 
-    delete_sharing_group_server(db, sharing_group.id)
+    await delete_sharing_group_server(db, sharing_group.id)
 
 
-def test_patch_server_to_own_sharing_group(
+@pytest.mark.asyncio
+async def test_patch_server_to_own_sharing_group(
     db, sharing_group_server, sharing_group, instance_owner_org_admin_user_token, client
 ) -> None:
     response = client.patch(
@@ -638,10 +684,11 @@ def test_patch_server_to_own_sharing_group(
     assert json["server_id"] == str(999)
     assert json["all_orgs"]
 
-    delete_sharing_group_server(db, sharing_group.id)
+    await delete_sharing_group_server(db, sharing_group.id)
 
 
-def test_add_server_to_sharing_group_using_site_admin(
+@pytest.mark.asyncio
+async def test_add_server_to_sharing_group_using_site_admin(
     db: Session, sharing_group, site_admin_user_token, client
 ) -> None:
     response = client.patch(
@@ -653,10 +700,11 @@ def test_add_server_to_sharing_group_using_site_admin(
     assert response.status_code == status.HTTP_200_OK
     json = response.json()
     assert json["sharing_group_id"] == str(sharing_group.id)
-    delete_sharing_group_server(db, sharing_group.id)
+    await delete_sharing_group_server(db, sharing_group.id)
 
 
-def test_add_server_to_sharing_group_with_no_access(
+@pytest.mark.asyncio
+async def test_add_server_to_sharing_group_with_no_access(
     db: Session, sharing_group, sharing_group_org, instance_owner_org, instance_org_two_admin_user_token, client
 ) -> None:
     response = client.patch(
@@ -668,7 +716,8 @@ def test_add_server_to_sharing_group_with_no_access(
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
-def test_remove_server_from_own_sharing_group(
+@pytest.mark.asyncio
+async def test_remove_server_from_own_sharing_group(
     db: Session, sharing_group_server, sharing_group, instance_owner_org_admin_user_token, client
 ) -> None:
     print("----------------- BEGIN TESTCASE ------------------")
@@ -683,14 +732,15 @@ def test_remove_server_from_own_sharing_group(
 
     assert response.status_code == status.HTTP_200_OK
 
-    db.invalidate()
+    await db.invalidate()
 
-    db_sharing_group_server = db.get(SharingGroupServer, sharing_group_server_id)
+    db_sharing_group_server = await db.get(SharingGroupServer, sharing_group_server_id)
 
     assert not db_sharing_group_server
 
 
-def test_create_valid_sharing_group_legacy(db, instance_owner_org, site_admin_user_token, client) -> None:
+@pytest.mark.asyncio
+async def test_create_valid_sharing_group_legacy(db, instance_owner_org, site_admin_user_token, client) -> None:
     body = {"name": f"Test Sharing Group {uuid()}{time_ns()}", "description": "description", "releasability": "yes"}
 
     response = client.post("/sharing_groups/add", headers={"authorization": site_admin_user_token}, json=body)
@@ -703,17 +753,23 @@ def test_create_valid_sharing_group_legacy(db, instance_owner_org, site_admin_us
     assert json["SharingGroupServer"][0]["server_id"] == "0"
 
     ic(json)
-
-    db_sharing_group_org: SharingGroupOrg | Any = (
-        db.query(SharingGroupOrg).filter(SharingGroupOrg.sharing_group_id == json["SharingGroup"]["id"]).first()
+    db_sharing_group_org: SharingGroupOrg = (
+        (
+            await db.execute(
+                select(SharingGroupOrg).filter(SharingGroupOrg.sharing_group_id == json["SharingGroup"]["id"])
+            )
+        )
+        .scalars()
+        .first()
     )
-    db.delete(db_sharing_group_org)
-    db.commit()
-    delete_sharing_group(db, json["SharingGroup"]["id"])
-    delete_sharing_group_server(db, json["SharingGroup"]["id"])
+    await db.delete(db_sharing_group_org)
+    await db.commit()
+    await delete_sharing_group(db, json["SharingGroup"]["id"])
+    await delete_sharing_group_server(db, json["SharingGroup"]["id"])
 
 
-def test_create_valid_sharing_group_legacy_with_org_id_overwrite(
+@pytest.mark.asyncio
+async def test_create_valid_sharing_group_legacy_with_org_id_overwrite(
     db, site_admin_user_token, instance_two_owner_org, client
 ) -> None:
     body = {
@@ -732,12 +788,13 @@ def test_create_valid_sharing_group_legacy_with_org_id_overwrite(
     assert json["SharingGroupOrg"][0]["org_id"] == str(instance_two_owner_org.id)
     assert json["SharingGroupServer"][0]["server_id"] == "0"
 
-    delete_sharing_group(db, json["SharingGroup"]["id"])
-    delete_sharing_group_orgs(db, json["SharingGroup"]["id"])
-    delete_sharing_group_server(db, json["SharingGroup"]["id"])
+    await delete_sharing_group(db, json["SharingGroup"]["id"])
+    await delete_sharing_group_orgs(db, json["SharingGroup"]["id"])
+    await delete_sharing_group_server(db, json["SharingGroup"]["id"])
 
 
-def test_create_sharing_group_legacy_with_org_id_overwrite_but_not_enough_permissions(
+@pytest.mark.asyncio
+async def test_create_sharing_group_legacy_with_org_id_overwrite_but_not_enough_permissions(
     db, instance_two_owner_org, instance_owner_org, instance_owner_org_admin_user_token, client
 ) -> None:
     body = {
@@ -758,12 +815,13 @@ def test_create_sharing_group_legacy_with_org_id_overwrite_but_not_enough_permis
     assert json["SharingGroupOrg"][0]["org_id"] == str(instance_owner_org.id)
     assert json["SharingGroupServer"][0]["server_id"] == "0"
 
-    delete_sharing_group(db, json["SharingGroup"]["id"])
-    delete_sharing_group_orgs(db, json["SharingGroup"]["id"])
-    delete_sharing_group_server(db, json["SharingGroup"]["id"])
+    await delete_sharing_group(db, json["SharingGroup"]["id"])
+    await delete_sharing_group_orgs(db, json["SharingGroup"]["id"])
+    await delete_sharing_group_server(db, json["SharingGroup"]["id"])
 
 
-def test_get_own_created_sharing_group_legacy(
+@pytest.mark.asyncio
+async def test_get_own_created_sharing_group_legacy(
     db: Session, sharing_group, instance_owner_org_admin_user_token, client
 ) -> None:
     response = client.get(
@@ -776,7 +834,8 @@ def test_get_own_created_sharing_group_legacy(
     assert json["SharingGroup"]["id"] == str(sharing_group.id)
 
 
-def test_get_sharing_group_legacy_with_access_through_sharing_group_org(
+@pytest.mark.asyncio
+async def test_get_sharing_group_legacy_with_access_through_sharing_group_org(
     db: Session, sharing_group, sharing_group_org_two, instance_org_two_admin_user_token, client
 ) -> None:
     assert sharing_group_org_two
@@ -791,12 +850,13 @@ def test_get_sharing_group_legacy_with_access_through_sharing_group_org(
     assert json["SharingGroup"]["id"] == str(sharing_group.id)
 
 
-def test_get_sharing_group_legacy_with_access_through_sharing_group_server(
+@pytest.mark.asyncio
+async def test_get_sharing_group_legacy_with_access_through_sharing_group_server(
     db: Session, sharing_group, sharing_group_server_all_orgs, instance_org_two_admin_user_token, client
 ) -> None:
     assert sharing_group_server_all_orgs
     sharing_group_server_all_orgs.server_id = 0
-    db.commit()
+    await db.commit()
 
     response = client.get(
         f"/sharing_groups/view/{sharing_group.id}",
@@ -808,7 +868,8 @@ def test_get_sharing_group_legacy_with_access_through_sharing_group_server(
     assert json["SharingGroup"]["id"] == str(sharing_group.id)
 
 
-def test_get_sharing_group_legacy_with_access_through_site_admin(
+@pytest.mark.asyncio
+async def test_get_sharing_group_legacy_with_access_through_site_admin(
     db: Session, sharing_group, instance_org_two, site_admin_user_token, client
 ) -> None:
     response = client.get(
@@ -821,7 +882,8 @@ def test_get_sharing_group_legacy_with_access_through_site_admin(
     assert json["SharingGroup"]["id"] == str(sharing_group.id)
 
 
-def test_get_sharing_group_legacy_with_no_access(
+@pytest.mark.asyncio
+async def test_get_sharing_group_legacy_with_no_access(
     db: Session, sharing_group, sharing_group_server, instance_org_two_admin_user_token, client
 ) -> None:
     response = client.get(
@@ -832,7 +894,8 @@ def test_get_sharing_group_legacy_with_no_access(
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
-def test_update_own_sharing_group_legacy(
+@pytest.mark.asyncio
+async def test_update_own_sharing_group_legacy(
     db: Session, sharing_group, instance_owner_org_admin_user_token, client
 ) -> None:
     new_description = f"this is a new description + {datetime.utcnow()}"
@@ -855,7 +918,8 @@ def test_update_own_sharing_group_legacy(
     assert json["SharingGroup"]["description"] == new_description
 
 
-def test_update_sharing_group_legacy_with_access_through_site_admin(
+@pytest.mark.asyncio
+async def test_update_sharing_group_legacy_with_access_through_site_admin(
     db: Session, sharing_group, instance_org_two, site_admin_user_token, client
 ) -> None:
     new_description = f"this is a new description + {datetime.utcnow()}"
@@ -879,7 +943,8 @@ def test_update_sharing_group_legacy_with_access_through_site_admin(
     assert json["SharingGroup"]["description"] == new_description
 
 
-def test_update_sharing_group_legacy_no_access_although_sharing_group_org_exists(
+@pytest.mark.asyncio
+async def test_update_sharing_group_legacy_no_access_although_sharing_group_org_exists(
     db: Session, sharing_group, sharing_group_org, instance_owner_org, instance_org_two_admin_user_token, client
 ) -> None:
     new_description = f"this is a new description + {datetime.utcnow()}"
@@ -897,7 +962,8 @@ def test_update_sharing_group_legacy_no_access_although_sharing_group_org_exists
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
-def test_delete_own_sharing_group_legacy(
+@pytest.mark.asyncio
+async def test_delete_own_sharing_group_legacy(
     db: Session,
     instance_owner_org,
     sharing_group,
@@ -921,11 +987,11 @@ def test_delete_own_sharing_group_legacy(
     assert json["saved"]
     assert json["success"]
 
-    db.invalidate()
+    await db.invalidate()
 
-    db_sharing_group: SharingGroup | None = db.get(SharingGroup, sharing_group_id)
-    db_sharing_group_org: SharingGroupOrg | None = db.get(SharingGroupOrg, sharing_group_org_id)
-    db_sharing_group_server: SharingGroupServer | None = db.get(SharingGroupServer, sharing_group_server_id)
+    db_sharing_group: SharingGroup | None = await db.get(SharingGroup, sharing_group_id)
+    db_sharing_group_org: SharingGroupOrg | None = await db.get(SharingGroupOrg, sharing_group_org_id)
+    db_sharing_group_server: SharingGroupServer | None = await db.get(SharingGroupServer, sharing_group_server_id)
 
     assert not db_sharing_group
     assert not db_sharing_group_org
@@ -939,7 +1005,8 @@ def test_delete_own_sharing_group_legacy(
     assert second_response.status_code == status.HTTP_404_NOT_FOUND
 
 
-def test_delete_sharing_group_legacy_with_access_through_site_admin(
+@pytest.mark.asyncio
+async def test_delete_sharing_group_legacy_with_access_through_site_admin(
     db: Session, sharing_group, instance_org_two, site_admin_user_token, client
 ) -> None:
     response = client.delete(
@@ -961,7 +1028,8 @@ def test_delete_sharing_group_legacy_with_access_through_site_admin(
     assert second_response.status_code == status.HTTP_404_NOT_FOUND
 
 
-def test_delete_sharing_group_legacy_no_access_although_sharing_group_org_exists(
+@pytest.mark.asyncio
+async def test_delete_sharing_group_legacy_no_access_although_sharing_group_org_exists(
     db: Session, sharing_group, sharing_group_org, instance_owner_org, instance_org_two_admin_user_token, client
 ) -> None:
     response = client.delete(
@@ -972,7 +1040,8 @@ def test_delete_sharing_group_legacy_no_access_although_sharing_group_org_exists
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
-def test_add_org_to_own_sharing_group_legacy(
+@pytest.mark.asyncio
+async def test_add_org_to_own_sharing_group_legacy(
     db: Session, sharing_group, instance_owner_org_admin_user_token, client
 ) -> None:
     response = client.post(
@@ -985,14 +1054,15 @@ def test_add_org_to_own_sharing_group_legacy(
     assert json["saved"]
     assert json["success"]
 
-    delete_sharing_group_orgs(db, sharing_group.id)
+    await delete_sharing_group_orgs(db, sharing_group.id)
 
 
-def test_patch_org_to_own_sharing_group_legacy(
+@pytest.mark.asyncio
+async def test_patch_org_to_own_sharing_group_legacy(
     db: Session, sharing_group, sharing_group_org, instance_owner_org_admin_user_token, client
 ) -> None:
     sharing_group_org.extend = True
-    db.commit()
+    await db.commit()
     sharing_group_org_id = sharing_group_org.id
 
     response = client.post(
@@ -1006,18 +1076,19 @@ def test_patch_org_to_own_sharing_group_legacy(
     assert json["saved"]
     assert json["success"]
 
-    db.invalidate()
+    await db.invalidate()
 
-    db_sharing_group_org: SharingGroupOrg = db.get(SharingGroupOrg, sharing_group_org_id)
+    db_sharing_group_org: SharingGroupOrg = await db.get(SharingGroupOrg, sharing_group_org_id)
 
     ic(db_sharing_group_org.asdict())
     assert db_sharing_group_org.extend
 
-    delete_sharing_group_server(db, sharing_group.id)
-    delete_sharing_group_orgs(db, sharing_group.id)
+    await delete_sharing_group_server(db, sharing_group.id)
+    await delete_sharing_group_orgs(db, sharing_group.id)
 
 
-def test_add_org_to_sharing_group_legacy_using_site_admin(
+@pytest.mark.asyncio
+async def test_add_org_to_sharing_group_legacy_using_site_admin(
     db: Session, sharing_group, site_admin_user_token, client
 ) -> None:
     response = client.post(
@@ -1030,10 +1101,11 @@ def test_add_org_to_sharing_group_legacy_using_site_admin(
     assert json["saved"]
     assert json["success"]
 
-    delete_sharing_group_orgs(db, sharing_group.id)
+    await delete_sharing_group_orgs(db, sharing_group.id)
 
 
-def test_add_org_to_sharing_group_legacy_with_no_access(
+@pytest.mark.asyncio
+async def test_add_org_to_sharing_group_legacy_with_no_access(
     db: Session,
     instance_org_two,
     sharing_group_org,
@@ -1050,7 +1122,8 @@ def test_add_org_to_sharing_group_legacy_with_no_access(
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
-def test_remove_org_from_own_sharing_group_legacy(
+@pytest.mark.asyncio
+async def test_remove_org_from_own_sharing_group_legacy(
     db: Session, sharing_group, sharing_group_org, instance_owner_org, instance_owner_org_admin_user_token, client
 ) -> None:
     sharing_group_org_id = sharing_group_org.id
@@ -1065,14 +1138,15 @@ def test_remove_org_from_own_sharing_group_legacy(
     assert json["saved"]
     assert json["success"]
 
-    db.invalidate()
+    await db.invalidate()
 
-    db_sharing_group_org = db.get(SharingGroupOrg, sharing_group_org_id)
+    db_sharing_group_org = await db.get(SharingGroupOrg, sharing_group_org_id)
 
     assert not db_sharing_group_org
 
 
-def test_add_server_to_own_sharing_group_legacy(
+@pytest.mark.asyncio
+async def test_add_server_to_own_sharing_group_legacy(
     db: Session, sharing_group, instance_owner_org_admin_user_token, client
 ) -> None:
     response = client.post(
@@ -1085,10 +1159,11 @@ def test_add_server_to_own_sharing_group_legacy(
     assert json["saved"]
     assert json["success"]
 
-    delete_sharing_group_server(db, sharing_group.id)
+    await delete_sharing_group_server(db, sharing_group.id)
 
 
-def test_patch_server_to_own_sharing_group_legacy(
+@pytest.mark.asyncio
+async def test_patch_server_to_own_sharing_group_legacy(
     db: Session, sharing_group, sharing_group_server_all_orgs, instance_owner_org_admin_user_token, client
 ) -> None:
     sharing_group_server_id = sharing_group_server_all_orgs.id
@@ -1104,15 +1179,16 @@ def test_patch_server_to_own_sharing_group_legacy(
     assert json["saved"]
     assert json["success"]
 
-    db.invalidate()
+    await db.invalidate()
 
-    db_sharing_group_server: SharingGroupServer = db.get(SharingGroupServer, sharing_group_server_id)
+    db_sharing_group_server: SharingGroupServer = await db.get(SharingGroupServer, sharing_group_server_id)
 
     assert db_sharing_group_server.all_orgs
-    delete_sharing_group_server(db, sharing_group.id)
+    await delete_sharing_group_server(db, sharing_group.id)
 
 
-def test_add_server_to_sharing_group_legeacy_using_site_admin(
+@pytest.mark.asyncio
+async def test_add_server_to_sharing_group_legeacy_using_site_admin(
     db: Session, sharing_group, site_admin_user_token, client
 ) -> None:
     response = client.post(
@@ -1125,10 +1201,11 @@ def test_add_server_to_sharing_group_legeacy_using_site_admin(
     assert json["saved"]
     assert json["success"]
 
-    delete_sharing_group_server(db, sharing_group.id)
+    await delete_sharing_group_server(db, sharing_group.id)
 
 
-def test_add_server_to_sharing_group_legacy_with_no_access(
+@pytest.mark.asyncio
+async def test_add_server_to_sharing_group_legacy_with_no_access(
     db: Session, sharing_group, instance_owner_org, sharing_group_org, instance_org_two_admin_user_token, client
 ) -> None:
     response = client.post(
@@ -1139,7 +1216,8 @@ def test_add_server_to_sharing_group_legacy_with_no_access(
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
-def test_remove_server_from_own_sharing_group_legacy(
+@pytest.mark.asyncio
+async def test_remove_server_from_own_sharing_group_legacy(
     db: Session, sharing_group, sharing_group_server, instance_owner_org, instance_owner_org_admin_user_token, client
 ) -> None:
     sharing_group_server_id = sharing_group_server.id
@@ -1151,8 +1229,8 @@ def test_remove_server_from_own_sharing_group_legacy(
 
     assert response.status_code == status.HTTP_200_OK
 
-    db.invalidate()
+    await db.invalidate()
 
-    db_sharing_group_server = db.get(SharingGroupServer, sharing_group_server_id)
+    db_sharing_group_server = await db.get(SharingGroupServer, sharing_group_server_id)
 
     assert not db_sharing_group_server

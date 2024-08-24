@@ -1,9 +1,9 @@
+from time import sleep
+
 import httpx
 from deepdiff import DeepDiff
 from icecream import ic
-from time import sleep
 
-from time import sleep
 
 def to_legacy_format(data):
     if isinstance(data, bool):
@@ -17,7 +17,7 @@ def to_legacy_format(data):
     return data
 
 
-def test_get_existing_event(
+async def test_get_existing_event(
     db, organisation, event, attribute, galaxy, galaxy_cluster, tag, auth_key, eventtag, client
 ) -> None:
     clear_key, auth_key = auth_key
@@ -49,7 +49,7 @@ def test_get_existing_event(
     assert response_json["Event"]["Galaxy"][0]["GalaxyCluster"][0]["id"] == str(galaxy_cluster_id)
     assert response_json["Event"]["Galaxy"][0]["GalaxyCluster"][0]["event_tag_id"] == str(eventtag.id)
 
-    db.commit()
+    await db.commit()
     sleep(5)
 
     # TODO: fix this
@@ -65,5 +65,5 @@ def test_get_existing_event(
 
     ic(response_json_in_legacy)
     ic(legacy_response_json)
-    db.commit()
+    await db.commit()
     assert DeepDiff(response_json_in_legacy, legacy_response_json) == {}

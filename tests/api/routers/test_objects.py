@@ -1,12 +1,13 @@
 from typing import Any
 
 import pytest
+import pytest_asyncio
 import sqlalchemy as sa
 from icecream import ic
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from mmisp.db.models.object import ObjectTemplate
-from tests.generators.object_generator import (
+from mmisp.tests.generators.object_generator import (
     generate_random_search_query,
     generate_search_query,
     generate_specific_search_query,
@@ -15,15 +16,15 @@ from tests.generators.object_generator import (
 )
 
 
-@pytest.fixture(autouse=True)
-def check_counts_stay_constant(db):
-    count_sharing_groups = db.execute(sa.text("SELECT COUNT(*) FROM sharing_groups")).first()[0]
-    count_sharing_groups_orgs = db.execute(sa.text("SELECT COUNT(*) FROM sharing_group_orgs")).first()[0]
-    count_sharing_groups_servers = db.execute(sa.text("SELECT COUNT(*) FROM sharing_group_servers")).first()[0]
+@pytest_asyncio.fixture(autouse=True)
+async def check_counts_stay_constant(db):
+    count_sharing_groups = (await db.execute(sa.text("SELECT COUNT(*) FROM sharing_groups"))).first()[0]
+    count_sharing_groups_orgs = (await db.execute(sa.text("SELECT COUNT(*) FROM sharing_group_orgs"))).first()[0]
+    count_sharing_groups_servers = (await db.execute(sa.text("SELECT COUNT(*) FROM sharing_group_servers"))).first()[0]
     yield
-    ncount_sharing_groups = db.execute(sa.text("SELECT COUNT(*) FROM sharing_groups")).first()[0]
-    ncount_sharing_groups_orgs = db.execute(sa.text("SELECT COUNT(*) FROM sharing_group_orgs")).first()[0]
-    ncount_sharing_groups_servers = db.execute(sa.text("SELECT COUNT(*) FROM sharing_group_servers")).first()[0]
+    ncount_sharing_groups = (await db.execute(sa.text("SELECT COUNT(*) FROM sharing_groups"))).first()[0]
+    ncount_sharing_groups_orgs = (await db.execute(sa.text("SELECT COUNT(*) FROM sharing_group_orgs"))).first()[0]
+    ncount_sharing_groups_servers = (await db.execute(sa.text("SELECT COUNT(*) FROM sharing_group_servers"))).first()[0]
 
     assert count_sharing_groups == ncount_sharing_groups
     assert count_sharing_groups_orgs == ncount_sharing_groups_orgs
@@ -43,36 +44,37 @@ def object_data(request: Any) -> dict[str, Any]:
     return request.param
 
 
-@pytest.fixture
-def object_template(db, organisation, site_admin_user):
+@pytest_asyncio.fixture
+async def object_template(db, organisation, site_admin_user):
     object_template = ObjectTemplate(
         name="test_template", user_id=site_admin_user.id, org_id=organisation.id, version=100
     )
     db.add(object_template)
-    db.flush()
-    db.refresh(object_template)
+    await db.flush()
+    await db.refresh(object_template)
 
     yield object_template
 
-    db.delete(object_template)
+    await db.delete(object_template)
 
 
-def delete_attributes_from_object_resp(db, response_data):
+async def delete_attributes_from_object_resp(db, response_data):
     ic(response_data)
     attribute_ids = [x["id"] for x in response_data["Object"]["Attribute"]]
     stmt = sa.sql.text("DELETE FROM attributes WHERE id=:id")
 
     for aid in attribute_ids:
-        db.execute(stmt, {"id": aid})
-    db.commit()
+        await db.execute(stmt, {"id": aid})
+    await db.commit()
 
     ic(response_data)
     stmt = sa.sql.text("DELETE FROM objects WHERE id=:id")
-    db.execute(stmt, {"id": response_data["Object"]["id"]})
-    db.commit()
+    await db.execute(stmt, {"id": response_data["Object"]["id"]})
+    await db.commit()
 
 
-def test_add_object_to_event(
+@pytest.mark.asyncio
+async def test_add_object_to_event(
     object_data: dict[str, Any], sharing_group, object_template, event, site_admin_user_token, db, client
 ) -> None:
     object_data["sharing_group_id"] = sharing_group.id
@@ -92,11 +94,12 @@ def test_add_object_to_event(
     assert "Object" in response_data
     assert int(response_data["Object"]["event_id"]) == event_id
 
-    delete_attributes_from_object_resp(db, response_data)
+    await delete_attributes_from_object_resp(db, response_data)
 
 
-def test_add_object_response_format(
-    object_data: dict[str, Any], db: Session, event, site_admin_user_token, object_template, sharing_group, client
+@pytest.mark.asyncio
+async def test_add_object_response_format(
+    object_data: dict[str, Any], db: AsyncSession, event, site_admin_user_token, object_template, sharing_group, client
 ) -> None:
     object_data["sharing_group_id"] = sharing_group.id
     if object_data["Attribute"]:
@@ -113,7 +116,7 @@ def test_add_object_response_format(
     assert "Object" in response.json()
 
     response_data = response.json()
-    delete_attributes_from_object_resp(db, response_data)
+    await delete_attributes_from_object_resp(db, response_data)
 
 
 @pytest.fixture(
@@ -128,7 +131,8 @@ def search_data(request: Any) -> dict[str, Any]:
     return request.param
 
 
-def test_search_objects_with_filters(search_data: dict[str, Any], site_admin_user_token, client) -> None:
+@pytest.mark.asyncio
+async def test_search_objects_with_filters(search_data: dict[str, Any], site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.post("/objects/restsearch", json=search_data, headers=headers)
     assert response.status_code == 200
@@ -144,7 +148,8 @@ def test_search_objects_with_filters(search_data: dict[str, Any], site_admin_use
         assert "comment" in obj["object"] != ""
 
 
-def test_search_objects_response_format(search_data: dict[str, Any], site_admin_user_token, client) -> None:
+@pytest.mark.asyncio
+async def test_search_objects_response_format(search_data: dict[str, Any], site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.post("/objects/restsearch", json=search_data, headers=headers)
     assert response.headers["Content-Type"] == "application/json"
@@ -153,7 +158,8 @@ def test_search_objects_response_format(search_data: dict[str, Any], site_admin_
     assert isinstance(response_data["response"], list)
 
 
-def test_search_objects_data_integrity(search_data: dict[str, Any], site_admin_user_token, client) -> None:
+@pytest.mark.asyncio
+async def test_search_objects_data_integrity(search_data: dict[str, Any], site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.post("/objects/restsearch", json=search_data, headers=headers)
     response_data = response.json()
@@ -164,8 +170,9 @@ def test_search_objects_data_integrity(search_data: dict[str, Any], site_admin_u
         assert "distribution" in obj["object"] != ""
 
 
-def test_get_object_details_valid_id(
-    object_data: dict[str, Any], db: Session, sharing_group, object_template, event, site_admin_user_token, client
+@pytest.mark.asyncio
+async def test_get_object_details_valid_id(
+    object_data: dict[str, Any], db: AsyncSession, sharing_group, object_template, event, site_admin_user_token, client
 ) -> None:
     object_data["sharing_group_id"] = sharing_group.id
     if object_data["Attribute"]:
@@ -196,12 +203,13 @@ def test_get_object_details_valid_id(
     assert "comment" in object_data
     assert "sharing_group_id" in object_data
 
-    delete_attributes_from_object_resp(db, response.json())
+    await delete_attributes_from_object_resp(db, response.json())
 
 
-def test_get_object_details_response_format(
+@pytest.mark.asyncio
+async def test_get_object_details_response_format(
     object_data: dict[str, Any],
-    db: Session,
+    db: AsyncSession,
     instance_owner_org,
     object_template,
     event,
@@ -216,7 +224,7 @@ def test_get_object_details_response_format(
 
     object_data["event_id"] = event.id
 
-    db.commit()
+    await db.commit()
 
     object_template_id = object_template.id
     event_id = event.id
@@ -231,18 +239,20 @@ def test_get_object_details_response_format(
     assert response.headers["Content-Type"] == "application/json"
     response_data = response.json()
     assert "Object" in response_data
-    delete_attributes_from_object_resp(db, response_data)
+    await delete_attributes_from_object_resp(db, response_data)
 
 
-def test_get_object_details_invalid_id(site_admin_user_token, client) -> None:
+@pytest.mark.asyncio
+async def test_get_object_details_invalid_id(site_admin_user_token, client) -> None:
     object_id: str = "invalid_id"
     headers = {"authorization": site_admin_user_token}
     response = client.get(f"/objects/{object_id}", headers=headers)
     assert response.status_code == 422
 
 
-def test_get_object_details_data_integrity(
-    object_data: dict[str, Any], db: Session, sharing_group, event, object_template, site_admin_user_token, client
+@pytest.mark.asyncio
+async def test_get_object_details_data_integrity(
+    object_data: dict[str, Any], db: AsyncSession, sharing_group, event, object_template, site_admin_user_token, client
 ) -> None:
     object_data["sharing_group_id"] = sharing_group.id
     if object_data["Attribute"]:
@@ -250,7 +260,7 @@ def test_get_object_details_data_integrity(
             attribute["sharing_group_id"] = sharing_group.id
 
     object_data["event_id"] = event.id
-    db.commit()
+    await db.commit()
 
     object_template_id = object_template.id
     ic(object_template.asdict())
@@ -268,12 +278,13 @@ def test_get_object_details_data_integrity(
     object_data = response_data["Object"]
     assert isinstance(object_data["id"], str)
     assert isinstance(object_data["name"], str)
-    delete_attributes_from_object_resp(db, response_data)
+    await delete_attributes_from_object_resp(db, response_data)
 
 
-def test_delete_object_hard_delete(
+@pytest.mark.asyncio
+async def test_delete_object_hard_delete(
     object_data: dict[str, Any],
-    db: Session,
+    db: AsyncSession,
     instance_owner_org,
     object_template,
     event,
@@ -288,7 +299,7 @@ def test_delete_object_hard_delete(
 
     object_data["event_id"] = event.id
 
-    db.commit()
+    await db.commit()
 
     object_template_id = object_template.id
     event_id = event.id
@@ -309,8 +320,9 @@ def test_delete_object_hard_delete(
     assert response_data["success"]
 
 
-def test_delete_object_soft_delete(
-    object_data: dict[str, Any], db: Session, sharing_group, object_template, event, site_admin_user_token, client
+@pytest.mark.asyncio
+async def test_delete_object_soft_delete(
+    object_data: dict[str, Any], db: AsyncSession, sharing_group, object_template, event, site_admin_user_token, client
 ) -> None:
     object_data["sharing_group_id"] = sharing_group.id
     if object_data["Attribute"]:
@@ -318,7 +330,7 @@ def test_delete_object_soft_delete(
             attribute["sharing_group_id"] = sharing_group.id
     object_data["event_id"] = event.id
 
-    db.commit()
+    await db.commit()
 
     object_template_id = object_template.id
     event_id = event.id
@@ -337,10 +349,11 @@ def test_delete_object_soft_delete(
     assert response_delete_data["name"] == object_data["name"]
     assert response_delete_data["saved"]
     assert response_delete_data["success"]
-    delete_attributes_from_object_resp(db, response_data)
+    await delete_attributes_from_object_resp(db, response_data)
 
 
-def test_delete_object_invalid_id(site_admin_user_token, client) -> None:
+@pytest.mark.asyncio
+async def test_delete_object_invalid_id(site_admin_user_token, client) -> None:
     object_id = "invalid_id"
     headers = {"authorization": site_admin_user_token}
     response_delete = client.delete(f"/objects/{object_id}/true", headers=headers)
@@ -348,7 +361,8 @@ def test_delete_object_invalid_id(site_admin_user_token, client) -> None:
     assert "detail" in response_delete.json()
 
 
-def test_delete_object_invalid_hard_delete(
+@pytest.mark.asyncio
+async def test_delete_object_invalid_hard_delete(
     db, object_data: dict[str, Any], sharing_group, object_template, event, site_admin_user_token, client
 ) -> None:
     object_data["sharing_group_id"] = sharing_group.id
@@ -369,4 +383,4 @@ def test_delete_object_invalid_hard_delete(
     response_delete = client.delete(f"/objects/{object_id}/invalid_value", headers=headers)
     assert response_delete.status_code == 422
     assert "detail" in response_delete.json()
-    delete_attributes_from_object_resp(db, response_data)
+    await delete_attributes_from_object_resp(db, response_data)

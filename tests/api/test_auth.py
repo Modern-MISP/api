@@ -6,8 +6,14 @@ from fastapi import HTTPException
 from icecream import ic
 
 from mmisp.api.auth import (
-    Auth, AuthStrategy, Permission, authorize, check_permissions, encode_exchange_token,
-    _get_user, user_login_allowed, encode_token, decode_exchange_token, _check_api_key
+    Auth,
+    AuthStrategy,
+    Permission,
+    authorize,
+    check_permissions,
+    decode_exchange_token,
+    encode_exchange_token,
+    encode_token,
 )
 from mmisp.api.config import config
 from mmisp.db.database import get_db
@@ -87,7 +93,7 @@ async def test_authorize_expired_auth_key(db, auth_key) -> None:
     clear_key, auth_key = auth_key
     auth_key.expiration = time() - 10
 
-    db.commit()
+    await db.commit()
 
     try:
         await authorize(AuthStrategy.API_KEY)(db=adb, authorization=clear_key)

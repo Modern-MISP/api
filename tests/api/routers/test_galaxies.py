@@ -1,4 +1,5 @@
 import pytest
+import pytest_asyncio
 import sqlalchemy as sa
 from icecream import ic
 from sqlalchemy.orm import Session
@@ -6,85 +7,85 @@ from sqlalchemy.sql import text
 
 from mmisp.api_schemas.galaxies import ExportGalaxyAttributes, ExportGalaxyBody
 from mmisp.db.models.galaxy_cluster import GalaxyCluster, GalaxyElement, GalaxyReference
+from mmisp.tests.generators.model_generators.galaxy_generator import generate_galaxy
+from mmisp.tests.generators.model_generators.organisation_generator import generate_organisation
 
-from ...generators.model_generators.galaxy_generator import generate_galaxy
-from ...generators.model_generators.organisation_generator import generate_organisation
 from ..helpers.galaxy_helper import get_invalid_import_galaxy_body, get_valid_import_galaxy_body
 
 
-@pytest.fixture(autouse=True)
-def check_counts_stay_constant(db):
-    count_galaxies = db.execute(text("SELECT COUNT(*) FROM galaxies")).first()[0]
-    count_galaxy_clusters = db.execute(text("SELECT COUNT(*) FROM galaxy_clusters")).first()[0]
-    count_galaxy_elements = db.execute(text("SELECT COUNT(*) FROM galaxy_elements")).first()[0]
+@pytest_asyncio.fixture(autouse=True)
+async def check_counts_stay_constant(db):
+    count_galaxies = (await db.execute(text("SELECT COUNT(*) FROM galaxies"))).first()[0]
+    count_galaxy_clusters = (await db.execute(text("SELECT COUNT(*) FROM galaxy_clusters"))).first()[0]
+    count_galaxy_elements = (await db.execute(text("SELECT COUNT(*) FROM galaxy_elements"))).first()[0]
     yield
-    ncount_galaxies = db.execute(text("SELECT COUNT(*) FROM galaxies")).first()[0]
-    ncount_galaxy_clusters = db.execute(text("SELECT COUNT(*) FROM galaxy_clusters")).first()[0]
-    ncount_galaxy_elements = db.execute(text("SELECT COUNT(*) FROM galaxy_elements")).first()[0]
+    ncount_galaxies = (await db.execute(text("SELECT COUNT(*) FROM galaxies"))).first()[0]
+    ncount_galaxy_clusters = (await db.execute(text("SELECT COUNT(*) FROM galaxy_clusters"))).first()[0]
+    ncount_galaxy_elements = (await db.execute(text("SELECT COUNT(*) FROM galaxy_elements"))).first()[0]
 
     assert count_galaxies == ncount_galaxies
     assert count_galaxy_clusters == ncount_galaxy_clusters
     assert count_galaxy_elements == ncount_galaxy_elements
 
 
-@pytest.fixture
-def galaxy(db):
+@pytest_asyncio.fixture
+async def galaxy(db):
     galaxy = generate_galaxy()
 
     db.add(galaxy)
-    db.commit()
-    db.refresh(galaxy)
+    await db.commit()
+    await db.refresh(galaxy)
 
     yield galaxy
 
-    db.delete(galaxy)
-    db.commit()
+    await db.delete(galaxy)
+    await db.commit()
 
 
-@pytest.fixture
-def galaxy2(db):
+@pytest_asyncio.fixture
+async def galaxy2(db):
     galaxy = generate_galaxy()
 
     db.add(galaxy)
-    db.commit()
-    db.refresh(galaxy)
+    await db.commit()
+    await db.refresh(galaxy)
 
     yield galaxy
 
-    db.delete(galaxy)
-    db.commit()
+    await db.delete(galaxy)
+    await db.commit()
 
 
-@pytest.fixture
-def galaxy3(db):
+@pytest_asyncio.fixture
+async def galaxy3(db):
     galaxy = generate_galaxy()
 
     db.add(galaxy)
-    db.commit()
-    db.refresh(galaxy)
+    await db.commit()
+    await db.refresh(galaxy)
 
     yield galaxy
 
-    db.delete(galaxy)
-    db.commit()
+    await db.delete(galaxy)
+    await db.commit()
 
 
-@pytest.fixture
-def organisation(db):
+@pytest_asyncio.fixture
+async def organisation(db):
     organisation = generate_organisation()
 
     db.add(organisation)
-    db.commit()
-    db.refresh(organisation)
+    await db.commit()
+    await db.refresh(organisation)
 
     yield organisation
 
-    db.delete(organisation)
-    db.commit()
+    await db.delete(organisation)
+    await db.commit()
 
 
-@pytest.fixture
-def add_galaxy_cluster_body(db, galaxy, tag, organisation):
+@pytest_asyncio.fixture
+async def add_galaxy_cluster_body(db, galaxy, tag, organisation):
     add_galaxy_cluster_body = GalaxyCluster(
         type="test",
         value="test",
@@ -97,17 +98,17 @@ def add_galaxy_cluster_body(db, galaxy, tag, organisation):
     )
 
     db.add(add_galaxy_cluster_body)
-    db.commit()
-    db.refresh(add_galaxy_cluster_body)
+    await db.commit()
+    await db.refresh(add_galaxy_cluster_body)
 
     yield add_galaxy_cluster_body
 
-    db.delete(add_galaxy_cluster_body)
-    db.commit()
+    await db.delete(add_galaxy_cluster_body)
+    await db.commit()
 
 
-@pytest.fixture
-def add_galaxy_cluster_body2(db, galaxy2, tag, organisation):
+@pytest_asyncio.fixture
+async def add_galaxy_cluster_body2(db, galaxy2, tag, organisation):
     add_galaxy_cluster_body = GalaxyCluster(
         type="test",
         value="test",
@@ -120,17 +121,17 @@ def add_galaxy_cluster_body2(db, galaxy2, tag, organisation):
     )
 
     db.add(add_galaxy_cluster_body)
-    db.commit()
-    db.refresh(add_galaxy_cluster_body)
+    await db.commit()
+    await db.refresh(add_galaxy_cluster_body)
 
     yield add_galaxy_cluster_body
 
-    db.delete(add_galaxy_cluster_body)
-    db.commit()
+    await db.delete(add_galaxy_cluster_body)
+    await db.commit()
 
 
-@pytest.fixture
-def add_galaxy_cluster_body3(db, galaxy3, tag, organisation):
+@pytest_asyncio.fixture
+async def add_galaxy_cluster_body3(db, galaxy3, tag, organisation):
     add_galaxy_cluster_body = GalaxyCluster(
         id="777",
         uuid="777",
@@ -155,48 +156,49 @@ def add_galaxy_cluster_body3(db, galaxy3, tag, organisation):
     )
 
     db.add(add_galaxy_cluster_body)
-    db.commit()
-    db.refresh(add_galaxy_cluster_body)
+    await db.commit()
+    await db.refresh(add_galaxy_cluster_body)
 
     yield add_galaxy_cluster_body
 
-    db.delete(add_galaxy_cluster_body)
-    db.commit()
+    await db.delete(add_galaxy_cluster_body)
+    await db.commit()
 
 
-@pytest.fixture
-def add_galaxy_element(db, add_galaxy_cluster_body):
+@pytest_asyncio.fixture
+async def add_galaxy_element(db, add_galaxy_cluster_body):
     add_galaxy_element = GalaxyElement(
         galaxy_cluster_id=add_galaxy_cluster_body.id, key="refs", value="http://github.com"
     )
 
     db.add(add_galaxy_element)
-    db.commit()
-    db.refresh(add_galaxy_element)
+    await db.commit()
+    await db.refresh(add_galaxy_element)
 
     yield add_galaxy_element
 
-    db.delete(add_galaxy_element)
-    db.commit()
+    await db.delete(add_galaxy_element)
+    await db.commit()
 
 
-@pytest.fixture
-def add_galaxy_element2(db, add_galaxy_cluster_body3):
+@pytest_asyncio.fixture
+async def add_galaxy_element2(db, add_galaxy_cluster_body3):
     add_galaxy_element = GalaxyElement(
         galaxy_cluster_id=add_galaxy_cluster_body3.id, key="refs", value="http://github.com"
     )
 
     db.add(add_galaxy_element)
-    db.commit()
-    db.refresh(add_galaxy_element)
+    await db.commit()
+    await db.refresh(add_galaxy_element)
 
     yield add_galaxy_element
 
-    db.delete(add_galaxy_element)
-    db.commit()
+    await db.delete(add_galaxy_element)
+    await db.commit()
 
 
-def test_import_galaxy_cluster_valid_data(db, site_admin_user_token, galaxy, organisation, tag, client) -> None:
+@pytest.mark.asyncio
+async def test_import_galaxy_cluster_valid_data(db, site_admin_user_token, galaxy, organisation, tag, client) -> None:
     org_id = organisation.id
     galaxy_id = galaxy.id
     tag_name = tag.name
@@ -214,14 +216,15 @@ def test_import_galaxy_cluster_valid_data(db, site_admin_user_token, galaxy, org
     stmt = sa.sql.text(
         "DELETE FROM galaxy_elements WHERE galaxy_cluster_id IN (SELECT id FROM galaxy_clusters WHERE galaxy_id=:id)"
     )
-    db.execute(stmt, {"id": galaxy_id})
+    await db.execute(stmt, {"id": galaxy_id})
 
     stmt = sa.sql.text("DELETE FROM galaxy_clusters WHERE galaxy_id=:id")
-    db.execute(stmt, {"id": galaxy_id})
-    db.commit()
+    await db.execute(stmt, {"id": galaxy_id})
+    await db.commit()
 
 
-def test_import_galaxy_cluster_invalid_data(site_admin_user_token, galaxy, organisation, tag, client) -> None:
+@pytest.mark.asyncio
+async def test_import_galaxy_cluster_invalid_data(site_admin_user_token, galaxy, organisation, tag, client) -> None:
     org_id = organisation.id
     galaxy_id = galaxy.id
     tag_name = tag.name
@@ -234,7 +237,8 @@ def test_import_galaxy_cluster_invalid_data(site_admin_user_token, galaxy, organ
     assert response.status_code == 403
 
 
-def test_get_existing_galaxy_cluster(
+@pytest.mark.asyncio
+async def test_get_existing_galaxy_cluster(
     db: Session, site_admin_user_token, galaxy3, add_galaxy_cluster_body3, client
 ) -> None:
     galaxy_id = galaxy3.id
@@ -255,7 +259,8 @@ def test_get_existing_galaxy_cluster(
     assert response_json["tag_name"] == add_galaxy_cluster_body3.tag_name
 
 
-def test_get_non_existing_galaxy_cluster(site_admin_user_token, client) -> None:
+@pytest.mark.asyncio
+async def test_get_non_existing_galaxy_cluster(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.get("/galaxies/clusters/0", headers=headers)
     assert response.status_code == 404
@@ -263,7 +268,8 @@ def test_get_non_existing_galaxy_cluster(site_admin_user_token, client) -> None:
     assert response.status_code == 404
 
 
-def test_get_existing_galaxy_details(
+@pytest.mark.asyncio
+async def test_get_existing_galaxy_details(
     db: Session, site_admin_user_token, galaxy, add_galaxy_cluster_body, add_galaxy_element, client
 ) -> None:
     galaxy_id = galaxy.id
@@ -285,14 +291,16 @@ def test_get_existing_galaxy_details(
     assert response_json["GalaxyCluster"][0]["GalaxyElement"][0]["value"] == add_galaxy_element.value
 
 
-def test_get_non_existing_galaxy_details(site_admin_user_token, client) -> None:
+@pytest.mark.asyncio
+async def test_get_non_existing_galaxy_details(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.get("/galaxies/0", headers=headers)
 
     assert response.status_code == 404
 
 
-def test_delete_existing_galaxy(
+@pytest.mark.asyncio
+async def test_delete_existing_galaxy(
     db: Session, site_admin_user_token, galaxy, organisation, tag, add_galaxy_cluster_body, add_galaxy_element, client
 ) -> None:
     galaxy_id = galaxy.id
@@ -306,7 +314,8 @@ def test_delete_existing_galaxy(
     assert response_json["name"] == "Galaxy deleted"
 
 
-def test_delete_non_existing_galaxy(site_admin_user_token, galaxy, organisation, tag, client) -> None:
+@pytest.mark.asyncio
+async def test_delete_non_existing_galaxy(site_admin_user_token, galaxy, organisation, tag, client) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.delete("/galaxies/0", headers=headers)
 
@@ -316,7 +325,8 @@ def test_delete_non_existing_galaxy(site_admin_user_token, galaxy, organisation,
     assert response_json["detail"]["name"] == "Invalid galaxy."
 
 
-def test_get_all_galaxies(
+@pytest.mark.asyncio
+async def test_get_all_galaxies(
     db: Session, site_admin_user_token, add_galaxy_cluster_body, add_galaxy_cluster_body2, client
 ) -> None:
     headers = {"authorization": site_admin_user_token}
@@ -327,7 +337,8 @@ def test_get_all_galaxies(
     assert isinstance(response_json, list)
 
 
-def test_search_galaxies(site_admin_user_token, organisation, tag, galaxy, client) -> None:
+@pytest.mark.asyncio
+async def test_search_galaxies(site_admin_user_token, organisation, tag, galaxy, client) -> None:
     request_body = {"value": "test galaxy single name abcdefghijklmnopqrstuvwxyz"}
 
     headers = {"authorization": site_admin_user_token}
@@ -340,7 +351,8 @@ def test_search_galaxies(site_admin_user_token, organisation, tag, galaxy, clien
         assert galaxy["Galaxy"]["name"] == request_body["name"]
 
 
-def test_export_existing_galaxy(
+@pytest.mark.asyncio
+async def test_export_existing_galaxy(
     db: Session,
     site_admin_user_token,
     galaxy,
@@ -366,8 +378,8 @@ def test_export_existing_galaxy(
     )
 
     db.add(galaxy_reference)
-    db.commit()
-    db.refresh(galaxy_reference)
+    await db.commit()
+    await db.refresh(galaxy_reference)
 
     body = ExportGalaxyBody(Galaxy=ExportGalaxyAttributes(default=False, distribution="1"))
     request_body = body.dict()
@@ -379,7 +391,8 @@ def test_export_existing_galaxy(
     assert response.status_code == 200
 
 
-def test_export_non_existing_galaxy(
+@pytest.mark.asyncio
+async def test_export_non_existing_galaxy(
     db: Session,
     site_admin_user_token,
     galaxy,
@@ -401,8 +414,8 @@ def test_export_non_existing_galaxy(
     )
 
     db.add(galaxy_reference)
-    db.commit()
-    db.refresh(galaxy_reference)
+    await db.commit()
+    await db.refresh(galaxy_reference)
 
     body = ExportGalaxyBody(Galaxy=ExportGalaxyAttributes(default=False, distribution="1"))
     request_body = body.dict()
@@ -412,7 +425,8 @@ def test_export_non_existing_galaxy(
     assert response.status_code == 404
 
 
-def test_attach_cluster(site_admin_user_token, organisation, add_galaxy_cluster_body, event, client) -> None:
+@pytest.mark.asyncio
+async def test_attach_cluster(site_admin_user_token, organisation, add_galaxy_cluster_body, event, client) -> None:
     galaxy_cluster_id1 = add_galaxy_cluster_body.id
     event_id = event.id
 
@@ -425,7 +439,8 @@ def test_attach_cluster(site_admin_user_token, organisation, add_galaxy_cluster_
     assert response.json()["success"] == "Cluster attached."
 
 
-def test_attach_cluster_non_existing_cluster(site_admin_user_token, client) -> None:
+@pytest.mark.asyncio
+async def test_attach_cluster_non_existing_cluster(site_admin_user_token, client) -> None:
     request_body = {"Galaxy": {"target_id": 0}}
     headers = {"authorization": site_admin_user_token}
     response = client.post("/galaxies/attachCluster/1/event/local:0", json=request_body, headers=headers)

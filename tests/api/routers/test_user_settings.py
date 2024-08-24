@@ -1,11 +1,15 @@
 from time import time
 from typing import Any
 
+import pytest
+from sqlalchemy import select
+
 from mmisp.db.models.user_setting import SettingName, UserSetting
-from tests.generators.model_generators.user_setting_generator import generate_user_setting
+from mmisp.tests.generators.model_generators.user_setting_generator import generate_user_setting
 
 
-def test_set_user_setting(db, site_admin_user, site_admin_user_token, client) -> None:
+@pytest.mark.asyncio
+async def test_set_user_setting(db, site_admin_user, site_admin_user_token, client) -> None:
     body = {"value": {"attribute": str(time())}}
 
     user_id = site_admin_user.id
@@ -19,11 +23,13 @@ def test_set_user_setting(db, site_admin_user, site_admin_user_token, client) ->
     )
 
     cleanup_setting = (
-        db.query(UserSetting).filter(UserSetting.user_id == user_id, UserSetting.setting == setting).first()
+        (await db.execute(select(UserSetting).filter(UserSetting.user_id == user_id, UserSetting.setting == setting)))
+        .scalars()
+        .first()
     )
 
-    db.delete(cleanup_setting)
-    db.commit()
+    await db.delete(cleanup_setting)
+    await db.commit()
 
     assert response.status_code == 200
     json = response.json()
@@ -31,14 +37,15 @@ def test_set_user_setting(db, site_admin_user, site_admin_user_token, client) ->
     assert json["UserSetting"]["value"] == body["value"]
 
 
-def test_set_user_setting_override_existing(
+@pytest.mark.asyncio
+async def test_set_user_setting_override_existing(
     db, instance_owner_org_admin_user, instance_owner_org_admin_user_token, client
 ) -> None:
     user_setting = generate_user_setting()
     user_setting.user_id = instance_owner_org_admin_user.id
 
     db.add(user_setting)
-    db.commit()
+    await db.commit()
 
     body: dict[str, Any] = {"value": {}}
 
@@ -52,13 +59,14 @@ def test_set_user_setting_override_existing(
     assert response.status_code == 200
     json = response.json()
 
-    db.delete(user_setting)
-    db.commit()
+    await db.delete(user_setting)
+    await db.commit()
 
     assert not json["UserSetting"]["value"].get("attribute", None)
 
 
-def test_set_user_setting_no_perms(
+@pytest.mark.asyncio
+async def test_set_user_setting_no_perms(
     instance_owner_org_admin_user_token, instance_two_owner_org_admin_user, client
 ) -> None:
     body: dict[str, Any] = {"value": {}}
@@ -76,19 +84,22 @@ def test_set_user_setting_no_perms(
 body: dict[str, Any] = {"value": {}}
 
 
-def test_get_existing_user_setting_details2(db, instance_owner_org_admin_user, site_admin_user_token, client) -> None:
+@pytest.mark.asyncio
+async def test_get_existing_user_setting_details2(
+    db, instance_owner_org_admin_user, site_admin_user_token, client
+) -> None:
     user_setting = generate_user_setting()
     user_setting.user_id = instance_owner_org_admin_user.id
 
     db.add(user_setting)
-    db.commit()
-    db.refresh(user_setting)
+    await db.commit()
+    await db.refresh(user_setting)
 
     headers = {"authorization": site_admin_user_token}
     response = client.get(f"/user_settings/{user_setting.id}", headers=headers)
 
-    db.delete(user_setting)
-    db.commit()
+    await db.delete(user_setting)
+    await db.commit()
 
     assert response.status_code == 200
     json = response.json()
@@ -97,46 +108,49 @@ def test_get_existing_user_setting_details2(db, instance_owner_org_admin_user, s
     assert isinstance(json["UserSetting"], dict)
 
 
-def test_get_non_existing_user_setting_details2(site_admin_user_token, client) -> None:
+@pytest.mark.asyncio
+async def test_get_non_existing_user_setting_details2(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.get("/user_settings/-1", headers=headers)
 
     assert response.status_code == 404
 
 
-def test_get_user_setting_without_perms(
+@pytest.mark.asyncio
+async def test_get_user_setting_without_perms(
     db, instance_owner_org_admin_user, instance_org_two_admin_user_token, client
 ) -> None:
     user_setting = generate_user_setting()
     user_setting.user_id = instance_owner_org_admin_user.id
 
     db.add(user_setting)
-    db.commit()
-    db.refresh(user_setting)
+    await db.commit()
+    await db.refresh(user_setting)
 
     headers = {"authorization": instance_org_two_admin_user_token}
     response = client.get(f"/user_settings/{user_setting.id}", headers=headers)
 
-    db.delete(user_setting)
-    db.commit()
+    await db.delete(user_setting)
+    await db.commit()
     assert response.status_code == 404
 
 
-def test_get_existing_user_setting_details(
+@pytest.mark.asyncio
+async def test_get_existing_user_setting_details(
     db, instance_owner_org_admin_user, instance_owner_org_admin_user_token, client
 ) -> None:
     user_setting = generate_user_setting()
     user_setting.user_id = instance_owner_org_admin_user.id
 
     db.add(user_setting)
-    db.commit()
-    db.refresh(user_setting)
+    await db.commit()
+    await db.refresh(user_setting)
 
     headers = {"authorization": instance_owner_org_admin_user_token}
     response = client.get(f"/user_settings/me/{user_setting.setting}", headers=headers)
 
-    db.delete(user_setting)
-    db.commit()
+    await db.delete(user_setting)
+    await db.commit()
 
     assert response.status_code == 200
     json = response.json()
@@ -145,57 +159,62 @@ def test_get_existing_user_setting_details(
     assert json["UserSetting"]["setting"] == user_setting.setting
 
 
-def test_get_user_setting_by_invalid_us_name_uid(
+@pytest.mark.asyncio
+async def test_get_user_setting_by_invalid_us_name_uid(
     db, instance_owner_org_admin_user, instance_owner_org_admin_user_token, client
 ) -> None:
     user_setting = generate_user_setting()
     user_setting.user_id = instance_owner_org_admin_user.id
 
     db.add(user_setting)
-    db.commit()
+    await db.commit()
 
     headers = {"authorization": instance_owner_org_admin_user_token}
     response = client.get("/user_settings/me/invalid", headers=headers)
 
-    db.delete(user_setting)
-    db.commit()
+    await db.delete(user_setting)
+    await db.commit()
 
     assert response.status_code == 404
 
 
-def test_get_non_existing_user_setting_details(site_admin_user_token, client) -> None:
+@pytest.mark.asyncio
+async def test_get_non_existing_user_setting_details(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.get(f"/user_settings/-1/{SettingName.TAG_NUMERICAL_VALUE_OVERRIDE.value}", headers=headers)
 
     assert response.status_code == 404
 
 
-def test_get_user_setting_without_perms2(
+@pytest.mark.asyncio
+async def test_get_user_setting_without_perms2(
     db, instance_owner_org_admin_user, instance_org_two_admin_user_token, client
 ) -> None:
     user_setting = generate_user_setting()
     user_setting.user_id = instance_owner_org_admin_user.id
 
     db.add(user_setting)
-    db.commit()
+    await db.commit()
 
     headers = {"authorization": instance_org_two_admin_user_token}
     response = client.get(f"/user_settings/me/{user_setting.setting}", headers=headers)
 
-    db.delete(user_setting)
-    db.commit()
+    await db.delete(user_setting)
+    await db.commit()
 
     assert response.status_code == 404
 
 
-def test_search_existing_user_setting_details(site_admin_user_token, client) -> None:
+@pytest.mark.asyncio
+async def test_search_existing_user_setting_details(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.post("/user_settings", headers=headers, json={})
 
     assert response.status_code == 200
 
 
-def test_search_non_existing_user_setting_details(instance_owner_org_admin_user_token, client) -> None:
+@pytest.mark.asyncio
+async def test_search_non_existing_user_setting_details(instance_owner_org_admin_user_token, client) -> None:
     body = {"setting": "doesnt exist"}
 
     headers = {"authorization": instance_owner_org_admin_user_token}
@@ -207,23 +226,24 @@ def test_search_non_existing_user_setting_details(instance_owner_org_admin_user_
     assert len(json) == 0
 
 
-def test_search_user_setting_using_ids(
+@pytest.mark.asyncio
+async def test_search_user_setting_using_ids(
     db, instance_owner_org_admin_user, instance_owner_org_admin_user_token, client
 ) -> None:
     user_setting = generate_user_setting()
     user_setting.user_id = instance_owner_org_admin_user.id
 
     db.add(user_setting)
-    db.commit()
-    db.refresh(user_setting)
+    await db.commit()
+    await db.refresh(user_setting)
 
     body = {"id": str(user_setting.id), "user_id": str(user_setting.user_id)}
 
     headers = {"authorization": instance_owner_org_admin_user_token}
     response = client.post("/user_settings", json=body, headers=headers)
 
-    db.delete(user_setting)
-    db.commit()
+    await db.delete(user_setting)
+    await db.commit()
 
     assert response.status_code == 200
     json = response.json()
@@ -231,7 +251,8 @@ def test_search_user_setting_using_ids(
     assert json[0]["UserSetting"]["id"] == str(user_setting.id)
 
 
-def test_get_all_user_settings(site_admin_user_token, client) -> None:
+@pytest.mark.asyncio
+async def test_get_all_user_settings(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.get("/user_settings", headers=headers)
 
@@ -241,21 +262,22 @@ def test_get_all_user_settings(site_admin_user_token, client) -> None:
     assert isinstance(json, list)
 
 
-def test_get_all_user_settings_using_site_admin(
+@pytest.mark.asyncio
+async def test_get_all_user_settings_using_site_admin(
     db, instance_two_owner_org_admin_user, site_admin_user_token, client
 ) -> None:
     user_setting = generate_user_setting()
     user_setting.user_id = instance_two_owner_org_admin_user.id
 
     db.add(user_setting)
-    db.commit()
-    db.refresh(user_setting)
+    await db.commit()
+    await db.refresh(user_setting)
 
     headers = {"authorization": site_admin_user_token}
     response = client.get("/user_settings", headers=headers)
 
-    db.delete(user_setting)
-    db.commit()
+    await db.delete(user_setting)
+    await db.commit()
 
     assert response.status_code == 200
     json = response.json()
@@ -263,13 +285,16 @@ def test_get_all_user_settings_using_site_admin(
     assert next((setting for setting in json if setting["UserSetting"]["id"] == str(user_setting.id)), None)
 
 
-def test_delete_user_setting(db, instance_owner_org_admin_user, instance_owner_org_admin_user_token, client) -> None:
+@pytest.mark.asyncio
+async def test_delete_user_setting(
+    db, instance_owner_org_admin_user, instance_owner_org_admin_user_token, client
+) -> None:
     user_setting = generate_user_setting()
     user_setting.user_id = instance_owner_org_admin_user.id
 
     db.add(user_setting)
-    db.commit()
-    db.refresh(user_setting)
+    await db.commit()
+    await db.refresh(user_setting)
 
     headers = {"authorization": instance_owner_org_admin_user_token}
     response = client.delete(f"/user_settings/{user_setting.id}", headers=headers)
@@ -283,15 +308,16 @@ def test_delete_user_setting(db, instance_owner_org_admin_user, instance_owner_o
     assert json["id"] == str(user_setting.id)
 
 
-def test_delete_user_setting_depr(
+@pytest.mark.asyncio
+async def test_delete_user_setting_depr(
     db, instance_owner_org_admin_user, instance_owner_org_admin_user_token, client
 ) -> None:
     user_setting = generate_user_setting()
     user_setting.user_id = instance_owner_org_admin_user.id
 
     db.add(user_setting)
-    db.commit()
-    db.refresh(user_setting)
+    await db.commit()
+    await db.refresh(user_setting)
 
     headers = {"authorization": instance_owner_org_admin_user_token}
     response = client.delete(f"/user_settings/delete/{user_setting.id}", headers=headers)
@@ -305,40 +331,42 @@ def test_delete_user_setting_depr(
     assert json["id"] == str(user_setting.id)
 
 
-def test_delete_user_setting_lesser_perms(
+@pytest.mark.asyncio
+async def test_delete_user_setting_lesser_perms(
     db, instance_two_owner_org_admin_user, instance_owner_org_admin_user_token, client
 ) -> None:
     user_setting = generate_user_setting()
     user_setting.user_id = instance_two_owner_org_admin_user.id
 
     db.add(user_setting)
-    db.commit()
-    db.refresh(user_setting)
+    await db.commit()
+    await db.refresh(user_setting)
 
     headers = {"authorization": instance_owner_org_admin_user_token}
     response = client.delete(f"/user_settings/{user_setting.id}", headers=headers)
 
-    db.delete(user_setting)
-    db.commit()
+    await db.delete(user_setting)
+    await db.commit()
 
     assert response.status_code == 404
 
 
-def test_get_user_setting_depr(
+@pytest.mark.asyncio
+async def test_get_user_setting_depr(
     db, instance_owner_org_admin_user, instance_owner_org_admin_user_token, client
 ) -> None:
     user_setting = generate_user_setting()
     user_setting.user_id = instance_owner_org_admin_user.id
 
     db.add(user_setting)
-    db.commit()
-    db.refresh(user_setting)
+    await db.commit()
+    await db.refresh(user_setting)
 
     headers = {"authorization": instance_owner_org_admin_user_token}
     response = client.get(f"/user_settings/view/{user_setting.id}", headers=headers)
 
-    db.delete(user_setting)
-    db.commit()
+    await db.delete(user_setting)
+    await db.commit()
 
     assert response.status_code == 200
     json = response.json()
