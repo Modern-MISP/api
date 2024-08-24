@@ -761,19 +761,11 @@ async def _add_tag_to_attribute(
 
 
 async def _remove_tag_from_attribute(db: Session, attribute_id: str, tag_id: str) -> AddRemoveTagAttributeResponse:
-    attribute: Attribute | None = await db.get(Attribute, attribute_id)
-
-    if not attribute:
-        raise HTTPException(status.HTTP_404_NOT_FOUND)
-
-    try:
-        int(tag_id)
-    except ValueError:
-        return AddRemoveTagAttributeResponse(saved=False, errors="Invalid Tag")
-    if not await db.get(Tag, tag_id):
-        return AddRemoveTagAttributeResponse(saved=False, errors="Tag could not be removed.")
-
-    result = await db.execute(select(AttributeTag).filter(AttributeTag.attribute_id == attribute_id).limit(1))
+    result = await db.execute(
+        select(AttributeTag)
+        .filter(AttributeTag.attribute_id == int(attribute_id), AttributeTag.tag_id == int(tag_id))
+        .limit(1)
+    )
     attribute_tag = result.scalars().first()
 
     if not attribute_tag:

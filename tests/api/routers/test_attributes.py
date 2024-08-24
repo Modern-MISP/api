@@ -1,4 +1,5 @@
 import pytest
+import pytest_asyncio
 import sqlalchemy as sa
 from icecream import ic
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -476,7 +477,7 @@ async def test_add_invalid_or_non_existing_tag_to_attribute(
     assert response_json["saved"] is False
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def attributetag(attribute, event, tag, db):
     attribute_tag = AttributeTag(attribute_id=attribute.id, event_id=event.id, tag_id=tag.id, local=False)
 
@@ -491,20 +492,16 @@ async def attributetag(attribute, event, tag, db):
 
 @pytest.mark.asyncio
 async def test_remove_existing_tag_from_attribute(
-    db: AsyncSession, site_admin_user_token, sharing_group, event, attribute, tag, attributetag, client
+    db: AsyncSession, site_admin_user_token, attributetag, client
 ) -> None:
-    event.sharing_group_id = sharing_group.id
-    await db.commit()
-
-    attribute.sharing_group_id = sharing_group.id
-    await db.commit()
-
-    attribute_id = attribute.id
+    attribute_id = attributetag.attribute_id
+    tag_id = attributetag.tag_id
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post(f"/attributes/removeTag/{attribute_id}/{tag.id}", headers=headers)
+    response = client.post(f"/attributes/removeTag/{attribute_id}/{tag_id}", headers=headers)
 
     assert response.status_code == 200
     response_json = response.json()
+    ic(response_json)
     assert response_json["saved"]
     assert response_json["success"] == "Tag removed"
