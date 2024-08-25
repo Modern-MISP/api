@@ -4,6 +4,7 @@ from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Request, status
 from sqlalchemy import func, select
+from sqlalchemy.orm import selectinload
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
 from mmisp.api_schemas.attributes import (
@@ -33,7 +34,6 @@ from mmisp.api_schemas.attributes import (
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.attribute import Attribute, AttributeTag
 from mmisp.db.models.event import Event
-from mmisp.db.models.object import Object
 from mmisp.db.models.tag import Tag
 from mmisp.lib.attribute_search_filter import get_search_filters
 from mmisp.util.models import update_record
@@ -668,7 +668,7 @@ async def _rest_search_attributes(db: Session, body: SearchAttributesBody) -> Se
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid output format.")
 
     filter = get_search_filters(**body.dict())
-    qry = select(Attribute).filter(filter)
+    qry = select(Attribute).filter(filter).options(selectinload(Attribute.tags), selectinload(Attribute.nonlocal_tags))
 
     if body.limit is not None:
         body.page = body.page or 1
@@ -682,23 +682,19 @@ async def _rest_search_attributes(db: Session, body: SearchAttributesBody) -> Se
     for attribute in attributes:
         attribute_dict = attribute.asdict().copy()
         if attribute.event_id is not None:
-            event = await db.get(Event, attribute.event_id)
-            event_dict = event.__dict__.copy()
+            event_dict = attribute.event.__dict__.copy()
             event_dict["date"] = str(event_dict["date"])
             attribute_dict["Event"] = SearchAttributesEvent(**event_dict)
         if attribute.object_id != 0:
-            object = await db.get(Object, attribute.object_id)
-            object_dict = object.__dict__.copy()
+            object_dict = attribute.mispobject.__dict__.copy()
             attribute_dict["Object"] = SearchAttributesObject(**object_dict)
 
-        result = await db.execute(select(AttributeTag).filter(AttributeTag.attribute_id == attribute.id))
-        attribute_tags = result.scalars().all()
-        attribute_dict["Tag"] = []
-        for attribute_tag in attribute_tags:
-            tag = await db.get(Tag, attribute_tag.tag_id)
-            tag_dict = tag.__dict__.copy()
-            tag_dict["local"] = attribute_tag.local
-            attribute_dict["Tag"].append(GetAttributeTag(**tag_dict))
+        if attribute.nonlocal_tags:
+            attribute_dict["Tag"] = []
+            for tag in attribute.nonlocal_tags:
+                tag_dict = tag.__dict__.copy()
+                tag_dict["local"] = False
+                attribute_dict["Tag"].append(GetAttributeTag(**tag_dict))
 
         response_list.append(attribute_dict)
     return SearchAttributesResponse.parse_obj({"response": {"Attribute": response_list}})
