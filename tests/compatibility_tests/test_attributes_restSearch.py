@@ -31,4 +31,6 @@ async def test_valid_search_attribute_data(db: AsyncSession, attribute, auth_key
     legacy_response = httpx.post("http://misp-core/attributes/restSearch", headers=headers, json=request_body)
     ic(legacy_response)
     legacy_response_json = legacy_response.json()
+    ic(response_json)
+    ic(legacy_response_json)
     assert DeepDiff(response_json_in_legacy, legacy_response_json) == {}

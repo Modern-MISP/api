@@ -1,6 +1,7 @@
 from time import sleep
 
 import httpx
+import pytest
 from deepdiff import DeepDiff
 from icecream import ic
 
@@ -17,6 +18,7 @@ def to_legacy_format(data):
     return data
 
 
+@pytest.mark.asyncio
 async def test_get_existing_event(
     db, organisation, event, attribute, galaxy, galaxy_cluster, tag, auth_key, eventtag, client
 ) -> None:
