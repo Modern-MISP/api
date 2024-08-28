@@ -1,8 +1,64 @@
 import httpx
 import pytest
+import pytest_asyncio
 from deepdiff import DeepDiff
 from icecream import ic
+from sqlalchemy import and_, delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
+
+from mmisp.db.models.attribute import Attribute, AttributeTag
+from mmisp.db.models.tag import Tag
+
+
+@pytest_asyncio.fixture()
+async def normal_tag(db, instance_owner_org):
+    tag = Tag(
+        name="test normal tag",
+        colour="#123456",
+        exportable=True,
+        hide_tag=False,
+        numerical_value=1,
+        local_only=False,
+        user_id=1,
+        org_id=instance_owner_org.id,
+    )
+
+    db.add(tag)
+    await db.commit()
+    await db.refresh(tag)
+
+    yield tag
+
+    await db.delete(tag)
+    await db.commit()
+
+
+@pytest_asyncio.fixture()
+async def attribute_with_normal_tag(db, attribute, normal_tag):
+    qry = (
+        select(Attribute)
+        .filter(Attribute.id == attribute.id)
+        .options(selectinload(Attribute.attributetags))
+        .execution_options(populate_existing=True)
+    )
+    await db.execute(qry)
+    await attribute.add_tag(db, normal_tag)
+
+    await db.commit()
+    yield attribute
+
+    qry = delete(AttributeTag).filter(
+        and_(
+            AttributeTag.attribute_id == attribute.id,
+            AttributeTag.tag_id == normal_tag.id,
+        )
+    )
+    await db.execute(qry)
+    #    del attribute.attributetags[3]
+
+
+#    await db.commit()
 
 
 def to_legacy_format(data):
@@ -67,6 +123,14 @@ async def test_valid_search_multi_attribute_data(
 ) -> None:
     assert attribute_multi.value != attribute_multi2.value
     request_body = {"returnFormat": "json", "limit": 100, "value": attribute_multi.value1}
+    path = "/attributes/restSearch"
+
+    assert get_legacy_modern_diff("post", path, request_body, auth_key, client) == {}
+
+
+@pytest.mark.asyncio
+async def test_valid_search_tag_attribute_data(db: AsyncSession, attribute_with_normal_tag, auth_key, client) -> None:
+    request_body = {"returnFormat": "json", "limit": 100, "value": attribute_with_normal_tag.value}
     path = "/attributes/restSearch"
 
     assert get_legacy_modern_diff("post", path, request_body, auth_key, client) == {}
