@@ -128,6 +128,7 @@ async def attribute_with_local_tag(db, attribute, local_only_tag):
 
 @pytest_asyncio.fixture()
 async def attribute_with_non_exportable_local_tag(db, attribute, non_exportable_local_only_tag):
+    assert non_exportable_local_only_tag.local_only
     qry = (
         select(Attribute)
         .filter(Attribute.id == attribute.id)
@@ -135,7 +136,8 @@ async def attribute_with_non_exportable_local_tag(db, attribute, non_exportable_
         .execution_options(populate_existing=True)
     )
     await db.execute(qry)
-    await attribute.add_tag(db, non_exportable_local_only_tag)
+    at = await attribute.add_tag(db, non_exportable_local_only_tag)
+    assert at.local
 
     await db.commit()
     yield attribute
