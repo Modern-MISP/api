@@ -35,6 +35,29 @@ async def normal_tag(db, instance_owner_org):
 
 
 @pytest_asyncio.fixture()
+async def local_only_tag(db, instance_owner_org):
+    tag = Tag(
+        name="test normal tag",
+        colour="#123456",
+        exportable=True,
+        hide_tag=False,
+        numerical_value=1,
+        local_only=True,
+        user_id=1,
+        org_id=instance_owner_org.id,
+    )
+
+    db.add(tag)
+    await db.commit()
+    await db.refresh(tag)
+
+    yield tag
+
+    await db.delete(tag)
+    await db.commit()
+
+
+@pytest_asyncio.fixture()
 async def attribute_with_normal_tag(db, attribute, normal_tag):
     qry = (
         select(Attribute)
@@ -55,10 +78,29 @@ async def attribute_with_normal_tag(db, attribute, normal_tag):
         )
     )
     await db.execute(qry)
-    #    del attribute.attributetags[3]
 
 
-#    await db.commit()
+@pytest_asyncio.fixture()
+async def attribute_with_local_tag(db, attribute, local_only_tag):
+    qry = (
+        select(Attribute)
+        .filter(Attribute.id == attribute.id)
+        .options(selectinload(Attribute.attributetags))
+        .execution_options(populate_existing=True)
+    )
+    await db.execute(qry)
+    await attribute.add_tag(db, local_only_tag)
+
+    await db.commit()
+    yield attribute
+
+    qry = delete(AttributeTag).filter(
+        and_(
+            AttributeTag.attribute_id == attribute.id,
+            AttributeTag.tag_id == local_only_tag.id,
+        )
+    )
+    await db.execute(qry)
 
 
 def to_legacy_format(data):
@@ -131,6 +173,16 @@ async def test_valid_search_multi_attribute_data(
 @pytest.mark.asyncio
 async def test_valid_search_tag_attribute_data(db: AsyncSession, attribute_with_normal_tag, auth_key, client) -> None:
     request_body = {"returnFormat": "json", "limit": 100, "value": attribute_with_normal_tag.value}
+    path = "/attributes/restSearch"
+
+    assert get_legacy_modern_diff("post", path, request_body, auth_key, client) == {}
+
+
+@pytest.mark.asyncio
+async def test_valid_search_local_tag_attribute_data(
+    db: AsyncSession, attribute_with_local_tag, auth_key, client
+) -> None:
+    request_body = {"returnFormat": "json", "limit": 100, "value": attribute_with_local_tag.value}
     path = "/attributes/restSearch"
 
     assert get_legacy_modern_diff("post", path, request_body, auth_key, client) == {}
