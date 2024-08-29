@@ -668,7 +668,11 @@ async def _rest_search_attributes(db: Session, body: SearchAttributesBody) -> Se
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid output format.")
 
     filter = get_search_filters(**body.dict())
-    qry = select(Attribute).filter(filter).options(selectinload(Attribute.tags), selectinload(Attribute.nonlocal_tags))
+    qry = (
+        select(Attribute)
+        .filter(filter)
+        .options(selectinload(Attribute.local_tags), selectinload(Attribute.nonlocal_tags))
+    )
 
     if body.limit is not None:
         body.page = body.page or 1
@@ -689,11 +693,17 @@ async def _rest_search_attributes(db: Session, body: SearchAttributesBody) -> Se
             object_dict = attribute.mispobject.__dict__.copy()
             attribute_dict["Object"] = SearchAttributesObject(**object_dict)
 
-        if attribute.nonlocal_tags:
+        if attribute.nonlocal_tags or attribute.local_tags:
             attribute_dict["Tag"] = []
             for tag in attribute.nonlocal_tags:
                 tag_dict = tag.__dict__.copy()
                 tag_dict["local"] = False
+                attribute_dict["Tag"].append(GetAttributeTag(**tag_dict))
+            for tag in attribute.local_tags:
+                if not tag.exportable:
+                    continue
+                tag_dict = tag.__dict__.copy()
+                tag_dict["local"] = True
                 attribute_dict["Tag"].append(GetAttributeTag(**tag_dict))
 
         response_list.append(attribute_dict)
