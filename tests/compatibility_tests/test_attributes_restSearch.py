@@ -3,11 +3,11 @@ import pytest
 import pytest_asyncio
 from deepdiff import DeepDiff
 from icecream import ic
-from sqlalchemy import and_, delete, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from mmisp.db.models.attribute import Attribute, AttributeTag
+from mmisp.db.models.attribute import Attribute
 from mmisp.db.models.tag import Tag
 
 
@@ -89,18 +89,13 @@ async def attribute_with_normal_tag(db, attribute, normal_tag):
         .execution_options(populate_existing=True)
     )
     await db.execute(qry)
-    await attribute.add_tag(db, normal_tag)
+    at = await attribute.add_tag(db, normal_tag)
 
     await db.commit()
     yield attribute
 
-    qry = delete(AttributeTag).filter(
-        and_(
-            AttributeTag.attribute_id == attribute.id,
-            AttributeTag.tag_id == normal_tag.id,
-        )
-    )
-    await db.execute(qry)
+    await db.delete(at)
+    await db.commit()
 
 
 @pytest_asyncio.fixture()
@@ -112,18 +107,13 @@ async def attribute_with_local_tag(db, attribute, local_only_tag):
         .execution_options(populate_existing=True)
     )
     await db.execute(qry)
-    await attribute.add_tag(db, local_only_tag)
+    at = await attribute.add_tag(db, normal_tag)
 
     await db.commit()
     yield attribute
 
-    qry = delete(AttributeTag).filter(
-        and_(
-            AttributeTag.attribute_id == attribute.id,
-            AttributeTag.tag_id == local_only_tag.id,
-        )
-    )
-    await db.execute(qry)
+    await db.delete(at)
+    await db.commit()
 
 
 @pytest_asyncio.fixture()
@@ -136,19 +126,13 @@ async def attribute_with_non_exportable_local_tag(db, attribute, non_exportable_
         .execution_options(populate_existing=True)
     )
     await db.execute(qry)
-    at = await attribute.add_tag(db, non_exportable_local_only_tag)
-    assert at.local
+    at = await attribute.add_tag(db, normal_tag)
 
     await db.commit()
     yield attribute
 
-    qry = delete(AttributeTag).filter(
-        and_(
-            AttributeTag.attribute_id == attribute.id,
-            AttributeTag.tag_id == non_exportable_local_only_tag.id,
-        )
-    )
-    await db.execute(qry)
+    await db.delete(at)
+    await db.commit()
 
 
 def to_legacy_format(data):
