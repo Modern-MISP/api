@@ -60,7 +60,7 @@ async def local_only_tag(db, instance_owner_org):
 @pytest_asyncio.fixture()
 async def non_exportable_local_only_tag(db, instance_owner_org):
     tag = Tag(
-        name="test local only tag",
+        name="test non exportable local only tag",
         colour="#123456",
         exportable=False,
         hide_tag=False,
@@ -82,6 +82,7 @@ async def non_exportable_local_only_tag(db, instance_owner_org):
 
 @pytest_asyncio.fixture()
 async def attribute_with_normal_tag(db, attribute, normal_tag):
+    assert not normal_tag.local_only
     qry = (
         select(Attribute)
         .filter(Attribute.id == attribute.id)
@@ -90,6 +91,7 @@ async def attribute_with_normal_tag(db, attribute, normal_tag):
     )
     await db.execute(qry)
     at = await attribute.add_tag(db, normal_tag)
+    assert not at.local
 
     await db.commit()
     yield attribute
@@ -107,7 +109,8 @@ async def attribute_with_local_tag(db, attribute, local_only_tag):
         .execution_options(populate_existing=True)
     )
     await db.execute(qry)
-    at = await attribute.add_tag(db, normal_tag)
+    at = await attribute.add_tag(db, local_only_tag)
+    assert at.local
 
     await db.commit()
     yield attribute
@@ -126,7 +129,7 @@ async def attribute_with_non_exportable_local_tag(db, attribute, non_exportable_
         .execution_options(populate_existing=True)
     )
     await db.execute(qry)
-    at = await attribute.add_tag(db, normal_tag)
+    at = await attribute.add_tag(db, non_exportable_local_only_tag)
 
     await db.commit()
     yield attribute
