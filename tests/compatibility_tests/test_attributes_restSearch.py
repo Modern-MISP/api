@@ -179,7 +179,9 @@ def get_legacy_modern_diff(http_method, path, body, auth_key, client):
     # They shouldnt hurt and removing all None
     # overshoots, MISP is inconsistent when to include what.
     # Note: We don't want the opposite. If MISP includes None, Modern MISP should do this as well!
-    diff["dictionary_item_removed"] = {k: v for k, v in diff["dictionary_item_removed"].items() if v is not None}
+    diff["dictionary_item_removed"] = {
+        k: v for k, v in diff["dictionary_item_removed"].items() if v is not None and v != [] and v != {}
+    }
     if diff["dictionary_item_removed"] == {}:
         del diff["dictionary_item_removed"]
 
