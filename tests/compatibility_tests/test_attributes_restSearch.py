@@ -11,92 +11,153 @@ from mmisp.db.models.attribute import Attribute
 from mmisp.db.models.galaxy import Galaxy
 from mmisp.db.models.galaxy_cluster import GalaxyCluster, GalaxyElement
 from mmisp.db.models.tag import Tag
+from mmisp.util.uuid import uuid
+
+
+def galaxy_tag_name_from_uuid(galaxy_cluster_uuid):
+    return f'misp-galaxy:test="{galaxy_cluster_uuid}"'
+
+
+@pytest.fixture
+def galaxy_cluster_collection_uuid():
+    return uuid()
+
+
+@pytest.fixture
+def galaxy_cluster_one_uuid():
+    return uuid()
+
+
+@pytest.fixture
+def galaxy_cluster_two_uuid():
+    return uuid()
 
 
 @pytest_asyncio.fixture
-async def galaxy(db):
+async def galaxy(db, instance_owner_org, galaxy_cluster_one_uuid, galaxy_cluster_two_uuid):
     galaxy = Galaxy(
+        namespace="misp",
         name="test galaxy",
         type="test galaxy type",
         description="test",
         version="1",
         kill_chain_order=None,
+        uuid=uuid(),
+        enabled=True,
+        local_only=False,
     )
 
     db.add(galaxy)
     await db.commit()
     await db.refresh(galaxy)
 
-    yield galaxy
+    galaxy_cluster = GalaxyCluster(
+        uuid=galaxy_cluster_one_uuid,
+        collection_uuid="",
+        type="test galaxy type",
+        value="test",
+        tag_name=galaxy_tag_name_from_uuid(galaxy_cluster_one_uuid),
+        description="test",
+        galaxy_id=galaxy.id,
+        source="me",
+        authors='["Konstantin Zangerle", "Test Writer"]',
+        version=1,
+        distribution=3,
+        sharing_group_id=None,
+        org_id=instance_owner_org.id,
+        orgc_id=instance_owner_org.id,
+        default=0,
+        locked=0,
+        extends_uuid=None,
+        extends_version=None,
+        published=True,
+        deleted=False,
+    )
+    galaxy_cluster2 = GalaxyCluster(
+        uuid=galaxy_cluster_two_uuid,
+        collection_uuid="",
+        type="test galaxy type",
+        value="test",
+        tag_name=galaxy_tag_name_from_uuid(galaxy_cluster_two_uuid),
+        description="test",
+        galaxy_id=galaxy.id,
+        source="me",
+        authors='["Konstantin Zangerle", "Test Writer"]',
+        version=1,
+        distribution=3,
+        sharing_group_id=None,
+        org_id=instance_owner_org.id,
+        orgc_id=instance_owner_org.id,
+        default=0,
+        locked=0,
+        extends_uuid=None,
+        extends_version=None,
+        published=True,
+        deleted=False,
+    )
 
+    db.add(galaxy_cluster)
+    db.add(galaxy_cluster2)
+
+    await db.commit()
+    await db.refresh(galaxy_cluster)
+    await db.refresh(galaxy_cluster2)
+
+    galaxy_element = GalaxyElement(
+        galaxy_cluster_id=galaxy_cluster.id, key="refs", value="http://test-one-one.example.com"
+    )
+    galaxy_element2 = GalaxyElement(
+        galaxy_cluster_id=galaxy_cluster.id, key="refs", value="http://test-one-two.example.com"
+    )
+
+    galaxy_element21 = GalaxyElement(
+        galaxy_cluster_id=galaxy_cluster2.id, key="refs", value="http://test-two-one.example.com"
+    )
+    galaxy_element22 = GalaxyElement(
+        galaxy_cluster_id=galaxy_cluster2.id, key="refs", value="http://test-two-two.example.com"
+    )
+
+    db.add(galaxy_element)
+    db.add(galaxy_element2)
+
+    db.add(galaxy_element21)
+    db.add(galaxy_element22)
+
+    await db.commit()
+
+    yield {
+        "galaxy": galaxy,
+        "galaxy_cluster": galaxy_cluster,
+        "galaxy_cluster2": galaxy_cluster2,
+        "galaxy_element": galaxy_element,
+        "galaxy_element2": galaxy_element2,
+        "galaxy_element21": galaxy_element21,
+        "galaxy_element22": galaxy_element22,
+    }
+
+    await db.delete(galaxy_element22)
+    await db.delete(galaxy_element21)
+    await db.delete(galaxy_element2)
+    await db.delete(galaxy_element)
+    await db.delete(galaxy_cluster2)
+    await db.delete(galaxy_cluster)
     await db.delete(galaxy)
     await db.commit()
 
 
-@pytest_asyncio.fixture
-async def galaxy_cluster_one(db, galaxy_cluster_one_tag, galaxy):
-    galaxy_cluster = GalaxyCluster(
-        collection_uuid="uuid",
-        type="test type",
-        value="test",
-        tag_name=galaxy_cluster_one_tag.name,
-        description="test",
-        galaxy_id=galaxy.id,
-        authors='["Konstantin Zangerle", "Test Writer"]',
-    )
-
-    db.add(galaxy_cluster)
-    await db.commit()
-    await db.refresh(galaxy_cluster)
-    galaxy_element = GalaxyElement(galaxy_cluster_id=galaxy_cluster.id, key="refs", value="http://test-one.example.com")
-    db.add(galaxy_element)
-    await db.commit()
-
-    yield galaxy_cluster
-
-    await db.delete(galaxy_element)
-    await db.delete(galaxy_cluster)
-    await db.commit()
-
-
-@pytest_asyncio.fixture
-async def galaxy_cluster_two(db, galaxy_cluster_two_tag, galaxy):
-    galaxy_cluster = GalaxyCluster(
-        collection_uuid="uuid",
-        type="test type",
-        value="test",
-        tag_name=galaxy_cluster_two_tag.name,
-        description="test",
-        galaxy_id=galaxy.id,
-        authors="admin",
-    )
-
-    db.add(galaxy_cluster)
-    await db.commit()
-    await db.refresh(galaxy_cluster)
-    galaxy_element = GalaxyElement(galaxy_cluster_id=galaxy_cluster.id, key="refs", value="http://test-two.example.com")
-    db.add(galaxy_element)
-    await db.commit()
-
-    yield galaxy_cluster
-
-    await db.delete(galaxy_element)
-    await db.delete(galaxy_cluster)
-    await db.commit()
-
-
 @pytest_asyncio.fixture()
-async def galaxy_cluster_one_tag(db, instance_owner_org):
+async def galaxy_cluster_one_tag(db, galaxy_cluster_one_uuid):
     tag = Tag(
-        name="test galaxy cluster one tag",
+        name=galaxy_tag_name_from_uuid(galaxy_cluster_one_uuid),
         colour="#123456",
         exportable=True,
         hide_tag=False,
-        numerical_value=1,
+        numerical_value=None,
         local_only=False,
-        user_id=1,
-        org_id=instance_owner_org.id,
+        user_id=0,
+        org_id=0,
         is_galaxy=True,
+        is_custom_galaxy=True,
     )
 
     db.add(tag)
@@ -110,16 +171,16 @@ async def galaxy_cluster_one_tag(db, instance_owner_org):
 
 
 @pytest_asyncio.fixture()
-async def galaxy_cluster_two_tag(db, instance_owner_org):
+async def galaxy_cluster_two_tag(db):
     tag = Tag(
-        name="test galaxy cluster two tag",
+        name='misp-galaxy:test="two"',
         colour="#123456",
         exportable=True,
         hide_tag=False,
-        numerical_value=2,
+        numerical_value=None,
         local_only=False,
-        user_id=1,
-        org_id=instance_owner_org.id,
+        user_id=0,
+        org_id=0,
         is_galaxy=True,
     )
 
@@ -261,7 +322,7 @@ async def attribute_with_non_exportable_local_tag(db, attribute, non_exportable_
 
 
 @pytest_asyncio.fixture()
-async def attribute_with_galaxy_cluster_one_tag(db, attribute, galaxy_cluster_one_tag):
+async def attribute_with_galaxy_cluster_one_tag(db, attribute, galaxy_cluster_one_tag, galaxy):
     assert not galaxy_cluster_one_tag.local_only
     qry = (
         select(Attribute)
@@ -400,5 +461,7 @@ async def test_valid_event_view(
     request_body = {}
     path = f"/events/view/{event.id}"
 
+    # get_legacy_modern_diff("get", f"/galaxies/view/{galaxy.id}", request_body, auth_key, client)
+    # get_legacy_modern_diff("get", f"/galaxy_clusters/view/{galaxy_cluster_one.id}", request_body, auth_key, client)
     assert get_legacy_modern_diff("get", path, request_body, auth_key, client) == {}
     assert False
