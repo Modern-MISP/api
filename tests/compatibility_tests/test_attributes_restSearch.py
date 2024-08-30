@@ -8,7 +8,121 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from mmisp.db.models.attribute import Attribute
+from mmisp.db.models.galaxy import Galaxy
+from mmisp.db.models.galaxy_cluster import GalaxyCluster
 from mmisp.db.models.tag import Tag
+
+
+@pytest_asyncio.fixture
+async def galaxy(db):
+    galaxy = Galaxy(
+        name="test galaxy",
+        type="test galaxy type",
+        description="test",
+        version="1",
+        kill_chain_order=None,
+    )
+
+    db.add(galaxy)
+    await db.commit()
+    await db.refresh(galaxy)
+
+    yield galaxy
+
+    await db.delete(galaxy)
+    await db.commit()
+
+
+@pytest_asyncio.fixture
+async def galaxy_cluster_one(db, galaxy_cluster_one_tag, galaxy):
+    galaxy_cluster = GalaxyCluster(
+        collection_uuid="uuid",
+        type="test type",
+        value="test",
+        tag_name=galaxy_cluster_one_tag.name,
+        description="test",
+        galaxy_id=galaxy.id,
+        authors="admin",
+    )
+
+    db.add(galaxy_cluster)
+    await db.commit()
+    await db.refresh(galaxy_cluster)
+
+    yield galaxy_cluster
+
+    await db.delete(galaxy_cluster)
+    await db.commit()
+
+
+@pytest_asyncio.fixture
+async def galaxy_cluster_two(db, galaxy_cluster_two_tag, galaxy):
+    galaxy_cluster = GalaxyCluster(
+        collection_uuid="uuid",
+        type="test type",
+        value="test",
+        tag_name=galaxy_cluster_two_tag.name,
+        description="test",
+        galaxy_id=galaxy.id,
+        authors="admin",
+    )
+
+    db.add(galaxy_cluster)
+    await db.commit()
+    await db.refresh(galaxy_cluster)
+
+    yield galaxy_cluster
+
+    await db.delete(galaxy_cluster)
+    await db.commit()
+
+
+@pytest_asyncio.fixture()
+async def galaxy_cluster_one_tag(db, instance_owner_org):
+    tag = Tag(
+        name="test galaxy cluster one tag",
+        colour="#123456",
+        exportable=True,
+        hide_tag=False,
+        numerical_value=1,
+        local_only=False,
+        user_id=1,
+        org_id=instance_owner_org.id,
+        is_galaxy=True,
+    )
+
+    db.add(tag)
+    await db.commit()
+    await db.refresh(tag)
+
+    yield tag
+
+    await db.delete(tag)
+    await db.commit()
+
+
+@pytest_asyncio.fixture()
+async def galaxy_cluster_two_tag(db, instance_owner_org):
+    tag = Tag(
+        name="test galaxy cluster two tag",
+        colour="#123456",
+        exportable=True,
+        hide_tag=False,
+        numerical_value=2,
+        local_only=False,
+        user_id=1,
+        org_id=instance_owner_org.id,
+        is_galaxy=True,
+    )
+
+    db.add(tag)
+    await db.commit()
+    await db.refresh(tag)
+
+    yield tag
+
+    await db.delete(tag)
+    await db.commit()
 
 
 @pytest_asyncio.fixture()
@@ -138,6 +252,26 @@ async def attribute_with_non_exportable_local_tag(db, attribute, non_exportable_
     await db.commit()
 
 
+@pytest_asyncio.fixture()
+async def attribute_with_galaxy_cluster_one_tag(db, attribute, galaxy_cluster_one_tag):
+    assert not galaxy_cluster_one_tag.local_only
+    qry = (
+        select(Attribute)
+        .filter(Attribute.id == attribute.id)
+        .options(selectinload(Attribute.attributetags))
+        .execution_options(populate_existing=True)
+    )
+    await db.execute(qry)
+    at = await attribute.add_tag(db, galaxy_cluster_one_tag)
+    assert not at.local
+
+    await db.commit()
+    yield attribute
+
+    await db.delete(at)
+    await db.commit()
+
+
 def to_legacy_format(data):
     if isinstance(data, bool):
         return data
@@ -233,3 +367,14 @@ async def test_valid_search_non_exportable_local_tag_attribute_data(
     path = "/attributes/restSearch"
 
     assert get_legacy_modern_diff("post", path, request_body, auth_key, client) == {}
+
+
+@pytest.mark.asyncio
+async def test_valid_search_galaxy_tag_attribute_data(
+    db: AsyncSession, attribute_with_galaxy_cluster_one_tag, auth_key, client
+) -> None:
+    request_body = {"returnFormat": "json", "limit": 100, "value": attribute_with_galaxy_cluster_one_tag.value}
+    path = "/attributes/restSearch"
+
+    assert get_legacy_modern_diff("post", path, request_body, auth_key, client) == {}
+    assert False
