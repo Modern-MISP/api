@@ -300,13 +300,17 @@ def get_legacy_modern_diff(http_method, path, body, auth_key, client):
     ic(f"Calling {path}")
     ic(body)
 
+    kwargs = {"headers": headers}
+    if http_method != "get":
+        kwargs["json"] = body
+
     call = getattr(client, http_method)
-    response = call(path, json=body, headers=headers)
+    response = call(path, **kwargs)
     response_json = response.json()
     response_json_in_legacy = to_legacy_format(response_json)
 
     call = getattr(httpx, http_method)
-    legacy_response = call(f"http://misp-core{path}", json=body, headers=headers)
+    legacy_response = call(f"http://misp-core{path}", **kwargs)
     ic(legacy_response)
     legacy_response_json = legacy_response.json()
     ic("Modern MISP Response")
