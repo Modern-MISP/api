@@ -386,3 +386,15 @@ async def test_valid_search_galaxy_tag_attribute_data(
 
     assert get_legacy_modern_diff("post", path, request_body, auth_key, client) == {}
     assert False
+
+
+@pytest.mark.asyncio
+async def test_valid_event_view(
+    db: AsyncSession, event, attribute_with_galaxy_cluster_one_tag, auth_key, client
+) -> None:
+    #    request_body = {"returnFormat": "json", "limit": 100, "value": attribute_with_galaxy_cluster_one_tag.value}
+    request_body = {}
+    path = f"/events/view/{event.id}"
+
+    assert get_legacy_modern_diff("get", path, request_body, auth_key, client) == {}
+    assert False
