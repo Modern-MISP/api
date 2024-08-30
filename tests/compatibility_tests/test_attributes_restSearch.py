@@ -9,7 +9,7 @@ from sqlalchemy.orm import selectinload
 
 from mmisp.db.models.attribute import Attribute
 from mmisp.db.models.galaxy import Galaxy
-from mmisp.db.models.galaxy_cluster import GalaxyCluster
+from mmisp.db.models.galaxy_cluster import GalaxyCluster, GalaxyElement
 from mmisp.db.models.tag import Tag
 
 
@@ -42,15 +42,19 @@ async def galaxy_cluster_one(db, galaxy_cluster_one_tag, galaxy):
         tag_name=galaxy_cluster_one_tag.name,
         description="test",
         galaxy_id=galaxy.id,
-        authors="admin",
+        authors='["Konstantin Zangerle", "Test Writer"]',
     )
 
     db.add(galaxy_cluster)
     await db.commit()
     await db.refresh(galaxy_cluster)
+    galaxy_element = GalaxyElement(galaxy_cluster_id=galaxy_cluster.id, key="refs", value="http://test-one.example.com")
+    db.add(galaxy_element)
+    await db.commit()
 
     yield galaxy_cluster
 
+    await db.delete(galaxy_element)
     await db.delete(galaxy_cluster)
     await db.commit()
 
@@ -70,9 +74,13 @@ async def galaxy_cluster_two(db, galaxy_cluster_two_tag, galaxy):
     db.add(galaxy_cluster)
     await db.commit()
     await db.refresh(galaxy_cluster)
+    galaxy_element = GalaxyElement(galaxy_cluster_id=galaxy_cluster.id, key="refs", value="http://test-two.example.com")
+    db.add(galaxy_element)
+    await db.commit()
 
     yield galaxy_cluster
 
+    await db.delete(galaxy_element)
     await db.delete(galaxy_cluster)
     await db.commit()
 
