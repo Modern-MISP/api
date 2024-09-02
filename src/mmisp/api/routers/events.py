@@ -859,7 +859,7 @@ async def _prepare_event_response(db: Session, event: Event) -> AddEditGetEventD
     if orgc is not None:
         event_dict["Orgc"] = AddEditGetEventOrg(id=orgc.id, name=orgc.name, uuid=orgc.uuid, local=orgc.local)
 
-    attribute_list = event.attribute
+    attribute_list = event.attributes
 
     event_dict["attribute_count"] = len(attribute_list)
 
