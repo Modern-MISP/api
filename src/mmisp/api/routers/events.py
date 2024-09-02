@@ -55,7 +55,6 @@ from mmisp.db.models.event import Event, EventReport, EventTag
 from mmisp.db.models.galaxy import Galaxy
 from mmisp.db.models.galaxy_cluster import GalaxyCluster, GalaxyReference
 from mmisp.db.models.object import Object
-from mmisp.db.models.organisation import Organisation
 from mmisp.db.models.tag import Tag
 from mmisp.db.models.user import User
 from mmisp.lib.actions import action_publish_event
@@ -597,7 +596,18 @@ async def _add_event(auth: Auth, db: Session, body: AddEventBody) -> AddEditGetE
 
 
 async def _get_event_details(db: Session, event_id: str) -> AddEditGetEventResponse:
-    event: Event | None = await db.get(Event, event_id)
+    result = await db.execute(
+        select(Event)
+        .options(
+            selectinload(Event.org),
+            selectinload(Event.orgc),
+            selectinload(Event.galaxy_tags),
+            selectinload(Event.tags),
+            selectinload(Event.eventtags),
+        )
+        .filter(id=event_id)
+    )
+    event = result.scalars().one_or_none()
 
     if not event:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
@@ -608,7 +618,18 @@ async def _get_event_details(db: Session, event_id: str) -> AddEditGetEventRespo
 
 
 async def _update_event(db: Session, event_id: str, body: EditEventBody) -> AddEditGetEventResponse:
-    event: Event | None = await db.get(Event, event_id)
+    result = await db.execute(
+        select(Event)
+        .options(
+            selectinload(Event.org),
+            selectinload(Event.orgc),
+            selectinload(Event.galaxy_tags),
+            selectinload(Event.tags),
+            selectinload(Event.eventtags),
+        )
+        .filter(id=event_id)
+    )
+    event = result.scalars().one_or_none()
 
     if not event:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
@@ -677,11 +698,20 @@ async def _rest_search_events(db: Session, body: SearchEventsBody) -> SearchEven
     if body.returnFormat != "json":
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid output format.")
 
-    result = await db.execute(select(Event))
+    qry = select(Event).options(
+        selectinload(Event.org),
+        selectinload(Event.orgc),
+        selectinload(Event.tags),
+        selectinload(Event.galaxy_tags),
+        selectinload(Event.eventtags),
+    )
+    if body.limit is not None:
+        page = body.page or 1
+        qry = qry.limit(body.limit).offset(body.limit * (page - 1))
+
+    result = await db.execute(qry)
     events: Sequence[Event] = result.scalars().all()
 
-    if body.limit is not None:
-        events = events[: body.limit]
     response_list = []
     for event in events:
         response_list.append(AddEditGetEventResponse(Event=await _prepare_event_response(db, event)))
@@ -822,30 +852,27 @@ async def _prepare_event_response(db: Session, event: Event) -> AddEditGetEventD
 
     event_dict["date"] = str(event_dict["date"])
 
-    org: Organisation | None = await db.get(Organisation, event.org_id)
-    orgc: Organisation | None = await db.get(Organisation, event.orgc_id)
+    org = event.org
+    orgc = event.orgc
 
     if org is not None:
         event_dict["Org"] = AddEditGetEventOrg(id=org.id, name=org.name, uuid=org.uuid, local=org.local)
     if orgc is not None:
         event_dict["Orgc"] = AddEditGetEventOrg(id=orgc.id, name=orgc.name, uuid=orgc.uuid, local=orgc.local)
 
-    result = await db.execute(select(Attribute).filter(Attribute.event_id == event.id))
-    attribute_list = result.scalars().all()
+    attribute_list = event.attribute
 
     event_dict["attribute_count"] = len(attribute_list)
 
     if len(attribute_list) > 0:
         event_dict["Attribute"] = await _prepare_attribute_response(db, attribute_list)
 
-    result = await db.execute(select(EventTag).filter(EventTag.event_id == event.id))
-    event_tag_list = result.scalars().all()
+    event_tag_list = event.eventtags
 
     if len(event_tag_list) > 0:
         event_dict["Tag"] = await _prepare_tag_response(db, event_tag_list)
 
-    result = await db.execute(select(Object).filter(Object.event_id == event.id))
-    object_list = result.scalars().all()
+    object_list = event.mispobjects
 
     if len(object_list) > 0:
         event_dict["Object"] = await _prepare_object_response(db, object_list)
@@ -860,14 +887,7 @@ async def _prepare_event_response(db: Session, event: Event) -> AddEditGetEventD
 
     galaxy_cluster_list = []
 
-    for event_tag in event_tag_list:
-        tag = await db.get(Tag, event_tag.tag_id)
-        if tag is None:
-            continue
-
-        if not tag.is_galaxy:
-            continue
-
+    for tag in event.galaxy_tags:
         result = await db.execute(select(GalaxyCluster).filter(GalaxyCluster.tag_name == tag.name))
         galaxy_clusters = result.scalars().all()
 
