@@ -97,13 +97,12 @@ async def add_event(
 @router.get(
     "/events/{eventId}",
     status_code=status.HTTP_200_OK,
-    response_model=AddEditGetEventResponse,
     summary="Get event details",
 )
 async def get_event_details(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    event_id: Annotated[str, Path(alias="eventId")],
+    event_id: Annotated[int, Path(alias="eventId")],
 ) -> AddEditGetEventResponse:
     """Retrieve details of a specific event by ist ID.
 
@@ -477,7 +476,7 @@ async def add_event_depr(
 async def get_event_details_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    event_id: Annotated[str, Path(alias="eventId")],
+    event_id: Annotated[int, Path(alias="eventId")],
 ) -> AddEditGetEventResponse:
     """Deprecated. Retrieve details of a specific attribute by its ID.
 
@@ -595,7 +594,7 @@ async def _add_event(auth: Auth, db: Session, body: AddEventBody) -> AddEditGetE
     return AddEditGetEventResponse(Event=event_data)
 
 
-async def _get_event_details(db: Session, event_id: str) -> AddEditGetEventResponse:
+async def _get_event_details(db: Session, event_id: int) -> AddEditGetEventResponse:
     result = await db.execute(
         select(Event)
         .options(

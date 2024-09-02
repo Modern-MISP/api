@@ -35,6 +35,16 @@ async def test_freetext_import(client, site_admin_user_token):
     assert response.json() == {"id": "777"}
 
 
+async def get_max_event_id(db):
+    stmt = sa.sql.text("SELECT max(id) FROM events")
+    result = await db.execute(stmt)
+
+    result = result.scalar()
+    if result is None:
+        return 0
+    return result
+
+
 @pytest.mark.asyncio
 async def delete_event(db, id):
     stmt = sa.sql.text("DELETE FROM events WHERE id=:id")
@@ -109,11 +119,10 @@ async def test_get_existing_event(
 
 
 @pytest.mark.asyncio
-async def test_get_non_existing_event(site_admin_user_token, client) -> None:
+async def test_get_non_existing_event(db, site_admin_user_token, client) -> None:
+    unused_event_id = await get_max_event_id(db) + 1
     headers = {"authorization": site_admin_user_token}
-    response = client.get("/events/0", headers=headers)
-    assert response.status_code == 404
-    response = client.get("/events/invalid_id", headers=headers)
+    response = client.get(f"/events/{unused_event_id}", headers=headers)
     assert response.status_code == 404
 
 
