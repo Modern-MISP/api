@@ -264,7 +264,8 @@ async def test_get_non_existing_galaxy_cluster(site_admin_user_token, client) ->
     headers = {"authorization": site_admin_user_token}
     response = client.get("/galaxies/clusters/0", headers=headers)
     assert response.status_code == 404
-    response = client.get("/events/invalid_id", headers=headers)
+    # todo: write fixture to get highest event_id, then use it here
+    response = client.get("/events/500", headers=headers)
     assert response.status_code == 404
 
 
