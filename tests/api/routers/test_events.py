@@ -45,11 +45,11 @@ async def get_max_event_id(db):
     return result
 
 
-@pytest.mark.asyncio
 async def delete_event(db, id):
     stmt = sa.sql.text("DELETE FROM events WHERE id=:id")
-    await db.execute(stmt, {"id": id})
+    result = await db.execute(stmt, {"id": id})
     await db.commit()
+    assert result.rowcount == 1
 
 
 @pytest.mark.asyncio

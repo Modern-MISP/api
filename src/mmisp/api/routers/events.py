@@ -1,8 +1,10 @@
+import json
 from calendar import timegm
+from collections import defaultdict
 from collections.abc import Sequence
 from datetime import date
 from time import gmtime
-from typing import Annotated, Any
+from typing import Annotated
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Path
@@ -470,7 +472,6 @@ async def add_event_depr(
     "/events/view/{eventId}",
     deprecated=True,
     status_code=status.HTTP_200_OK,
-    response_model=AddEditGetEventResponse,
     summary="Get event details (Deprecated)",
 )
 async def get_event_details_depr(
@@ -587,9 +588,30 @@ async def _add_event(auth: Auth, db: Session, body: AddEventBody) -> AddEditGetE
     db.add(new_event)
     await db.commit()
     await db.refresh(new_event)
-    await execute_workflow("event-after-save", db, new_event)
 
-    event_data = await _prepare_event_response(db, new_event)
+    result = await db.execute(
+        select(Event)
+        .filter(Event.id == new_event.id)
+        .options(
+            selectinload(Event.org),
+            selectinload(Event.orgc),
+            selectinload(Event.galaxy_tags),
+            selectinload(Event.eventtags_galaxy),
+            selectinload(Event.tags),
+            selectinload(Event.eventtags),
+            selectinload(Event.attributes).options(
+                selectinload(Attribute.galaxy_tags),
+                selectinload(Attribute.attributetags_galaxy).selectinload(AttributeTag.tag),
+            ),
+            selectinload(Event.mispobjects),
+        )
+        .execution_options(populate_existing=True)
+    )
+    event = result.scalars().one()
+
+    await execute_workflow("event-after-save", db, event)
+
+    event_data = await _prepare_event_response(db, event)
 
     return AddEditGetEventResponse(Event=event_data)
 
@@ -597,14 +619,20 @@ async def _add_event(auth: Auth, db: Session, body: AddEventBody) -> AddEditGetE
 async def _get_event_details(db: Session, event_id: int) -> AddEditGetEventResponse:
     result = await db.execute(
         select(Event)
+        .filter(Event.id == event_id)
         .options(
             selectinload(Event.org),
             selectinload(Event.orgc),
             selectinload(Event.galaxy_tags),
+            selectinload(Event.eventtags_galaxy),
             selectinload(Event.tags),
             selectinload(Event.eventtags),
+            selectinload(Event.attributes).options(
+                selectinload(Attribute.galaxy_tags),
+                selectinload(Attribute.attributetags_galaxy).selectinload(AttributeTag.tag),
+            ),
+            selectinload(Event.mispobjects),
         )
-        .filter(id=event_id)
     )
     event = result.scalars().one_or_none()
 
@@ -619,14 +647,20 @@ async def _get_event_details(db: Session, event_id: int) -> AddEditGetEventRespo
 async def _update_event(db: Session, event_id: str, body: EditEventBody) -> AddEditGetEventResponse:
     result = await db.execute(
         select(Event)
+        .filter(Event.id == event_id)
         .options(
             selectinload(Event.org),
             selectinload(Event.orgc),
             selectinload(Event.galaxy_tags),
+            selectinload(Event.eventtags_galaxy),
             selectinload(Event.tags),
             selectinload(Event.eventtags),
+            selectinload(Event.mispobjects),
+            selectinload(Event.attributes).options(
+                selectinload(Attribute.galaxy_tags),
+                selectinload(Attribute.attributetags_galaxy).selectinload(AttributeTag.tag),
+            ),
         )
-        .filter(id=event_id)
     )
     event = result.scalars().one_or_none()
 
@@ -679,6 +713,7 @@ async def _get_events(db: Session) -> list[GetAllEventsResponse]:
             selectinload(Event.org),
             selectinload(Event.orgc),
             selectinload(Event.galaxy_tags),
+            selectinload(Event.eventtags_galaxy),
             selectinload(Event.tags),
             selectinload(Event.eventtags),
         )
@@ -702,7 +737,13 @@ async def _rest_search_events(db: Session, body: SearchEventsBody) -> SearchEven
         selectinload(Event.orgc),
         selectinload(Event.tags),
         selectinload(Event.galaxy_tags),
+        selectinload(Event.eventtags_galaxy),
         selectinload(Event.eventtags),
+        selectinload(Event.mispobjects),
+        selectinload(Event.attributes).options(
+            selectinload(Attribute.galaxy_tags),
+            selectinload(Attribute.attributetags_galaxy).selectinload(AttributeTag.tag),
+        ),
     )
     if body.limit is not None:
         page = body.page or 1
@@ -734,7 +775,13 @@ async def _index_events(db: Session, body: IndexEventsBody) -> list[GetAllEvents
             selectinload(Event.orgc),
             selectinload(Event.tags),
             selectinload(Event.galaxy_tags),
+            selectinload(Event.eventtags_galaxy),
             selectinload(Event.eventtags),
+            selectinload(Event.attributes).options(
+                selectinload(Attribute.galaxy_tags),
+                selectinload(Attribute.attributetags_galaxy).selectinload(AttributeTag.tag),
+            ),
+            selectinload(Event.mispobjects),
         )
         .limit(limit)
         .offset(offset)
@@ -861,7 +908,7 @@ async def _prepare_event_response(db: Session, event: Event) -> AddEditGetEventD
 
     attribute_list = event.attributes
 
-    event_dict["attribute_count"] = len(attribute_list)
+    # event_dict["attribute_count"] = len(attribute_list) # there is a column in the db for that
 
     if len(attribute_list) > 0:
         event_dict["Attribute"] = await _prepare_attribute_response(db, attribute_list)
@@ -882,26 +929,37 @@ async def _prepare_event_response(db: Session, event: Event) -> AddEditGetEventD
     if len(event_report_list) > 0:
         event_dict["EventReport"] = _prepare_event_report_response(event_report_list)
 
-    event_dict["Galaxy"] = []
+    galaxy_cluster_by_galaxy = defaultdict(list)
 
-    galaxy_cluster_list = []
+    for eventtag in event.eventtags_galaxy:
+        tag = eventtag.tag
+        result = await db.execute(
+            select(GalaxyCluster)
+            .filter(GalaxyCluster.tag_name == tag.name)
+            .options(
+                selectinload(GalaxyCluster.org),
+                selectinload(GalaxyCluster.orgc),
+                selectinload(GalaxyCluster.galaxy),
+                selectinload(GalaxyCluster.galaxy_elements),
+            )
+        )
+        galaxy_cluster = result.scalars().one_or_none()
 
-    for tag in event.galaxy_tags:
-        result = await db.execute(select(GalaxyCluster).filter(GalaxyCluster.tag_name == tag.name))
-        galaxy_clusters = result.scalars().all()
+        if galaxy_cluster is not None:
+            gc_cluster = await _prepare_single_galaxy_cluster_response(db, galaxy_cluster, eventtag)
+            galaxy_cluster_by_galaxy[galaxy_cluster.galaxy].append(gc_cluster)
 
-        for galaxy_cluster in galaxy_clusters:
-            galaxy_cluster_list.append(galaxy_cluster)
+    galaxy_response_list = []
 
-            galaxy = await db.get(Galaxy, galaxy_cluster.galaxy_id)
+    for galaxy, galaxy_cluster_responses in galaxy_cluster_by_galaxy.items():
+        galaxy_dict = galaxy.__dict__.copy()
+        galaxy_dict["GalaxyCluster"] = galaxy_cluster_responses
 
-            if galaxy in event_dict["Galaxy"]:
-                continue
+        galaxy_response_list.append(AddEditGetEventGalaxy(**galaxy_dict))
 
-            event_dict["Galaxy"].append(galaxy)
-
-    event_dict["Galaxy"] = await _prepare_galaxy_response(db, event_dict["Galaxy"], event, galaxy_cluster_list)
+    event_dict["Galaxy"] = galaxy_response_list
     event_dict["date"] = str(event_dict["date"])
+
     user = await db.get(User, event.user_id)
     if user is not None:
         event_dict["event_creator_email"] = user.email
@@ -933,30 +991,52 @@ async def _prepare_attribute_response(
         attribute_dict["Galaxy"] = []
         galaxy_cluster_list = []
 
-        for attribute_tag in attribute_tag_list:
-            tag = await db.get(Tag, attribute_tag.tag_id)
-            if tag is None:
-                continue
+        for attribute_tag in attribute.attributetags_galaxy:
+            tag = attribute_tag.tag
+            result = await db.execute(
+                select(GalaxyCluster)
+                .options(
+                    selectinload(GalaxyCluster.org),
+                    selectinload(GalaxyCluster.orgc),
+                    selectinload(GalaxyCluster.galaxy),
+                    selectinload(GalaxyCluster.galaxy_elements),
+                )
+                .filter(GalaxyCluster.tag_name == tag.name)
+            )
+            galaxy_cluster = result.scalars().one_or_none()
 
-            if not tag.is_galaxy:
-                continue
-
-            result = await db.execute(select(GalaxyCluster).filter(GalaxyCluster.tag_name == tag.name))
-            galaxy_clusters = result.scalars().all()
-
-            for galaxy_cluster in galaxy_clusters:
+            if galaxy_cluster is not None:
                 galaxy_cluster_list.append(galaxy_cluster)
 
-                galaxy = await db.get(Galaxy, galaxy_cluster.galaxy_id)
+        galaxy_cluster_by_galaxy = defaultdict(list)
 
-                if galaxy in attribute_dict["Galaxy"]:
-                    continue
+        for attributetag in attribute.attributetags_galaxy:
+            tag = attributetag.tag
+            result = await db.execute(
+                select(GalaxyCluster)
+                .filter(GalaxyCluster.tag_name == tag.name)
+                .options(
+                    selectinload(GalaxyCluster.org),
+                    selectinload(GalaxyCluster.orgc),
+                    selectinload(GalaxyCluster.galaxy),
+                    selectinload(GalaxyCluster.galaxy_elements),
+                )
+            )
+            galaxy_cluster = result.scalars().one_or_none()
 
-                attribute_dict["Galaxy"].append(galaxy)
+            if galaxy_cluster is not None:
+                gc_cluster = await _prepare_single_galaxy_cluster_response(db, galaxy_cluster, attributetag)
+                galaxy_cluster_by_galaxy[galaxy_cluster.galaxy].append(gc_cluster)
 
-        attribute_dict["Galaxy"] = await _prepare_galaxy_response(
-            db, attribute_dict["Galaxy"], attribute, galaxy_cluster_list
-        )
+        galaxy_response_list = []
+
+        for galaxy, galaxy_cluster_responses in galaxy_cluster_by_galaxy.items():
+            galaxy_dict = galaxy.__dict__.copy()
+            galaxy_dict["GalaxyCluster"] = galaxy_cluster_responses
+
+            galaxy_response_list.append(AddEditGetEventGalaxy(**galaxy_dict))
+
+        attribute_dict["Galaxy"] = galaxy_response_list
 
         attribute_response_list.append(AddEditGetEventAttribute(**attribute_dict))
 
@@ -987,84 +1067,63 @@ async def _prepare_tag_response(
     return tag_response_list
 
 
-async def _prepare_galaxy_response(
-    db: Session, galaxy_list: list[Galaxy], data_object: Any, galaxy_cluster_list: Sequence[GalaxyCluster]
-) -> list[AddEditGetEventGalaxy]:
-    galaxy_response_list = []
-
-    for galaxy in galaxy_list:
-        galaxy_dict = galaxy.__dict__.copy()
-
-        if len(galaxy_cluster_list) > 0:
-            galaxy_dict["GalaxyCluster"] = await _prepare_galaxy_cluster_response(
-                db, galaxy_cluster_list, data_object, galaxy.id
-            )
-
-        galaxy_response_list.append(AddEditGetEventGalaxy(**galaxy_dict))
-
-    return galaxy_response_list
+def json_or_original_string(s: str) -> str | dict | list:
+    try:
+        return json.loads(s)
+    except json.decoder.JSONDecodeError:
+        return s
 
 
-async def _prepare_galaxy_cluster_response(
-    db: Session, galaxy_cluster_list: Sequence[GalaxyCluster], data_object: Any, galaxy_id: int
-) -> list[AddEditGetEventGalaxyCluster]:
-    galaxy_cluster_response_list = []
+async def _prepare_single_galaxy_cluster_response(
+    db: Session, galaxy_cluster: GalaxyCluster, connecting_tag: AttributeTag | EventTag
+) -> AddEditGetEventGalaxyCluster:
+    galaxy_cluster_dict = galaxy_cluster.__dict__.copy()
 
-    for galaxy_cluster in galaxy_cluster_list:
-        if galaxy_cluster.galaxy_id != galaxy_id:
-            continue
+    if galaxy_cluster.orgc is not None:
+        galaxy_cluster_dict["Orgc"] = galaxy_cluster.orgc.__dict__.copy()
+    if galaxy_cluster.orgc is not None:
+        galaxy_cluster_dict["Org"] = galaxy_cluster.org.__dict__.copy()
+    if galaxy_cluster.galaxy_elements is not None:
+        galaxy_cluster_dict["meta"] = defaultdict(list)
+        for element in galaxy_cluster.galaxy_elements:
+            galaxy_cluster_dict["meta"][element.key].append(element.value)
 
-        galaxy_cluster_dict = galaxy_cluster.__dict__.copy()
-        galaxy_cluster_dict["authors"] = galaxy_cluster.authors.split(" ")
+    if galaxy_cluster_dict["authors"] is not None:
+        parsed_author = json_or_original_string(galaxy_cluster.authors)
+        if isinstance(parsed_author, str):
+            parsed_author = [parsed_author]  # force to be a list
+        galaxy_cluster_dict["authors"] = parsed_author
 
-        result = await db.execute(select(Tag).filter(Tag.name == galaxy_cluster.tag_name).limit(1))
-        tag = result.scalars().first()
+    fields_to_convert = ["org_id", "orgc_id", "extends_version"]
 
-        fields_to_convert = ["org_id", "orgc_id", "extends_version"]
+    for field in fields_to_convert:
+        if galaxy_cluster_dict.get(field) is not None:
+            galaxy_cluster_dict[field] = str(galaxy_cluster_dict[field])
+        else:
+            galaxy_cluster_dict[field] = "0"
+    galaxy_cluster_dict["collection_uuid"] = (
+        galaxy_cluster.collection_uuid if galaxy_cluster.collection_uuid is not None else ""
+    )
 
-        for field in fields_to_convert:
-            if galaxy_cluster_dict.get(field) is not None:
-                galaxy_cluster_dict[field] = str(galaxy_cluster_dict[field])
-            else:
-                galaxy_cluster_dict[field] = "0"
-        galaxy_cluster_dict["extends_uuid"] = (
-            galaxy_cluster.extends_uuid if galaxy_cluster.extends_uuid is not None else ""
+    galaxy_cluster_dict["tag_id"] = connecting_tag.tag_id
+
+    galaxy_cluster_dict["local"] = connecting_tag.local
+    galaxy_cluster_dict["relationship_type"] = connecting_tag.relationship_type or False
+
+    if isinstance(connecting_tag, AttributeTag):
+        galaxy_cluster_dict["attribute_tag_id"] = connecting_tag.id
+    if isinstance(connecting_tag, EventTag):
+        galaxy_cluster_dict["event_tag_id"] = connecting_tag.id
+
+    result = await db.execute(select(GalaxyReference).filter(GalaxyReference.galaxy_cluster_id == galaxy_cluster.id))
+    galaxy_cluster_relation_list = result.scalars().all()
+
+    if len(galaxy_cluster_relation_list) > 0:
+        galaxy_cluster_dict["GalaxyClusterRelation"] = await _prepare_galaxy_cluster_relation_response(
+            db, galaxy_cluster_relation_list
         )
-        galaxy_cluster_dict["collection_uuid"] = (
-            galaxy_cluster.collection_uuid if galaxy_cluster.collection_uuid is not None else ""
-        )
 
-        if tag is None:
-            continue
-
-        galaxy_cluster_dict["tag_id"] = tag.id
-
-        if isinstance(data_object, Attribute):
-            result = await db.execute(
-                select(AttributeTag)
-                .filter(AttributeTag.tag_id == tag.id, AttributeTag.attribute_id == data_object.id)
-                .limit(1)
-            )
-            galaxy_cluster_dict["attribute_tag_id"] = result.scalars().one().id
-        elif isinstance(data_object, Event):
-            result = await db.execute(
-                select(EventTag).filter(EventTag.tag_id == tag.id, EventTag.event_id == data_object.id).limit(1)
-            )
-            galaxy_cluster_dict["event_tag_id"] = result.scalars().one().id
-
-        result = await db.execute(
-            select(GalaxyReference).filter(GalaxyReference.galaxy_cluster_id == galaxy_cluster.id)
-        )
-        galaxy_cluster_relation_list = result.scalars().all()
-
-        if len(galaxy_cluster_relation_list) > 0:
-            galaxy_cluster_dict["GalaxyClusterRelation"] = await _prepare_galaxy_cluster_relation_response(
-                db, galaxy_cluster_relation_list
-            )
-
-        galaxy_cluster_response_list.append(AddEditGetEventGalaxyCluster(**galaxy_cluster_dict))
-
-    return galaxy_cluster_response_list
+    return AddEditGetEventGalaxyCluster(**galaxy_cluster_dict)
 
 
 async def _prepare_galaxy_cluster_relation_response(
@@ -1099,7 +1158,13 @@ async def _prepare_object_response(db: Session, object_list: Sequence[Object]) -
     for object in object_list:
         object_dict = object.__dict__.copy()
 
-        result = await db.execute(select(Attribute).filter(Attribute.object_id == object.id))
+        result = await db.execute(
+            select(Attribute)
+            .options(
+                selectinload(Attribute.galaxy_tags),
+            )
+            .filter(Attribute.object_id == object.id)
+        )
         object_attribute_list = result.scalars().all()
 
         if len(object_attribute_list) > 0:
