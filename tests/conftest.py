@@ -1,4 +1,3 @@
-import uuid
 from contextlib import ExitStack
 from dataclasses import dataclass
 from typing import Self, Tuple
@@ -260,7 +259,7 @@ async def blocking_publish_workflow(db):
 
     wf = Workflow(
         id=1,
-        uuid=str(uuid.uuid4()),
+        uuid=str(uuid()),
         name="Demo workflow",
         description="",
         timestamp=0,
@@ -316,7 +315,7 @@ async def unsupported_workflow(db):
 
     wf = Workflow(
         id=1,
-        uuid=str(uuid.uuid4()),
+        uuid=str(uuid()),
         name="Demo workflow",
         description="",
         timestamp=0,
@@ -359,7 +358,7 @@ async def failing_before_save_workflow(db):
 
     wf = Workflow(
         id=1,
-        uuid=str(uuid.uuid4()),
+        uuid=str(uuid()),
         name="Before save workflow",
         description="",
         timestamp=0,
