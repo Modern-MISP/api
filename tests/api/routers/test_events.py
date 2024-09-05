@@ -381,7 +381,7 @@ async def test_publish_invalid_event2(site_admin_user_token, client) -> None:
 
 
 @pytest.mark.asyncio
-async def test_add_existing_tag_to_attribute(event, tag, site_admin_user_token, client) -> None:
+async def test_add_existing_tag_to_event(event, tag, site_admin_user_token, client) -> None:
     tag_id = tag.id
     event_id = event.id
 
