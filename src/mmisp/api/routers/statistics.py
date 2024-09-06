@@ -1,21 +1,15 @@
 from typing import Annotated
-from collections.abc import Sequence
 
-from fastapi import APIRouter, Depends, Path, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Path, status
 from sqlalchemy.future import select
-from sqlalchemy import func
 
-
-from mmisp.db.models.event import Event
+from mmisp.api.auth import Auth, AuthStrategy, authorize
+from mmisp.api_schemas.statistics import OrgDataResponseModel, UsageDataResponseModel
+from mmisp.db.database import Session, get_db
 from mmisp.db.models.attribute import Attribute
+from mmisp.db.models.event import Event
 from mmisp.db.models.organisation import Organisation
 from mmisp.db.models.user import User
-
-from mmisp.api_schemas.statistics import UsageDataResponseModel, OrgDataResponseModel
-from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize, check_permissions
-
-
-from mmisp.db.database import Session, get_db
 
 router = APIRouter(tags=["statistics"])
 
@@ -88,14 +82,15 @@ async def get_logincount(
 
 # --- endpoint logic ---
 
+
 async def _get_statistics(db: Session) -> UsageDataResponseModel:
     query = select(Event)
-    events_result  = await db.execute(query)
+    events_result = await db.execute(query)
     events_list = events_result.fetchall()
     event_count = len(events_list)
 
     query = select(Organisation)
-    org_result  = await db.execute(query)
+    org_result = await db.execute(query)
     org_list = org_result.fetchall()
     org_count = len(org_list)
 
@@ -122,26 +117,22 @@ async def _get_statistics(db: Session) -> UsageDataResponseModel:
     for org in org_list:
         if org[0].local:
             localOrg_count = localOrg_count + 1
-    
+
     all_events = []
     if len(events_list) > 0:
         eventCreatorOrg_count = 1
         all_events.append(events_list[0])
-    
-    for event in events_list:
 
+    for event in events_list:
         current_event = event[0]
 
         for event2 in all_events:
-
             if event2[0].orgc_id != current_event.orgc_id:
-
                 all_events.append(current_event)
                 eventCreatorOrg_count = eventCreatorOrg_count + 1
                 break
 
     users_per_org = []
-
 
     for org in org_list:
         counter = 0
@@ -152,21 +143,21 @@ async def _get_statistics(db: Session) -> UsageDataResponseModel:
 
     averageUsers = sum(users_per_org) / len(users_per_org)
 
-    response = UsageDataResponseModel(events=event_count,
-                                attributes=attribute_count,
-                                eventAttributes=eventAttribute_count,
-                                users=user_count,
-                                usersWithGPGKeys=user_with_gpgkey_count,
-                                organisations=org_count,
-                                localOrganisations=localOrg_count,
-                                eventCreatorOrgs=eventCreatorOrg_count,
-                                averageUsersPerOrg=averageUsers,
-                                )
+    response = UsageDataResponseModel(
+        events=event_count,
+        attributes=attribute_count,
+        eventAttributes=eventAttribute_count,
+        users=user_count,
+        usersWithGPGKeys=user_with_gpgkey_count,
+        organisations=org_count,
+        localOrganisations=localOrg_count,
+        eventCreatorOrgs=eventCreatorOrg_count,
+        averageUsersPerOrg=averageUsers,
+    )
     return response
 
 
 async def _get_statistics_by_org(db: Session, orgID: str) -> OrgDataResponseModel:
-    
     int_orgId = 0
     try:
         int_orgId = int(orgID)
@@ -178,7 +169,7 @@ async def _get_statistics_by_org(db: Session, orgID: str) -> OrgDataResponseMode
     users_list = user_result.fetchall()
 
     query = select(Event)
-    events_result  = await db.execute(query)
+    events_result = await db.execute(query)
     events_list = events_result.fetchall()
 
     user_count = 0
@@ -202,7 +193,6 @@ async def _get_statistics_by_org(db: Session, orgID: str) -> OrgDataResponseMode
 
 
 async def _get_logincount(db: Session, orgID: str) -> int:
-    
     int_orgId = 0
     try:
         int_orgId = int(orgID)

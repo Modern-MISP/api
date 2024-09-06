@@ -2,7 +2,7 @@ from collections.abc import Sequence
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Path
-from sqlalchemy.future import select
+from sqlalchemy import delete, select
 from starlette import status
 from starlette.requests import Request
 
@@ -19,7 +19,6 @@ from mmisp.api_schemas.galaxies import (
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.galaxy import Galaxy
 from mmisp.db.models.galaxy_cluster import GalaxyCluster, GalaxyElement
-from mmisp.db.models.tag import Tag
 
 router = APIRouter(tags=["galaxies"])
 
@@ -309,14 +308,9 @@ async def _delete_galaxy(db: Session, galaxy_id: str, request: Request) -> Delet
             ).dict(),
         )
 
-    result = await db.execute(select(GalaxyCluster).filter(GalaxyCluster.galaxy_id == galaxy.id).limit(1))
-    connected_tag_name = result.scalars().one().tag_name
-
-    result = await db.execute(select(Tag).filter(Tag.name == connected_tag_name))
-    connected_tag = result.scalars().first()
+    await db.execute(delete(GalaxyCluster).filter(GalaxyCluster.galaxy_id == galaxy.id))
 
     await db.delete(galaxy)
-    await db.delete(connected_tag)
     await db.commit()
 
     return DeleteForceUpdateImportGalaxyResponse(

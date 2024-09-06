@@ -2,7 +2,7 @@ import json
 import random
 import string
 
-from sqlalchemy import func
+from sqlalchemy import func, select
 
 from mmisp.db.models.noticelist import Noticelist, NoticelistEntry
 
@@ -11,9 +11,9 @@ def random_string(length: int = 10) -> str:
     return "".join(random.choices(string.ascii_letters + string.digits, k=length))
 
 
-def get_non_existing_noticelist_ids(db, number: int = 10) -> list:
+async def get_non_existing_noticelist_ids(db, number: int = 10) -> list:
     noticelist_ids = []
-    largest_id = db.query(func.max(Noticelist.id)).scalar()
+    largest_id = (await db.execute(select(func.max(Noticelist.id)))).scalar()
     print(largest_id)
     if not largest_id:
         largest_id = 1
@@ -54,23 +54,23 @@ def generate_random_noticelistentry_input(noticelist_id: int) -> NoticelistEntry
     )
 
 
-def add_noticelists(db, number: int = 10) -> list[int]:
+async def add_noticelists(db, number: int = 10) -> list[int]:
     noticelist_ids = []
     for i in range(number):
         new_noticelist = generate_random_noticelist_input()
         db.add(new_noticelist)
-        db.flush()
-        db.refresh(new_noticelist)
+        await db.flush()
+        await db.refresh(new_noticelist)
         for j in range(random.randint(0, 10)):
             db.add(generate_random_noticelistentry_input(new_noticelist.id))
-        db.commit()
+        await db.commit()
         noticelist_ids.append(new_noticelist.id)
 
     return noticelist_ids
 
 
-def remove_noticelists(db, ids: list[int]) -> None:
+async def remove_noticelists(db, ids: list[int]) -> None:
     for id in ids:
-        noticelist = db.get(Noticelist, id)
-        db.delete(noticelist)
-        db.commit()
+        noticelist = await db.get(Noticelist, id)
+        await db.delete(noticelist)
+        await db.commit()

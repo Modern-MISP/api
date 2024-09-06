@@ -1,40 +1,42 @@
 from time import time
 
 import pytest
+import pytest_asyncio
 from sqlalchemy.orm import Session
 
-from ...generators.model_generators.organisation_generator import generate_organisation
+from mmisp.tests.generators.model_generators.organisation_generator import generate_organisation
 
 
-@pytest.fixture
-def organisation(db):
+@pytest_asyncio.fixture
+async def organisation(db):
     organisation = generate_organisation()
 
     db.add(organisation)
-    db.commit()
-    db.refresh(organisation)
+    await db.commit()
+    await db.refresh(organisation)
 
     yield organisation
 
-    db.delete(organisation)
-    db.commit()
+    await db.delete(organisation)
+    await db.commit()
 
 
-@pytest.fixture
-def organisation2(db):
+@pytest_asyncio.fixture
+async def organisation2(db):
     organisation = generate_organisation()
 
     db.add(organisation)
-    db.commit()
-    db.refresh(organisation)
+    await db.commit()
+    await db.refresh(organisation)
 
     yield organisation
 
-    db.delete(organisation)
-    db.commit()
+    await db.delete(organisation)
+    await db.commit()
 
 
-def test_get_organisation_by_id(db: Session, site_admin_user_token, client, organisation) -> None:
+@pytest.mark.asyncio
+async def test_get_organisation_by_id(db: Session, site_admin_user_token, client, organisation) -> None:
     org_id = organisation.id
 
     headers = {"authorization": site_admin_user_token}
@@ -51,7 +53,8 @@ def test_get_organisation_by_id(db: Session, site_admin_user_token, client, orga
     assert response_json["sector"] == organisation.sector
 
 
-def test_get_all_organisations(db: Session, site_admin_user_token, client, organisation, organisation2) -> None:
+@pytest.mark.asyncio
+async def test_get_all_organisations(db: Session, site_admin_user_token, client, organisation, organisation2) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.get("/organisations/all", headers=headers)
 
@@ -71,7 +74,8 @@ def test_get_all_organisations(db: Session, site_admin_user_token, client, organ
         assert "user_count" in organisation_data
 
 
-def test_delete_organisation(db: Session, site_admin_user_token, client, organisation) -> None:
+@pytest.mark.asyncio
+async def test_delete_organisation(db: Session, site_admin_user_token, client, organisation) -> None:
     org_id = organisation.id
 
     headers = {"authorization": site_admin_user_token}
@@ -83,7 +87,8 @@ def test_delete_organisation(db: Session, site_admin_user_token, client, organis
     assert response_json["name"] == "Organisation deleted"
 
 
-def test_add_organisation(client, site_admin_user_token, db: Session):
+@pytest.mark.asyncio
+async def test_add_organisation(client, site_admin_user_token, db: Session):
     name = "test" + str(time())
     headers = {"authorization": site_admin_user_token}
     request_body = {
@@ -107,7 +112,8 @@ def test_add_organisation(client, site_admin_user_token, db: Session):
     assert response_json["name"] == name
 
 
-def test_edit_organisation(client, site_admin_user_token, organisation):
+@pytest.mark.asyncio
+async def test_edit_organisation(client, site_admin_user_token, organisation):
     headers = {"authorization": site_admin_user_token}
     request_body = {
         "name": "test1",

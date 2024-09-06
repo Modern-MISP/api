@@ -2,10 +2,12 @@ from dataclasses import dataclass
 from time import time_ns
 
 import pytest
+import pytest_asyncio
 import respx
 from fastapi import status
 from httpx import Response
 from icecream import ic
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from mmisp.api.auth import _decode_token, encode_exchange_token, encode_token
@@ -13,10 +15,10 @@ from mmisp.api.config import config
 from mmisp.api_schemas.authentication import LoginType
 from mmisp.db.models.identity_provider import OIDCIdentityProvider
 from mmisp.db.models.user import User
+from mmisp.tests.generators.model_generators.identity_provider_generator import generate_oidc_identity_provider
+from mmisp.tests.generators.model_generators.user_generator import generate_user
 from mmisp.util.crypto import hash_secret, verify_secret
 from mmisp.util.uuid import uuid
-from tests.generators.model_generators.identity_provider_generator import generate_oidc_identity_provider
-from tests.generators.model_generators.user_generator import generate_user
 
 
 @dataclass
@@ -28,13 +30,13 @@ class AuthEnvironment:
     well_known_oidc_config: dict
 
 
-@pytest.fixture
-def password():
+@pytest_asyncio.fixture
+async def password():
     return uuid()
 
 
-@pytest.fixture
-def password_auth_user(db, password, instance_owner_org, org_admin_role):
+@pytest_asyncio.fixture
+async def password_auth_user(db, password, instance_owner_org, org_admin_role):
     hashed_password = hash_secret(password)
 
     user = generate_user()
@@ -44,16 +46,16 @@ def password_auth_user(db, password, instance_owner_org, org_admin_role):
     user.password = hashed_password
 
     db.add(user)
-    db.commit()
+    await db.commit()
 
     yield user
 
-    db.delete(user)
-    db.commit()
+    await db.delete(user)
+    await db.commit()
 
 
-@pytest.fixture
-def external_auth_user(db, password, instance_owner_org, org_admin_role):
+@pytest_asyncio.fixture
+async def external_auth_user(db, password, instance_owner_org, org_admin_role):
     hashed_password = hash_secret(password)
 
     user = generate_user()
@@ -65,30 +67,30 @@ def external_auth_user(db, password, instance_owner_org, org_admin_role):
     user.external_auth_required = True
 
     db.add(user)
-    db.commit()
+    await db.commit()
 
     yield user
 
-    db.delete(user)
-    db.commit()
+    await db.delete(user)
+    await db.commit()
 
 
-@pytest.fixture
-def identity_provider(db, instance_owner_org):
+@pytest_asyncio.fixture
+async def identity_provider(db, instance_owner_org):
     identity_provider = generate_oidc_identity_provider()
     identity_provider.org_id = instance_owner_org.id
 
     db.add(identity_provider)
-    db.commit()
+    await db.commit()
 
     yield identity_provider
 
-    db.delete(identity_provider)
-    db.commit()
+    await db.delete(identity_provider)
+    await db.commit()
 
 
-@pytest.fixture
-def auth_environment(password, password_auth_user, external_auth_user, identity_provider) -> AuthEnvironment:
+@pytest_asyncio.fixture
+async def auth_environment(password, password_auth_user, external_auth_user, identity_provider) -> AuthEnvironment:
     well_known_oidc_config = {
         "authorization_endpoint": f"{identity_provider.base_url}/authorize",
         "token_endpoint": f"{identity_provider.base_url}/oauth/token",
@@ -104,7 +106,8 @@ def auth_environment(password, password_auth_user, external_auth_user, identity_
     )
 
 
-def test_start_login_password(instance_owner_org_admin_user, client) -> None:
+@pytest.mark.asyncio
+async def test_start_login_password(instance_owner_org_admin_user, client) -> None:
     user = instance_owner_org_admin_user
 
     response = client.post("/auth/login/start", json={"email": user.email})
@@ -116,7 +119,8 @@ def test_start_login_password(instance_owner_org_admin_user, client) -> None:
     assert json["identityProviders"] == []
 
 
-def test_start_login_idp(auth_environment: AuthEnvironment, client) -> None:
+@pytest.mark.asyncio
+async def test_start_login_idp(auth_environment: AuthEnvironment, client) -> None:
     response = client.post("/auth/login/start", json={"email": auth_environment.external_auth_user.email})
 
     assert response.status_code == status.HTTP_200_OK
@@ -127,13 +131,15 @@ def test_start_login_idp(auth_environment: AuthEnvironment, client) -> None:
     assert json["identityProviders"][0]["name"] == auth_environment.identity_provider.name
 
 
-def test_start_login_unknown(client) -> None:
+@pytest.mark.asyncio
+async def test_start_login_unknown(client) -> None:
     response = client.post("/auth/login/start", json={"email": f"doesnotexist{time_ns()}@test.com"})
 
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
-def test_password_login_correct(auth_environment: AuthEnvironment, client) -> None:
+@pytest.mark.asyncio
+async def test_password_login_correct(auth_environment: AuthEnvironment, client) -> None:
     response = client.post(
         "/auth/login/password",
         json={"email": auth_environment.password_auth_user.email, "password": auth_environment.password},
@@ -146,7 +152,8 @@ def test_password_login_correct(auth_environment: AuthEnvironment, client) -> No
     assert user_id == auth_environment.password_auth_user.id
 
 
-def test_password_login_wrong_email(auth_environment: AuthEnvironment, client) -> None:
+@pytest.mark.asyncio
+async def test_password_login_wrong_email(auth_environment: AuthEnvironment, client) -> None:
     response = client.post(
         "/auth/login/password",
         json={"email": f"random{time_ns()}@random.com", "password": auth_environment.password},
@@ -155,7 +162,8 @@ def test_password_login_wrong_email(auth_environment: AuthEnvironment, client) -
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
-def test_password_login_wrong_password(auth_environment: AuthEnvironment, client) -> None:
+@pytest.mark.asyncio
+async def test_password_login_wrong_password(auth_environment: AuthEnvironment, client) -> None:
     response = client.post(
         "/auth/login/password",
         json={
@@ -167,7 +175,8 @@ def test_password_login_wrong_password(auth_environment: AuthEnvironment, client
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
-def test_password_login_idp_user(auth_environment: AuthEnvironment, client) -> None:
+@pytest.mark.asyncio
+async def test_password_login_idp_user(auth_environment: AuthEnvironment, client) -> None:
     response = client.post(
         "/auth/login/password",
         json={"email": auth_environment.external_auth_user.email, "password": auth_environment.password},
@@ -176,7 +185,8 @@ def test_password_login_idp_user(auth_environment: AuthEnvironment, client) -> N
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
-def test_add_open_id_provider(db: Session, site_admin_user_token, client) -> None:
+@pytest.mark.asyncio
+async def test_add_open_id_provider(db: Session, site_admin_user_token, client) -> None:
     response = client.post(
         "/auth/openID/addOpenIDConnectProvider",
         headers={"authorization": site_admin_user_token},
@@ -193,13 +203,18 @@ def test_add_open_id_provider(db: Session, site_admin_user_token, client) -> Non
     assert response.status_code == 200
     response = response.json()
     assert response["name"] == "Test"
-    oidc_provider = db.query(OIDCIdentityProvider).where(OIDCIdentityProvider.id == response["id"]).first()
+    oidc_provider = (
+        (await db.execute(select(OIDCIdentityProvider).where(OIDCIdentityProvider.id == response["id"])))
+        .scalars()
+        .first()
+    )
     assert oidc_provider is not None
-    db.delete(oidc_provider)
+    await db.delete(oidc_provider)
 
 
 @respx.mock
-def test_get_open_id_providers_info(auth_environment: AuthEnvironment, client) -> None:
+@pytest.mark.asyncio
+async def test_get_open_id_providers_info(auth_environment: AuthEnvironment, client) -> None:
     ic(auth_environment.identity_provider.base_url)
     route = respx.get(f"{auth_environment.identity_provider.base_url}/.well-known/openid-configuration").mock(
         return_value=Response(200, json=auth_environment.well_known_oidc_config)
@@ -217,7 +232,8 @@ def test_get_open_id_providers_info(auth_environment: AuthEnvironment, client) -
 
 
 @respx.mock
-def test_redirect_to_frontend_correct(auth_environment: AuthEnvironment, client) -> None:
+@pytest.mark.asyncio
+async def test_redirect_to_frontend_correct(auth_environment: AuthEnvironment, client) -> None:
     config_route = respx.get(f"{auth_environment.identity_provider.base_url}/.well-known/openid-configuration").mock(
         return_value=Response(200, json=auth_environment.well_known_oidc_config)
     )
@@ -253,7 +269,8 @@ def test_redirect_to_frontend_correct(auth_environment: AuthEnvironment, client)
     assert info_route.called
 
 
-def test_redirect_to_frontend_idp_does_not_exist(client) -> None:
+@pytest.mark.asyncio
+async def test_redirect_to_frontend_idp_does_not_exist(client) -> None:
     response = client.post(
         "/auth/login/idp/-1/callback",
         json={"code": "test-code", "redirect_uri": f"{config.DASHBOARD_URL}/login/oidc/-1/callback"},
@@ -265,7 +282,8 @@ def test_redirect_to_frontend_idp_does_not_exist(client) -> None:
 
 
 @respx.mock
-def test_redirect_to_frontend_no_access_token(auth_environment: AuthEnvironment, client) -> None:
+@pytest.mark.asyncio
+async def test_redirect_to_frontend_no_access_token(auth_environment: AuthEnvironment, client) -> None:
     config_route = respx.get(f"{auth_environment.identity_provider.base_url}/.well-known/openid-configuration").mock(
         return_value=Response(200, json=auth_environment.well_known_oidc_config)
     )
@@ -290,7 +308,8 @@ def test_redirect_to_frontend_no_access_token(auth_environment: AuthEnvironment,
 
 
 @respx.mock
-def test_redirect_to_frontend_invalid_sub(auth_environment: AuthEnvironment, client) -> None:
+@pytest.mark.asyncio
+async def test_redirect_to_frontend_invalid_sub(auth_environment: AuthEnvironment, client) -> None:
     config_route = respx.get(f"{auth_environment.identity_provider.base_url}/.well-known/openid-configuration").mock(
         return_value=Response(200, json=auth_environment.well_known_oidc_config)
     )
@@ -322,7 +341,8 @@ def test_redirect_to_frontend_invalid_sub(auth_environment: AuthEnvironment, cli
     assert info_route.called
 
 
-def test_exchange_token_login_valid(auth_environment: AuthEnvironment, client) -> None:
+@pytest.mark.asyncio
+async def test_exchange_token_login_valid(auth_environment: AuthEnvironment, client) -> None:
     response = client.post(
         "/auth/login/token",
         json={"exchangeToken": encode_exchange_token(str(auth_environment.external_auth_user.id))},
@@ -333,7 +353,8 @@ def test_exchange_token_login_valid(auth_environment: AuthEnvironment, client) -
     assert _decode_token(json["token"]) == auth_environment.external_auth_user.id
 
 
-def test_exchange_token_login_regular_token(auth_environment: AuthEnvironment, client) -> None:
+@pytest.mark.asyncio
+async def test_exchange_token_login_regular_token(auth_environment: AuthEnvironment, client) -> None:
     response = client.post(
         "/auth/login/token",
         json={"exchangeToken": encode_token(str(auth_environment.external_auth_user.id))},
@@ -342,7 +363,8 @@ def test_exchange_token_login_regular_token(auth_environment: AuthEnvironment, c
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
-def test_change_password_userID(db: Session, site_admin_user_token, client, view_only_user) -> None:
+@pytest.mark.asyncio
+async def test_change_password_userID(db: Session, site_admin_user_token, client, view_only_user) -> None:
     newPassword = "TEST"
 
     response = client.put(
@@ -350,14 +372,17 @@ def test_change_password_userID(db: Session, site_admin_user_token, client, view
         headers={"authorization": site_admin_user_token},
         json={"password": newPassword},
     )
-    db.refresh(view_only_user)
+    await db.refresh(view_only_user)
 
     assert response.status_code == 200
     assert response.json() == {"successful": True}
     assert verify_secret(newPassword, view_only_user.password)
 
 
-def test_openid_edit_provider(db: Session, site_admin_user_token, client, auth_environment: AuthEnvironment) -> None:
+@pytest.mark.asyncio
+async def test_openid_edit_provider(
+    db: Session, site_admin_user_token, client, auth_environment: AuthEnvironment
+) -> None:
     response = client.post(
         f"/auth/openID/editOpenIDConnectProvider/{auth_environment.identity_provider.id}",
         headers={"authorization": site_admin_user_token},
@@ -370,7 +395,7 @@ def test_openid_edit_provider(db: Session, site_admin_user_token, client, auth_e
             "client_secret": "test",
         },
     )
-    db.refresh(auth_environment.identity_provider)
+    await db.refresh(auth_environment.identity_provider)
 
     assert response.status_code == 200
     assert response.json() == {"successful": True}
@@ -382,7 +407,10 @@ def test_openid_edit_provider(db: Session, site_admin_user_token, client, auth_e
     assert auth_environment.identity_provider.client_secret == "test"
 
 
-def test_openid_delete_provider(db: Session, site_admin_user_token, client, auth_environment: AuthEnvironment) -> None:
+@pytest.mark.asyncio
+async def test_openid_delete_provider(
+    db: Session, site_admin_user_token, client, auth_environment: AuthEnvironment
+) -> None:
     response = client.delete(
         f"/auth/openID/delete/{auth_environment.identity_provider.id}",
         headers={"authorization": site_admin_user_token},
@@ -391,12 +419,14 @@ def test_openid_delete_provider(db: Session, site_admin_user_token, client, auth
     assert response.status_code == 200
     assert response.json() == {"successful": True}
     assert (
-        db.query(OIDCIdentityProvider).where(OIDCIdentityProvider.id == auth_environment.identity_provider.id).first()
-        is None
-    )
+        await db.execute(
+            select(OIDCIdentityProvider).where(OIDCIdentityProvider.id == auth_environment.identity_provider.id)
+        )
+    ).scalars().first() is None
 
 
-def test_openid_add_provider(db: Session, site_admin_user_token, client) -> None:
+@pytest.mark.asyncio
+async def test_openid_add_provider(db: Session, site_admin_user_token, client) -> None:
     response = client.post(
         "/auth/openID/addOpenIDConnectProvider",
         headers={"authorization": site_admin_user_token},
@@ -413,7 +443,11 @@ def test_openid_add_provider(db: Session, site_admin_user_token, client) -> None
     assert response.status_code == 200
     response = response.json()
     assert response["name"] == "Test"
-    oidc_provider = db.query(OIDCIdentityProvider).where(OIDCIdentityProvider.id == response["id"]).first()
+    oidc_provider = (
+        (await db.execute(select(OIDCIdentityProvider).where(OIDCIdentityProvider.id == response["id"])))
+        .scalars()
+        .first()
+    )
     assert oidc_provider is not None
     assert oidc_provider.name == "Test"
     assert oidc_provider.org_id == 1
@@ -421,17 +455,18 @@ def test_openid_add_provider(db: Session, site_admin_user_token, client) -> None
     assert oidc_provider.base_url == "http://test.com"
     assert oidc_provider.client_id == "test"
     assert oidc_provider.client_secret == "test"
-    db.delete(oidc_provider)
+    await db.delete(oidc_provider)
 
 
-def test_set_own_password(db: Session, client, password_auth_user, password) -> None:
+@pytest.mark.asyncio
+async def test_set_own_password(db: Session, client, password_auth_user, password) -> None:
     password_auth_user.password = hash_secret("testPw")
-    db.commit()
+    await db.commit()
     response = client.post(
         "/auth/login/setOwnPassword",
         json={"email": password_auth_user.email, "password": password, "oldPassword": "testPw"},
     )
-    db.refresh(password_auth_user)
+    await db.refresh(password_auth_user)
 
     assert response.status_code == 200
     response_json = response.json()
@@ -439,7 +474,8 @@ def test_set_own_password(db: Session, client, password_auth_user, password) -> 
     assert verify_secret(password, password_auth_user.password)
 
 
-def test_get_all_open_id_connect_providers(db: Session, client, site_admin_user_token) -> None:
+@pytest.mark.asyncio
+async def test_get_all_open_id_connect_providers(db: Session, client, site_admin_user_token) -> None:
     response = client.post(
         "/auth/openID/addOpenIDConnectProvider",
         headers={"authorization": site_admin_user_token},
@@ -456,7 +492,11 @@ def test_get_all_open_id_connect_providers(db: Session, client, site_admin_user_
     assert response.status_code == 200
     response = response.json()
     assert response["name"] == "Test"
-    oidc_provider = db.query(OIDCIdentityProvider).where(OIDCIdentityProvider.id == response["id"]).first()
+    oidc_provider = (
+        (await db.execute(select(OIDCIdentityProvider).where(OIDCIdentityProvider.id == response["id"])))
+        .scalars()
+        .first()
+    )
     assert oidc_provider is not None
     assert oidc_provider.name == "Test"
     assert oidc_provider.org_id == 1
@@ -480,10 +520,11 @@ def test_get_all_open_id_connect_providers(db: Session, client, site_admin_user_
     assert provider["client_id"] == oidc_provider.client_id
     assert provider["client_secret"] == oidc_provider.client_secret
     assert provider["scope"] == oidc_provider.scope
-    db.delete(oidc_provider)
+    await db.delete(oidc_provider)
 
 
-def test_get_open_id_connect_provider_by_id(db: Session, client, site_admin_user_token) -> None:
+@pytest.mark.asyncio
+async def test_get_open_id_connect_provider_by_id(db: Session, client, site_admin_user_token) -> None:
     response = client.post(
         "/auth/openID/addOpenIDConnectProvider",
         headers={"authorization": site_admin_user_token},
@@ -500,7 +541,11 @@ def test_get_open_id_connect_provider_by_id(db: Session, client, site_admin_user
     assert response.status_code == 200
     response = response.json()
     assert response["name"] == "Test"
-    oidc_provider = db.query(OIDCIdentityProvider).where(OIDCIdentityProvider.id == response["id"]).first()
+    oidc_provider = (
+        (await db.execute(select(OIDCIdentityProvider).where(OIDCIdentityProvider.id == response["id"])))
+        .scalars()
+        .first()
+    )
     assert oidc_provider is not None
     assert oidc_provider.name == "Test"
     assert oidc_provider.org_id == 1
@@ -524,4 +569,4 @@ def test_get_open_id_connect_provider_by_id(db: Session, client, site_admin_user
     assert json["client_id"] == oidc_provider.client_id
     assert json["client_secret"] == oidc_provider.client_secret
     assert json["scope"] == oidc_provider.scope
-    db.delete(oidc_provider)
+    await db.delete(oidc_provider)

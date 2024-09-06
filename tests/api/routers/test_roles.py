@@ -1,4 +1,8 @@
-def test_roles_get(client, site_admin_user_token):
+import pytest
+
+
+@pytest.mark.asyncio
+async def test_roles_get(client, site_admin_user_token):
     headers = {"authorization": site_admin_user_token}
     response = client.get("/roles", headers=headers)
     assert response.status_code == 200

@@ -353,10 +353,10 @@ async def _get_galaxy_cluster(db: Session, cluster_id: int) -> GetGalaxyClusterR
             galaxy_cluster_dict["GalaxyElement"].append(ExportGalaxyGalaxyElement(**galaxy_element_dict))
 
     # Get the Organisation
-    galaxy_cluster_dict["Org"] = _get_organisation_for_cluster(db, galaxy_cluster.org_id)
+    galaxy_cluster_dict["Org"] = await _get_organisation_for_cluster(db, galaxy_cluster.org_id)
 
     # Get the OrganisationCollection
-    galaxy_cluster_dict["Orgc"] = _get_organisation_for_cluster(db, galaxy_cluster.orgc_id)
+    galaxy_cluster_dict["Orgc"] = await _get_organisation_for_cluster(db, galaxy_cluster.orgc_id)
 
     return GetGalaxyClusterResponse(**galaxy_cluster_dict)
 
@@ -366,7 +366,7 @@ async def _get_organisation_for_cluster(db: Session, org_id: int) -> GetOrganisa
     organisation = result.scalar_one_or_none()
 
     if organisation is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Organisation not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=f"Organisation ({org_id}) not found")
 
     return GetOrganisationResponse(
         id=organisation.id,
