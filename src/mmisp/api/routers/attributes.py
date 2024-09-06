@@ -35,6 +35,7 @@ from mmisp.db.models.attribute import Attribute, AttributeTag
 from mmisp.db.models.event import Event
 from mmisp.db.models.object import Object
 from mmisp.db.models.tag import Tag
+from mmisp.lib.attribute_search_filter import get_search_filters
 from mmisp.util.models import update_record
 
 from ..workflow import execute_workflow
@@ -666,10 +667,17 @@ async def _rest_search_attributes(db: Session, body: SearchAttributesBody) -> Se
     if body.returnFormat != "json":
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid output format.")
 
-    result = await db.execute(select(Attribute))
-    attributes: Sequence[Attribute] = result.scalars().all()
+    filter = get_search_filters(**body.dict())
+    qry = select(Attribute).filter(filter)
+
     if body.limit is not None:
-        attributes = attributes[: body.limit]
+        body.page = body.page or 1
+        qry = qry.limit(body.limit)
+        qry = qry.offset((body.page - 1) * body.limit)
+
+    result = await db.execute(qry)
+    attributes: Sequence[Attribute] = result.scalars().all()
+
     response_list = []
     for attribute in attributes:
         attribute_dict = attribute.asdict().copy()
