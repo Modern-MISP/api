@@ -671,7 +671,11 @@ async def _rest_search_attributes(db: Session, body: SearchAttributesBody) -> Se
     qry = (
         select(Attribute)
         .filter(filter)
-        .options(selectinload(Attribute.local_tags), selectinload(Attribute.nonlocal_tags))
+        .options(
+            selectinload(Attribute.local_tags),
+            selectinload(Attribute.nonlocal_tags),
+            selectinload(Attribute.mispobject),
+        )
     )
 
     if body.limit is not None:
@@ -689,7 +693,7 @@ async def _rest_search_attributes(db: Session, body: SearchAttributesBody) -> Se
             event_dict = attribute.event.__dict__.copy()
             event_dict["date"] = str(event_dict["date"])
             attribute_dict["Event"] = SearchAttributesEvent(**event_dict)
-        if attribute.object_id != 0:
+        if attribute.object_id != 0 and attribute.object_id is not None:
             object_dict = attribute.mispobject.__dict__.copy()
             attribute_dict["Object"] = SearchAttributesObject(**object_dict)
 
