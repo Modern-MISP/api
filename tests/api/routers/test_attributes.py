@@ -339,24 +339,51 @@ async def test_delete_selected_attributes_from_existing_event(
 
 
 @pytest.mark.asyncio
-async def test_valid_parameters_attribute_statistics(site_admin_user_token, client) -> None:
-    request_body = {"context": "category", "percentage": "1"}
-    context = request_body["context"]
-    percentage = request_body["percentage"]
+async def test_attribute_type_absolute_statistics(event, attribute, site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.get(f"/attributes/attributeStatistics/{context}/{percentage}", headers=headers)
+    response = client.get("/attributes/attributeStatistics/type/0", headers=headers)
     assert response.status_code == 200
     response_json = response.json()
 
-    if context == "category":
-        for category in GetDescribeTypesAttributes().categories:
-            assert category in response_json
-    else:
-        for type in GetDescribeTypesAttributes().types:
-            assert type in response_json
-    if percentage == 1:
-        for item in response_json:
-            assert "%" in item
+    for type in GetDescribeTypesAttributes().types:
+        assert type in response_json
+
+
+@pytest.mark.asyncio
+async def test_attribute_type_relative_statistics(event, attribute, site_admin_user_token, client) -> None:
+    headers = {"authorization": site_admin_user_token}
+    response = client.get("/attributes/attributeStatistics/type/1", headers=headers)
+    assert response.status_code == 200
+    response_json = response.json()
+
+    for type in GetDescribeTypesAttributes().types:
+        assert type in response_json
+    for item in response_json:
+        assert "%" in item
+
+
+@pytest.mark.asyncio
+async def test_attribute_category_absolute_statistics(event, site_admin_user_token, client) -> None:
+    headers = {"authorization": site_admin_user_token}
+    response = client.get("/attributes/attributeStatistics/category/0", headers=headers)
+    assert response.status_code == 200
+    response_json = response.json()
+
+    for category in GetDescribeTypesAttributes().categories:
+        assert category in response_json
+
+
+@pytest.mark.asyncio
+async def test_attribute_category_relative_statistics(event, site_admin_user_token, client) -> None:
+    headers = {"authorization": site_admin_user_token}
+    response = client.get("/attributes/attributeStatistics/category/1", headers=headers)
+    assert response.status_code == 200
+    response_json = response.json()
+
+    for category in GetDescribeTypesAttributes().categories:
+        assert category in response_json
+    for item in response_json:
+        assert "%" in item
 
 
 @pytest.mark.asyncio
