@@ -29,24 +29,25 @@ async def test_get_server(site_admin_user_token, instance_owner_org, server, cli
 
     assert result.status_code == 200
     response = result.json()
-    assert response["id"] == server.id
-    assert response["org_id"] == instance_owner_org.id
-    assert response["name"] == server.name
-    assert response["url"] == server.url
-    assert response["authkey"] == server.authkey
-    assert response["push"] == server.push
-    assert response["pull"] == server.pull
-    assert response["push_sightings"] == server.push_sightings
-    assert response["push_galaxy_clusters"] == server.push_galaxy_clusters
-    assert response["pull_galaxy_clusters"] == server.pull_galaxy_clusters
-    assert response["remote_org_id"] == server.remote_org_id
-    assert response["publish_without_email"] == server.publish_without_email
-    assert response["unpublish_event"] == server.unpublish_event
-    assert response["self_signed"] == server.self_signed
-    assert response["internal"] == server.internal
-    assert response["skip_proxy"] == server.skip_proxy
-    assert response["caching_enabled"] == server.caching_enabled
-    assert response["priority"] == server.priority
+    ic(response)
+    server_resp = response["Server"]
+    assert server_resp["id"] == server.id
+    assert server_resp["org_id"] == instance_owner_org.id
+    assert server_resp["name"] == server.name
+    assert server_resp["url"] == server.url
+    assert server_resp["push"] == server.push
+    assert server_resp["pull"] == server.pull
+    assert server_resp["push_sightings"] == server.push_sightings
+    assert server_resp["push_galaxy_clusters"] == server.push_galaxy_clusters
+    assert server_resp["pull_galaxy_clusters"] == server.pull_galaxy_clusters
+    assert server_resp["remote_org_id"] == server.remote_org_id
+    assert server_resp["publish_without_email"] == server.publish_without_email
+    assert server_resp["unpublish_event"] == server.unpublish_event
+    assert server_resp["self_signed"] == server.self_signed
+    assert server_resp["internal"] == server.internal
+    assert server_resp["skip_proxy"] == server.skip_proxy
+    assert server_resp["caching_enabled"] == server.caching_enabled
+    assert server_resp["priority"] == server.priority
 
 
 @pytest.mark.asyncio
@@ -58,12 +59,11 @@ async def test_get_servers(site_admin_user_token, instance_owner_org, server, cl
     ic(response)
     assert isinstance(response, list)
     assert response[len(response) - 1] is not None
-    serv = response[len(response) - 1]
+    serv = response[len(response) - 1]["Server"]
     assert serv["id"] == server.id
     assert serv["org_id"] == instance_owner_org.id
     assert serv["name"] == server.name
     assert serv["url"] == server.url
-    assert serv["authkey"] == server.authkey
     assert serv["push"] == server.push
     assert serv["pull"] == server.pull
     assert serv["push_sightings"] == server.push_sightings
@@ -96,8 +96,6 @@ async def test_add_remote_server(site_admin_user_token, client, db) -> None:
             "internal": False,
             "push": False,
             "pull": False,
-            "pull_rules": "default_pull_rules",
-            "push_rules": "default_push_rules",
             "push_galaxy_clusters": False,
             "caching_enabled": False,
             "unpublish_event": False,
@@ -109,10 +107,11 @@ async def test_add_remote_server(site_admin_user_token, client, db) -> None:
 
     # Check if the Status Code is 200
     json_str = response.json()
+    ic(json_str)
     assert response.status_code == 200
 
     await db.commit()
-    query = select(Server).where(Server.id == json_str.get("id"))
+    query = select(Server).where(Server.id == json_str["Server"]["id"])
     server = (await db.execute(query)).scalars().first()
 
     assert name == server.name
@@ -139,8 +138,6 @@ async def test_delete_remote_server(site_admin_user_token, client, db) -> None:
             "internal": False,
             "push": False,
             "pull": False,
-            "pull_rules": "default_pull_rules",
-            "push_rules": "default_push_rules",
             "push_galaxy_clusters": False,
             "caching_enabled": False,
             "unpublish_event": False,
@@ -154,7 +151,7 @@ async def test_delete_remote_server(site_admin_user_token, client, db) -> None:
     assert response.status_code == 200
 
     await db.commit()
-    query = select(Server).where(Server.id == json_str.get("id"))
+    query = select(Server).where(Server.id == json_str["Server"]["id"])
     server = (await db.execute(query)).scalars().first()
 
     assert name == server.name
@@ -255,8 +252,6 @@ async def test_edit_server(db, site_admin_user_token, client, instance_two_serve
         "internal": False,
         "push": True,
         "pull": True,
-        "pull_rules": "rule1",
-        "push_rules": "rule2",
         "push_galaxy_clusters": True,
         "caching_enabled": True,
         "unpublish_event": False,
@@ -265,15 +260,14 @@ async def test_edit_server(db, site_admin_user_token, client, instance_two_serve
         "skip_proxy": True,
     }
     edit_response = client.post(
-        f"/servers/remote/edit/{instance_two_server.org_id}",
+        f"/servers/remote/edit/{instance_two_server.id}",
         headers={"authorization": site_admin_user_token},
         json=request,
     )
 
     edit_response_json = edit_response.json()
-    assert isinstance(edit_response_json, list)
-    assert edit_response_json[len(edit_response_json) - 1] is not None
-    serv = edit_response_json[len(edit_response_json) - 1]
+    ic(edit_response_json)
+    serv = edit_response_json["Server"]
     assert serv["id"] == instance_two_server.id
     assert serv["name"] == request["name"]
     assert serv["url"] == request["url"]

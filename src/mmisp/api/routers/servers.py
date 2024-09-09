@@ -2,11 +2,20 @@ import importlib
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Path, status
-from sqlalchemy.future import select
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize, check_permissions
+from mmisp.api_schemas.organisations import BaseOrganisation
 from mmisp.api_schemas.responses.standard_status_response import StandardStatusIdentifiedResponse
-from mmisp.api_schemas.servers import AddServer, AddServerResponse, EditServer, GetRemoteServersResponse
+from mmisp.api_schemas.servers import (
+    AddServer,
+    AddServerResponse,
+    AddServerServer,
+    EditServer,
+    GetRemoteServer,
+    ServerResponse,
+)
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.server import Server
 
@@ -20,7 +29,7 @@ router = APIRouter(tags=["servers"])
 async def get_remote_servers(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-) -> list[GetRemoteServersResponse]:
+) -> list[GetRemoteServer]:
     """
     Returns a list of all currently active remote servers.
 
@@ -43,7 +52,7 @@ async def get_remote_server_by_id(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     server_Id: Annotated[str, Path(alias="serverId")],
-) -> GetRemoteServersResponse:
+) -> GetRemoteServer:
     """
     Returns information for a specific remote server chosen by its id.
 
@@ -141,15 +150,15 @@ async def get_version(
 
 
 @router.post(
-    "/servers/remote/edit/{org_Id}",
-    summary="Edits remote servers by org id",
+    "/servers/remote/edit/{server_id}",
+    summary="Edits remote servers",
 )
 async def update_remote_server(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    organisation_id: Annotated[str, Path(alias="org_Id")],
+    server_id: Annotated[str, Path(alias="server_id")],
     body: EditServer,
-) -> list[GetRemoteServersResponse]:
+) -> AddServerResponse:
     """
     Edits servers given by org_id.
 
@@ -165,7 +174,7 @@ async def update_remote_server(
 
     - Updated servers as a list
     """
-    return await _edit_servers_by_id(auth=auth, db=db, org_id=organisation_id, body=body)
+    return await _edit_server_by_id(auth=auth, db=db, server_id=server_id, body=body)
 
 
 # --- deprecated ---
@@ -179,7 +188,7 @@ async def update_remote_server(
 async def get_remote_servers_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-) -> list[GetRemoteServersResponse]:
+) -> list[GetRemoteServer]:
     """Deprecated
     Returns a list of all currently active remote servers.
 
@@ -210,7 +219,6 @@ async def add_remote_server_depr(
     Input:
 
     - Data containing details of the remote server to be added
-
     - The current database
 
     Output:
@@ -223,79 +231,70 @@ async def add_remote_server_depr(
 # --- endpoint logic ---
 
 
-async def _get_remote_servers(auth: Auth, db: Session) -> list[GetRemoteServersResponse]:
+async def _get_remote_servers(auth: Auth, db: Session) -> list[GetRemoteServer]:
     if not (
         await check_permissions(db, auth, [Permission.SITE_ADMIN])
         or await check_permissions(db, auth, [Permission.ADMIN])
     ):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
-    query = select(Server)
+    query = select(Server).options(
+        selectinload(Server.remote_organisation), selectinload(Server.organisation), selectinload(Server.users)
+    )
     result = await db.execute(query)
-    servers = result.fetchall()
-    server_list_computed: list[GetRemoteServersResponse] = []
+    servers = result.scalars().all()
 
-    for server in servers:
-        server_list_computed.append(
-            GetRemoteServersResponse(
-                id=server[0].id,
-                name=server[0].name,
-                url=server[0].url,
-                authkey=server[0].authkey,
-                org_id=server[0].org_id,
-                push=server[0].push,
-                pull=server[0].pull,
-                push_sightings=server[0].push_sightings,
-                push_galaxy_clusters=server[0].push_galaxy_clusters,
-                pull_galaxy_clusters=server[0].pull_galaxy_clusters,
-                remote_org_id=server[0].remote_org_id,
-                publish_without_email=server[0].publish_without_email,
-                unpublish_event=server[0].unpublish_event,
-                self_signed=server[0].self_signed,
-                internal=server[0].internal,
-                skip_proxy=server[0].skip_proxy,
-                caching_enabled=server[0].caching_enabled,
-                priority=server[0].priority,
-            )
-        )
-
-    return server_list_computed
+    return [get_remote_server_answer(server) for server in servers]
 
 
-async def _get_remote_server_by_id(auth: Auth, db: Session, serverId: str) -> GetRemoteServersResponse:
+def get_remote_server_answer(server: Server) -> GetRemoteServer:
+    server_dict = server.__dict__.copy()
+    server_dict["lastpulledid"] = server_dict.pop("last_pulled_id")
+    server_dict["lastpushedid"] = server_dict.pop("last_pushed_id")
+
+    org_dict = server.organisation.__dict__.copy()
+    if server.remote_organisation is not None:
+        remote_org_dict = server.remote_organisation.__dict__.copy()
+    else:
+        remote_org_dict = {
+            "id": None,
+            "name": None,
+            "type": None,
+            "uuid": None,
+        }
+
+    users_list_dict = [user.__dict__.copy() for user in server.users]
+
+    return GetRemoteServer(
+        Server=ServerResponse(**server_dict),
+        Organisation=BaseOrganisation(**org_dict),
+        RemoteOrg=BaseOrganisation(**remote_org_dict),
+        User=users_list_dict,
+    )
+
+
+async def _get_remote_server_by_id(auth: Auth, db: Session, serverId: str) -> GetRemoteServer:
     if not (
         await check_permissions(db, auth, [Permission.SITE_ADMIN])
         or await check_permissions(db, auth, [Permission.ADMIN])
     ):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
-    query = select(Server).where(Server.id == serverId)
+    query = (
+        select(Server)
+        .options(
+            selectinload(Server.remote_organisation), selectinload(Server.organisation), selectinload(Server.users)
+        )
+        .where(Server.id == serverId)
+    )
+
     result = await db.execute(query)
     server = result.scalar_one_or_none()
 
     if server is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Remote server not found")
 
-    return GetRemoteServersResponse(
-        id=server.id,
-        name=server.name,
-        url=server.url,
-        authkey=server.authkey,
-        org_id=server.org_id,
-        push=server.push,
-        pull=server.pull,
-        push_sightings=server.push_sightings,
-        push_galaxy_clusters=server.push_galaxy_clusters,
-        pull_galaxy_clusters=server.pull_galaxy_clusters,
-        remote_org_id=server.remote_org_id,
-        publish_without_email=server.publish_without_email,
-        unpublish_event=server.unpublish_event,
-        self_signed=server.self_signed,
-        internal=server.internal,
-        skip_proxy=server.skip_proxy,
-        caching_enabled=server.caching_enabled,
-        priority=server.priority,
-    )
+    return get_remote_server_answer(server)
 
 
 async def _add_remote_server(auth: Auth, db: Session, body: AddServer) -> AddServerResponse:
@@ -304,6 +303,9 @@ async def _add_remote_server(auth: Auth, db: Session, body: AddServer) -> AddSer
         and await check_permissions(db, auth, [Permission.ADMIN])
     ):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
+
+    if body.org_id is None:
+        body.org_id = auth.org_id
 
     server = Server(
         name=body.name,
@@ -315,8 +317,8 @@ async def _add_remote_server(auth: Auth, db: Session, body: AddServer) -> AddSer
         internal=body.internal,
         push=body.push,
         pull=body.pull,
-        pull_rules=body.pull_rules,
-        push_rules=body.push_rules,
+        pull_rules=body.pull_rules.json().replace(" ", ""),
+        push_rules=body.push_rules.json().replace(" ", ""),
         push_galaxy_clusters=body.push_galaxy_clusters,
         caching_enabled=body.caching_enabled,
         unpublish_event=body.unpublish_event,
@@ -328,9 +330,9 @@ async def _add_remote_server(auth: Auth, db: Session, body: AddServer) -> AddSer
     await db.commit()
     await db.refresh(server)
 
-    return AddServerResponse(
-        id=server.id,
-    )
+    server_dict = server.__dict__.copy()
+
+    return AddServerResponse(Server=AddServerServer(**server_dict))
 
 
 async def _delete_remote_server(auth: Auth, db: Session, server_id: str) -> StandardStatusIdentifiedResponse:
@@ -359,63 +361,41 @@ async def _delete_remote_server(auth: Auth, db: Session, server_id: str) -> Stan
     )
 
 
-async def _edit_servers_by_id(auth: Auth, db: Session, org_id: str, body: EditServer) -> list[GetRemoteServersResponse]:
+async def _edit_server_by_id(auth: Auth, db: Session, server_id: str, body: EditServer) -> AddServerResponse:
     if not (
         await check_permissions(db, auth, [Permission.SITE_ADMIN])
         or await check_permissions(db, auth, [Permission.ADMIN])
     ):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
-    int_orgId = 0
-    try:
-        int_orgId = int(org_id)
 
-    except ValueError:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Organisation not found")
+    query = select(Server).where(Server.id == server_id)
+    result = await db.execute(query)
+    server = result.scalars().one_or_none()
 
-    query = select(Server)
-    server_result = await db.execute(query)
-    server_list = server_result.fetchall()
-    response = []
-    for server in server_list:
-        if server[0].org_id == int_orgId:
-            server[0].name = body.name
-            server[0].url = body.url
-            server[0].priority = body.priority
-            server[0].authkey = body.authkey
-            server[0].remote_org_id = body.remote_org_id
-            server[0].internal = body.internal
-            server[0].push = body.push
-            server[0].pull = body.pull
-            server[0].pull_rules = body.pull_rules
-            server[0].push_rules = body.push_rules
-            server[0].push_galaxy_clusters = body.push_galaxy_clusters
-            server[0].caching_enabled = body.caching_enabled
-            server[0].unpublish_event = body.unpublish_event
-            server[0].publish_without_email = body.publish_without_email
-            server[0].self_signed = body.self_signed
-            server[0].skip_proxy = body.skip_proxy
-            await db.commit()
-            await db.refresh(server[0])
-            remote_server = GetRemoteServersResponse(
-                id=server[0].id,
-                name=server[0].name,
-                url=server[0].url,
-                authkey=server[0].authkey,
-                org_id=server[0].org_id,
-                push=server[0].push,
-                pull=server[0].pull,
-                push_sightings=server[0].push_sightings,
-                push_galaxy_clusters=server[0].push_galaxy_clusters,
-                pull_galaxy_clusters=server[0].pull_galaxy_clusters,
-                remote_org_id=server[0].remote_org_id,
-                publish_without_email=server[0].publish_without_email,
-                unpublish_event=server[0].unpublish_event,
-                self_signed=server[0].self_signed,
-                internal=server[0].internal,
-                skip_proxy=server[0].skip_proxy,
-                caching_enabled=server[0].caching_enabled,
-                priority=server[0].priority,
-            )
-            response.append(remote_server)
+    if server is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
 
-    return response
+    server.name = body.name
+    server.url = body.url
+    server.priority = body.priority
+    server.authkey = body.authkey
+    server.remote_org_id = body.remote_org_id
+    server.internal = body.internal
+    server.push = body.push
+    server.pull = body.pull
+    server.pull_rules = body.pull_rules.json().replace(" ", "")
+    server.push_rules = body.push_rules.json().replace(" ", "")
+    server.push_galaxy_clusters = body.push_galaxy_clusters
+    server.caching_enabled = body.caching_enabled
+    server.unpublish_event = body.unpublish_event
+    server.publish_without_email = body.publish_without_email
+    server.self_signed = body.self_signed
+    server.skip_proxy = body.skip_proxy
+
+    db.add(server)
+    await db.commit()
+    await db.refresh(server)
+
+    server_dict = server.__dict__.copy()
+
+    return AddServerResponse(Server=AddServerServer(**server_dict))
