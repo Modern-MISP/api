@@ -4,7 +4,6 @@ import sqlalchemy as sa
 from icecream import ic
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from mmisp.api_schemas.attributes import GetDescribeTypesAttributes
 from mmisp.db.models.attribute import AttributeTag
 from mmisp.tests.generators.model_generators.tag_generator import generate_tag
 
@@ -345,8 +344,7 @@ async def test_attribute_type_absolute_statistics(event, attribute, site_admin_u
     assert response.status_code == 200
     response_json = response.json()
 
-    for type in GetDescribeTypesAttributes().types:
-        assert type in response_json
+    assert attribute.type in response_json.keys()
 
 
 @pytest.mark.asyncio
@@ -356,41 +354,36 @@ async def test_attribute_type_relative_statistics(event, attribute, site_admin_u
     assert response.status_code == 200
     response_json = response.json()
 
-    for type in GetDescribeTypesAttributes().types:
-        assert type in response_json
-    for item in response_json:
-        assert "%" in item
+    assert attribute.type in response_json.keys()
+    for _, v in response_json.items():
+        assert "%" in v
 
 
 @pytest.mark.asyncio
-async def test_attribute_category_absolute_statistics(event, site_admin_user_token, client) -> None:
+async def test_attribute_category_absolute_statistics(event, attribute, site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.get("/attributes/attributeStatistics/category/0", headers=headers)
     assert response.status_code == 200
     response_json = response.json()
 
-    for category in GetDescribeTypesAttributes().categories:
-        assert category in response_json
+    assert attribute.category in response_json.keys()
 
 
 @pytest.mark.asyncio
-async def test_attribute_category_relative_statistics(event, site_admin_user_token, client) -> None:
+async def test_attribute_category_relative_statistics(event, attribute, site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.get("/attributes/attributeStatistics/category/1", headers=headers)
     assert response.status_code == 200
     response_json = response.json()
 
-    for category in GetDescribeTypesAttributes().categories:
-        assert category in response_json
-    for item in response_json:
-        assert "%" in item
+    assert attribute.category in response_json.keys()
+    for _, v in response_json.items():
+        assert "%" in v
 
 
 @pytest.mark.asyncio
 async def test_invalid_parameters_attribute_statistics(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.get("/attributes/attributeStatistics/invalid_context/0", headers=headers)
-    assert response.status_code == 422
     response = client.get("/attributes/attributeStatistics/type/non_boolean", headers=headers)
     assert response.status_code == 422
 

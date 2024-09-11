@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import Annotated
+from typing import Annotated, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Request, status
 from sqlalchemy import func, select
@@ -103,7 +103,6 @@ async def add_attribute(
 @router.get(
     "/attributes/describeTypes",
     status_code=status.HTTP_200_OK,
-    response_model=GetDescribeTypesResponse,
     summary="Get all attribute describe types",
 )
 async def get_attributes_describe_types(
@@ -268,12 +267,13 @@ async def delete_selected_attributes(
     "/attributes/attributeStatistics/type/{percentage}",
     status_code=status.HTTP_200_OK,
     summary="Get attribute statistics",
+    response_model_exclude_unset=True,
 )
 async def get_attributes_type_statistics(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     percentage: bool,
-) -> GetAttributeStatisticsTypesResponse:
+) -> GetAttributeStatisticsTypesResponse:  # type: ignore
     """Get the count/percentage of attributes per category/type.
 
     Input:
@@ -290,15 +290,16 @@ async def get_attributes_type_statistics(
 
 
 @router.get(
-    "/attributes/attributeStatistics/{context}/{percentage}",
+    "/attributes/attributeStatistics/category/{percentage}",
     status_code=status.HTTP_200_OK,
     summary="Get attribute statistics",
+    response_model_exclude_unset=True,
 )
 async def get_attributes_category_statistics(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     percentage: bool,
-) -> GetAttributeStatisticsCategoriesResponse:
+) -> GetAttributeStatisticsCategoriesResponse:  # type: ignore
     """Get the count/percentage of attributes per category/type.
 
     Input:
@@ -897,37 +898,37 @@ async def _prepare_edit_attribute_response(
     return EditAttributeAttributes(**attribute_dict)
 
 
-async def _get_attribute_category_statistics(db: Session, percentage: bool) -> GetAttributeStatisticsCategoriesResponse:
+async def _get_attribute_category_statistics(db: Session, percentage: bool) -> GetAttributeStatisticsCategoriesResponse:  # type: ignore
     qry = select(Attribute.category, func.count(Attribute.category).label("count")).group_by(Attribute.category)
     result = await db.execute(qry)
     attribute_count_by_category = result.all()
-    attribute_count_by_category_dict = {x.category: x.count for x in attribute_count_by_category}
+    attribute_count_by_category_dict: dict[str, int] = {
+        x.category: cast(int, x.count) for x in attribute_count_by_category
+    }
 
     if percentage:
-        total_count_of_attributes = sum(x.count for x in attribute_count_by_category)
+        total_count_of_attributes = sum(cast(int, x.count) for x in attribute_count_by_category)
         percentages = {
-            k: round(v / total_count_of_attributes * 100, 2) for k, v in attribute_count_by_category_dict.items()
+            k: f"{str(round(v / total_count_of_attributes * 100, 3)).rstrip('.0')}%"
+            for k, v in attribute_count_by_category_dict.items()
         }
-        response_dict = {x: f"{percentages.get(x, '0')}%" for x in GetDescribeTypesAttributes().types}
-        return GetAttributeStatisticsCategoriesResponse(**response_dict)
+        return GetAttributeStatisticsCategoriesResponse(**percentages)
 
-    response_dict = {x: attribute_count_by_category_dict.get(x, "0") for x in GetDescribeTypesAttributes().types}
-    return GetAttributeStatisticsCategoriesResponse(**response_dict)
+    return GetAttributeStatisticsCategoriesResponse(**attribute_count_by_category_dict)
 
 
-async def _get_attribute_type_statistics(db: Session, percentage: bool) -> GetAttributeStatisticsTypesResponse:
+async def _get_attribute_type_statistics(db: Session, percentage: bool) -> GetAttributeStatisticsTypesResponse:  # type: ignore
     qry = select(Attribute.type, func.count(Attribute.type).label("count")).group_by(Attribute.type)
     result = await db.execute(qry)
     attribute_count_by_group = result.all()
-    attribute_count_by_group_dict = {x.type: x.count for x in attribute_count_by_group}
+    attribute_count_by_group_dict: dict[str, int] = {x.type: cast(int, x.count) for x in attribute_count_by_group}
 
     if percentage:
-        total_count_of_attributes = sum(x.count for x in attribute_count_by_group)
+        total_count_of_attributes = sum(cast(int, x.count) for x in attribute_count_by_group)
         percentages = {
-            k: round(v / total_count_of_attributes * 100, 2) for k, v in attribute_count_by_group_dict.items()
+            k: f"{str(round(v / total_count_of_attributes * 100, 3)).strip('.0')}%"
+            for k, v in attribute_count_by_group_dict.items()
         }
-        response_dict = {x: f"{percentages.get(x, '0')}%" for x in GetDescribeTypesAttributes().types}
-        return GetAttributeStatisticsTypesResponse(**response_dict)
+        return GetAttributeStatisticsTypesResponse(**percentages)
 
-    response_dict = {x: attribute_count_by_group_dict.get(x, "0") for x in GetDescribeTypesAttributes().types}
-    return GetAttributeStatisticsTypesResponse(**response_dict)
+    return GetAttributeStatisticsTypesResponse(**attribute_count_by_group_dict)
