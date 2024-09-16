@@ -1,4 +1,3 @@
-import json
 from calendar import timegm
 from collections import defaultdict
 from collections.abc import Sequence
@@ -60,6 +59,7 @@ from mmisp.db.models.object import Object
 from mmisp.db.models.tag import Tag
 from mmisp.db.models.user import User
 from mmisp.lib.actions import action_publish_event
+from mmisp.lib.galaxies import parse_galaxy_authors
 from mmisp.util.models import update_record
 from mmisp.util.partial import partial
 
@@ -1067,13 +1067,6 @@ async def _prepare_tag_response(
     return tag_response_list
 
 
-def json_or_original_string(s: str) -> str | dict | list:
-    try:
-        return json.loads(s)
-    except json.decoder.JSONDecodeError:
-        return s
-
-
 async def _prepare_single_galaxy_cluster_response(
     db: Session, galaxy_cluster: GalaxyCluster, connecting_tag: AttributeTag | EventTag
 ) -> AddEditGetEventGalaxyCluster:
@@ -1089,10 +1082,7 @@ async def _prepare_single_galaxy_cluster_response(
             galaxy_cluster_dict["meta"][element.key].append(element.value)
 
     if galaxy_cluster_dict["authors"] is not None:
-        parsed_author = json_or_original_string(galaxy_cluster.authors)
-        if isinstance(parsed_author, str):
-            parsed_author = [parsed_author]  # force to be a list
-        galaxy_cluster_dict["authors"] = parsed_author
+        galaxy_cluster_dict["authors"] = parse_galaxy_authors(galaxy_cluster_dict["authors"])
 
     fields_to_convert = ["org_id", "orgc_id", "extends_version"]
 

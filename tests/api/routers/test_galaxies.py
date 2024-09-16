@@ -251,12 +251,13 @@ async def test_get_existing_galaxy_cluster(
     assert response.status_code == 200
 
     response_json = response.json()
+    gc = response_json["GalaxyCluster"]
 
-    assert response_json["id"] == str(galaxy_cluster_id)
-    assert response_json["galaxy_id"] == str(galaxy_id)
-    assert response_json["type"] == add_galaxy_cluster_body3.type
-    assert response_json["value"] == add_galaxy_cluster_body3.value
-    assert response_json["tag_name"] == add_galaxy_cluster_body3.tag_name
+    assert gc["id"] == str(galaxy_cluster_id)
+    assert gc["galaxy_id"] == str(galaxy_id)
+    assert gc["type"] == add_galaxy_cluster_body3.type
+    assert gc["value"] == add_galaxy_cluster_body3.value
+    assert gc["tag_name"] == add_galaxy_cluster_body3.tag_name
 
 
 @pytest.mark.asyncio
