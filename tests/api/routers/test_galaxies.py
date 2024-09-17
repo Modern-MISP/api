@@ -261,6 +261,30 @@ async def test_get_existing_galaxy_cluster(
 
 
 @pytest.mark.asyncio
+async def test_get_default_galaxy_cluster(db: Session, site_admin_user_token, test_default_galaxy, client) -> None:
+    galaxy_cluster = test_default_galaxy["galaxy_cluster"]
+    path = f"/galaxy_clusters/view/{galaxy_cluster.id}"
+
+    headers = {"authorization": site_admin_user_token}
+    response = client.get(path, headers=headers)
+    ic(response.text)
+
+    assert response.status_code == 200
+
+    response_json = response.json()
+    gc = response_json["GalaxyCluster"]
+    ic(gc)
+    assert gc["Org"]["id"] == "0"
+    assert gc["id"] == str(galaxy_cluster.id)
+    assert gc["Org"]["date_created"] == ""
+    assert gc["Orgc"]["date_created"] == ""
+    assert gc["Org"]["date_modified"] == ""
+    assert gc["Orgc"]["date_modified"] == ""
+    assert gc["Org"]["restricted_to_domain"] == []
+    assert gc["Orgc"]["restricted_to_domain"] == []
+
+
+@pytest.mark.asyncio
 async def test_get_non_existing_galaxy_cluster(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.get("/galaxies/clusters/0", headers=headers)
