@@ -404,13 +404,11 @@ async def _get_galaxy_cluster(db: Session, galaxy_cluster: GalaxyCluster | None)
     ]
 
     # Get the Organisations
-    if galaxy_cluster.org_id == 0:
-        galaxy_cluster.org = GENERIC_MISP_ORGANISATION
-    if galaxy_cluster.orgc_id == 0:
-        galaxy_cluster.orgc = GENERIC_MISP_ORGANISATION
+    org = galaxy_cluster.org if galaxy_cluster.org_id != 0 else GENERIC_MISP_ORGANISATION
+    orgc = galaxy_cluster.orgc if galaxy_cluster.orgc_id != 0 else GENERIC_MISP_ORGANISATION
 
-    galaxy_cluster_dict["Org"] = await _get_organisation_for_cluster(db, galaxy_cluster.org)
-    galaxy_cluster_dict["Orgc"] = await _get_organisation_for_cluster(db, galaxy_cluster.orgc)
+    galaxy_cluster_dict["Org"] = await _get_organisation_for_cluster(db, org)
+    galaxy_cluster_dict["Orgc"] = await _get_organisation_for_cluster(db, orgc)
 
     return GalaxyClusterResponse(GalaxyCluster=GetGalaxyClusterResponse(**galaxy_cluster_dict))
 
