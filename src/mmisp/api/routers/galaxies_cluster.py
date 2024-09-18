@@ -1,3 +1,5 @@
+import json
+import time
 from collections.abc import Sequence
 from typing import Annotated, Any
 
@@ -22,6 +24,7 @@ from mmisp.api_schemas.galaxies import (
     ImportGalaxyBody,
 )
 from mmisp.api_schemas.galaxy_clusters import (
+    AddGalaxyClusterRequest,
     ExportGalaxyClusterResponse,
     GalaxyClusterResponse,
     GetGalaxyClusterResponse,
@@ -35,7 +38,8 @@ from mmisp.db.models.galaxy_cluster import GalaxyCluster, GalaxyElement, GalaxyR
 from mmisp.db.models.organisation import Organisation
 from mmisp.db.models.tag import Tag
 from mmisp.lib.fallbacks import GENERIC_MISP_ORGANISATION
-from mmisp.lib.galaxies import parse_galaxy_authors
+from mmisp.lib.galaxies import galaxy_tag_name, parse_galaxy_authors
+from mmisp.util.uuid import uuid
 
 router = APIRouter(tags=["galaxy_clusters"])
 
@@ -43,7 +47,6 @@ router = APIRouter(tags=["galaxy_clusters"])
 @router.post(
     "/galaxies/import",
     status_code=status.HTTP_200_OK,
-    response_model=DeleteForceUpdateImportGalaxyResponse,
     summary="Add new galaxy cluster",
 )
 async def import_galaxy_cluster(
@@ -101,7 +104,6 @@ async def get_galaxy_cluster(
 @router.post(
     "/galaxies/export/{galaxyId}",
     status_code=status.HTTP_200_OK,
-    response_model=list[ExportGalaxyClusterResponse],
     summary="Export galaxy cluster",
 )
 async def export_galaxy(
@@ -132,7 +134,6 @@ async def export_galaxy(
 @router.post(
     "/galaxies/attachCluster/{attachTargetId}/{attachTargetType}/local:{local}",
     status_code=status.HTTP_200_OK,
-    response_model=AttachClusterGalaxyResponse,
     summary="Attach Cluster to Galaxy.",
 )
 async def galaxies_attachCluster(
@@ -196,6 +197,54 @@ async def get_galaxy_cluster_view(
     - the information of the galaxy cluster
     """
     return await _get_galaxy_cluster(db, await _load_galaxy_cluster(db, cluster_id))
+
+
+@router.post(
+    "/galaxy_clusters/add/{galaxyId}",
+    status_code=status.HTTP_200_OK,
+    summary="Add new galaxy cluster",
+)
+async def add_galaxy_cluster(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
+    db: Annotated[Session, Depends(get_db)],
+    galaxy_id: Annotated[int, Path(alias="galaxyId")],
+    body: AddGalaxyClusterRequest,
+) -> GalaxyClusterResponse:
+    # get galaxy
+    result = await db.execute(select(Galaxy).filter(Galaxy.id == galaxy_id))
+    galaxy = result.scalar_one_or_none()
+
+    if galaxy is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Galaxy not found")
+
+    # get new uuid
+    new_uuid = uuid()
+
+    tag_name = galaxy_tag_name(galaxy.type, new_uuid)
+
+    new_galaxy_cluster = GalaxyCluster(
+        uuid=new_uuid,
+        value=body.value,
+        description=body.description,
+        source=body.source,
+        galaxy_id=galaxy_id,
+        distribution=body.distribution,
+        authors=json.dumps(body.authors),
+        tag_name=tag_name,
+        type=galaxy.type,
+        org_id=auth.org_id,
+        orgc_id=auth.org_id,
+        version=int(time.time()),
+    )
+    db.add(new_galaxy_cluster)
+    await db.flush()
+
+    for ge in body.GalaxyElement:
+        new_galaxy_element = GalaxyElement(galaxy_cluster_id=new_galaxy_cluster.id, key=ge.key, value=ge.value)
+        db.add(new_galaxy_element)
+    await db.flush()
+
+    return await _get_galaxy_cluster(db, await _load_galaxy_cluster(db, new_galaxy_cluster.id))
 
 
 # --- endpoint logic ---
@@ -304,13 +353,6 @@ async def _import_galaxy_cluster(
 
 async def _process_galaxy_cluster_dict(cluster_dict: dict) -> dict:
     cluster_dict["authors"] = parse_galaxy_authors(cluster_dict["authors"])
-
-    int_fields_to_convert = ["sharing_group_id", "org_id", "orgc_id", "extends_version"]
-    for field in int_fields_to_convert:
-        if cluster_dict.get(field) is not None:
-            cluster_dict[field] = str(cluster_dict[field])
-        else:
-            cluster_dict[field] = "0"
 
     if cluster_dict.get("collection_uuid") is None:
         cluster_dict["collection_uuid"] = ""

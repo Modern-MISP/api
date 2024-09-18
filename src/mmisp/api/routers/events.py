@@ -1084,7 +1084,7 @@ async def _prepare_single_galaxy_cluster_response(
     if galaxy_cluster_dict["authors"] is not None:
         galaxy_cluster_dict["authors"] = parse_galaxy_authors(galaxy_cluster_dict["authors"])
 
-    fields_to_convert = ["org_id", "orgc_id", "extends_version"]
+    fields_to_convert = ["org_id", "orgc_id"]
 
     for field in fields_to_convert:
         if galaxy_cluster_dict.get(field) is not None:
