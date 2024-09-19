@@ -43,6 +43,7 @@ dev = [
   "types-Pygments",
   "types-passlib",
   "deepdiff==7.0.1",
+  "pyinstrument",
 ]
 
 [tool.ruff]

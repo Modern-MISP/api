@@ -141,9 +141,9 @@ async def get_version(
     """
     return {
         "version": importlib.metadata.version("mmisp-api"),
-        "perm_sync": await check_permissions(db, auth, [Permission.SYNC]),
-        "perm_sighting": await check_permissions(db, auth, [Permission.SIGHTING]),
-        "perm_galaxy_editor": await check_permissions(db, auth, [Permission.GALAXY_EDITOR]),
+        "perm_sync": check_permissions(auth, [Permission.SYNC]),
+        "perm_sighting": check_permissions(auth, [Permission.SIGHTING]),
+        "perm_galaxy_editor": check_permissions(auth, [Permission.GALAXY_EDITOR]),
         "request_encoding": [],
         "filter_sightings": True,
     }
@@ -232,10 +232,7 @@ async def add_remote_server_depr(
 
 
 async def _get_remote_servers(auth: Auth, db: Session) -> list[GetRemoteServer]:
-    if not (
-        await check_permissions(db, auth, [Permission.SITE_ADMIN])
-        or await check_permissions(db, auth, [Permission.ADMIN])
-    ):
+    if not (check_permissions(auth, [Permission.SITE_ADMIN]) or check_permissions(auth, [Permission.ADMIN])):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
     query = select(Server).options(
@@ -274,10 +271,7 @@ def get_remote_server_answer(server: Server) -> GetRemoteServer:
 
 
 async def _get_remote_server_by_id(auth: Auth, db: Session, serverId: str) -> GetRemoteServer:
-    if not (
-        await check_permissions(db, auth, [Permission.SITE_ADMIN])
-        or await check_permissions(db, auth, [Permission.ADMIN])
-    ):
+    if not (check_permissions(auth, [Permission.SITE_ADMIN]) or check_permissions(auth, [Permission.ADMIN])):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
     query = (
@@ -298,10 +292,7 @@ async def _get_remote_server_by_id(auth: Auth, db: Session, serverId: str) -> Ge
 
 
 async def _add_remote_server(auth: Auth, db: Session, body: AddServer) -> AddServerResponse:
-    if not (
-        await check_permissions(db, auth, [Permission.SITE_ADMIN])
-        and await check_permissions(db, auth, [Permission.ADMIN])
-    ):
+    if not (check_permissions(auth, [Permission.SITE_ADMIN]) and check_permissions(auth, [Permission.ADMIN])):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
     if body.org_id is None:
@@ -336,10 +327,7 @@ async def _add_remote_server(auth: Auth, db: Session, body: AddServer) -> AddSer
 
 
 async def _delete_remote_server(auth: Auth, db: Session, server_id: str) -> StandardStatusIdentifiedResponse:
-    if not (
-        await check_permissions(db, auth, [Permission.SITE_ADMIN])
-        or await check_permissions(db, auth, [Permission.ADMIN])
-    ):
+    if not (check_permissions(auth, [Permission.SITE_ADMIN]) or check_permissions(auth, [Permission.ADMIN])):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
     server_to_delete = await db.get(Server, server_id)
@@ -362,10 +350,7 @@ async def _delete_remote_server(auth: Auth, db: Session, server_id: str) -> Stan
 
 
 async def _edit_server_by_id(auth: Auth, db: Session, server_id: str, body: EditServer) -> AddServerResponse:
-    if not (
-        await check_permissions(db, auth, [Permission.SITE_ADMIN])
-        or await check_permissions(db, auth, [Permission.ADMIN])
-    ):
+    if not (check_permissions(auth, [Permission.SITE_ADMIN]) or check_permissions(auth, [Permission.ADMIN])):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
     query = select(Server).where(Server.id == server_id)

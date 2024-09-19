@@ -1,8 +1,8 @@
 import json
 import string
 import time
-from datetime import datetime
 from collections.abc import Sequence
+from datetime import datetime
 from typing import TYPE_CHECKING, Annotated, Any, Tuple
 
 from fastapi import APIRouter, Depends, HTTPException, Path, status
@@ -380,7 +380,7 @@ async def _auth_key_add(auth: Auth, db: Session, user_id: int, body: AddAuthKeyB
     if body.user_id is not None:
         user_id = body.user_id
 
-    if auth.user_id != user_id and not await check_permissions(db, auth, [Permission.SITE_ADMIN]):
+    if auth.user_id != user_id and not check_permissions(auth, [Permission.SITE_ADMIN]):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
     auth_key_string = generate(size=40, alphabet=string.ascii_letters + string.digits)
@@ -443,8 +443,8 @@ async def _auth_keys_view(
 
     if (
         auth_key.user_id != auth.user_id
-        and (not await check_permissions(db, auth, [Permission.ADMIN]) or user.org_id != auth.org_id)
-        and (not await check_permissions(db, auth, [Permission.SITE_ADMIN]))
+        and (not check_permissions(auth, [Permission.ADMIN]) or user.org_id != auth.org_id)
+        and (not check_permissions(auth, [Permission.SITE_ADMIN]))
     ):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
@@ -476,9 +476,9 @@ async def _search_auth_keys(
 ) -> list[SearchGetAuthKeysResponseItem]:
     query = select(AuthKey, User).join(User, AuthKey.user_id == User.id)
 
-    if not await check_permissions(db, auth, [Permission.SITE_ADMIN]):
+    if not check_permissions(auth, [Permission.SITE_ADMIN]):
         query = query.filter(User.org_id == auth.org_id)
-    if not await check_permissions(db, auth, [Permission.ADMIN]):
+    if not check_permissions(auth, [Permission.ADMIN]):
         query = query.filter(AuthKey.user_id == auth.user_id)
 
     if body.id:
@@ -546,9 +546,9 @@ async def _search_auth_keys_depr(
 ) -> list[SearchGetAuthKeysResponse]:
     query = select(AuthKey, User).join(User, AuthKey.user_id == User.id)
 
-    if not await check_permissions(db, auth, [Permission.SITE_ADMIN]):
+    if not check_permissions(auth, [Permission.SITE_ADMIN]):
         query = query.filter(User.org_id == auth.org_id)
-    if not await check_permissions(db, auth, [Permission.ADMIN]):
+    if not check_permissions(auth, [Permission.ADMIN]):
         query = query.filter(AuthKey.user_id == auth.user_id)
 
     if body.id:
@@ -614,8 +614,8 @@ async def _auth_keys_edit(auth: Auth, db: Session, auth_key_id: int, body: EditA
 
     if not auth_key or (
         auth_key.user_id != auth.user_id
-        and (not await check_permissions(db, auth, [Permission.ADMIN]) or auth_key.user.org_id != auth.org_id)
-        and (not await check_permissions(db, auth, [Permission.SITE_ADMIN]))
+        and (not check_permissions(auth, [Permission.ADMIN]) or auth_key.user.org_id != auth.org_id)
+        and (not check_permissions(auth, [Permission.SITE_ADMIN]))
     ):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
@@ -633,7 +633,7 @@ async def _auth_keys_edit(auth: Auth, db: Session, auth_key_id: int, body: EditA
         update["expiration"] = parse_date(body.expiration)
     else:
         update["expiration"] = None
-    
+
     update_record(auth_key, update)
 
     await db.commit()
@@ -671,8 +671,8 @@ async def _auth_keys_delete(auth: Auth, db: Session, auth_key_id: int) -> None:
 
     if not auth_key or (
         auth_key.user_id != auth.user_id
-        and (not await check_permissions(db, auth, [Permission.ADMIN]) or user.org_id != auth.org_id)
-        and (not await check_permissions(db, auth, [Permission.SITE_ADMIN]))
+        and (not check_permissions(auth, [Permission.ADMIN]) or user.org_id != auth.org_id)
+        and (not check_permissions(auth, [Permission.SITE_ADMIN]))
     ):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
@@ -686,9 +686,9 @@ async def _auth_keys_get(
 ) -> list[SearchGetAuthKeysResponse]:
     query = select(AuthKey, User).join(User, AuthKey.user_id == User.id)
 
-    if not await check_permissions(db, auth, [Permission.SITE_ADMIN]):
+    if not check_permissions(auth, [Permission.SITE_ADMIN]):
         query = query.filter(User.org_id == auth.org_id)
-    if not await check_permissions(db, auth, [Permission.ADMIN]):
+    if not check_permissions(auth, [Permission.ADMIN]):
         query = query.filter(AuthKey.user_id == auth.user_id)
 
     result = await db.execute(query)
@@ -741,13 +741,13 @@ async def _auth_keys_view_own_depr(auth: Auth, db: Session) -> list[SearchGetAut
 
 
 def parse_date(date_str: str) -> int:
-    if len(date_str) != 10 or date_str[4] != '-' or date_str[7] != '-':
+    if len(date_str) != 10 or date_str[4] != "-" or date_str[7] != "-":
         raise ValueError("Date must be in the format yyyy-mm-dd")
-    
+
     try:
         dt = datetime.strptime(date_str, "%Y-%m-%d")
     except ValueError:
         raise ValueError("Invalid date format")
-    
+
     unix_timestamp = int(dt.timestamp())
     return unix_timestamp

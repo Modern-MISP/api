@@ -605,7 +605,7 @@ async def remove_server_from_sharing_group_legacy(
 async def _create_sharing_group(auth: Auth, db: Session, body: CreateSharingGroupBody) -> dict:
     organisation: Organisation | None = None
 
-    if body.organisation_uuid and await check_permissions(db, auth, [Permission.SITE_ADMIN]):
+    if body.organisation_uuid and check_permissions(auth, [Permission.SITE_ADMIN]):
         result = await db.execute(select(Organisation).filter(Organisation.uuid == body.organisation_uuid).limit(1))
         organisation = result.scalars().first()
 
@@ -646,7 +646,7 @@ async def _get_sharing_group(auth: Auth, db: Session, id: int) -> dict:
 
     sharing_group = cast(SharingGroup, sharing_group)
 
-    if sharing_group.org_id == auth.org_id or await check_permissions(db, auth, [Permission.SITE_ADMIN]):
+    if sharing_group.org_id == auth.org_id or check_permissions(auth, [Permission.SITE_ADMIN]):
         return sharing_group.__dict__
 
     result = await db.execute(
@@ -688,7 +688,7 @@ async def _update_sharing_group(auth: Auth, db: Session, id: int, body: UpdateSh
 
     sharing_group = cast(SharingGroup, sharing_group)
 
-    if sharing_group.org_id != auth.org_id and not await check_permissions(db, auth, [Permission.SITE_ADMIN]):
+    if sharing_group.org_id != auth.org_id and not check_permissions(auth, [Permission.SITE_ADMIN]):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     update_record(sharing_group, body.dict())
@@ -707,7 +707,7 @@ async def _delete_sharing_group(auth: Auth, db: Session, id: int) -> dict:
 
     sharing_group = cast(SharingGroup, sharing_group)
 
-    if sharing_group.org_id != auth.org_id and not await check_permissions(db, auth, [Permission.SITE_ADMIN]):
+    if sharing_group.org_id != auth.org_id and not check_permissions(auth, [Permission.SITE_ADMIN]):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     await db.execute(delete(SharingGroupOrg).filter(SharingGroupOrg.sharing_group_id == sharing_group.id))
@@ -722,7 +722,7 @@ async def _delete_sharing_group(auth: Auth, db: Session, id: int) -> dict:
 async def _get_all_sharing_groups(auth: Auth, db: Session) -> dict:
     sharing_groups: Sequence[SharingGroup] = []
 
-    is_site_admin: bool = await check_permissions(db, auth, [Permission.SITE_ADMIN])
+    is_site_admin: bool = check_permissions(auth, [Permission.SITE_ADMIN])
 
     if is_site_admin:
         result = await db.execute(select(SharingGroup))
@@ -822,7 +822,7 @@ async def _get_sharing_group_info(auth: Auth, db: Session, id: int) -> dict:
     if not sharing_group:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
-    if sharing_group.org_id != auth.org_id and not await check_permissions(db, auth, [Permission.SITE_ADMIN]):
+    if sharing_group.org_id != auth.org_id and not check_permissions(auth, [Permission.SITE_ADMIN]):
         result = await db.execute(
             select(SharingGroupOrg)
             .filter(SharingGroupOrg.sharing_group_id == id, SharingGroupOrg.org_id == auth.org_id)
@@ -894,7 +894,7 @@ async def _add_org_to_sharing_group(
     sharing_group: SharingGroup | None = await db.get(SharingGroup, id)
 
     if not sharing_group or (
-        sharing_group.org_id != auth.org_id and not await check_permissions(db, auth, [Permission.SITE_ADMIN])
+        sharing_group.org_id != auth.org_id and not check_permissions(auth, [Permission.SITE_ADMIN])
     ):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
@@ -929,7 +929,7 @@ async def _remove_org_from_sharing_group(auth: Auth, db: Session, id: int, organ
     sharing_group: SharingGroup | None = await db.get(SharingGroup, id)
 
     if not sharing_group or (
-        sharing_group.org_id != auth.org_id and not await check_permissions(db, auth, [Permission.SITE_ADMIN])
+        sharing_group.org_id != auth.org_id and not check_permissions(auth, [Permission.SITE_ADMIN])
     ):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
@@ -953,7 +953,7 @@ async def _add_server_to_sharing_group(auth: Auth, db: Session, id: int, body: A
     sharing_group: SharingGroup | None = await db.get(SharingGroup, id)
 
     if not sharing_group or (
-        sharing_group.org_id != auth.org_id and not await check_permissions(db, auth, [Permission.SITE_ADMIN])
+        sharing_group.org_id != auth.org_id and not check_permissions(auth, [Permission.SITE_ADMIN])
     ):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
@@ -988,7 +988,7 @@ async def _remove_server_from_sharing_group(auth: Auth, db: Session, id: int, se
     sharing_group: SharingGroup | None = await db.get(SharingGroup, id)
 
     if not sharing_group or (
-        sharing_group.org_id != auth.org_id and not await check_permissions(db, auth, [Permission.SITE_ADMIN])
+        sharing_group.org_id != auth.org_id and not check_permissions(auth, [Permission.SITE_ADMIN])
     ):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
@@ -1011,7 +1011,7 @@ async def _remove_server_from_sharing_group(auth: Auth, db: Session, id: int, se
 async def _create_sharing_group_legacy(auth: Auth, db: Session, body: CreateSharingGroupLegacyBody) -> dict:
     organisation: Organisation | None = None
 
-    is_site_admin = await check_permissions(db, auth, [Permission.SITE_ADMIN])
+    is_site_admin = check_permissions(auth, [Permission.SITE_ADMIN])
 
     if body.organisation_uuid and is_site_admin:
         result = await db.execute(select(Organisation).filter(Organisation.uuid == body.organisation_uuid).limit(1))
@@ -1063,7 +1063,7 @@ async def _view_sharing_group_legacy(auth: Auth, db: Session, id: int) -> dict:
     if not sharing_group:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
-    if sharing_group.org_id != auth.org_id and not await check_permissions(db, auth, [Permission.SITE_ADMIN]):
+    if sharing_group.org_id != auth.org_id and not check_permissions(auth, [Permission.SITE_ADMIN]):
         result = await db.execute(
             select(SharingGroupOrg)
             .filter(SharingGroupOrg.sharing_group_id == id, SharingGroupOrg.org_id == auth.org_id)
@@ -1139,7 +1139,7 @@ async def _update_sharing_group_legacy(
 
     sharing_group = cast(SharingGroup, sharing_group)
 
-    if sharing_group.org_id != auth.org_id and not await check_permissions(db, auth, [Permission.SITE_ADMIN]):
+    if sharing_group.org_id != auth.org_id and not check_permissions(auth, [Permission.SITE_ADMIN]):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     update = body.dict(include={"name", "description", "releasability", "local", "active", "roaming"})
@@ -1198,7 +1198,7 @@ async def _delete_sharing_group_legacy(auth: Auth, db: Session, id: int) -> dict
 
     sharing_group = cast(SharingGroup, sharing_group)
 
-    if sharing_group.org_id != auth.org_id and not await check_permissions(db, auth, [Permission.SITE_ADMIN]):
+    if sharing_group.org_id != auth.org_id and not check_permissions(auth, [Permission.SITE_ADMIN]):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     await db.execute(delete(SharingGroupOrg).filter(SharingGroupOrg.sharing_group_id == sharing_group.id))
@@ -1223,7 +1223,7 @@ async def _add_org_to_sharing_group_legacy(
     sharing_group: SharingGroup | None = await db.get(SharingGroup, id)
 
     if not sharing_group or (
-        sharing_group.org_id != auth.org_id and not await check_permissions(db, auth, [Permission.SITE_ADMIN])
+        sharing_group.org_id != auth.org_id and not check_permissions(auth, [Permission.SITE_ADMIN])
     ):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
@@ -1263,7 +1263,7 @@ async def _remove_org_from_sharing_group_legacy(
     sharing_group: SharingGroup | None = await db.get(SharingGroup, id)
 
     if not sharing_group or (
-        sharing_group.org_id != auth.org_id and not await check_permissions(db, auth, [Permission.SITE_ADMIN])
+        sharing_group.org_id != auth.org_id and not check_permissions(auth, [Permission.SITE_ADMIN])
     ):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
@@ -1295,7 +1295,7 @@ async def _add_server_to_sharing_group_legacy(
     sharing_group: SharingGroup | None = await db.get(SharingGroup, id)
 
     if not sharing_group or (
-        sharing_group.org_id != auth.org_id and not await check_permissions(db, auth, [Permission.SITE_ADMIN])
+        sharing_group.org_id != auth.org_id and not check_permissions(auth, [Permission.SITE_ADMIN])
     ):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
@@ -1335,7 +1335,7 @@ async def _remove_server_from_sharing_group_legacy(
     sharing_group: SharingGroup | None = await db.get(SharingGroup, id)
 
     if not sharing_group or (
-        sharing_group.org_id != auth.org_id and not await check_permissions(db, auth, [Permission.SITE_ADMIN])
+        sharing_group.org_id != auth.org_id and not check_permissions(auth, [Permission.SITE_ADMIN])
     ):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 

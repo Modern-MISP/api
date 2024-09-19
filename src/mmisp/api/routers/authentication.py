@@ -313,7 +313,7 @@ async def redirect_to_frontend(
         user.sub = user_info["sub"]
         await db.commit()
     user.last_login = int(datetime.now().timestamp())
-    await db.commit() 
+    await db.commit()
     return TokenResponse(
         token=encode_token(str(user.id)),
     )
@@ -413,8 +413,8 @@ async def get_idp_url(db: Session, identity_provider_id: int) -> str:
 
 async def _get_all_open_id_connect_providers(db: Session) -> list[GetIdentityProviderResponse]:
     # if not (
-    #    await check_permissions(db, auth, [Permission.SITE_ADMIN])
-    #    and await check_permissions(db, auth, [Permission.ADMIN])
+    #    check_permissions(auth, [Permission.SITE_ADMIN])
+    #    and check_permissions(auth, [Permission.ADMIN])
     # ):
     #    raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
@@ -438,10 +438,7 @@ async def _get_all_open_id_connect_providers(db: Session) -> list[GetIdentityPro
 
 
 async def _get_open_id_connect_provider_by_id(auth: Auth, db: Session, provider_id: str) -> GetIdentityProviderResponse:
-    if not (
-        await check_permissions(db, auth, [Permission.SITE_ADMIN])
-        and await check_permissions(db, auth, [Permission.ADMIN])
-    ):
+    if not (check_permissions(auth, [Permission.SITE_ADMIN]) and check_permissions(auth, [Permission.ADMIN])):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
     query = select(OIDCIdentityProvider).where(OIDCIdentityProvider.id == provider_id)
@@ -465,10 +462,7 @@ async def _get_open_id_connect_provider_by_id(auth: Auth, db: Session, provider_
 async def _change_password_UserId(
     auth: Auth, db: Session, user_id: int, body: SetPasswordBody
 ) -> ChangeLoginInfoResponse:
-    if not (
-        await check_permissions(db, auth, [Permission.SITE_ADMIN])
-        and await check_permissions(db, auth, [Permission.ADMIN])
-    ):
+    if not (check_permissions(auth, [Permission.SITE_ADMIN]) and check_permissions(auth, [Permission.ADMIN])):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
     user = await db.get(User, user_id)
@@ -485,10 +479,7 @@ async def _change_password_UserId(
 
 
 async def _add_openID_Connect_provider(auth: Auth, db: Session, body: IdentityProviderBody) -> IdentityProviderInfo:
-    if not (
-        await check_permissions(db, auth, [Permission.SITE_ADMIN])
-        and await check_permissions(db, auth, [Permission.ADMIN])
-    ):
+    if not (check_permissions(auth, [Permission.SITE_ADMIN]) and check_permissions(auth, [Permission.ADMIN])):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
     oidc_provider = OIDCIdentityProvider(
@@ -524,10 +515,7 @@ async def _delete_openID_Connect_provider(db: Session, open_Id_Connect_provider_
 async def _edit_openID_Connect_provider(
     auth: Auth, db: Session, open_Id_Connect_provider_Id: str, body: IdentityProviderEditBody
 ) -> ChangeLoginInfoResponse:
-    if not (
-        await check_permissions(db, auth, [Permission.SITE_ADMIN])
-        and await check_permissions(db, auth, [Permission.ADMIN])
-    ):
+    if not (check_permissions(auth, [Permission.SITE_ADMIN]) and check_permissions(auth, [Permission.ADMIN])):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
     query = select(OIDCIdentityProvider).where(OIDCIdentityProvider.id == open_Id_Connect_provider_Id)

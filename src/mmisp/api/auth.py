@@ -15,13 +15,12 @@ from typing import Annotated, Awaitable, Callable
 import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import APIKeyHeader
-from sqlalchemy import or_
-from sqlalchemy.future import select
+from sqlalchemy import or_, select
+from sqlalchemy.orm import joinedload
 
 from mmisp.api.config import config
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.auth_key import AuthKey
-from mmisp.db.models.role import Role
 from mmisp.db.models.user import User
 from mmisp.lib.permissions import Permission
 from mmisp.util.crypto import verify_secret
@@ -53,6 +52,7 @@ class Auth:
     """
 
     user_id: int | None = None
+    user: User | None = None
     org_id: int | None = None
     role_id: int | None = None
     auth_key_id: int | None = None
@@ -88,7 +88,8 @@ async def _get_user(
 
 
 async def user_login_allowed(db: Session, user_id: int, api_login: bool) -> User:
-    user = await db.get(User, user_id)
+    result = await db.execute(select(User).options(joinedload(User.role)).filter(User.id == user_id).limit(1))
+    user = result.scalars().one_or_none()
     if user is not None:
         if not api_login and user.force_logout:
             raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail="User has been logged out")
@@ -124,9 +125,9 @@ def authorize(
 
         user, auth_key_id = await _get_user(db, authorization, strategy, permissions, is_readonly_route)
 
-        auth = Auth(user_id=user.id, org_id=user.org_id, role_id=user.role_id, auth_key_id=auth_key_id)
+        auth = Auth(user=user, user_id=user.id, org_id=user.org_id, role_id=user.role_id, auth_key_id=auth_key_id)
 
-        if not await check_permissions(db, auth, permissions):
+        if not check_permissions(auth, permissions):
             raise HTTPException(status.HTTP_403_FORBIDDEN)
 
         return auth
@@ -134,9 +135,10 @@ def authorize(
     return authorizer
 
 
-async def check_permissions(db: Session, auth: Auth, permissions: list[Permission] = []) -> bool:
-    result = await db.execute(select(Role).join(User, Role.id == User.role_id).filter(User.id == auth.user_id).limit(1))
-    role: Role | None = result.scalars().first()
+def check_permissions(auth: Auth, permissions: list[Permission] = []) -> bool:
+    if auth.user is None:
+        raise ValueError
+    role = auth.user.role
 
     if not role:
         return False

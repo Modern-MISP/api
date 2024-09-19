@@ -13,7 +13,7 @@ from mmisp.api.exception_handler import register_exception_handler
 from mmisp.db.database import sessionmanager
 
 if config.ENABLE_PROFILE:
-    pass
+    from mmisp.api.profile_middleware import ProfileMiddleware
 
 router_pkg = "mmisp.api.routers"
 all_routers = (
@@ -52,6 +52,8 @@ def init_app(*, init_db: bool = True) -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+    if config.ENABLE_PROFILE:
+        app.add_middleware(ProfileMiddleware)
 
     # include Routes
     for r in fastapi_routers:
