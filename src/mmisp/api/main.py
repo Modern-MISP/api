@@ -8,8 +8,12 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 import mmisp.db.all_models  # noqa: F401
+from mmisp.api.config import config
 from mmisp.api.exception_handler import register_exception_handler
 from mmisp.db.database import sessionmanager
+
+if config.ENABLE_PROFILE:
+    pass
 
 router_pkg = "mmisp.api.routers"
 all_routers = (
