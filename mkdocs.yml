@@ -9,7 +9,6 @@ theme:
 
 nav:
   - index.md
-  - util_package.md
   - api_package.md
   - api_routers_package.md
 
