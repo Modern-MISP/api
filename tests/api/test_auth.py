@@ -128,13 +128,13 @@ async def test_check_permissions_site_admin(site_admin_user) -> None:
     ic(adb)
 
     auth = Auth(
+        user=site_admin_user,
         user_id=site_admin_user.id,
         org_id=site_admin_user.org_id,
         role_id=site_admin_user.role_id,
     )
 
-    assert await check_permissions(
-        adb,
+    assert check_permissions(
         auth,
         [
             Permission.ADD,

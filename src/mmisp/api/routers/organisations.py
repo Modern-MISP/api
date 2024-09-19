@@ -177,10 +177,7 @@ async def get_organisations_deprecated(
 
 
 async def _add_organisation(auth: Auth, db: Session, body: AddOrganisation) -> GetOrganisationResponse:
-    if not (
-        await check_permissions(db, auth, [Permission.SITE_ADMIN])
-        or await check_permissions(db, auth, [Permission.ADMIN])
-    ):
+    if not (check_permissions(auth, [Permission.SITE_ADMIN]) or check_permissions(auth, [Permission.ADMIN])):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
     org = Organisation(
         id=body.id,
@@ -252,10 +249,7 @@ async def _get_organisations(auth: Auth, db: Session) -> list[GetAllOrganisation
 
 
 async def _get_organisation(auth: Auth, db: Session, organisationID: str) -> GetOrganisationResponse:
-    if not (
-        await check_permissions(db, auth, [Permission.SITE_ADMIN])
-        or await check_permissions(db, auth, [Permission.ADMIN])
-    ):
+    if not (check_permissions(auth, [Permission.SITE_ADMIN]) or check_permissions(auth, [Permission.ADMIN])):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
     query = select(Organisation).where(Organisation.id == organisationID)
@@ -285,10 +279,7 @@ async def _get_organisation(auth: Auth, db: Session, organisationID: str) -> Get
 
 
 async def _delete_organisation(auth: Auth, db: Session, organisationID: str) -> DeleteForceUpdateOrganisationResponse:
-    if not (
-        await check_permissions(db, auth, [Permission.SITE_ADMIN])
-        and await check_permissions(db, auth, [Permission.ADMIN])
-    ):
+    if not (check_permissions(auth, [Permission.SITE_ADMIN]) and check_permissions(auth, [Permission.ADMIN])):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
     organisation = await db.get(Organisation, organisationID)
@@ -320,10 +311,7 @@ async def _delete_organisation(auth: Auth, db: Session, organisationID: str) -> 
 async def _update_organisation(
     auth: Auth, db: Session, organisationID: str, body: EditOrganisation
 ) -> GetOrganisationResponse:
-    if not (
-        await check_permissions(db, auth, [Permission.SITE_ADMIN])
-        and await check_permissions(db, auth, [Permission.ADMIN])
-    ):
+    if not (check_permissions(auth, [Permission.SITE_ADMIN]) and check_permissions(auth, [Permission.ADMIN])):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
     org = await db.get(Organisation, organisationID)

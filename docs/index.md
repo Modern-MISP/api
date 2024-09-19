@@ -23,12 +23,6 @@ database "Redis"
 ![api-worker-integration](diagrams/api-worker-integration.svg)
 
 
-# Util
-## ::: mmisp.util
-## ::: mmisp.util.partial
-## ::: mmisp.util.crypto
-## ::: mmisp.util.models
-## ::: mmisp.util.uuid
 # API
 ## ::: mmisp.api
 ## ::: mmisp.api.config

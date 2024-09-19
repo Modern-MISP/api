@@ -342,10 +342,7 @@ async def delete_user_depr(
 
 
 async def _add_user(auth: Auth, db: Session, body: AddUserBody) -> AddUserResponse:
-    if not (
-        await check_permissions(db, auth, [Permission.SITE_ADMIN])
-        and await check_permissions(db, auth, [Permission.ADMIN])
-    ):
+    if not (check_permissions(auth, [Permission.SITE_ADMIN]) and check_permissions(auth, [Permission.ADMIN])):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
     user_result = await db.execute(select(User).where(User.email == body.email))
@@ -404,10 +401,7 @@ async def _get_all_users(
 ) -> list[GetUsersElement]:
     query = select(User)
 
-    if not (
-        await check_permissions(db, auth, [Permission.SITE_ADMIN])
-        or await check_permissions(db, auth, [Permission.ADMIN])
-    ):
+    if not (check_permissions(auth, [Permission.SITE_ADMIN]) or check_permissions(auth, [Permission.ADMIN])):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
     result = await db.execute(query)
@@ -504,8 +498,8 @@ async def get_organisations_by_id(db: Session) -> dict:
 
 async def _get_user(auth: Auth, db: Session, userID: str) -> GetUsersElement:
     if not (
-        await check_permissions(db, auth, [Permission.SITE_ADMIN])
-        or await check_permissions(db, auth, [Permission.ADMIN])
+        check_permissions(auth, [Permission.SITE_ADMIN])
+        or check_permissions(auth, [Permission.ADMIN])
         or str(auth.user_id) == userID
     ):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
@@ -592,10 +586,7 @@ async def _get_user(auth: Auth, db: Session, userID: str) -> GetUsersElement:
 
 
 async def _delete_user(user_id: str, auth: Auth, db: Session) -> StandardStatusIdentifiedResponse:
-    if not (
-        await check_permissions(db, auth, [Permission.SITE_ADMIN])
-        or await check_permissions(db, auth, [Permission.ADMIN])
-    ):
+    if not (check_permissions(auth, [Permission.SITE_ADMIN]) or check_permissions(auth, [Permission.ADMIN])):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
     user = await db.get(User, user_id)
@@ -625,10 +616,7 @@ async def _delete_user_token(auth: Auth, db: Session, userID: str) -> None:
 
 
 async def _update_user(auth: Auth, db: Session, userID: str, body: UserAttributesBody) -> UserWithName:
-    if not (
-        await check_permissions(db, auth, [Permission.SITE_ADMIN])
-        and await check_permissions(db, auth, [Permission.ADMIN])
-    ):
+    if not (check_permissions(auth, [Permission.SITE_ADMIN]) and check_permissions(auth, [Permission.ADMIN])):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
     user = await db.get(User, userID)

@@ -12,6 +12,7 @@ class APIConfig:
     WORKER_URL: str
     DASHBOARD_URL: str
     READONLY_MODE: bool
+    ENABLE_PROFILE: bool
 
 
 load_dotenv(getenv("ENV_FILE", ".env"))
@@ -23,4 +24,5 @@ config: APIConfig = APIConfig(
     WORKER_URL=getenv("WORKER_URL", ""),
     DASHBOARD_URL=getenv("DASHBOARD_URL", ""),
     READONLY_MODE=bool(getenv("READONLY_MODE", False)),
+    ENABLE_PROFILE=bool(getenv("ENABLE_PROFILE", False)),
 )
