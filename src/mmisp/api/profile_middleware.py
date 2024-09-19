@@ -21,6 +21,7 @@ class ProfileMiddleware(BaseHTTPMiddleware):
         if request.query_params.get("profile", False):
             profile_type = request.query_params.get("profile_format", "speedscope")
             renderer_class = self.profile_type_to_renderer.get(profile_type)
+            assert renderer_class is not None
 
             with Profiler(interval=0.001, async_mode="enabled") as profiler:
                 response = await call_next(request)

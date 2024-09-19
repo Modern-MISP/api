@@ -598,7 +598,15 @@ async def _add_event(auth: Auth, db: Session, body: AddEventBody) -> AddEditGetE
             selectinload(Event.tags),
             selectinload(Event.eventtags),
             selectinload(Event.attributes).options(
-                selectinload(Attribute.attributetags_galaxy).selectinload(AttributeTag.tag),
+                selectinload(Attribute.attributetags_galaxy)
+                .selectinload(AttributeTag.tag)
+                .selectinload(Tag.galaxy_cluster)
+                .options(
+                    selectinload(GalaxyCluster.org),
+                    selectinload(GalaxyCluster.orgc),
+                    selectinload(GalaxyCluster.galaxy),
+                    selectinload(GalaxyCluster.galaxy_elements),
+                ),
                 selectinload(Attribute.attributetags).selectinload(AttributeTag.tag),
             ),
             selectinload(Event.mispobjects),
@@ -625,7 +633,15 @@ async def _get_event_details(db: Session, event_id: int) -> AddEditGetEventRespo
             selectinload(Event.tags),
             selectinload(Event.eventtags),
             selectinload(Event.attributes).options(
-                selectinload(Attribute.attributetags_galaxy).selectinload(AttributeTag.tag),
+                selectinload(Attribute.attributetags_galaxy)
+                .selectinload(AttributeTag.tag)
+                .selectinload(Tag.galaxy_cluster)
+                .options(
+                    selectinload(GalaxyCluster.org),
+                    selectinload(GalaxyCluster.orgc),
+                    selectinload(GalaxyCluster.galaxy),
+                    selectinload(GalaxyCluster.galaxy_elements),
+                ),
                 selectinload(Attribute.attributetags).selectinload(AttributeTag.tag),
             ),
             selectinload(Event.mispobjects),
@@ -653,7 +669,15 @@ async def _update_event(db: Session, event_id: str, body: EditEventBody) -> AddE
             selectinload(Event.eventtags),
             selectinload(Event.mispobjects),
             selectinload(Event.attributes).options(
-                selectinload(Attribute.attributetags_galaxy).selectinload(AttributeTag.tag),
+                selectinload(Attribute.attributetags_galaxy)
+                .selectinload(AttributeTag.tag)
+                .selectinload(Tag.galaxy_cluster)
+                .options(
+                    selectinload(GalaxyCluster.org),
+                    selectinload(GalaxyCluster.orgc),
+                    selectinload(GalaxyCluster.galaxy),
+                    selectinload(GalaxyCluster.galaxy_elements),
+                ),
             ),
         )
     )
@@ -710,7 +734,12 @@ async def _get_events(db: Session) -> list[GetAllEventsResponse]:
             selectinload(Event.eventtags_galaxy)
             .selectinload(EventTag.tag)
             .selectinload(Tag.galaxy_cluster)
-            .selectinload(GalaxyCluster.galaxy),
+            .options(
+                selectinload(GalaxyCluster.org),
+                selectinload(GalaxyCluster.orgc),
+                selectinload(GalaxyCluster.galaxy),
+                selectinload(GalaxyCluster.galaxy_elements),
+            ),
             selectinload(Event.tags),
             selectinload(Event.eventtags).selectinload(EventTag.tag),
         )
@@ -737,7 +766,15 @@ async def _rest_search_events(db: Session, body: SearchEventsBody) -> SearchEven
         selectinload(Event.eventtags),
         selectinload(Event.mispobjects),
         selectinload(Event.attributes).options(
-            selectinload(Attribute.attributetags_galaxy).selectinload(AttributeTag.tag),
+            selectinload(Attribute.attributetags_galaxy)
+            .selectinload(AttributeTag.tag)
+            .selectinload(Tag.galaxy_cluster)
+            .options(
+                selectinload(GalaxyCluster.org),
+                selectinload(GalaxyCluster.orgc),
+                selectinload(GalaxyCluster.galaxy),
+                selectinload(GalaxyCluster.galaxy_elements),
+            ),
             selectinload(Attribute.attributetags).selectinload(AttributeTag.tag),
         ),
     )
@@ -775,7 +812,13 @@ async def _index_events(db: Session, body: IndexEventsBody) -> list[GetAllEvents
             selectinload(Event.attributes).options(
                 selectinload(Attribute.attributetags_galaxy)
                 .selectinload(AttributeTag.tag)
-                .selectinload(Tag.galaxy_cluster),
+                .selectinload(Tag.galaxy_cluster)
+                .options(
+                    selectinload(GalaxyCluster.org),
+                    selectinload(GalaxyCluster.orgc),
+                    selectinload(GalaxyCluster.galaxy),
+                    selectinload(GalaxyCluster.galaxy_elements),
+                )
             ),
             selectinload(Event.mispobjects),
         )
@@ -1115,7 +1158,15 @@ async def _prepare_object_response(db: Session, object_list: Sequence[Object]) -
         result = await db.execute(
             select(Attribute)
             .options(
-                selectinload(Attribute.attributetags_galaxy).selectinload(AttributeTag.tag),
+                selectinload(Attribute.attributetags_galaxy)
+                .selectinload(AttributeTag.tag)
+                .selectinload(Tag.galaxy_cluster)
+                .options(
+                    selectinload(GalaxyCluster.org),
+                    selectinload(GalaxyCluster.orgc),
+                    selectinload(GalaxyCluster.galaxy),
+                    selectinload(GalaxyCluster.galaxy_elements),
+                )
             )
             .filter(Attribute.object_id == object.id)
         )
