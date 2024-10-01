@@ -1,3 +1,4 @@
+import logging
 from collections.abc import Sequence
 from datetime import datetime
 from typing import Annotated
@@ -39,6 +40,8 @@ from mmisp.lib.logger import alog
 from mmisp.util.crypto import hash_secret, verify_secret
 
 router = APIRouter(tags=["authentication"])
+
+logger = logging.getLogger("mmisp")
 
 
 @router.get("/auth/openID/getAllOpenIDConnectProvidersInfo")
@@ -546,14 +549,13 @@ async def _edit_openID_Connect_provider(
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     settings = body.dict(exclude_unset=True)
+    settings["client_secret"] = body.client_secret.get_secret_value() if body.client_secret is not None else None
 
     for key in settings.keys():
-        if key == "client_secret" and settings[key] is not None:
-            settings[key] = settings[key].get_secret_value()
         if settings[key] is not None:
             setattr(oidc_provider, key, settings[key])
 
-    await db.commit()
+    await db.flush()
 
     return ChangeLoginInfoResponse(successful=True)
 
@@ -563,10 +565,19 @@ async def _password_login(db: Session, body: PasswordLoginBody) -> TokenResponse
     result = await db.execute(select(User).filter(User.email == body.email).limit(1))
     user: User | None = result.scalars().first()
 
-    if not user or user.external_auth_required or not verify_secret(body.password.get_secret_value(), user.password):
+    if not user:
+        logger.info(f"Did not find user with {body.email}")
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED)
+    if user.external_auth_required:
+        logger.info(f"External auth is required for user with {body.email}")
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED)
+
+    if not verify_secret(body.password.get_secret_value(), user.password):
+        logger.info(f"Password verification failed for user with {body.email}")
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
     if user.change_pw:
+        logger.info(f"User ({body.email}) must change password")
         raise HTTPException(status.HTTP_403_FORBIDDEN)
 
     if user.force_logout:
@@ -582,18 +593,28 @@ async def _password_login(db: Session, body: PasswordLoginBody) -> TokenResponse
 async def _set_own_password(db: Session, body: ChangePasswordBody) -> TokenResponse:
     result = await db.execute(select(User).filter(User.email == body.email).limit(1))
     user: User | None = result.scalars().first()
-    old_password = body.oldPassword
 
-    if old_password is None:
+    if body.oldPassword is None:
         raise HTTPException(status.HTTP_400_BAD_REQUEST)
 
-    if not user or user.external_auth_required or not verify_secret(old_password.get_secret_value(), user.password):
+    old_password = body.oldPassword.get_secret_value()
+    new_password = body.password.get_secret_value()
+
+    if not user:
+        logger.info(f"Did not find user with {body.email}")
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED)
+    if user.external_auth_required:
+        logger.info(f"External auth is required for user with {body.email}")
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
-    if old_password.get_secret_value().lower() in body.password.get_secret_value().lower():
+    if not verify_secret(old_password, user.password):
+        logger.info(f"Password verification failed for user with {body.email}")
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED)
+
+    if old_password.lower() in new_password.lower():
         raise HTTPException(status.HTTP_400_BAD_REQUEST)
 
-    user.password = hash_secret(body.password.get_secret_value())
+    user.password = hash_secret(new_password)
     user.change_pw = False
 
     await db.commit()

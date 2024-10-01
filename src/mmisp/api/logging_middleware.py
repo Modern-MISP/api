@@ -18,7 +18,7 @@ class LogMiddleware(BaseHTTPMiddleware):
             # Process the request
             response = await call_next(request)
         except Exception as exc:
-            logger.error(f"Exception occurred: {str(exc)}")
+            logger.error("Exception occurred", exc_info=True)
             print_request_log()
             raise exc
         else:

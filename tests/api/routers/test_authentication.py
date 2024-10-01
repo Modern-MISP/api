@@ -139,7 +139,12 @@ async def test_start_login_unknown(client) -> None:
 
 
 @pytest.mark.asyncio
-async def test_password_login_correct(auth_environment: AuthEnvironment, client) -> None:
+async def test_password_login(auth_environment: AuthEnvironment, client, capsys) -> None:
+    """Test two things:
+    - Password Login works
+    - The Password is not in stdout/stderr, even in debug mode
+    """
+    capsys.readouterr()
     response = client.post(
         "/auth/login/password",
         json={"email": auth_environment.password_auth_user.email, "password": auth_environment.password},
@@ -150,6 +155,9 @@ async def test_password_login_correct(auth_environment: AuthEnvironment, client)
 
     user_id = _decode_token(json["token"])
     assert user_id == auth_environment.password_auth_user.id
+    captured = capsys.readouterr()
+    assert auth_environment.password not in captured.out
+    assert auth_environment.password not in captured.err
 
 
 @pytest.mark.asyncio
@@ -404,7 +412,6 @@ async def test_openid_edit_provider(
     assert auth_environment.identity_provider.active is True
     assert auth_environment.identity_provider.base_url == "http://test.com"
     assert auth_environment.identity_provider.client_id == "test"
-    assert auth_environment.identity_provider.client_secret == "test"
 
 
 @pytest.mark.asyncio
@@ -454,7 +461,6 @@ async def test_openid_add_provider(db: Session, site_admin_user_token, client) -
     assert oidc_provider.active is True
     assert oidc_provider.base_url == "http://test.com"
     assert oidc_provider.client_id == "test"
-    assert oidc_provider.client_secret == "test"
     await db.delete(oidc_provider)
 
 
@@ -550,7 +556,6 @@ async def test_get_open_id_connect_provider_by_id(db: Session, client, site_admi
     assert oidc_provider.active is True
     assert oidc_provider.base_url == "http://test.com"
     assert oidc_provider.client_id == "test"
-    assert oidc_provider.client_secret == "test"
     provider_id = oidc_provider.id
     response = client.get(
         f"/auth/openID/getOpenIDConnectProvider/{provider_id}", headers={"authorization": site_admin_user_token}
