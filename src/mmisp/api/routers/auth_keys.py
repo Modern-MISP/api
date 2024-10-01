@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Annotated, Any, Tuple
 from fastapi import APIRouter, Depends, HTTPException, Path, status
 from nanoid import generate  # type: ignore
 
-from mmisp.lib.logger import alog
+from mmisp.lib.logger import alog, log
 
 if TYPE_CHECKING:
     from sqlalchemy import Row
@@ -762,6 +762,7 @@ async def _auth_keys_view_own_depr(auth: Auth, db: Session) -> list[SearchGetAut
     return own_key
 
 
+@log
 def parse_date(date_str: str) -> int:
     if len(date_str) != 10 or date_str[4] != "-" or date_str[7] != "-":
         raise ValueError("Date must be in the format yyyy-mm-dd")

@@ -42,7 +42,7 @@ from mmisp.api_schemas.responses.standard_status_response import (
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.admin_setting import AdminSetting
 from mmisp.db.models.workflow import Workflow
-from mmisp.lib.logger import alog
+from mmisp.lib.logger import alog, log
 from mmisp.util.models import update_record
 from mmisp.workflows.fastapi import (
     module_entity_to_json_dict,
@@ -311,6 +311,7 @@ async def create_workflow(trigger_id: str, db: Session) -> None:
     await db.refresh(new_workflow)
 
 
+@log
 def __create_new_workflow_object(name: str, trigger_id: str, description: str = "") -> Workflow:
     nt = NODE_REGISTRY.triggers[trigger_id]
 
@@ -450,6 +451,7 @@ async def moduleIndex(
     return response
 
 
+@log
 def __create_module_or_trigger_object(module: type[Module | Trigger]) -> Module | Trigger:
     # FIXME it's a little hacky, but we initialize `apperance` into
     # None because it's nowhere used when returning module-data only.
@@ -465,6 +467,7 @@ def __create_module_or_trigger_object(module: type[Module | Trigger]) -> Module 
     )
 
 
+@log
 def __filter_index_modules(module: Module, type: str) -> bool:
     if type == "action" and not isinstance(module, ModuleAction):
         return False

@@ -60,7 +60,7 @@ from mmisp.db.models.tag import Tag
 from mmisp.db.models.user import User
 from mmisp.lib.actions import action_publish_event
 from mmisp.lib.galaxies import parse_galaxy_authors
-from mmisp.lib.logger import alog
+from mmisp.lib.logger import alog, log
 from mmisp.util.models import update_record
 from mmisp.util.partial import partial
 
@@ -1225,6 +1225,7 @@ async def _prepare_object_response(db: Session, object_list: Sequence[Object]) -
     return response_object_list
 
 
+@log
 def _prepare_event_report_response(event_report_list: Sequence[EventReport]) -> AddEditGetEventEventReport:
     response_event_report_list = []
 
@@ -1235,6 +1236,7 @@ def _prepare_event_report_response(event_report_list: Sequence[EventReport]) -> 
     return AddEditGetEventEventReport.parse_obj(response_event_report_list)
 
 
+@log
 def _prepare_all_events_response(event: Event, request_type: str) -> GetAllEventsResponse:
     event_dict = event.__dict__.copy()
     event_dict["sharing_group_id"] = "0"
@@ -1262,6 +1264,7 @@ def _prepare_all_events_response(event: Event, request_type: str) -> GetAllEvent
     raise ValueError(f"Unknown request_type: {request_type}")
 
 
+@log
 def _prepare_all_events_galaxy_cluster_response(event_tag_list: Sequence[EventTag]) -> list[GetAllEventsGalaxyCluster]:
     galaxy_cluster_response_list = []
 
@@ -1297,6 +1300,7 @@ def _prepare_all_events_galaxy_cluster_response(event_tag_list: Sequence[EventTa
     return galaxy_cluster_response_list
 
 
+@log
 def _prepare_all_events_event_tag_response(event_tag_list: Sequence[EventTag]) -> list[GetAllEventsEventTag]:
     event_tag_response_list = []
 

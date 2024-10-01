@@ -35,7 +35,7 @@ from mmisp.db.models.attribute import Attribute, AttributeTag
 from mmisp.db.models.event import Event
 from mmisp.db.models.tag import Tag
 from mmisp.lib.attribute_search_filter import get_search_filters
-from mmisp.lib.logger import alog
+from mmisp.lib.logger import alog, log
 from mmisp.util.models import update_record
 
 from ..workflow import execute_workflow
@@ -831,6 +831,7 @@ async def _remove_tag_from_attribute(db: Session, attribute_id: str, tag_id: str
     return AddRemoveTagAttributeResponse(saved=True, success="Tag removed", check_publish=True)
 
 
+@log
 def _prepare_attribute_response_add(attribute: Attribute) -> AddAttributeAttributes:
     attribute_dict = attribute.asdict().copy()
 
@@ -841,6 +842,7 @@ def _prepare_attribute_response_add(attribute: Attribute) -> AddAttributeAttribu
     return AddAttributeAttributes(**attribute_dict)
 
 
+@log
 def _prepare_attribute_response_get_all(attribute: Attribute) -> GetAllAttributesResponse:
     attribute_dict = attribute.asdict().copy()
 

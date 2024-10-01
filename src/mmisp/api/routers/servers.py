@@ -18,7 +18,7 @@ from mmisp.api_schemas.servers import (
 )
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.server import Server
-from mmisp.lib.logger import alog
+from mmisp.lib.logger import alog, log
 
 router = APIRouter(tags=["servers"])
 
@@ -254,6 +254,7 @@ async def _get_remote_servers(auth: Auth, db: Session) -> list[GetRemoteServer]:
     return [get_remote_server_answer(server) for server in servers]
 
 
+@log
 def get_remote_server_answer(server: Server) -> GetRemoteServer:
     server_dict = server.__dict__.copy()
     server_dict["lastpulledid"] = server_dict.pop("last_pulled_id")

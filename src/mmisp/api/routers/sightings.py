@@ -20,7 +20,7 @@ from mmisp.db.models.attribute import Attribute
 from mmisp.db.models.event import Event
 from mmisp.db.models.organisation import Organisation
 from mmisp.db.models.sighting import Sighting
-from mmisp.lib.logger import alog
+from mmisp.lib.logger import alog, log
 
 from ..workflow import execute_workflow
 
@@ -471,6 +471,7 @@ async def _get_sightings(db: Session) -> SightingsGetResponse:
     return SightingsGetResponse(sightings=responses)
 
 
+@log
 def _check_valid_return_format(return_format: str) -> None:
     if return_format not in ["json"]:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid return format.")

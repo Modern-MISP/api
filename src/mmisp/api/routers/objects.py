@@ -22,7 +22,7 @@ from mmisp.db.database import Session, get_db
 from mmisp.db.models.attribute import Attribute
 from mmisp.db.models.event import Event
 from mmisp.db.models.object import Object, ObjectTemplate
-from mmisp.lib.logger import alog
+from mmisp.lib.logger import alog, log
 
 router = APIRouter(tags=["objects"])
 
@@ -399,6 +399,7 @@ async def _delete_object(db: Session, object_id: int, hard_delete: bool) -> Stan
     )
 
 
+@log
 def _check_valid_return_format(return_format: str) -> None:
     if return_format not in ["json"]:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid return format.")

@@ -7,7 +7,7 @@ from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
 from mmisp.api_schemas.logs import LogsRequest
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.log import Log
-from mmisp.lib.logger import alog
+from mmisp.lib.logger import alog, log
 from mmisp.workflows.fastapi import log_to_json_dict
 
 router = APIRouter(tags=["logs"])
@@ -73,11 +73,12 @@ async def logs_index_post(
     return transform_logs_to_response(logs)
 
 
+@log
 def transform_logs_to_response(logs: Sequence[Log]) -> List[Any]:
     result = []
 
-    for log in logs:
-        log_json = log_to_json_dict(log)
+    for log_entry in logs:
+        log_json = log_to_json_dict(log_entry)
         result.append(log_json)
 
     return result

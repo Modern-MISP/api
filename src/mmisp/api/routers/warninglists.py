@@ -21,7 +21,7 @@ from mmisp.api_schemas.warninglists import (
 )
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.warninglist import Warninglist, WarninglistEntry, WarninglistType
-from mmisp.lib.logger import alog
+from mmisp.lib.logger import alog, log
 
 router = APIRouter(tags=["warninglists"])
 
@@ -533,6 +533,7 @@ async def _search_warninglist(
     return warninglists
 
 
+@log
 def _create_warninglist_entries(values: str, warninglist_id: int) -> list[WarninglistEntry]:
     raw_text = values.splitlines()
     new_warninglist_entries = []
@@ -558,6 +559,7 @@ def _create_warninglist_entries(values: str, warninglist_id: int) -> list[Warnin
     return new_warninglist_entries
 
 
+@log
 def _create_warninglist_types(valid_attributes: Sequence[str], warninglist_id: int) -> list[WarninglistType]:
     new_warninglist_types: list[WarninglistType] = []
     for valid_attribute in valid_attributes:
@@ -567,6 +569,7 @@ def _create_warninglist_types(valid_attributes: Sequence[str], warninglist_id: i
     return new_warninglist_types
 
 
+@log
 def _convert_to_list(value: Any) -> list[str]:
     if not isinstance(value, list):
         return [value]

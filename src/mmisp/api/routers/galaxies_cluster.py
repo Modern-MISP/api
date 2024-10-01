@@ -41,6 +41,7 @@ from mmisp.lib.fallbacks import GENERIC_MISP_ORGANISATION
 from mmisp.lib.galaxies import galaxy_tag_name, parse_galaxy_authors
 from mmisp.lib.galaxy_clusters import update_galaxy_cluster_elements
 from mmisp.lib.logger import alog
+from mmisp.lib.logger import alog, log
 from mmisp.util.uuid import uuid
 
 router = APIRouter(tags=["galaxy_clusters"])
@@ -650,6 +651,7 @@ async def _prepare_galaxy_cluster_relation_response(
     return galaxy_cluster_relation_response_list
 
 
+@log
 def _prepare_tag_response(tag_list: Sequence[Any]) -> list[AddEditGetEventGalaxyClusterRelationTag]:
     tag_response_list = []
 

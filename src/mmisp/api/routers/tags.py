@@ -23,7 +23,7 @@ from mmisp.db.models.feed import Feed
 from mmisp.db.models.galaxy_cluster import GalaxyCluster
 from mmisp.db.models.tag import Tag
 from mmisp.db.models.taxonomy import Taxonomy, TaxonomyPredicate
-from mmisp.lib.logger import alog
+from mmisp.lib.logger import alog, log
 from mmisp.util.models import update_record
 from mmisp.util.partial import partial
 
@@ -448,6 +448,7 @@ async def _get_tags(db: Session) -> TagGetResponse:
     return TagGetResponse(Tag=[tag.__dict__ for tag in tags])
 
 
+@log
 def _check_type_hex_colour(colour: Any) -> None:
     _hex_string = re.compile(r"#[a-fA-F0-9]{6}$")
     if colour is None or not _hex_string.match(colour):

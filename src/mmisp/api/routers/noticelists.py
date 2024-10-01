@@ -19,7 +19,7 @@ from mmisp.api_schemas.responses.standard_status_response import (
 )
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.noticelist import Noticelist, NoticelistEntry
-from mmisp.lib.logger import alog
+from mmisp.lib.logger import alog, log
 
 router = APIRouter(tags=["noticelists"])
 
@@ -268,6 +268,7 @@ async def _get_all_noticelists(db: Session) -> list[GetAllNoticelists]:
     return noticelist_data
 
 
+@log
 def _prepare_noticelist_entries(noticelist_entries: Sequence[NoticelistEntry]) -> list[NoticelistEntryResponse]:
     noticelist_entry_response = []
     for noticelist_entry in noticelist_entries:
@@ -279,6 +280,7 @@ def _prepare_noticelist_entries(noticelist_entries: Sequence[NoticelistEntry]) -
     return noticelist_entry_response
 
 
+@log
 def _prepare_noticelist_response(
     noticelist: Noticelist, noticelist_entries: Sequence[NoticelistEntry]
 ) -> NoticelistAttributesResponse:
