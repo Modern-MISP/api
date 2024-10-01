@@ -11,6 +11,7 @@ from fastapi.responses import ORJSONResponse
 import mmisp.db.all_models  # noqa: F401
 from mmisp.api.config import config
 from mmisp.api.exception_handler import register_exception_handler
+from mmisp.api.logging_middleware import LogMiddleware
 from mmisp.db.database import sessionmanager
 
 if config.ENABLE_PROFILE:
@@ -20,7 +21,9 @@ router_pkg = "mmisp.api.routers"
 all_routers = (
     resource.name[:-3]
     for resource in importlib.resources.files(router_pkg).iterdir()
-    if resource.is_file() and resource.name != "__init__.py"
+    if resource.is_file()
+    and resource.name != "__init__.py"
+    and (resource.name != "test_endpoints.py" or config.ENABLE_TEST_ENDPOINTS)
 )
 
 router_module_names = map(".".join, zip(itertools.repeat(router_pkg), all_routers))
@@ -54,6 +57,7 @@ def init_app(*, init_db: bool = False) -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+    app.add_middleware(LogMiddleware)
     if config.ENABLE_PROFILE:
         app.add_middleware(ProfileMiddleware)
 
@@ -62,6 +66,8 @@ def init_app(*, init_db: bool = False) -> FastAPI:
         app.include_router(r)
 
     register_exception_handler(app)
+
+    # flush logger once
 
     return app
 

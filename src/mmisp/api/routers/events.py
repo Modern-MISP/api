@@ -1,3 +1,4 @@
+import logging
 from calendar import timegm
 from collections import defaultdict
 from collections.abc import Sequence
@@ -7,7 +8,7 @@ from typing import Annotated
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Path
-from sqlalchemy.future import select
+from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.sql import Select
 from starlette import status
@@ -63,6 +64,8 @@ from mmisp.util.models import update_record
 from mmisp.util.partial import partial
 
 from ..workflow import execute_blocking_workflow, execute_workflow
+
+logger = logging.getLogger("mmisp")
 
 router = APIRouter(tags=["events"])
 
@@ -1235,6 +1238,7 @@ def _prepare_all_events_galaxy_cluster_response(event_tag_list: Sequence[EventTa
 
         galaxy_cluster = tag.galaxy_cluster
         if galaxy_cluster is None:
+            # todo add some debug line
             continue
         galaxy_cluster_dict = galaxy_cluster.asdict()
 

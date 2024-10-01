@@ -3,6 +3,7 @@
 Database related settings are part of mmisp.db of the lib repository.
 """
 
+import logging
 from os import getenv
 
 from dotenv import load_dotenv
@@ -18,6 +19,8 @@ class APIConfig:
     DASHBOARD_URL: str
     READONLY_MODE: bool
     ENABLE_PROFILE: bool
+    DEBUG: bool
+    ENABLE_TEST_ENDPOINTS: bool
 
 
 load_dotenv(getenv("ENV_FILE", ".env"))
@@ -30,4 +33,10 @@ config: APIConfig = APIConfig(
     DASHBOARD_URL=getenv("DASHBOARD_URL", ""),
     READONLY_MODE=bool(getenv("READONLY_MODE", False)),
     ENABLE_PROFILE=bool(getenv("ENABLE_PROFILE", False)),
+    ENABLE_TEST_ENDPOINTS=bool(getenv("ENABLE_TEST_ENDPOINTS", False)),
+    DEBUG=bool(getenv("DEBUG", False)),
 )
+logger = logging.getLogger("mmisp")
+logger.setLevel(logging.INFO)
+if config.DEBUG:
+    logger.setLevel(logging.DEBUG)
