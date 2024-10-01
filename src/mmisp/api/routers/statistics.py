@@ -10,6 +10,7 @@ from mmisp.db.models.attribute import Attribute
 from mmisp.db.models.event import Event
 from mmisp.db.models.organisation import Organisation
 from mmisp.db.models.user import User
+from mmisp.lib.logger import alog
 
 router = APIRouter(tags=["statistics"])
 
@@ -18,6 +19,7 @@ router = APIRouter(tags=["statistics"])
     "/statistics/getUsageData",
     summary="Gets a list of all usage-related statistics listed on the website",
 )
+@alog
 async def get_statistics(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -39,6 +41,7 @@ async def get_statistics(
     "/statistics/getAttributes/{orgId}",
     summary="Gets a list of attributes related to an organisation",
 )
+@alog
 async def get_statistics_by_org(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -62,6 +65,7 @@ async def get_statistics_by_org(
     "/statistics/logincount/{orgID}",
     summary="Gets a count of all logins the past 4 months",
 )
+@alog
 async def get_logincount(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -83,6 +87,7 @@ async def get_logincount(
 # --- endpoint logic ---
 
 
+@alog
 async def _get_statistics(db: Session) -> UsageDataResponseModel:
     query = select(Event)
     events_result = await db.execute(query)
@@ -157,6 +162,7 @@ async def _get_statistics(db: Session) -> UsageDataResponseModel:
     return response
 
 
+@alog
 async def _get_statistics_by_org(db: Session, orgID: str) -> OrgDataResponseModel:
     int_orgId = 0
     try:
@@ -192,6 +198,7 @@ async def _get_statistics_by_org(db: Session, orgID: str) -> OrgDataResponseMode
     return response
 
 
+@alog
 async def _get_logincount(db: Session, orgID: str) -> int:
     int_orgId = 0
     try:

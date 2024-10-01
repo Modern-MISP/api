@@ -16,6 +16,7 @@ from mmisp.api_schemas.feeds import (
 )
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.feed import Feed
+from mmisp.lib.logger import alog
 from mmisp.util.models import update_record
 
 router = APIRouter(tags=["feeds"])
@@ -27,6 +28,7 @@ router = APIRouter(tags=["feeds"])
     response_model=FeedResponse,
     summary="Add new feed",
 )
+@alog
 async def add_feed(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -55,6 +57,7 @@ async def add_feed(
     response_model=FeedCacheResponse,
     summary="Cache feeds",
 )
+@alog
 async def cache_feeds(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -83,6 +86,7 @@ async def cache_feeds(
     response_model=FeedFetchResponse,
     summary="Fetch from feed",
 )
+@alog
 async def fetch_from_feed(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -111,6 +115,7 @@ async def fetch_from_feed(
     response_model=FeedResponse,
     summary="Get feed details",
 )
+@alog
 async def get_feed_details(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -139,6 +144,7 @@ async def get_feed_details(
     response_model=FeedResponse,
     summary="Update feed",
 )
+@alog
 async def update_feed(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -170,6 +176,7 @@ async def update_feed(
     response_model=FeedEnableDisableResponse,
     summary="Toggle feed status",
 )
+@alog
 async def toggle_feed(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -202,6 +209,7 @@ async def toggle_feed(
     response_model=FeedFetchResponse,
     summary="Fetch from all feeds",
 )
+@alog
 async def fetch_data_from_all_feeds(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -227,6 +235,7 @@ async def fetch_data_from_all_feeds(
     response_model=list[FeedResponse],
     summary="Get all feeds",
 )
+@alog
 async def get_feeds(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -256,6 +265,7 @@ async def get_feeds(
     response_model=FeedResponse,
     summary="Add new feed (Deprecated)",
 )
+@alog
 async def add_feed_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -285,6 +295,7 @@ async def add_feed_depr(
     response_model=FeedEnableDisableResponse,
     summary="Enable feed (Deprecated)",
 )
+@alog
 async def enable_feed(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -314,6 +325,7 @@ async def enable_feed(
     response_model=FeedEnableDisableResponse,
     summary="Disable feed (Deprecated)",
 )
+@alog
 async def disable_feed(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -343,6 +355,7 @@ async def disable_feed(
     response_model=FeedCacheResponse,
     summary="Cache feeds",
 )
+@alog
 async def cache_feeds_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -372,6 +385,7 @@ async def cache_feeds_depr(
     response_model=FeedFetchResponse,
     summary="Fetch from feed (Deprecated)",
 )
+@alog
 async def fetch_from_feed_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -401,6 +415,7 @@ async def fetch_from_feed_depr(
     response_model=FeedFetchResponse,
     summary="Fetch from all feeds (Deprecated)",
 )
+@alog
 async def fetch_data_from_all_feeds_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -428,6 +443,7 @@ async def fetch_data_from_all_feeds_depr(
     response_model=FeedResponse,
     summary="Get feed details (Deprecated)",
 )
+@alog
 async def get_feed_details_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -457,6 +473,7 @@ async def get_feed_details_depr(
     response_model=FeedResponse,
     summary="Update feed (Deprecated)",
 )
+@alog
 async def update_feed_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -486,6 +503,7 @@ async def update_feed_depr(
 # --- endpoint logic ---
 
 
+@alog
 async def _add_feed(db: Session, body: FeedCreateBody) -> FeedResponse:
     feed: Feed = Feed(**body.dict())
 
@@ -496,16 +514,19 @@ async def _add_feed(db: Session, body: FeedCreateBody) -> FeedResponse:
     return FeedResponse(Feed=feed.__dict__)
 
 
+@alog
 async def _cache_feeds(db: Session, cache_feeds_scope: str) -> FeedCacheResponse:
     # logic to save 'feeds_to_cache' in cache (worker)
     raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Endpoint not yet supported.")
 
 
+@alog
 async def _fetch_from_feed(db: Session, feed_id: int) -> FeedFetchResponse:
     # logic to start the pull process (worker)
     raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Endpoint not yet supported.")
 
 
+@alog
 async def _get_feed_details(db: Session, feed_id: int) -> FeedResponse:
     feed: Feed | None = await db.get(Feed, feed_id)
 
@@ -515,6 +536,7 @@ async def _get_feed_details(db: Session, feed_id: int) -> FeedResponse:
     return FeedResponse(Feed=feed.__dict__)
 
 
+@alog
 async def _update_feed(db: Session, feed_id: int, body: FeedUpdateBody) -> FeedResponse:
     feed: Feed | None = await db.get(Feed, feed_id)
 
@@ -529,6 +551,7 @@ async def _update_feed(db: Session, feed_id: int, body: FeedUpdateBody) -> FeedR
     return FeedResponse(Feed=feed.__dict__)
 
 
+@alog
 async def _toggle_feed(db: Session, feed_id: int, body: FeedToggleBody) -> FeedEnableDisableResponse:
     feed: Feed | None = await db.get(Feed, feed_id)
 
@@ -549,11 +572,13 @@ async def _toggle_feed(db: Session, feed_id: int, body: FeedToggleBody) -> FeedE
     return FeedEnableDisableResponse(name=feed.name, message=message, url=feed.url)
 
 
+@alog
 async def _fetch_data_from_all_feeds(db: Session) -> FeedFetchResponse:
     # logic to start the pull process for all feeds
     raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Endpoint not yet supported.")
 
 
+@alog
 async def _get_feeds(db: Session) -> list[FeedResponse]:
     result = await db.execute(select(Feed))
     feeds: Sequence[Feed] = result.scalars().all()
@@ -561,6 +586,7 @@ async def _get_feeds(db: Session) -> list[FeedResponse]:
     return [FeedResponse(Feed=feed.__dict__) for feed in feeds]
 
 
+@alog
 async def _enable_feed(db: Session, feed_id: int) -> FeedEnableDisableResponse:
     feed: Feed | None = await db.get(Feed, feed_id)
 
@@ -577,6 +603,7 @@ async def _enable_feed(db: Session, feed_id: int) -> FeedEnableDisableResponse:
     return FeedEnableDisableResponse(name=feed.name, message=message, url=feed.url)
 
 
+@alog
 async def _disable_feed(db: Session, feed_id: int) -> FeedEnableDisableResponse:
     feed: Feed | None = await db.get(Feed, feed_id)
 

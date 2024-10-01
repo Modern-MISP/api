@@ -42,6 +42,7 @@ from mmisp.api_schemas.responses.standard_status_response import (
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.admin_setting import AdminSetting
 from mmisp.db.models.workflow import Workflow
+from mmisp.lib.logger import alog
 from mmisp.util.models import update_record
 from mmisp.workflows.fastapi import (
     module_entity_to_json_dict,
@@ -76,6 +77,7 @@ router = APIRouter(tags=["workflows"])
     status_code=status.HTTP_200_OK,
     summary="Returns a list of all workflows",
 )
+@alog
 async def index(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -93,6 +95,7 @@ async def index(
     return result
 
 
+@alog
 async def query_all_workflows(db: Session) -> Sequence[Workflow]:
     db_result = await db.execute(select(Workflow))
     workflows: Sequence[Workflow] = db_result.scalars().all()
@@ -104,6 +107,7 @@ async def query_all_workflows(db: Session) -> Sequence[Workflow]:
     status_code=status.HTTP_200_OK,
     summary="Edits a workflow",
 )
+@alog
 async def edit(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -140,6 +144,7 @@ async def edit(
     return workflow_entity_to_json_dict(workflow)
 
 
+@alog
 async def edit_workflow(
     workflow_id: int,
     db: Session,
@@ -177,6 +182,7 @@ async def edit_workflow(
     status_code=status.HTTP_200_OK,
     summary="Deletes a workflow",
 )
+@alog
 async def delete(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -206,6 +212,7 @@ async def delete(
     )
 
 
+@alog
 async def delete_workflow(workflow_id: int, db: Session) -> bool:
     workflow = await get_workflow_by_id(workflow_id, db)
     if workflow is None:
@@ -221,6 +228,7 @@ async def delete_workflow(workflow_id: int, db: Session) -> bool:
     summary="Get a workflow",
     description="",
 )
+@alog
 async def view(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -251,6 +259,7 @@ async def view(
     return workflow_entity_to_json_dict(workflow)
 
 
+@alog
 async def get_workflow_by_id(workflow_id: int, db: Session) -> Workflow | None:
     return await db.get(Workflow, workflow_id)
 
@@ -260,6 +269,7 @@ async def get_workflow_by_id(workflow_id: int, db: Session) -> Workflow | None:
     status_code=status.HTTP_200_OK,
     summary="Creates a new workflow",
 )
+@alog
 async def editor(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -289,6 +299,7 @@ async def editor(
         )
 
 
+@alog
 async def create_workflow(trigger_id: str, db: Session) -> None:
     new_workflow = __create_new_workflow_object(
         name=f"Workflow for trigger {trigger_id}",
@@ -336,6 +347,7 @@ def __create_new_workflow_object(name: str, trigger_id: str, description: str = 
     status_code=status.HTTP_200_OK,
     summary="Executes a workflow",
 )
+@alog
 async def executeWorkflow(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -356,6 +368,7 @@ async def executeWorkflow(
     status_code=status.HTTP_200_OK,
     summary="Returns a list with all triggers",
 )
+@alog
 async def triggers(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -392,6 +405,7 @@ async def triggers(
     return result
 
 
+@alog
 async def get_workflow_by_trigger_id(
     trigger_id: str,
     db: Session,
@@ -401,6 +415,7 @@ async def get_workflow_by_trigger_id(
 
 
 @router.get("/workflows/moduleIndex/type:{type}", status_code=status.HTTP_200_OK, summary="Returns modules")
+@alog
 async def moduleIndex(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -464,6 +479,7 @@ def __filter_index_modules(module: Module, type: str) -> bool:
     status_code=status.HTTP_200_OK,
     summary="Returns a singular module",
 )
+@alog
 async def moduleView(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -499,6 +515,7 @@ async def moduleView(
     status_code=status.HTTP_200_OK,
     summary="Enables/ disables a module",
 )
+@alog
 async def toggleModule(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -564,6 +581,7 @@ async def toggleModule(
     status_code=status.HTTP_200_OK,
     summary="Checks if the given graph is correct",
 )
+@alog
 async def checkGraph(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -591,6 +609,7 @@ async def checkGraph(
     status_code=status.HTTP_200_OK,
     summary="Enable/ disable the workflow feature",
 )
+@alog
 async def toggleWorkflows(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -617,6 +636,7 @@ workflow_setting_name = "workflow_feature_enabled"
 
 
 # Should be moved to lib
+@alog
 async def set_admin_setting(setting_name: str, value: str, db: Session) -> None:
     setting_db = await db.execute(select(AdminSetting).where(AdminSetting.setting == setting_name))
     setting: AdminSetting | None = setting_db.scalars().first()
@@ -633,6 +653,7 @@ async def set_admin_setting(setting_name: str, value: str, db: Session) -> None:
     await db.refresh(setting)
 
 
+@alog
 async def get_admin_setting(setting_name: str, db: Session) -> str:
     setting_db = await db.execute(select(AdminSetting).where(AdminSetting.setting == setting_name))
     setting: AdminSetting | None = cast(AdminSetting | None, setting_db.scalars().first())
@@ -646,6 +667,7 @@ async def get_admin_setting(setting_name: str, db: Session) -> str:
     status_code=status.HTTP_200_OK,
     summary="Status whether the workflow setting is globally enabled/ disabled",
 )
+@alog
 async def workflowsSetting(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -662,6 +684,7 @@ async def workflowsSetting(
     status_code=status.HTTP_200_OK,
     summary="Status whether the workflow setting is globally enabled/ disabled",
 )
+@alog
 async def debugToggleField(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -681,6 +704,7 @@ async def debugToggleField(
     )
 
 
+@alog
 async def toggleWorkflowDebugField(workflow_id: int, debug_enabled: bool, db: Session) -> bool:
     workflow = await get_workflow_by_id(workflow_id, db)
     if workflow is None:

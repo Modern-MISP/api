@@ -19,11 +19,13 @@ from mmisp.api_schemas.galaxies import (
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.galaxy import Galaxy
 from mmisp.db.models.galaxy_cluster import GalaxyCluster, GalaxyElement
+from mmisp.lib.logger import alog
 
 router = APIRouter(tags=["galaxies"])
 
 
 @router.get("/galaxies/{galaxyId}", status_code=status.HTTP_200_OK, response_model=GetGalaxyResponse)
+@alog
 async def get_galaxy_details(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -52,6 +54,7 @@ async def get_galaxy_details(
     response_model=DeleteForceUpdateImportGalaxyResponse,
     summary="Update galaxies",
 )
+@alog
 async def update_galaxy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.WORKER_KEY, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -80,6 +83,7 @@ async def update_galaxy(
     response_model=DeleteForceUpdateImportGalaxyResponse,
     summary="Delete a galaxy",
 )
+@alog
 async def delete_galaxy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -111,6 +115,7 @@ async def delete_galaxy(
     response_model=list[GetAllSearchGalaxiesResponse],
     summary="Get all galaxies",
 )
+@alog
 async def get_galaxies(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))], db: Annotated[Session, Depends(get_db)]
 ) -> list[GetAllSearchGalaxiesResponse]:
@@ -135,6 +140,7 @@ async def get_galaxies(
     response_model=list[GetAllSearchGalaxiesResponse],
     summary="Search galaxies",
 )
+@alog
 async def search_galaxies(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -167,6 +173,7 @@ async def search_galaxies(
     response_model=GetGalaxyResponse,
     summary="View Galaxy by ID.",
 )
+@alog
 async def get_galaxy_details_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -196,6 +203,7 @@ async def get_galaxy_details_depr(
     response_model=DeleteForceUpdateImportGalaxyResponse,
     summary="Delete Galaxy by ID",
 )
+@alog
 async def delete_galaxy_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -224,6 +232,7 @@ async def delete_galaxy_depr(
 # --- endpoint logic ---
 
 
+@alog
 async def _get_galaxy_details(db: Session, galaxy_id: str) -> GetGalaxyResponse:
     galaxy: Galaxy | None = await db.get(Galaxy, galaxy_id)
 
@@ -236,6 +245,7 @@ async def _get_galaxy_details(db: Session, galaxy_id: str) -> GetGalaxyResponse:
     return GetGalaxyResponse(Galaxy=galaxy_data, GalaxyCluster=galaxy_cluster_data)
 
 
+@alog
 async def _prepare_galaxy_response(db: Session, galaxy: Galaxy) -> GetAllSearchGalaxiesAttributes:
     galaxy_dict = galaxy.__dict__.copy()
 
@@ -248,6 +258,7 @@ async def _prepare_galaxy_response(db: Session, galaxy: Galaxy) -> GetAllSearchG
     return GetAllSearchGalaxiesAttributes(**galaxy_dict)
 
 
+@alog
 async def _prepare_galaxy_cluster_response(db: Session, galaxy: Galaxy) -> list[GetGalaxyClusterResponse]:
     response_list = []
 
@@ -295,6 +306,7 @@ async def _prepare_galaxy_cluster_response(db: Session, galaxy: Galaxy) -> list[
     return response_list
 
 
+@alog
 async def _delete_galaxy(db: Session, galaxy_id: str, request: Request) -> DeleteForceUpdateImportGalaxyResponse:
     galaxy = await db.get(Galaxy, galaxy_id)
 
@@ -316,6 +328,7 @@ async def _delete_galaxy(db: Session, galaxy_id: str, request: Request) -> Delet
     )
 
 
+@alog
 async def _get_galaxies(db: Session) -> list[GetAllSearchGalaxiesResponse]:
     result = await db.execute(select(Galaxy))
     galaxies = result.scalars().all()
@@ -330,6 +343,7 @@ async def _get_galaxies(db: Session) -> list[GetAllSearchGalaxiesResponse]:
     return response_list
 
 
+@alog
 async def _search_galaxies(db: Session, body: SearchGalaxiesbyValue) -> list[GetAllSearchGalaxiesResponse]:
     search_term = body.value
     result = await db.execute(

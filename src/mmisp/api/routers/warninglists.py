@@ -21,6 +21,7 @@ from mmisp.api_schemas.warninglists import (
 )
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.warninglist import Warninglist, WarninglistEntry, WarninglistType
+from mmisp.lib.logger import alog
 
 router = APIRouter(tags=["warninglists"])
 
@@ -30,6 +31,7 @@ router = APIRouter(tags=["warninglists"])
     status_code=status.HTTP_201_CREATED,
     summary="Add a new warninglist",
 )
+@alog
 async def add_warninglist(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.WARNINGLIST]))],
     db: Annotated[Session, Depends(get_db)],
@@ -58,6 +60,7 @@ async def add_warninglist(
     status_code=status.HTTP_200_OK,
     summary="Get warninglist details",
 )
+@alog
 async def get_warninglist_details(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -87,6 +90,7 @@ async def get_warninglist_details(
     response_model_exclude_unset=True,
     summary="Disable/Enable warninglist",
 )
+@alog
 async def post_toggleEnable(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -115,6 +119,7 @@ async def post_toggleEnable(
     status_code=status.HTTP_200_OK,
     summary="Delete warninglist",
 )
+@alog
 async def delete_warninglist(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -143,6 +148,7 @@ async def delete_warninglist(
     status_code=status.HTTP_200_OK,
     summary="Get all warninglists, or selected ones by value and status",
 )
+@alog
 async def get_all_or_selected_warninglists(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -176,6 +182,7 @@ async def get_all_or_selected_warninglists(
     status_code=status.HTTP_200_OK,
     summary="Get a list of ID and name of enabled warninglists",
 )
+@alog
 async def get_warninglists_by_value(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -205,6 +212,7 @@ async def get_warninglists_by_value(
     status_code=status.HTTP_200_OK,
     summary="Update warninglists",
 )
+@alog
 async def update_all_warninglists(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -234,6 +242,7 @@ async def update_all_warninglists(
     status_code=status.HTTP_200_OK,
     summary="Get warninglist details (Deprecated)",
 )
+@alog
 async def get_warninglist_details_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -263,6 +272,7 @@ async def get_warninglist_details_depr(
     status_code=status.HTTP_200_OK,
     summary="Get selected warninglists (Deprecated)",
 )
+@alog
 async def search_warninglists(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -292,6 +302,7 @@ async def search_warninglists(
     status_code=status.HTTP_200_OK,
     summary="Update warninglists (Deprecated)",
 )
+@alog
 async def update_all_warninglists_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -315,6 +326,7 @@ async def update_all_warninglists_depr(
 # --- endpoint logic ---
 
 
+@alog
 async def _add_warninglist(
     db: Session,
     body: CreateWarninglistBody,
@@ -343,6 +355,7 @@ async def _add_warninglist(
     return WarninglistResponse(Warninglist=warninglist_data)
 
 
+@alog
 async def _toggleEnable(
     db: Session,
     body: ToggleEnableWarninglistsBody,
@@ -378,6 +391,7 @@ async def _toggleEnable(
     return ToggleEnableWarninglistsResponse(saved=True, success=f"{len(warninglists)} warninglist(s) {action}")
 
 
+@alog
 async def _get_warninglist_details(
     db: Session,
     warninglist_id: int,
@@ -392,6 +406,7 @@ async def _get_warninglist_details(
     return WarninglistResponse(Warninglist=warninglist_response)
 
 
+@alog
 async def _delete_warninglist(
     db: Session,
     warninglist_id: int,
@@ -426,6 +441,7 @@ async def _delete_warninglist(
     return WarninglistResponse(Warninglist=warninglist_response)
 
 
+@alog
 async def _get_all_or_selected_warninglists(
     db: Session,
     value: str | None = None,
@@ -440,6 +456,7 @@ async def _get_all_or_selected_warninglists(
     return GetSelectedAllWarninglistsResponse(Warninglists=warninglists_data)
 
 
+@alog
 async def _get_warninglists_by_value(
     db: Session,
     body: CheckValueWarninglistsBody,
@@ -465,6 +482,7 @@ async def _get_warninglists_by_value(
     return {f"{value}": name_warninglists}
 
 
+@alog
 async def _update_all_warninglists(
     db: Session,
     deprecated: bool,
@@ -482,6 +500,7 @@ async def _update_all_warninglists(
     )
 
 
+@alog
 async def _get_selected_warninglists(
     db: Session,
     body: GetSelectedWarninglistsBody,
@@ -495,6 +514,7 @@ async def _get_selected_warninglists(
     return GetSelectedAllWarninglistsResponse(Warninglists=warninglists_data)
 
 
+@alog
 async def _search_warninglist(
     db: Session, value: str | None = None, enabled: bool | None = None
 ) -> Sequence[Warninglist]:
@@ -553,6 +573,7 @@ def _convert_to_list(value: Any) -> list[str]:
     return value
 
 
+@alog
 async def _prepare_warninglist_response(db: Session, warninglist: Warninglist) -> dict:
     warninglist_response = warninglist.__dict__
     warninglist_response["warninglist_entry_count"] = await _get_warninglist_entry_count(db, warninglist.id)
@@ -561,6 +582,7 @@ async def _prepare_warninglist_response(db: Session, warninglist: Warninglist) -
     return warninglist_response
 
 
+@alog
 async def _prepare_warninglist_details_response(db: Session, warninglist: Warninglist) -> dict:
     warninglist_response = await _prepare_warninglist_response(db, warninglist)
     warninglist_response["WarninglistEntry"] = await _get_warninglist_entries(db, warninglist.id)
@@ -569,23 +591,27 @@ async def _prepare_warninglist_details_response(db: Session, warninglist: Warnin
     return warninglist_response
 
 
+@alog
 async def _get_warninglist_types(db: Session, warninglist_id: int) -> list[dict]:
     result = await db.execute(select(WarninglistType).filter(WarninglistType.warninglist_id == warninglist_id))
     warninglist_types = result.scalars().all()
     return [warninglist_type.__dict__ for warninglist_type in warninglist_types]
 
 
+@alog
 async def _get_warninglist_entries(db: Session, warninglist_id: int) -> list[dict]:
     result = await db.execute(select(WarninglistEntry).filter(WarninglistEntry.warninglist_id == warninglist_id))
     warninglist_entries = result.scalars().all()
     return [warninglist_entry.__dict__ for warninglist_entry in warninglist_entries]
 
 
+@alog
 async def _get_warninglist_entry_count(db: Session, warninglist_id: int) -> int:
     result = await db.execute(select(func.count()).filter(WarninglistEntry.warninglist_id == warninglist_id))
     return cast(int, result.scalar())
 
 
+@alog
 async def _get_valid_attributes(db: Session, warninglist_id: int) -> str:
     result = await db.execute(select(WarninglistType).filter(WarninglistType.warninglist_id == warninglist_id))
     warninglist_types: Sequence[WarninglistType] = result.scalars().all()

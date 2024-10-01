@@ -35,6 +35,7 @@ from mmisp.db.models.attribute import Attribute, AttributeTag
 from mmisp.db.models.event import Event
 from mmisp.db.models.tag import Tag
 from mmisp.lib.attribute_search_filter import get_search_filters
+from mmisp.lib.logger import alog
 from mmisp.util.models import update_record
 
 from ..workflow import execute_workflow
@@ -47,6 +48,7 @@ router = APIRouter(tags=["attributes"])
     status_code=status.HTTP_200_OK,
     summary="Search attributes",
 )
+@alog
 async def rest_search_attributes(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -75,6 +77,7 @@ async def rest_search_attributes(
     response_model=AddAttributeResponse,
     summary="Add new attribute",
 )
+@alog
 async def add_attribute(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
@@ -105,6 +108,7 @@ async def add_attribute(
     status_code=status.HTTP_200_OK,
     summary="Get all attribute describe types",
 )
+@alog
 async def get_attributes_describe_types(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
 ) -> GetDescribeTypesResponse:
@@ -127,6 +131,7 @@ async def get_attributes_describe_types(
     response_model=GetAttributeResponse,
     summary="Get attribute details",
 )
+@alog
 async def get_attribute_details(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -155,6 +160,7 @@ async def get_attribute_details(
     response_model=EditAttributeResponse,
     summary="Update an attribute",
 )
+@alog
 async def update_attribute(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
@@ -186,6 +192,7 @@ async def update_attribute(
     response_model=DeleteAttributeResponse,
     summary="Delete an Attribute",
 )
+@alog
 async def delete_attribute(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
@@ -213,6 +220,7 @@ async def delete_attribute(
     status_code=status.HTTP_200_OK,
     summary="Get all Attributes",
 )
+@alog
 async def get_attributes(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))], db: Annotated[Session, Depends(get_db)]
 ) -> list[GetAllAttributesResponse]:
@@ -235,6 +243,7 @@ async def get_attributes(
     response_model=DeleteSelectedAttributeResponse,
     summary="Delete the selected attributes",
 )
+@alog
 async def delete_selected_attributes(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
@@ -269,6 +278,7 @@ async def delete_selected_attributes(
     summary="Get attribute statistics",
     response_model_exclude_unset=True,
 )
+@alog
 async def get_attributes_type_statistics(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -295,6 +305,7 @@ async def get_attributes_type_statistics(
     summary="Get attribute statistics",
     response_model_exclude_unset=True,
 )
+@alog
 async def get_attributes_category_statistics(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -321,6 +332,7 @@ async def get_attributes_category_statistics(
     response_model=GetAttributeResponse,
     summary="Restore an attribute",
 )
+@alog
 async def restore_attribute(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
@@ -349,6 +361,7 @@ async def restore_attribute(
     response_model=AddRemoveTagAttributeResponse,
     summary="Add tag to attribute",
 )
+@alog
 async def add_tag_to_attribute(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.TAGGER]))],
     db: Annotated[Session, Depends(get_db)],
@@ -383,6 +396,7 @@ async def add_tag_to_attribute(
     response_model=AddRemoveTagAttributeResponse,
     summary="Remove tag from attribute",
 )
+@alog
 async def remove_tag_from_attribute(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.TAGGER]))],
     db: Annotated[Session, Depends(get_db)],
@@ -418,6 +432,7 @@ async def remove_tag_from_attribute(
     response_model=AddAttributeResponse,
     summary="Add new attribute (Deprecated)",
 )
+@alog
 async def add_attribute_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
@@ -450,6 +465,7 @@ async def add_attribute_depr(
     response_model=GetAttributeResponse,
     summary="Get attribute details (Deprecated)",
 )
+@alog
 async def get_attribute_details_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -479,6 +495,7 @@ async def get_attribute_details_depr(
     response_model=EditAttributeResponse,
     summary="Update an attribute (Deprecated)",
 )
+@alog
 async def update_attribute_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
@@ -511,6 +528,7 @@ async def update_attribute_depr(
     response_model=DeleteAttributeResponse,
     summary="Delete an Attribute (Deprecated)",
 )
+@alog
 async def delete_attribute_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
@@ -536,6 +554,7 @@ async def delete_attribute_depr(
 # --- endpoint logic ---
 
 
+@alog
 async def _add_attribute(db: Session, event_id: str, body: AddAttributeBody) -> AddAttributeResponse:
     event: Event | None = await db.get(Event, event_id)
 
@@ -579,6 +598,7 @@ async def _add_attribute(db: Session, event_id: str, body: AddAttributeBody) -> 
     return AddAttributeResponse(Attribute=attribute_data)
 
 
+@alog
 async def _get_attribute_details(db: Session, attribute_id: int) -> GetAttributeResponse:
     attribute: Attribute | None = await db.get(Attribute, attribute_id)
 
@@ -590,6 +610,7 @@ async def _get_attribute_details(db: Session, attribute_id: int) -> GetAttribute
     return GetAttributeResponse(Attribute=attribute_data)
 
 
+@alog
 async def _update_attribute(db: Session, attribute_id: str, body: EditAttributeBody) -> EditAttributeResponse:
     attribute: Attribute | None = await db.get(Attribute, attribute_id)
 
@@ -615,6 +636,7 @@ async def _update_attribute(db: Session, attribute_id: str, body: EditAttributeB
     return EditAttributeResponse(Attribute=attribute_data)
 
 
+@alog
 async def _delete_attribute(db: Session, attribute_id: str) -> DeleteAttributeResponse:
     attribute: Attribute | None = await db.get(Attribute, attribute_id)
 
@@ -627,6 +649,7 @@ async def _delete_attribute(db: Session, attribute_id: str) -> DeleteAttributeRe
     return DeleteAttributeResponse(message="Attribute deleted.")
 
 
+@alog
 async def _get_attributes(db: Session) -> list[GetAllAttributesResponse]:
     result = await db.execute(select(Attribute))
     attributes = result.scalars().all()
@@ -639,6 +662,7 @@ async def _get_attributes(db: Session) -> list[GetAllAttributesResponse]:
     return attribute_responses
 
 
+@alog
 async def _delete_selected_attributes(
     db: Session, event_id: str, body: DeleteSelectedAttributeBody, request: Request
 ) -> DeleteSelectedAttributeResponse:
@@ -683,6 +707,7 @@ async def _delete_selected_attributes(
     )
 
 
+@alog
 async def _rest_search_attributes(db: Session, body: SearchAttributesBody) -> SearchAttributesResponse:
     if body.returnFormat != "json":
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid output format.")
@@ -734,6 +759,7 @@ async def _rest_search_attributes(db: Session, body: SearchAttributesBody) -> Se
     return SearchAttributesResponse.parse_obj({"response": {"Attribute": response_list}})
 
 
+@alog
 async def _restore_attribute(db: Session, attribute_id: str) -> GetAttributeResponse:
     attribute: Attribute | None = await db.get(Attribute, attribute_id)
 
@@ -752,6 +778,7 @@ async def _restore_attribute(db: Session, attribute_id: str) -> GetAttributeResp
     return GetAttributeResponse(Attribute=attribute_data)
 
 
+@alog
 async def _add_tag_to_attribute(
     db: Session, attribute_id: str, tag_id: str, local: str
 ) -> AddRemoveTagAttributeResponse:
@@ -786,6 +813,7 @@ async def _add_tag_to_attribute(
     return AddRemoveTagAttributeResponse(saved=True, success="Tag added", check_publish=True)
 
 
+@alog
 async def _remove_tag_from_attribute(db: Session, attribute_id: str, tag_id: str) -> AddRemoveTagAttributeResponse:
     result = await db.execute(
         select(AttributeTag)
@@ -823,6 +851,7 @@ def _prepare_attribute_response_get_all(attribute: Attribute) -> GetAllAttribute
     return GetAllAttributesResponse(**attribute_dict)
 
 
+@alog
 async def _prepare_get_attribute_details_response(
     db: Session, attribute_id: int, attribute: Attribute
 ) -> GetAttributeAttributes:
@@ -853,6 +882,7 @@ async def _prepare_get_attribute_details_response(
     return GetAttributeAttributes(**attribute_dict)
 
 
+@alog
 async def _prepare_edit_attribute_response(
     db: Session, attribute_id: str, attribute: Attribute
 ) -> EditAttributeAttributes:
@@ -890,6 +920,7 @@ async def _prepare_edit_attribute_response(
     return EditAttributeAttributes(**attribute_dict)
 
 
+@alog
 async def _get_attribute_category_statistics(db: Session, percentage: bool) -> GetAttributeStatisticsCategoriesResponse:  # type: ignore
     qry = select(Attribute.category, func.count(Attribute.category).label("count")).group_by(Attribute.category)
     result = await db.execute(qry)
@@ -909,6 +940,7 @@ async def _get_attribute_category_statistics(db: Session, percentage: bool) -> G
     return GetAttributeStatisticsCategoriesResponse(**attribute_count_by_category_dict)
 
 
+@alog
 async def _get_attribute_type_statistics(db: Session, percentage: bool) -> GetAttributeStatisticsTypesResponse:  # type: ignore
     qry = select(Attribute.type, func.count(Attribute.type).label("count")).group_by(Attribute.type)
     result = await db.execute(qry)

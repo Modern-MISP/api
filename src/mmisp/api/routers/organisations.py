@@ -16,6 +16,7 @@ from mmisp.api_schemas.organisations import (
 )
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.organisation import Organisation
+from mmisp.lib.logger import alog
 
 router = APIRouter(tags=["organisations"])
 
@@ -24,6 +25,7 @@ router = APIRouter(tags=["organisations"])
     "/organisations",
     summary="Add a new organisation",
 )
+@alog
 async def add_organisation(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -49,6 +51,7 @@ async def add_organisation(
     "/organisations/all",
     summary="Gets a list of all organisations",
 )
+@alog
 async def get_organisations(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -71,6 +74,7 @@ async def get_organisations(
     "/organisations/{orgId}",
     summary="Gets an organisation by its ID",
 )
+@alog
 async def get_organisation(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -98,6 +102,7 @@ async def get_organisation(
     "/organisations/delete/{orgId}",
     summary="Deletes an organisation by its ID",
 )
+@alog
 async def delete_organisation(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -123,6 +128,7 @@ async def delete_organisation(
     "/organisations/update/{orgId}",
     summary="Updates an organisation by its ID",
 )
+@alog
 async def update_organisation(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -155,6 +161,7 @@ async def update_organisation(
     summary="Gets a list of all organisations",
     deprecated=True,
 )
+@alog
 async def get_organisations_deprecated(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -176,6 +183,7 @@ async def get_organisations_deprecated(
 # --- endpoint logic ---
 
 
+@alog
 async def _add_organisation(auth: Auth, db: Session, body: AddOrganisation) -> GetOrganisationResponse:
     if not (check_permissions(auth, [Permission.SITE_ADMIN]) or check_permissions(auth, [Permission.ADMIN])):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
@@ -215,6 +223,7 @@ async def _add_organisation(auth: Auth, db: Session, body: AddOrganisation) -> G
     )
 
 
+@alog
 async def _get_organisations(auth: Auth, db: Session) -> list[GetAllOrganisationResponse]:
     query = select(Organisation)
     result = await db.execute(query)
@@ -248,6 +257,7 @@ async def _get_organisations(auth: Auth, db: Session) -> list[GetAllOrganisation
     return org_list_computed
 
 
+@alog
 async def _get_organisation(auth: Auth, db: Session, organisationID: str) -> GetOrganisationResponse:
     if not (check_permissions(auth, [Permission.SITE_ADMIN]) or check_permissions(auth, [Permission.ADMIN])):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
@@ -278,6 +288,7 @@ async def _get_organisation(auth: Auth, db: Session, organisationID: str) -> Get
     )
 
 
+@alog
 async def _delete_organisation(auth: Auth, db: Session, organisationID: str) -> DeleteForceUpdateOrganisationResponse:
     if not (check_permissions(auth, [Permission.SITE_ADMIN]) and check_permissions(auth, [Permission.ADMIN])):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
@@ -308,6 +319,7 @@ async def _delete_organisation(auth: Auth, db: Session, organisationID: str) -> 
     )
 
 
+@alog
 async def _update_organisation(
     auth: Auth, db: Session, organisationID: str, body: EditOrganisation
 ) -> GetOrganisationResponse:

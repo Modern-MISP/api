@@ -60,6 +60,7 @@ from mmisp.db.models.tag import Tag
 from mmisp.db.models.user import User
 from mmisp.lib.actions import action_publish_event
 from mmisp.lib.galaxies import parse_galaxy_authors
+from mmisp.lib.logger import alog
 from mmisp.util.models import update_record
 from mmisp.util.partial import partial
 
@@ -76,6 +77,7 @@ router = APIRouter(tags=["events"])
     response_model=AddEditGetEventResponse,
     summary="Add new event",
 )
+@alog
 async def add_event(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
@@ -103,6 +105,7 @@ async def add_event(
     status_code=status.HTTP_200_OK,
     summary="Get event details",
 )
+@alog
 async def get_event_details(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -131,6 +134,7 @@ async def get_event_details(
     response_model=AddEditGetEventResponse,
     summary="Update an event",
 )
+@alog
 async def update_event(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
@@ -162,6 +166,7 @@ async def update_event(
     response_model=DeleteEventResponse,
     summary="Delete an event",
 )
+@alog
 async def delete_event(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
@@ -189,6 +194,7 @@ async def delete_event(
     status_code=status.HTTP_200_OK,
     summary="Get all events",
 )
+@alog
 async def get_all_events(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))], db: Annotated[Session, Depends(get_db)]
 ) -> list[GetAllEventsResponse]:
@@ -213,6 +219,7 @@ async def get_all_events(
     response_model=partial(SearchEventsResponse),
     summary="Search events",
 )
+@alog
 async def rest_search_events(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -240,6 +247,7 @@ async def rest_search_events(
     status_code=status.HTTP_200_OK,
     summary="Search events",
 )
+@alog
 async def index_events(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -268,6 +276,7 @@ async def index_events(
     response_model=PublishEventResponse,
     summary="Publish an event",
 )
+@alog
 async def publish_event(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.PUBLISH]))],
     db: Annotated[Session, Depends(get_db)],
@@ -299,6 +308,7 @@ async def publish_event(
     response_model=UnpublishEventResponse,
     summary="Unpublish an event",
 )
+@alog
 async def unpublish_event(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
@@ -329,6 +339,7 @@ async def unpublish_event(
     status_code=status.HTTP_200_OK,
     summary="Add tag to event",
 )
+@alog
 async def add_tag_to_event(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
@@ -363,6 +374,7 @@ async def add_tag_to_event(
     response_model=AddRemoveTagEventsResponse,
     summary="Remove tag of event",
 )
+@alog
 async def remove_tag_from_event(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
@@ -394,6 +406,7 @@ async def remove_tag_from_event(
     response_model=FreeTextProcessID,
     summary="start the freetext import process via worker",
 )
+@alog
 async def start_freeTextImport(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     event_id: Annotated[str, Path(alias="eventID")],
@@ -448,6 +461,7 @@ async def start_freeTextImport(
     response_model=AddEditGetEventResponse,
     summary="Add new event (Deprecated)",
 )
+@alog
 async def add_event_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
@@ -476,6 +490,7 @@ async def add_event_depr(
     status_code=status.HTTP_200_OK,
     summary="Get event details (Deprecated)",
 )
+@alog
 async def get_event_details_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -505,6 +520,7 @@ async def get_event_details_depr(
     response_model=AddEditGetEventResponse,
     summary="Update an event (Deprecated)",
 )
+@alog
 async def update_event_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
@@ -537,6 +553,7 @@ async def update_event_depr(
     response_model=DeleteEventResponse,
     summary="Delete an event (Deprecated)",
 )
+@alog
 async def delete_event_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
@@ -562,6 +579,7 @@ async def delete_event_depr(
 # --- endpoint logic ---
 
 
+@alog
 async def _add_event(auth: Auth, db: Session, body: AddEventBody) -> AddEditGetEventResponse:
     if not body.info:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="value 'info' is required")
@@ -625,6 +643,7 @@ async def _add_event(auth: Auth, db: Session, body: AddEventBody) -> AddEditGetE
     return AddEditGetEventResponse(Event=event_data)
 
 
+@alog
 async def _get_event_details(db: Session, event_id: int) -> AddEditGetEventResponse:
     result = await db.execute(
         select(Event)
@@ -660,6 +679,7 @@ async def _get_event_details(db: Session, event_id: int) -> AddEditGetEventRespo
     return AddEditGetEventResponse(Event=event_data)
 
 
+@alog
 async def _update_event(db: Session, event_id: str, body: EditEventBody) -> AddEditGetEventResponse:
     result = await db.execute(
         select(Event)
@@ -701,6 +721,7 @@ async def _update_event(db: Session, event_id: str, body: EditEventBody) -> AddE
     return AddEditGetEventResponse(Event=event_data)
 
 
+@alog
 async def _delete_event(db: Session, event_id: int) -> DeleteEventResponse:
     event = await db.get(Event, event_id)
 
@@ -729,6 +750,7 @@ async def _delete_event(db: Session, event_id: int) -> DeleteEventResponse:
     )
 
 
+@alog
 async def _get_events(db: Session) -> list[GetAllEventsResponse]:
     result = await db.execute(
         select(Event).options(
@@ -757,6 +779,7 @@ async def _get_events(db: Session) -> list[GetAllEventsResponse]:
     return event_responses
 
 
+@alog
 async def _rest_search_events(db: Session, body: SearchEventsBody) -> SearchEventsResponse:
     if body.returnFormat != "json":
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid output format.")
@@ -795,6 +818,7 @@ async def _rest_search_events(db: Session, body: SearchEventsBody) -> SearchEven
     return SearchEventsResponse(response=response_list)
 
 
+@alog
 async def _index_events(db: Session, body: IndexEventsBody) -> list[GetAllEventsResponse]:
     limit = 25
     offset = 0
@@ -845,6 +869,7 @@ async def _index_events(db: Session, body: IndexEventsBody) -> list[GetAllEvents
     return response_list
 
 
+@alog
 async def _publish_event(db: Session, event_id: str, request: Request) -> PublishEventResponse:
     event = await db.get(Event, event_id)
 
@@ -860,6 +885,7 @@ async def _publish_event(db: Session, event_id: str, request: Request) -> Publis
     )
 
 
+@alog
 async def _unpublish_event(db: Session, event_id: str, request: Request) -> UnpublishEventResponse:
     event = await db.get(Event, event_id)
 
@@ -882,6 +908,7 @@ async def _unpublish_event(db: Session, event_id: str, request: Request) -> Unpu
     )
 
 
+@alog
 async def _add_tag_to_event(db: Session, event_id: str, tag_id: str, local: str) -> AddRemoveTagEventsResponse:
     event: Event | None = await db.get(Event, event_id)
 
@@ -910,6 +937,7 @@ async def _add_tag_to_event(db: Session, event_id: str, tag_id: str, local: str)
     return AddRemoveTagEventsResponse(saved=True, success="Tag added", check_publish=True)
 
 
+@alog
 async def _remove_tag_from_event(db: Session, event_id: str, tag_id: str) -> AddRemoveTagEventsResponse:
     event: Event | None = await db.get(Event, event_id)
 
@@ -936,6 +964,7 @@ async def _remove_tag_from_event(db: Session, event_id: str, tag_id: str) -> Add
     return AddRemoveTagEventsResponse(saved=True, success="Tag removed", check_publish=True)
 
 
+@alog
 async def _prepare_event_response(db: Session, event: Event) -> AddEditGetEventDetails:
     event_dict = event.__dict__.copy()
 
@@ -1017,6 +1046,7 @@ async def _prepare_event_response(db: Session, event: Event) -> AddEditGetEventD
     return AddEditGetEventDetails(**event_dict)
 
 
+@alog
 async def _prepare_attribute_response(
     db: Session, attribute_list: Sequence[Attribute]
 ) -> list[AddEditGetEventAttribute]:
@@ -1064,6 +1094,7 @@ async def _prepare_attribute_response(
     return attribute_response_list
 
 
+@alog
 async def _prepare_tag_response(db: Session, tag_list: Sequence[EventTag | AttributeTag]) -> list[AddEditGetEventTag]:
     tag_response_list = []
 
@@ -1083,6 +1114,7 @@ async def _prepare_tag_response(db: Session, tag_list: Sequence[EventTag | Attri
     return tag_response_list
 
 
+@alog
 async def _prepare_single_galaxy_cluster_response(
     db: Session, galaxy_cluster: GalaxyCluster, connecting_tag: AttributeTag | EventTag
 ) -> AddEditGetEventGalaxyCluster:
@@ -1134,6 +1166,7 @@ async def _prepare_single_galaxy_cluster_response(
     return AddEditGetEventGalaxyCluster(**galaxy_cluster_dict)
 
 
+@alog
 async def _prepare_galaxy_cluster_relation_response(
     db: Session, galaxy_cluster_relation_list: Sequence[GalaxyReference]
 ) -> list[AddEditGetEventGalaxyClusterRelation]:
@@ -1160,6 +1193,7 @@ async def _prepare_galaxy_cluster_relation_response(
     return galaxy_cluster_relation_response_list
 
 
+@alog
 async def _prepare_object_response(db: Session, object_list: Sequence[Object]) -> list[AddEditGetEventObject]:
     response_object_list = []
 

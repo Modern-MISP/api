@@ -40,6 +40,7 @@ from mmisp.db.models.tag import Tag
 from mmisp.lib.fallbacks import GENERIC_MISP_ORGANISATION
 from mmisp.lib.galaxies import galaxy_tag_name, parse_galaxy_authors
 from mmisp.lib.galaxy_clusters import update_galaxy_cluster_elements
+from mmisp.lib.logger import alog
 from mmisp.util.uuid import uuid
 
 router = APIRouter(tags=["galaxy_clusters"])
@@ -50,6 +51,7 @@ router = APIRouter(tags=["galaxy_clusters"])
     status_code=status.HTTP_200_OK,
     summary="Add new galaxy cluster",
 )
+@alog
 async def import_galaxy_cluster(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.GALAXY_EDITOR]))],
     db: Annotated[Session, Depends(get_db)],
@@ -80,6 +82,7 @@ async def import_galaxy_cluster(
     status_code=status.HTTP_200_OK,
     summary="Gets information from a galaxy cluster",
 )
+@alog
 async def get_galaxy_cluster(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -107,6 +110,7 @@ async def get_galaxy_cluster(
     status_code=status.HTTP_200_OK,
     summary="Export galaxy cluster",
 )
+@alog
 async def export_galaxy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -137,6 +141,7 @@ async def export_galaxy(
     status_code=status.HTTP_200_OK,
     summary="Attach Cluster to Galaxy.",
 )
+@alog
 async def galaxies_attachCluster(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -177,6 +182,7 @@ async def galaxies_attachCluster(
     status_code=status.HTTP_200_OK,
     summary="Gets information from a galaxy cluster",
 )
+@alog
 async def get_galaxy_cluster_view(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -236,6 +242,7 @@ async def put_galaxy_cluster(
     status_code=status.HTTP_200_OK,
     summary="Add new galaxy cluster",
 )
+@alog
 async def add_galaxy_cluster(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -281,6 +288,7 @@ async def add_galaxy_cluster(
 # --- endpoint logic ---
 
 
+@alog
 async def _import_galaxy_cluster(
     db: Session, body: list[ImportGalaxyBody], request: Request
 ) -> DeleteForceUpdateImportGalaxyResponse:
@@ -381,6 +389,7 @@ async def _import_galaxy_cluster(
     )
 
 
+@alog
 async def _process_galaxy_cluster_dict(cluster_dict: dict) -> dict:
     if not isinstance(cluster_dict["authors"], list):
         cluster_dict["authors"] = parse_galaxy_authors(cluster_dict["authors"])
@@ -400,6 +409,7 @@ async def _process_galaxy_cluster_dict(cluster_dict: dict) -> dict:
     return cluster_dict
 
 
+@alog
 async def _load_galaxy_cluster(db: Session, cluster_id: int) -> GalaxyCluster | None:
     result = await db.execute(
         select(GalaxyCluster)
@@ -414,6 +424,7 @@ async def _load_galaxy_cluster(db: Session, cluster_id: int) -> GalaxyCluster | 
     return result.scalar_one_or_none()
 
 
+@alog
 async def _get_galaxy_cluster(db: Session, galaxy_cluster: GalaxyCluster | None) -> GalaxyClusterResponse:
     if galaxy_cluster is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Galaxy cluster not found")
@@ -443,6 +454,7 @@ async def _get_galaxy_cluster(db: Session, galaxy_cluster: GalaxyCluster | None)
     return GalaxyClusterResponse(GalaxyCluster=GetGalaxyClusterResponse(**galaxy_cluster_dict))
 
 
+@alog
 async def _get_organisation_for_cluster(db: Session, org: Organisation) -> GetOrganisationResponse:
     if org is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Organisation not found")
@@ -465,6 +477,7 @@ async def _get_organisation_for_cluster(db: Session, org: Organisation) -> GetOr
     )
 
 
+@alog
 async def _export_galaxy(db: Session, galaxy_id: str, body: ExportGalaxyBody) -> list[ExportGalaxyClusterResponse]:
     galaxy: Galaxy | None = await db.get(Galaxy, galaxy_id)
 
@@ -493,6 +506,7 @@ async def _export_galaxy(db: Session, galaxy_id: str, body: ExportGalaxyBody) ->
     return response_list
 
 
+@alog
 async def _attach_cluster_to_galaxy(
     db: Session, attach_target_id: str, attach_target_type: str, local: str, body: AttachClusterGalaxyBody
 ) -> AttachClusterGalaxyResponse:
@@ -539,6 +553,7 @@ async def _attach_cluster_to_galaxy(
     return AttachClusterGalaxyResponse(saved=True, success="Cluster attached.", check_publish=True)
 
 
+@alog
 async def _prepare_galaxy_response(db: Session, galaxy: Galaxy) -> GetAllSearchGalaxiesAttributes:
     galaxy_dict = galaxy.asdict()
     result = await db.execute(select(GalaxyCluster).filter(GalaxyCluster.galaxy_id == galaxy.id).limit(1))
@@ -550,6 +565,7 @@ async def _prepare_galaxy_response(db: Session, galaxy: Galaxy) -> GetAllSearchG
     return GetAllSearchGalaxiesAttributes(**galaxy_dict)
 
 
+@alog
 async def _prepare_galaxy_cluster_response(db: Session, galaxy: Galaxy) -> list[GalaxyClusterResponse]:
     result = await db.execute(
         select(GalaxyCluster)
@@ -566,6 +582,7 @@ async def _prepare_galaxy_cluster_response(db: Session, galaxy: Galaxy) -> list[
     return [await _get_galaxy_cluster(db, gc) for gc in galaxy_cluster_list]
 
 
+@alog
 async def _prepare_export_galaxy_response(
     db: Session, galaxy_id: str, body_dict_information: dict
 ) -> list[ExportGalaxyClusterResponse]:
@@ -596,6 +613,7 @@ async def _prepare_export_galaxy_response(
     return response_list
 
 
+@alog
 async def _prepare_galaxy_cluster_relation_response(
     db: Session, galaxy_cluster_relation_list: Sequence[GalaxyReference]
 ) -> list[AddEditGetEventGalaxyClusterRelation]:

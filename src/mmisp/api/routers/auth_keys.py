@@ -8,6 +8,8 @@ from typing import TYPE_CHECKING, Annotated, Any, Tuple
 from fastapi import APIRouter, Depends, HTTPException, Path, status
 from nanoid import generate  # type: ignore
 
+from mmisp.lib.logger import alog
+
 if TYPE_CHECKING:
     from sqlalchemy import Row
 from sqlalchemy.future import select
@@ -47,6 +49,7 @@ router = APIRouter(tags=["auth_keys"])
     response_model=AddAuthKeyResponse,
     summary="Add an AuthKey.",
 )
+@alog
 async def auth_keys_add_user(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -77,6 +80,7 @@ async def auth_keys_add_user(
     response_model=ViewAuthKeysResponse,
     summary="View an AuthKey",
 )
+@alog
 async def auth_keys_view_auth_key(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -104,6 +108,7 @@ async def auth_keys_view_auth_key(
     response_model=list[SearchGetAuthKeysResponseItem],
     summary="Search for specific AuthKeys.",
 )
+@alog
 async def search_auth_keys(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -131,6 +136,7 @@ async def search_auth_keys(
     response_model=EditAuthKeyResponseCompl,
     summary="Edit an AuthKey.",
 )
+@alog
 async def auth_keys_edit_auth_key(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -161,6 +167,7 @@ async def auth_keys_edit_auth_key(
     response_model=StandardStatusIdentifiedResponse,
     summary="Delete given AuthKey.",
 )
+@alog
 async def auth_keys_delete_auth_key(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -197,6 +204,7 @@ async def auth_keys_delete_auth_key(
     response_model=list[SearchGetAuthKeysResponse],
     summary="Returns AuthKeys.",
 )
+@alog
 async def auth_keys_get(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -220,6 +228,7 @@ async def auth_keys_get(
     "/auth_keys/viewOwn",
     summary="View own AuthKeys",
 )
+@alog
 async def auth_keys_view_own_auth_keys(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -249,6 +258,7 @@ async def auth_keys_view_own_auth_keys(
     deprecated=True,
     summary="View own AuthKeys",
 )
+@alog
 async def auth_keys_view_own_auth_keys_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -277,6 +287,7 @@ async def auth_keys_view_own_auth_keys_depr(
     response_model=AddAuthKeyResponse,
     summary="Add an AuthKey.",
 )
+@alog
 async def auth_keys_add_user_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -308,6 +319,7 @@ async def auth_keys_add_user_depr(
     response_model=EditAuthKeyResponseCompl,
     summary="Edit AuthKey",
 )
+@alog
 async def auth_keys_edit_auth_key_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -339,6 +351,7 @@ async def auth_keys_edit_auth_key_depr(
     response_model=StandardStatusIdentifiedResponse,
     summary="Delete given AuthKey.",
 )
+@alog
 async def auth_keys_delete_auth_key_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -373,6 +386,7 @@ async def auth_keys_delete_auth_key_depr(
 # --- endpoint logic ---
 
 
+@alog
 async def _auth_key_add(auth: Auth, db: Session, user_id: int, body: AddAuthKeyBody) -> AddAuthKeyResponse:
     if body.uuid and not is_uuid(body.uuid):
         raise HTTPException(status.HTTP_400_BAD_REQUEST)
@@ -423,6 +437,7 @@ async def _auth_key_add(auth: Auth, db: Session, user_id: int, body: AddAuthKeyB
     )
 
 
+@alog
 async def _auth_keys_view(
     auth: Auth,
     db: Session,
@@ -469,6 +484,7 @@ async def _auth_keys_view(
     )
 
 
+@alog
 async def _search_auth_keys(
     auth: Auth,
     db: Session,
@@ -539,6 +555,7 @@ async def _search_auth_keys(
     return auth_keys_computed
 
 
+@alog
 async def _search_auth_keys_depr(
     auth: Auth,
     db: Session,
@@ -609,6 +626,7 @@ async def _search_auth_keys_depr(
     return auth_keys_computed
 
 
+@alog
 async def _auth_keys_edit(auth: Auth, db: Session, auth_key_id: int, body: EditAuthKeyBody) -> EditAuthKeyResponseCompl:
     auth_key: AuthKey | None = await db.get(AuthKey, auth_key_id)
 
@@ -660,6 +678,7 @@ async def _auth_keys_edit(auth: Auth, db: Session, auth_key_id: int, body: EditA
     )
 
 
+@alog
 async def _auth_keys_delete(auth: Auth, db: Session, auth_key_id: int) -> None:
     auth_key: AuthKey | None = await db.get(AuthKey, auth_key_id)
     if auth_key is None:
@@ -680,6 +699,7 @@ async def _auth_keys_delete(auth: Auth, db: Session, auth_key_id: int) -> None:
     await db.commit()
 
 
+@alog
 async def _auth_keys_get(
     auth: Auth,
     db: Session,
@@ -726,6 +746,7 @@ async def _auth_keys_get(
     return auth_keys_computed
 
 
+@alog
 async def _auth_keys_view_own(auth: Auth, db: Session) -> list[SearchGetAuthKeysResponseItem]:
     own_key = await _search_auth_keys(auth, db, SearchAuthKeyBody(user_id=auth.user_id))
     if own_key is None:
@@ -733,6 +754,7 @@ async def _auth_keys_view_own(auth: Auth, db: Session) -> list[SearchGetAuthKeys
     return own_key
 
 
+@alog
 async def _auth_keys_view_own_depr(auth: Auth, db: Session) -> list[SearchGetAuthKeysResponse]:
     own_key = await _search_auth_keys_depr(auth, db, SearchAuthKeyBody(user_id=auth.user_id))
     if own_key is None:

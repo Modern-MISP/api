@@ -25,6 +25,7 @@ from mmisp.db.models.organisation import Organisation
 from mmisp.db.models.role import Role
 from mmisp.db.models.user import User
 from mmisp.db.models.user_setting import UserSetting
+from mmisp.lib.logger import alog
 from mmisp.util.crypto import hash_secret
 from mmisp.util.partial import partial
 
@@ -35,6 +36,7 @@ router = APIRouter(tags=["users"])
     "/users",
     summary="Add new user",
 )
+@alog
 async def add_user(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -58,6 +60,7 @@ async def add_user(
 
 @router.get("/users/view/me.json", response_model=partial(GetUsersElement))
 @router.get("/users/view/me", response_model=partial(GetUsersElement))
+@alog
 async def get_logged_in_user_info(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))], db: Annotated[Session, Depends(get_db)]
 ) -> GetUsersElement:
@@ -80,6 +83,7 @@ async def get_logged_in_user_info(
     "/users/view/all",
     summary="Get all users",
 )
+@alog
 async def get_all_users(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -102,6 +106,7 @@ async def get_all_users(
     "/users/view/{userId}",
     summary="Get a user by id",
 )
+@alog
 async def get_user_by_id(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -127,6 +132,7 @@ async def get_user_by_id(
     "/users/{user_id}",
     summary="Delete a user",
 )
+@alog
 async def delete_user(
     user_id: Annotated[str, Path(alias="user_id")],
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
@@ -154,6 +160,7 @@ async def delete_user(
     # response_model=UserAttributesResponse,
     summary="Delete a users login token",
 )
+@alog
 async def delete_user_token(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -180,6 +187,7 @@ async def delete_user_token(
     # response_model=UserAttributesResponse,
     summary="Update a user",
 )
+@alog
 async def update_user(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -212,6 +220,7 @@ async def update_user(
     deprecated=True,
     summary="Add new user",
 )
+@alog
 async def add_user_deprecated(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -238,6 +247,7 @@ async def add_user_deprecated(
     deprecated=True,
     summary="Update a user",
 )
+@alog
 async def update_user_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -267,6 +277,7 @@ async def update_user_depr(
     deprecated=True,
     summary="Get a user by id",
 )
+@alog
 async def get_user_by_id_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -293,6 +304,7 @@ async def get_user_by_id_depr(
     deprecated=True,
     summary="Get all users",
 )
+@alog
 async def get_all_users_deprecated(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -316,6 +328,7 @@ async def get_all_users_deprecated(
     deprecated=True,
     summary="Delete a user",
 )
+@alog
 async def delete_user_depr(
     user_id: Annotated[str, Path(alias="userId")],
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
@@ -341,6 +354,7 @@ async def delete_user_depr(
 # --- endpoint logic ---
 
 
+@alog
 async def _add_user(auth: Auth, db: Session, body: AddUserBody) -> AddUserResponse:
     if not (check_permissions(auth, [Permission.SITE_ADMIN]) and check_permissions(auth, [Permission.ADMIN])):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
@@ -395,6 +409,7 @@ async def _add_user(auth: Auth, db: Session, body: AddUserBody) -> AddUserRespon
     return AddUserResponse(User=AddUserResponseData(**user.__dict__))
 
 
+@alog
 async def _get_all_users(
     auth: Auth,
     db: Session,
@@ -463,6 +478,7 @@ async def _get_all_users(
     return user_list_computed
 
 
+@alog
 async def get_user_names_by_id(db: Session) -> dict:
     user_name_query = select(UserSetting).where(UserSetting.setting == "user_name")
     user_name_result = await db.execute(user_name_query)
@@ -474,6 +490,7 @@ async def get_user_names_by_id(db: Session) -> dict:
     return user_names_by_id
 
 
+@alog
 async def get_roles_by_id(db: Session) -> dict:
     roles_query = select(Role)
     roles_result = await db.execute(roles_query)
@@ -485,6 +502,7 @@ async def get_roles_by_id(db: Session) -> dict:
     return roles_by_id
 
 
+@alog
 async def get_organisations_by_id(db: Session) -> dict:
     organisations_query = select(Organisation)
     organisations_result = await db.execute(organisations_query)
@@ -496,6 +514,7 @@ async def get_organisations_by_id(db: Session) -> dict:
     return organisations_by_id
 
 
+@alog
 async def _get_user(auth: Auth, db: Session, userID: str) -> GetUsersElement:
     if not (
         check_permissions(auth, [Permission.SITE_ADMIN])
@@ -585,6 +604,7 @@ async def _get_user(auth: Auth, db: Session, userID: str) -> GetUsersElement:
     )
 
 
+@alog
 async def _delete_user(user_id: str, auth: Auth, db: Session) -> StandardStatusIdentifiedResponse:
     if not (check_permissions(auth, [Permission.SITE_ADMIN]) or check_permissions(auth, [Permission.ADMIN])):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
@@ -611,10 +631,12 @@ async def _delete_user(user_id: str, auth: Auth, db: Session) -> StandardStatusI
     )
 
 
+@alog
 async def _delete_user_token(auth: Auth, db: Session, userID: str) -> None:
     return None
 
 
+@alog
 async def _update_user(auth: Auth, db: Session, userID: str, body: UserAttributesBody) -> UserWithName:
     if not (check_permissions(auth, [Permission.SITE_ADMIN]) and check_permissions(auth, [Permission.ADMIN])):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)

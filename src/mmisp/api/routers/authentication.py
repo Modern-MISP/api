@@ -35,12 +35,14 @@ from mmisp.api_schemas.authentication import (
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.identity_provider import OIDCIdentityProvider
 from mmisp.db.models.user import User
+from mmisp.lib.logger import alog
 from mmisp.util.crypto import hash_secret, verify_secret
 
 router = APIRouter(tags=["authentication"])
 
 
 @router.get("/auth/openID/getAllOpenIDConnectProvidersInfo")
+@alog
 async def get_all_open_id_connect_providers_info(
     db: Annotated[Session, Depends(get_db)],
 ) -> list[IdentityProviderInfo]:
@@ -58,6 +60,7 @@ async def get_all_open_id_connect_providers_info(
 
 
 @router.get("/auth/openID/getAllOpenIDConnectProviders")
+@alog
 async def get_all_open_id_connect_providers(
     db: Annotated[Session, Depends(get_db)],
 ) -> list[GetIdentityProviderResponse]:
@@ -75,6 +78,7 @@ async def get_all_open_id_connect_providers(
 
 
 @router.get("/auth/openID/getOpenIDConnectProvider/{providerId}")
+@alog
 async def get_open_id_connect_provider_by_id(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -95,6 +99,7 @@ async def get_open_id_connect_provider_by_id(
 
 
 @router.post("/auth/openID/addOpenIDConnectProvider")
+@alog
 async def add_openID_Connect_provider(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -114,6 +119,7 @@ async def add_openID_Connect_provider(
 
 
 @router.post("/auth/openID/editOpenIDConnectProvider/{openIDConnectProvider}")
+@alog
 async def edit_openID_Connect_provider(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -139,6 +145,7 @@ async def edit_openID_Connect_provider(
     "/auth/openID/delete/{openIDConnectProvider}",
     summary="Deletes an OpenID Connect Provider by its ID",
 )
+@alog
 async def delete_openID_Connect_provider(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -160,6 +167,7 @@ async def delete_openID_Connect_provider(
 
 
 @router.post("/auth/login/start", response_model=StartLoginResponse)
+@alog
 async def start_login(db: Annotated[Session, Depends(get_db)], body: StartLoginBody) -> dict:
     """Starts the login process.
 
@@ -195,6 +203,7 @@ async def start_login(db: Annotated[Session, Depends(get_db)], body: StartLoginB
 
 
 @router.post("/auth/login/password")
+@alog
 async def password_login(db: Annotated[Session, Depends(get_db)], body: PasswordLoginBody) -> TokenResponse:
     """Login with password.
 
@@ -215,6 +224,7 @@ async def password_login(db: Annotated[Session, Depends(get_db)], body: Password
     "/auth/login/setOwnPassword",
     summary="User sets their password to a new password",
 )
+@alog
 async def set_password(
     db: Annotated[Session, Depends(get_db)],
     body: ChangePasswordBody,
@@ -234,6 +244,7 @@ async def set_password(
 
 @router.get("/auth/login/idp/{identityProviderName}/callback")
 @router.post("/auth/login/idp/{identityProviderName}/callback")
+@alog
 async def redirect_to_frontend(
     db: Annotated[Session, Depends(get_db)],
     identity_provider_name: Annotated[str, Path(alias="identityProviderName")],
@@ -320,6 +331,7 @@ async def redirect_to_frontend(
 
 
 @router.post("/auth/login/token")
+@alog
 async def exchange_token_login(body: ExchangeTokenLoginBody) -> TokenResponse:
     """Login with exchange token.
 
@@ -343,6 +355,7 @@ async def exchange_token_login(body: ExchangeTokenLoginBody) -> TokenResponse:
     "/auth/setPassword/{userId}",
     summary="Admin sets the password of the user to a new password",
 )
+@alog
 async def change_password_UserId(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -368,6 +381,7 @@ async def change_password_UserId(
 # --- endpoint logic ---
 
 
+@alog
 async def _get_oidc_config(base_url: str) -> dict:
     async with httpx.AsyncClient() as client:
         oidc_config_response = await client.get(f"{base_url}/.well-known/openid-configuration")
@@ -376,6 +390,7 @@ async def _get_oidc_config(base_url: str) -> dict:
 
 
 # --- endpoint logic ---
+@alog
 async def _get_all_open_id_connect_providers_info(db: Session) -> list[IdentityProviderInfo]:
     query = select(OIDCIdentityProvider)
     result = await db.execute(query)
@@ -391,6 +406,7 @@ async def _get_all_open_id_connect_providers_info(db: Session) -> list[IdentityP
     ]
 
 
+@alog
 async def get_idp_url(db: Session, identity_provider_id: int) -> str:
     identity_provider: OIDCIdentityProvider | None = await db.get(OIDCIdentityProvider, identity_provider_id)
 
@@ -411,6 +427,7 @@ async def get_idp_url(db: Session, identity_provider_id: int) -> str:
     return url
 
 
+@alog
 async def _get_all_open_id_connect_providers(db: Session) -> list[GetIdentityProviderResponse]:
     # if not (
     #    check_permissions(auth, [Permission.SITE_ADMIN])
@@ -436,6 +453,7 @@ async def _get_all_open_id_connect_providers(db: Session) -> list[GetIdentityPro
     ]
 
 
+@alog
 async def _get_open_id_connect_provider_by_id(auth: Auth, db: Session, provider_id: str) -> GetIdentityProviderResponse:
     if not (check_permissions(auth, [Permission.SITE_ADMIN]) and check_permissions(auth, [Permission.ADMIN])):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
@@ -457,6 +475,7 @@ async def _get_open_id_connect_provider_by_id(auth: Auth, db: Session, provider_
     )
 
 
+@alog
 async def _change_password_UserId(
     auth: Auth, db: Session, user_id: int, body: SetPasswordBody
 ) -> ChangeLoginInfoResponse:
@@ -476,6 +495,7 @@ async def _change_password_UserId(
     return ChangeLoginInfoResponse(successful=True)
 
 
+@alog
 async def _add_openID_Connect_provider(auth: Auth, db: Session, body: IdentityProviderBody) -> IdentityProviderInfo:
     if not (check_permissions(auth, [Permission.SITE_ADMIN]) and check_permissions(auth, [Permission.ADMIN])):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
@@ -496,6 +516,7 @@ async def _add_openID_Connect_provider(auth: Auth, db: Session, body: IdentityPr
     return IdentityProviderInfo(id=oidc_provider.id, name=oidc_provider.name)
 
 
+@alog
 async def _delete_openID_Connect_provider(db: Session, open_Id_Connect_provider_Id: str) -> ChangeLoginInfoResponse:
     query = select(OIDCIdentityProvider).where(OIDCIdentityProvider.id == open_Id_Connect_provider_Id)
     oidc = await db.execute(query)
@@ -510,6 +531,7 @@ async def _delete_openID_Connect_provider(db: Session, open_Id_Connect_provider_
     return ChangeLoginInfoResponse(successful=True)
 
 
+@alog
 async def _edit_openID_Connect_provider(
     auth: Auth, db: Session, open_Id_Connect_provider_Id: str, body: IdentityProviderEditBody
 ) -> ChangeLoginInfoResponse:
@@ -536,6 +558,7 @@ async def _edit_openID_Connect_provider(
     return ChangeLoginInfoResponse(successful=True)
 
 
+@alog
 async def _password_login(db: Session, body: PasswordLoginBody) -> TokenResponse:
     result = await db.execute(select(User).filter(User.email == body.email).limit(1))
     user: User | None = result.scalars().first()
@@ -555,6 +578,7 @@ async def _password_login(db: Session, body: PasswordLoginBody) -> TokenResponse
     return TokenResponse(token=encode_token(str(user.id)))
 
 
+@alog
 async def _set_own_password(db: Session, body: ChangePasswordBody) -> TokenResponse:
     result = await db.execute(select(User).filter(User.email == body.email).limit(1))
     user: User | None = result.scalars().first()
