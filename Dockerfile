@@ -18,6 +18,8 @@ ENV PATH="/home/${DOCKER_USER}/.local/bin:${PATH}"
 
 ADD --chown=$DOCKER_USER:$DOCKER_USER . ./
 RUN pip install '.[dev]'
+RUN pip install 'gunicorn'
+RUN pip install 'uvicorn-worker'
 # also install lib
 RUN if [ "$INSTALL_LIB" = "true" ]; then \
       if git ls-remote --exit-code --heads $LIB_REPO_URL $BRANCH; then \
@@ -28,5 +30,4 @@ RUN if [ "$INSTALL_LIB" = "true" ]; then \
     fi
 
 EXPOSE 4000
-CMD ["uvicorn", "mmisp.api.main:app", "--host", "0.0.0.0", "--port", "4000"]
-
+CMD ["gunicorn", "mmisp.api.main:app", "-b", "0.0.0.0:4000", "-w", "4", "-k", "uvicorn_worker.UvicornWorker"]
