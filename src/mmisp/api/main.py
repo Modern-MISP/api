@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import ORJSONResponse
 
 import mmisp.db.all_models  # noqa: F401
 from mmisp.api.config import config
@@ -43,7 +44,7 @@ def init_app(*, init_db: bool = True) -> FastAPI:
     else:
         lifespan = None  # type: ignore
 
-    app = FastAPI(lifespan=lifespan)
+    app = FastAPI(lifespan=lifespan, default_response_class=ORJSONResponse)
 
     app.add_middleware(
         CORSMiddleware,
