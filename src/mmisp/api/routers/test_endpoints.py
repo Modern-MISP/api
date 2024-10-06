@@ -38,3 +38,16 @@ async def test_logging(
 async def test_logging_error() -> str:
     logger.info("hello")
     raise ValueError("testing")
+
+
+@router.get(
+    "/test_sublogger",
+    status_code=status.HTTP_200_OK,
+)
+@alog
+async def test_sublogger() -> str:
+    workflow_logger = logging.getLogger("mmisp.workflow")
+    workflow_logger.setLevel(logging.DEBUG)
+    workflow_logger.debug("hello workflow logger")
+    logger.debug("this should not be there")
+    return "this"
