@@ -106,7 +106,7 @@ async def test_users_edit(db: Session, site_admin_user_token, client, site_admin
     assert response_user.get("email") == email + "test"
     assert response_user.get("termsaccepted") is not terms_accepted
     assert response_user.get("gpgkey") == gpg_key + "test"
-    assert response_user.get("org_id") == str(view_only_user.org_id)
+    assert response_user.get("org_id") == view_only_user.org_id
     assert response_json.get("name") == name + "test"
 
 

@@ -162,7 +162,7 @@ async def update_event(
 async def delete_event(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
-    event_id: Annotated[str, Path(alias="eventId")],
+    event_id: Annotated[int, Path(alias="eventId")],
 ) -> DeleteEventResponse:
     """Delete an attribute by its ID.
 
@@ -698,7 +698,7 @@ async def _update_event(db: Session, event_id: str, body: EditEventBody) -> AddE
     return AddEditGetEventResponse(Event=event_data)
 
 
-async def _delete_event(db: Session, event_id: str) -> DeleteEventResponse:
+async def _delete_event(db: Session, event_id: int) -> DeleteEventResponse:
     event = await db.get(Event, event_id)
 
     if event is None:
@@ -709,7 +709,7 @@ async def _delete_event(db: Session, event_id: str) -> DeleteEventResponse:
                 name="Could not delete Event",
                 message="Could not delete Event",
                 url=f"/events/delete/{event_id}",
-                id=str(event_id),
+                id=event_id,
             ).dict(),
         )
 

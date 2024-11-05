@@ -513,7 +513,7 @@ async def test_get_all_open_id_connect_providers(db: Session, client, site_admin
     assert result[len(result) - 1] is not None
     provider = result[len(result) - 1]
     assert provider["name"] == oidc_provider.name
-    assert provider["org_id"] == str(oidc_provider.org_id)
+    assert provider["org_id"] == oidc_provider.org_id
     assert provider["active"] == oidc_provider.active
     assert provider["base_url"] == oidc_provider.base_url
     assert provider["client_id"] == oidc_provider.client_id

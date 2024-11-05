@@ -191,7 +191,7 @@ async def test_delete_invalid_or_non_existing_event(site_admin_user_token, clien
     response = client.delete("/events/0", headers=headers)
     assert response.status_code == 404
     response = client.delete("/events/invalid_id", headers=headers)
-    assert response.status_code == 404
+    assert response.status_code == 422
 
 
 @pytest.mark.asyncio
