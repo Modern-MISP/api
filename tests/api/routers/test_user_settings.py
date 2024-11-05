@@ -104,7 +104,7 @@ async def test_get_existing_user_setting_details2(
     assert response.status_code == 200
     json = response.json()
 
-    assert json["UserSetting"]["id"] == str(user_setting.id)
+    assert json["UserSetting"]["id"] == user_setting.id
     assert isinstance(json["UserSetting"], dict)
 
 
@@ -155,7 +155,7 @@ async def test_get_existing_user_setting_details(
     assert response.status_code == 200
     json = response.json()
 
-    assert json["UserSetting"]["user_id"] == str(instance_owner_org_admin_user.id)
+    assert json["UserSetting"]["user_id"] == instance_owner_org_admin_user.id
     assert json["UserSetting"]["setting"] == user_setting.setting
 
 
@@ -237,7 +237,7 @@ async def test_search_user_setting_using_ids(
     await db.commit()
     await db.refresh(user_setting)
 
-    body = {"id": str(user_setting.id), "user_id": str(user_setting.user_id)}
+    body = {"id": user_setting.id, "user_id": user_setting.user_id}
 
     headers = {"authorization": instance_owner_org_admin_user_token}
     response = client.post("/user_settings", json=body, headers=headers)
@@ -248,7 +248,7 @@ async def test_search_user_setting_using_ids(
     assert response.status_code == 200
     json = response.json()
 
-    assert json[0]["UserSetting"]["id"] == str(user_setting.id)
+    assert json[0]["UserSetting"]["id"] == user_setting.id
 
 
 @pytest.mark.asyncio
@@ -282,7 +282,7 @@ async def test_get_all_user_settings_using_site_admin(
     assert response.status_code == 200
     json = response.json()
 
-    assert next((setting for setting in json if setting["UserSetting"]["id"] == str(user_setting.id)), None)
+    assert next((setting for setting in json if setting["UserSetting"]["id"] == user_setting.id), None)
 
 
 @pytest.mark.asyncio
@@ -305,7 +305,7 @@ async def test_delete_user_setting(
     assert json["saved"]
     assert json["success"]
     assert "delete" not in json["url"]
-    assert json["id"] == str(user_setting.id)
+    assert json["id"] == user_setting.id
 
 
 @pytest.mark.asyncio
@@ -328,7 +328,7 @@ async def test_delete_user_setting_depr(
     assert json["saved"]
     assert json["success"]
     assert "delete" in json["url"]
-    assert json["id"] == str(user_setting.id)
+    assert json["id"] == user_setting.id
 
 
 @pytest.mark.asyncio
@@ -371,5 +371,5 @@ async def test_get_user_setting_depr(
     assert response.status_code == 200
     json = response.json()
 
-    assert json["UserSetting"]["id"] == str(user_setting.id)
+    assert json["UserSetting"]["id"] == user_setting.id
     assert isinstance(json["UserSetting"], dict)

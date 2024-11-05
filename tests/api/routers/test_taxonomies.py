@@ -64,7 +64,7 @@ async def test_get_taxonomy_by_id(db, taxonomy, taxonomy_entry, site_admin_user_
     headers = {"authorization": site_admin_user_token}
     response = client.get(f"/taxonomies/{taxonomy.id}", headers=headers)
     assert response.status_code == 200
-    assert response.json()["Taxonomy"]["id"] == str(1)
+    assert response.json()["Taxonomy"]["id"] == 1
 
 
 @pytest.mark.asyncio
@@ -88,7 +88,7 @@ async def test_get_taxonomy_expanded_by_id_with_tag(
     response = client.get(f"/taxonomies/taxonomy_tags/{taxonomy.id}", headers=headers)
     response_json = response.json()
     assert response.status_code == 200
-    assert response_json["id"] == str(taxonomy.id)
+    assert response_json["id"] == taxonomy.id
     assert response_json["entries"][0]["tag"] == tag.name
 
 
@@ -100,7 +100,7 @@ async def test_get_taxonomy_expanded_by_id_without_tag(
     response = client.get(f"/taxonomies/taxonomy_tags/{taxonomy.id}", headers=headers)
     response_json = response.json()
     assert response.status_code == 200
-    assert response_json["id"] == str(taxonomy.id)
+    assert response_json["id"] == taxonomy.id
 
 
 @pytest.mark.asyncio

@@ -102,7 +102,7 @@ async def test_users_edit(db: Session, site_admin_user_token, client, site_admin
     response_json = response.json()
     response_user = response_json.get("user")
     ic(response_user, response_user.get("id"), response_user.get("email"))
-    assert response_user.get("id") == str(user_id)
+    assert response_user.get("id") == user_id
     assert response_user.get("email") == email + "test"
     assert response_user.get("termsaccepted") is not terms_accepted
     assert response_user.get("gpgkey") == gpg_key + "test"

@@ -127,7 +127,7 @@ async def test_start_login_idp(auth_environment: AuthEnvironment, client) -> Non
     json: dict = response.json()
 
     assert json["loginType"] == LoginType.IDENTITY_PROVIDER.value
-    assert json["identityProviders"][0]["id"] == str(auth_environment.identity_provider.id)
+    assert json["identityProviders"][0]["id"] == auth_environment.identity_provider.id
     assert json["identityProviders"][0]["name"] == auth_environment.identity_provider.name
 
 

@@ -77,7 +77,7 @@ async def test_toggleEnable_missing_warninglist(db, site_admin_user_token, clien
         response = client.get(f"/warninglists/{warninglist_id}", headers=headers)
 
         assert response.status_code == 200
-        assert response.json()["Warninglist"]["id"] == str(warninglist_id)
+        assert response.json()["Warninglist"]["id"] == warninglist_id
 
     await remove_warninglists(db, warninglist_test_ids)
 
@@ -91,7 +91,7 @@ async def test_get_existing_warninglist_details_deprecated(db, site_admin_user_t
         response = client.get(f"/warninglists/view/{warninglist_id}", headers=headers)
 
         assert response.status_code == 200
-        assert response.json()["Warninglist"]["id"] == str(warninglist_id)
+        assert response.json()["Warninglist"]["id"] == warninglist_id
 
     await remove_warninglists(db, warninglist_test_ids)
 
@@ -139,7 +139,7 @@ async def test_get_warninglist_response_format(db, site_admin_user_token, client
     json = response.json()
 
     print(json)
-    assert json["Warninglist"]["id"] == str(warninglist_id[0])
+    assert json["Warninglist"]["id"] == warninglist_id[0]
     assert isinstance(json["Warninglist"]["WarninglistEntry"], list)
 
     await remove_warninglists(db, warninglist_id)
@@ -155,7 +155,7 @@ async def test_get_warninglist_response_format_deprecated(db, site_admin_user_to
     assert response.status_code == 200
     json = response.json()
 
-    assert json["Warninglist"]["id"] == str(warninglist_id[0])
+    assert json["Warninglist"]["id"] == warninglist_id[0]
     assert isinstance(json["Warninglist"]["WarninglistEntry"], list)
 
     await remove_warninglists(db, warninglist_id)
@@ -199,7 +199,7 @@ async def test_delete_warninglist_response_format(db, site_admin_user_token, cli
         json = response.json()
 
         assert isinstance(json["Warninglist"]["WarninglistEntry"], list)
-        assert json["Warninglist"]["id"] == str(warninglist_id)
+        assert json["Warninglist"]["id"] == warninglist_id
 
 
 @pytest.mark.asyncio
@@ -212,7 +212,7 @@ async def test_get_all_warninglist(site_admin_user_token, client) -> None:
 
 
 @pytest.mark.asyncio
-async def test_get_selected_warninglists(db: Session, site_admin_user_token, client) -> None:
+async def test_get_selected_warninglists(db, site_admin_user_token, client) -> None:
     warninglist_id = await add_warninglists(db, 1)
 
     warninglist: Warninglist = await db.get(Warninglist, warninglist_id)

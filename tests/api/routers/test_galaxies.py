@@ -253,8 +253,8 @@ async def test_get_existing_galaxy_cluster(
     response_json = response.json()
     gc = response_json["GalaxyCluster"]
 
-    assert gc["id"] == str(galaxy_cluster_id)
-    assert gc["galaxy_id"] == str(galaxy_id)
+    assert gc["id"] == galaxy_cluster_id
+    assert gc["galaxy_id"] == galaxy_id
     assert gc["type"] == add_galaxy_cluster_body3.type
     assert gc["value"] == add_galaxy_cluster_body3.value
     assert gc["tag_name"] == add_galaxy_cluster_body3.tag_name
@@ -275,7 +275,7 @@ async def test_get_default_galaxy_cluster(db: Session, site_admin_user_token, te
     gc = response_json["GalaxyCluster"]
     ic(gc)
     assert gc["Org"]["id"] == "0"
-    assert gc["id"] == str(galaxy_cluster.id)
+    assert gc["id"] == galaxy_cluster.id
     assert gc["Org"]["date_created"] == ""
     assert gc["Orgc"]["date_created"] == ""
     assert gc["Org"]["date_modified"] == ""
@@ -309,10 +309,10 @@ async def test_get_existing_galaxy_details(
     response_json = response.json()
 
     ic(response_json)
-    assert response_json["Galaxy"]["id"] == str(galaxy_id)
+    assert response_json["Galaxy"]["id"] == galaxy_id
     assert len(response_json["GalaxyCluster"]) == 1
-    assert response_json["GalaxyCluster"][0]["id"] == str(galaxy_cluster_id)
-    assert response_json["GalaxyCluster"][0]["GalaxyElement"][0]["id"] == str(add_galaxy_element.id)
+    assert response_json["GalaxyCluster"][0]["id"] == galaxy_cluster_id
+    assert response_json["GalaxyCluster"][0]["GalaxyElement"][0]["id"] == add_galaxy_element.id
     assert response_json["GalaxyCluster"][0]["GalaxyElement"][0]["key"] == add_galaxy_element.key
     assert response_json["GalaxyCluster"][0]["GalaxyElement"][0]["value"] == add_galaxy_element.value
 

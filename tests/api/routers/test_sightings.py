@@ -110,11 +110,11 @@ async def test_add_sighting(
 
     assert response.status_code == 201
     if sighting_data["filters"]:
-        assert str(attributes[-1].id) in response_attribute_ids
+        assert attributes[-1].id in response_attribute_ids
         assert len(response_attribute_ids) == 1
     else:
         for a in attributes:
-            assert str(a.id) in response_attribute_ids
+            assert a.id in response_attribute_ids
 
     for sighting in response_data:
         await delete_sighting(db, sighting["id"])

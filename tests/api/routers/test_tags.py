@@ -202,7 +202,7 @@ async def test_view_tag_response_format(db, site_admin_user_token, add_tags, cli
     response = client.get(f"tags/{tag[0]}", headers=headers)
     assert response.status_code == 200
     json = response.json()
-    assert json["id"] == str(tag[0])
+    assert json["id"] == tag[0]
 
     await remove_tags(db, tag)
 
@@ -216,7 +216,7 @@ async def test_view_tag_response_format_deprecated(db, site_admin_user_token, ad
     response = client.get(f"tags/view/{tag[0]}", headers=headers)
     assert response.status_code == 200
     json = response.json()
-    assert json["id"] == str(tag[0])
+    assert json["id"] == tag[0]
 
     await remove_tags(db, tag)
 
@@ -343,7 +343,7 @@ async def test_edit_tag_response_format(db, tag_data: Dict[str, Any], site_admin
     assert response.headers["Content-Type"] == "application/json"
     json = response.json()
     print(json)
-    assert json["Tag"]["id"] == str(tag[0])
+    assert json["Tag"]["id"] == tag[0]
 
     await remove_tags(db, tag)
 
