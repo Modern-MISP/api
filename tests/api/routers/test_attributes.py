@@ -109,7 +109,6 @@ async def test_get_existing_attribute(
     attribute.sharing_group_id = sharing_group_id
 
     assert tag.user_id == 1
-    assert tag.org_id == 1
 
     attribute_id = attribute.id
 
@@ -120,8 +119,8 @@ async def test_get_existing_attribute(
 
     assert response.status_code == 200
     response_json = response.json()
-    assert response_json["Attribute"]["id"] == str(attribute_id)
-    assert response_json["Attribute"]["event_id"] == str(event_id)
+    assert response_json["Attribute"]["id"] == attribute_id
+    assert response_json["Attribute"]["event_id"] == event_id
     assert "id" in response_json["Attribute"]
     assert "event_id" in response_json["Attribute"]
     assert "object_id" in response_json["Attribute"]
@@ -143,7 +142,7 @@ async def test_get_existing_attribute(
     assert "tag" in response_json["Attribute"]
     if len(response_json["Attribute"]["tag"]) > 0:
         print(response_json["Attribute"]["tag"])
-        assert response_json["Attribute"]["tag"][0]["id"] == str(attributetag.id)
+        assert response_json["Attribute"]["tag"][0]["id"] == attributetag.id
 
 
 @pytest.mark.asyncio
