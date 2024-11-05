@@ -276,7 +276,7 @@ async def test_get_object_details_data_integrity(
     response = client.get(f"/objects/{object_id}", headers=headers)
     response_data = response.json()
     object_data = response_data["Object"]
-    assert isinstance(object_data["id"], str)
+    assert isinstance(object_data["id"], int)
     assert isinstance(object_data["name"], str)
     await delete_attributes_from_object_resp(db, response_data)
 
