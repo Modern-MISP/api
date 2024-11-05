@@ -46,7 +46,7 @@ async def test_get_organisation_by_id(db: Session, site_admin_user_token, client
 
     response_json = response.json()
 
-    assert response_json["id"] == str(org_id)
+    assert response_json["id"] == org_id
     assert response_json["name"] == organisation.name
     assert response_json["description"] == organisation.description
     assert response_json["nationality"] == organisation.nationality
@@ -108,7 +108,7 @@ async def test_add_organisation(client, site_admin_user_token, db: Session):
     response = client.post("/organisations", headers=headers, json=request_body)
     response_json = response.json()
 
-    assert response_json["id"] == "0"
+    assert response_json["id"] == 0
     assert response_json["name"] == name
 
 

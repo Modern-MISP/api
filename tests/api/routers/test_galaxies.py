@@ -274,7 +274,7 @@ async def test_get_default_galaxy_cluster(db: Session, site_admin_user_token, te
     response_json = response.json()
     gc = response_json["GalaxyCluster"]
     ic(gc)
-    assert gc["Org"]["id"] == "0"
+    assert gc["Org"]["id"] == 0
     assert gc["id"] == galaxy_cluster.id
     assert gc["Org"]["date_created"] == ""
     assert gc["Orgc"]["date_created"] == ""

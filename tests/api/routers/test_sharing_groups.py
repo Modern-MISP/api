@@ -68,7 +68,7 @@ async def test_create_valid_sharing_group(db: Session, site_admin_user_token, in
 
     assert response.status_code == status.HTTP_201_CREATED
     json: dict = response.json()
-    assert json["org_id"] == str(instance_owner_org.id)
+    assert json["org_id"] == instance_owner_org.id
     assert json["organisation_uuid"] == instance_owner_org.uuid
 
     db_sharing_group_org: SharingGroupOrg = (
@@ -105,7 +105,7 @@ async def test_create_valid_sharing_group_with_org_id_overwrite(
 
     assert response.status_code == status.HTTP_201_CREATED
     json: dict = response.json()
-    assert json["org_id"] == str(instance_two_owner_org.id)
+    assert json["org_id"] == instance_two_owner_org.id
     assert json["organisation_uuid"] == instance_two_owner_org.uuid
 
     db_sharing_group_org: SharingGroupOrg = (
@@ -141,7 +141,7 @@ async def test_create_sharing_group_with_org_id_overwrite_but_not_enough_permiss
 
     assert response.status_code == status.HTTP_201_CREATED
     json: dict = response.json()
-    assert json["org_id"] == str(instance_owner_org.id)
+    assert json["org_id"] == instance_owner_org.id
     assert json["organisation_uuid"] == instance_owner_org.uuid
 
     await delete_sharing_group(db, json["id"])
@@ -160,7 +160,7 @@ async def test_get_own_created_sharing_group(
 
     assert response.status_code == status.HTTP_200_OK
     json = response.json()
-    assert json["id"] == str(sharing_group.id)
+    assert json["id"] == sharing_group.id
 
 
 @pytest.mark.asyncio
@@ -176,7 +176,7 @@ async def test_get_sharing_group_with_access_through_sharing_group_org(
 
     assert response.status_code == status.HTTP_200_OK
     json = response.json()
-    assert json["id"] == str(sharing_group.id)
+    assert json["id"] == sharing_group.id
 
 
 @pytest.mark.asyncio
@@ -194,7 +194,7 @@ async def test_get_sharing_group_with_access_through_sharing_group_server(
 
     assert response.status_code == status.HTTP_200_OK
     json = response.json()
-    assert json["id"] == str(sharing_group.id)
+    assert json["id"] == sharing_group.id
 
 
 @pytest.mark.asyncio
@@ -208,7 +208,7 @@ async def test_get_sharing_group_with_access_through_site_admin(
 
     assert response.status_code == status.HTTP_200_OK
     json = response.json()
-    assert json["id"] == str(sharing_group.id)
+    assert json["id"] == sharing_group.id
 
 
 @pytest.mark.asyncio
@@ -239,7 +239,7 @@ async def test_update_own_sharing_group(
 
     assert response.status_code == status.HTTP_200_OK
     json = response.json()
-    assert json["id"] == str(sharing_group.id)
+    assert json["id"] == sharing_group.id
     assert json["uuid"] == sharing_group.uuid
     assert json["name"] == sharing_group.name
     assert json["description"] == new_description
@@ -259,7 +259,7 @@ async def test_update_sharing_group_with_access_through_site_admin(
 
     assert response.status_code == status.HTTP_200_OK
     json = response.json()
-    assert json["id"] == str(sharing_group.id)
+    assert json["id"] == sharing_group.id
     assert json["uuid"] == sharing_group.uuid
     assert json["name"] == sharing_group.name
     assert json["description"] == new_description
@@ -296,7 +296,7 @@ async def test_delete_own_sharing_group(
 
     assert response.status_code == status.HTTP_200_OK
     json = response.json()
-    assert json["id"] == str(sharing_group_id)
+    assert json["id"] == sharing_group_id
 
     await db.invalidate()
 
@@ -327,7 +327,7 @@ async def test_delete_sharing_group_with_access_through_site_admin(
 
     assert response.status_code == status.HTTP_200_OK
     json = response.json()
-    assert json["id"] == str(sharing_group.id)
+    assert json["id"] == sharing_group.id
 
     second_response = client.delete(
         f"/sharing_groups/{sharing_group.id}",
@@ -365,7 +365,7 @@ async def test_list_own_sharing_group(db: Session, sharing_group, instance_owner
     assert response.status_code == status.HTTP_200_OK
     json = response.json()
     ic(json)
-    sharing_group_items = [item for item in json["response"] if item["SharingGroup"]["id"] == str(sharing_group.id)]
+    sharing_group_items = [item for item in json["response"] if item["SharingGroup"]["id"] == sharing_group.id]
     sharing_group_item = sharing_group_items[0]
 
     assert sharing_group_item
@@ -386,7 +386,7 @@ async def test_list_own_sharing_group_site_admin(
     json = response.json()
 
     sharing_group_item = next(
-        (item for item in json["response"] if item["SharingGroup"]["id"] == str(sharing_group.id)), None
+        (item for item in json["response"] if item["SharingGroup"]["id"] == sharing_group.id), None
     )
 
     assert sharing_group_item
@@ -416,7 +416,7 @@ async def test_list_sharing_group_with_access_through_sharing_group_org(
     json = response.json()
     ic(json)
     sharing_group_items = [
-        item for item in json["response"] if item["SharingGroup"]["id"] == str(sharing_group_org_two.sharing_group_id)
+        item for item in json["response"] if item["SharingGroup"]["id"] == sharing_group_org_two.sharing_group_id
     ]
     ic(sharing_group_items, sharing_group_org_two.id)
     sharing_group_item = sharing_group_items[0]
@@ -458,7 +458,7 @@ async def test_list_sharing_group_with_access_through_sharing_group_server(
     json = response.json()
     ic(json)
     ic(sharing_group.asdict())
-    sharing_group_items = [item for item in json["response"] if item["SharingGroup"]["id"] == str(sharing_group.id)]
+    sharing_group_items = [item for item in json["response"] if item["SharingGroup"]["id"] == sharing_group.id]
     sharing_group_item = sharing_group_items[0]
 
     assert sharing_group_item
@@ -480,7 +480,7 @@ async def test_list_sharing_group_with_no_access(
     json = response.json()
 
     sharing_group_item = next(
-        (item for item in json["response"] if item["SharingGroup"]["id"] == str(sharing_group.id)), None
+        (item for item in json["response"] if item["SharingGroup"]["id"] == sharing_group.id), None
     )
 
     assert not sharing_group_item
@@ -498,7 +498,7 @@ async def test_get_own_created_sharing_group_info(
     assert response.status_code == status.HTTP_200_OK
     json = response.json()
 
-    assert json["SharingGroup"]["id"] == str(sharing_group.id)
+    assert json["SharingGroup"]["id"] == sharing_group.id
     assert json["SharingGroup"]["org_count"] == 0
 
 
@@ -515,7 +515,7 @@ async def test_get_sharing_group_info_with_access_through_sharing_group_org(
     assert response.status_code == status.HTTP_200_OK
     json = response.json()
 
-    assert json["SharingGroup"]["id"] == str(sharing_group.id)
+    assert json["SharingGroup"]["id"] == sharing_group.id
     assert json["SharingGroup"]["org_count"] == 1
 
 
@@ -535,7 +535,7 @@ async def test_get_sharing_group_info_with_access_through_sharing_group_server(
     assert response.status_code == status.HTTP_200_OK
     json = response.json()
 
-    assert json["SharingGroup"]["id"] == str(sharing_group.id)
+    assert json["SharingGroup"]["id"] == sharing_group.id
     assert json["SharingGroup"]["org_count"] == 0
 
 
@@ -551,7 +551,7 @@ async def test_get_sharing_group_info_with_access_through_site_admin(
     assert response.status_code == status.HTTP_200_OK
     json = response.json()
 
-    assert json["SharingGroup"]["id"] == str(sharing_group.id)
+    assert json["SharingGroup"]["id"] == sharing_group.id
     assert json["SharingGroup"]["org_count"] == 0
 
 
@@ -580,7 +580,7 @@ async def test_add_org_to_own_sharing_group(
     assert response.status_code == status.HTTP_200_OK
     json = response.json()
     ic(json)
-    assert json["org_id"] == str(999)
+    assert json["org_id"] == 999
     await delete_sharing_group_orgs(db, sharing_group.id)
 
 
@@ -597,7 +597,7 @@ async def test_patch_org_to_own_sharing_group(
     assert response.status_code == status.HTTP_200_OK
     json = response.json()
     ic(json, sharing_group_org.asdict())
-    assert json["org_id"] == str(999)
+    assert json["org_id"] == 999
     assert json["extend"]
 
     await delete_sharing_group_orgs(db, sharing_group.id)
@@ -615,7 +615,7 @@ async def test_add_org_to_sharing_group_using_site_admin(
 
     assert response.status_code == status.HTTP_200_OK
     json = response.json()
-    assert json["sharing_group_id"] == str(sharing_group.id)
+    assert json["sharing_group_id"] == sharing_group.id
 
     await delete_sharing_group_orgs(db, sharing_group.id)
 
@@ -663,7 +663,7 @@ async def test_add_server_to_own_sharing_group(db, sharing_group, instance_owner
 
     assert response.status_code == status.HTTP_200_OK
     json = response.json()
-    assert json["sharing_group_id"] == str(sharing_group.id)
+    assert json["sharing_group_id"] == sharing_group.id
 
     await delete_sharing_group_server(db, sharing_group.id)
 
@@ -681,7 +681,7 @@ async def test_patch_server_to_own_sharing_group(
     assert response.status_code == status.HTTP_200_OK
     json = response.json()
     ic(json)
-    assert json["server_id"] == str(999)
+    assert json["server_id"] == 999
     assert json["all_orgs"]
 
     await delete_sharing_group_server(db, sharing_group.id)
@@ -699,7 +699,7 @@ async def test_add_server_to_sharing_group_using_site_admin(
 
     assert response.status_code == status.HTTP_200_OK
     json = response.json()
-    assert json["sharing_group_id"] == str(sharing_group.id)
+    assert json["sharing_group_id"] == sharing_group.id
     await delete_sharing_group_server(db, sharing_group.id)
 
 
@@ -718,7 +718,7 @@ async def test_add_server_to_sharing_group_with_no_access(
 
 @pytest.mark.asyncio
 async def test_remove_server_from_own_sharing_group(
-    db: Session, sharing_group_server, sharing_group, instance_owner_org_admin_user_token, client
+    db, sharing_group_server, sharing_group, instance_owner_org_admin_user_token, client
 ) -> None:
     print("----------------- BEGIN TESTCASE ------------------")
     sharing_group_server_id = sharing_group_server.id
@@ -747,10 +747,10 @@ async def test_create_valid_sharing_group_legacy(db, instance_owner_org, site_ad
 
     assert response.status_code == status.HTTP_201_CREATED
     json: dict = response.json()
-    assert json["SharingGroup"]["org_id"] == str(instance_owner_org.id)
+    assert json["SharingGroup"]["org_id"] == instance_owner_org.id
     assert json["SharingGroup"]["organisation_uuid"] == instance_owner_org.uuid
-    assert json["SharingGroupOrg"][0]["org_id"] == str(instance_owner_org.id)
-    assert json["SharingGroupServer"][0]["server_id"] == "0"
+    assert json["SharingGroupOrg"][0]["org_id"] == instance_owner_org.id
+    assert json["SharingGroupServer"][0]["server_id"] == 0
 
     ic(json)
     db_sharing_group_org: SharingGroupOrg = (
@@ -783,10 +783,10 @@ async def test_create_valid_sharing_group_legacy_with_org_id_overwrite(
 
     assert response.status_code == status.HTTP_201_CREATED
     json: dict = response.json()
-    assert json["SharingGroup"]["org_id"] == str(instance_two_owner_org.id)
+    assert json["SharingGroup"]["org_id"] == instance_two_owner_org.id
     assert json["SharingGroup"]["organisation_uuid"] == instance_two_owner_org.uuid
-    assert json["SharingGroupOrg"][0]["org_id"] == str(instance_two_owner_org.id)
-    assert json["SharingGroupServer"][0]["server_id"] == "0"
+    assert json["SharingGroupOrg"][0]["org_id"] == instance_two_owner_org.id
+    assert json["SharingGroupServer"][0]["server_id"] == 0
 
     await delete_sharing_group(db, json["SharingGroup"]["id"])
     await delete_sharing_group_orgs(db, json["SharingGroup"]["id"])
@@ -810,10 +810,10 @@ async def test_create_sharing_group_legacy_with_org_id_overwrite_but_not_enough_
 
     assert response.status_code == status.HTTP_201_CREATED
     json: dict = response.json()
-    assert json["SharingGroup"]["org_id"] == str(instance_owner_org.id)
+    assert json["SharingGroup"]["org_id"] == instance_owner_org.id
     assert json["SharingGroup"]["organisation_uuid"] == instance_owner_org.uuid
-    assert json["SharingGroupOrg"][0]["org_id"] == str(instance_owner_org.id)
-    assert json["SharingGroupServer"][0]["server_id"] == "0"
+    assert json["SharingGroupOrg"][0]["org_id"] == instance_owner_org.id
+    assert json["SharingGroupServer"][0]["server_id"] == 0
 
     await delete_sharing_group(db, json["SharingGroup"]["id"])
     await delete_sharing_group_orgs(db, json["SharingGroup"]["id"])
@@ -831,7 +831,7 @@ async def test_get_own_created_sharing_group_legacy(
 
     assert response.status_code == status.HTTP_200_OK
     json = response.json()
-    assert json["SharingGroup"]["id"] == str(sharing_group.id)
+    assert json["SharingGroup"]["id"] == sharing_group.id
 
 
 @pytest.mark.asyncio
@@ -847,12 +847,12 @@ async def test_get_sharing_group_legacy_with_access_through_sharing_group_org(
 
     assert response.status_code == status.HTTP_200_OK
     json = response.json()
-    assert json["SharingGroup"]["id"] == str(sharing_group.id)
+    assert json["SharingGroup"]["id"] == sharing_group.id
 
 
 @pytest.mark.asyncio
 async def test_get_sharing_group_legacy_with_access_through_sharing_group_server(
-    db: Session, sharing_group, sharing_group_server_all_orgs, instance_org_two_admin_user_token, client
+    db, sharing_group, sharing_group_server_all_orgs, instance_org_two_admin_user_token, client
 ) -> None:
     assert sharing_group_server_all_orgs
     sharing_group_server_all_orgs.server_id = 0
@@ -865,7 +865,7 @@ async def test_get_sharing_group_legacy_with_access_through_sharing_group_server
 
     assert response.status_code == status.HTTP_200_OK
     json = response.json()
-    assert json["SharingGroup"]["id"] == str(sharing_group.id)
+    assert json["SharingGroup"]["id"] == sharing_group.id
 
 
 @pytest.mark.asyncio
@@ -879,7 +879,7 @@ async def test_get_sharing_group_legacy_with_access_through_site_admin(
 
     assert response.status_code == status.HTTP_200_OK
     json = response.json()
-    assert json["SharingGroup"]["id"] == str(sharing_group.id)
+    assert json["SharingGroup"]["id"] == sharing_group.id
 
 
 @pytest.mark.asyncio
@@ -912,7 +912,7 @@ async def test_update_own_sharing_group_legacy(
 
     assert response.status_code == status.HTTP_200_OK
     json = response.json()
-    assert json["SharingGroup"]["id"] == str(sharing_group.id)
+    assert json["SharingGroup"]["id"] == sharing_group.id
     assert json["SharingGroup"]["uuid"] == sharing_group.uuid
     assert json["SharingGroup"]["name"] == sharing_group.name
     assert json["SharingGroup"]["description"] == new_description
@@ -937,7 +937,7 @@ async def test_update_sharing_group_legacy_with_access_through_site_admin(
 
     assert response.status_code == status.HTTP_200_OK
     json = response.json()
-    assert json["SharingGroup"]["id"] == str(sharing_group.id)
+    assert json["SharingGroup"]["id"] == sharing_group.id
     assert json["SharingGroup"]["uuid"] == sharing_group.uuid
     assert json["SharingGroup"]["name"] == sharing_group.name
     assert json["SharingGroup"]["description"] == new_description
@@ -983,7 +983,7 @@ async def test_delete_own_sharing_group_legacy(
 
     assert response.status_code == status.HTTP_200_OK
     json = response.json()
-    assert json["id"] == str(sharing_group.id)
+    assert json["id"] == sharing_group.id
     assert json["saved"]
     assert json["success"]
 
@@ -1016,7 +1016,7 @@ async def test_delete_sharing_group_legacy_with_access_through_site_admin(
 
     assert response.status_code == status.HTTP_200_OK
     json = response.json()
-    assert json["id"] == str(sharing_group.id)
+    assert json["id"] == sharing_group.id
     assert json["saved"]
     assert json["success"]
 
