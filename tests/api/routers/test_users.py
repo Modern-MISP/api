@@ -315,7 +315,7 @@ async def test_users_create_missing_fields(site_admin_user_token, client) -> Non
             "termsaccepted": False,
         },
     )
-    assert response.status_code == 404
+    assert response.status_code == 422, response.json()
 
 
 @pytest.mark.asyncio
