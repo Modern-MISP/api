@@ -540,7 +540,7 @@ async def _password_login(db: Session, body: PasswordLoginBody) -> TokenResponse
     result = await db.execute(select(User).filter(User.email == body.email).limit(1))
     user: User | None = result.scalars().first()
 
-    if not user or user.external_auth_required or not verify_secret(body.password, user.password):
+    if not user or user.external_auth_required or not verify_secret(body.password.get_secret_value(), user.password):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
     if user.change_pw:

@@ -559,9 +559,9 @@ async def test_get_open_id_connect_provider_by_id(db: Session, client, site_admi
     assert response.status_code == status.HTTP_200_OK
     json = response.json()
 
-    assert json["id"] == str(provider_id)
+    assert json["id"] == provider_id
     assert json["name"] == oidc_provider.name
-    assert json["org_id"] == str(oidc_provider.org_id)
+    assert json["org_id"] == oidc_provider.org_id
     assert json["active"] == oidc_provider.active
     assert json["base_url"] == oidc_provider.base_url
     assert json["client_id"] == oidc_provider.client_id

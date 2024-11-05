@@ -300,7 +300,7 @@ async def test_delete_auth_key_depr(auth_key, site_admin_user_token, client) -> 
     assert json["saved"]
     assert json["success"]
     assert "delete" in json["url"]
-    assert json["id"] == str(auth_key.id)
+    assert json["id"] == auth_key.id
 
 
 @pytest.mark.asyncio
