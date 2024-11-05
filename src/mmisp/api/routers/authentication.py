@@ -563,7 +563,7 @@ async def _set_own_password(db: Session, body: ChangePasswordBody) -> TokenRespo
     if old_password is None:
         raise HTTPException(status.HTTP_400_BAD_REQUEST)
 
-    if not user or user.external_auth_required or not verify_secret(old_password, user.password):
+    if not user or user.external_auth_required or not verify_secret(old_password.get_secret_value(), user.password):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
     if old_password.get_secret_value().lower() in body.password.get_secret_value().lower():

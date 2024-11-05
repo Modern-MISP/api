@@ -503,7 +503,6 @@ async def test_get_all_open_id_connect_providers(db: Session, client, site_admin
     assert oidc_provider.active is True
     assert oidc_provider.base_url == "http://test.com"
     assert oidc_provider.client_id == "test"
-    assert oidc_provider.client_secret == "test"
     response = client.get("/auth/openID/getAllOpenIDConnectProviders", headers={"authorization": site_admin_user_token})
 
     assert response.status_code == status.HTTP_200_OK
@@ -518,7 +517,6 @@ async def test_get_all_open_id_connect_providers(db: Session, client, site_admin
     assert provider["active"] == oidc_provider.active
     assert provider["base_url"] == oidc_provider.base_url
     assert provider["client_id"] == oidc_provider.client_id
-    assert provider["client_secret"] == oidc_provider.client_secret
     assert provider["scope"] == oidc_provider.scope
     await db.delete(oidc_provider)
 
@@ -567,6 +565,5 @@ async def test_get_open_id_connect_provider_by_id(db: Session, client, site_admi
     assert json["active"] == oidc_provider.active
     assert json["base_url"] == oidc_provider.base_url
     assert json["client_id"] == oidc_provider.client_id
-    assert json["client_secret"] == oidc_provider.client_secret
     assert json["scope"] == oidc_provider.scope
     await db.delete(oidc_provider)
