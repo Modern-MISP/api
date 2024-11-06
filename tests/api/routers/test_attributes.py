@@ -94,7 +94,7 @@ async def test_get_existing_attribute(
     client,
 ) -> None:
     attribute, at = attribute_with_normal_tag
-    attribute_id = attribute_with_normal_tag.id
+    attribute_id = attribute.id
 
     ic(attribute.asdict())
 
