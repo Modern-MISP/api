@@ -1085,7 +1085,7 @@ async def test_patch_org_to_own_sharing_group_legacy(
     ic(db_sharing_group_org.asdict())
     assert db_sharing_group_org.extend
 
-    await delete_sharing_group_server(db, sharing_group.id)
+    #    await delete_sharing_group_server(db, sharing_group.id)
     await delete_sharing_group_orgs(db, sharing_group.id)
 
 
