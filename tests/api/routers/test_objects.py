@@ -50,7 +50,7 @@ async def object_template(db, organisation, site_admin_user):
         name="test_template", user_id=site_admin_user.id, org_id=organisation.id, version=100
     )
     db.add(object_template)
-    await db.flush()
+    await db.commit()
     await db.refresh(object_template)
 
     yield object_template
