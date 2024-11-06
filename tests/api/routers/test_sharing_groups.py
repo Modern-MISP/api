@@ -462,7 +462,7 @@ async def test_list_sharing_group_with_access_through_sharing_group_server(
     sharing_group_item = sharing_group_items[0]
 
     assert sharing_group_item
-    assert sharing_group_item["SharingGroupServer"][0]["Server"]["id"] == "0"
+    assert sharing_group_item["SharingGroupServer"][0]["Server"]["id"] == 0
     assert not sharing_group_item["editable"]
     assert not sharing_group_item["deletable"]
 
