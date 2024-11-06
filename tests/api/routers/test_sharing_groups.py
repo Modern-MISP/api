@@ -16,20 +16,22 @@ from mmisp.util.uuid import uuid
 
 async def delete_sharing_group_server(db, sharing_group_id):
     stmt = sa.sql.text("DELETE FROM sharing_group_servers WHERE sharing_group_id=:id")
-    await db.execute(stmt, {"id": sharing_group_id})
+    result = await db.execute(stmt, {"id": sharing_group_id})
+    assert result.rowcount == 1
     await db.commit()
 
 
 async def delete_sharing_group_orgs(db, sharing_group_id):
     stmt = sa.sql.text("DELETE FROM sharing_group_orgs WHERE sharing_group_id=:id")
-    await db.execute(stmt, {"id": sharing_group_id})
-    await db.commit()
+    result = await db.execute(stmt, {"id": sharing_group_id})
+    assert result.rowcount == 1
     await db.commit()
 
 
 async def delete_sharing_group(db, sharing_group_id):
     stmt = sa.sql.text("DELETE FROM sharing_groups WHERE id=:id")
-    await db.execute(stmt, {"id": sharing_group_id})
+    result = await db.execute(stmt, {"id": sharing_group_id})
+    assert result.rowcount == 1
     await db.commit()
 
 
