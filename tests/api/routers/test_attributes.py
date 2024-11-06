@@ -89,28 +89,12 @@ async def test_add_attribute_invalid_data(
 @pytest.mark.asyncio
 async def test_get_existing_attribute(
     db: AsyncSession,
-    instance_org_two,
+    attribute_with_normal_tag,
     site_admin_user_token,
-    sharing_group,
-    organisation,
-    event,
-    attribute,
-    tag,
-    attributetag,
     client,
 ) -> None:
-    sharing_group_id = sharing_group.id
-    event.sharing_group_id = sharing_group_id
-
-    await db.commit()
-
-    event_id = event.id
-
-    attribute.sharing_group_id = sharing_group_id
-
-    assert tag.user_id == 1
-
-    attribute_id = attribute.id
+    attribute, at = attribute_with_normal_tag
+    attribute_id = attribute_with_normal_tag.id
 
     ic(attribute.asdict())
 
@@ -119,8 +103,9 @@ async def test_get_existing_attribute(
 
     assert response.status_code == 200
     response_json = response.json()
+    ic(response_json)
     assert response_json["Attribute"]["id"] == attribute_id
-    assert response_json["Attribute"]["event_id"] == event_id
+    assert response_json["Attribute"]["event_id"] == attribute.event_id
     assert "id" in response_json["Attribute"]
     assert "event_id" in response_json["Attribute"]
     assert "object_id" in response_json["Attribute"]
@@ -140,9 +125,9 @@ async def test_get_existing_attribute(
     assert "last_seen" in response_json["Attribute"]
     assert "event_uuid" in response_json["Attribute"]
     assert "tag" in response_json["Attribute"]
-    if len(response_json["Attribute"]["tag"]) > 0:
-        print(response_json["Attribute"]["tag"])
-        assert response_json["Attribute"]["tag"][0]["id"] == attributetag.id
+    if len(response_json["Attribute"]["Tag"]) > 0:
+        print(response_json["Attribute"]["Tag"])
+        assert response_json["Attribute"]["Tag"][0]["id"] == at.id
 
 
 @pytest.mark.asyncio
