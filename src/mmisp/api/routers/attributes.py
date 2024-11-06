@@ -130,7 +130,7 @@ async def get_attributes_describe_types(
 async def get_attribute_details(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    attribute_id: Annotated[str, Path(alias="attributeId")],
+    attribute_id: Annotated[int, Path(alias="attributeId")],
 ) -> GetAttributeResponse:
     """Retrieve details of a specific attribute by its ID.
 
@@ -579,7 +579,7 @@ async def _add_attribute(db: Session, event_id: str, body: AddAttributeBody) -> 
     return AddAttributeResponse(Attribute=attribute_data)
 
 
-async def _get_attribute_details(db: Session, attribute_id: str) -> GetAttributeResponse:
+async def _get_attribute_details(db: Session, attribute_id: int) -> GetAttributeResponse:
     attribute: Attribute | None = await db.get(Attribute, attribute_id)
 
     if not attribute:
@@ -747,7 +747,7 @@ async def _restore_attribute(db: Session, attribute_id: str) -> GetAttributeResp
 
     await execute_workflow("attribute-after-save", db, attribute)
 
-    attribute_data = await _prepare_get_attribute_details_response(db, str(attribute.id), attribute)
+    attribute_data = await _prepare_get_attribute_details_response(db, attribute.id, attribute)
 
     return GetAttributeResponse(Attribute=attribute_data)
 
@@ -824,24 +824,16 @@ def _prepare_attribute_response_get_all(attribute: Attribute) -> GetAllAttribute
 
 
 async def _prepare_get_attribute_details_response(
-    db: Session, attribute_id: str, attribute: Attribute
+    db: Session, attribute_id: int, attribute: Attribute
 ) -> GetAttributeAttributes:
     attribute_dict = attribute.asdict().copy()
     if "event_uuid" not in attribute_dict.keys():
         attribute_dict["event_uuid"] = attribute.event_uuid
 
-    fields_to_convert = ["object_id", "sharing_group_id", "timestamp"]
-
-    for field in fields_to_convert:
-        if attribute_dict.get(field) is not None:
-            attribute_dict[field] = str(attribute_dict[field])
-        else:
-            attribute_dict[field] = "0"
-
     result = await db.execute(select(AttributeTag).filter(AttributeTag.attribute_id == attribute_id))
     db_attribute_tags = result.scalars().all()
 
-    attribute_dict["tag"] = []
+    attribute_dict["Tag"] = []
 
     if len(db_attribute_tags) > 0:
         for attribute_tag in db_attribute_tags:
@@ -856,7 +848,7 @@ async def _prepare_get_attribute_details_response(
                 is_galaxy=tag.is_galaxy,
                 local=attribute_tag.local,
             )
-            attribute_dict["tag"].append(connected_tag)
+            attribute_dict["Tag"].append(connected_tag)
 
     return GetAttributeAttributes(**attribute_dict)
 
@@ -875,7 +867,7 @@ async def _prepare_edit_attribute_response(
 
     result = await db.execute(select(AttributeTag).filter(AttributeTag.attribute_id == attribute_id))
     db_attribute_tags = result.scalars().all()
-    attribute_dict["tag"] = []
+    attribute_dict["Tag"] = []
 
     if len(db_attribute_tags) > 0:
         for attribute_tag in db_attribute_tags:
@@ -893,7 +885,7 @@ async def _prepare_edit_attribute_response(
                 is_costum_galaxy=tag.is_custom_galaxy,
                 local=tag.local_only,
             )
-            attribute_dict["tag"].append(connected_tag)
+            attribute_dict["Tag"].append(connected_tag)
 
     return EditAttributeAttributes(**attribute_dict)
 
