@@ -433,7 +433,7 @@ async def test_update_user_attributes(site_admin_user_token, client, db, view_on
         "notification_weekly": False,
         "notification_monthly": False,
         "totp": "new_totp",
-        "hotp_counter": "5",
+        "hotp_counter": 5,
         "nids_sid": 54321,
     }
 
