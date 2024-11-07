@@ -9,6 +9,8 @@ from mmisp.api_schemas.galaxies import (
 def get_valid_import_galaxy_body(tag_name: str, galaxy_id: int, org_id: int, galaxy_uuid: str) -> list[dict]:
     body = ImportGalaxyBody(
         GalaxyCluster=GetGalaxyClusterResponse(
+            id=283,
+            uuid="99b91d3f-9076-4505-82ec-76adbc9ad0de",
             collection_uuid="",
             type="test type",
             value="test",
@@ -40,6 +42,8 @@ def get_invalid_import_galaxy_body(tag_name: str, galaxy_id: int, org_id: int) -
     body = ImportGalaxyBody(
         GalaxyCluster=GetGalaxyClusterResponse(
             collection_uuid="",
+            id=1283,
+            uuid="99b91d3f-9076-4505-82ec-76adbc9ad0df",
             type="",
             value="test",
             tag_name=tag_name,

@@ -225,7 +225,7 @@ async def _get_organisations(auth: Auth, db: Session) -> list[GetAllOrganisation
         org_list_computed.append(
             GetAllOrganisationResponse(
                 Organisation=GetAllOrganisationsOrganisation(
-                    id=str(organisation.id),
+                    id=organisation.id,
                     name=organisation.name,
                     date_created=organisation.date_created,
                     date_modified=organisation.date_modified,

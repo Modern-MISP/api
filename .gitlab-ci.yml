@@ -33,6 +33,8 @@ build_image:
       echo '{"auths":{"https://registry.cert.kit.edu/v2/":{"auth": "'$(echo -n ${REGISTRY_USER}:${REGISTRY_PASSWORD} | base64 -w 0)'" }}}' > /kaniko/.docker/config.json
     - >-
       /kaniko/executor
+      --cache=true
+      --cache-ttl=6h
       --context "${CI_PROJECT_DIR}/"
       --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
       --build-arg LIB_REPO_URL=${LIB_REPO_URL}
@@ -44,6 +46,8 @@ build_image:
 
 pytest_mariadb:
   parallel: 8
+  needs:
+    - pytest
   stage: test
   image: ${REGISTRY_DOMAIN}/${REGISTRY_PROJECT}/api:${CI_COMMIT_SHA}
   script:
@@ -82,12 +86,15 @@ pytest:
   stage: test
   image: ${REGISTRY_DOMAIN}/${REGISTRY_PROJECT}/api:${CI_COMMIT_SHA}
   script:
-    - ENV_FILE=.env.test.lite pytest --test-group-count $CI_NODE_TOTAL --test-group=$CI_NODE_INDEX  --cov --cov-report term tests/api/routers
+    - ENV_FILE=.env.test.lite pytest --junitxml=report.xml --test-group-count $CI_NODE_TOTAL --test-group=$CI_NODE_INDEX  --cov --cov-report= tests/api/routers
   variables:
     COVERAGE_FILE: ".coverage.${CI_NODE_INDEX}"
   artifacts:
-    paths:
-      - ".coverage.*"
+      when: always
+      paths:
+        - ".coverage.*"
+      reports:
+        junit: report.xml
 
 pytest_coverage_combine:
   stage: coverage
@@ -95,6 +102,8 @@ pytest_coverage_combine:
   script:
     - coverage combine
     - coverage xml
+    - sed -i 's,/home/mmisp/.local/lib/python3.11/site-packages/,src/,' coverage.xml
+    - sed -i 's,<source></source>,<source>./</source>,' coverage.xml
     - coverage report
   coverage: '/TOTAL.*\s+(\d+%)$/'
   artifacts:
@@ -105,6 +114,8 @@ pytest_coverage_combine:
 
 # also run pytest with sqlalchemy v2
 pytest_sa2:
+  needs:
+    - pytest
   parallel: 8
   stage: test
   image: ${REGISTRY_DOMAIN}/${REGISTRY_PROJECT}/api:${CI_COMMIT_SHA}

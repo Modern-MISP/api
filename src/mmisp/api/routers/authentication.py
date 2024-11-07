@@ -430,7 +430,6 @@ async def _get_all_open_id_connect_providers(db: Session) -> list[GetIdentityPro
             active=provider.active,
             base_url=provider.base_url,
             client_id=provider.client_id,
-            client_secret=provider.client_secret,
             scope=provider.scope,
         )
         for provider in oidc_providers
@@ -454,7 +453,6 @@ async def _get_open_id_connect_provider_by_id(auth: Auth, db: Session, provider_
         active=provider.active,
         base_url=provider.base_url,
         client_id=provider.client_id,
-        client_secret=provider.client_secret,
         scope=provider.scope,
     )
 
@@ -470,7 +468,7 @@ async def _change_password_UserId(
     if not user:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
-    user.password = hash_secret(body.password)
+    user.password = hash_secret(body.password.get_secret_value())
     user.change_pw = True
 
     await db.commit()
@@ -488,7 +486,7 @@ async def _add_openID_Connect_provider(auth: Auth, db: Session, body: IdentityPr
         active=body.active,
         base_url=body.base_url,
         client_id=body.client_id,
-        client_secret=body.client_secret,
+        client_secret=body.client_secret.get_secret_value(),
         scope=body.scope,
     )
     db.add(oidc_provider)
@@ -528,6 +526,8 @@ async def _edit_openID_Connect_provider(
     settings = body.dict(exclude_unset=True)
 
     for key in settings.keys():
+        if key == "client_secret" and settings[key] is not None:
+            settings[key] = settings[key].get_secret_value()
         if settings[key] is not None:
             setattr(oidc_provider, key, settings[key])
 
@@ -540,7 +540,7 @@ async def _password_login(db: Session, body: PasswordLoginBody) -> TokenResponse
     result = await db.execute(select(User).filter(User.email == body.email).limit(1))
     user: User | None = result.scalars().first()
 
-    if not user or user.external_auth_required or not verify_secret(body.password, user.password):
+    if not user or user.external_auth_required or not verify_secret(body.password.get_secret_value(), user.password):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
     if user.change_pw:
@@ -563,13 +563,13 @@ async def _set_own_password(db: Session, body: ChangePasswordBody) -> TokenRespo
     if old_password is None:
         raise HTTPException(status.HTTP_400_BAD_REQUEST)
 
-    if not user or user.external_auth_required or not verify_secret(old_password, user.password):
+    if not user or user.external_auth_required or not verify_secret(old_password.get_secret_value(), user.password):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
-    if old_password.lower() in body.password.lower():
+    if old_password.get_secret_value().lower() in body.password.get_secret_value().lower():
         raise HTTPException(status.HTTP_400_BAD_REQUEST)
 
-    user.password = hash_secret(body.password)
+    user.password = hash_secret(body.password.get_secret_value())
     user.change_pw = False
 
     await db.commit()

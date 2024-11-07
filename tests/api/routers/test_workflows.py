@@ -204,7 +204,7 @@ async def test_workflow_delete_success(client, site_admin_user_token, db) -> Non
     assert detail_dict["name"] == "Workflow deleted."
     assert detail_dict["message"] == "Workflow deleted."
     assert detail_dict["url"] == f"/workflows/delete/{id}"
-    assert detail_dict["id"] == f"{id}"
+    assert detail_dict["id"] == id
 
 
 @pytest.mark.asyncio

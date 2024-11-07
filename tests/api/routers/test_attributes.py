@@ -89,28 +89,11 @@ async def test_add_attribute_invalid_data(
 @pytest.mark.asyncio
 async def test_get_existing_attribute(
     db: AsyncSession,
-    instance_org_two,
+    attribute_with_normal_tag,
     site_admin_user_token,
-    sharing_group,
-    organisation,
-    event,
-    attribute,
-    tag,
-    attributetag,
     client,
 ) -> None:
-    sharing_group_id = sharing_group.id
-    event.sharing_group_id = sharing_group_id
-
-    await db.commit()
-
-    event_id = event.id
-
-    attribute.sharing_group_id = sharing_group_id
-
-    assert tag.user_id == 1
-    assert tag.org_id == 1
-
+    attribute, at = attribute_with_normal_tag
     attribute_id = attribute.id
 
     ic(attribute.asdict())
@@ -120,8 +103,9 @@ async def test_get_existing_attribute(
 
     assert response.status_code == 200
     response_json = response.json()
-    assert response_json["Attribute"]["id"] == str(attribute_id)
-    assert response_json["Attribute"]["event_id"] == str(event_id)
+    ic(response_json)
+    assert response_json["Attribute"]["id"] == attribute_id
+    assert response_json["Attribute"]["event_id"] == attribute.event_id
     assert "id" in response_json["Attribute"]
     assert "event_id" in response_json["Attribute"]
     assert "object_id" in response_json["Attribute"]
@@ -140,10 +124,10 @@ async def test_get_existing_attribute(
     assert "first_seen" in response_json["Attribute"]
     assert "last_seen" in response_json["Attribute"]
     assert "event_uuid" in response_json["Attribute"]
-    assert "tag" in response_json["Attribute"]
-    if len(response_json["Attribute"]["tag"]) > 0:
-        print(response_json["Attribute"]["tag"])
-        assert response_json["Attribute"]["tag"][0]["id"] == str(attributetag.id)
+    assert "Tag" in response_json["Attribute"]
+    if len(response_json["Attribute"]["Tag"]) > 0:
+        print(response_json["Attribute"]["Tag"])
+        assert response_json["Attribute"]["Tag"][0]["id"] == at.id
 
 
 @pytest.mark.asyncio
@@ -152,7 +136,7 @@ async def test_get_invalid_or_non_existing_attribute(site_admin_user_token, clie
     response = client.get("/attributes/0", headers=headers)
     assert response.status_code == 404
     response = client.get("/attributes/invalid_id", headers=headers)
-    assert response.status_code == 404
+    assert response.status_code == 422
 
 
 # --- Test edit attribute
@@ -189,8 +173,8 @@ async def test_edit_existing_attribute(
     assert response.status_code == 200
     response_json = response.json()
 
-    assert response_json["Attribute"]["id"] == str(attribute_id)
-    assert response_json["Attribute"]["event_id"] == str(event_id)
+    assert response_json["Attribute"]["id"] == attribute_id
+    assert response_json["Attribute"]["event_id"] == event_id
     assert "id" in response_json["Attribute"]
     assert "event_id" in response_json["Attribute"]
     assert "object_id" in response_json["Attribute"]
@@ -208,7 +192,7 @@ async def test_edit_existing_attribute(
     assert "disable_correlation" in response_json["Attribute"]
     assert "first_seen" in response_json["Attribute"]
     assert "last_seen" in response_json["Attribute"]
-    assert "tag" in response_json["Attribute"]
+    assert "Tag" in response_json["Attribute"]
     assert "first_seen" in response_json["Attribute"]
 
     assert response_json["Attribute"]["first_seen"] is None

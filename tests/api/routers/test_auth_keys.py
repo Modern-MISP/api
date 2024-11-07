@@ -95,7 +95,7 @@ async def test_get_existing_auth_key_details(auth_key, site_admin_user_token, cl
     assert response.status_code == 200
     json = response.json()
 
-    assert json["AuthKey"]["id"] == str(auth_key.id)
+    assert json["AuthKey"]["id"] == auth_key.id
 
 
 @pytest.mark.asyncio
@@ -116,7 +116,7 @@ async def test_edit_auth_key(auth_key, instance_owner_org_admin_user_token, clie
     assert response.status_code == 200
     json = response.json()
 
-    assert json["AuthKey"]["id"] == str(auth_key.id)
+    assert json["AuthKey"]["id"] == auth_key.id
     assert json["AuthKey"]["comment"] == body["comment"]
 
 
@@ -130,7 +130,7 @@ async def test_edit_auth_key_depr(auth_key, instance_owner_org_admin_user_token,
     assert response.status_code == 200
     json = response.json()
 
-    assert json["AuthKey"]["id"] == str(auth_key.id)
+    assert json["AuthKey"]["id"] == auth_key.id
     assert json["AuthKey"]["comment"] == body["comment"]
 
 
@@ -286,7 +286,7 @@ async def test_delete_auth_key(auth_key, site_admin_user_token, client) -> None:
     assert json["saved"]
     assert json["success"]
     assert "delete" not in json["url"]
-    assert json["id"] == str(auth_key.id)
+    assert json["id"] == auth_key.id
 
 
 @pytest.mark.asyncio
@@ -300,7 +300,7 @@ async def test_delete_auth_key_depr(auth_key, site_admin_user_token, client) -> 
     assert json["saved"]
     assert json["success"]
     assert "delete" in json["url"]
-    assert json["id"] == str(auth_key.id)
+    assert json["id"] == auth_key.id
 
 
 @pytest.mark.asyncio

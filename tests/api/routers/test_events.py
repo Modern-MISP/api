@@ -107,15 +107,15 @@ async def test_get_existing_event(
 
     assert response.status_code == 200
     response_json = response.json()
-    assert response_json["Event"]["id"] == str(event_id)
-    assert response_json["Event"]["org_id"] == str(org_id)
-    assert response_json["Event"]["orgc_id"] == str(org_id)
+    assert response_json["Event"]["id"] == event_id
+    assert response_json["Event"]["org_id"] == org_id
+    assert response_json["Event"]["orgc_id"] == org_id
     assert response_json["Event"]["attribute_count"] == "1"
-    assert response_json["Event"]["Attribute"][0]["id"] == str(attribute_id)
-    assert response_json["Event"]["Tag"][0]["id"] == str(tag_id)
-    assert response_json["Event"]["Galaxy"][0]["id"] == str(galaxy_id)
-    assert response_json["Event"]["Galaxy"][0]["GalaxyCluster"][0]["id"] == str(galaxy_cluster_id)
-    assert response_json["Event"]["Galaxy"][0]["GalaxyCluster"][0]["event_tag_id"] == str(eventtag.id)
+    assert response_json["Event"]["Attribute"][0]["id"] == attribute_id
+    assert response_json["Event"]["Tag"][0]["id"] == tag_id
+    assert response_json["Event"]["Galaxy"][0]["id"] == galaxy_id
+    assert response_json["Event"]["Galaxy"][0]["GalaxyCluster"][0]["id"] == galaxy_cluster_id
+    assert response_json["Event"]["Galaxy"][0]["GalaxyCluster"][0]["event_tag_id"] == eventtag.id
 
 
 @pytest.mark.asyncio
@@ -191,7 +191,7 @@ async def test_delete_invalid_or_non_existing_event(site_admin_user_token, clien
     response = client.delete("/events/0", headers=headers)
     assert response.status_code == 404
     response = client.delete("/events/invalid_id", headers=headers)
-    assert response.status_code == 404
+    assert response.status_code == 422
 
 
 @pytest.mark.asyncio
@@ -252,7 +252,7 @@ async def test_publish_existing_event(organisation, event, site_admin_user_token
     assert response_json["name"] == "Job queued"
     assert response_json["message"] == "Job queued"
     assert response_json["url"] == f"/events/publish/{event_id}"
-    assert response_json["id"] == str(event_id)
+    assert response_json["id"] == event_id
 
 
 @pytest.mark.asyncio
@@ -360,7 +360,7 @@ async def test_publish_existing_event2(event, site_admin_user_token, client) -> 
     assert response_json["name"] == "Event unpublished."
     assert response_json["message"] == "Event unpublished."
     assert response_json["url"] == f"/events/unpublish/{event_id}"
-    assert response_json["id"] == str(event_id)
+    assert response_json["id"] == event_id
 
 
 @pytest.mark.asyncio

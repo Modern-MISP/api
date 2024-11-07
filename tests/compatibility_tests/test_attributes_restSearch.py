@@ -25,7 +25,8 @@ async def test_valid_search_multi_attribute_data(
 
 @pytest.mark.asyncio
 async def test_valid_search_tag_attribute_data(db: AsyncSession, attribute_with_normal_tag, auth_key, client) -> None:
-    request_body = {"returnFormat": "json", "limit": 100, "value": attribute_with_normal_tag.value}
+    attribute, attribute_tag = attribute_with_normal_tag
+    request_body = {"returnFormat": "json", "limit": 100, "value": attribute.value}
     path = "/attributes/restSearch"
 
     assert get_legacy_modern_diff("post", path, request_body, auth_key, client) == {}

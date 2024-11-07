@@ -50,7 +50,7 @@ async def object_template(db, organisation, site_admin_user):
         name="test_template", user_id=site_admin_user.id, org_id=organisation.id, version=100
     )
     db.add(object_template)
-    await db.flush()
+    await db.commit()
     await db.refresh(object_template)
 
     yield object_template
@@ -276,7 +276,7 @@ async def test_get_object_details_data_integrity(
     response = client.get(f"/objects/{object_id}", headers=headers)
     response_data = response.json()
     object_data = response_data["Object"]
-    assert isinstance(object_data["id"], str)
+    assert isinstance(object_data["id"], int)
     assert isinstance(object_data["name"], str)
     await delete_attributes_from_object_resp(db, response_data)
 

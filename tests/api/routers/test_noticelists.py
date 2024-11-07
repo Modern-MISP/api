@@ -17,7 +17,7 @@ async def test_get_existing_noticelist_details(db, site_admin_user_token, client
     for noticelist_id in noticelist_ids:
         response = client.get(f"/noticelists/{noticelist_id}", headers=headers)
         assert response.status_code == 200
-        assert response.json()["Noticelist"]["id"] == str(noticelist_id)
+        assert response.json()["Noticelist"]["id"] == noticelist_id
 
     await remove_noticelists(db, noticelist_ids)
 
@@ -31,7 +31,7 @@ async def test_get_existing_noticelist_details_deprecated(db, site_admin_user_to
     for noticelist_id in noticelist_ids:
         response = client.get(f"/noticelists/view/{noticelist_id}", headers=headers)
         assert response.status_code == 200
-        assert response.json()["Noticelist"]["id"] == str(noticelist_id)
+        assert response.json()["Noticelist"]["id"] == noticelist_id
 
     await remove_noticelists(db, noticelist_ids)
 
@@ -88,7 +88,7 @@ async def test_get_noticelist_response_format(db, site_admin_user_token, client)
 
     response = client.get(f"/noticelists/{noticelist_id[0]}", headers=headers)
     json = response.json()
-    assert isinstance(json["Noticelist"]["id"], str)
+    assert isinstance(json["Noticelist"]["id"], int)
 
     await remove_noticelists(db, noticelist_id)
 
@@ -101,7 +101,7 @@ async def test_get_noticelist_response_format_deprecated(db, site_admin_user_tok
 
     response = client.get(f"/noticelists/view/{noticelist_id[0]}", headers=headers)
     json = response.json()
-    assert isinstance(json["Noticelist"]["id"], str)
+    assert isinstance(json["Noticelist"]["id"], int)
 
     await remove_noticelists(db, noticelist_id)
 
@@ -164,7 +164,7 @@ async def test_noticelist_toggleEnable_response_format(db, site_admin_user_token
 
     response = client.post(f"noticelists/toggleEnable/{noticelist_id[0]}", headers=headers)
     json = response.json()
-    assert json["id"] == str(noticelist_id[0])
+    assert json["id"] == noticelist_id[0]
     assert json["saved"]
 
     await remove_noticelists(db, noticelist_id)
