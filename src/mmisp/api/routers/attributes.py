@@ -453,7 +453,7 @@ async def add_attribute_depr(
 async def get_attribute_details_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    attribute_id: Annotated[str, Path(alias="attributeId")],
+    attribute_id: Annotated[int, Path(alias="attributeId")],
 ) -> GetAttributeResponse:
     """Deprecated. Retrieve details of a specific attribute by its ID using the old route.
 

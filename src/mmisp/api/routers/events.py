@@ -537,7 +537,7 @@ async def update_event_depr(
 async def delete_event_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
-    event_id: Annotated[str, Path(..., alias="eventId")],
+    event_id: Annotated[int, Path(..., alias="eventId")],
 ) -> DeleteEventResponse:
     """Deprecated. Delete an existing event by its ID.
 
