@@ -807,7 +807,15 @@ async def _index_events(db: Session, body: IndexEventsBody) -> list[GetAllEvents
             selectinload(Event.org),
             selectinload(Event.orgc),
             selectinload(Event.tags),
-            selectinload(Event.eventtags_galaxy).selectinload(EventTag.tag).selectinload(Tag.galaxy_cluster),
+            selectinload(Event.eventtags_galaxy)
+            .selectinload(EventTag.tag)
+            .selectinload(Tag.galaxy_cluster)
+            .options(
+                selectinload(GalaxyCluster.org),
+                selectinload(GalaxyCluster.orgc),
+                selectinload(GalaxyCluster.galaxy),
+                selectinload(GalaxyCluster.galaxy_elements),
+            ),
             selectinload(Event.eventtags),
             selectinload(Event.attributes).options(
                 selectinload(Attribute.attributetags_galaxy)
@@ -1226,6 +1234,8 @@ def _prepare_all_events_galaxy_cluster_response(event_tag_list: Sequence[EventTa
             raise ValueError("this method should only be called with galaxy_tags!")
 
         galaxy_cluster = tag.galaxy_cluster
+        if galaxy_cluster is None:
+            continue
         galaxy_cluster_dict = galaxy_cluster.__dict__.copy()
 
         galaxy = galaxy_cluster.galaxy
