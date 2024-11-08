@@ -1244,8 +1244,6 @@ def _prepare_all_events_galaxy_cluster_response(event_tag_list: Sequence[EventTa
         galaxy_dict = galaxy.__dict__.copy()
         galaxy_dict["local_only"] = tag.local_only
 
-        galaxy_cluster_dict["authors"] = galaxy_cluster.authors.split(" ")
-
         galaxy_cluster_dict["tag_id"] = 0
         galaxy_cluster_dict["extends_uuid"] = ""
         galaxy_cluster_dict["collection_uuid"] = ""
