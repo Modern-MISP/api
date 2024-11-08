@@ -200,7 +200,7 @@ async def galaxy_cluster(db, tag, galaxy):
         tag_name=tag.name,
         description="test",
         galaxy_id=galaxy.id,
-        authors="admin",
+        authors=["admin"],
     )
 
     db.add(galaxy_cluster)

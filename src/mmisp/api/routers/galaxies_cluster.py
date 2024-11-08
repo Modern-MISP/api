@@ -1,4 +1,3 @@
-import json
 import time
 from collections.abc import Sequence
 from typing import Annotated, Any
@@ -28,6 +27,7 @@ from mmisp.api_schemas.galaxy_clusters import (
     ExportGalaxyClusterResponse,
     GalaxyClusterResponse,
     GetGalaxyClusterResponse,
+    PutGalaxyClusterRequest,
 )
 from mmisp.api_schemas.organisations import GetOrganisationResponse
 from mmisp.db.database import Session, get_db
@@ -39,6 +39,7 @@ from mmisp.db.models.organisation import Organisation
 from mmisp.db.models.tag import Tag
 from mmisp.lib.fallbacks import GENERIC_MISP_ORGANISATION
 from mmisp.lib.galaxies import galaxy_tag_name, parse_galaxy_authors
+from mmisp.lib.galaxy_clusters import update_galaxy_cluster_elements
 from mmisp.util.uuid import uuid
 
 router = APIRouter(tags=["galaxy_clusters"])
@@ -199,6 +200,37 @@ async def get_galaxy_cluster_view(
     return await _get_galaxy_cluster(db, await _load_galaxy_cluster(db, cluster_id))
 
 
+@router.put(
+    "/galaxy_clusters/edit/{galaxy_cluster_id}",
+    status_code=status.HTTP_200_OK,
+    summary="Update galaxy cluster",
+)
+async def put_galaxy_cluster(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
+    db: Annotated[Session, Depends(get_db)],
+    galaxy_cluster_id: Annotated[int, Path(alias="galaxy_cluster_id")],
+    body: PutGalaxyClusterRequest,
+) -> GalaxyClusterResponse:
+    # get galaxy
+    qry = (
+        select(GalaxyCluster)
+        .filter(GalaxyCluster.id == galaxy_cluster_id)
+        .options(selectinload(GalaxyCluster.galaxy_elements))
+    )
+
+    result = await db.execute(qry)
+    galaxy_cluster = result.scalar_one_or_none()
+
+    if galaxy_cluster is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Galaxy Cluster not found")
+
+    galaxy_cluster.patch(**body.dict())
+    await update_galaxy_cluster_elements(db, galaxy_cluster, body.GalaxyElement)
+    await db.flush()
+    db.expire(galaxy_cluster)
+    return await _get_galaxy_cluster(db, await _load_galaxy_cluster(db, galaxy_cluster_id))
+
+
 @router.post(
     "/galaxy_clusters/add/{galaxyId}",
     status_code=status.HTTP_200_OK,
@@ -216,7 +248,6 @@ async def add_galaxy_cluster(
 
     if galaxy is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Galaxy not found")
-
     # get new uuid
     new_uuid = uuid()
 
@@ -229,7 +260,7 @@ async def add_galaxy_cluster(
         source=body.source,
         galaxy_id=galaxy_id,
         distribution=body.distribution,
-        authors=json.dumps(body.authors),
+        authors=body.authors,
         tag_name=tag_name,
         type=galaxy.type,
         org_id=auth.org_id,
@@ -294,7 +325,6 @@ async def _import_galaxy_cluster(
                 ).dict(),
             )
         else:
-            galaxy_cluster_dict["authors"] = " ".join(galaxy_cluster_dict["authors"])
             del galaxy_cluster_dict["GalaxyElement"]
 
             new_galaxy_cluster = GalaxyCluster(
@@ -304,7 +334,7 @@ async def _import_galaxy_cluster(
                 description=galaxy_cluster.description,
                 galaxy_id=galaxy_cluster.galaxy_id,
                 source=galaxy_cluster.source,
-                authors=" ".join(galaxy_cluster.authors),
+                authors=galaxy_cluster.authors,
                 version=galaxy_cluster.version,
                 distribution=galaxy_cluster.distribution,
                 sharing_group_id=galaxy_cluster.sharing_group_id,
@@ -352,7 +382,8 @@ async def _import_galaxy_cluster(
 
 
 async def _process_galaxy_cluster_dict(cluster_dict: dict) -> dict:
-    cluster_dict["authors"] = parse_galaxy_authors(cluster_dict["authors"])
+    if not isinstance(cluster_dict["authors"], list):
+        cluster_dict["authors"] = parse_galaxy_authors(cluster_dict["authors"])
 
     if cluster_dict.get("collection_uuid") is None:
         cluster_dict["collection_uuid"] = ""
@@ -387,7 +418,7 @@ async def _get_galaxy_cluster(db: Session, galaxy_cluster: GalaxyCluster | None)
     if galaxy_cluster is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Galaxy cluster not found")
 
-    galaxy_cluster_dict = galaxy_cluster.__dict__.copy()
+    galaxy_cluster_dict = galaxy_cluster.asdict()
     galaxy_cluster_dict = await _process_galaxy_cluster_dict(galaxy_cluster_dict)
 
     # Get the Galaxy
