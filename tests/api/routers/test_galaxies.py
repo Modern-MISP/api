@@ -92,9 +92,10 @@ async def add_galaxy_cluster_body(db, galaxy, tag, organisation):
         tag_name=tag.name,
         description="",
         galaxy_id=galaxy.id,
-        authors="Me",
+        authors=["Me"],
         org_id=organisation.id,
         orgc_id=organisation.id,
+        uuid="01ff063f-42de-49d7-9bbb-ef783d99fde7",
     )
 
     db.add(add_galaxy_cluster_body)
@@ -115,9 +116,10 @@ async def add_galaxy_cluster_body2(db, galaxy2, tag, organisation):
         tag_name=tag.name,
         description="",
         galaxy_id=galaxy2.id,
-        authors="Me",
+        authors=["Me"],
         org_id=organisation.id,
         orgc_id=organisation.id,
+        uuid="01ff063f-42de-49d7-9bbb-ef783d99fde8",
     )
 
     db.add(add_galaxy_cluster_body)
@@ -134,14 +136,14 @@ async def add_galaxy_cluster_body2(db, galaxy2, tag, organisation):
 async def add_galaxy_cluster_body3(db, galaxy3, tag, organisation):
     add_galaxy_cluster_body = GalaxyCluster(
         id="777",
-        uuid="777",
+        uuid="01ff063f-42de-49d7-9bbb-ef783d99fde9",
         collection_uuid="777",
         type="test",
         value="test",
         tag_name=tag.name,
         description="",
         galaxy_id=galaxy3.id,
-        authors="Me",
+        authors=["Me"],
         version="1.0",
         distribution="187",
         sharing_group_id="777",
@@ -282,6 +284,51 @@ async def test_get_default_galaxy_cluster(db: Session, site_admin_user_token, te
     assert gc["Orgc"]["date_modified"] == ""
     assert gc["Org"]["restricted_to_domain"] == []
     assert gc["Orgc"]["restricted_to_domain"] == []
+
+
+@pytest.mark.asyncio
+async def test_put_galaxy_cluster(db: Session, site_admin_user_token, test_galaxy, client) -> None:
+    galaxy_cluster = test_galaxy["galaxy_cluster"]
+    galaxy_element = test_galaxy["galaxy_element"]
+    path = f"/galaxy_clusters/edit/{galaxy_cluster.id}"
+
+    body = {
+        "value": galaxy_cluster.value,
+        "description": galaxy_cluster.description + " extended",
+        "type": galaxy_cluster.type,
+        "source": galaxy_cluster.source,
+        "authors": galaxy_cluster.authors + ["first new author", "second new author"],
+        "version": galaxy_cluster.version,
+        "id": galaxy_cluster.id,
+        "uuid": galaxy_cluster.uuid,
+        "distribution": galaxy_cluster.distribution,
+        "GalaxyElement": [
+            {"id": galaxy_element.id, "key": "refs", "value": "http://test-one-one-one.example.com"},
+            {"key": "refs", "value": "http://test-new.example.com"},
+        ],
+    }
+
+    headers = {"authorization": site_admin_user_token}
+    response = client.put(path, json=body, headers=headers)
+    ic(response.text)
+
+    assert response.status_code == 200
+
+    response_json = response.json()
+    gc = response_json["GalaxyCluster"]
+    ic(gc)
+    assert "first new author" in gc["authors"]
+    assert "second new author" in gc["authors"]
+    assert galaxy_cluster.description + " extended" in gc["description"]
+    for ge in gc["GalaxyElement"]:
+        ic(ge)
+        if ge["id"] == galaxy_element.id:
+            assert ge["value"] == "http://test-one-one-one.example.com"
+        else:
+            assert ge["value"] == "http://test-new.example.com"
+
+    await db.execute(sa.delete(GalaxyElement).filter(GalaxyElement.galaxy_cluster_id == galaxy_cluster.id))
+    await db.commit()
 
 
 @pytest.mark.asyncio

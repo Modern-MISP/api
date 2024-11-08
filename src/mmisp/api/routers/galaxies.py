@@ -256,9 +256,7 @@ async def _prepare_galaxy_cluster_response(db: Session, galaxy: Galaxy) -> list[
 
     if len(galaxy_cluster_list) > 0:
         for galaxy_cluster in galaxy_cluster_list:
-            galaxy_cluster_dict = galaxy_cluster.__dict__.copy()
-
-            galaxy_cluster_dict["authors"] = galaxy_cluster_dict["authors"].split(" ")
+            galaxy_cluster_dict = galaxy_cluster.asdict()
 
             int_fields_to_convert = ["sharing_group_id", "org_id", "orgc_id", "extends_version"]
             for field in int_fields_to_convert:

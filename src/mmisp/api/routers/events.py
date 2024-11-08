@@ -1083,7 +1083,7 @@ async def _prepare_tag_response(db: Session, tag_list: Sequence[EventTag | Attri
 async def _prepare_single_galaxy_cluster_response(
     db: Session, galaxy_cluster: GalaxyCluster, connecting_tag: AttributeTag | EventTag
 ) -> AddEditGetEventGalaxyCluster:
-    galaxy_cluster_dict = galaxy_cluster.__dict__.copy()
+    galaxy_cluster_dict = galaxy_cluster.asdict()
 
     if galaxy_cluster.orgc is not None:
         galaxy_cluster_dict["Orgc"] = galaxy_cluster.orgc.__dict__.copy()
@@ -1236,7 +1236,7 @@ def _prepare_all_events_galaxy_cluster_response(event_tag_list: Sequence[EventTa
         galaxy_cluster = tag.galaxy_cluster
         if galaxy_cluster is None:
             continue
-        galaxy_cluster_dict = galaxy_cluster.__dict__.copy()
+        galaxy_cluster_dict = galaxy_cluster.asdict()
 
         galaxy = galaxy_cluster.galaxy
         if galaxy is None or tag is None:
