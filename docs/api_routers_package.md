@@ -1,19 +1,2 @@
+# Routers
 ## ::: mmisp.api.routers
-## ::: mmisp.api.routers.taxonomies
-## ::: mmisp.api.routers.user_settings
-## ::: mmisp.api.routers.authentication
-## ::: mmisp.api.routers.events
-## ::: mmisp.api.routers.tags
-## ::: mmisp.api.routers.objects
-## ::: mmisp.api.routers.attributes
-## ::: mmisp.api.routers.jobs
-## ::: mmisp.api.routers.users
-## ::: mmisp.api.routers.feeds
-## ::: mmisp.api.routers.warninglists
-## ::: mmisp.api.routers.noticelists
-## ::: mmisp.api.routers.sightings
-## ::: mmisp.api.routers.auth_keys
-## ::: mmisp.api.routers.sharing_groups
-## ::: mmisp.api.routers.servers
-## ::: mmisp.api.routers.galaxies
-## ::: mmisp.api.routers.workflow

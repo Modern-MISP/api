@@ -67,7 +67,7 @@ pytest_mariadb:
       conn.close()"
     - pytest --test-group-count $CI_NODE_TOTAL --test-group=$CI_NODE_INDEX tests/api/routers
   services:
-    - name: mariadb:latest
+    - name: mariadb:11.5
       alias: db
   variables:
     MARIADB_ROOT_PASSWORD: misp
@@ -139,7 +139,7 @@ legacy_misp:
     - while [ ! -f "$MISP_READY_FILE" ]; do sleep 10; done
     - pytest tests/compatibility_tests
   services:
-    - name: mariadb:latest
+    - name: mariadb:11.5
       alias: db
       variables:
         HEALTHCHECK_TCP_PORT: 3306
@@ -173,6 +173,7 @@ legacy_misp:
 generate_mkdocs:
   before_script: []
   stage: docs
+  needs: []
   image: registry.cert.kit.edu/public-gitlab-ci/mkdocs
   script:
     - source /root/.venv/bin/activate; PYTHONPATH=src mkdocs build
