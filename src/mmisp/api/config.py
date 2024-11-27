@@ -1,3 +1,8 @@
+"""This module handels the configuration of the API.
+
+Database related settings are part of mmisp.db of the lib repository.
+"""
+
 from os import getenv
 
 from dotenv import load_dotenv

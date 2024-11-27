@@ -10,7 +10,32 @@ theme:
 nav:
   - index.md
   - api_package.md
-  - api_routers_package.md
+  - Routers:
+      - Introduction: api_routers_package.md
+      - Attributes: routers/attributes.md
+      - Auth Keys: routers/auth_keys.md
+      - Authentication: routers/authentication.md
+      - Events: routers/events.md
+      - Feeds: routers/feeds.md
+      - Galaxies: routers/galaxies.md
+      - Galaxy Clusters: routers/galaxy_clusters.md
+      - Jobs: routers/jobs.md
+      - Noticelists: routers/noticelists.md
+      - Objects: routers/objects.md
+      - Organisations: routers/organisations.md
+      - Servers: routers/servers.md
+      - Sharing Groups: routers/sharing_groups.md
+      - Sightings: routers/sightings.md
+      - Statistics: routers/statistics.md
+      - Tags: routers/tags.md
+      - Taxonomies: routers/taxnomies.md
+      - User Settings: routers/user_settings.md
+      - Users: routers/users.md
+      - Warninglists: routers/warninglists.md
+  - Frontend Reference: /frontend/intro
+  - Library Reference: /lib/introduction
+  - API Reference: /api/
+  - Worker Reference: /worker/
 
 plugins:
   - search
