@@ -31,9 +31,10 @@ for m in router_module_names:
     fastapi_routers.append(mod.router)
 
 
-def init_app(*, init_db: bool = True) -> FastAPI:
+def init_app(*, init_db: bool = False) -> FastAPI:
+    sessionmanager.init()
+
     if init_db:
-        sessionmanager.init()
 
         @asynccontextmanager
         async def lifespan(app: FastAPI) -> AsyncGenerator:
