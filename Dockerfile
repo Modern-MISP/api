@@ -15,6 +15,8 @@ RUN pip install --upgrade pip
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 ENV PATH="/home/${DOCKER_USER}/.local/bin:${PATH}"
+# set to empty if you dont want a db setup
+ENV SETUP_DB="1"
 
 ADD --chown=$DOCKER_USER:$DOCKER_USER . ./
 RUN pip install '.[dev]'
@@ -30,4 +32,5 @@ RUN if [ "$INSTALL_LIB" = "true" ]; then \
     fi
 
 EXPOSE 4000
-CMD ["gunicorn", "mmisp.api.main:app", "-b", "0.0.0.0:4000", "-w", "4", "-k", "uvicorn_worker.UvicornWorker"]
+COPY entrypoint.sh /
+CMD ["/entrypoint.sh"]
