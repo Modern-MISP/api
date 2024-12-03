@@ -29,20 +29,6 @@ async def check_counts_stay_constant(db):
 
 
 @pytest_asyncio.fixture
-async def galaxy(db):
-    galaxy = generate_galaxy()
-
-    db.add(galaxy)
-    await db.commit()
-    await db.refresh(galaxy)
-
-    yield galaxy
-
-    await db.delete(galaxy)
-    await db.commit()
-
-
-@pytest_asyncio.fixture
 async def galaxy2(db):
     galaxy = generate_galaxy()
 
