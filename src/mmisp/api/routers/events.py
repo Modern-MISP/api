@@ -999,7 +999,7 @@ async def _prepare_event_response(db: Session, event: Event) -> AddEditGetEventD
     galaxy_response_list = []
 
     for galaxy, galaxy_cluster_responses in galaxy_cluster_by_galaxy.items():
-        galaxy_dict = galaxy.__dict__.copy()
+        galaxy_dict = galaxy.asdict()
         galaxy_dict["GalaxyCluster"] = galaxy_cluster_responses
 
         galaxy_response_list.append(AddEditGetEventGalaxy(**galaxy_dict))
@@ -1020,7 +1020,7 @@ async def _prepare_attribute_response(
     attribute_response_list = []
 
     for attribute in attribute_list:
-        attribute_dict = attribute.asdict().copy()
+        attribute_dict = attribute.asdict()
 
         attribute_tag_list = attribute.attributetags
 
@@ -1049,7 +1049,7 @@ async def _prepare_attribute_response(
         galaxy_response_list = []
 
         for galaxy, galaxy_cluster_responses in galaxy_cluster_by_galaxy.items():
-            galaxy_dict = galaxy.__dict__.copy()
+            galaxy_dict = galaxy.asdict()
             galaxy_dict["GalaxyCluster"] = galaxy_cluster_responses
 
             galaxy_response_list.append(AddEditGetEventGalaxy(**galaxy_dict))
@@ -1241,7 +1241,7 @@ def _prepare_all_events_galaxy_cluster_response(event_tag_list: Sequence[EventTa
         galaxy = galaxy_cluster.galaxy
         if galaxy is None or tag is None:
             continue
-        galaxy_dict = galaxy.__dict__.copy()
+        galaxy_dict = galaxy.asdict().copy()
         galaxy_dict["local_only"] = tag.local_only
 
         galaxy_cluster_dict["tag_id"] = 0

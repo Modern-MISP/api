@@ -428,7 +428,6 @@ async def _get_galaxy_cluster(db: Session, galaxy_cluster: GalaxyCluster | None)
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Galaxy not found")
 
     galaxy_cluster_dict["Galaxy"] = await _prepare_galaxy_response(db, galaxy)
-
     # Get the GalaxyElements
     galaxy_cluster_dict["GalaxyElement"] = [
         ExportGalaxyGalaxyElement(**ge.__dict__.copy()) for ge in galaxy_cluster.galaxy_elements
@@ -541,8 +540,7 @@ async def _attach_cluster_to_galaxy(
 
 
 async def _prepare_galaxy_response(db: Session, galaxy: Galaxy) -> GetAllSearchGalaxiesAttributes:
-    galaxy_dict = galaxy.__dict__.copy()
-
+    galaxy_dict = galaxy.asdict()
     result = await db.execute(select(GalaxyCluster).filter(GalaxyCluster.galaxy_id == galaxy.id).limit(1))
     galaxy_cluster = result.scalars().first()
 
