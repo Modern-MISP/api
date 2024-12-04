@@ -40,4 +40,10 @@ RUN if [ "$INSTALL_LIB" = "true" ]; then \
     fi
 
 EXPOSE 4000
+
+USER root
+COPY entrypoint.sh /
+RUN chmod +x /entrypoint.sh
+USER $DOCKER_USER
+
 CMD ["/entrypoint.sh"]
