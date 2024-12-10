@@ -83,7 +83,7 @@ async def add_event(
     db: Annotated[Session, Depends(get_db)],
     body: AddEventBody,
 ) -> AddEditGetEventResponse:
-    """Add a new event with the gi ven details.
+    """Add a new event with the given details.
 
     Input:
 
@@ -111,7 +111,7 @@ async def get_event_details(
     db: Annotated[Session, Depends(get_db)],
     event_id: Annotated[int, Path(alias="eventId")],
 ) -> AddEditGetEventResponse:
-    """Retrieve details of a specific event by ist ID.
+    """Retrieve details of a specific event either by its event id or via its UUID. 
 
     Input:
 
@@ -119,7 +119,7 @@ async def get_event_details(
 
     - the current database
 
-    - the id of the event
+    - the id or UUID of the event
 
     Output:
 
@@ -141,7 +141,7 @@ async def update_event(
     event_id: Annotated[str, Path(alias="eventId")],
     body: EditEventBody,
 ) -> AddEditGetEventResponse:
-    """Update an existing event by its ID.
+    """Update an existing event either by its event id or via its UUID. 
 
     Input:
 
@@ -149,7 +149,7 @@ async def update_event(
 
     - the current database
 
-    - the id of the event
+    - the id or UUID of the event
 
     - the request body
 
@@ -172,7 +172,7 @@ async def delete_event(
     db: Annotated[Session, Depends(get_db)],
     event_id: Annotated[int, Path(alias="eventId")],
 ) -> DeleteEventResponse:
-    """Delete an attribute by its ID.
+    """Delete an event either by its event id or via its UUID. 
 
     Input:
 
@@ -180,7 +180,7 @@ async def delete_event(
 
     - the current database
 
-    - the event id
+    - the id or UUID of the Event
 
     Output:
 
@@ -283,7 +283,7 @@ async def publish_event(
     event_id: Annotated[str, Path(alias="eventId")],
     request: Request,
 ) -> PublishEventResponse:
-    """Publish an event by ist ID.
+    """Publish an event either by its event id or via its UUID. .
 
     Input:
 
@@ -291,7 +291,7 @@ async def publish_event(
 
     - the current database
 
-    - the event id
+    - the event id or UUID
 
     - the request
 
@@ -315,7 +315,7 @@ async def unpublish_event(
     event_id: Annotated[str, Path(alias="eventId")],
     request: Request,
 ) -> UnpublishEventResponse:
-    """Unpublish an event by its ID.
+    """Unpublish an event  either by its event id or via its UUID. 
 
     Input:
 
@@ -323,7 +323,7 @@ async def unpublish_event(
 
     - the current database
 
-    - the event id
+    - the event id or UUID
 
     - the request
 
@@ -347,7 +347,7 @@ async def add_tag_to_event(
     tag_id: Annotated[str, Path(alias="tagId")],
     local: str,
 ) -> AddRemoveTagEventsResponse:
-    """Add a tag to an attribute by their ids.
+    """Add a tag to an event by their ids.
 
     Input:
 
@@ -355,7 +355,7 @@ async def add_tag_to_event(
 
     - the current database
 
-    - the event id
+    - the event id or UUID
 
     - the tag id
 
@@ -381,7 +381,7 @@ async def remove_tag_from_event(
     event_id: Annotated[str, Path(alias="eventId")],
     tag_id: Annotated[str, Path(alias="tagId")],
 ) -> AddRemoveTagEventsResponse:
-    """Remove a tag to from an event by their id.
+    """Remove a tag to from an event by their ids.
 
     Input:
 
@@ -389,7 +389,7 @@ async def remove_tag_from_event(
 
     - the current database
 
-    - the event id
+    - the event id or UUID
 
     - the tag id
 
@@ -412,11 +412,13 @@ async def start_freeTextImport(
     event_id: Annotated[str, Path(alias="eventID")],
     body: AddAttributeViaFreeTextImportEventBody,
 ) -> FreeTextProcessID:
-    """Starts the freetext import process by submitting the freetext to the worker.
+    """Starts the freetext import process for an event by its id or UUID, by submitting the freetext to the worker.
 
     Input:
 
     - the user's authentification status
+
+    - the event id or UUID
 
     - the body of the freetext
 
@@ -504,7 +506,7 @@ async def get_event_details_depr(
 
     - the current database
 
-    - the event id
+    - the event ID
 
     Output:
 

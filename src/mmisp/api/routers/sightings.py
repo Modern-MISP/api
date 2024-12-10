@@ -94,7 +94,7 @@ async def get_sightings_at_index(
     db: Annotated[Session, Depends(get_db)],
     event_id: Annotated[int, Path(alias="eventId")],
 ) -> list[SightingAttributesResponse]:
-    """Retrieve all sightings associated with a specific event ID.
+    """Retrieve all sightings associated with a specific event ID or UUID.
 
     Input:
 
@@ -102,7 +102,7 @@ async def get_sightings_at_index(
 
     - db: Database session
 
-    - event_id: ID of the event
+    - event_id: ID or UUID of the event
 
     Output:
 
