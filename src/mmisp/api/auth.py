@@ -33,7 +33,7 @@ class AuthStrategy(StrEnum):
 
     - jwt: Use only jwts after login
     - api_key: Use only api-key
-    - jwt/api_key: Either jwt or api_key
+    - jwt/api_key: Either jwt or api_key (Hybrid)
     - worker_key: Only accessible for modern misp worker
     - all: Use any authentication method
     """
@@ -59,6 +59,7 @@ class Auth:
     is_worker: bool | None = False
 
 
+#
 async def _get_user(
     db: Session, authorization: str, strategy: AuthStrategy, permissions: list[Permission], is_readonly_route: bool
 ) -> tuple[User, int | None]:
