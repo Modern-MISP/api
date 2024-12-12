@@ -7,6 +7,9 @@ from mmisp.api.auth import Auth, AuthStrategy, authorize
 from mmisp.api_schemas.roles import (
     GetRolesResponse,
     RoleAttributeResponse,
+    AddRoleResponse,
+    DeleteRoleResponse,
+    EditRoleResponse
 )
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.role import Role
@@ -27,7 +30,7 @@ async def get_all_roles(
     """
     Get all roles and their details.
 
-    Input:
+    Input: 
 
     - Authentification details of the logged in user.
 
@@ -56,7 +59,7 @@ async def get_role_info(
 
     - The current database
 
-    - The role Id
+    - The role ID
 
     Output:
 
@@ -104,8 +107,7 @@ async def delete_role(
     db: Annotated[Session, Depends(get_db)],
     role_id: Annotated[int, Path(alias="roleId")],
 ) -> DeleteRoleResponse:
-    """Delete a role specified by its role Id. 
-    # FIXME Permissions missing
+    """Delete a role specified by its role ID. 
 
     Input:
 
@@ -113,7 +115,7 @@ async def delete_role(
 
     - the current database
 
-    - the role Id
+    - the role ID
 
     Output:
 
@@ -135,7 +137,7 @@ async def update_event(
     role_id: Annotated[str, Path(alias="roleId")],
     body: EditRoleBody,
 ) -> EditRoleResponse:
-    """Update an existing event either by its event id or via its UUID. 
+    """Update an existing event either by its event ID or via its UUID. 
 
     Input:
 
@@ -143,7 +145,7 @@ async def update_event(
 
     - the current database
 
-    - the id of the role
+    - the ID of the role
 
     - the request body
 

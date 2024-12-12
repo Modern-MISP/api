@@ -57,6 +57,7 @@ class Auth:
     role_id: int | None = None
     auth_key_id: int | None = None
     is_worker: bool | None = False
+    auth_permissions: list[Permission] | None
 
 
 async def _get_user(
