@@ -79,7 +79,7 @@ async def rest_search_attributes(
 )
 @alog
 async def add_attribute(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.ADD]))],
     db: Annotated[Session, Depends(get_db)],
     event_id: Annotated[str, Path(alias="eventId")],
     body: AddAttributeBody,
@@ -92,7 +92,7 @@ async def add_attribute(
 
     - the current database
 
-    - the id or UUID of the event
+    - the id of the event
 
     - the body for adding an attribute
 
@@ -137,7 +137,7 @@ async def get_attribute_details(
     db: Annotated[Session, Depends(get_db)],
     attribute_id: Annotated[int, Path(alias="attributeId")],
 ) -> GetAttributeResponse:
-    """Retrieve details of a specific attribute either by its ID or UUID.
+    """Retrieve details of a specific attribute by its ID.
 
     Input:
 
@@ -145,7 +145,7 @@ async def get_attribute_details(
 
     - the current database
 
-    - the id or UUID of the attribute
+    - the id of the attribute
 
     Output:
 
@@ -167,7 +167,7 @@ async def update_attribute(
     attribute_id: Annotated[str, Path(alias="attributeId")],
     body: EditAttributeBody,
 ) -> EditAttributeResponse:
-    """Update an existing attribute either by its ID or UUID.
+    """Update an existing attribute by its ID.
 
     Input:
 
@@ -175,7 +175,7 @@ async def update_attribute(
 
     - the current database
 
-    - the id or UUID of the attribute
+    - the id of the attribute
 
     - the body for editing the attribute
 
@@ -198,7 +198,7 @@ async def delete_attribute(
     db: Annotated[Session, Depends(get_db)],
     attribute_id: Annotated[str, Path(alias="attributeId")],
 ) -> DeleteAttributeResponse:
-    """Delete an attribute either by its ID or UUID.
+    """Delete an attribute by its ID.
 
     Input:
 
@@ -206,7 +206,7 @@ async def delete_attribute(
 
     - the current database
 
-    - the id or UUID of the attribute
+    - the id of the attribute
 
     Output:
 
@@ -259,7 +259,7 @@ async def delete_selected_attributes(
 
     - the current database
 
-    - the id or UUID of the event
+    - the id of the event
 
     - the body for deleting the selected attributes
 
@@ -338,7 +338,7 @@ async def restore_attribute(
     db: Annotated[Session, Depends(get_db)],
     attribute_id: Annotated[str, Path(alias="attributeId")],
 ) -> GetAttributeResponse:
-    """Restore an attribute either by its ID or UUID.
+    """Restore an attribute by its ID.
 
     Input:
 
@@ -346,7 +346,7 @@ async def restore_attribute(
 
     - the current database
 
-    - the id or UUID of the attribute
+    - the id of the attribute
 
     Output:
 
@@ -377,7 +377,7 @@ async def add_tag_to_attribute(
 
     - the current database
 
-    - the id or UUID of the attribute
+    - the id of the attribute
 
     - the id of the tag
 
@@ -411,7 +411,7 @@ async def remove_tag_from_attribute(
 
     - the current database
 
-    - the id or UUID of the attribute
+    - the id of the attribute
 
     - the id of the tag
 
