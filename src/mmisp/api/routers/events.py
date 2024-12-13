@@ -79,7 +79,7 @@ router = APIRouter(tags=["events"])
 )
 @alog
 async def add_event(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.ADD]))],
     db: Annotated[Session, Depends(get_db)],
     body: AddEventBody,
 ) -> AddEditGetEventResponse:
@@ -341,7 +341,7 @@ async def unpublish_event(
 )
 @alog
 async def add_tag_to_event(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.TAGGER]))],
     db: Annotated[Session, Depends(get_db)],
     event_id: Annotated[str, Path(alias="eventId")],
     tag_id: Annotated[str, Path(alias="tagId")],
@@ -376,7 +376,7 @@ async def add_tag_to_event(
 )
 @alog
 async def remove_tag_from_event(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.TAGGER]))],
     db: Annotated[Session, Depends(get_db)],
     event_id: Annotated[str, Path(alias="eventId")],
     tag_id: Annotated[str, Path(alias="tagId")],
