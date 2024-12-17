@@ -1,5 +1,6 @@
 from collections.abc import Sequence
 from typing import Annotated, cast
+import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Request, status
 from sqlalchemy import func, select
@@ -81,7 +82,7 @@ async def rest_search_attributes(
 async def add_attribute(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.ADD]))],
     db: Annotated[Session, Depends(get_db)],
-    event_id: Annotated[str, Path(alias="eventId")],
+    event_id: Annotated[int | uuid.UUID, Path(alias="eventId")],
     body: AddAttributeBody,
 ) -> AddAttributeResponse:
     """Add a new attribute with the given details.
@@ -92,7 +93,7 @@ async def add_attribute(
 
     - the current database
 
-    - the id or UUID of the event
+    - the ID or UUID of the event
 
     - the body for adding an attribute
 
@@ -135,7 +136,7 @@ async def get_attributes_describe_types(
 async def get_attribute_details(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    attribute_id: Annotated[int, Path(alias="attributeId")],
+    attribute_id: Annotated[int | uuid.UUID, Path(alias="attributeId")],
 ) -> GetAttributeResponse:
     """Retrieve details of a specific attribute by either by its ID or UUID.
 
@@ -145,7 +146,7 @@ async def get_attribute_details(
 
     - the current database
 
-    - the id or UUID of the attribute
+    - the ID or UUID of the attribute
 
     Output:
 
@@ -164,7 +165,7 @@ async def get_attribute_details(
 async def update_attribute(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
-    attribute_id: Annotated[str, Path(alias="attributeId")],
+    attribute_id: Annotated[int | uuid.UUID, Path(alias="attributeId")],
     body: EditAttributeBody,
 ) -> EditAttributeResponse:
     """Update an existing attribute by its ID.
@@ -175,7 +176,7 @@ async def update_attribute(
 
     - the current database
 
-    - the id or UUID of the attribute
+    - the ID or UUID of the attribute
 
     - the body for editing the attribute
 
@@ -196,7 +197,7 @@ async def update_attribute(
 async def delete_attribute(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
-    attribute_id: Annotated[str, Path(alias="attributeId")],
+    attribute_id: Annotated[int | uuid.UUID, Path(alias="attributeId")],
 ) -> DeleteAttributeResponse:
     """Delete an attribute by either by its ID or UUID.
 
@@ -206,7 +207,7 @@ async def delete_attribute(
 
     - the current database
 
-    - the id or UUID of the attribute
+    - the ID or UUID of the attribute
 
     Output:
 
@@ -247,7 +248,7 @@ async def get_attributes(
 async def delete_selected_attributes(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
-    event_id: Annotated[str, Path(alias="eventId")],
+    event_id: Annotated[int | uuid.UUID, Path(alias="eventId")],
     body: DeleteSelectedAttributeBody,
     request: Request,
 ) -> DeleteSelectedAttributeResponse:
@@ -259,7 +260,7 @@ async def delete_selected_attributes(
 
     - the current database
 
-    - the id or UUID of the event
+    - the ID or UUID of the event
 
     - the body for deleting the selected attributes
 
@@ -336,7 +337,7 @@ async def get_attributes_category_statistics(
 async def restore_attribute(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
-    attribute_id: Annotated[str, Path(alias="attributeId")],
+    attribute_id: Annotated[int | uuid.UUID, Path(alias="attributeId")],
 ) -> GetAttributeResponse:
     """Restore an attribute either by its ID or UUID.
 
@@ -346,7 +347,7 @@ async def restore_attribute(
 
     - the current database
 
-    - the id or UUID of the attribute
+    - the ID or UUID of the attribute
 
     Output:
 
@@ -365,11 +366,11 @@ async def restore_attribute(
 async def add_tag_to_attribute(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.TAGGER]))],
     db: Annotated[Session, Depends(get_db)],
-    attribute_id: Annotated[str, Path(alias="attributeId")],
+    attribute_id: Annotated[int | uuid.UUID, Path(alias="attributeId")],
     tag_id: Annotated[str, Path(alias="tagId")],
     local: str,
 ) -> AddRemoveTagAttributeResponse:
-    """Add a tag to an attribute by there ids.
+    """Add a tag to an attribute by there IDs.
 
     Input:
 
@@ -377,9 +378,9 @@ async def add_tag_to_attribute(
 
     - the current database
 
-    - the id or UUID of the attribute
+    - the ID or UUID of the attribute
 
-    - the id of the tag
+    - the ID of the tag
 
     - local
 
@@ -400,10 +401,10 @@ async def add_tag_to_attribute(
 async def remove_tag_from_attribute(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.TAGGER]))],
     db: Annotated[Session, Depends(get_db)],
-    attribute_id: Annotated[str, Path(alias="attributeId")],
+    attribute_id: Annotated[int | uuid.UUID, Path(alias="attributeId")],
     tag_id: Annotated[str, Path(alias="tagId")],
 ) -> AddRemoveTagAttributeResponse:
-    """Remove a tag from an attribute by there ids.
+    """Remove a tag from an attribute by there IDs.
 
     Input:
 
@@ -411,9 +412,9 @@ async def remove_tag_from_attribute(
 
     - the current database
 
-    - the id or UUID of the attribute
+    - the ID or UUID of the attribute
     
-    - the id of the tag
+    - the ID of the tag
 
     Output:
 

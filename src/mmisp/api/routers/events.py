@@ -5,6 +5,7 @@ from collections.abc import Sequence
 from datetime import date
 from time import gmtime
 from typing import Annotated
+import uuid
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Path
@@ -109,7 +110,7 @@ async def add_event(
 async def get_event_details(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    event_id: Annotated[int, Path(alias="eventId")],
+    event_id: Annotated[int | uuid.UUID, Path(alias="eventId")],
 ) -> AddEditGetEventResponse:
     """Retrieve details of a specific event either by its event ID or via its UUID. 
 
@@ -138,7 +139,7 @@ async def get_event_details(
 async def update_event(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
-    event_id: Annotated[str, Path(alias="eventId")],
+    event_id: Annotated[int | uuid.UUID, Path(alias="eventId")],
     body: EditEventBody,
 ) -> AddEditGetEventResponse:
     """Update an existing event either by its event ID or via its UUID. 
@@ -170,7 +171,7 @@ async def update_event(
 async def delete_event(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
-    event_id: Annotated[int, Path(alias="eventId")],
+    event_id: Annotated[int | uuid.UUID, Path(alias="eventId")],
 ) -> DeleteEventResponse:
     """Delete an event either by its event ID or via its UUID. 
 
@@ -280,7 +281,7 @@ async def index_events(
 async def publish_event(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.PUBLISH]))],
     db: Annotated[Session, Depends(get_db)],
-    event_id: Annotated[str, Path(alias="eventId")],
+    event_id: Annotated[int | uuid.UUID, Path(alias="eventId")],
     request: Request,
 ) -> PublishEventResponse:
     """Publish an event either by its event ID or via its UUID. .
@@ -312,7 +313,7 @@ async def publish_event(
 async def unpublish_event(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
-    event_id: Annotated[str, Path(alias="eventId")],
+    event_id: Annotated[int | uuid.UUID, Path(alias="eventId")],
     request: Request,
 ) -> UnpublishEventResponse:
     """Unpublish an event  either by its event ID or via its UUID. 
@@ -343,7 +344,7 @@ async def unpublish_event(
 async def add_tag_to_event(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.TAGGER]))],
     db: Annotated[Session, Depends(get_db)],
-    event_id: Annotated[str, Path(alias="eventId")],
+    event_id: Annotated[int | uuid.UUID, Path(alias="eventId")],
     tag_id: Annotated[str, Path(alias="tagId")],
     local: str,
 ) -> AddRemoveTagEventsResponse:
@@ -378,7 +379,7 @@ async def add_tag_to_event(
 async def remove_tag_from_event(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.TAGGER]))],
     db: Annotated[Session, Depends(get_db)],
-    event_id: Annotated[str, Path(alias="eventId")],
+    event_id: Annotated[int | uuid.UUID, Path(alias="eventId")],
     tag_id: Annotated[str, Path(alias="tagId")],
 ) -> AddRemoveTagEventsResponse:
     """Remove a tag to from an event by their IDs.
@@ -409,7 +410,7 @@ async def remove_tag_from_event(
 @alog
 async def start_freeTextImport(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
-    event_id: Annotated[str, Path(alias="eventID")],
+    event_id: Annotated[int  | uuid.UUID, Path(alias="eventID")],
     body: AddAttributeViaFreeTextImportEventBody,
 ) -> FreeTextProcessID:
     """Starts the freetext import process for an event by its ID or UUID, by submitting the freetext to the worker.

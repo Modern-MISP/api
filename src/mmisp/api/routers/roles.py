@@ -69,7 +69,7 @@ async def get_role_info(
 
 
 @router.post(
-    "/roles",
+    "/admin/roles/add",
     status_code=status.HTTP_200_OK,
     response_model=AddRoleResponse,
     summary="Add new role",
@@ -97,7 +97,7 @@ async def add_role(
 
 
 @router.delete(
-    "/roles/{roleId}",
+    "/admin/roles/delete/{roleId}",
     status_code=status.HTTP_200_OK,
     response_model=DeleteRoleResponse,
     summary="Delete a role",
@@ -126,12 +126,12 @@ async def delete_role(
 
 
 @router.put(
-    "/roles/edit/{roleId}",
+    "/admin/roles/edit/{roleId}",
     status_code=status.HTTP_200_OK,
     response_model=EditRoleResponse,
     summary="Edit a role",
 )
-async def update_event(
+async def update_role(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
     role_id: Annotated[str, Path(alias="roleId")],
