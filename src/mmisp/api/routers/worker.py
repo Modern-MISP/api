@@ -27,6 +27,9 @@ async def pause_workers(
         auth (Auth): The user's authentication status.
         id (str): The id of the worker.
 
+    Returns:
+        None
+
     Raises:
         HTTPException: If an error occurs while pausing the workers.
     """
@@ -39,8 +42,8 @@ async def pause_workers(
     response.headers["x-worker-name-header"] = api_response.headers[
         "x-worker-name-header"
     ]  # possible to use an attribute but i am lazy feel free to change
-    if api_response.status_code == 404:
-        raise HTTPException(status_code=404, detail="Name of worker is not valid")
+    if api_response.status_code == 400:
+        raise HTTPException(status_code=400, detail="Name of worker is not valid")
     elif api_response.status_code != 200:
         raise HTTPException(status_code=500, detail="Unexpected error occurred")
 
@@ -56,6 +59,9 @@ async def unpause_workers(
         auth (Auth): The user's authentication status.
         id (str): The id of the worker.
 
+    Returns:
+        None
+
     Raises:
         HTTPException: If an error occurs while unpausing the workers.
     """
@@ -69,8 +75,8 @@ async def unpause_workers(
     response.headers["x-worker-name-header"] = api_response.headers["x-worker-name-header"]
     # possible to use an attribute but i am lazy feel free to change
     # if so dont forget to delete the header in main.py
-    if api_response.status_code == 404:
-        raise HTTPException(status_code=404, detail="Name of worker is not valid")
+    if api_response.status_code == 400:
+        raise HTTPException(status_code=400, detail="Name of worker is not valid")
     elif api_response.status_code != 200:
         raise HTTPException(status_code=500, detail="Unexpected error occurred")
 
@@ -89,6 +95,9 @@ async def add_queue(
         id (str): The id of the worker.
         body (RemoveAddQueueToWorker): The request body containing the queue name to add.
         auth (Auth): The user's authentication status.
+
+    Returns:
+        None
 
     Raises:
         HTTPException: If the worker or queue cannot be found or if an error occurs during queue addition.
@@ -124,6 +133,8 @@ async def remove_queue(
         body (RemoveAddQueueToWorker): The request body containing the queue name to remove.
         auth (Auth): The user's authentication status.
 
+    Returns:
+        None
 
     Raises:
         HTTPException: If the worker or queue cannot be found or if an error occurs during queue removal.
