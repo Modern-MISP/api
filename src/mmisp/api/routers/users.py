@@ -361,12 +361,14 @@ async def _add_user(auth: Auth, db: Session, body: AddUserBody) -> AddUserRespon
 
     user_result = await db.execute(select(User).where(User.email == body.email))
     if user_result.scalar_one_or_none() is not None:
-        raise HTTPException(status.HTTP_406_NOT_ACCEPTABLE, detail="User already exists with this email")
+        raise HTTPException(status.HTTP_406_NOT_ACCEPTABLE,
+                            detail="User already exists with this email")
 
     org = await db.get(Organisation, body.org_id)
 
     if not org:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Organisation not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND,
+                            detail="Organisation not found")
 
     role = await db.get(Role, body.role_id)
 
@@ -475,7 +477,8 @@ async def _get_all_users(
 
 @alog
 async def get_user_names_by_id(db: Session) -> dict:
-    user_name_query = select(UserSetting).where(UserSetting.setting == "user_name")
+    user_name_query = select(UserSetting).where(
+        UserSetting.setting == "user_name")
     user_name_result = await db.execute(user_name_query)
     user_name = user_name_result.fetchall()
 
@@ -526,7 +529,8 @@ async def _get_user(auth: Auth, db: Session, userID: str) -> GetUsersElement:
     if user is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="User not found")
 
-    user_settings_query = select(UserSetting).where(UserSetting.user_id == userID)
+    user_settings_query = select(UserSetting).where(
+        UserSetting.user_id == userID)
     user_settings_result = await db.execute(user_settings_query)
     user_settings = user_settings_result.scalars().all()
 
@@ -539,7 +543,8 @@ async def _get_user(auth: Auth, db: Session, userID: str) -> GetUsersElement:
         user_settings_dict["user_name"] = {"name": user.email}
 
     if user_settings is None or user_settings_dict.get("user_name") is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="User name not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND,
+                            detail="User name not found")
 
     role_query = select(Role).where(Role.id == user.role_id)
     role_result = await db.execute(role_query)
@@ -548,12 +553,14 @@ async def _get_user(auth: Auth, db: Session, userID: str) -> GetUsersElement:
     if role is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Role not found")
 
-    organisation_query = select(Organisation).where(Organisation.id == user.org_id)
+    organisation_query = select(Organisation).where(
+        Organisation.id == user.org_id)
     organisation_result = await db.execute(organisation_query)
     organisation = organisation_result.scalar_one_or_none()
 
     if organisation is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Organisation not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND,
+                            detail="Organisation not found")
 
     return GetUsersElement(
         User=GetUsersUser(
@@ -591,7 +598,8 @@ async def _get_user(auth: Auth, db: Session, userID: str) -> GetUsersElement:
             sub=user.sub,
             name=user_settings_dict["user_name"]["name"],
             contact=user.contactalert,
-            notification=(user.notification_daily or user.notification_weekly or user.notification_monthly),
+            notification=(
+                user.notification_daily or user.notification_weekly or user.notification_monthly),
         ),
         Role=RoleUsersResponse(**role.asdict()),
         Organisation=OrganisationUsersResponse(**organisation.asdict()),
@@ -642,13 +650,15 @@ async def _update_user(auth: Auth, db: Session, userID: str, body: UserAttribute
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="User not found")
 
     name_result = await db.execute(
-        select(UserSetting).where(UserSetting.setting == "user_name" and UserSetting.user_id == user.id)
+        select(UserSetting).where(UserSetting.setting ==
+                                  "user_name" and UserSetting.user_id == user.id)
     )
 
     name = name_result.scalars().first()
 
     if not name:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="User name not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND,
+                            detail="User name not found")
 
     settings = body.dict()
 
@@ -750,6 +760,7 @@ async def _update_user(auth: Auth, db: Session, userID: str, body: UserAttribute
         nids_sid=user.nids_sid,
     )
 
-    user_return = UserWithName(user=user_schema, name=json.loads(name.value)["name"])
+    user_return = UserWithName(
+        user=user_schema, name=json.loads(name.value)["name"])
 
     return user_return

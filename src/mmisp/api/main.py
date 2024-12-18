@@ -64,7 +64,7 @@ def init_app(*, init_db: bool = False) -> FastAPI:
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
-        expose_headers=["x-result-count"],
+        expose_headers=["x-result-count", "x-worker-name-header", "x-queue-name-header"],
     )
     app.add_middleware(DryRunMiddleware)
     app.add_middleware(LogMiddleware)

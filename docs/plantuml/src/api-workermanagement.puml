@@ -1,0 +1,6 @@
+@startuml
+frontend -> api: GET /worker/all
+api -> workerapi: GET /worker/list_workers
+workerapi -> api : 200 <list of workers>
+api -> frontend : 200 <list of workers>
+@enduml
