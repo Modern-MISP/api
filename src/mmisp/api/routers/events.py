@@ -87,7 +87,6 @@ async def add_event(
     """Add a new event with the given details.
 
     args:
-
         the user's authentification status
         the current database
         the request body
