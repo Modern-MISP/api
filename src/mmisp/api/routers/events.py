@@ -86,17 +86,14 @@ async def add_event(
 ) -> AddEditGetEventResponse:
     """Add a new event with the given details.
 
-    Input:
+    args:
 
-    - the user's authentification status
+        the user's authentification status
+        the current database
+        the request body
 
-    - the current database
-
-    - the request body
-
-    Output:
-
-    - the new event
+    returns:
+        the new event
     """
     return await _add_event(auth, db, body)
 
