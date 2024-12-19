@@ -14,6 +14,8 @@ from mmisp.api_schemas.roles import (
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.role import Role
 from mmisp.lib.logger import alog
+from fastapi import Path
+from mmisp.lib.permissions import Permission
 
 router = APIRouter(tags=["roles"])
 
@@ -71,7 +73,6 @@ async def get_role_info(
 @router.post(
     "/admin/roles/add",
     status_code=status.HTTP_200_OK,
-    response_model=AddRoleResponse,
     summary="Add new role",
 )
 async def add_role(
@@ -99,7 +100,6 @@ async def add_role(
 @router.delete(
     "/admin/roles/delete/{roleId}",
     status_code=status.HTTP_200_OK,
-    response_model=DeleteRoleResponse,
     summary="Delete a role",
 )
 async def delete_role(
@@ -127,7 +127,6 @@ async def delete_role(
 @router.put(
     "/admin/roles/edit/{roleId}",
     status_code=status.HTTP_200_OK,
-    response_model=EditRoleResponse,
     summary="Edit a role",
 )
 async def update_role(
@@ -158,7 +157,6 @@ async def update_role(
 @router.post(
     "/roles/reinstate",
     status_code=status.HTTP_200_OK,
-    response_model=ReinstateRoleResponse,
     summary="Reinstate a deleted standard role",
 )
 async def reinstate_role(
@@ -193,14 +191,13 @@ async def reinstate_role(
 @router.post(
     "/roles/restSearch",
     status_code=status.HTTP_200_OK,
-    response_model=List[FilterRoleResponse],
     summary="Search roles with filters",
 )
 async def filter_roles(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     body: FilterRoleBody,
-) -> List[FilterRoleResponse]:
+) -> list[FilterRoleResponse]:
     """Search roles based on filters.
 
     Input:
@@ -226,7 +223,6 @@ async def filter_roles(
 @router.put(
     "/admin/users/edit/{user_id}",
     status_code=status.HTTP_200_OK,
-    response_model=EditUserRoleResponse,
     summary="Assign or reassign a user to a specific role",
 )
 async def edit_user_role(
@@ -261,7 +257,6 @@ async def edit_user_role(
 @router.put(
     "/admin/roles/setDefault",
     status_code=status.HTTP_200_OK,
-    response_model=DefaultRoleResponse,
     summary="Change the default role",
 )
 async def set_default_role(

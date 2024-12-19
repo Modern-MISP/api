@@ -75,7 +75,6 @@ router = APIRouter(tags=["events"])
 @router.post(
     "/events",
     status_code=status.HTTP_200_OK,
-    response_model=AddEditGetEventResponse,
     summary="Add new event",
 )
 @alog
@@ -87,9 +86,9 @@ async def add_event(
     """Add a new event with the given details.
 
     args:
-        the user's authentification status
-        the current database
-        the request body
+        auth: the user's authentification status
+        db: the current database
+        body: the request body
 
     returns:
         the new event
