@@ -4,12 +4,6 @@ from enum import StrEnum
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Path
-from sqlalchemy import select
-from sqlalchemy.orm import selectinload
-from starlette import status
-from starlette.requests import Request
-
-from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
 from mmisp.api_schemas.events import (
     AddEditGetEventGalaxyClusterRelation,
     AddEditGetEventGalaxyClusterRelationTag,
@@ -30,6 +24,8 @@ from mmisp.api_schemas.galaxy_clusters import (
     GetGalaxyClusterResponse,
     IndexGalaxyCluster,
     PutGalaxyClusterRequest,
+    GalaxyClusterSearchResponse,
+    GalaxyClusterSearchBody,
 )
 from mmisp.api_schemas.galaxy_common import ShortCommonGalaxy, ShortCommonGalaxyCluster
 from mmisp.api_schemas.organisations import GetOrganisationResponse
@@ -47,6 +43,13 @@ from mmisp.lib.galaxy_clusters import update_galaxy_cluster_elements
 from mmisp.lib.logger import alog, log
 from mmisp.lib.tags import get_or_create_instance_tag
 from mmisp.util.uuid import uuid
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
+from sqlalchemy.sql.expression import Select
+from starlette import status
+from starlette.requests import Request
+
+from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
 
 router = APIRouter(tags=["galaxy_clusters"])
 
@@ -313,8 +316,91 @@ async def index_galaxy_cluster_by_galaxy_id(
 
     return response
 
+@router.post(
+    "/galaxy_clusters/restsearch",
+    status_code=status.HTTP_200_OK,
+    summary="Search galaxy_clusters",
+)
+async def restsearch(
+        auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+        db: Annotated[Session, Depends(get_db)],
+        body: GalaxyClusterSearchBody,
+) -> GalaxyClusterSearchResponse:
+    # TODO not right implemented
+    """Search for galaxy_clusters based on various filters.
+
+    Input:
+
+    - the user's authentification status
+
+    - the current database
+
+    - the request body
+
+    Output:
+
+    - the galaxy_clusters found by search
+    """
+    return await _restsearch(db, body)
+
 
 # --- endpoint logic ---
+async def _restsearch(db: Session, body: GalaxyClusterSearchBody) -> GalaxyClusterSearchResponse:
+    galaxy_clusters = await _get_galaxy_clusters_with_filters(db=db, filters=body)
+    return GalaxyClusterSearchResponse(response=galaxy_clusters)
+
+
+async def _get_galaxy_clusters_with_filters(db: Session, filters: GalaxyClusterSearchBody) -> Sequence[GalaxyCluster]:
+    search_body: GalaxyClusterSearchBody = filters
+    query: Select = select(GalaxyCluster)
+
+    if search_body.id:
+        query = query.filter(GalaxyCluster.id == search_body.id)
+
+    if search_body.uuid:
+        query = query.filter(GalaxyCluster.uuid == search_body.uuid)
+
+    if search_body.galaxy_id:
+        query = query.filter(GalaxyCluster.galaxy_id == search_body.galaxy_id)
+
+    # todo galaxy_uuid unknown what to do, not in GalaxyCluster
+
+    if search_body.published:
+        query = query.filter(GalaxyCluster.published == search_body.published)
+
+    if search_body.value:
+        query = query.filter(GalaxyCluster.value == search_body.value)
+
+    if search_body.extends_uuid:
+        query = query.filter(GalaxyCluster.extends_uuid == search_body.extends_uuid)
+
+    if search_body.extends_version:
+        query = query.filter(GalaxyCluster.extends_version == search_body.extends_version)
+
+    if search_body.version:
+        query = query.filter(GalaxyCluster.version == search_body.version)
+
+    if search_body.distribution:
+        query = query.filter(GalaxyCluster.distribution == search_body.distribution)
+
+    if search_body.org_id:
+        query = query.filter(GalaxyCluster.org_id == search_body.org_id)
+
+    if search_body.orgc_id:
+        query = query.filter(GalaxyCluster.orgc_id == search_body.orgc_id)
+
+    if search_body.tag_name:
+        query = query.filter(GalaxyCluster.tag_name == search_body.tag_name)
+
+    # todo custom unknown what to do, not in GalaxyCluster
+
+    # todo minimal unknown what to do, not in GalaxyCluster
+
+    if search_body.limit:
+        query = query.limit(int(search_body.limit))
+
+    result = await db.execute(query)
+    return result.scalars().all()
 
 
 @alog
