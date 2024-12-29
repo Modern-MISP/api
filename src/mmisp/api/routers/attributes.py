@@ -437,7 +437,7 @@ async def remove_tag_from_attribute(
 async def add_attribute_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
-    event_id: Annotated[str, Path(alias="eventId")],
+    event_id: Annotated[int, Path(alias="eventId")],
     body: AddAttributeBody,
 ) -> AddAttributeResponse:
     """Deprecated. Add a new attribute with the given details using the old route.
@@ -500,7 +500,7 @@ async def get_attribute_details_depr(
 async def update_attribute_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
-    attribute_id: Annotated[str, Path(alias="attributeId")],
+    attribute_id: Annotated[int, Path(alias="attributeId")],
     body: EditAttributeBody,
 ) -> EditAttributeResponse:
     """Deprecated. Update an existing attribute by its ID using the old route.
@@ -533,7 +533,7 @@ async def update_attribute_depr(
 async def delete_attribute_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
-    attribute_id: Annotated[str, Path(alias="attributeId")],
+    attribute_id: Annotated[int, Path(alias="attributeId")],
 ) -> DeleteAttributeResponse:
     """Deprecated. Delete an attribute by its ID using the old route.
 
@@ -850,7 +850,7 @@ def _prepare_attribute_response_get_all(attribute: Attribute) -> GetAllAttribute
 
 @alog
 async def _prepare_get_attribute_details_response(
-    db: Session, attribute_id: int, attribute: Attribute
+    db: Session, attribute_id: int | uuid.UUID, attribute: Attribute
 ) -> GetAttributeAttributes:
     attribute_dict = attribute.asdict().copy()
     if "event_uuid" not in attribute_dict.keys():
@@ -881,7 +881,7 @@ async def _prepare_get_attribute_details_response(
 
 @alog
 async def _prepare_edit_attribute_response(
-    db: Session, attribute_id: str, attribute: Attribute
+    db: Session, attribute_id: int | uuid.UUID, attribute: Attribute
 ) -> EditAttributeAttributes:
     attribute_dict = attribute.asdict().copy()
 
