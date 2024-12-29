@@ -522,7 +522,7 @@ async def get_event_details_depr(
 async def update_event_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
-    event_id: Annotated[str, Path(alias="eventId")],
+    event_id: Annotated[int, Path(alias="eventId")],
     body: EditEventBody,
 ) -> AddEditGetEventResponse:
     """Deprecated. Update an existing event by its ID.
@@ -676,9 +676,8 @@ async def _get_event_details(db: Session, event_id: int | uuid.UUID) -> AddEditG
 
     return AddEditGetEventResponse(Event=event_data)
 
-
 @alog
-async def _update_event(db: Session, event_id: str, body: EditEventBody) -> AddEditGetEventResponse:
+async def _update_event(db: Session, event_id: int | uuid.UUID, body: EditEventBody) -> AddEditGetEventResponse:
     result = await db.execute(
         select(Event)
         .filter(Event.id == event_id)
@@ -718,9 +717,8 @@ async def _update_event(db: Session, event_id: str, body: EditEventBody) -> AddE
 
     return AddEditGetEventResponse(Event=event_data)
 
-
 @alog
-async def _delete_event(db: Session, event_id: int) -> DeleteEventResponse:
+async def _delete_event(db: Session, event_id: int | uuid.UUID) -> DeleteEventResponse:
     event = await db.get(Event, event_id)
 
     if event is None:
@@ -866,9 +864,8 @@ async def _index_events(db: Session, body: IndexEventsBody) -> list[GetAllEvents
 
     return response_list
 
-
 @alog
-async def _publish_event(db: Session, event_id: str, request: Request) -> PublishEventResponse:
+async def _publish_event(db: Session, event_id: int | uuid.UUID, request: Request) -> PublishEventResponse:
     event = await db.get(Event, event_id)
 
     if not event:
@@ -882,9 +879,8 @@ async def _publish_event(db: Session, event_id: str, request: Request) -> Publis
         saved=True, success=True, name="Job queued", message="Job queued", url=str(request.url.path), id=str(event_id)
     )
 
-
 @alog
-async def _unpublish_event(db: Session, event_id: str, request: Request) -> UnpublishEventResponse:
+async def _unpublish_event(db: Session, event_id: int | uuid.UUID, request: Request) -> UnpublishEventResponse:
     event = await db.get(Event, event_id)
 
     if not event:
@@ -905,9 +901,8 @@ async def _unpublish_event(db: Session, event_id: str, request: Request) -> Unpu
         id=str(event_id),
     )
 
-
 @alog
-async def _add_tag_to_event(db: Session, event_id: str, tag_id: str, local: str) -> AddRemoveTagEventsResponse:
+async def _add_tag_to_event(db: Session, event_id: int | uuid.UUID, tag_id: str, local: str) -> AddRemoveTagEventsResponse:
     event: Event | None = await db.get(Event, event_id)
 
     if not event:
@@ -934,9 +929,8 @@ async def _add_tag_to_event(db: Session, event_id: str, tag_id: str, local: str)
 
     return AddRemoveTagEventsResponse(saved=True, success="Tag added", check_publish=True)
 
-
 @alog
-async def _remove_tag_from_event(db: Session, event_id: str, tag_id: str) -> AddRemoveTagEventsResponse:
+async def _remove_tag_from_event(db: Session, event_id: int | uuid.UUID, tag_id: str) -> AddRemoveTagEventsResponse:
     event: Event | None = await db.get(Event, event_id)
 
     if not event:

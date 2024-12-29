@@ -554,9 +554,8 @@ async def delete_attribute_depr(
 
 # --- endpoint logic ---
 
-
 @alog
-async def _add_attribute(db: Session, event_id: str, body: AddAttributeBody) -> AddAttributeResponse:
+async def _add_attribute(db: Session, event_id: int | uuid.UUID, body: AddAttributeBody) -> AddAttributeResponse:
     event: Event | None = await db.get(Event, event_id)
 
     if not event:
@@ -598,9 +597,8 @@ async def _add_attribute(db: Session, event_id: str, body: AddAttributeBody) -> 
 
     return AddAttributeResponse(Attribute=attribute_data)
 
-
 @alog
-async def _get_attribute_details(db: Session, attribute_id: int) -> GetAttributeResponse:
+async def _get_attribute_details(db: Session, attribute_id: int | uuid.UUID) -> GetAttributeResponse:
     attribute: Attribute | None = await db.get(Attribute, attribute_id)
 
     if not attribute:
@@ -610,9 +608,8 @@ async def _get_attribute_details(db: Session, attribute_id: int) -> GetAttribute
 
     return GetAttributeResponse(Attribute=attribute_data)
 
-
 @alog
-async def _update_attribute(db: Session, attribute_id: str, body: EditAttributeBody) -> EditAttributeResponse:
+async def _update_attribute(db: Session, attribute_id: int | uuid.UUID, body: EditAttributeBody) -> EditAttributeResponse:
     attribute: Attribute | None = await db.get(Attribute, attribute_id)
 
     if not attribute:
@@ -636,9 +633,8 @@ async def _update_attribute(db: Session, attribute_id: str, body: EditAttributeB
 
     return EditAttributeResponse(Attribute=attribute_data)
 
-
 @alog
-async def _delete_attribute(db: Session, attribute_id: str) -> DeleteAttributeResponse:
+async def _delete_attribute(db: Session, attribute_id: int | uuid.UUID) -> DeleteAttributeResponse:
     attribute: Attribute | None = await db.get(Attribute, attribute_id)
 
     if not attribute:
@@ -665,7 +661,7 @@ async def _get_attributes(db: Session) -> list[GetAllAttributesResponse]:
 
 @alog
 async def _delete_selected_attributes(
-    db: Session, event_id: str, body: DeleteSelectedAttributeBody, request: Request
+    db: Session, event_id: int | uuid.UUID, body: DeleteSelectedAttributeBody, request: Request
 ) -> DeleteSelectedAttributeResponse:
     event: Event | None = await db.get(Event, event_id)
 
@@ -759,9 +755,8 @@ async def _rest_search_attributes(db: Session, body: SearchAttributesBody) -> Se
         response_list.append(attribute_dict)
     return SearchAttributesResponse.parse_obj({"response": {"Attribute": response_list}})
 
-
 @alog
-async def _restore_attribute(db: Session, attribute_id: str) -> GetAttributeResponse:
+async def _restore_attribute(db: Session, attribute_id: int | uuid.UUID) -> GetAttributeResponse:
     attribute: Attribute | None = await db.get(Attribute, attribute_id)
 
     if not attribute:
@@ -781,7 +776,7 @@ async def _restore_attribute(db: Session, attribute_id: str) -> GetAttributeResp
 
 @alog
 async def _add_tag_to_attribute(
-    db: Session, attribute_id: str, tag_id: str, local: str
+    db: Session, attribute_id: int | uuid.UUID, tag_id: str, local: str
 ) -> AddRemoveTagAttributeResponse:
     attribute: Attribute | None = await db.get(Attribute, attribute_id)
 
@@ -813,9 +808,8 @@ async def _add_tag_to_attribute(
 
     return AddRemoveTagAttributeResponse(saved=True, success="Tag added", check_publish=True)
 
-
 @alog
-async def _remove_tag_from_attribute(db: Session, attribute_id: str, tag_id: str) -> AddRemoveTagAttributeResponse:
+async def _remove_tag_from_attribute(db: Session, attribute_id: int | uuid.UUID, tag_id: str) -> AddRemoveTagAttributeResponse:
     result = await db.execute(
         select(AttributeTag)
         .filter(AttributeTag.attribute_id == int(attribute_id), AttributeTag.tag_id == int(tag_id))
