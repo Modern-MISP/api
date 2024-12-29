@@ -642,7 +642,7 @@ async def _add_event(auth: Auth, db: Session, body: AddEventBody) -> AddEditGetE
 
 
 @alog
-async def _get_event_details(db: Session, event_id: int) -> AddEditGetEventResponse:
+async def _get_event_details(db: Session, event_id: int | uuid.UUID) -> AddEditGetEventResponse:
     result = await db.execute(
         select(Event)
         .filter(Event.id == event_id)
