@@ -1,11 +1,12 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status, Path
 from sqlalchemy.future import select
 
 from mmisp.api.auth import Auth, AuthStrategy, authorize
 from mmisp.api_schemas.roles import (
     GetRolesResponse,
+    GetRoleResponse,
     RoleAttributeResponse,
     AddRoleResponse,
     DeleteRoleResponse,
@@ -32,11 +33,11 @@ async def get_all_roles(
     """
     Get all roles and their details.
 
-    Input: 
+    args:
 
     - Authentification details of the logged in user.
 
-    Output:
+    returns:
 
     - Information about all roles.
     """
@@ -55,7 +56,7 @@ async def get_role_info(
     """
     Gets the details of the specified role.
 
-    Input:
+    args:
 
     - Authentification details of the logged in user.
 
@@ -63,7 +64,7 @@ async def get_role_info(
 
     - The role ID
 
-    Output:
+    returns:
 
     - Information about the roles.
     """
@@ -82,7 +83,7 @@ async def add_role(
 ) -> AddRoleResponse:
     """Add a new role with the given details.
 
-    Input:
+    args:
 
     - the user's authentification status
 
@@ -90,7 +91,7 @@ async def add_role(
 
     - the request body containing the new role and its requested permissions
 
-    Output:
+    returns:
 
     - the new role
     """
@@ -109,7 +110,7 @@ async def delete_role(
 ) -> DeleteRoleResponse:
     """Delete a role specified by its role ID. 
 
-    Input:
+    args:
 
     - the user's authentification status
 
@@ -117,7 +118,7 @@ async def delete_role(
 
     - the role ID
 
-    Output:
+    returns:
 
     - the deleted role
     """
@@ -137,7 +138,7 @@ async def update_role(
 ) -> EditRoleResponse:
     """Update an existing event either by its event ID or via its UUID. 
 
-    Input:
+    args:
 
     - the user's authentification status
 
@@ -147,7 +148,7 @@ async def update_role(
 
     - the request body
 
-    Output:
+    returns:
 
     - the updated event
     """
@@ -167,18 +168,18 @@ async def reinstate_role(
 ) -> ReinstateRoleResponse:
     """Reinstate a deleted standard role.
 
-    Input:
+    args:
 
     - the user's authentication status
     - the current database
     - the role id
     - the requested body containing the name of the requested standard role
 
-    Output:
+    returns:
 
     - the updated role
 
-    Responses:
+    raises:
 
     - 200: Successful Response
     - 422: Validation Error
