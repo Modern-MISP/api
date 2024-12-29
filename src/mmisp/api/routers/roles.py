@@ -10,7 +10,15 @@ from mmisp.api_schemas.roles import (
     RoleAttributeResponse,
     AddRoleResponse,
     DeleteRoleResponse,
-    EditRoleResponse
+    EditRoleResponse,
+    AddRoleBody,
+    EditRoleBody,
+    ReinstateRoleBody,
+    FilterRoleBody,
+    EditUserRoleBody,
+    DefaultRoleBody
+    
+
 )
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.role import Role
