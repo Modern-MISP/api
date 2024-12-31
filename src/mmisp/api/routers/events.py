@@ -107,7 +107,7 @@ async def get_event_details(
     db: Annotated[Session, Depends(get_db)],
     event_id: Annotated[int | uuid.UUID, Path(alias="eventId")],
 ) -> AddEditGetEventResponse:
-    """Retrieve details of a specific event either by its event ID or via its UUID. 
+    """Retrieve details of a specific event either by its event ID or via its UUID.
 
     Input:
 
@@ -137,7 +137,7 @@ async def update_event(
     event_id: Annotated[int | uuid.UUID, Path(alias="eventId")],
     body: EditEventBody,
 ) -> AddEditGetEventResponse:
-    """Update an existing event either by its event ID or via its UUID. 
+    """Update an existing event either by its event ID or via its UUID.
 
     Input:
 
@@ -168,7 +168,7 @@ async def delete_event(
     db: Annotated[Session, Depends(get_db)],
     event_id: Annotated[int | uuid.UUID, Path(alias="eventId")],
 ) -> DeleteEventResponse:
-    """Delete an event either by its event ID or via its UUID. 
+    """Delete an event either by its event ID or via its UUID.
 
     Input:
 
@@ -311,7 +311,7 @@ async def unpublish_event(
     event_id: Annotated[int | uuid.UUID, Path(alias="eventId")],
     request: Request,
 ) -> UnpublishEventResponse:
-    """Unpublish an event  either by its event ID or via its UUID. 
+    """Unpublish an event  either by its event ID or via its UUID.
 
     Input:
 
@@ -405,7 +405,7 @@ async def remove_tag_from_event(
 @alog
 async def start_freeTextImport(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
-    event_id: Annotated[int  | uuid.UUID, Path(alias="eventID")],
+    event_id: Annotated[int | uuid.UUID, Path(alias="eventID")],
     body: AddAttributeViaFreeTextImportEventBody,
 ) -> FreeTextProcessID:
     """Starts the freetext import process for an event by its ID or UUID, by submitting the freetext to the worker.
@@ -902,7 +902,9 @@ async def _unpublish_event(db: Session, event_id: int | uuid.UUID, request: Requ
     )
 
 @alog
-async def _add_tag_to_event(db: Session, event_id: int | uuid.UUID, tag_id: str, local: str) -> AddRemoveTagEventsResponse:
+async def _add_tag_to_event(
+    db: Session, event_id: int | uuid.UUID, tag_id: str, local: str
+) -> AddRemoveTagEventsResponse:
     event: Event | None = await db.get(Event, event_id)
 
     if not event:

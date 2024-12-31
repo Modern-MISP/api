@@ -16,9 +16,7 @@ from mmisp.api_schemas.roles import (
     ReinstateRoleBody,
     FilterRoleBody,
     EditUserRoleBody,
-    DefaultRoleBody
-    
-
+    DefaultRoleBody,
 )
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.role import Role
@@ -116,7 +114,7 @@ async def delete_role(
     db: Annotated[Session, Depends(get_db)],
     role_id: Annotated[int, Path(alias="roleId")],
 ) -> DeleteRoleResponse:
-    """Delete a role specified by its role ID. 
+    """Delete a role specified by its role ID.
 
     args:
 
@@ -144,7 +142,7 @@ async def update_role(
     role_id: Annotated[str, Path(alias="roleId")],
     body: EditRoleBody,
 ) -> EditRoleResponse:
-    """Update an existing event either by its event ID or via its UUID. 
+    """Update an existing event either by its event ID or via its UUID.
 
     args:
 

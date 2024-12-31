@@ -413,7 +413,7 @@ async def remove_tag_from_attribute(
     - the current database
 
     - the ID or UUID of the attribute
-    
+
     - the ID of the tag
 
     Output:
@@ -609,7 +609,9 @@ async def _get_attribute_details(db: Session, attribute_id: int | uuid.UUID) -> 
     return GetAttributeResponse(Attribute=attribute_data)
 
 @alog
-async def _update_attribute(db: Session, attribute_id: int | uuid.UUID, body: EditAttributeBody) -> EditAttributeResponse:
+async def _update_attribute(
+    db: Session, attribute_id: int | uuid.UUID, body: EditAttributeBody
+) -> EditAttributeResponse:
     attribute: Attribute | None = await db.get(Attribute, attribute_id)
 
     if not attribute:
@@ -809,7 +811,9 @@ async def _add_tag_to_attribute(
     return AddRemoveTagAttributeResponse(saved=True, success="Tag added", check_publish=True)
 
 @alog
-async def _remove_tag_from_attribute(db: Session, attribute_id: int | uuid.UUID, tag_id: str) -> AddRemoveTagAttributeResponse:
+async def _remove_tag_from_attribute(
+    db: Session, attribute_id: int | uuid.UUID, tag_id: str
+) -> AddRemoveTagAttributeResponse:
     result = await db.execute(
         select(AttributeTag)
         .filter(AttributeTag.attribute_id == int(attribute_id), AttributeTag.tag_id == int(tag_id))

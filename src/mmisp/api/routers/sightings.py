@@ -5,6 +5,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Path, status
 from sqlalchemy import and_, select
 from sqlalchemy.sql.expression import Select
+import uuid
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
 from mmisp.api_schemas.responses.standard_status_response import StandardStatusResponse
@@ -68,17 +69,13 @@ async def add_sightings_at_index(
 ) -> SightingAttributesResponse:
     """Add a new sighting for a specific attribute.
 
-    Input:
+    args:
+        auth: Authentication
+        db: Database session
+        attribute_id: ID of the attribute
 
-    - auth: Authentication
-
-    - db: Database session
-
-    - attribute_id: ID of the attribute
-
-    Output:
-
-    - Details of new sightings
+    returns:
+        Details of new sightings
     """
     return await _add_sightings_at_index(db, attribute_id)
 
@@ -92,21 +89,17 @@ async def add_sightings_at_index(
 async def get_sightings_at_index(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    event_id: Annotated[int, Path(alias="eventId")],
+    event_id: Annotated[int | uuid.UUID, Path(alias="eventId")],
 ) -> list[SightingAttributesResponse]:
     """Retrieve all sightings associated with a specific event ID or UUID.
 
-    Input:
+    args:
+        auth: Authentication
+        db: Database session
+        event_id: ID or UUID of the event
 
-    - auth: Authentication details
-
-    - db: Database session
-
-    - event_id: ID or UUID of the event
-
-    Output:
-
-    - Details of the sightings at index
+    returns:
+        Details of the sightings at index
     """
     return await _get_sightings_at_index(db, event_id)
 
