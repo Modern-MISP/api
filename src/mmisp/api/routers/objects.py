@@ -43,7 +43,7 @@ async def add_object(
 ) -> ObjectResponse:
     """Add a new object to a specific event using a template.
 
-    Input:
+    args:
 
     - the user's authentification status
 
@@ -55,7 +55,7 @@ async def add_object(
 
     - the request body
 
-    Output:
+    returns:
 
     - the added object
     """
@@ -75,7 +75,7 @@ async def restsearch(
 ) -> ObjectSearchResponse:
     """Search for objects based on various filters.
 
-    Input:
+    args:
 
     - the user's authentification status
 
@@ -83,7 +83,7 @@ async def restsearch(
 
     - the request body
 
-    Output:
+    returns:
 
     - the objects found by search
     """
@@ -103,7 +103,7 @@ async def get_object_details(
 ) -> ObjectResponse:
     """View details of a specific object including its attributes and related event.
 
-    Input:
+    args:
 
     - the user's authentification status
 
@@ -111,7 +111,7 @@ async def get_object_details(
 
     - the object id
 
-    Output:
+    returns:
 
     - the details of the object
     """
@@ -133,7 +133,7 @@ async def delete_object(
 ) -> StandardStatusResponse:
     """Delete a specific object. The hardDelete parameter determines if it's a hard or soft delete.
 
-    Input:
+    args:
 
     - the user's authentification status
 
@@ -143,7 +143,7 @@ async def delete_object(
 
     - hard delete
 
-    Output:
+    returns:
 
     - the deleted object
     """
@@ -170,7 +170,7 @@ async def add_object_depr(
 ) -> ObjectResponse:
     """Deprecated. Add an object to an event using the old route.
 
-    Input:
+    args:
 
     - the user's authentification status
 
@@ -182,7 +182,7 @@ async def add_object_depr(
 
     - the request body
 
-    Output:
+    returns:
 
     - the added object
     """
@@ -204,7 +204,7 @@ async def get_object_details_depr(
 ) -> ObjectResponse:
     """Deprecated. View details of a specific object using the old route.
 
-    Input:
+    args:
 
     - the user's authentification status
 
@@ -212,7 +212,7 @@ async def get_object_details_depr(
 
     - the object id
 
-    Output:
+    returns:
 
     - the details of the object
     """
@@ -237,7 +237,7 @@ async def delete_object_depr(
     Deprecated. Delete a specific object using the old route.
     The hardDelete parameter determines if it's a hard or soft delete.
 
-    Input:
+    args:
 
     - the user's authentification status
 
@@ -247,7 +247,7 @@ async def delete_object_depr(
 
     - hard delete
 
-    Output:
+    returns:
 
     - the deleted object
     """

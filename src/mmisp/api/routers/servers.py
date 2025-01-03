@@ -35,11 +35,11 @@ async def get_remote_servers(
     """
     Returns a list of all currently active remote servers.
 
-    Input:
+    args:
 
     - The current database
 
-    Output:
+    returns:
 
     - List of remote servers
     """
@@ -59,13 +59,13 @@ async def get_remote_server_by_id(
     """
     Returns information for a specific remote server chosen by its id.
 
-    Input:
+    args:
 
     - serverId: the server's ID
 
     - The current database
 
-    Output:
+    returns:
 
     - server information regarding the chosen server
     """
@@ -85,13 +85,13 @@ async def add_remote_server(
     """
     Adds a new remote server based on the input of an admin.
 
-    Input:
+    args:
 
     - Data containing details of the remote server to be added
 
     - The current database
 
-    Output:
+    returns:
 
     - Response indicating the result of the server addition operation
     """
@@ -111,13 +111,13 @@ async def delete_remote_server(
     """
     Deletes a remote server if the given id is valid.
 
-    Input:
+    args:
 
     - Identifier of the remote server to be deleted
 
     - The current database
 
-    Output:
+    returns:
 
     - Response indicating the result of the server deletion operation
     """
@@ -132,13 +132,13 @@ async def get_version(
     """
     Gets the Version of the server.
 
-    Input:
+    args:
 
     - auth: Authentication details
 
     - db: Database session
 
-     Output:
+     returns:
 
     - Version of the server
     - Permissions for sync, sighting, and galaxy editor
@@ -169,7 +169,7 @@ async def update_remote_server(
     """
     Edits servers given by org_id.
 
-    Input:
+    args:
 
     - org_id
 
@@ -177,7 +177,7 @@ async def update_remote_server(
 
     - auth: Authentication details
 
-    Output:
+    returns:
 
     - Updated servers as a list
     """
@@ -200,11 +200,11 @@ async def get_remote_servers_depr(
     """Deprecated
     Returns a list of all currently active remote servers.
 
-    Input:
+    args:
 
     - The current database
 
-    Output:
+    returns:
 
     - List of remote servers
     """
@@ -225,12 +225,12 @@ async def add_remote_server_depr(
     """
     Adds a new remote server based on the input of an admin.
 
-    Input:
+    args:
 
     - Data containing details of the remote server to be added
     - The current database
 
-    Output:
+    returns:
 
     - Response indicating the result of the server addition operation
     """

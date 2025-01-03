@@ -38,7 +38,7 @@ async def get_noticelist(
 ) -> NoticelistResponse:
     """Retrieve details of a specific noticelist by its ID.
 
-    Input:
+    args:
 
     - the user's authentification status
 
@@ -46,7 +46,7 @@ async def get_noticelist(
 
     - the notice list id
 
-    Output:
+    returns:
 
     - the details of the notice list
     """
@@ -66,7 +66,7 @@ async def post_toggleEnable_noticelist(
 ) -> StandardStatusIdentifiedResponse:
     """Disable/Enable a specific noticelist by its ID.
 
-    Input:
+    args:
 
     - the user's authentification status
 
@@ -74,7 +74,7 @@ async def post_toggleEnable_noticelist(
 
     - the notice list id
 
-    Output:
+    returns:
 
     - the enabled/disabled notice list
     """
@@ -94,13 +94,13 @@ async def update_noticelists(
 ) -> StandardStatusResponse:
     """Update all noticelists.
 
-    Input:
+    args:
 
     - the user's authentification status
 
     - the current database
 
-    Output:
+    returns:
 
     - all updated notice lists
     """
@@ -120,13 +120,13 @@ async def get_all_noticelists(
 ) -> list[GetAllNoticelists]:
     """Retrieve a list of all noticelists.
 
-    Input:
+    args:
 
     - the user's authentification status
 
     - the current database
 
-    Output:
+    returns:
 
     - all notice lists as a list
     """
@@ -151,7 +151,7 @@ async def get_noticelist_depr(
 ) -> NoticelistResponse:
     """Deprecated. Retrieve details of a specific noticelist by its ID using the old route.
 
-    Input:
+    args:
 
     - the user's authentification status
 
@@ -159,7 +159,7 @@ async def get_noticelist_depr(
 
     - the id of the notice list
 
-    Output:
+    returns:
 
     - the details of the notice list
     """
@@ -180,13 +180,13 @@ async def update_noticelist_depr(
 ) -> StandardStatusResponse:
     """Deprecated. Update all noticelists.
 
-    Input:
+    args:
 
     - the user's authentification status
 
     - the current database
 
-    Output:
+    returns:
 
     - all updated notice lists
     """

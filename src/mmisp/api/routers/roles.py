@@ -11,6 +11,10 @@ from mmisp.api_schemas.roles import (
     AddRoleResponse,
     DeleteRoleResponse,
     EditRoleResponse,
+    ReinstateRoleResponse,
+    FilterRoleResponse,
+    EditUserRoleResponse,
+    DefaultRoleResponse,
     AddRoleBody,
     EditRoleBody,
     ReinstateRoleBody,
@@ -40,12 +44,10 @@ async def get_all_roles(
     Get all roles and their details.
 
     args:
-
-    - Authentification details of the logged in user.
+        auth: the user's authentification status
 
     returns:
-
-    - Information about all roles.
+        information about all roles
     """
     return await _get_roles(db)
 
@@ -63,16 +65,12 @@ async def get_role_info(
     Gets the details of the specified role.
 
     args:
-
-    - Authentification details of the logged in user.
-
-    - The current database
-
-    - The role ID
+        auth: the user's authentification status
+        db: the current database
+        role_id: the role ID
 
     returns:
-
-    - Information about the roles.
+        information about the role
     """
     return await None
 
@@ -90,16 +88,12 @@ async def add_role(
     """Add a new role with the given details.
 
     args:
-
-    - the user's authentification status
-
-    - the current database
-
-    - the request body containing the new role and its requested permissions
+        auth: the user's authentification status
+        db: the current database
+        body: the request body containing the new role and its requested permissions
 
     returns:
-
-    - the new role
+        the new role
     """
     return None
 
@@ -117,16 +111,12 @@ async def delete_role(
     """Delete a role specified by its role ID.
 
     args:
-
-    - the user's authentification status
-
-    - the current database
-
-    - the role ID
+        auth: the user's authentification status
+        db: the current database
+        role_id: the ID of the role
 
     returns:
-
-    - the deleted role
+        the deleted role
     """
     return await None
 
@@ -145,18 +135,13 @@ async def update_role(
     """Update an existing event either by its event ID or via its UUID.
 
     args:
-
-    - the user's authentification status
-
-    - the current database
-
-    - the ID of the role
-
-    - the request body
+        auth: the user's authentification status
+        db: the current database
+        role_id: the ID of the role
+        body: the request body
 
     returns:
-
-    - the updated event
+        the updated event
     """
     return await None
 
@@ -175,22 +160,19 @@ async def reinstate_role(
     """Reinstate a deleted standard role.
 
     args:
-
-    - the user's authentication status
-    - the current database
-    - the role id
-    - the requested body containing the name of the requested standard role
+        auth: the user's authentication status
+        db: the current database
+        role_id: the role id
+        body: the requested body containing the name of the requested standard role
 
     returns:
-
-    - the updated role
+        the updated role
 
     raises:
-
-    - 200: Successful Response
-    - 422: Validation Error
-    - 403: Forbidden Error
-    - 404: Not Found Error
+        200: Successful Response
+        422: Validation Error
+        403: Forbidden Error
+        404: Not Found Error
     """
     return await _reinstate_role(auth, db, role_id, body)
 
@@ -207,22 +189,19 @@ async def filter_roles(
 ) -> list[FilterRoleResponse]:
     """Search roles based on filters.
 
-    Input:
+    args:
+        auth: the user's authentication status
+        db: the current database
+        body: the requested body containing the requested filter data
 
-    - the user's authentication status
-    - the current database
-    - the requested body containing the requested filter data
+    returns:
+        the searched and filtered roles
 
-    Output:
-
-    - the searched and filtered roles
-
-    Responses:
-
-    - 200: Successful Response
-    - 422: Validation Error
-    - 403: Forbidden Error
-    - 404: Not Found Error
+    raises:
+        200: Successful Response
+        422: Validation Error
+        403: Forbidden Error
+        404: Not Found Error
     """
     return await _filter_roles(auth, db, body)
 
@@ -240,23 +219,20 @@ async def edit_user_role(
 ) -> EditUserRoleResponse:
     """Assign or reassign a user to a specific role.
 
-    Input:
+    args:
+        auth: authentication details
+        db: database session
+        user_id: ID of the user for whom the setting is to be updated
+        body: new role for updating the user setting
 
-    - authentication details
-    - database session
-    - user_id: ID of the user for whom the setting is to be updated
-    - body: new role for updating the user setting
+    returns:
+        the updated user
 
-    Output:
-
-    - the updated user
-
-    Responses:
-
-    - 200: Successful Response
-    - 422: Validation Error
-    - 403: Forbidden Error
-    - 404: Not Found Error
+    raises:
+        200: Successful Response
+        422: Validation Error
+        403: Forbidden Error
+        404: Not Found Error
     """
     return await _edit_user_role(auth, db, user_id, body)
 
@@ -273,22 +249,19 @@ async def set_default_role(
 ) -> DefaultRoleResponse:
     """Change the default role (if not changed the default role is 'read only').
 
-    Input:
+    args:
+        auth: the user's authentication status
+        db: the current database
+        body: the requested body containing the new default role
 
-    - the user's authentication status
-    - the current database
-    - the requested body containing the new default role
+    returns:
+        the new default role
 
-    Output:
-
-    - the new default role
-
-    Responses:
-
-    - 200: Successful Response
-    - 422: Validation Error
-    - 403: Forbidden Error
-    - 404: Not Found Error
+    raises:
+        200: Successful Response
+        422: Validation Error
+        403: Forbidden Error
+        404: Not Found Error
 
     """
     return await _set_default_role(auth, db, body)

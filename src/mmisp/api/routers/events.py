@@ -109,17 +109,13 @@ async def get_event_details(
 ) -> AddEditGetEventResponse:
     """Retrieve details of a specific event either by its event ID or via its UUID.
 
-    Input:
+    args:
+        auth: the user's authentification status
+        db: the current database
+        event_id: the ID or UUID of the event
 
-    - the user's authentification status
-
-    - the current database
-
-    - the ID or UUID of the event
-
-    Output:
-
-    - the event details
+    returns:
+        the event details
     """
     return await _get_event_details(db, event_id)
 
@@ -139,19 +135,14 @@ async def update_event(
 ) -> AddEditGetEventResponse:
     """Update an existing event either by its event ID or via its UUID.
 
-    Input:
+    args:
+        auth: the user's authentification status
+        db: the current database
+        event_id: the ID or UUID of the event
+        body: the request body
 
-    - the user's authentification status
-
-    - the current database
-
-    - the ID or UUID of the event
-
-    - the request body
-
-    Output:
-
-    - the updated event
+    returns:
+        the updated event
     """
     return await _update_event(db, event_id, body)
 
@@ -170,17 +161,13 @@ async def delete_event(
 ) -> DeleteEventResponse:
     """Delete an event either by its event ID or via its UUID.
 
-    Input:
+    args:
+        auth: the user's authentification status
+        db: the current database
+        event_id: the ID or UUID of the event
 
-    - the user's authentification status
-
-    - the current database
-
-    - the ID or UUID of the Event
-
-    Output:
-
-    - the deleted event
+    returns:
+        the deleted event
     """
     return await _delete_event(db, event_id)
 
@@ -196,15 +183,12 @@ async def get_all_events(
 ) -> list[GetAllEventsResponse]:
     """Retrieve a list of all events.
 
-    Input:
+    args:
+        auth: the user's authentification status
+        db: the current database
 
-    - the user's authentification status
-
-    - the current database
-
-    Output:
-
-    - all events as a list
+    returns:
+        all events as a list
     """
     return await _get_events(db)
 
@@ -223,17 +207,14 @@ async def rest_search_events(
 ) -> SearchEventsResponse:
     """Search for events based on various filters.
 
-    Input:
+    args:
+        auth: the user's authentification status
+        db: the current database
+        body: the request body
 
-    - the user's authentification status
 
-    - the current database
-
-    - the request body
-
-    Output:
-
-    - the searched events
+    returns:
+        the searched events
     """
     return await _rest_search_events(db, body)
 
@@ -251,17 +232,14 @@ async def index_events(
 ) -> list[GetAllEventsResponse]:
     """Search for events based on various filters, which are more general than the ones in 'rest search'.
 
-    Input:
+    args:
+        auth: the user's authentification status
+        db: the current database
+        body: the request body
 
-    - the user's authentification status
 
-    - the current database
-
-    - the request body
-
-    Output:
-
-    - the searched events
+    returns:
+        the searched events
     """
     return await _index_events(db, body)
 
@@ -281,19 +259,14 @@ async def publish_event(
 ) -> PublishEventResponse:
     """Publish an event either by its event ID or via its UUID. .
 
-    Input:
+    args:
+        auth: the user's authentification status
+        db: the current database
+        event_id: the ID or UUID of the event
+        request: the request
 
-    - the user's authentification status
-
-    - the current database
-
-    - the event ID or UUID
-
-    - the request
-
-    Output:
-
-    - the published event
+    returns:
+        the published event
     """
     return await _publish_event(db, event_id, request)
 
@@ -301,7 +274,6 @@ async def publish_event(
 @router.post(
     "/events/unpublish/{eventId}",
     status_code=status.HTTP_200_OK,
-    response_model=UnpublishEventResponse,
     summary="Unpublish an event",
 )
 @alog
@@ -313,19 +285,14 @@ async def unpublish_event(
 ) -> UnpublishEventResponse:
     """Unpublish an event  either by its event ID or via its UUID.
 
-    Input:
+    args:
+        auth: the user's authentification status
+        db: the current database
+        event_id: the ID or UUID of the event
+        request: the request
 
-    - the user's authentification status
-
-    - the current database
-
-    - the event ID or UUID
-
-    - the request
-
-    Output:
-
-    - the unpublished event
+    returns:
+        the unpublished event
     """
     return await _unpublish_event(db, event_id, request)
 
@@ -345,21 +312,15 @@ async def add_tag_to_event(
 ) -> AddRemoveTagEventsResponse:
     """Add a tag to an event by their ids.
 
-    Input:
+    args:
+        auth: the user's authentification status
+        db: the current database
+        event_id: the event ID or UUID
+        tag_id: the tag ID
+        local: "1" if local
 
-    - the user's authentification status
-
-    - the current database
-
-    - the event ID or UUID
-
-    - the tag ID
-
-    - local
-
-    Output:
-
-    - the result of adding the tag to the event given by the api
+    returns:
+        the result of adding the tag to the event given by the api
     """
     return await _add_tag_to_event(db, event_id, tag_id, local)
 
@@ -379,19 +340,14 @@ async def remove_tag_from_event(
 ) -> AddRemoveTagEventsResponse:
     """Remove a tag to from an event by their IDs.
 
-    Input:
+    args:
+        auth: the user's authentification status
+        db: the current database
+        event_id: the event ID or UUID
+        tag_id: the tag ID
 
-    - the user's authentification status
-
-    - the current database
-
-    - the event ID or UUID
-
-    - the tag ID
-
-    Output:
-
-    - the result of removing the tag from the event given by the api
+    returns:
+        the result of removing the tag from the event given by the api
     """
     return await _remove_tag_from_event(db, event_id, tag_id)
 
@@ -410,18 +366,15 @@ async def start_freeTextImport(
 ) -> FreeTextProcessID:
     """Starts the freetext import process for an event by its ID or UUID, by submitting the freetext to the worker.
 
-    Input:
+    args:
+        auth: the user's authentification status
+        event_id: the event ID or UUID
+        body: the body of the freetext
 
-    - the user's authentification status
-
-    - the event ID or UUID
-
-    - the body of the freetext
-
-    Output:
-
-    - dict
+    returns:
+        dict
     """
+    
     body_dict = body.dict()
     if body_dict["returnMetaAttributes"] is False:
         raise HTTPException(
@@ -467,7 +420,7 @@ async def add_event_depr(
 ) -> AddEditGetEventResponse:
     """Deprecated. Add a new event with the given details.
 
-    Input:
+    args:
 
     - the user's authentification status
 
@@ -475,7 +428,7 @@ async def add_event_depr(
 
     - the request body
 
-    Output:
+    returns:
 
     - the new event
     """
@@ -496,7 +449,7 @@ async def get_event_details_depr(
 ) -> AddEditGetEventResponse:
     """Deprecated. Retrieve details of a specific attribute by its ID.
 
-    Input:
+    args:
 
     - the user's authentification status
 
@@ -504,7 +457,7 @@ async def get_event_details_depr(
 
     - the event ID
 
-    Output:
+    returns:
 
     - the event details
     """
@@ -527,7 +480,7 @@ async def update_event_depr(
 ) -> AddEditGetEventResponse:
     """Deprecated. Update an existing event by its ID.
 
-    Input:
+    args:
 
     - the user's authentification status
 
@@ -537,7 +490,7 @@ async def update_event_depr(
 
     - the request body
 
-    Output:
+    returns:
 
     - the updated event
     """
@@ -559,7 +512,7 @@ async def delete_event_depr(
 ) -> DeleteEventResponse:
     """Deprecated. Delete an existing event by its ID.
 
-    Input:
+    args:
 
     - the user's authentification status
 
@@ -567,7 +520,7 @@ async def delete_event_depr(
 
     - the event id
 
-    Output:
+    returns:
 
     - the deleted event
     """

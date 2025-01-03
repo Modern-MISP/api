@@ -33,7 +33,7 @@ async def get_galaxy_details(
 ) -> GetGalaxyResponse:
     """ "Gets the details of a galaxy.
 
-    Input:
+    args:
 
     - the user's authentification status
 
@@ -41,7 +41,7 @@ async def get_galaxy_details(
 
     - the galaxy id
 
-    Output:
+    returns:
 
     - the details of the galaxy
     """
@@ -61,13 +61,13 @@ async def update_galaxy(
 ) -> DeleteForceUpdateImportGalaxyResponse:
     """Force the galaxies to update with the JSON definitions, not yet implemented.
 
-    Input:
+    args:
 
     - the user's authentification status
 
     - the current database
 
-    Output:
+    returns:
 
     - the updated galaxies
     """
@@ -92,7 +92,7 @@ async def delete_galaxy(
 ) -> DeleteForceUpdateImportGalaxyResponse:
     """ "Delete a specific galaxy by its Id.
 
-    Input:
+    args:
 
     - the user's authentification status
 
@@ -102,7 +102,7 @@ async def delete_galaxy(
 
     - the request
 
-    Output:
+    returns:
 
     - the deleted galaxy
     """
@@ -121,13 +121,13 @@ async def get_galaxies(
 ) -> list[GetAllSearchGalaxiesResponse]:
     """Get a list with all existing galaxies.
 
-    Input:
+    args:
 
     - the user's authentification status
 
     - the current database
 
-    Output:
+    returns:
 
     - all galaxies
     """
@@ -148,7 +148,7 @@ async def search_galaxies(
 ) -> list[GetAllSearchGalaxiesResponse]:
     """Search galaxies by search term which matches with galaxy name, namespace, description, kill_chain_order or uuid."
 
-    Input:
+    args:
 
     - the user's authentification status
 
@@ -156,7 +156,7 @@ async def search_galaxies(
 
     - the request body
 
-    Output:
+    returns:
 
     - the galaxies found by search
     """
@@ -181,7 +181,7 @@ async def get_galaxy_details_depr(
 ) -> GetGalaxyResponse:
     """View Galaxy by given Galaxy ID.
 
-    Input:
+    args:
 
     - the user's authentification status
 
@@ -189,7 +189,7 @@ async def get_galaxy_details_depr(
 
     - the galaxy id
 
-    Output:
+    returns:
 
     - the details of the galaxy
     """
@@ -212,7 +212,7 @@ async def delete_galaxy_depr(
 ) -> DeleteForceUpdateImportGalaxyResponse:
     """Delete Galaxy by GalaxyID.
 
-    Input:
+    args:
 
     - the user's authentification status
 
@@ -222,7 +222,7 @@ async def delete_galaxy_depr(
 
     - the request
 
-    Output:
+    returns:
 
     - the deleted galaxy
     """

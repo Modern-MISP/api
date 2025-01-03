@@ -52,11 +52,11 @@ async def get_all_open_id_connect_providers_info(
     """
     Fetches all OpenID Connect providers
 
-    Input:
+    args:
     - Authorization token
     - Database session
 
-    Output:
+    returns:
     - List of OpenID Connect providers
     """
     return await _get_all_open_id_connect_providers_info(db)
@@ -70,11 +70,11 @@ async def get_all_open_id_connect_providers(
     """
     Fetches all OpenID Connect providers
 
-    Input:
+    args:
     - Authorization token
     - Database session
 
-    Output:
+    returns:
     - List of OpenID Connect providers
     """
     return await _get_all_open_id_connect_providers(db)
@@ -90,12 +90,12 @@ async def get_open_id_connect_provider_by_id(
     """
     Fetches a single OpenID Connect provider by its ID
 
-    Input:
+    args:
     - Authorization token
     - Database session
     - Provider ID
 
-    Output:
+    returns:
     - OpenID Connect provider details
     """
     return await _get_open_id_connect_provider_by_id(auth, db, provider_id)
@@ -110,11 +110,11 @@ async def add_openID_Connect_provider(
 ) -> IdentityProviderInfo:
     """Adds a new OpenID Connect provider
 
-    Input:
+    args:
 
     - database
 
-    Output:
+    returns:
 
     - openID Connect provider
     """
@@ -131,13 +131,13 @@ async def edit_openID_Connect_provider(
 ) -> ChangeLoginInfoResponse:
     """Edits an OpenID Connect provider
 
-    Input:
+    args:
 
     - OpenID Connect provider
 
     - The current database
 
-    Output:
+    returns:
 
     - updated OpenID Connect provider
     """
@@ -156,13 +156,13 @@ async def delete_openID_Connect_provider(
 ) -> ChangeLoginInfoResponse:
     """Deletes an OpenID Connect provider
 
-    Input:
+    args:
 
     - OpenID Connect provider
 
     - The current database
 
-    Output:
+    returns:
 
     - database
     """
@@ -174,13 +174,13 @@ async def delete_openID_Connect_provider(
 async def start_login(db: Annotated[Session, Depends(get_db)], body: StartLoginBody) -> dict:
     """Starts the login process.
 
-    Input:
+    args:
 
     - the database
 
     - the request body
 
-    Output:
+    returns:
 
     - dict
     """
@@ -210,13 +210,13 @@ async def start_login(db: Annotated[Session, Depends(get_db)], body: StartLoginB
 async def password_login(db: Annotated[Session, Depends(get_db)], body: PasswordLoginBody) -> TokenResponse:
     """Login with password.
 
-    Input:
+    args:
 
     - the database
 
     - the request body
 
-    Output:
+    returns:
 
     - the login token
     """
@@ -234,11 +234,11 @@ async def set_password(
 ) -> TokenResponse:
     """Sets the password of the user to a new password.
 
-    Input:
+    args:
 
     - the database
 
-    Output:
+    returns:
 
     - the response form the api after the password change request
     """
@@ -255,7 +255,7 @@ async def redirect_to_frontend(
 ) -> TokenResponse:
     """Redirects to the frontend.
 
-    Input:
+    args:
 
     - the database
 
@@ -263,7 +263,7 @@ async def redirect_to_frontend(
 
     - the code
 
-    Output:
+    returns:
 
     - the redirection
     """
@@ -342,7 +342,7 @@ async def exchange_token_login(body: ExchangeTokenLoginBody) -> TokenResponse:
 
     - the request body
 
-    Output:
+    returns:
 
     - the login token
     """
@@ -367,13 +367,13 @@ async def change_password_UserId(
 ) -> ChangeLoginInfoResponse:
     """Set the password of the user to a new password
 
-    Input:
+    args:
 
     - the request body
 
     - The current database
 
-    Output:
+    returns:
 
     - the response from the api after the password change request
     """

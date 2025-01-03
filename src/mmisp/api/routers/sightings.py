@@ -41,7 +41,7 @@ async def add_sighting(
 ) -> list[SightingAttributesResponse]:
     """Add a new sighting for each given value.
 
-    Input:
+    args:
 
     - auth: Authentication details
 
@@ -49,7 +49,7 @@ async def add_sighting(
 
     - body: Sighting creation data
 
-    Output:
+    returns:
 
     - Details of the new sighting
     """
@@ -117,7 +117,7 @@ async def delete_sighting(
 ) -> StandardStatusResponse:
     """Delete a specific sighting.
 
-    Input:
+    args:
 
     - auth: Authentication details
 
@@ -125,7 +125,7 @@ async def delete_sighting(
 
     - sighting_id: ID of the sighting
 
-    Output:
+    returns:
 
     - Status response indicating success or failure
     """
@@ -144,13 +144,13 @@ async def get_sightings(
 ) -> SightingsGetResponse:
     """Retrieve a list of all sightings.
 
-    Input:
+    args:
 
     - auth: Authentication details
 
     - db: Database session
 
-    Output:
+    returns:
 
     - Status response indicating success or failure
     """
@@ -174,7 +174,7 @@ async def add_sighting_depr(
 ) -> list[SightingAttributesResponse]:
     """Deprecated. Add a new sighting using the old route.
 
-    Input:
+    args:
 
     - auth: Authentication details
 
@@ -182,7 +182,7 @@ async def add_sighting_depr(
 
     - body: Sighting creation data
 
-    Output:
+    returns:
 
     - List of sighting attributes
     """
@@ -203,7 +203,7 @@ async def add_sightings_at_index_depr(
 ) -> SightingAttributesResponse:
     """Deprecated. Add a new sighting for a specific attribute using the old route.
 
-    Input:
+    args:
 
     - auth: Authentication details
 
@@ -211,7 +211,7 @@ async def add_sightings_at_index_depr(
 
     - attribute_id: ID of the attribute
 
-    Output:
+    returns:
 
     - Details of the new sightings
     """
@@ -232,7 +232,7 @@ async def delete_sighting_depr(
 ) -> StandardStatusResponse:
     """Deprecated. Delete a specific sighting using the old route.
 
-    Input:
+    args:
 
     - auth: Authentication details
 
@@ -240,7 +240,7 @@ async def delete_sighting_depr(
 
     - sighting_id: ID of the sighting
 
-    Output:
+    returns:
 
     - Status response indicating success or failure
     """
@@ -261,7 +261,7 @@ async def get_sightings_at_index_depr(
 ) -> list[SightingAttributesResponse]:
     """Deprecated. Retrieve all sightings associated with a specific event ID using the old route.
 
-    Input:
+    args:
 
     - auth: Authentication details
 
@@ -269,7 +269,7 @@ async def get_sightings_at_index_depr(
 
     - event_id: ID of the event
 
-    Output:
+    returns:
 
     - Details of the sightings at index
     """

@@ -58,7 +58,7 @@ async def auth_keys_add_user(
 ) -> AddAuthKeyResponse:
     """Create an AuthKey for a specific user and save it in the database.
 
-    Input:
+    args:
 
     - the user's authentification status
 
@@ -68,7 +68,7 @@ async def auth_keys_add_user(
 
     - the request body
 
-    Output:
+    returns:
 
     - the added authkey
     """
@@ -88,7 +88,7 @@ async def auth_keys_view_auth_key(
 ) -> ViewAuthKeysResponse:
     """View an AuthKey by its ID.
 
-    Input:
+    args:
 
     - the user's authentification status
 
@@ -96,7 +96,7 @@ async def auth_keys_view_auth_key(
 
     - the id of the authkey
 
-    Output:
+    returns:
 
     - the authkey
     """
@@ -116,7 +116,7 @@ async def search_auth_keys(
 ) -> list[SearchGetAuthKeysResponseItem]:
     """Search for specific AuthKeys by parameters.
 
-    Input:
+    args:
 
     - the user's authentification status
 
@@ -124,7 +124,7 @@ async def search_auth_keys(
 
     - the request body
 
-    Output:
+    returns:
 
     - the authkeys
     """
@@ -145,7 +145,7 @@ async def auth_keys_edit_auth_key(
 ) -> EditAuthKeyResponseCompl:
     """Edit an AuthKey by its ID.
 
-    Input:
+    args:
 
     - the user's authentification status
 
@@ -155,7 +155,7 @@ async def auth_keys_edit_auth_key(
 
     - the request body
 
-    Output:
+    returns:
 
     - the updated authkey
     """
@@ -175,7 +175,7 @@ async def auth_keys_delete_auth_key(
 ) -> StandardStatusIdentifiedResponse:
     """Delete AuthKey by AuthKeyId from the database.
 
-    Input:
+    args:
 
     - the user's authentification status
 
@@ -183,7 +183,7 @@ async def auth_keys_delete_auth_key(
 
     - the id of the authkey
 
-    Output:
+    returns:
 
     - the response from the api after the deleting request
     """
@@ -211,13 +211,13 @@ async def auth_keys_get(
 ) -> list[SearchGetAuthKeysResponse]:
     """Returns all AuthKeys stored in the database as a List.
 
-    Input:
+    args:
 
     - the user's authentification status
 
     - the current database
 
-    Output:
+    returns:
 
     - all authkeys as a list
     """
@@ -235,7 +235,7 @@ async def auth_keys_view_own_auth_keys(
 ) -> list[SearchGetAuthKeysResponseItem]:
     """View own Authkeys.
 
-    Input:
+    args:
 
     - the user's authentification status
 
@@ -243,7 +243,7 @@ async def auth_keys_view_own_auth_keys(
 
     - the id of the user
 
-    Output:
+    returns:
 
     - the auth keys
     """
@@ -265,7 +265,7 @@ async def auth_keys_view_own_auth_keys_depr(
 ) -> list[SearchGetAuthKeysResponse]:
     """Deprecated. View own Authkeys by the old route.
 
-    Input:
+    args:
 
     - the user's authentification status
 
@@ -273,7 +273,7 @@ async def auth_keys_view_own_auth_keys_depr(
 
     - the id of the user
 
-    Output:
+    returns:
 
     - the auth keys
     """
@@ -296,7 +296,7 @@ async def auth_keys_add_user_depr(
 ) -> AddAuthKeyResponse:
     """Create an AuthKey for a specific user and write it to the database.
 
-    Input:
+    args:
 
     - the user's authentification status
 
@@ -306,7 +306,7 @@ async def auth_keys_add_user_depr(
 
     - the request body
 
-    Output:
+    returns:
 
     - the added authkey
     """
@@ -328,7 +328,7 @@ async def auth_keys_edit_auth_key_depr(
 ) -> EditAuthKeyResponseCompl:
     """Edit AuthKey by AuthKey ID.
 
-    Input:
+    args:
 
     - the user's authentification status
 
@@ -338,7 +338,7 @@ async def auth_keys_edit_auth_key_depr(
 
     - the request body
 
-    Output:
+    returns:
 
     - the updated authkey
     """
@@ -359,7 +359,7 @@ async def auth_keys_delete_auth_key_depr(
 ) -> StandardStatusIdentifiedResponse:
     """Delete AuthKey by AuthKeyId from the database.
 
-    Input:
+    args:
 
     - the user's authentification status
 
@@ -367,7 +367,7 @@ async def auth_keys_delete_auth_key_depr(
 
     - the id of the authkey
 
-    Output:
+    returns:
 
     - the response from the api after the deleting request
     """

@@ -41,7 +41,7 @@ async def set_user_settings(
     Create or Update a UserSetting by user ID and UserSettingName. \
     If specified UserSetting doesn't exist, it is created.
 
-    Input:
+    args:
 
     - auth: Authentication details
 
@@ -53,7 +53,7 @@ async def set_user_settings(
 
     - body: SetUserSettingBody, Data for setting the user setting
 
-    Output:
+    returns:
 
     - SetUserSettingResponse: Response indicating success or failure
     """
@@ -77,7 +77,7 @@ async def view_user_settings(
     """
     Displays a UserSetting by the UserSettingID.
 
-    Input:
+    args:
 
     - userSettingId: ID of the user setting to view
 
@@ -85,7 +85,7 @@ async def view_user_settings(
 
     - db: Database session
 
-    Output:
+    returns:
 
     - ViewUserSettingResponse: Response with details of the viewed user setting
     """
@@ -105,7 +105,7 @@ async def get_user_setting_by_id(
     """
     Displays a UserSetting by given userID and UserSetting name.
 
-    Input:
+    args:
 
     - userId: ID of the user for whom setting is to be viewed
 
@@ -115,7 +115,7 @@ async def get_user_setting_by_id(
 
     - db: Database session
 
-    Output:
+    returns:
 
     - ViewUserSettingResponse: Response with details of the viewed user setting
     """
@@ -140,7 +140,7 @@ async def search_user_settings(
     """
     Displays all UserSettings by specified parameters.
 
-    Input:
+    args:
 
     - body: SearchUserSettingBody, Data for searching user settings
 
@@ -148,7 +148,7 @@ async def search_user_settings(
 
     - db: Database session
 
-    Output:
+    returns:
 
     - list[UserSettingResponse]: List of UserSettingResponse objects
     """
@@ -167,13 +167,13 @@ async def get_user_settings(
     """
     Displays all UserSettings.
 
-    Input:
+    args:
 
     - auth: Authentication details
 
     - db: Database session
 
-    Output:
+    returns:
 
     - list[UserSettingResponse]: List of UserSettingResponse objects
     """
@@ -193,7 +193,7 @@ async def delete_user_settings(
     """
     Deletes UserSetting by UserSetting ID.
 
-    Input:
+    args:
 
     - userSettingId: ID of the user setting to delete
 
@@ -201,7 +201,7 @@ async def delete_user_settings(
 
     - db: Database session
 
-    Output:
+    returns:
 
     - StandardStatusIdentifiedResponse: Response indicating success or failure
     """
@@ -234,7 +234,7 @@ async def view_user_settings_depr(
     """
     Deprecated. View UserSetting by UserSettingID.
 
-    Input:
+    args:
 
     - userSettingId: ID of the user setting to view
 
@@ -242,7 +242,7 @@ async def view_user_settings_depr(
 
     - db: Database session
 
-    Output:
+    returns:
 
     - ViewUserSettingResponse: Response with details of the viewed user setting
     """
@@ -278,7 +278,7 @@ async def get_user_setting_by_ids(
     """
     Deprecated. View a UserSetting by its userID and UserSetting name.
 
-    Input:
+    args:
 
     - userId: ID of the user for whom setting is to be viewed
 
@@ -288,7 +288,7 @@ async def get_user_setting_by_ids(
 
     - db: Database session
 
-    Output:
+    returns:
 
     - GetUserSettingResponse: Response with details of the viewed user setting
     """
@@ -325,7 +325,7 @@ async def delete_user_settings_depr(
     """
     Deprecated. Delete a UserSetting by specified UserSettingID.
 
-    Input:
+    args:
 
     - userSettingId: ID of the user setting to delete
 
@@ -333,7 +333,7 @@ async def delete_user_settings_depr(
 
     - db: Database session
 
-    Output:
+    returns:
 
     - StandardStatusIdentifiedResponse: Response indicating success or failure
     """

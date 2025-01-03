@@ -44,7 +44,7 @@ async def add_tag(
 ) -> TagResponse:
     """Add a new tag with given details.
 
-    Input:
+    args:
 
     - auth: Authentication details
 
@@ -52,7 +52,7 @@ async def add_tag(
 
     - body: Tag creation details
 
-    Output:
+    returns:
 
     - TagResponse: Details of the created tag
     """
@@ -73,7 +73,7 @@ async def view_tag(
 ) -> TagViewResponse:
     """View details of a specific tag.
 
-    Input:
+    args:
 
     - auth: Authentication details
 
@@ -81,7 +81,7 @@ async def view_tag(
 
     - tag_id: ID of the tag to view
 
-    Output:
+    returns:
 
     - TagViewResponse: Detailed information of the specified tag
     """
@@ -102,7 +102,7 @@ async def search_tags(
 ) -> dict:
     """Search for tags using a specific search term.
 
-    Input:
+    args:
 
     - auth: Authentication details
 
@@ -110,7 +110,7 @@ async def search_tags(
 
     - tag_search_term: Search term for finding tags
 
-    Output:
+    returns:
 
     - dict: Dictionary containing search results
     """
@@ -132,7 +132,7 @@ async def update_tag(
 ) -> TagResponse:
     """Edit details of a specific tag.
 
-    Input:
+    args:
 
     - auth: Authentication details
 
@@ -142,7 +142,7 @@ async def update_tag(
 
     - tag_id: ID of the tag to update
 
-    Output:
+    returns:
 
     - TagResponse: Details of the updated tag
     """
@@ -163,7 +163,7 @@ async def delete_tag(
 ) -> TagDeleteResponse:
     """Delete a specific tag.
 
-    Input:
+    args:
 
     - auth: Authentication details
 
@@ -171,7 +171,7 @@ async def delete_tag(
 
     - tag_id: ID of the tag to delete
 
-    Output:
+    returns:
 
     - TagDeleteResponse: Confirmation of the tag deletion
     """
@@ -190,13 +190,13 @@ async def get_tags(
 ) -> TagGetResponse:
     """Retrieve a list of all tags.
 
-    Input:
+    args:
 
     - auth: Authentication details
 
     - db: Database session
 
-    Output:
+    returns:
 
     - TagGetResponse: List of all tags
     """
@@ -221,7 +221,7 @@ async def add_tag_depr(
 ) -> TagResponse:
     """Deprecated. Add a new tag using the old route.
 
-    Input:
+    args:
 
     - auth: Authentication details
 
@@ -229,7 +229,7 @@ async def add_tag_depr(
 
     - body: Tag creation details (TagCreateBody)
 
-    Output:
+    returns:
 
     - TagResponse: Details of the created tag
     """
@@ -251,7 +251,7 @@ async def view_tag_depr(
 ) -> TagViewResponse:
     """Deprecated. View details of a specific tag using the old route.
 
-    Input:
+    args:
 
     - auth: Authentication details
 
@@ -259,7 +259,7 @@ async def view_tag_depr(
 
     - tag_id: ID of the tag to view
 
-    Output:
+    returns:
 
     - TagViewResponse: Detailed information of the specified tag
     """
@@ -282,7 +282,7 @@ async def update_tag_depr(
 ) -> TagResponse:
     """Deprecated. Edit a specific tag using the old route.
 
-    Input:
+    args:
 
     - auth: Authentication details
 
@@ -292,7 +292,7 @@ async def update_tag_depr(
 
     - tag_id: ID of the tag to update
 
-    Output:
+    returns:
 
     - TagResponse: Details of the updated tag
     """
@@ -314,7 +314,7 @@ async def delete_tag_depr(
 ) -> TagDeleteResponse:
     """Deprecated. Delete a specific tag using the old route.
 
-    Input:
+    args:
 
     - auth: Authentication details
 
@@ -322,7 +322,7 @@ async def delete_tag_depr(
 
     - tag_id: ID of the tag to delete
 
-    Output:
+    returns:
 
     - TagDeleteResponse: Confirmation of the tag deletion
     """

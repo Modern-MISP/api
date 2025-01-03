@@ -57,17 +57,13 @@ async def rest_search_attributes(
 ) -> SearchAttributesResponse:
     """Search for attributes based on various filters.
 
-    Input:
+    args:
+        auth: the user's authentification status
+        db: the current database
+        body: the search body
 
-    - the user's authentification status
-
-    - the current database
-
-    - the search body
-
-    Output:
-
-    - the attributes the search finds
+    returns:
+        the attributes the search finds
     """
     return await _rest_search_attributes(db, body)
 
@@ -87,19 +83,14 @@ async def add_attribute(
 ) -> AddAttributeResponse:
     """Add a new attribute with the given details.
 
-    Input:
+    args:
+        auth: the user's authentification status
+        db: the current database
+        event_id: the ID or UUID of the event
+        body: the body for adding an attribute
 
-    - the user's authentification status
-
-    - the current database
-
-    - the ID or UUID of the event
-
-    - the body for adding an attribute
-
-    Output:
-
-    - the response of the added attribute from the api
+    returns:
+        the response of the added attribute from the api
     """
     return await _add_attribute(db, event_id, body)
 
@@ -115,13 +106,11 @@ async def get_attributes_describe_types(
 ) -> GetDescribeTypesResponse:
     """Retrieve a list of all available attribute types and categories.
 
-    Input:
+    args:
+        auth: the user's authentification status
 
-    - the user's authentification status
-
-    Output:
-
-    - the attributes describe types
+    returns:
+        the attributes describe types
     """
     return GetDescribeTypesResponse(result=GetDescribeTypesAttributes())
 
@@ -140,17 +129,13 @@ async def get_attribute_details(
 ) -> GetAttributeResponse:
     """Retrieve details of a specific attribute by either by its ID or UUID.
 
-    Input:
+    args:
+        auth: the user's authentification status
+        db: the current database
+        attribute_id: the ID or UUID of the attribute
 
-    - the user's authentification status
-
-    - the current database
-
-    - the ID or UUID of the attribute
-
-    Output:
-
-    - the attribute details
+    returns:
+        the attribute details
     """
     return await _get_attribute_details(db, attribute_id)
 
@@ -170,19 +155,14 @@ async def update_attribute(
 ) -> EditAttributeResponse:
     """Update an existing attribute by its ID.
 
-    Input:
+    args:
+        auth: the user's authentification status
+        db: the current database
+        attribute_id: the ID or UUID of the attribute
+        body: the body for editing the attribute
 
-    - the user's authentification status
-
-    - the current database
-
-    - the ID or UUID of the attribute
-
-    - the body for editing the attribute
-
-    Output:
-
-    - the response from the api for the edit request
+    returns:
+        the response from the api for the edit/update request
     """
     return await _update_attribute(db, attribute_id, body)
 
@@ -201,17 +181,13 @@ async def delete_attribute(
 ) -> DeleteAttributeResponse:
     """Delete an attribute by either by its ID or UUID.
 
-    Input:
+    args:
+        auth: the user's authentification status
+        db: the current database
+        attribute_id: the ID or UUID of the attribute
 
-    - the user's authentification status
-
-    - the current database
-
-    - the ID or UUID of the attribute
-
-    Output:
-
-    - the response from the api for the delete request
+    returns:
+        the response from the api for the delete request
     """
     return await _delete_attribute(db, attribute_id)
 
@@ -227,13 +203,11 @@ async def get_attributes(
 ) -> list[GetAllAttributesResponse]:
     """Retrieve a list of all attributes.
 
-    Input:
+    args:
+        auth: the user's authentification status
 
-    - the user's authentification status
-
-    Output:
-
-    - the list of all attributes
+    returns:
+        the list of all attributes
     """
     return await _get_attributes(db)
 
@@ -254,21 +228,15 @@ async def delete_selected_attributes(
 ) -> DeleteSelectedAttributeResponse:
     """Deletes the attributes associated with the event from the list in the body.
 
-    Input:
+    args:
+        auth: the user's authentification status
+        db: the current database
+        event_id: the ID or UUID of the event
+        body: the body for deleting the selected attributes
+        request: the request
 
-    - the user's authentification status
-
-    - the current database
-
-    - the ID or UUID of the event
-
-    - the body for deleting the selected attributes
-
-    - the request
-
-    Output:
-
-    - the response from the api for the deleting of the selection
+    returns:
+        the response from the api for the deleting of the selection
     """
     return await _delete_selected_attributes(db, event_id, body, request)
 
@@ -287,15 +255,13 @@ async def get_attributes_type_statistics(
 ) -> GetAttributeStatisticsTypesResponse:  # type: ignore
     """Get the count/percentage of attributes per category/type.
 
-    Input:
+    args:
+        auth: the user's authentification status
+        db: the current database
+        percentage: percentage request or not
 
-    - the user's authentification status
-    - the current database
-    - percentage
-
-    Output:
-
-    - the attributes statistics for one category/type
+    returns:
+        the attributes statistics for one category/type
     """
     return await _get_attribute_type_statistics(db, percentage)
 
@@ -314,15 +280,13 @@ async def get_attributes_category_statistics(
 ) -> GetAttributeStatisticsCategoriesResponse:  # type: ignore
     """Get the count/percentage of attributes per category/type.
 
-    Input:
+    args:
+        auth: the user's authentification status
+        db: the current database
+        percentage: percentage request or not
 
-    - the user's authentification status
-    - the current database
-    - percentage
-
-    Output:
-
-    - the attributes statistics for one category/type
+    returns:
+        the attributes statistics for one category/type
     """
     return await _get_attribute_category_statistics(db, percentage)
 
@@ -341,17 +305,13 @@ async def restore_attribute(
 ) -> GetAttributeResponse:
     """Restore an attribute either by its ID or UUID.
 
-    Input:
+    args:
+        auth: the user's authentification status
+        db: the current database
+        attribute_id: the ID or UUID of the attribute
 
-    - the user's authentification status
-
-    - the current database
-
-    - the ID or UUID of the attribute
-
-    Output:
-
-    - the restored attribute
+    returns:
+        the restored attribute
     """
     return await _restore_attribute(db, attribute_id)
 
@@ -372,21 +332,15 @@ async def add_tag_to_attribute(
 ) -> AddRemoveTagAttributeResponse:
     """Add a tag to an attribute by there IDs.
 
-    Input:
+    args:
+        auth: the user's authentification status
+        db: the current database
+        attribute_id: the ID or UUID of the attribute
+        tag_id: the ID of the tag
+        local: "1" for local
 
-    - the user's authentification status
-
-    - the current database
-
-    - the ID or UUID of the attribute
-
-    - the ID of the tag
-
-    - local
-
-    Output:
-
-    - the response from the api for adding a tag to an attribute
+    returns:
+        the response from the api for adding a tag to an attribute
     """
     return await _add_tag_to_attribute(db, attribute_id, tag_id, local)
 
@@ -406,19 +360,14 @@ async def remove_tag_from_attribute(
 ) -> AddRemoveTagAttributeResponse:
     """Remove a tag from an attribute by there IDs.
 
-    Input:
+    args:
+        auth: the user's authentification status
+        db: the current database
+        attribute_id: the ID or UUID of the attribute
+        tag_id: the ID of the tag
 
-    - the user's authentification status
-
-    - the current database
-
-    - the ID or UUID of the attribute
-
-    - the ID of the tag
-
-    Output:
-
-    - the response from the api for removing a tag to an attribute
+    returns:
+        the response from the api for removing a tag to an attribute
     """
     return await _remove_tag_from_attribute(db, attribute_id, tag_id)
 
@@ -442,19 +391,19 @@ async def add_attribute_depr(
 ) -> AddAttributeResponse:
     """Deprecated. Add a new attribute with the given details using the old route.
 
-    Input:
+    args:
 
-    - the user's authentification status
+    the user's authentification status
 
-    - the current database
+    the current database
 
-    - the id of the event
+    the id of the event
 
-    - the body
+    the body
 
-    Output:
+    returns:
 
-    - the attribute
+    the attribute
     """
     return await _add_attribute(db, event_id, body)
 
@@ -474,17 +423,17 @@ async def get_attribute_details_depr(
 ) -> GetAttributeResponse:
     """Deprecated. Retrieve details of a specific attribute by its ID using the old route.
 
-    Input:
+    args:
 
-    - the user's authentification status
+    the user's authentification status
 
-    - the current database
+    the current database
 
-    - the id of the attribute
+    the id of the attribute
 
-    Output:
+    returns:
 
-    - the details of an attribute
+    the details of an attribute
     """
     return await _get_attribute_details(db, attribute_id)
 
@@ -505,19 +454,19 @@ async def update_attribute_depr(
 ) -> EditAttributeResponse:
     """Deprecated. Update an existing attribute by its ID using the old route.
 
-    Input:
+    args:
 
-    - the user's authentification status
+    the user's authentification status
 
-    - the current database
+    the current database
 
-    - the id of the attribute
+    the id of the attribute
 
-    - the body
+    the body
 
-    Output:
+    returns:
 
-    - the updated version af an attribute
+    the updated version af an attribute
     """
     return await _update_attribute(db, attribute_id, body)
 
@@ -537,17 +486,17 @@ async def delete_attribute_depr(
 ) -> DeleteAttributeResponse:
     """Deprecated. Delete an attribute by its ID using the old route.
 
-    Input:
+    args:
 
-    - the user's authentification status
+    the user's authentification status
 
-    - the current database
+    the current database
 
-    - the id of the attribute
+    the id of the attribute
 
-    Output:
+    returns:
 
-    - the response from the api for the deleting request
+    the response from the api for the deleting request
     """
     return await _delete_attribute(db, attribute_id)
 
