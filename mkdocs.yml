@@ -23,6 +23,7 @@ nav:
       - Noticelists: routers/noticelists.md
       - Objects: routers/objects.md
       - Organisations: routers/organisations.md
+      - Rosles: routers/roles.md
       - Servers: routers/servers.md
       - Sharing Groups: routers/sharing_groups.md
       - Sightings: routers/sightings.md
