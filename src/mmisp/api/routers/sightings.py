@@ -42,16 +42,12 @@ async def add_sighting(
     """Add a new sighting for each given value.
 
     args:
-
-    - auth: Authentication details
-
-    - db: Database session
-
-    - body: Sighting creation data
+        auth: Authentication details
+        db: Database session
+        body: Sighting creation data
 
     returns:
-
-    - Details of the new sighting
+        details of the new sighting
     """
     return await _add_sighting(db, body)
 
@@ -65,17 +61,17 @@ async def add_sighting(
 async def add_sightings_at_index(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SIGHTING]))],
     db: Annotated[Session, Depends(get_db)],
-    attribute_id: Annotated[int, Path(alias="attributeId")],
+    attribute_id: Annotated[int | uuid.UUID, Path(alias="attributeId")],
 ) -> SightingAttributesResponse:
     """Add a new sighting for a specific attribute.
 
     args:
         auth: Authentication
         db: Database session
-        attribute_id: ID of the attribute
+        attribute_id: ID or UUID of the attribute
 
     returns:
-        Details of new sightings
+        details of new sightings
     """
     return await _add_sightings_at_index(db, attribute_id)
 
@@ -99,7 +95,7 @@ async def get_sightings_at_index(
         event_id: ID or UUID of the event
 
     returns:
-        Details of the sightings at index
+        details of the sightings at index
     """
     return await _get_sightings_at_index(db, event_id)
 
@@ -339,9 +335,8 @@ async def _add_sighting(db: Session, body: SightingCreateBody) -> list[SightingA
 
     return responses
 
-
 @alog
-async def _add_sightings_at_index(db: Session, attribute_id: int) -> SightingAttributesResponse:
+async def _add_sightings_at_index(db: Session, attribute_id: int | uuid.UUID) -> SightingAttributesResponse:
     attribute: Attribute | None = await db.get(Attribute, attribute_id)
 
     if not attribute:
