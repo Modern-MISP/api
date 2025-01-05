@@ -57,12 +57,15 @@ class Auth:
     role_id: int | None = None
     auth_key_id: int | None = None
     is_worker: bool | None = False
-    auth_permissions: list[Permission] | None = None
 
 
 async def _get_user(
     db: Session, authorization: str, strategy: AuthStrategy, permissions: list[Permission], is_readonly_route: bool
 ) -> tuple[User, int | None]:
+    """
+    Fetches the user from the database.
+    """
+
     user_id: int | None = None
     auth_key_id: int | None = None
 
@@ -105,6 +108,10 @@ async def user_login_allowed(db: Session, user_id: int, api_login: bool) -> User
 def authorize(
     strategy: AuthStrategy, permissions: list[Permission] | None = None, is_readonly_route: bool = False
 ) -> Callable[[Session, str], Awaitable[Auth]]:
+    """
+    Handels the authentication.
+    """
+
     if permissions is None:
         permissions = []
 
@@ -137,6 +144,10 @@ def authorize(
 
 
 def check_permissions(auth: Auth, permissions: list[Permission] = []) -> bool:
+    """
+    Checks the permission list against the permissions of the user's auth.
+    """
+
     if auth.user is None:
         raise ValueError
     role = auth.user.role

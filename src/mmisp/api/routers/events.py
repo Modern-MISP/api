@@ -123,7 +123,6 @@ async def get_event_details(
 @router.put(
     "/events/{eventId}",
     status_code=status.HTTP_200_OK,
-    response_model=AddEditGetEventResponse,
     summary="Update an event",
 )
 @alog
@@ -150,7 +149,6 @@ async def update_event(
 @router.delete(
     "/events/{eventId}",
     status_code=status.HTTP_200_OK,
-    response_model=DeleteEventResponse,
     summary="Delete an event",
 )
 @alog
@@ -190,13 +188,12 @@ async def get_all_events(
     returns:
         all events as a list
     """
-    return await _get_events(db)
+    return await _get_events(db, auth.user)
 
 
 @router.post(
     "/events/restSearch",
     status_code=status.HTTP_200_OK,
-    response_model=partial(SearchEventsResponse),
     summary="Search events",
 )
 @alog
@@ -247,7 +244,6 @@ async def index_events(
 @router.post(
     "/events/publish/{eventId}",
     status_code=status.HTTP_200_OK,
-    response_model=PublishEventResponse,
     summary="Publish an event",
 )
 @alog
@@ -328,7 +324,6 @@ async def add_tag_to_event(
 @router.post(
     "/events/removeTag/{eventId}/{tagId}",
     status_code=status.HTTP_200_OK,
-    response_model=AddRemoveTagEventsResponse,
     summary="Remove tag of event",
 )
 @alog
@@ -355,7 +350,6 @@ async def remove_tag_from_event(
 @router.post(
     "/events/freeTextImport/{eventID}",
     status_code=status.HTTP_307_TEMPORARY_REDIRECT,
-    response_model=FreeTextProcessID,
     summary="start the freetext import process via worker",
 )
 @alog
@@ -698,9 +692,8 @@ async def _delete_event(db: Session, event_id: int | uuid.UUID) -> DeleteEventRe
         id=str(event_id),
     )
 
-
 @alog
-async def _get_events(db: Session) -> list[GetAllEventsResponse]:
+async def _get_events(db: Session, user: User) -> list[GetAllEventsResponse]:
     result = await db.execute(
         select(Event).options(
             selectinload(Event.org),

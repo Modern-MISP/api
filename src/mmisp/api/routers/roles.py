@@ -223,7 +223,7 @@ async def edit_user_role(
         auth: authentication details
         db: database session
         user_id: ID of the user for whom the setting is to be updated
-        body: new role for updating the user setting
+        body: new role for updating the users roles
 
     returns:
         the updated user
