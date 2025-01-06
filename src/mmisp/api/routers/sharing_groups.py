@@ -652,7 +652,7 @@ async def _create_sharing_group(auth: Auth, db: Session, body: CreateSharingGrou
     sharing_group_server = SharingGroupServer(sharing_group_id=sharing_group.id, server_id=0, all_orgs=False)
 
     db.add_all([sharing_group_org, sharing_group_server])
-    await db.commit()
+    await db.flush()
     await db.refresh(sharing_group)
 
     return sharing_group.__dict__
@@ -715,7 +715,7 @@ async def _update_sharing_group(auth: Auth, db: Session, id: int, body: UpdateSh
 
     update_record(sharing_group, body.dict())
 
-    await db.commit()
+    await db.flush()
     await db.refresh(sharing_group)
 
     return sharing_group.__dict__
@@ -737,7 +737,7 @@ async def _delete_sharing_group(auth: Auth, db: Session, id: int) -> dict:
     await db.execute(delete(SharingGroupServer).filter(SharingGroupServer.sharing_group_id == sharing_group.id))
 
     await db.delete(sharing_group)
-    await db.commit()
+    await db.flush()
 
     return sharing_group.__dict__
 
@@ -945,7 +945,7 @@ async def _add_org_to_sharing_group(
 
     update_record(sharing_group_org, update)
 
-    await db.commit()
+    await db.flush()
     await db.refresh(sharing_group_org)
 
     return SharingGroupOrgSchema.parse_obj(sharing_group_org.asdict())
@@ -971,7 +971,7 @@ async def _remove_org_from_sharing_group(auth: Auth, db: Session, id: int, organ
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     await db.delete(sharing_group_org)
-    await db.commit()
+    await db.flush()
 
     return sharing_group_org.__dict__
 
@@ -1006,7 +1006,7 @@ async def _add_server_to_sharing_group(auth: Auth, db: Session, id: int, body: A
 
     update_record(sharing_group_server, update)
 
-    await db.commit()
+    await db.flush()
     await db.refresh(sharing_group_server)
 
     return sharing_group_server.__dict__
@@ -1032,7 +1032,7 @@ async def _remove_server_from_sharing_group(auth: Auth, db: Session, id: int, se
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     await db.delete(sharing_group_server)
-    await db.commit()
+    await db.flush()
 
     return sharing_group_server.__dict__
 
@@ -1073,7 +1073,7 @@ async def _create_sharing_group_legacy(auth: Auth, db: Session, body: CreateShar
     sharing_group_server = SharingGroupServer(sharing_group_id=sharing_group.id, server_id=0, all_orgs=False)
 
     db.add_all([sharing_group_org, sharing_group_server])
-    await db.commit()
+    await db.flush()
     await db.refresh(sharing_group_org)
     await db.refresh(sharing_group_server)
     await db.refresh(sharing_group)
@@ -1177,7 +1177,7 @@ async def _update_sharing_group_legacy(
     update = body.dict(include={"name", "description", "releasability", "local", "active", "roaming"})
     update_record(sharing_group, update)
 
-    await db.commit()
+    await db.flush()
     await db.refresh(sharing_group)
 
     organisation = await db.get(Organisation, sharing_group.org_id)
@@ -1238,7 +1238,7 @@ async def _delete_sharing_group_legacy(auth: Auth, db: Session, id: int) -> dict
     await db.execute(delete(SharingGroupServer).filter(SharingGroupServer.sharing_group_id == sharing_group.id))
 
     await db.delete(sharing_group)
-    await db.commit()
+    await db.flush()
 
     return {
         "id": sharing_group.id,
@@ -1279,7 +1279,7 @@ async def _add_org_to_sharing_group_legacy(
 
     update_record(sharing_group_org, body.dict())
 
-    await db.commit()
+    await db.flush()
     await db.refresh(sharing_group_org)
 
     return StandardStatusResponse(
@@ -1313,7 +1313,7 @@ async def _remove_org_from_sharing_group_legacy(
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     await db.delete(sharing_group_org)
-    await db.commit()
+    await db.flush()
 
     return StandardStatusResponse(
         saved=True,
@@ -1353,7 +1353,7 @@ async def _add_server_to_sharing_group_legacy(
 
     update_record(sharing_group_server, body.dict())
 
-    await db.commit()
+    await db.flush()
     await db.refresh(sharing_group_server)
 
     return StandardStatusResponse(
@@ -1387,7 +1387,7 @@ async def _remove_server_from_sharing_group_legacy(
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     await db.delete(sharing_group_server)
-    await db.commit()
+    await db.flush()
 
     return StandardStatusResponse(
         saved=True,

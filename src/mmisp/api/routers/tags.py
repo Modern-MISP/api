@@ -343,7 +343,7 @@ async def _add_tag(db: Session, body: TagCreateBody) -> TagResponse:
         raise HTTPException(status.HTTP_403_FORBIDDEN, detail="This tag name already exists.")
 
     db.add(tag)
-    await db.commit()
+    await db.flush()
 
     return TagResponse.parse_obj({"Tag": tag.__dict__})
 
@@ -405,7 +405,7 @@ async def _update_tag(db: Session, body: TagUpdateBody, tag_id: int) -> TagRespo
 
     update_record(tag, body.dict())
 
-    await db.commit()
+    await db.flush()
     await db.refresh(tag)
 
     return TagResponse.parse_obj({"Tag": tag.__dict__})
@@ -433,7 +433,7 @@ async def _delete_tag(db: Session, tag_id: int) -> TagDeleteResponse:
     await db.execute(delete(EventTag).filter(EventTag.tag_id == deleted_tag.id))
     await db.execute(delete(AttributeTag).filter(AttributeTag.tag_id == deleted_tag.id))
     await db.delete(deleted_tag)
-    await db.commit()
+    await db.flush()
 
     message = "Tag deleted."
 

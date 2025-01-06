@@ -606,7 +606,7 @@ async def _add_event(auth: Auth, db: Session, body: AddEventBody) -> AddEditGetE
 
     await execute_blocking_workflow("event-before-save", db, new_event)
     db.add(new_event)
-    await db.commit()
+    await db.flush()
     await db.refresh(new_event)
 
     result = await db.execute(
@@ -712,7 +712,7 @@ async def _update_event(db: Session, event_id: str, body: EditEventBody) -> AddE
     update_record(event, body.dict())
 
     await execute_blocking_workflow("event-before-save", db, event)
-    await db.commit()
+    await db.flush()
     await db.refresh(event)
     await execute_workflow("event-after-save", db, event)
 
@@ -738,7 +738,7 @@ async def _delete_event(db: Session, event_id: int) -> DeleteEventResponse:
         )
 
     await db.delete(event)
-    await db.commit()
+    await db.flush()
 
     return DeleteEventResponse(
         saved=True,
@@ -895,7 +895,7 @@ async def _unpublish_event(db: Session, event_id: str, request: Request) -> Unpu
     setattr(event, "published", False)
     setattr(event, "publish_timestamp", 0)
 
-    await db.commit()
+    await db.flush()
     await db.refresh(event)
 
     return UnpublishEventResponse(
@@ -931,7 +931,7 @@ async def _add_tag_to_event(db: Session, event_id: str, tag_id: str, local: str)
     new_event_tag = EventTag(event_id=event_id, tag_id=tag.id, local=True if int(local) == 1 else False)
 
     db.add(new_event_tag)
-    await db.commit()
+    await db.flush()
     await db.refresh(new_event_tag)
 
     return AddRemoveTagEventsResponse(saved=True, success="Tag added", check_publish=True)
@@ -959,7 +959,7 @@ async def _remove_tag_from_event(db: Session, event_id: str, tag_id: str) -> Add
         return AddRemoveTagEventsResponse(saved=False, errors="Invalid event - tag combination.")
 
     await db.delete(event_tag)
-    await db.commit()
+    await db.flush()
 
     return AddRemoveTagEventsResponse(saved=True, success="Tag removed", check_publish=True)
 

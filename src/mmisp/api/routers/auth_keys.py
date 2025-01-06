@@ -417,7 +417,7 @@ async def _auth_key_add(auth: Auth, db: Session, user_id: int, body: AddAuthKeyB
 
     db.add(auth_key)
 
-    await db.commit()
+    await db.flush()
     await db.refresh(auth_key)
     return AddAuthKeyResponse(
         AuthKey=AddAuthKeyResponseAuthKey(
@@ -654,7 +654,7 @@ async def _auth_keys_edit(auth: Auth, db: Session, auth_key_id: int, body: EditA
 
     update_record(auth_key, update)
 
-    await db.commit()
+    await db.flush()
     await db.refresh(auth_key)
     await db.refresh(user)
     return EditAuthKeyResponseCompl(
@@ -696,7 +696,7 @@ async def _auth_keys_delete(auth: Auth, db: Session, auth_key_id: int) -> None:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     await db.delete(auth_key)
-    await db.commit()
+    await db.flush()
 
 
 @alog

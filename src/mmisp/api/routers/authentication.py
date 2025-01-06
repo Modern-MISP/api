@@ -325,9 +325,9 @@ async def redirect_to_frontend(
 
     if not user.sub:
         user.sub = user_info["sub"]
-        await db.commit()
+        await db.flush()
     user.last_login = int(datetime.now().timestamp())
-    await db.commit()
+    await db.flush()
     return TokenResponse(
         token=encode_token(str(user.id)),
     )
@@ -493,7 +493,7 @@ async def _change_password_UserId(
     user.password = hash_secret(body.password.get_secret_value())
     user.change_pw = True
 
-    await db.commit()
+    await db.flush()
 
     return ChangeLoginInfoResponse(successful=True)
 
@@ -513,7 +513,7 @@ async def _add_openID_Connect_provider(auth: Auth, db: Session, body: IdentityPr
         scope=body.scope,
     )
     db.add(oidc_provider)
-    await db.commit()
+    await db.flush()
     await db.refresh(oidc_provider)
 
     return IdentityProviderInfo(id=oidc_provider.id, name=oidc_provider.name)
@@ -529,7 +529,7 @@ async def _delete_openID_Connect_provider(db: Session, open_Id_Connect_provider_
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     await db.delete(oidc_provider)
-    await db.commit()
+    await db.flush()
 
     return ChangeLoginInfoResponse(successful=True)
 
@@ -582,10 +582,10 @@ async def _password_login(db: Session, body: PasswordLoginBody) -> TokenResponse
 
     if user.force_logout:
         user.force_logout = False
-        await db.commit()
+        await db.flush()
 
     user.last_login = int(datetime.now().timestamp())
-    await db.commit()
+    await db.flush()
     return TokenResponse(token=encode_token(str(user.id)))
 
 
@@ -617,6 +617,6 @@ async def _set_own_password(db: Session, body: ChangePasswordBody) -> TokenRespo
     user.password = hash_secret(new_password)
     user.change_pw = False
 
-    await db.commit()
+    await db.flush()
 
     return TokenResponse(token=encode_token(str(user.id)))

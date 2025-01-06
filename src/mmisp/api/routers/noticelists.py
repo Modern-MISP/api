@@ -220,7 +220,7 @@ async def _toggleEnable_noticelists(db: Session, noticelist_id: int) -> Standard
 
     noticelist.enabled = not noticelist.enabled
 
-    await db.commit()
+    await db.flush()
 
     return StandardStatusIdentifiedResponse(
         saved=True,

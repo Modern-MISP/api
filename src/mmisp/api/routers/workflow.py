@@ -172,7 +172,7 @@ async def edit_workflow(
             status=status.HTTP_400_BAD_REQUEST,
             message=f"Refusing to save invalid graph:\n{report}",
         )
-    await db.commit()
+    await db.flush()
     await db.refresh(workflow)
     return workflow
 
@@ -218,7 +218,7 @@ async def delete_workflow(workflow_id: int, db: Session) -> bool:
     if workflow is None:
         return False
     await db.delete(workflow)
-    await db.commit()
+    await db.flush()
     return True
 
 
@@ -307,7 +307,7 @@ async def create_workflow(trigger_id: str, db: Session) -> None:
     )
 
     db.add(new_workflow)
-    await db.commit()
+    await db.flush()
     await db.refresh(new_workflow)
 
 
@@ -567,7 +567,7 @@ async def toggleModule(
     workflow.data = cast(WorkflowGraph, graph)
     workflow.enabled = enable
 
-    await db.commit()
+    await db.flush()
     await db.refresh(workflow)
     enabled_text = "Enabled" if (enable) else "Disabled"
     return StandardStatusResponse(
@@ -647,12 +647,12 @@ async def set_admin_setting(setting_name: str, value: str, db: Session) -> None:
     if setting is None:
         new_setting = AdminSetting(setting=setting_name, value=value)
         db.add(new_setting)
-        await db.commit()
+        await db.flush()
         await db.refresh(new_setting)
         return
 
     setting.value = value
-    await db.commit()
+    await db.flush()
     await db.refresh(setting)
 
 
@@ -713,6 +713,6 @@ async def toggleWorkflowDebugField(workflow_id: int, debug_enabled: bool, db: Se
     if workflow is None:
         return False
     workflow.debug_enabled = debug_enabled
-    await db.commit()
+    await db.flush()
     await db.refresh(workflow)
     return True

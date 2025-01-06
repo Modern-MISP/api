@@ -392,7 +392,7 @@ async def _add_user(auth: Auth, db: Session, body: AddUserBody) -> AddUserRespon
 
     db.add(user)
 
-    await db.commit()
+    await db.flush()
     await db.refresh(user)
 
     user_setting = UserSetting(
@@ -403,7 +403,7 @@ async def _add_user(auth: Auth, db: Session, body: AddUserBody) -> AddUserRespon
 
     db.add(user_setting)
 
-    await db.commit()
+    await db.flush()
     await db.refresh(user_setting)
 
     return AddUserResponse(User=AddUserResponseData(**user.__dict__))
@@ -616,10 +616,10 @@ async def _delete_user(user_id: str, auth: Auth, db: Session) -> StandardStatusI
     user_settings = await db.execute(select(UserSetting).where(UserSetting.user_id == user.id))
     for setting in user_settings.scalars():
         await db.delete(setting)
-        await db.commit()
+        await db.flush()
 
     await db.delete(user)
-    await db.commit()
+    await db.flush()
 
     return StandardStatusIdentifiedResponse(
         saved=True,
@@ -659,7 +659,7 @@ async def _update_user(auth: Auth, db: Session, userID: str, body: UserAttribute
 
     if settings.get("name") is not None:
         name.value = json.dumps({"name": str(settings["name"])})
-        await db.commit()
+        await db.flush()
         await db.refresh(name)
     if settings.get("org_id") is not None:
         user.org_id = settings["org_id"]
@@ -720,7 +720,7 @@ async def _update_user(auth: Auth, db: Session, userID: str, body: UserAttribute
     if settings.get("nids_sid") is not None:
         user.nids_sid = settings["nids_sid"]
 
-    await db.commit()
+    await db.flush()
     await db.refresh(user)
 
     user_schema = UserSchema(

@@ -508,7 +508,7 @@ async def _add_feed(db: Session, body: FeedCreateBody) -> FeedResponse:
     feed: Feed = Feed(**body.dict())
 
     db.add(feed)
-    await db.commit()
+    await db.flush()
     await db.refresh(feed)
 
     return FeedResponse(Feed=feed.__dict__)
@@ -545,7 +545,7 @@ async def _update_feed(db: Session, feed_id: int, body: FeedUpdateBody) -> FeedR
 
     update_record(feed, body.dict())
 
-    await db.commit()
+    await db.flush()
     await db.refresh(feed)
 
     return FeedResponse(Feed=feed.__dict__)
@@ -567,7 +567,7 @@ async def _toggle_feed(db: Session, feed_id: int, body: FeedToggleBody) -> FeedE
         feed.enabled = enable_status
         message = f"Feed {target_status} successfully."
 
-    await db.commit()
+    await db.flush()
 
     return FeedEnableDisableResponse(name=feed.name, message=message, url=feed.url)
 
@@ -597,7 +597,7 @@ async def _enable_feed(db: Session, feed_id: int) -> FeedEnableDisableResponse:
         message = "Feed already enabled."
     else:
         feed.enabled = True
-        await db.commit()
+        await db.flush()
         message = "Feed enabled successfully."
 
     return FeedEnableDisableResponse(name=feed.name, message=message, url=feed.url)
@@ -614,7 +614,7 @@ async def _disable_feed(db: Session, feed_id: int) -> FeedEnableDisableResponse:
         message = "Feed already disabled."
     else:
         feed.enabled = False
-        await db.commit()
+        await db.flush()
         message = "Feed disabled successfully."
 
     return FeedEnableDisableResponse(name=feed.name, message=message, url=feed.url)

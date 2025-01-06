@@ -321,7 +321,7 @@ async def _delete_galaxy(db: Session, galaxy_id: str, request: Request) -> Delet
     await db.execute(delete(GalaxyCluster).filter(GalaxyCluster.galaxy_id == galaxy.id))
 
     await db.delete(galaxy)
-    await db.commit()
+    await db.flush()
 
     return DeleteForceUpdateImportGalaxyResponse(
         saved=True, success=True, name="Galaxy deleted", message="Galaxy deleted", url=str(request.url.path)

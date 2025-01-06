@@ -331,7 +331,7 @@ async def _add_remote_server(auth: Auth, db: Session, body: AddServer) -> AddSer
         skip_proxy=body.skip_proxy,
     )
     db.add(server)
-    await db.commit()
+    await db.flush()
     await db.refresh(server)
 
     server_dict = server.__dict__.copy()
@@ -351,7 +351,7 @@ async def _delete_remote_server(auth: Auth, db: Session, server_id: str) -> Stan
 
     # Delete
     await db.delete(server_to_delete)
-    await db.commit()
+    await db.flush()
 
     return StandardStatusIdentifiedResponse(
         saved=True,
@@ -393,7 +393,7 @@ async def _edit_server_by_id(auth: Auth, db: Session, server_id: str, body: Edit
     server.skip_proxy = body.skip_proxy
 
     db.add(server)
-    await db.commit()
+    await db.flush()
     await db.refresh(server)
 
     server_dict = server.__dict__.copy()

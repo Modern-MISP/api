@@ -287,7 +287,7 @@ async def _add_object(db: Session, event_id: int, object_template_id: int, body:
         )
         db.add(attribute)
 
-    await db.commit()
+    await db.flush()
     await db.refresh(object)
 
     result = await db.execute(select(Attribute).filter(Attribute.object_id == object.id))
@@ -388,7 +388,7 @@ async def _delete_object(db: Session, object_id: int, hard_delete: bool) -> Stan
         success = True
         message = "Object has been soft deleted."
 
-    await db.commit()
+    await db.flush()
 
     return StandardStatusResponse(
         saved=saved,

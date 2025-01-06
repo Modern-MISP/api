@@ -342,7 +342,7 @@ async def _add_sighting(db: Session, body: SightingCreateBody) -> list[SightingA
 
         counter -= 1
 
-    await db.commit()
+    await db.flush()
 
     return responses
 
@@ -365,7 +365,7 @@ async def _add_sightings_at_index(db: Session, attribute_id: int) -> SightingAtt
     )
 
     db.add(sighting)
-    await db.commit()
+    await db.flush()
     await db.refresh(sighting)
     await execute_workflow("sighting-after-save", db, attribute)
 
@@ -415,7 +415,7 @@ async def _delete_sighting(db: Session, sighting_id: int) -> StandardStatusRespo
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Sighting not found.")
 
     await db.delete(sighting)
-    await db.commit()
+    await db.flush()
     saved: bool = True
     success: bool = True
     message: str = "Sighting successfully deleted."

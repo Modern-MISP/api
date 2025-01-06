@@ -389,7 +389,7 @@ async def _set_user_settings(
     user_setting.value = json.dumps(body.value)
     user_setting.user_id = user_id
 
-    await db.commit()
+    await db.flush()
     await db.refresh(user_setting)
 
     user_setting_out = SetUserSettingResponseUserSetting(
@@ -543,4 +543,4 @@ async def _delete_user_settings(
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     await db.delete(user_setting)
-    await db.commit()
+    await db.flush()

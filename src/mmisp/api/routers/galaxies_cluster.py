@@ -40,7 +40,6 @@ from mmisp.db.models.tag import Tag
 from mmisp.lib.fallbacks import GENERIC_MISP_ORGANISATION
 from mmisp.lib.galaxies import galaxy_tag_name, parse_galaxy_authors
 from mmisp.lib.galaxy_clusters import update_galaxy_cluster_elements
-from mmisp.lib.logger import alog
 from mmisp.lib.logger import alog, log
 from mmisp.util.uuid import uuid
 
@@ -358,7 +357,7 @@ async def _import_galaxy_cluster(
             )
 
             db.add(new_galaxy_cluster)
-            await db.commit()
+            await db.flush()
 
             for galaxy_element in galaxy_elements:
                 galaxy_element["galaxy_cluster_id"] = new_galaxy_cluster.id
@@ -368,7 +367,7 @@ async def _import_galaxy_cluster(
                 new_galaxy_element = GalaxyElement(**{**galaxy_element})
 
                 db.add(new_galaxy_element)
-                await db.commit()
+                await db.flush()
 
         successfully_imported_counter += 1
 
@@ -530,7 +529,7 @@ async def _attach_cluster_to_galaxy(
             raise HTTPException(status.HTTP_404_NOT_FOUND, "Invalid event.")
         new_event_tag = EventTag(event_id=event.id, tag_id=tag_id, local=True if int(local) == 1 else False)
         db.add(new_event_tag)
-        await db.commit()
+        await db.flush()
     elif attach_target_type == "attribute":
         attribute: Attribute | None = await db.get(Attribute, attach_target_id)
 
@@ -543,7 +542,7 @@ async def _attach_cluster_to_galaxy(
             local=True if int(local) == 1 else False,
         )
         db.add(new_attribute_tag)
-        await db.commit()
+        await db.flush()
     elif attach_target_type == "tag_collection":
         raise HTTPException(
             status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Attachment to tag_collection is not available yet."

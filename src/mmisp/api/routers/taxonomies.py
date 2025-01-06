@@ -559,7 +559,7 @@ async def _enable_taxonomy(db: Session, taxonomy_id: int) -> StandardStatusIdent
 
     taxonomy.enabled = True
 
-    await db.commit()
+    await db.flush()
 
     return StandardStatusIdentifiedResponse(
         saved=True,
@@ -580,7 +580,7 @@ async def _disable_taxonomy(db: Session, taxonomy_id: int) -> StandardStatusIden
 
     taxonomy.enabled = False
 
-    await db.commit()
+    await db.flush()
 
     return StandardStatusIdentifiedResponse(
         saved=True,

@@ -348,7 +348,7 @@ async def _add_warninglist(
     db.add_all(new_warninglist_entries)
     db.add_all(new_warninglist_types)
 
-    await db.commit()
+    await db.flush()
 
     warninglist_data = await _prepare_warninglist_details_response(db, new_warninglist)
 
@@ -379,7 +379,7 @@ async def _toggleEnable(
     for warninglist in warninglists:
         warninglist.enabled = body.enabled
 
-    await db.commit()
+    await db.flush()
 
     if not warninglists:
         return ToggleEnableWarninglistsResponse(saved=False, errors="Warninglist(s) not found")
@@ -436,7 +436,7 @@ async def _delete_warninglist(
     await db.execute(delete(WarninglistEntry).filter(WarninglistEntry.warninglist_id == warninglist.id))
     await db.execute(delete(WarninglistType).filter(WarninglistType.warninglist_id == warninglist.id))
     await db.delete(warninglist)
-    await db.commit()
+    await db.flush()
 
     return WarninglistResponse(Warninglist=warninglist_response)
 

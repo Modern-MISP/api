@@ -585,7 +585,7 @@ async def _add_attribute(db: Session, event_id: str, body: AddAttributeBody) -> 
     )
 
     db.add(new_attribute)
-    await db.commit()
+    await db.flush()
 
     await db.refresh(new_attribute)
 
@@ -628,7 +628,7 @@ async def _update_attribute(db: Session, attribute_id: str, body: EditAttributeB
 
     await execute_workflow("attribute-after-save", db, attribute)
 
-    await db.commit()
+    await db.flush()
     await db.refresh(attribute)
 
     attribute_data = await _prepare_edit_attribute_response(db, attribute_id, attribute)
@@ -644,7 +644,7 @@ async def _delete_attribute(db: Session, attribute_id: str) -> DeleteAttributeRe
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     await db.delete(attribute)
-    await db.commit()
+    await db.flush()
 
     return DeleteAttributeResponse(message="Attribute deleted.")
 
@@ -687,10 +687,10 @@ async def _delete_selected_attributes(
 
         if body.allow_hard_delete:
             await db.delete(attribute)
-            await db.commit()
+            await db.flush()
         else:
             setattr(attribute, "deleted", True)
-            await db.commit()
+            await db.flush()
 
             await db.refresh(attribute)
 
@@ -768,7 +768,7 @@ async def _restore_attribute(db: Session, attribute_id: str) -> GetAttributeResp
 
     setattr(attribute, "deleted", False)
 
-    await db.commit()
+    await db.flush()
     await db.refresh(attribute)
 
     await execute_workflow("attribute-after-save", db, attribute)
@@ -807,7 +807,7 @@ async def _add_tag_to_attribute(
 
     db.add(new_attribute_tag)
 
-    await db.commit()
+    await db.flush()
     await db.refresh(new_attribute_tag)
 
     return AddRemoveTagAttributeResponse(saved=True, success="Tag added", check_publish=True)
@@ -826,7 +826,7 @@ async def _remove_tag_from_attribute(db: Session, attribute_id: str, tag_id: str
         return AddRemoveTagAttributeResponse(saved=False, errors="Invalid attribute - tag combination.")
 
     await db.delete(attribute_tag)
-    await db.commit()
+    await db.flush()
 
     return AddRemoveTagAttributeResponse(saved=True, success="Tag removed", check_publish=True)
 

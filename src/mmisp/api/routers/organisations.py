@@ -204,7 +204,7 @@ async def _add_organisation(auth: Auth, db: Session, body: AddOrganisation) -> G
         landingpage=body.landingpage,
     )
     db.add(org)
-    await db.commit()
+    await db.flush()
     return GetOrganisationResponse(
         id=org.id,
         name=org.name,
@@ -308,7 +308,7 @@ async def _delete_organisation(auth: Auth, db: Session, organisationID: str) -> 
         )
 
     await db.delete(organisation)
-    await db.commit()
+    await db.flush()
 
     return DeleteForceUpdateOrganisationResponse(
         saved=True,
@@ -355,7 +355,7 @@ async def _update_organisation(
     if body.landingpage is not None:
         org.landingpage = body.landingpage
 
-    await db.commit()
+    await db.flush()
     await db.refresh(org)
     return GetOrganisationResponse(
         id=org.id,
