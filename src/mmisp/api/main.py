@@ -56,6 +56,7 @@ def init_app(*, init_db: bool = False) -> FastAPI:
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
+        expose_headers=["x-result-count"],
     )
     app.add_middleware(LogMiddleware)
     if config.ENABLE_PROFILE:
