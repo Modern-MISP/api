@@ -63,7 +63,7 @@ async def _get_user(
     db: Session, authorization: str, strategy: AuthStrategy, permissions: list[Permission], is_readonly_route: bool
 ) -> tuple[User, int | None]:
     """
-    Fetches the user from the database.
+    Fetches the user from the database. 
     """
 
     user_id: int | None = None
@@ -109,7 +109,7 @@ def authorize(
     strategy: AuthStrategy, permissions: list[Permission] | None = None, is_readonly_route: bool = False
 ) -> Callable[[Session, str], Awaitable[Auth]]:
     """
-    Handels the authentication.
+    Handels the authenticationproccess.
     """
 
     if permissions is None:
