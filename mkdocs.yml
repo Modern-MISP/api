@@ -47,7 +47,7 @@ plugins:
             show_source: false
             separate_signature: true
             show_signature_annotations: true
-            filters: []
+
             
   - plantuml:
       puml_url: http://plantuml:8080/

@@ -48,7 +48,7 @@ class AuthStrategy(StrEnum):
 @dataclass
 class Auth:
     """
-    Contains the result of an authentication process.
+        Contains the result of an authentication process.
     """
 
     user_id: int | None = None
@@ -63,7 +63,17 @@ async def _get_user(
     db: Session, authorization: str, strategy: AuthStrategy, permissions: list[Permission], is_readonly_route: bool
 ) -> tuple[User, int | None]:
     """
-    Fetches the user from the database. 
+        Fetches the user from the database. 
+
+    args: 
+        db: the current db
+        authorization: the authorization token
+        strategy: the authorization strategy
+        permissions: the list of permissions to be checked
+        is_readonly_route: wether the route is read only
+
+    returns: 
+        the user and, in case of an api key as the auth strategy the decoded api key
     """
 
     user_id: int | None = None
@@ -132,14 +142,14 @@ def authorize(
     ) -> Auth:
         authorization = authorization.replace("Bearer ", "")
         """
-            Generates an auth object, which contains the result of the authentication proccess.
+        Generates an auth object, which contains the result of the authentication proccess.
 
-            args: 
-                db: the current db
-                authorization: The auth key from the header 
+        args: 
+            db: the current db
+            authorization: The auth key from the header 
 
-            returns:
-                An auth object 
+        returns:
+            An auth object 
         """
 
         if not is_readonly_route and config.READONLY_MODE:
@@ -167,6 +177,13 @@ def authorize(
 def check_permissions(auth: Auth, permissions: list[Permission] = []) -> bool:
     """
     Checks the permission list against the permissions of the user's auth.
+
+    args:
+        auth: the clients authentication
+        permissions: the permissions to check against the client's
+
+    returns:
+        True if the client has all the requested permissions.
     """
 
     if auth.user is None:
