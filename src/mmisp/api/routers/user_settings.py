@@ -20,6 +20,7 @@ from mmisp.api_schemas.user_settings import (
 )
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.user_setting import SettingName, UserSetting
+from mmisp.lib.logger import alog
 
 router = APIRouter(tags=["user_settings"])
 
@@ -28,6 +29,7 @@ router = APIRouter(tags=["user_settings"])
     "/user_settings/setSetting/me/{userSettingName}",
     summary="Set user setting.",
 )
+@alog
 async def set_user_settings(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
@@ -66,6 +68,7 @@ async def set_user_settings(
     "/user_settings/{userSettingId}",
     summary="View UserSetting by ID.",
 )
+@alog
 async def view_user_settings(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -93,6 +96,7 @@ async def view_user_settings(
     "/user_settings/me/{userSettingName}",
     summary="View UserSetting.",
 )
+@alog
 async def get_user_setting_by_id(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -127,6 +131,7 @@ async def get_user_setting_by_id(
     "/user_settings",
     summary="Displays all UserSettings.",
 )
+@alog
 async def search_user_settings(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -154,6 +159,7 @@ async def search_user_settings(
     "/user_settings",
     summary="Displays all UserSettings.",
 )
+@alog
 async def get_user_settings(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -178,6 +184,7 @@ async def get_user_settings(
     "/user_settings/{userSettingId}",
     summary="Deletes a UserSetting.",
 )
+@alog
 async def delete_user_settings(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
@@ -218,6 +225,7 @@ async def delete_user_settings(
     deprecated=True,
     summary="View UserSetting by ID.",
 )
+@alog
 async def view_user_settings_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -260,6 +268,7 @@ async def view_user_settings_depr(
     deprecated=True,
     summary="View a UserSetting.",
 )
+@alog
 async def get_user_setting_by_ids(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -307,6 +316,7 @@ async def get_user_setting_by_ids(
     deprecated=True,
     summary="Delete UserSetting.",
 )
+@alog
 async def delete_user_settings_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
@@ -342,6 +352,7 @@ async def delete_user_settings_depr(
 # --- endpoint logic ---
 
 
+@alog
 async def _set_user_settings(
     auth: Auth,
     db: Session,
@@ -378,7 +389,7 @@ async def _set_user_settings(
     user_setting.value = json.dumps(body.value)
     user_setting.user_id = user_id
 
-    await db.commit()
+    await db.flush()
     await db.refresh(user_setting)
 
     user_setting_out = SetUserSettingResponseUserSetting(
@@ -392,6 +403,7 @@ async def _set_user_settings(
     return SetUserSettingResponse(UserSetting=user_setting_out)
 
 
+@alog
 async def _view_user_settings(
     auth: Auth,
     db: Session,
@@ -415,6 +427,7 @@ async def _view_user_settings(
     return ViewUserSettingResponse(UserSetting=user_setting_out)
 
 
+@alog
 async def _get_user_setting_by_id(
     db: Session,
     auth: Auth,
@@ -443,6 +456,7 @@ async def _get_user_setting_by_id(
     return ViewUserSettingResponse(UserSetting=user_setting_out)
 
 
+@alog
 async def _search_user_settings(
     auth: Auth,
     db: Session,
@@ -484,6 +498,7 @@ async def _search_user_settings(
     return user_settings_out
 
 
+@alog
 async def _get_user_settings(
     auth: Auth,
     db: Session,
@@ -514,6 +529,7 @@ async def _get_user_settings(
     return user_settings_out
 
 
+@alog
 async def _delete_user_settings(
     auth: Auth,
     db: Session,
@@ -527,4 +543,4 @@ async def _delete_user_settings(
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     await db.delete(user_setting)
-    await db.commit()
+    await db.flush()

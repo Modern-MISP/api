@@ -19,6 +19,7 @@ from mmisp.api_schemas.responses.standard_status_response import (
 )
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.noticelist import Noticelist, NoticelistEntry
+from mmisp.lib.logger import alog, log
 
 router = APIRouter(tags=["noticelists"])
 
@@ -29,6 +30,7 @@ router = APIRouter(tags=["noticelists"])
     response_model=NoticelistResponse,
     summary="Get noticelist details",
 )
+@alog
 async def get_noticelist(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -56,6 +58,7 @@ async def get_noticelist(
     status_code=status.HTTP_200_OK,
     response_model=StandardStatusIdentifiedResponse,
 )
+@alog
 async def post_toggleEnable_noticelist(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -84,6 +87,7 @@ async def post_toggleEnable_noticelist(
     response_model=StandardStatusResponse,
     summary="Update noticelists",
 )
+@alog
 async def update_noticelists(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -109,6 +113,7 @@ async def update_noticelists(
     response_model=list[GetAllNoticelists],
     summary="Get all noticelists",
 )
+@alog
 async def get_all_noticelists(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -138,6 +143,7 @@ async def get_all_noticelists(
     response_model=NoticelistResponse,
     summary="Get noticelist details (Deprecated)",
 )
+@alog
 async def get_noticelist_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -167,6 +173,7 @@ async def get_noticelist_depr(
     response_model=StandardStatusResponse,
     summary="Update noticelists (Deprecated)",
 )
+@alog
 async def update_noticelist_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -189,6 +196,7 @@ async def update_noticelist_depr(
 # --- endpoint logic ---
 
 
+@alog
 async def _get_noticelist(db: Session, noticelist_id: int) -> NoticelistResponse:
     noticelist: Noticelist | None = await db.get(Noticelist, noticelist_id)
 
@@ -201,6 +209,7 @@ async def _get_noticelist(db: Session, noticelist_id: int) -> NoticelistResponse
     return NoticelistResponse(Noticelist=_prepare_noticelist_response(noticelist, noticelist_entries))
 
 
+@alog
 async def _toggleEnable_noticelists(db: Session, noticelist_id: int) -> StandardStatusIdentifiedResponse:
     noticelist: Noticelist | None = await db.get(Noticelist, noticelist_id)
 
@@ -211,7 +220,7 @@ async def _toggleEnable_noticelists(db: Session, noticelist_id: int) -> Standard
 
     noticelist.enabled = not noticelist.enabled
 
-    await db.commit()
+    await db.flush()
 
     return StandardStatusIdentifiedResponse(
         saved=True,
@@ -223,6 +232,7 @@ async def _toggleEnable_noticelists(db: Session, noticelist_id: int) -> Standard
     )
 
 
+@alog
 async def _update_noticelists(db: Session, depr: bool) -> StandardStatusResponse:
     return StandardStatusResponse(
         saved=True,
@@ -233,6 +243,7 @@ async def _update_noticelists(db: Session, depr: bool) -> StandardStatusResponse
     )
 
 
+@alog
 async def _get_all_noticelists(db: Session) -> list[GetAllNoticelists]:
     noticelist_data: list[GetAllNoticelists] = []
 
@@ -257,6 +268,7 @@ async def _get_all_noticelists(db: Session) -> list[GetAllNoticelists]:
     return noticelist_data
 
 
+@log
 def _prepare_noticelist_entries(noticelist_entries: Sequence[NoticelistEntry]) -> list[NoticelistEntryResponse]:
     noticelist_entry_response = []
     for noticelist_entry in noticelist_entries:
@@ -268,6 +280,7 @@ def _prepare_noticelist_entries(noticelist_entries: Sequence[NoticelistEntry]) -
     return noticelist_entry_response
 
 
+@log
 def _prepare_noticelist_response(
     noticelist: Noticelist, noticelist_entries: Sequence[NoticelistEntry]
 ) -> NoticelistAttributesResponse:

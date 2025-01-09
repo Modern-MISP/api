@@ -5,11 +5,13 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
 from mmisp.api.config import config
+from mmisp.lib.logger import alog
 
 router = APIRouter(tags=["jobs"])
 
 
 @router.get("/jobs/{id}")
+@alog
 async def get_job(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))], id: str
 ) -> dict:

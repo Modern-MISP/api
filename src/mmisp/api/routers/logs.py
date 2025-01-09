@@ -1,12 +1,14 @@
 from typing import Annotated, Any, List, Sequence
 
-from fastapi import APIRouter, Depends, HTTPException, Path, status
+from fastapi import APIRouter, Depends, HTTPException, Path, Response, status
 from sqlalchemy import desc, select
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
 from mmisp.api_schemas.logs import LogsRequest
 from mmisp.db.database import Session, get_db
+from mmisp.db.lib import get_count_from_select
 from mmisp.db.models.log import Log
+from mmisp.lib.logger import alog, log
 from mmisp.workflows.fastapi import log_to_json_dict
 
 router = APIRouter(tags=["logs"])
@@ -17,9 +19,11 @@ router = APIRouter(tags=["logs"])
     status_code=status.HTTP_200_OK,
     summary="List logs",
 )
+@alog
 async def logs_index_get(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
+    response: Response,
     page: int | None = None,
     limit: int | None = None,
     model: str | None = None,
@@ -43,7 +47,8 @@ async def logs_index_get(
     if limit is not None:
         request.limit = limit
 
-    logs = await query_logs(request, db)
+    count, logs = await query_logs(request, db)
+    response.headers["X-Result-Count"] = str(count)
     return transform_logs_to_response(logs)
 
 
@@ -52,10 +57,12 @@ async def logs_index_get(
     status_code=status.HTTP_200_OK,
     summary="List logs",
 )
+@alog
 async def logs_index_post(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     request: LogsRequest,
+    response: Response,
 ) -> List[Any]:
     """
     List logs, filter can be applied.
@@ -66,21 +73,24 @@ async def logs_index_post(
     - **page** the page for pagination
     - **limit** the limit for pagination
     """
-    logs = await query_logs(request, db)
+    count, logs = await query_logs(request, db)
+    response.headers["X-Result-Count"] = str(count)
     return transform_logs_to_response(logs)
 
 
+@log
 def transform_logs_to_response(logs: Sequence[Log]) -> List[Any]:
     result = []
 
-    for log in logs:
-        log_json = log_to_json_dict(log)
+    for log_entry in logs:
+        log_json = log_to_json_dict(log_entry)
         result.append(log_json)
 
     return result
 
 
-async def query_logs(request: LogsRequest, db: Session) -> Sequence[Log]:
+@alog
+async def query_logs(request: LogsRequest, db: Session) -> tuple[int, Sequence[Log]]:
     query = select(Log)
 
     if request.model:
@@ -94,7 +104,9 @@ async def query_logs(request: LogsRequest, db: Session) -> Sequence[Log]:
     query = query.order_by(desc(Log.id))
 
     db_result = await db.execute(query)
-    return db_result.scalars().all()
+
+    count = await get_count_from_select(db, query)
+    return count, db_result.scalars().all()
 
 
 @router.get(
@@ -102,6 +114,7 @@ async def query_logs(request: LogsRequest, db: Session) -> Sequence[Log]:
     status_code=status.HTTP_200_OK,
     summary="Get single log",
 )
+@alog
 async def log_by_id(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],

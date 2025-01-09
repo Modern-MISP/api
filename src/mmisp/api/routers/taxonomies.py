@@ -29,6 +29,7 @@ from mmisp.db.models.attribute import AttributeTag
 from mmisp.db.models.event import EventTag
 from mmisp.db.models.tag import Tag
 from mmisp.db.models.taxonomy import Taxonomy, TaxonomyEntry, TaxonomyPredicate
+from mmisp.lib.logger import alog
 
 router = APIRouter(tags=["taxonomies"])
 
@@ -39,6 +40,7 @@ router = APIRouter(tags=["taxonomies"])
     response_model=StandardStatusResponse,
     summary="Update taxonomies",
 )
+@alog
 async def update_taxonomies(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -65,6 +67,7 @@ async def update_taxonomies(
     response_model=GetIdTaxonomyResponseWrapper,
     summary="Get taxonomy details",
 )
+@alog
 async def get_taxonomy_details(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -93,6 +96,7 @@ async def get_taxonomy_details(
     status_code=status.HTTP_200_OK,
     summary="Get all taxonomies",
 )
+@alog
 async def get_taxonomies(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -119,6 +123,7 @@ async def get_taxonomies(
     response_model=GetTagTaxonomyResponse,
     summary="Get taxonomy inclusive tags and attributes",
 )
+@alog
 async def get_taxonomy_details_extended(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -148,6 +153,7 @@ async def get_taxonomy_details_extended(
     response_model=ExportTaxonomyResponse,
     summary="Export taxonomy",
 )
+@alog
 async def export_taxonomy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -177,6 +183,7 @@ async def export_taxonomy(
     response_model=StandardStatusResponse,
     summary="Enable taxonomy",
 )
+@alog
 async def enable_taxonomy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -206,6 +213,7 @@ async def enable_taxonomy(
     response_model=StandardStatusResponse,
     summary="Disable taxonomy",
 )
+@alog
 async def disable_taxonomies(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -236,6 +244,7 @@ async def disable_taxonomies(
     response_model=StandardStatusResponse,
     summary="Update taxonomies",
 )
+@alog
 async def update_taxonomies_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -263,6 +272,7 @@ async def update_taxonomies_depr(
     response_model=GetIdTaxonomyResponseWrapper,
     summary="Get taxonomy details",
 )
+@alog
 async def get_taxonomy_by_id_depr(
     db: Annotated[Session, Depends(get_db)],
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
@@ -289,6 +299,7 @@ async def get_taxonomy_by_id_depr(
 # --- endpoint logic ---
 
 
+@alog
 async def _update_taxonomies(db: Session, deprecated: bool) -> StandardStatusResponse:
     result = await db.execute(select(func.count()).select_from(Taxonomy))
     number_updated_taxonomies = result.scalar()
@@ -307,6 +318,7 @@ async def _update_taxonomies(db: Session, deprecated: bool) -> StandardStatusRes
     )
 
 
+@alog
 async def _get_taxonomy_details(db: Session, taxonomy_id: int) -> GetIdTaxonomyResponseWrapper:
     taxonomy: Taxonomy | None = await db.get(Taxonomy, taxonomy_id)
 
@@ -359,6 +371,7 @@ async def _get_taxonomy_details(db: Session, taxonomy_id: int) -> GetIdTaxonomyR
     return response
 
 
+@alog
 async def _get_all_taxonomies(db: Session) -> list[ViewTaxonomyResponse]:
     result = await db.execute(select(Taxonomy))
     taxonomies: Sequence[Taxonomy] = result.scalars().all()
@@ -433,6 +446,7 @@ async def _get_all_taxonomies(db: Session) -> list[ViewTaxonomyResponse]:
     return response
 
 
+@alog
 async def _get_taxonomy_details_extended(db: Session, taxonomy_id: int) -> GetTagTaxonomyResponse:
     taxonomy: Taxonomy | None = await db.get(Taxonomy, taxonomy_id)
 
@@ -496,6 +510,7 @@ async def _get_taxonomy_details_extended(db: Session, taxonomy_id: int) -> GetTa
     return response
 
 
+@alog
 async def _export_taxonomy(db: Session, taxonomy_id: int) -> ExportTaxonomyResponse:
     taxonomy: Taxonomy | None = await db.get(Taxonomy, taxonomy_id)
 
@@ -535,6 +550,7 @@ async def _export_taxonomy(db: Session, taxonomy_id: int) -> ExportTaxonomyRespo
     )
 
 
+@alog
 async def _enable_taxonomy(db: Session, taxonomy_id: int) -> StandardStatusIdentifiedResponse:
     taxonomy: Taxonomy | None = await db.get(Taxonomy, taxonomy_id)
 
@@ -543,7 +559,7 @@ async def _enable_taxonomy(db: Session, taxonomy_id: int) -> StandardStatusIdent
 
     taxonomy.enabled = True
 
-    await db.commit()
+    await db.flush()
 
     return StandardStatusIdentifiedResponse(
         saved=True,
@@ -555,6 +571,7 @@ async def _enable_taxonomy(db: Session, taxonomy_id: int) -> StandardStatusIdent
     )
 
 
+@alog
 async def _disable_taxonomy(db: Session, taxonomy_id: int) -> StandardStatusIdentifiedResponse:
     taxonomy: Taxonomy | None = await db.get(Taxonomy, taxonomy_id)
 
@@ -563,7 +580,7 @@ async def _disable_taxonomy(db: Session, taxonomy_id: int) -> StandardStatusIden
 
     taxonomy.enabled = False
 
-    await db.commit()
+    await db.flush()
 
     return StandardStatusIdentifiedResponse(
         saved=True,
@@ -575,6 +592,7 @@ async def _disable_taxonomy(db: Session, taxonomy_id: int) -> StandardStatusIden
     )
 
 
+@alog
 async def _get_tag_name(db: Session, taxonomy_entry: TaxonomyEntry) -> str:
     result = await db.execute(
         select(TaxonomyPredicate).filter(TaxonomyPredicate.id == taxonomy_entry.taxonomy_predicate_id).limit(1)

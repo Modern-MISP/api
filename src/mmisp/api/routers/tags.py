@@ -23,6 +23,7 @@ from mmisp.db.models.feed import Feed
 from mmisp.db.models.galaxy_cluster import GalaxyCluster
 from mmisp.db.models.tag import Tag
 from mmisp.db.models.taxonomy import Taxonomy, TaxonomyPredicate
+from mmisp.lib.logger import alog, log
 from mmisp.util.models import update_record
 from mmisp.util.partial import partial
 
@@ -35,6 +36,7 @@ router = APIRouter(tags=["tags"])
     response_model=TagResponse,
     summary="Add new tag",
 )
+@alog
 async def add_tag(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.TAG_EDITOR]))],
     db: Annotated[Session, Depends(get_db)],
@@ -63,6 +65,7 @@ async def add_tag(
     response_model=TagViewResponse,
     summary="View tag details",
 )
+@alog
 async def view_tag(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -91,6 +94,7 @@ async def view_tag(
     response_model=partial(TagSearchResponse),
     summary="Search tags",
 )
+@alog
 async def search_tags(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -119,6 +123,7 @@ async def search_tags(
     response_model=TagResponse,
     summary="Edit tag",
 )
+@alog
 async def update_tag(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -150,6 +155,7 @@ async def update_tag(
     response_model=TagDeleteResponse,
     summary="Delete tag",
 )
+@alog
 async def delete_tag(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -177,6 +183,7 @@ async def delete_tag(
     status_code=status.HTTP_200_OK,
     summary="Get all tags",
 )
+@alog
 async def get_tags(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -206,6 +213,7 @@ async def get_tags(
     deprecated=True,
     summary="Add new tag (Deprecated)",
 )
+@alog
 async def add_tag_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.TAG_EDITOR]))],
     db: Annotated[Session, Depends(get_db)],
@@ -235,6 +243,7 @@ async def add_tag_depr(
     deprecated=True,
     summary="View tag details (Deprecated)",
 )
+@alog
 async def view_tag_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -264,6 +273,7 @@ async def view_tag_depr(
     deprecated=True,
     summary="Edit tag (Deprecated)",
 )
+@alog
 async def update_tag_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -296,6 +306,7 @@ async def update_tag_depr(
     deprecated=True,
     summary="Delete tag (Deprecated)",
 )
+@alog
 async def delete_tag_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
@@ -321,6 +332,7 @@ async def delete_tag_depr(
 # --- endpoint logic ---
 
 
+@alog
 async def _add_tag(db: Session, body: TagCreateBody) -> TagResponse:
     _check_type_hex_colour(body.colour)
     tag: Tag = Tag(**body.dict())
@@ -331,11 +343,12 @@ async def _add_tag(db: Session, body: TagCreateBody) -> TagResponse:
         raise HTTPException(status.HTTP_403_FORBIDDEN, detail="This tag name already exists.")
 
     db.add(tag)
-    await db.commit()
+    await db.flush()
 
     return TagResponse.parse_obj({"Tag": tag.__dict__})
 
 
+@alog
 async def _view_tag(db: Session, tag_id: int) -> TagViewResponse:
     tag: Tag | None = await db.get(Tag, tag_id)
 
@@ -348,6 +361,7 @@ async def _view_tag(db: Session, tag_id: int) -> TagViewResponse:
     return TagViewResponse(**{**tag.__dict__, "attribute_count": 0, "count": count})
 
 
+@alog
 async def _search_tags(db: Session, tag_search_term: str) -> dict:
     result = await db.execute(select(Tag).filter(Tag.name.contains(tag_search_term)))
     tags: Sequence[Tag] = result.scalars().all()
@@ -373,6 +387,7 @@ async def _search_tags(db: Session, tag_search_term: str) -> dict:
     return {"response": tag_datas}
 
 
+@alog
 async def _update_tag(db: Session, body: TagUpdateBody, tag_id: int) -> TagResponse:
     tag: Tag | None = await db.get(Tag, tag_id)
 
@@ -390,12 +405,13 @@ async def _update_tag(db: Session, body: TagUpdateBody, tag_id: int) -> TagRespo
 
     update_record(tag, body.dict())
 
-    await db.commit()
+    await db.flush()
     await db.refresh(tag)
 
     return TagResponse.parse_obj({"Tag": tag.__dict__})
 
 
+@alog
 async def _delete_tag(db: Session, tag_id: int) -> TagDeleteResponse:
     deleted_tag: Tag | None = await db.get(Tag, tag_id)
 
@@ -417,13 +433,14 @@ async def _delete_tag(db: Session, tag_id: int) -> TagDeleteResponse:
     await db.execute(delete(EventTag).filter(EventTag.tag_id == deleted_tag.id))
     await db.execute(delete(AttributeTag).filter(AttributeTag.tag_id == deleted_tag.id))
     await db.delete(deleted_tag)
-    await db.commit()
+    await db.flush()
 
     message = "Tag deleted."
 
     return TagDeleteResponse.parse_obj({"name": message, "message": message, "url": f"/tags/{tag_id}"})
 
 
+@alog
 async def _get_tags(db: Session) -> TagGetResponse:
     result = await db.execute(select(Tag))
     tags: Sequence[Tag] = result.scalars().all()
@@ -431,6 +448,7 @@ async def _get_tags(db: Session) -> TagGetResponse:
     return TagGetResponse(Tag=[tag.__dict__ for tag in tags])
 
 
+@log
 def _check_type_hex_colour(colour: Any) -> None:
     _hex_string = re.compile(r"#[a-fA-F0-9]{6}$")
     if colour is None or not _hex_string.match(colour):

@@ -18,6 +18,7 @@ from mmisp.api_schemas.servers import (
 )
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.server import Server
+from mmisp.lib.logger import alog, log
 
 router = APIRouter(tags=["servers"])
 
@@ -26,6 +27,7 @@ router = APIRouter(tags=["servers"])
     "/servers/remote/getAll",
     summary="Requests a list of all remote servers",
 )
+@alog
 async def get_remote_servers(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -48,6 +50,7 @@ async def get_remote_servers(
     "/servers/remote/{serverId}",
     summary="Requests information regarding a remote server",
 )
+@alog
 async def get_remote_server_by_id(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -73,6 +76,7 @@ async def get_remote_server_by_id(
     "/servers/remote/add",
     summary="Adds a new remote server to the list",
 )
+@alog
 async def add_remote_server(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -98,6 +102,7 @@ async def add_remote_server(
     "/servers/remote/delete/{server_id}",
     summary="Deletes a remote server by id",
 )
+@alog
 async def delete_remote_server(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -120,6 +125,7 @@ async def delete_remote_server(
 
 
 @router.get("/servers/getVersion")
+@alog
 async def get_version(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))], db: Annotated[Session, Depends(get_db)]
 ) -> dict:
@@ -153,6 +159,7 @@ async def get_version(
     "/servers/remote/edit/{server_id}",
     summary="Edits remote servers",
 )
+@alog
 async def update_remote_server(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -185,6 +192,7 @@ async def update_remote_server(
     deprecated=True,
     summary="Requests a list of all remote servers",
 )
+@alog
 async def get_remote_servers_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -208,6 +216,7 @@ async def get_remote_servers_depr(
     deprecated=True,
     summary="Adds a new remote server to the list",
 )
+@alog
 async def add_remote_server_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -231,6 +240,7 @@ async def add_remote_server_depr(
 # --- endpoint logic ---
 
 
+@alog
 async def _get_remote_servers(auth: Auth, db: Session) -> list[GetRemoteServer]:
     if not (check_permissions(auth, [Permission.SITE_ADMIN]) or check_permissions(auth, [Permission.ADMIN])):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
@@ -244,6 +254,7 @@ async def _get_remote_servers(auth: Auth, db: Session) -> list[GetRemoteServer]:
     return [get_remote_server_answer(server) for server in servers]
 
 
+@log
 def get_remote_server_answer(server: Server) -> GetRemoteServer:
     server_dict = server.__dict__.copy()
     server_dict["lastpulledid"] = server_dict.pop("last_pulled_id")
@@ -270,6 +281,7 @@ def get_remote_server_answer(server: Server) -> GetRemoteServer:
     )
 
 
+@alog
 async def _get_remote_server_by_id(auth: Auth, db: Session, serverId: str) -> GetRemoteServer:
     if not (check_permissions(auth, [Permission.SITE_ADMIN]) or check_permissions(auth, [Permission.ADMIN])):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
@@ -291,6 +303,7 @@ async def _get_remote_server_by_id(auth: Auth, db: Session, serverId: str) -> Ge
     return get_remote_server_answer(server)
 
 
+@alog
 async def _add_remote_server(auth: Auth, db: Session, body: AddServer) -> AddServerResponse:
     if not (check_permissions(auth, [Permission.SITE_ADMIN]) and check_permissions(auth, [Permission.ADMIN])):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
@@ -318,7 +331,7 @@ async def _add_remote_server(auth: Auth, db: Session, body: AddServer) -> AddSer
         skip_proxy=body.skip_proxy,
     )
     db.add(server)
-    await db.commit()
+    await db.flush()
     await db.refresh(server)
 
     server_dict = server.__dict__.copy()
@@ -326,6 +339,7 @@ async def _add_remote_server(auth: Auth, db: Session, body: AddServer) -> AddSer
     return AddServerResponse(Server=AddServerServer(**server_dict))
 
 
+@alog
 async def _delete_remote_server(auth: Auth, db: Session, server_id: str) -> StandardStatusIdentifiedResponse:
     if not (check_permissions(auth, [Permission.SITE_ADMIN]) or check_permissions(auth, [Permission.ADMIN])):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
@@ -337,7 +351,7 @@ async def _delete_remote_server(auth: Auth, db: Session, server_id: str) -> Stan
 
     # Delete
     await db.delete(server_to_delete)
-    await db.commit()
+    await db.flush()
 
     return StandardStatusIdentifiedResponse(
         saved=True,
@@ -349,6 +363,7 @@ async def _delete_remote_server(auth: Auth, db: Session, server_id: str) -> Stan
     )
 
 
+@alog
 async def _edit_server_by_id(auth: Auth, db: Session, server_id: str, body: EditServer) -> AddServerResponse:
     if not (check_permissions(auth, [Permission.SITE_ADMIN]) or check_permissions(auth, [Permission.ADMIN])):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
@@ -378,7 +393,7 @@ async def _edit_server_by_id(auth: Auth, db: Session, server_id: str, body: Edit
     server.skip_proxy = body.skip_proxy
 
     db.add(server)
-    await db.commit()
+    await db.flush()
     await db.refresh(server)
 
     server_dict = server.__dict__.copy()

@@ -30,6 +30,7 @@ from mmisp.db.database import Session, get_db
 from mmisp.db.models.organisation import Organisation
 from mmisp.db.models.server import Server
 from mmisp.db.models.sharing_group import SharingGroup, SharingGroupOrg, SharingGroupServer
+from mmisp.lib.logger import alog
 from mmisp.util.models import update_record
 from mmisp.util.partial import partial
 
@@ -44,6 +45,7 @@ LOCAL_INSTANCE_SERVER = {"id": 0, "name": "Local instance", "url": config.OWN_UR
     response_model=partial(SharingGroupSchema),
     summary="Add a new sharing group",
 )
+@alog
 async def create_sharing_group(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
@@ -73,6 +75,7 @@ async def create_sharing_group(
     response_model=partial(SharingGroupSchema),
     summary="Get sharing group details",
 )
+@alog
 async def get_sharing_group(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
@@ -102,6 +105,7 @@ async def get_sharing_group(
     response_model=partial(SharingGroupSchema),
     summary="Update sharing group",
 )
+@alog
 async def update_sharing_group(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
@@ -134,6 +138,7 @@ async def update_sharing_group(
     response_model=partial(SharingGroupSchema),
     summary="Delete sharing group",
 )
+@alog
 async def delete_sharing_group(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
@@ -163,6 +168,7 @@ async def delete_sharing_group(
     response_model=partial(GetAllSharingGroupsResponse),
     summary="Get all sharing groups",
 )
+@alog
 async def get_all_sharing_groups(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
@@ -189,6 +195,7 @@ async def get_all_sharing_groups(
     response_model=partial(GetSharingGroupInfoResponse),
     summary="Additional infos from a sharing group",
 )
+@alog
 async def get_sharing_group_info(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
@@ -217,6 +224,7 @@ async def get_sharing_group_info(
     status_code=status.HTTP_200_OK,
     summary="Add an organisation",
 )
+@alog
 async def add_org_to_sharing_group(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
@@ -249,6 +257,7 @@ async def add_org_to_sharing_group(
     response_model=partial(SharingGroupOrgSchema),
     summary="Remove an organisation",
 )
+@alog
 async def remove_org_from_sharing_group(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
@@ -281,6 +290,7 @@ async def remove_org_from_sharing_group(
     response_model=partial(SharingGroupServerSchema),
     summary="Add a server",
 )
+@alog
 async def add_server_to_sharing_group(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
@@ -313,6 +323,7 @@ async def add_server_to_sharing_group(
     response_model=partial(SharingGroupServerSchema),
     summary="Remove a server",
 )
+@alog
 async def remove_server_from_sharing_group(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
@@ -349,6 +360,7 @@ async def remove_server_from_sharing_group(
     response_model=partial(CreateSharingGroupLegacyResponse),
     summary="Add new sharing group",
 )
+@alog
 async def create_sharing_group_legacy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
@@ -379,6 +391,7 @@ async def create_sharing_group_legacy(
     response_model=partial(ViewUpdateSharingGroupLegacyResponse),
     summary="Get sharing groups details",
 )
+@alog
 async def view_sharing_group_legacy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
@@ -408,6 +421,7 @@ async def view_sharing_group_legacy(
     status_code=status.HTTP_200_OK,
     summary="Update sharing group",
 )
+@alog
 async def update_sharing_group_legacy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
@@ -441,6 +455,7 @@ async def update_sharing_group_legacy(
     response_model=partial(DeleteSharingGroupLegacyResponse),
     summary="Delete sharing group",
 )
+@alog
 async def delete_sharing_group_legacy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
@@ -471,6 +486,7 @@ async def delete_sharing_group_legacy(
     response_model=partial(StandardStatusResponse),
     summary="Add an organisation",
 )
+@alog
 async def add_org_to_sharing_group_legacy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
@@ -506,6 +522,7 @@ async def add_org_to_sharing_group_legacy(
     deprecated=True,
     summary="Remove an organisation",
 )
+@alog
 async def remove_org_from_sharing_group_legacy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
@@ -538,6 +555,7 @@ async def remove_org_from_sharing_group_legacy(
     deprecated=True,
     summary="Add a server",
 )
+@alog
 async def add_server_to_sharing_group_legacy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
@@ -573,6 +591,7 @@ async def add_server_to_sharing_group_legacy(
     response_model=partial(StandardStatusResponse),
     summary="Remove a server",
 )
+@alog
 async def remove_server_from_sharing_group_legacy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
@@ -602,6 +621,7 @@ async def remove_server_from_sharing_group_legacy(
 # ---endpoint logic ---
 
 
+@alog
 async def _create_sharing_group(auth: Auth, db: Session, body: CreateSharingGroupBody) -> dict:
     organisation: Organisation | None = None
 
@@ -632,12 +652,13 @@ async def _create_sharing_group(auth: Auth, db: Session, body: CreateSharingGrou
     sharing_group_server = SharingGroupServer(sharing_group_id=sharing_group.id, server_id=0, all_orgs=False)
 
     db.add_all([sharing_group_org, sharing_group_server])
-    await db.commit()
+    await db.flush()
     await db.refresh(sharing_group)
 
     return sharing_group.__dict__
 
 
+@alog
 async def _get_sharing_group(auth: Auth, db: Session, id: int) -> dict:
     sharing_group: SharingGroup | None = await db.get(SharingGroup, id)
 
@@ -680,6 +701,7 @@ async def _get_sharing_group(auth: Auth, db: Session, id: int) -> dict:
     raise HTTPException(status.HTTP_404_NOT_FOUND)
 
 
+@alog
 async def _update_sharing_group(auth: Auth, db: Session, id: int, body: UpdateSharingGroupBody) -> dict:
     sharing_group: SharingGroup | None = await db.get(SharingGroup, id)
 
@@ -693,12 +715,13 @@ async def _update_sharing_group(auth: Auth, db: Session, id: int, body: UpdateSh
 
     update_record(sharing_group, body.dict())
 
-    await db.commit()
+    await db.flush()
     await db.refresh(sharing_group)
 
     return sharing_group.__dict__
 
 
+@alog
 async def _delete_sharing_group(auth: Auth, db: Session, id: int) -> dict:
     sharing_group: SharingGroup | None = await db.get(SharingGroup, id)
 
@@ -714,11 +737,12 @@ async def _delete_sharing_group(auth: Auth, db: Session, id: int) -> dict:
     await db.execute(delete(SharingGroupServer).filter(SharingGroupServer.sharing_group_id == sharing_group.id))
 
     await db.delete(sharing_group)
-    await db.commit()
+    await db.flush()
 
     return sharing_group.__dict__
 
 
+@alog
 async def _get_all_sharing_groups(auth: Auth, db: Session) -> dict:
     sharing_groups: Sequence[SharingGroup] = []
 
@@ -816,6 +840,7 @@ async def _get_all_sharing_groups(auth: Auth, db: Session) -> dict:
     return {"response": sharing_groups_computed}
 
 
+@alog
 async def _get_sharing_group_info(auth: Auth, db: Session, id: int) -> dict:
     sharing_group: SharingGroup | None = await db.get(SharingGroup, id)
 
@@ -888,6 +913,7 @@ async def _get_sharing_group_info(auth: Auth, db: Session, id: int) -> dict:
     }
 
 
+@alog
 async def _add_org_to_sharing_group(
     auth: Auth, db: Session, id: int, body: AddOrgToSharingGroupBody
 ) -> SharingGroupOrgSchema:
@@ -919,12 +945,13 @@ async def _add_org_to_sharing_group(
 
     update_record(sharing_group_org, update)
 
-    await db.commit()
+    await db.flush()
     await db.refresh(sharing_group_org)
 
     return SharingGroupOrgSchema.parse_obj(sharing_group_org.asdict())
 
 
+@alog
 async def _remove_org_from_sharing_group(auth: Auth, db: Session, id: int, organisation_id: int) -> dict:
     sharing_group: SharingGroup | None = await db.get(SharingGroup, id)
 
@@ -944,11 +971,12 @@ async def _remove_org_from_sharing_group(auth: Auth, db: Session, id: int, organ
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     await db.delete(sharing_group_org)
-    await db.commit()
+    await db.flush()
 
     return sharing_group_org.__dict__
 
 
+@alog
 async def _add_server_to_sharing_group(auth: Auth, db: Session, id: int, body: AddServerToSharingGroupBody) -> dict:
     sharing_group: SharingGroup | None = await db.get(SharingGroup, id)
 
@@ -978,12 +1006,13 @@ async def _add_server_to_sharing_group(auth: Auth, db: Session, id: int, body: A
 
     update_record(sharing_group_server, update)
 
-    await db.commit()
+    await db.flush()
     await db.refresh(sharing_group_server)
 
     return sharing_group_server.__dict__
 
 
+@alog
 async def _remove_server_from_sharing_group(auth: Auth, db: Session, id: int, server_id: int) -> dict:
     sharing_group: SharingGroup | None = await db.get(SharingGroup, id)
 
@@ -1003,11 +1032,12 @@ async def _remove_server_from_sharing_group(auth: Auth, db: Session, id: int, se
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     await db.delete(sharing_group_server)
-    await db.commit()
+    await db.flush()
 
     return sharing_group_server.__dict__
 
 
+@alog
 async def _create_sharing_group_legacy(auth: Auth, db: Session, body: CreateSharingGroupLegacyBody) -> dict:
     organisation: Organisation | None = None
 
@@ -1043,7 +1073,7 @@ async def _create_sharing_group_legacy(auth: Auth, db: Session, body: CreateShar
     sharing_group_server = SharingGroupServer(sharing_group_id=sharing_group.id, server_id=0, all_orgs=False)
 
     db.add_all([sharing_group_org, sharing_group_server])
-    await db.commit()
+    await db.flush()
     await db.refresh(sharing_group_org)
     await db.refresh(sharing_group_server)
     await db.refresh(sharing_group)
@@ -1057,6 +1087,7 @@ async def _create_sharing_group_legacy(auth: Auth, db: Session, body: CreateShar
     }
 
 
+@alog
 async def _view_sharing_group_legacy(auth: Auth, db: Session, id: int) -> dict:
     sharing_group: SharingGroup | None = await db.get(SharingGroup, id)
 
@@ -1129,6 +1160,7 @@ async def _view_sharing_group_legacy(auth: Auth, db: Session, id: int) -> dict:
     }
 
 
+@alog
 async def _update_sharing_group_legacy(
     auth: Auth, db: Session, id: int, body: UpdateSharingGroupLegacyBody
 ) -> ViewUpdateSharingGroupLegacyResponse:
@@ -1145,7 +1177,7 @@ async def _update_sharing_group_legacy(
     update = body.dict(include={"name", "description", "releasability", "local", "active", "roaming"})
     update_record(sharing_group, update)
 
-    await db.commit()
+    await db.flush()
     await db.refresh(sharing_group)
 
     organisation = await db.get(Organisation, sharing_group.org_id)
@@ -1190,6 +1222,7 @@ async def _update_sharing_group_legacy(
     )
 
 
+@alog
 async def _delete_sharing_group_legacy(auth: Auth, db: Session, id: int) -> dict:
     sharing_group: SharingGroup | None = await db.get(SharingGroup, id)
 
@@ -1205,7 +1238,7 @@ async def _delete_sharing_group_legacy(auth: Auth, db: Session, id: int) -> dict
     await db.execute(delete(SharingGroupServer).filter(SharingGroupServer.sharing_group_id == sharing_group.id))
 
     await db.delete(sharing_group)
-    await db.commit()
+    await db.flush()
 
     return {
         "id": sharing_group.id,
@@ -1217,6 +1250,7 @@ async def _delete_sharing_group_legacy(auth: Auth, db: Session, id: int) -> dict
     }
 
 
+@alog
 async def _add_org_to_sharing_group_legacy(
     auth: Auth, db: Session, id: int, organisation_id: int, body: AddOrgToSharingGroupLegacyBody
 ) -> StandardStatusResponse:
@@ -1245,7 +1279,7 @@ async def _add_org_to_sharing_group_legacy(
 
     update_record(sharing_group_org, body.dict())
 
-    await db.commit()
+    await db.flush()
     await db.refresh(sharing_group_org)
 
     return StandardStatusResponse(
@@ -1257,6 +1291,7 @@ async def _add_org_to_sharing_group_legacy(
     )
 
 
+@alog
 async def _remove_org_from_sharing_group_legacy(
     auth: Auth, db: Session, id: int, organisation_id: int
 ) -> StandardStatusResponse:
@@ -1278,7 +1313,7 @@ async def _remove_org_from_sharing_group_legacy(
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     await db.delete(sharing_group_org)
-    await db.commit()
+    await db.flush()
 
     return StandardStatusResponse(
         saved=True,
@@ -1289,6 +1324,7 @@ async def _remove_org_from_sharing_group_legacy(
     )
 
 
+@alog
 async def _add_server_to_sharing_group_legacy(
     auth: Auth, db: Session, id: int, server_id: int, body: AddServerToSharingGroupLegacyBody
 ) -> StandardStatusResponse:
@@ -1317,7 +1353,7 @@ async def _add_server_to_sharing_group_legacy(
 
     update_record(sharing_group_server, body.dict())
 
-    await db.commit()
+    await db.flush()
     await db.refresh(sharing_group_server)
 
     return StandardStatusResponse(
@@ -1329,6 +1365,7 @@ async def _add_server_to_sharing_group_legacy(
     )
 
 
+@alog
 async def _remove_server_from_sharing_group_legacy(
     auth: Auth, db: Session, id: int, server_id: int
 ) -> StandardStatusResponse:
@@ -1350,7 +1387,7 @@ async def _remove_server_from_sharing_group_legacy(
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     await db.delete(sharing_group_server)
-    await db.commit()
+    await db.flush()
 
     return StandardStatusResponse(
         saved=True,

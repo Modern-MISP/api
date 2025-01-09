@@ -20,6 +20,7 @@ from mmisp.db.models.attribute import Attribute
 from mmisp.db.models.event import Event
 from mmisp.db.models.organisation import Organisation
 from mmisp.db.models.sighting import Sighting
+from mmisp.lib.logger import alog, log
 
 from ..workflow import execute_workflow
 
@@ -31,6 +32,7 @@ router = APIRouter(tags=["sightings"])
     status_code=status.HTTP_201_CREATED,
     summary="Add sighting",
 )
+@alog
 async def add_sighting(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SIGHTING]))],
     db: Annotated[Session, Depends(get_db)],
@@ -58,6 +60,7 @@ async def add_sighting(
     status_code=status.HTTP_201_CREATED,
     summary="Add sighting at index",
 )
+@alog
 async def add_sightings_at_index(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SIGHTING]))],
     db: Annotated[Session, Depends(get_db)],
@@ -85,6 +88,7 @@ async def add_sightings_at_index(
     status_code=status.HTTP_200_OK,
     summary="Get sightings for event",
 )
+@alog
 async def get_sightings_at_index(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -112,6 +116,7 @@ async def get_sightings_at_index(
     status_code=status.HTTP_200_OK,
     summary="Delete sighting",
 )
+@alog
 async def delete_sighting(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SIGHTING]))],
     db: Annotated[Session, Depends(get_db)],
@@ -139,6 +144,7 @@ async def delete_sighting(
     status_code=status.HTTP_200_OK,
     summary="Get all sightings",
 )
+@alog
 async def get_sightings(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -167,6 +173,7 @@ async def get_sightings(
     status_code=status.HTTP_201_CREATED,
     summary="Add sighting (Deprecated)",
 )
+@alog
 async def add_sighting_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SIGHTING]))],
     db: Annotated[Session, Depends(get_db)],
@@ -195,6 +202,7 @@ async def add_sighting_depr(
     status_code=status.HTTP_201_CREATED,
     summary="Add sighting at index (Deprecated)",
 )
+@alog
 async def add_sightings_at_index_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SIGHTING]))],
     db: Annotated[Session, Depends(get_db)],
@@ -223,6 +231,7 @@ async def add_sightings_at_index_depr(
     status_code=status.HTTP_200_OK,
     summary="Delete sighting (Deprecated)",
 )
+@alog
 async def delete_sighting_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SIGHTING]))],
     db: Annotated[Session, Depends(get_db)],
@@ -251,6 +260,7 @@ async def delete_sighting_depr(
     status_code=status.HTTP_200_OK,
     summary="Get sightings for event (Deprecated)",
 )
+@alog
 async def get_sightings_at_index_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -276,6 +286,7 @@ async def get_sightings_at_index_depr(
 # --- endpoint logic ---
 
 
+@alog
 async def _add_sighting(db: Session, body: SightingCreateBody) -> list[SightingAttributesResponse]:
     filters: SightingFiltersBody | None = body.filters if body.filters else None
     responses: list[SightingAttributesResponse] = []
@@ -331,11 +342,12 @@ async def _add_sighting(db: Session, body: SightingCreateBody) -> list[SightingA
 
         counter -= 1
 
-    await db.commit()
+    await db.flush()
 
     return responses
 
 
+@alog
 async def _add_sightings_at_index(db: Session, attribute_id: int) -> SightingAttributesResponse:
     attribute: Attribute | None = await db.get(Attribute, attribute_id)
 
@@ -353,7 +365,7 @@ async def _add_sightings_at_index(db: Session, attribute_id: int) -> SightingAtt
     )
 
     db.add(sighting)
-    await db.commit()
+    await db.flush()
     await db.refresh(sighting)
     await execute_workflow("sighting-after-save", db, attribute)
 
@@ -373,6 +385,7 @@ async def _add_sightings_at_index(db: Session, attribute_id: int) -> SightingAtt
     return response
 
 
+@alog
 async def _get_sightings_at_index(db: Session, event_id: int) -> list[SightingAttributesResponse]:
     if not await db.get(Event, event_id):
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Event not found.")
@@ -394,6 +407,7 @@ async def _get_sightings_at_index(db: Session, event_id: int) -> list[SightingAt
     return [SightingAttributesResponse(**sighting.__dict__) for sighting in sightings]
 
 
+@alog
 async def _delete_sighting(db: Session, sighting_id: int) -> StandardStatusResponse:
     sighting: Sighting | None = await db.get(Sighting, sighting_id)
 
@@ -401,7 +415,7 @@ async def _delete_sighting(db: Session, sighting_id: int) -> StandardStatusRespo
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Sighting not found.")
 
     await db.delete(sighting)
-    await db.commit()
+    await db.flush()
     saved: bool = True
     success: bool = True
     message: str = "Sighting successfully deleted."
@@ -415,6 +429,7 @@ async def _delete_sighting(db: Session, sighting_id: int) -> StandardStatusRespo
     )
 
 
+@alog
 async def _get_sightings(db: Session) -> SightingsGetResponse:
     responses: list[SightingAttributesResponse] = []
     result = await db.execute(select(Sighting))
@@ -456,11 +471,13 @@ async def _get_sightings(db: Session) -> SightingsGetResponse:
     return SightingsGetResponse(sightings=responses)
 
 
+@log
 def _check_valid_return_format(return_format: str) -> None:
     if return_format not in ["json"]:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid return format.")
 
 
+@alog
 async def _get_attributes_with_filters(db: Session, filters: SightingFiltersBody, value: str) -> Sequence[Attribute]:
     search_body: SightingFiltersBody = filters
     query: Select = select(Attribute)

@@ -1,3 +1,4 @@
+import logging
 from collections.abc import Sequence
 from datetime import datetime
 from typing import Annotated
@@ -35,12 +36,16 @@ from mmisp.api_schemas.authentication import (
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.identity_provider import OIDCIdentityProvider
 from mmisp.db.models.user import User
+from mmisp.lib.logger import alog
 from mmisp.util.crypto import hash_secret, verify_secret
 
 router = APIRouter(tags=["authentication"])
 
+logger = logging.getLogger("mmisp")
+
 
 @router.get("/auth/openID/getAllOpenIDConnectProvidersInfo")
+@alog
 async def get_all_open_id_connect_providers_info(
     db: Annotated[Session, Depends(get_db)],
 ) -> list[IdentityProviderInfo]:
@@ -58,6 +63,7 @@ async def get_all_open_id_connect_providers_info(
 
 
 @router.get("/auth/openID/getAllOpenIDConnectProviders")
+@alog
 async def get_all_open_id_connect_providers(
     db: Annotated[Session, Depends(get_db)],
 ) -> list[GetIdentityProviderResponse]:
@@ -75,6 +81,7 @@ async def get_all_open_id_connect_providers(
 
 
 @router.get("/auth/openID/getOpenIDConnectProvider/{providerId}")
+@alog
 async def get_open_id_connect_provider_by_id(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -95,6 +102,7 @@ async def get_open_id_connect_provider_by_id(
 
 
 @router.post("/auth/openID/addOpenIDConnectProvider")
+@alog
 async def add_openID_Connect_provider(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -114,6 +122,7 @@ async def add_openID_Connect_provider(
 
 
 @router.post("/auth/openID/editOpenIDConnectProvider/{openIDConnectProvider}")
+@alog
 async def edit_openID_Connect_provider(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -139,6 +148,7 @@ async def edit_openID_Connect_provider(
     "/auth/openID/delete/{openIDConnectProvider}",
     summary="Deletes an OpenID Connect Provider by its ID",
 )
+@alog
 async def delete_openID_Connect_provider(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -160,6 +170,7 @@ async def delete_openID_Connect_provider(
 
 
 @router.post("/auth/login/start", response_model=StartLoginResponse)
+@alog
 async def start_login(db: Annotated[Session, Depends(get_db)], body: StartLoginBody) -> dict:
     """Starts the login process.
 
@@ -195,6 +206,7 @@ async def start_login(db: Annotated[Session, Depends(get_db)], body: StartLoginB
 
 
 @router.post("/auth/login/password")
+@alog
 async def password_login(db: Annotated[Session, Depends(get_db)], body: PasswordLoginBody) -> TokenResponse:
     """Login with password.
 
@@ -215,6 +227,7 @@ async def password_login(db: Annotated[Session, Depends(get_db)], body: Password
     "/auth/login/setOwnPassword",
     summary="User sets their password to a new password",
 )
+@alog
 async def set_password(
     db: Annotated[Session, Depends(get_db)],
     body: ChangePasswordBody,
@@ -234,6 +247,7 @@ async def set_password(
 
 @router.get("/auth/login/idp/{identityProviderName}/callback")
 @router.post("/auth/login/idp/{identityProviderName}/callback")
+@alog
 async def redirect_to_frontend(
     db: Annotated[Session, Depends(get_db)],
     identity_provider_name: Annotated[str, Path(alias="identityProviderName")],
@@ -311,15 +325,16 @@ async def redirect_to_frontend(
 
     if not user.sub:
         user.sub = user_info["sub"]
-        await db.commit()
+        await db.flush()
     user.last_login = int(datetime.now().timestamp())
-    await db.commit()
+    await db.flush()
     return TokenResponse(
         token=encode_token(str(user.id)),
     )
 
 
 @router.post("/auth/login/token")
+@alog
 async def exchange_token_login(body: ExchangeTokenLoginBody) -> TokenResponse:
     """Login with exchange token.
 
@@ -343,6 +358,7 @@ async def exchange_token_login(body: ExchangeTokenLoginBody) -> TokenResponse:
     "/auth/setPassword/{userId}",
     summary="Admin sets the password of the user to a new password",
 )
+@alog
 async def change_password_UserId(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -368,6 +384,7 @@ async def change_password_UserId(
 # --- endpoint logic ---
 
 
+@alog
 async def _get_oidc_config(base_url: str) -> dict:
     async with httpx.AsyncClient() as client:
         oidc_config_response = await client.get(f"{base_url}/.well-known/openid-configuration")
@@ -376,6 +393,7 @@ async def _get_oidc_config(base_url: str) -> dict:
 
 
 # --- endpoint logic ---
+@alog
 async def _get_all_open_id_connect_providers_info(db: Session) -> list[IdentityProviderInfo]:
     query = select(OIDCIdentityProvider)
     result = await db.execute(query)
@@ -391,6 +409,7 @@ async def _get_all_open_id_connect_providers_info(db: Session) -> list[IdentityP
     ]
 
 
+@alog
 async def get_idp_url(db: Session, identity_provider_id: int) -> str:
     identity_provider: OIDCIdentityProvider | None = await db.get(OIDCIdentityProvider, identity_provider_id)
 
@@ -411,6 +430,7 @@ async def get_idp_url(db: Session, identity_provider_id: int) -> str:
     return url
 
 
+@alog
 async def _get_all_open_id_connect_providers(db: Session) -> list[GetIdentityProviderResponse]:
     # if not (
     #    check_permissions(auth, [Permission.SITE_ADMIN])
@@ -436,6 +456,7 @@ async def _get_all_open_id_connect_providers(db: Session) -> list[GetIdentityPro
     ]
 
 
+@alog
 async def _get_open_id_connect_provider_by_id(auth: Auth, db: Session, provider_id: str) -> GetIdentityProviderResponse:
     if not (check_permissions(auth, [Permission.SITE_ADMIN]) and check_permissions(auth, [Permission.ADMIN])):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
@@ -457,6 +478,7 @@ async def _get_open_id_connect_provider_by_id(auth: Auth, db: Session, provider_
     )
 
 
+@alog
 async def _change_password_UserId(
     auth: Auth, db: Session, user_id: int, body: SetPasswordBody
 ) -> ChangeLoginInfoResponse:
@@ -471,11 +493,12 @@ async def _change_password_UserId(
     user.password = hash_secret(body.password.get_secret_value())
     user.change_pw = True
 
-    await db.commit()
+    await db.flush()
 
     return ChangeLoginInfoResponse(successful=True)
 
 
+@alog
 async def _add_openID_Connect_provider(auth: Auth, db: Session, body: IdentityProviderBody) -> IdentityProviderInfo:
     if not (check_permissions(auth, [Permission.SITE_ADMIN]) and check_permissions(auth, [Permission.ADMIN])):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
@@ -490,12 +513,13 @@ async def _add_openID_Connect_provider(auth: Auth, db: Session, body: IdentityPr
         scope=body.scope,
     )
     db.add(oidc_provider)
-    await db.commit()
+    await db.flush()
     await db.refresh(oidc_provider)
 
     return IdentityProviderInfo(id=oidc_provider.id, name=oidc_provider.name)
 
 
+@alog
 async def _delete_openID_Connect_provider(db: Session, open_Id_Connect_provider_Id: str) -> ChangeLoginInfoResponse:
     query = select(OIDCIdentityProvider).where(OIDCIdentityProvider.id == open_Id_Connect_provider_Id)
     oidc = await db.execute(query)
@@ -505,11 +529,12 @@ async def _delete_openID_Connect_provider(db: Session, open_Id_Connect_provider_
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     await db.delete(oidc_provider)
-    await db.commit()
+    await db.flush()
 
     return ChangeLoginInfoResponse(successful=True)
 
 
+@alog
 async def _edit_openID_Connect_provider(
     auth: Auth, db: Session, open_Id_Connect_provider_Id: str, body: IdentityProviderEditBody
 ) -> ChangeLoginInfoResponse:
@@ -524,54 +549,74 @@ async def _edit_openID_Connect_provider(
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     settings = body.dict(exclude_unset=True)
+    settings["client_secret"] = body.client_secret.get_secret_value() if body.client_secret is not None else None
 
     for key in settings.keys():
-        if key == "client_secret" and settings[key] is not None:
-            settings[key] = settings[key].get_secret_value()
         if settings[key] is not None:
             setattr(oidc_provider, key, settings[key])
 
-    await db.commit()
+    await db.flush()
 
     return ChangeLoginInfoResponse(successful=True)
 
 
+@alog
 async def _password_login(db: Session, body: PasswordLoginBody) -> TokenResponse:
     result = await db.execute(select(User).filter(User.email == body.email).limit(1))
     user: User | None = result.scalars().first()
 
-    if not user or user.external_auth_required or not verify_secret(body.password.get_secret_value(), user.password):
+    if not user:
+        logger.info(f"Did not find user with {body.email}")
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED)
+    if user.external_auth_required:
+        logger.info(f"External auth is required for user with {body.email}")
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED)
+
+    if not verify_secret(body.password.get_secret_value(), user.password):
+        logger.info(f"Password verification failed for user with {body.email}")
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
     if user.change_pw:
+        logger.info(f"User ({body.email}) must change password")
         raise HTTPException(status.HTTP_403_FORBIDDEN)
 
     if user.force_logout:
         user.force_logout = False
-        await db.commit()
+        await db.flush()
 
     user.last_login = int(datetime.now().timestamp())
-    await db.commit()
+    await db.flush()
     return TokenResponse(token=encode_token(str(user.id)))
 
 
+@alog
 async def _set_own_password(db: Session, body: ChangePasswordBody) -> TokenResponse:
     result = await db.execute(select(User).filter(User.email == body.email).limit(1))
     user: User | None = result.scalars().first()
-    old_password = body.oldPassword
 
-    if old_password is None:
+    if body.oldPassword is None:
         raise HTTPException(status.HTTP_400_BAD_REQUEST)
 
-    if not user or user.external_auth_required or not verify_secret(old_password.get_secret_value(), user.password):
+    old_password = body.oldPassword.get_secret_value()
+    new_password = body.password.get_secret_value()
+
+    if not user:
+        logger.info(f"Did not find user with {body.email}")
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED)
+    if user.external_auth_required:
+        logger.info(f"External auth is required for user with {body.email}")
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
-    if old_password.get_secret_value().lower() in body.password.get_secret_value().lower():
+    if not verify_secret(old_password, user.password):
+        logger.info(f"Password verification failed for user with {body.email}")
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED)
+
+    if old_password.lower() in new_password.lower():
         raise HTTPException(status.HTTP_400_BAD_REQUEST)
 
-    user.password = hash_secret(body.password.get_secret_value())
+    user.password = hash_secret(new_password)
     user.change_pw = False
 
-    await db.commit()
+    await db.flush()
 
     return TokenResponse(token=encode_token(str(user.id)))

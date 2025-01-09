@@ -22,6 +22,7 @@ from mmisp.db.database import Session, get_db
 from mmisp.db.models.attribute import Attribute
 from mmisp.db.models.event import Event
 from mmisp.db.models.object import Object, ObjectTemplate
+from mmisp.lib.logger import alog, log
 
 router = APIRouter(tags=["objects"])
 
@@ -32,6 +33,7 @@ router = APIRouter(tags=["objects"])
     response_model=ObjectResponse,
     summary="Add object to event",
 )
+@alog
 async def add_object(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
@@ -65,6 +67,7 @@ async def add_object(
     status_code=status.HTTP_200_OK,
     summary="Search objects",
 )
+@alog
 async def restsearch(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -92,6 +95,7 @@ async def restsearch(
     status_code=status.HTTP_200_OK,
     summary="View object details",
 )
+@alog
 async def get_object_details(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -120,6 +124,7 @@ async def get_object_details(
     response_model=StandardStatusResponse,
     summary="Delete object",
 )
+@alog
 async def delete_object(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
@@ -155,6 +160,7 @@ async def delete_object(
     response_model=ObjectResponse,
     summary="Add object to event (Deprecated)",
 )
+@alog
 async def add_object_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
@@ -190,6 +196,7 @@ async def add_object_depr(
     response_model=ObjectResponse,
     summary="View object details (Deprecated)",
 )
+@alog
 async def get_object_details_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
@@ -219,6 +226,7 @@ async def get_object_details_depr(
     response_model=StandardStatusResponse,
     summary="Delete object (Deprecated)",
 )
+@alog
 async def delete_object_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
@@ -249,6 +257,7 @@ async def delete_object_depr(
 # --- endpoint logic ---
 
 
+@alog
 async def _add_object(db: Session, event_id: int, object_template_id: int, body: ObjectCreateBody) -> ObjectResponse:
     template: ObjectTemplate | None = await db.get(ObjectTemplate, object_template_id)
 
@@ -278,7 +287,7 @@ async def _add_object(db: Session, event_id: int, object_template_id: int, body:
         )
         db.add(attribute)
 
-    await db.commit()
+    await db.flush()
     await db.refresh(object)
 
     result = await db.execute(select(Attribute).filter(Attribute.object_id == object.id))
@@ -297,6 +306,7 @@ async def _add_object(db: Session, event_id: int, object_template_id: int, body:
     return ObjectResponse(Object=object_response)
 
 
+@alog
 async def _restsearch(db: Session, body: ObjectSearchBody) -> ObjectSearchResponse:
     if body.return_format is None:
         body.return_format = "json"
@@ -330,6 +340,7 @@ async def _restsearch(db: Session, body: ObjectSearchBody) -> ObjectSearchRespon
     return ObjectSearchResponse(response=objects_data)
 
 
+@alog
 async def _get_object_details(db: Session, object_id: int) -> ObjectResponse:
     object: Object | None = await db.get(Object, object_id)
 
@@ -358,6 +369,7 @@ async def _get_object_details(db: Session, object_id: int) -> ObjectResponse:
     return ObjectResponse(Object=object_data)
 
 
+@alog
 async def _delete_object(db: Session, object_id: int, hard_delete: bool) -> StandardStatusResponse:
     object: Object | None = await db.get(Object, object_id)
 
@@ -376,7 +388,7 @@ async def _delete_object(db: Session, object_id: int, hard_delete: bool) -> Stan
         success = True
         message = "Object has been soft deleted."
 
-    await db.commit()
+    await db.flush()
 
     return StandardStatusResponse(
         saved=saved,
@@ -387,11 +399,13 @@ async def _delete_object(db: Session, object_id: int, hard_delete: bool) -> Stan
     )
 
 
+@log
 def _check_valid_return_format(return_format: str) -> None:
     if return_format not in ["json"]:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid return format.")
 
 
+@alog
 async def _get_objects_with_filters(db: Session, filters: ObjectSearchBody) -> Sequence[Object]:
     search_body: ObjectSearchBody = filters
     query: Select = select(Object)
