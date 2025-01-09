@@ -106,10 +106,21 @@ async def user_login_allowed(db: Session, user_id: int, api_login: bool) -> User
 
 
 def authorize(
-    strategy: AuthStrategy, permissions: list[Permission] | None = None, is_readonly_route: bool = False
+    strategy: AuthStrategy, 
+    permissions: list[Permission] | None = None, 
+    is_readonly_route: bool = False
 ) -> Callable[[Session, str], Awaitable[Auth]]:
     """
-    Handels the authenticationproccess.
+    Generates a authorizer, which then returns an auth object.
+
+    args: 
+        strategy: the authentication strategy
+        permissions: the required permissions of the action to be authorized
+        is_readonly_route: wether the route is read only
+
+    returns:
+        An authorizer function and a db session
+    
     """
 
     if permissions is None:
@@ -120,6 +131,16 @@ def authorize(
         authorization: Annotated[str, Depends(APIKeyHeader(name="authorization"))],
     ) -> Auth:
         authorization = authorization.replace("Bearer ", "")
+        """
+            Generates an auth object, which contains the result of the authentication proccess.
+
+            args: 
+                db: the current db
+                authorization: The auth key from the header 
+
+            returns:
+                An auth object 
+        """
 
         if not is_readonly_route and config.READONLY_MODE:
             raise HTTPException(status.HTTP_403_FORBIDDEN, detail="Readonly mode is active, but route is not readonly")
