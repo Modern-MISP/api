@@ -7,6 +7,10 @@ ARG BRANCH
 
 RUN groupadd "$DOCKER_USER"
 RUN useradd -ms /bin/bash -g "$DOCKER_USER" "$DOCKER_USER"
+
+COPY entrypoint.sh /
+RUN chmod +x /entrypoint.sh
+
 USER $DOCKER_USER
 WORKDIR /home/$DOCKER_USER
 
@@ -32,5 +36,4 @@ RUN if [ "$INSTALL_LIB" = "true" ]; then \
     fi
 
 EXPOSE 4000
-COPY entrypoint.sh /
 CMD ["/entrypoint.sh"]
