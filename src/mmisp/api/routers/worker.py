@@ -27,9 +27,6 @@ async def pause_workers(
         auth (Auth): The user's authentication status.
         id (str): The id of the worker.
 
-    Returns:
-        None
-
     Raises:
         HTTPException: If an error occurs while pausing the workers.
     """
@@ -58,9 +55,6 @@ async def unpause_workers(
     Args:
         auth (Auth): The user's authentication status.
         id (str): The id of the worker.
-
-    Returns:
-        None
 
     Raises:
         HTTPException: If an error occurs while unpausing the workers.
@@ -96,9 +90,6 @@ async def add_queue(
         body (RemoveAddQueueToWorker): The request body containing the queue name to add.
         auth (Auth): The user's authentication status.
 
-    Returns:
-        None
-
     Raises:
         HTTPException: If the worker or queue cannot be found or if an error occurs during queue addition.
     """
@@ -133,8 +124,6 @@ async def remove_queue(
         body (RemoveAddQueueToWorker): The request body containing the queue name to remove.
         auth (Auth): The user's authentication status.
 
-    Returns:
-        None
 
     Raises:
         HTTPException: If the worker or queue cannot be found or if an error occurs during queue removal.
