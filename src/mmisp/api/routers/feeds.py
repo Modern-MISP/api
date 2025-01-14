@@ -4,7 +4,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Path, status
 from sqlalchemy.future import select
 
-from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
+from mmisp.api.auth import Auth, AuthStrategy, authorize
 from mmisp.api_schemas.feeds import (
     FeedCacheResponse,
     FeedCreateBody,
@@ -17,16 +17,40 @@ from mmisp.api_schemas.feeds import (
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.feed import Feed
 from mmisp.lib.logger import alog
+from mmisp.lib.permissions import Permission
 from mmisp.util.models import update_record
 
 router = APIRouter(tags=["feeds"])
 
 
+@router.get(
+    "/feeds/index",
+    status_code=status.HTTP_200_OK,
+)
+@router.get(
+    "/feeds",
+    status_code=status.HTTP_200_OK,
+)
+@alog
+async def get_feeds(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    db: Annotated[Session, Depends(get_db)],
+) -> list[FeedResponse]:
+    """Retrieve a list of all feeds.
+
+    Args:
+      auth: the user's authentification status
+      db: the current database
+
+    Returns:
+      all feeds as a list
+    """
+    return await _get_feeds(db)
+
+
 @router.post(
     "/feeds",
     status_code=status.HTTP_201_CREATED,
-    response_model=FeedResponse,
-    summary="Add new feed",
 )
 @alog
 async def add_feed(
@@ -36,17 +60,13 @@ async def add_feed(
 ) -> FeedResponse:
     """Add a new feed with given details.
 
-    Input:
+    Args:
+      auth: the user's authentification status
+      db: the current database
+      body: the request body
 
-    - the user's authentification status
-
-    - the current database
-
-    - the request body
-
-    Output:
-
-    - the new feed
+    Returns:
+      the new feed
     """
     return await _add_feed(db, body)
 
@@ -54,8 +74,6 @@ async def add_feed(
 @router.post(  # @worker: also change 'status_code'
     "/feeds/cache_feeds/{cacheFeedsScope}",
     status_code=status.HTTP_501_NOT_IMPLEMENTED,
-    response_model=FeedCacheResponse,
-    summary="Cache feeds",
 )
 @alog
 async def cache_feeds(
@@ -65,17 +83,13 @@ async def cache_feeds(
 ) -> FeedCacheResponse:
     """Cache feeds based on a specific scope. NOT YET AVAILABLE!
 
-    Input:
+    Args:
+      auth: the user's authentification status
+      db: the current database
+      cache_feeds_scope: the cache feeds scope
 
-    - the user's authentification status
-
-    - the current database
-
-    - the cache feeds scope
-
-    Output:
-
-    - the cache feeds
+    Returns:
+      the cache feeds
     """
     return await _cache_feeds(db, cache_feeds_scope)
 
@@ -83,8 +97,6 @@ async def cache_feeds(
 @router.get(  # @worker: also change 'status_code'
     "/feeds/fetch_from_feed/{feedId}",
     status_code=status.HTTP_501_NOT_IMPLEMENTED,
-    response_model=FeedFetchResponse,
-    summary="Fetch from feed",
 )
 @alog
 async def fetch_from_feed(
@@ -94,17 +106,13 @@ async def fetch_from_feed(
 ) -> FeedFetchResponse:
     """Fetch data from a specific feed by its ID. NOT YET AVAILABLE!
 
-    Input:
+    Args:
+      auth: the user's authentification status
+      db: the current database
+      feed_id: the feed id
 
-    - the user's authentification status
-
-    - the current database
-
-    - the feed id
-
-    Output:
-
-    - the fetched feed data
+    Returns:
+      the fetched feed data
     """
     return await _fetch_from_feed(db, feed_id)
 
@@ -112,8 +120,6 @@ async def fetch_from_feed(
 @router.get(
     "/feeds/{feedId}",
     status_code=status.HTTP_200_OK,
-    response_model=FeedResponse,
-    summary="Get feed details",
 )
 @alog
 async def get_feed_details(
@@ -123,17 +129,13 @@ async def get_feed_details(
 ) -> FeedResponse:
     """Retrieve details of a specific feed by its ID.
 
-    Input:
+    Args:
+      auth: the user's authentification status
+      db: the current database
+      feed_id: the feed id
 
-    - the user's authentification status
-
-    - the current database
-
-    - the feed id
-
-    Output:
-
-    - the details of a feed
+    Returns:
+      the details of a feed
     """
     return await _get_feed_details(db, feed_id)
 
@@ -141,8 +143,6 @@ async def get_feed_details(
 @router.put(
     "/feeds/{feedId}",
     status_code=status.HTTP_200_OK,
-    response_model=FeedResponse,
-    summary="Update feed",
 )
 @alog
 async def update_feed(
@@ -153,19 +153,14 @@ async def update_feed(
 ) -> FeedResponse:
     """Update an existing feed by its ID.
 
-    Input:
+    Args:
+      auth: the user's authentification status
+      db: the current database
+      feed_id: the feed id
+      body: the request body
 
-    - the user's authentification status
-
-    - the current database
-
-    - the feed id
-
-    - the request body
-
-    Output:
-
-    - the updated feed
+    Returns:
+      the updated feed
     """
     return await _update_feed(db, feed_id, body)
 
@@ -173,8 +168,6 @@ async def update_feed(
 @router.patch(
     "/feeds/{feedId}",
     status_code=status.HTTP_200_OK,
-    response_model=FeedEnableDisableResponse,
-    summary="Toggle feed status",
 )
 @alog
 async def toggle_feed(
@@ -186,19 +179,14 @@ async def toggle_feed(
     """Toggle the status of a feed between enabled and disabled.
 
 
-    Input:
+    Args:
+      auth: the user's authentification status
+      db: the current database
+      feed_id: the feed id
+      body: the request body
 
-    - the user's authentification status
-
-    - the current database
-
-    - the feed id
-
-    - the request body
-
-    Output:
-
-    - the new status of the feed
+    Returns:
+      the new status of the feed
     """
     return await _toggle_feed(db, feed_id, body)
 
@@ -206,8 +194,6 @@ async def toggle_feed(
 @router.get(  # @worker: also change 'status_code'
     "/feeds/fetch_from_all_feeds",
     status_code=status.HTTP_501_NOT_IMPLEMENTED,
-    response_model=FeedFetchResponse,
-    summary="Fetch from all feeds",
 )
 @alog
 async def fetch_data_from_all_feeds(
@@ -216,43 +202,14 @@ async def fetch_data_from_all_feeds(
 ) -> FeedFetchResponse:
     """Fetch data from all available feeds. NOT YET AVAILABLE!
 
-    Input:
+    Args:
+      auth: the user's authentification status
+      db: the current database
 
-    - the user's authentification status
-
-    - the current database
-
-    Output:
-
-    - the fetched data of all available feeds
+    Returns:
+      the fetched data of all available feeds
     """
     return await _fetch_data_from_all_feeds(db)
-
-
-@router.get(
-    "/feeds",
-    status_code=status.HTTP_200_OK,
-    response_model=list[FeedResponse],
-    summary="Get all feeds",
-)
-@alog
-async def get_feeds(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
-    db: Annotated[Session, Depends(get_db)],
-) -> list[FeedResponse]:
-    """Retrieve a list of all feeds.
-
-    Input:
-
-    - the user's authentification status
-
-    - the current database
-
-    Output:
-
-    - all feeds as a list
-    """
-    return await _get_feeds(db)
 
 
 # --- deprecated ---
@@ -262,8 +219,6 @@ async def get_feeds(
     "/feeds/add",
     deprecated=True,
     status_code=status.HTTP_201_CREATED,
-    response_model=FeedResponse,
-    summary="Add new feed (Deprecated)",
 )
 @alog
 async def add_feed_depr(
@@ -273,17 +228,13 @@ async def add_feed_depr(
 ) -> FeedResponse:
     """Deprecated. Add a new feed with given details using the old route.
 
-    Input:
+    Args:
+      auth: the user's authentification status
+      db: the current database
+      body: the request body
 
-    - the user's authentification status
-
-    - the current database
-
-    - the request body
-
-    Output:
-
-    - the added feed
+    Returns:
+      the added feed
     """
     return await _add_feed(db, body)
 
@@ -292,8 +243,6 @@ async def add_feed_depr(
     "/feeds/enable/{feedId}",
     deprecated=True,
     status_code=status.HTTP_200_OK,
-    response_model=FeedEnableDisableResponse,
-    summary="Enable feed (Deprecated)",
 )
 @alog
 async def enable_feed(
@@ -303,17 +252,13 @@ async def enable_feed(
 ) -> FeedEnableDisableResponse:
     """Deprecated. Enable a specific feed by its ID using the old route.
 
-    Input:
+    Args:
+      auth: user's authentification status
+      db: current database
+      feed_id: feed id
 
-    - the user's authentification status
-
-    - the current database
-
-    - the feed id
-
-    Output:
-
-    - the the enabled feed
+    Returns:
+      the the enabled feed
     """
     return await _enable_feed(db, feed_id)
 
@@ -322,8 +267,6 @@ async def enable_feed(
     "/feeds/disable/{feedId}",
     deprecated=True,
     status_code=status.HTTP_200_OK,
-    response_model=FeedEnableDisableResponse,
-    summary="Disable feed (Deprecated)",
 )
 @alog
 async def disable_feed(
@@ -333,17 +276,13 @@ async def disable_feed(
 ) -> FeedEnableDisableResponse:
     """Deprecated. Disable a specific feed by its ID using the old route.
 
-    Input:
+    Args:
+      the user's authentification status
+      the current database
+      the feed id
 
-    - the user's authentification status
-
-    - the current database
-
-    - the feed id
-
-    Output:
-
-    - the disabled feed
+    Returns:
+      the disabled feed
     """
     return await _disable_feed(db, feed_id)
 
@@ -352,8 +291,6 @@ async def disable_feed(
     "/feeds/cacheFeeds/{cacheFeedsScope}",
     deprecated=True,
     status_code=status.HTTP_501_NOT_IMPLEMENTED,
-    response_model=FeedCacheResponse,
-    summary="Cache feeds",
 )
 @alog
 async def cache_feeds_depr(
@@ -363,17 +300,13 @@ async def cache_feeds_depr(
 ) -> FeedCacheResponse:
     """Cache feeds based on a specific scope.
 
-    Input:
+    Args:
+      auth: the user's authentification status
+      db: the current database
+      cache_feeds_scope: the cache feeds scope
 
-    - the user's authentification status
-
-    - the current database
-
-    - the cache feeds scope
-
-    Output:
-
-    - the feed cache
+    Returns:
+      the feed cache
     """
     return await _cache_feeds(db, cache_feeds_scope)
 
@@ -382,7 +315,6 @@ async def cache_feeds_depr(
     "/feeds/fetchFromFeed/{feedId}",
     deprecated=True,
     status_code=status.HTTP_501_NOT_IMPLEMENTED,
-    response_model=FeedFetchResponse,
     summary="Fetch from feed (Deprecated)",
 )
 @alog
@@ -393,17 +325,13 @@ async def fetch_from_feed_depr(
 ) -> FeedFetchResponse:
     """Deprecated. Fetch data from a specific feed by its ID using the old route.
 
-    Input:
+    Args:
+      auth: the user's authentification status
+      db: the current database
+      feed_id: the feed id
 
-    - the user's authentification status
-
-    - the current database
-
-    - the feed id
-
-    Output:
-
-    - the fetched feed data
+    Returns:
+     the fetched feed data
     """
     return await _fetch_from_feed(db, feed_id)
 
@@ -412,8 +340,6 @@ async def fetch_from_feed_depr(
     "/feeds/fetchFromAllFeeds",
     deprecated=True,
     status_code=status.HTTP_501_NOT_IMPLEMENTED,
-    response_model=FeedFetchResponse,
-    summary="Fetch from all feeds (Deprecated)",
 )
 @alog
 async def fetch_data_from_all_feeds_depr(
@@ -422,16 +348,12 @@ async def fetch_data_from_all_feeds_depr(
 ) -> FeedFetchResponse:
     """Deprecated. Fetch data from all available feeds using the old route.
 
-    Input:
+    Args:
+      auth: the user's authentification status
+      db: the current database
 
-    - the user's authentification status
-
-    - the current database
-
-
-    Output:
-
-    - the fetched data of all feeds
+    Returns:
+      the fetched data of all feeds
     """
     return await _fetch_data_from_all_feeds(db)
 
@@ -440,8 +362,6 @@ async def fetch_data_from_all_feeds_depr(
     "/feeds/view/{feedId}",
     deprecated=True,
     status_code=status.HTTP_200_OK,
-    response_model=FeedResponse,
-    summary="Get feed details (Deprecated)",
 )
 @alog
 async def get_feed_details_depr(
@@ -451,17 +371,13 @@ async def get_feed_details_depr(
 ) -> FeedResponse:
     """Deprecated. Retrieve details of a specific feed by its ID using the old route.
 
-    Input:
+    Args:
+      auth: the user's authentification status
+      db: the current database
+      feed_id: the feed id
 
-    - the user's authentification status
-
-    - the current database
-
-    - the feed id
-
-    Output:
-
-    - the details of the feed
+    Returns:
+      the details of the feed
     """
     return await _get_feed_details(db, feed_id)
 
@@ -470,8 +386,6 @@ async def get_feed_details_depr(
     "/feeds/edit/{feedId}",
     deprecated=True,
     status_code=status.HTTP_200_OK,
-    response_model=FeedResponse,
-    summary="Update feed (Deprecated)",
 )
 @alog
 async def update_feed_depr(
@@ -483,19 +397,14 @@ async def update_feed_depr(
     """Deprecated. Update an existing feed by its ID using the old route.
 
 
-    Input:
+    Args:
+      auth: the user's authentification status
+      db: the current database
+      feed_id: the feed id
+      body: the request body
 
-    - the user's authentification status
-
-    - the current database
-
-    - the feed id
-
-    - the request body
-
-    Output:
-
-    - the updated feed
+    Returns:
+      the updated feed
     """
     return await _update_feed(db, feed_id, body)
 
