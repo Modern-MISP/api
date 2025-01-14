@@ -25,6 +25,7 @@ class LogMiddleware(BaseHTTPMiddleware):
             raise exc
         else:
             # Emit all logs at the end of the request if no exception
+            assert sessionmanager is not None
             async with sessionmanager.session() as db:
                 await save_db_log(db)
             print_request_log()

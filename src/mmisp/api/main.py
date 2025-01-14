@@ -3,6 +3,7 @@ import importlib.resources
 import itertools
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
+from importlib.metadata import version
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -12,6 +13,7 @@ import mmisp.db.all_models  # noqa: F401
 from mmisp.api.config import config
 from mmisp.api.exception_handler import register_exception_handler
 from mmisp.api.logging_middleware import LogMiddleware
+from mmisp.db.config import config as db_config
 from mmisp.db.database import sessionmanager
 
 if config.ENABLE_PROFILE:
@@ -35,12 +37,15 @@ for m in router_module_names:
 
 
 def init_app(*, init_db: bool = False) -> FastAPI:
-    sessionmanager.init()
+    if db_config.CONNECTION_INIT:
+        assert sessionmanager is not None
+        sessionmanager.init()
 
     if init_db:
 
         @asynccontextmanager
         async def lifespan(app: FastAPI) -> AsyncGenerator:
+            assert sessionmanager is not None
             await sessionmanager.create_all()
             yield
             if sessionmanager._engine is not None:
@@ -48,7 +53,9 @@ def init_app(*, init_db: bool = False) -> FastAPI:
     else:
         lifespan = None  # type: ignore
 
-    app = FastAPI(lifespan=lifespan, default_response_class=ORJSONResponse)
+    app = FastAPI(
+        title="Modern MISP API", version=version("mmisp-api"), lifespan=lifespan, default_response_class=ORJSONResponse
+    )
 
     app.add_middleware(
         CORSMiddleware,

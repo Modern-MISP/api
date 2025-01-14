@@ -170,6 +170,22 @@ legacy_misp:
     DEBUG: true
     MISP_READY_FILE: '${CI_PROJECT_DIR}/misp_ready'
 
+
+create_api_spec:
+  needs:
+    - build_image
+  stage: docs
+  image: ${REGISTRY_DOMAIN}/${REGISTRY_PROJECT}/api:${CI_COMMIT_SHA}
+  script:
+    - python -c 'import json; import mmisp.api.main; print(json.dumps(mmisp.api.main.app.openapi()))' > openapi.json
+    - python -c 'import yaml; import mmisp.api.main; print(yaml.dump(mmisp.api.main.app.openapi()))' > openapi.yaml
+  artifacts:
+      paths:
+        - "openapi.json"
+        - "openapi.yaml"
+  variables:
+    CONNECTION_INIT: False
+
 generate_mkdocs:
   before_script: []
   stage: docs
