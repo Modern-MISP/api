@@ -352,7 +352,12 @@ async def _restsearch(db: Session, body: GalaxyClusterSearchBody) -> GalaxyClust
 
 async def _get_galaxy_clusters_with_filters(db: Session, filters: GalaxyClusterSearchBody) -> Sequence[GalaxyCluster]:
     search_body: GalaxyClusterSearchBody = filters
-    query: Select = select(GalaxyCluster)
+
+    query: Select
+    if search_body.minimal:
+        query = select(GalaxyCluster.uuid, GalaxyCluster.version, GalaxyCluster.galaxy)
+    else:
+        query = select(GalaxyCluster)
 
     if search_body.id:
         query = query.filter(GalaxyCluster.id == search_body.id)
@@ -393,8 +398,6 @@ async def _get_galaxy_clusters_with_filters(db: Session, filters: GalaxyClusterS
         query = query.filter(GalaxyCluster.tag_name == search_body.tag_name)
 
     # todo custom unknown what to do, not in GalaxyCluster
-
-    # todo minimal unknown what to do, not in GalaxyCluster
 
     if search_body.limit:
         query = query.limit(int(search_body.limit))
