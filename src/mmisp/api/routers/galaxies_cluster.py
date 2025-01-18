@@ -368,7 +368,8 @@ async def _get_galaxy_clusters_with_filters(db: Session, filters: GalaxyClusterS
     if search_body.galaxy_id:
         query = query.filter(GalaxyCluster.galaxy_id == search_body.galaxy_id)
 
-    # todo galaxy_uuid unknown what to do, not in GalaxyCluster
+    if search_body.galaxy_uuid:
+        query = query.filter(GalaxyCluster.galaxy.uuid)
 
     if search_body.published:
         query = query.filter(GalaxyCluster.published == search_body.published)
@@ -397,7 +398,9 @@ async def _get_galaxy_clusters_with_filters(db: Session, filters: GalaxyClusterS
     if search_body.tag_name:
         query = query.filter(GalaxyCluster.tag_name == search_body.tag_name)
 
-    # todo custom unknown what to do, not in GalaxyCluster
+    # could be wrong, if default is False the cluster is a custom one
+    if search_body.custom:
+        query = query.filter(GalaxyCluster.default == False)
 
     if search_body.limit:
         query = query.limit(int(search_body.limit))
