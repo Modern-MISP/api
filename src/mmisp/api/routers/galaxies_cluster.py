@@ -398,9 +398,8 @@ async def _get_galaxy_clusters_with_filters(db: Session, filters: GalaxyClusterS
     if search_body.tag_name:
         query = query.filter(GalaxyCluster.tag_name == search_body.tag_name)
 
-    # could be wrong, if default is False the cluster is a custom one
     if search_body.custom:
-        query = query.filter(GalaxyCluster.default == False)
+        query = query.filter(GalaxyCluster.default != search_body.custom)
 
     if search_body.limit:
         query = query.limit(int(search_body.limit))
