@@ -599,19 +599,21 @@ async def _get_event_details(db: Session, event_id: int | uuid.UUID) -> AddEditG
             selectinload(Event.eventtags_galaxy),
             selectinload(Event.tags),
             selectinload(Event.eventtags),
-            selectinload(Event.attributes).options(
-                selectinload(Attribute.attributetags_galaxy)
-                .selectinload(AttributeTag.tag)
-                .selectinload(Tag.galaxy_cluster)
-                .options(
-                    selectinload(GalaxyCluster.org),
-                    selectinload(GalaxyCluster.orgc),
-                    selectinload(GalaxyCluster.galaxy),
-                    selectinload(GalaxyCluster.galaxy_elements),
-                ),
-                selectinload(Attribute.attributetags).selectinload(AttributeTag.tag),
-            ),
             selectinload(Event.mispobjects),
+            selectinload(Event.attributes)
+                .options(
+                    selectinload(Attribute.attributetags_galaxy)
+                        .selectinload(AttributeTag.tag)
+                        .selectinload(Tag.galaxy_cluster)
+                            .options(
+                                selectinload(GalaxyCluster.org),
+                                selectinload(GalaxyCluster.orgc),
+                                selectinload(GalaxyCluster.galaxy),
+                                selectinload(GalaxyCluster.galaxy_elements),
+                            ),
+                    selectinload(Attribute.attributetags)
+                        .selectinload(AttributeTag.tag),
+                ),
         )
     )
     event = result.scalars().one_or_none()
@@ -637,14 +639,14 @@ async def _update_event(db: Session, event_id: int | uuid.UUID, body: EditEventB
             selectinload(Event.mispobjects),
             selectinload(Event.attributes).options(
                 selectinload(Attribute.attributetags_galaxy)
-                .selectinload(AttributeTag.tag)
-                .selectinload(Tag.galaxy_cluster)
-                .options(
-                    selectinload(GalaxyCluster.org),
-                    selectinload(GalaxyCluster.orgc),
-                    selectinload(GalaxyCluster.galaxy),
-                    selectinload(GalaxyCluster.galaxy_elements),
-                ),
+                    .selectinload(AttributeTag.tag)
+                    .selectinload(Tag.galaxy_cluster)
+                        .options(
+                            selectinload(GalaxyCluster.org),
+                            selectinload(GalaxyCluster.orgc),
+                            selectinload(GalaxyCluster.galaxy),
+                            selectinload(GalaxyCluster.galaxy_elements),
+                        ),
             ),
         )
     )
@@ -1258,3 +1260,83 @@ def _prepare_all_events_event_tag_response(event_tag_list: Sequence[EventTag]) -
         event_tag_response_list.append(GetAllEventsEventTag(**event_tag_dict))
 
     return event_tag_response_list
+
+
+def _get_event_by_uuid(event_id: uuid.UUID, db: Session, include_basic_event_attributes: bool, include_non_galaxy_attribute_tags: bool ) -> Event:
+    """ Get's an event by its UUID with varying amounts of included attributes loaded in.
+
+    args:
+        event_id: the UUID of the event
+        db: the current db
+        include_basic_event_attributes: wether to include additional load-in's
+        include_basic_event_attributes: wether to also include non galaxy attribute tags
+
+    returns:
+        The event with the associated UUID of NONE in case of not being present.
+    
+    """
+    
+    if include_basic_event_attributes and include_non_galaxy_attribute_tags:
+        query: Select = (
+            select(Event)
+            .filter(Event.uuid == event_id)
+            .options(
+                selectinload(Event.org),
+                selectinload(Event.orgc),
+                selectinload(Event.eventtags_galaxy),
+                selectinload(Event.tags),
+                selectinload(Event.eventtags),
+                selectinload(Event.mispobjects),
+                selectinload(Event.attributes)
+                    .options(
+                        selectinload(Attribute.attributetags_galaxy)
+                            .selectinload(AttributeTag.tag)
+                            .selectinload(Tag.galaxy_cluster)
+                                .options(
+                                    selectinload(GalaxyCluster.org),
+                                    selectinload(GalaxyCluster.orgc),
+                                    selectinload(GalaxyCluster.galaxy),
+                                    selectinload(GalaxyCluster.galaxy_elements),
+                                ),
+                    selectinload(Attribute.attributetags)
+                        .selectinload(AttributeTag.tag),
+                ),
+            )
+        )
+
+    elif include_basic_event_attributes:
+        query: Select = (
+            select(Event)
+            .filter(Event.uuid == event_id)
+            .options(
+                selectinload(Event.org),
+                selectinload(Event.orgc),
+                selectinload(Event.eventtags_galaxy),
+                selectinload(Event.tags),
+                selectinload(Event.eventtags),
+                selectinload(Event.mispobjects),
+                selectinload(Event.attributes)
+                    .options(
+                        selectinload(Attribute.attributetags_galaxy)
+                            .selectinload(AttributeTag.tag)
+                            .selectinload(Tag.galaxy_cluster)
+                                .options(
+                                    selectinload(GalaxyCluster.org),
+                                    selectinload(GalaxyCluster.orgc),
+                                    selectinload(GalaxyCluster.galaxy),
+                                    selectinload(GalaxyCluster.galaxy_elements),
+                                ),
+                ),
+            )
+        )
+
+    else:
+        query: Select = (
+            select(Event)
+            .filter(Event.uuid == event_id)
+        )
+
+    result = db.execute(query)
+    event = result.scalars().one_or_none
+
+    return event

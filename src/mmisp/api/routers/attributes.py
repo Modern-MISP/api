@@ -763,6 +763,7 @@ async def _add_tag_to_attribute(
 async def _remove_tag_from_attribute(
     db: Session, attribute_id: int | uuid.UUID, tag_id: str
 ) -> AddRemoveTagAttributeResponse:
+    
     result = await db.execute(
         select(AttributeTag)
         .filter(AttributeTag.attribute_id == int(attribute_id), AttributeTag.tag_id == int(tag_id))
@@ -906,3 +907,15 @@ async def _get_attribute_type_statistics(db: Session, percentage: bool) -> GetAt
         return GetAttributeStatisticsTypesResponse(**percentages)
 
     return GetAttributeStatisticsTypesResponse(**attribute_count_by_group_dict)
+
+
+def _get_attribute_by_uuid(db: Seesion, event_id: uuid.UUID) -> Attribute:
+
+    if include_basic_event_attributes and include_non_galaxy_attribute_tags:
+        query: Select = (
+            select(Event)
+                .filter(Event.uuid == event_id)
+                .options())
+
+
+    return None
