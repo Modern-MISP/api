@@ -591,37 +591,33 @@ async def _add_event(auth: Auth, db: Session, body: AddEventBody) -> AddEditGetE
 
 @alog
 async def _get_event_details(db: Session, event_id: int | uuid.UUID) -> AddEditGetEventResponse:
-    if type(event_id) is uuid.UUID:
-        event = await _get_event_by_uuid(event_id, db, True, True)
-    
-    else:
-        result = await db.execute(
-            select(Event)
-            .filter(Event.id == event_id)
-            .options(
-                selectinload(Event.org),
-                selectinload(Event.orgc),
-                selectinload(Event.eventtags_galaxy),
-                selectinload(Event.tags),
-                selectinload(Event.eventtags),
-                selectinload(Event.mispobjects),
-                selectinload(Event.attributes)
-                    .options(
-                        selectinload(Attribute.attributetags_galaxy)
-                            .selectinload(AttributeTag.tag)
-                            .selectinload(Tag.galaxy_cluster)
-                                .options(
-                                    selectinload(GalaxyCluster.org),
-                                    selectinload(GalaxyCluster.orgc),
-                                    selectinload(GalaxyCluster.galaxy),
-                                    selectinload(GalaxyCluster.galaxy_elements),
-                                ),
-                        selectinload(Attribute.attributetags)
-                            .selectinload(AttributeTag.tag),
-                    ),
-            )
+    result = await db.execute(
+        select(Event)
+        .filter(Event.id == event_id)
+        .options(
+            selectinload(Event.org),
+            selectinload(Event.orgc),
+            selectinload(Event.eventtags_galaxy),
+            selectinload(Event.tags),
+            selectinload(Event.eventtags),
+            selectinload(Event.mispobjects),
+            selectinload(Event.attributes)
+                .options(
+                    selectinload(Attribute.attributetags_galaxy)
+                        .selectinload(AttributeTag.tag)
+                        .selectinload(Tag.galaxy_cluster)
+                            .options(
+                                selectinload(GalaxyCluster.org),
+                                selectinload(GalaxyCluster.orgc),
+                                selectinload(GalaxyCluster.galaxy),
+                                selectinload(GalaxyCluster.galaxy_elements),
+                            ),
+                    selectinload(Attribute.attributetags)
+                        .selectinload(AttributeTag.tag),
+                ),
         )
-        event = result.scalars().one_or_none()
+    )
+    event = result.scalars().one_or_none()
 
     if not event:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
@@ -1302,7 +1298,7 @@ async def _get_event_by_uuid(
         include_basic_event_attributes: whether to also include non galaxy attribute tags
 
     returns:
-        The event with the associated UUID of NONE in case of not being present.
+        The event with the associated UUID of NONE in case of not being present. 
     
     """
     query: Select = (
