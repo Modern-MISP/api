@@ -5,6 +5,7 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, Path, Request, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import selectinload
+from sqlalchemy.sql import Select
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
 from mmisp.api_schemas.attributes import (
@@ -909,13 +910,20 @@ async def _get_attribute_type_statistics(db: Session, percentage: bool) -> GetAt
     return GetAttributeStatisticsTypesResponse(**attribute_count_by_group_dict)
 
 
-def _get_attribute_by_uuid(db: Seesion, event_id: uuid.UUID) -> Attribute:
+def _get_attribute_by_uuid(db: Seesion, attribute_id: uuid.UUID) -> Attribute:
 
     if include_basic_event_attributes and include_non_galaxy_attribute_tags:
         query: Select = (
-            select(Event)
-                .filter(Event.uuid == event_id)
+            select(Attribute)
+                .filter(Attribute.uuid == attribute_id)
                 .options())
+    else:
+        query: Select = (
+            select(Attribute)
+            .filter(Attribute.uuid == attribute_id)
+        )
 
+    result = db.execute(query)
+    attribute = result.scalars().one_or_none
 
-    return None
+    return attribute
