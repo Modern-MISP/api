@@ -506,7 +506,10 @@ async def delete_attribute_depr(
 
 @alog
 async def _add_attribute(db: Session, event_id: int | uuid.UUID, body: AddAttributeBody) -> AddAttributeResponse:
-    event: Event | None = await db.get(Event, event_id)
+    if type(event_id) is uuid.UUID:
+        event = await _get_event_by_uuid(event_id, db)
+    else:
+        event = await db.get(Event, event_id)
 
     if not event:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
@@ -615,7 +618,10 @@ async def _get_attributes(db: Session) -> list[GetAllAttributesResponse]:
 async def _delete_selected_attributes(
     db: Session, event_id: int | uuid.UUID, body: DeleteSelectedAttributeBody, request: Request
 ) -> DeleteSelectedAttributeResponse:
-    event: Event | None = await db.get(Event, event_id)
+    if type(event_id) is uuid.UUID:
+        event = await _get_event_by_uuid(event_id, db)
+    else:
+        event = await db.get(Event, event_id)
 
     if not event:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
@@ -765,9 +771,17 @@ async def _remove_tag_from_attribute(
     db: Session, attribute_id: int | uuid.UUID, tag_id: str
 ) -> AddRemoveTagAttributeResponse:
     
+    if isinstance(attribute_id, int):
+        attribute_system_id = attribute_id
+    else:
+        result = await db.execute(
+            select(Attribute.id)
+            .filter(Attribute.uuid == attribute_id))
+        attribute_system_id = result.scalars().first()
+
     result = await db.execute(
         select(AttributeTag)
-        .filter(AttributeTag.attribute_id == int(attribute_id), AttributeTag.tag_id == int(tag_id))
+        .filter(AttributeTag.attribute_id == int(attribute_system_id), AttributeTag.tag_id == int(tag_id))
         .limit(1)
     )
     attribute_tag = result.scalars().one_or_none()
@@ -909,6 +923,27 @@ async def _get_attribute_type_statistics(db: Session, percentage: bool) -> GetAt
         return GetAttributeStatisticsTypesResponse(**percentages)
 
     return GetAttributeStatisticsTypesResponse(**attribute_count_by_group_dict)
+
+async def _get_event_by_uuid(
+        event_id: uuid.UUID, db: Session)-> Event:
+    """ Get's an event by its UUID.
+
+    args:
+        event_id: the UUID of the event
+        db: the current db
+
+    returns:
+        The event with the associated UUID of NONE in case of not being present.
+    
+    """
+    query: Select = (
+        select(Event)
+        .filter(Event.uuid == event_id))        
+
+    result = await db.execute(query)
+    event = result.scalars().one_or_none
+
+    return event
 
 
 def _get_attribute_by_uuid(db: Seesion, attribute_id: uuid.UUID) -> Attribute:
