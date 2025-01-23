@@ -40,7 +40,7 @@ build_image:
       --build-arg LIB_REPO_URL=${LIB_REPO_URL}
       --build-arg BRANCH=${CI_COMMIT_BRANCH}
       --build-arg INSTALL_LIB=true
-      --destination ${REGISTRY_DOMAIN}/${REGISTRY_PROJECT}/api:${CI_COMMIT_BRANCH}
+      --destination ${REGISTRY_DOMAIN}/${REGISTRY_PROJECT}/api:$(echo $CI_COMMIT_BRANCH | tr -c '[:alnum:]_' '_')
       --destination ${REGISTRY_DOMAIN}/${REGISTRY_PROJECT}/api:${CI_COMMIT_SHA}
 
 

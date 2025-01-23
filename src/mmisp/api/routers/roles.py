@@ -281,3 +281,4 @@ async def _get_roles(db: Session) -> list[GetRolesResponse]:
     for role in roles:
         role_list.append(GetRolesResponse(Role=RoleAttributeResponse(**role.__dict__)))
     return role_list
+
