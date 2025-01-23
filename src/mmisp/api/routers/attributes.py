@@ -781,7 +781,7 @@ async def _remove_tag_from_attribute(
 
     result = await db.execute(
         select(AttributeTag)
-        .filter(AttributeTag.attribute_id == int(attribute_system_id), AttributeTag.tag_id == int(tag_id))
+        .filter(AttributeTag.attribute_id == int(attribute_id), AttributeTag.tag_id == int(tag_id))
         .limit(1)
     )
     attribute_tag = result.scalars().one_or_none()
