@@ -771,6 +771,7 @@ async def _remove_tag_from_attribute(
     db: Session, attribute_id: int | uuid.UUID, tag_id: str
 ) -> AddRemoveTagAttributeResponse:
     
+<<<<<<< HEAD
     if isinstance(attribute_id, int):
         attribute_system_id = attribute_id
     else:
@@ -785,6 +786,17 @@ async def _remove_tag_from_attribute(
         .limit(1)
     )
     attribute_tag = result.scalars().one_or_none()
+=======
+    if type(attribute_id) is uuid.UUID:
+        attirbute_tag = _get_tag_by_attribute_uuid(db, attribute_id, tag_id)
+    else:
+        result = await db.execute(
+            select(AttributeTag)
+            .filter(AttributeTag.attribute_id == int(attribute_id), AttributeTag.tag_id == int(tag_id))
+            .limit(1)
+        )
+        attribute_tag = result.scalars().one_or_none()
+>>>>>>> 9e64874 (Attributes UUID compatibility)
 
     if not attribute_tag:
         return AddRemoveTagAttributeResponse(saved=False, errors="Invalid attribute - tag combination.")
@@ -821,12 +833,17 @@ def _prepare_attribute_response_get_all(attribute: Attribute) -> GetAllAttribute
 async def _prepare_get_attribute_details_response(
     db: Session, attribute_id: int | uuid.UUID, attribute: Attribute
 ) -> GetAttributeAttributes:
+    
     attribute_dict = attribute.asdict().copy()
     if "event_uuid" not in attribute_dict.keys():
         attribute_dict["event_uuid"] = attribute.event_uuid
 
-    result = await db.execute(select(AttributeTag).filter(AttributeTag.attribute_id == attribute_id))
-    db_attribute_tags = result.scalars().all()
+
+    if type(attribute_id) is uuid.UUID:
+        db_attribute_tags = _get_all_tags_by_attribute_uuid(db, attribute_id)
+    else:
+        result = await db.execute(select(AttributeTag).filter(AttributeTag.attribute_id == attribute_id))
+        db_attribute_tags = result.scalars().all()
 
     attribute_dict["Tag"] = []
 
@@ -834,7 +851,7 @@ async def _prepare_get_attribute_details_response(
         for attribute_tag in db_attribute_tags:
             result = await db.execute(select(Tag).filter(Tag.id == attribute_tag.tag_id).limit(1))
             tag = result.scalars().one()
-            # FIXME one or none if none -> http error
+            # FIXME chacnge to one or none &   if none throw http error
 
             connected_tag = GetAttributeTag(
                 id=tag.id,
@@ -862,14 +879,21 @@ async def _prepare_edit_attribute_response(
         else:
             attribute_dict[field] = "0"
 
-    result = await db.execute(select(AttributeTag).filter(AttributeTag.attribute_id == attribute_id))
-    db_attribute_tags = result.scalars().all()
+    if type(attribute_id) is uuid.UUID:
+        db_attribute_tags = _get_all_tags_by_attribute_uuid(db, attribute_id)
+    else:
+        result = await db.execute(select(AttributeTag).filter(AttributeTag.attribute_id == attribute_id))
+        db_attribute_tags = result.scalars().all()
+
     attribute_dict["Tag"] = []
 
     if len(db_attribute_tags) > 0:
         for attribute_tag in db_attribute_tags:
             result = await db.execute(select(Tag).filter(Tag.id == attribute_tag.tag_id).limit(1))
             tag = result.scalars().one()
+            # FIXME chacnge to one or none &   if none throw http error
+
+
             connected_tag = GetAttributeTag(
                 id=tag.id,
                 name=tag.name,
@@ -889,9 +913,11 @@ async def _prepare_edit_attribute_response(
 
 @alog
 async def _get_attribute_category_statistics(db: Session, percentage: bool) -> GetAttributeStatisticsCategoriesResponse:  # type: ignore
+    
     qry = select(Attribute.category, func.count(Attribute.category).label("count")).group_by(Attribute.category)
     result = await db.execute(qry)
     attribute_count_by_category = result.all()
+    
     attribute_count_by_category_dict: dict[str, int] = {
         x.category: cast(int, x.count) for x in attribute_count_by_category
     }
@@ -924,8 +950,7 @@ async def _get_attribute_type_statistics(db: Session, percentage: bool) -> GetAt
 
     return GetAttributeStatisticsTypesResponse(**attribute_count_by_group_dict)
 
-async def _get_event_by_uuid(
-        event_id: uuid.UUID, db: Session)-> Event:
+async def _get_event_by_uuid(event_id: uuid.UUID, db: Session) -> Event:
     """ Get's an event by its UUID.
 
     args:
@@ -946,14 +971,48 @@ async def _get_event_by_uuid(
     return event
 
 
-def _get_attribute_by_uuid(db: Seesion, attribute_id: uuid.UUID) -> Attribute:
+async def _get_tag_by_attribute_uuid(db: Session, attribute_id: uuid.UUID, tag_id: int) -> AttributeTag:
+    """ Get's an attributes tag by the attributes UUID and the tags ID.
 
+    args:
+        db: the current db
+        attribute_id: the UUID of the attribute
+        tag_id: the ID of the tag
+
+    returns:
+        The tag of the attribute with the associated UUID an ID or None in case of not being present.
+    
+    """
     query: Select = (
-            select(Attribute)
-                .filter(Attribute.uuid == attribute_id)
-                .options())
+            select(AttributeTag)
+            .filter(AttributeTag.attribute_uuid == attribute_id, AttributeTag.tag_id == tag_id)
+            .limit(1))
     
     result = db.execute(query)
-    attribute = result.scalars().one_or_none
+    attribute_tag = result.scalars().one_or_none()
 
-    return attribute
+    return attribute_tag
+
+
+async def _get_all_tags_by_attribute_uuid(db: Session, attribute_id: uuid.UUID) -> list[AttributeTag]:
+    """ Get's an attributes tags by the attributes UUID.
+
+    args:
+        db: the current db
+        attribute_id: the UUID of the attribute
+
+    returns:
+        The tags of the attribute or None in case of the attribute not being present.
+    
+    """
+
+    query: Select = (
+            select(AttributeTag)
+            .filter(AttributeTag.attribute_uuid == attribute_id))
+    
+    result = db.execute(query)
+    attribute_tags = result.scalars().all()
+
+    return attribute_tags
+
+
