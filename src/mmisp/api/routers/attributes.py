@@ -765,17 +765,12 @@ async def _remove_tag_from_attribute(
     db: Session, attribute_id: int | uuid.UUID, tag_id: str
 ) -> AddRemoveTagAttributeResponse:
     
-    if isinstance(attribute_id, int):
-    attribute_system_id = attribute_id
-    else:
-        attribute_system_id = _get_attribute_by_uuid(db, attribute_id).id
-
     result = await db.execute(
         select(AttributeTag)
-        .filter(AttributeTag.attribute_id == int(attribute_system_id), AttributeTag.tag_id == int(tag_id))
+        .filter(AttributeTag.attribute_id == int(attribute_id), AttributeTag.tag_id == int(tag_id))
         .limit(1)
     )
-    attribute_tag = result.scalars().first()
+    attribute_tag = result.scalars().one_or_none()
 
     if not attribute_tag:
         return AddRemoveTagAttributeResponse(saved=False, errors="Invalid attribute - tag combination.")
@@ -825,6 +820,7 @@ async def _prepare_get_attribute_details_response(
         for attribute_tag in db_attribute_tags:
             result = await db.execute(select(Tag).filter(Tag.id == attribute_tag.tag_id).limit(1))
             tag = result.scalars().one()
+            # FIXME one or none if none -> http error
 
             connected_tag = GetAttributeTag(
                 id=tag.id,
@@ -917,17 +913,11 @@ async def _get_attribute_type_statistics(db: Session, percentage: bool) -> GetAt
 
 def _get_attribute_by_uuid(db: Seesion, attribute_id: uuid.UUID) -> Attribute:
 
-    if include_basic_event_attributes and include_non_galaxy_attribute_tags:
-     Attribute   query: Select = (
+    query: Select = (
             select(Attribute)
                 .filter(Attribute.uuid == attribute_id)
                 .options())
-    else:
-        query: Select = (
-            select(Attribute)
-            .filter(Attribute.uuid == attribute_id)
-        )
-
+    
     result = db.execute(query)
     attribute = result.scalars().one_or_none
 
