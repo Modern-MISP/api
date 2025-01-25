@@ -18,9 +18,7 @@ from mmisp.api_schemas.roles import (
     FilterRoleBody,
     FilterRoleResponse,
     EditUserRoleBody,
-    EditUserRoleResponse,
-    DefaultRoleResponse)
-
+)
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.role import Role
 from mmisp.lib.logger import alog
@@ -265,9 +263,7 @@ async def set_default_role(
         404: Not Found Error
 
     """
-    return None
-
-
+    return await _set_default_role(auth, db, role_id)
 
 
 # --- endpoint logic ---
@@ -295,18 +291,16 @@ async def _get_role(db: Session, role_id: int) -> GetRoleResponse:
     if role is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=GetRoleResponse{
+            detail=GetRoleResponse(
                 saved=False,
-                name:"Role not found",
-                message:f"Role with ID {role_id} not found.",
-                url:f"/roles/{role_id}",
-                id:role_id,
-            },
+                name="Role not found",
+                message=f"Role with ID {role_id} not found.",
+                url=f"/roles/{role_id}",
+                id=role_id,
+            ).dict(),
         )
 
-    return GetRoleResponse(
-        Role=RoleAttributeResponse(**role.__dict__)
-    )
+    return GetRoleResponse(Role=RoleAttributeResponse(**role.__dict__))
 
 
 
@@ -318,23 +312,63 @@ async def _delete_role(db: Session, role_id: int) -> DeleteRoleResponse:
     if role is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=DeleteRoleResponse{
+            detail=DeleteRoleResponse(
                 saved=False,
-                name:"Role not found",
-                message:f"Role with ID {role_id} not found.",
-                url:f"/roles/delete/{role_id}",
-                id:role_id,
-            },
+                name="Role not found",
+                message=f"Role with ID {role_id} not found.",
+                url=f"/admin/roles/delete/{role_id}",
+                id=role_id,
+            ).dict(),
         )
 
     await db.delete(role)
     await db.commit()
 
     return DeleteRoleResponse(
+        Role=RoleAttributeResponse(**role.__dict__),
         saved=True,
         success=True,
         name="Role deleted",
         message="Role deleted",
-        url=f"/roles/delete/{role_id}",
+        url=f"/admin/roles/delete/{role_id}",
         id=str(role_id),
+    )
+
+
+
+async def _set_default_role(auth: Auth, db: Session, role_id: int) -> DefaultRoleResponse:
+    
+    result = await db.execute(select(Role).where(Role.id == role_id))
+    role = result.scalar_one_or_none()
+
+    if role is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=DefaultRoleResponse(
+                saved=False,
+                name="Role not found",
+                message=f"Role with ID {role_id} not found.",
+                url=f"/admin/roles/delete/{role_id}",
+                id=role_id,
+            ).dict(),
+        )
+    
+    current_default_role = await db.execute(select(Role).where(Role.default_role == True))
+    current_default_role = current_default_role.scalar_one_or_none()
+
+    if current_default_role:
+        current_default_role.default_role = False
+        await db.commit()
+
+    role.default_role = True
+    await db.commit()
+
+    return DefaultRoleResponse(
+        Role=RoleAttributeResponse(**role.__dict__),
+        saved=True,
+        success=True,
+        name="Default Role Changed",
+        message=f"The default role has been changed to {role.name}.",
+        url="/admin/roles/setDefault/{role_id}",
+        id=role_id,
     )
