@@ -18,7 +18,9 @@ from mmisp.api_schemas.roles import (
     FilterRoleBody,
     FilterRoleResponse,
     EditUserRoleBody,
-)
+    EditUserRoleResponse,
+    DefaultRoleResponse)
+
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.role import Role
 from mmisp.lib.logger import alog
@@ -173,7 +175,7 @@ async def reinstate_role(
         403: Forbidden Error
         404: Not Found Error
     """
-    return None
+    return await None # _reinstate_role(auth, db, role_id, body)
 
 
 @router.post(
@@ -202,7 +204,7 @@ async def filter_roles(
         403: Forbidden Error
         404: Not Found Error
     """
-    return None
+    return await None # _filter_roles(auth, db, body)
 
 
 @router.put(
@@ -332,6 +334,48 @@ async def _delete_role(db: Session, role_id: int) -> DeleteRoleResponse:
         message="Role deleted",
         url=f"/admin/roles/delete/{role_id}",
         id=str(role_id),
+    )
+
+
+
+async def _edit_user_role(auth: Auth, db: Session, user_id: str, body: EditUserRoleBody) -> EditUserRoleResponse:
+
+    if not body.role_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="value 'role_id' is required")
+    if not isinstance(body.role_id, int):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN_BAD_REQUEST, detail="invalid 'role_id'")
+
+    user = await db.get(User, auth.user_id)
+    if user is None:
+        # this should never happen, it would mean, the user disappeared between auth and processing the request
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="user not available")
+
+    result = await db.execute(select(Role).where(Role.id == body.role_id))
+    role = result.scalar_one_or_none()
+
+    if role is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=EditUserRoleResponse(
+                saved=False,
+                name="Role not found",
+                message=f"Role with ID {body.role_id} not found.",
+                url=f"/admin/roles/delete/{body.role_id}",
+                id=body.role_id,
+            ).dict(),
+        )
+
+    user.role_id = body.role_id  
+    await db.commit()
+
+    return EditUserRoleResponse(
+        saved=True,
+        success=True,
+        name="User role updated",
+        message=f"User's role has been updated to {role.name}.",
+        url=f"/admin/users/edit/{user_id}",
+        id=user.id,
+        Role=role.name,  
     )
 
 
