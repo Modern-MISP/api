@@ -119,7 +119,7 @@ async def delete_role(
     returns:
         the deleted role
     """
-    return None
+    return await _delete_role(db, role_id)
 
 
 @router.put(
@@ -296,6 +296,7 @@ async def _get_role(db: Session, role_id: int) -> GetRoleResponse:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=GetRoleResponse{
+                saved=False,
                 name:"Role not found",
                 message:f"Role with ID {role_id} not found.",
                 url:f"/roles/{role_id}",
@@ -305,4 +306,35 @@ async def _get_role(db: Session, role_id: int) -> GetRoleResponse:
 
     return GetRoleResponse(
         Role=RoleAttributeResponse(**role.__dict__)
+    )
+
+
+
+async def _delete_role(db: Session, role_id: int) -> DeleteRoleResponse:
+    
+    result = await db.execute(select(Role).where(Role.id == role_id))
+    role = result.scalar_one_or_none()
+
+    if role is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=DeleteRoleResponse{
+                saved=False,
+                name:"Role not found",
+                message:f"Role with ID {role_id} not found.",
+                url:f"/roles/delete/{role_id}",
+                id:role_id,
+            },
+        )
+
+    await db.delete(role)
+    await db.commit()
+
+    return DeleteRoleResponse(
+        saved=True,
+        success=True,
+        name="Role deleted",
+        message="Role deleted",
+        url=f"/roles/delete/{role_id}",
+        id=str(role_id),
     )
