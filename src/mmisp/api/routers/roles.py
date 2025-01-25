@@ -72,7 +72,9 @@ async def get_role_info(
     returns:
         information about the role
     """
-    return None
+
+    return await _get_role(db, role_id)
+
 
 @router.post(
     "/admin/roles/add",
@@ -283,3 +285,24 @@ async def _get_roles(db: Session) -> list[GetRolesResponse]:
         role_list.append(GetRolesResponse(Role=RoleAttributeResponse(**role.__dict__)))
     return role_list
 
+
+
+async def _get_role(db: Session, role_id: int) -> GetRoleResponse:
+    
+    result = await db.execute(select(Role).where(Role.id == role_id))
+    role = result.scalar_one_or_none()
+
+    if role is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=GetRoleResponse{
+                name:"Role not found",
+                message:f"Role with ID {role_id} not found.",
+                url:f"/roles/{role_id}",
+                id:role_id,
+            },
+        )
+
+    return GetRoleResponse(
+        Role=RoleAttributeResponse(**role.__dict__)
+    )
