@@ -72,7 +72,7 @@ async def get_role_info(
     returns:
         information about the role
     """
-    return await None
+    return None
 
 @router.post(
     "/admin/roles/add",
@@ -117,7 +117,7 @@ async def delete_role(
     returns:
         the deleted role
     """
-    return await None
+    return None
 
 
 @router.put(
@@ -142,7 +142,7 @@ async def update_role(
     returns:
         the updated event
     """
-    return await None
+    return None
 
 
 @router.post(
@@ -173,7 +173,7 @@ async def reinstate_role(
         403: Forbidden Error
         404: Not Found Error
     """
-    return await None
+    return None
 
 
 @router.post(
@@ -202,7 +202,7 @@ async def filter_roles(
         403: Forbidden Error
         404: Not Found Error
     """
-    return await None
+    return None
 
 
 @router.put(
@@ -233,7 +233,7 @@ async def edit_user_role(
         403: Forbidden Error
         404: Not Found Error
     """
-    return await None
+    return None
 
 
 @router.put(
@@ -263,7 +263,7 @@ async def set_default_role(
         404: Not Found Error
 
     """
-    return await None
+    return None
 
 
 

@@ -693,7 +693,13 @@ async def _delete_event(db: Session, event_id: int | uuid.UUID) -> DeleteEventRe
     )
 
 @alog
-async def _get_events(db: Session, user: User) -> list[GetAllEventsResponse]:
+async def _get_events(db: Session, user: User | None) -> list[GetAllEventsResponse]:
+    if not user:    # Since the auth.user can be User or None
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN_BAD_REQUEST, 
+            detail="invalid user")
+
+    
     result = await db.execute(
         select(Event).options(
             selectinload(Event.org),

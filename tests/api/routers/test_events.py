@@ -172,7 +172,7 @@ async def test_update_non_existing_event(site_admin_user_token, client) -> None:
     assert response.status_code == 404
 
     response = client.put("/events/invalid_id", json=request_body, headers=headers)
-    assert response.status_code == 404
+    assert response.status_code == 422
 
 
 @pytest.mark.asyncio
@@ -372,12 +372,12 @@ async def test_publish_invalid_event2(site_admin_user_token, client) -> None:
     assert response_json["name"] == "Invalid event."
     assert response_json["message"] == "Invalid event."
     assert response_json["url"] == "/events/unpublish/0"
-    response = client.post("/events/unpublish/invalid_id", headers=headers)
+    response = client.post("/events/unpublish/999999999", headers=headers)
     assert response.status_code == 200
     response_json = response.json()
     assert response_json["name"] == "Invalid event."
     assert response_json["message"] == "Invalid event."
-    assert response_json["url"] == "/events/unpublish/invalid_id"
+    assert response_json["url"] == "/events/unpublish/999999999"
 
 
 @pytest.mark.asyncio
