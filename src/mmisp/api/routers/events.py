@@ -107,7 +107,7 @@ async def get_event_details(
     db: Annotated[Session, Depends(get_db)],
     event_id: Annotated[int | uuid.UUID, Path(alias="eventId")],
 ) -> AddEditGetEventResponse:
-    """Retrieve details of a specific event either by its event ID or via its UUID.
+    """Retrieve details of a specific event either by its event ID, or via its UUID.
 
     args:
         auth: the user's authentification status
@@ -591,32 +591,37 @@ async def _add_event(auth: Auth, db: Session, body: AddEventBody) -> AddEditGetE
 
 @alog
 async def _get_event_details(db: Session, event_id: int | uuid.UUID) -> AddEditGetEventResponse:
-    result = await db.execute(
-        select(Event)
-        .filter(Event.id == event_id)
-        .options(
-            selectinload(Event.org),
-            selectinload(Event.orgc),
-            selectinload(Event.eventtags_galaxy),
-            selectinload(Event.tags),
-            selectinload(Event.eventtags),
-            selectinload(Event.mispobjects),
-            selectinload(Event.attributes)
-                .options(
-                    selectinload(Attribute.attributetags_galaxy)
-                        .selectinload(AttributeTag.tag)
-                        .selectinload(Tag.galaxy_cluster)
-                            .options(
-                                selectinload(GalaxyCluster.org),
-                                selectinload(GalaxyCluster.orgc),
-                                selectinload(GalaxyCluster.galaxy),
-                                selectinload(GalaxyCluster.galaxy_elements),
-                            ),
-                    selectinload(Attribute.attributetags)
-                        .selectinload(AttributeTag.tag),
-                ),
+    if isinstance(event_id, uuid.UUID):
+        event = await _get_event_by_uuid(event_id, db, True, True)
+    
+    else:
+        result = await db.execute(
+            select(Event)
+            .filter(Event.id == event_id)
+            .options(
+                selectinload(Event.org),
+                selectinload(Event.orgc),
+                selectinload(Event.eventtags_galaxy),
+                selectinload(Event.tags),
+                selectinload(Event.eventtags),
+                selectinload(Event.mispobjects),
+                selectinload(Event.attributes)
+                    .options(
+                        selectinload(Attribute.attributetags_galaxy)
+                            .selectinload(AttributeTag.tag)
+                            .selectinload(Tag.galaxy_cluster)
+                                .options(
+                                    selectinload(GalaxyCluster.org),
+                                    selectinload(GalaxyCluster.orgc),
+                                    selectinload(GalaxyCluster.galaxy),
+                                    selectinload(GalaxyCluster.galaxy_elements),
+                                ),
+                        selectinload(Attribute.attributetags)
+                            .selectinload(AttributeTag.tag),
+                    ),
+            )
         )
-    )
+    
     event = result.scalars().one_or_none()
 
     if not event:
@@ -629,7 +634,7 @@ async def _get_event_details(db: Session, event_id: int | uuid.UUID) -> AddEditG
 @alog
 async def _update_event(db: Session, event_id: int | uuid.UUID, body: EditEventBody) -> AddEditGetEventResponse:
     
-    if type(event_id) is uuid.UUID:
+    if isinstance(event_id, uuid.UUID):
         event = await _get_event_by_uuid(event_id, db, True, False)
     else:
         result = await db.execute(
@@ -673,7 +678,7 @@ async def _update_event(db: Session, event_id: int | uuid.UUID, body: EditEventB
 
 @alog
 async def _delete_event(db: Session, event_id: int | uuid.UUID) -> DeleteEventResponse:
-    if type(event_id) is uuid.UUID:
+    if isinstance(event_id, uuid.UUID):
         event = await _get_event_by_uuid(event_id, db)
     else:
         event = await db.get(Event, event_id)
@@ -827,7 +832,7 @@ async def _index_events(db: Session, body: IndexEventsBody) -> list[GetAllEvents
 
 @alog
 async def _publish_event(db: Session, event_id: int | uuid.UUID, request: Request) -> PublishEventResponse:
-    if type(event_id) is uuid.UUID:
+    if isinstance(event_id, uuid.UUID):
         event = await _get_event_by_uuid(event_id, db)
     else:
         event = await db.get(Event, event_id)
@@ -846,7 +851,7 @@ async def _publish_event(db: Session, event_id: int | uuid.UUID, request: Reques
 
 @alog
 async def _unpublish_event(db: Session, event_id: int | uuid.UUID, request: Request) -> UnpublishEventResponse:
-    if type(event_id) is uuid.UUID:
+    if isinstance(event_id, uuid.UUID):
         event = await _get_event_by_uuid(event_id, db)
     else:
         event = await db.get(Event, event_id)
@@ -875,7 +880,7 @@ async def _add_tag_to_event(
     db: Session, event_id: int | uuid.UUID, tag_id: str, local: str
 ) -> AddRemoveTagEventsResponse:
     
-    if type(event_id) is uuid.UUID:
+    if isinstance(event_id, uuid.UUID):
         event = await _get_event_by_uuid(event_id, db)
     else:
         event = await db.get(Event, event_id)
@@ -906,7 +911,7 @@ async def _add_tag_to_event(
 
 @alog
 async def _remove_tag_from_event(db: Session, event_id: int | uuid.UUID, tag_id: str) -> AddRemoveTagEventsResponse:
-    if type(event_id) is uuid.UUID:
+    if isinstance(event_id, uuid.UUID):
         event = await _get_event_by_uuid(event_id, db)
     else:
         event = await db.get(Event, event_id)

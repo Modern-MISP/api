@@ -506,7 +506,7 @@ async def delete_attribute_depr(
 
 @alog
 async def _add_attribute(db: Session, event_id: int | uuid.UUID, body: AddAttributeBody) -> AddAttributeResponse:
-    if type(event_id) is uuid.UUID:
+    if isinstance(event_id, uuid.UUID):
         event = await _get_event_by_uuid(event_id, db)
     else:
         event = await db.get(Event, event_id)
@@ -618,7 +618,7 @@ async def _get_attributes(db: Session) -> list[GetAllAttributesResponse]:
 async def _delete_selected_attributes(
     db: Session, event_id: int | uuid.UUID, body: DeleteSelectedAttributeBody, request: Request
 ) -> DeleteSelectedAttributeResponse:
-    if type(event_id) is uuid.UUID:
+    if isinstance(event_id, uuid.UUID):
         event = await _get_event_by_uuid(event_id, db)
     else:
         event = await db.get(Event, event_id)
@@ -771,23 +771,7 @@ async def _remove_tag_from_attribute(
     db: Session, attribute_id: int | uuid.UUID, tag_id: str
 ) -> AddRemoveTagAttributeResponse:
     
-<<<<<<< HEAD
-    if isinstance(attribute_id, int):
-        attribute_system_id = attribute_id
-    else:
-        result = await db.execute(
-            select(Attribute.id)
-            .filter(Attribute.uuid == attribute_id))
-        attribute_system_id = result.scalars().first()
-
-    result = await db.execute(
-        select(AttributeTag)
-        .filter(AttributeTag.attribute_id == int(attribute_id), AttributeTag.tag_id == int(tag_id))
-        .limit(1)
-    )
-    attribute_tag = result.scalars().one_or_none()
-=======
-    if type(attribute_id) is uuid.UUID:
+    if isinstance(attribute_id, uuid.UUID):
         attirbute_tag = _get_tag_by_attribute_uuid(db, attribute_id, tag_id)
     else:
         result = await db.execute(
@@ -796,7 +780,6 @@ async def _remove_tag_from_attribute(
             .limit(1)
         )
         attribute_tag = result.scalars().one_or_none()
->>>>>>> 9e64874 (Attributes UUID compatibility)
 
     if not attribute_tag:
         return AddRemoveTagAttributeResponse(saved=False, errors="Invalid attribute - tag combination.")
@@ -839,7 +822,7 @@ async def _prepare_get_attribute_details_response(
         attribute_dict["event_uuid"] = attribute.event_uuid
 
 
-    if type(attribute_id) is uuid.UUID:
+    if isinstance(attribute_id, uuid.UUID):
         db_attribute_tags = _get_all_tags_by_attribute_uuid(db, attribute_id)
     else:
         result = await db.execute(select(AttributeTag).filter(AttributeTag.attribute_id == attribute_id))
@@ -879,7 +862,7 @@ async def _prepare_edit_attribute_response(
         else:
             attribute_dict[field] = "0"
 
-    if type(attribute_id) is uuid.UUID:
+    if isinstance(attribute_id, uuid.UUID):
         db_attribute_tags = _get_all_tags_by_attribute_uuid(db, attribute_id)
     else:
         result = await db.execute(select(AttributeTag).filter(AttributeTag.attribute_id == attribute_id))

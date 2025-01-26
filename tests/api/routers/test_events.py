@@ -102,7 +102,42 @@ async def test_get_existing_event(
 
     headers = {"authorization": site_admin_user_token}
     ic("event_id", event_id)
+
     response = client.get(f"/events/{event_id}", headers=headers)
+    ic("response", response)
+
+    assert response.status_code == 200
+    response_json = response.json()
+    assert response_json["Event"]["id"] == event_id
+    assert response_json["Event"]["org_id"] == org_id
+    assert response_json["Event"]["orgc_id"] == org_id
+    assert response_json["Event"]["attribute_count"] == "1"
+    assert response_json["Event"]["Attribute"][0]["id"] == attribute_id
+    assert response_json["Event"]["Tag"][0]["id"] == tag_id
+    assert response_json["Event"]["Galaxy"][0]["id"] == galaxy_id
+    assert response_json["Event"]["Galaxy"][0]["GalaxyCluster"][0]["id"] == galaxy_cluster_id
+    assert response_json["Event"]["Galaxy"][0]["GalaxyCluster"][0]["event_tag_id"] == eventtag.id
+
+
+@pytest.mark.asyncio
+async def test_get_existing_event_by_uuid(
+    organisation, event, attribute, galaxy, galaxy_cluster, tag, site_admin_user_token, eventtag, client
+) -> None:
+    ic("test")
+    org_id = organisation.id
+
+    event_id = event.id
+    event_uuid = event.uuid
+    attribute_id = attribute.id
+    galaxy_id = galaxy.id
+    tag_id = tag.id
+
+    galaxy_cluster_id = galaxy_cluster.id
+
+    headers = {"authorization": site_admin_user_token}
+    ic("event_id", event_id)
+    
+    response = client.get(f"/events/{event_uuid}", headers=headers)
     ic("response", response)
 
     assert response.status_code == 200
