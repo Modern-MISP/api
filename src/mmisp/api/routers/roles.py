@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, status, Path
+from fastapi import APIRouter, Depends, HTTPException, status, Path
 from sqlalchemy.future import select
 
 from mmisp.api.auth import Auth, AuthStrategy, authorize
@@ -8,25 +8,25 @@ from mmisp.api_schemas.roles import (
     GetRolesResponse,
     GetRoleResponse,
     RoleAttributeResponse,
+    AddRoleBody,
     AddRoleResponse,
     DeleteRoleResponse,
-    EditRoleResponse,
-    ReinstateRoleResponse,
-    FilterRoleResponse,
-    EditUserRoleResponse,
-    DefaultRoleResponse,
-    AddRoleBody,
     EditRoleBody,
+    EditRoleResponse,
     ReinstateRoleBody,
+    ReinstateRoleResponse,
     FilterRoleBody,
+    FilterRoleResponse,
     EditUserRoleBody,
-    DefaultRoleBody,
-)
+    EditUserRoleResponse,
+    DefaultRoleResponse)
+
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.role import Role
 from mmisp.lib.logger import alog
 from fastapi import Path
 from mmisp.lib.permissions import Permission
+from mmisp.db.models.user import User
 
 router = APIRouter(tags=["roles"])
 
@@ -41,7 +41,7 @@ async def get_all_roles(
     db: Annotated[Session, Depends(get_db)],
 ) -> list[GetRolesResponse]:
     """
-    Get all roles and their details.
+    Get all roles and their details. 
 
     args:
         auth: the user's authentification status
@@ -73,7 +73,6 @@ async def get_role_info(
         information about the role
     """
     return await None
-
 
 @router.post(
     "/admin/roles/add",
@@ -174,7 +173,7 @@ async def reinstate_role(
         403: Forbidden Error
         404: Not Found Error
     """
-    return await _reinstate_role(auth, db, role_id, body)
+    return await None
 
 
 @router.post(
@@ -203,7 +202,7 @@ async def filter_roles(
         403: Forbidden Error
         404: Not Found Error
     """
-    return await _filter_roles(auth, db, body)
+    return await None
 
 
 @router.put(
@@ -212,7 +211,7 @@ async def filter_roles(
     summary="Assign or reassign a user to a specific role",
 )
 async def edit_user_role(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ADMIN, [Permission.ADMIN]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     user_id: Annotated[str, Path(alias="userId")],
     body: EditUserRoleBody,
@@ -234,18 +233,18 @@ async def edit_user_role(
         403: Forbidden Error
         404: Not Found Error
     """
-    return await _edit_user_role(auth, db, user_id, body)
+    return await None
 
 
 @router.put(
-    "/admin/roles/setDefault",
+    "/admin/roles/setDefault/{roleId}",
     status_code=status.HTTP_200_OK,
     summary="Change the default role",
 )
 async def set_default_role(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ADMIN, [Permission.ADMIN]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
-    body: DefaultRoleBody,
+    role_id: Annotated[int, Path(alias="roleId")],
 ) -> DefaultRoleResponse:
     """Change the default role (if not changed the default role is 'read only').
 
@@ -264,7 +263,9 @@ async def set_default_role(
         404: Not Found Error
 
     """
-    return await _set_default_role(auth, db, body)
+    return await None
+
+
 
 
 # --- endpoint logic ---
