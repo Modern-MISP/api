@@ -204,7 +204,7 @@ async def filter_roles(
         403: Forbidden Error
         404: Not Found Error
     """
-    return await None # _filter_roles(auth, db, body)
+    return await _filter_roles(auth, db, body)
 
 
 @router.put(
@@ -361,6 +361,31 @@ async def _delete_role(db: Session, role_id: int) -> DeleteRoleResponse:
         url=f"/admin/roles/delete/{role_id}",
         id=str(role_id),
     )
+
+
+
+async def _filter_roles(auth: Auth, db: Session, body: FilterRoleBody) -> list[FilterRoleResponse]:
+    requested_permissions = body.permissions
+
+    if not requested_permissions:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No permissions provided for filtering."
+        )
+
+    query = select(Role)
+    result = await db.execute(query)
+    roles = result.scalars().all()
+
+    filtered_roles: list[FilterRoleResponse] = []
+
+    for role in roles:
+        role_permissions = role.get_permissions()
+
+        if all(permission in role_permissions for permission in requested_permissions):
+            filtered_roles.append(FilterRoleResponse(Role=RoleAttributeResponse(**role.__dict__)))
+
+    return filtered_roles
 
 
 
