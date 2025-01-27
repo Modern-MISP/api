@@ -19,6 +19,7 @@ from mmisp.api_schemas.roles import (
     FilterRoleResponse,
     EditUserRoleBody,
     EditUserRoleResponse,
+    GetUserRoleResponse,
     DefaultRoleResponse)
 
 from mmisp.db.database import Session, get_db
@@ -156,18 +157,16 @@ async def reinstate_role(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     role_id: Annotated[str, Path(alias="roleId")],
-    body: ReinstateRoleBody,
 ) -> ReinstateRoleResponse:
     """Reinstate a deleted standard role.
 
     args:
         auth: the user's authentication status
         db: the current database
-        role_id: the role id
-        body: the requested body containing the name of the requested standard role
+        role_id: the role id of the to be reinstated role
 
     returns:
-        the updated role
+        the reinstated role
 
     raises:
         200: Successful Response
@@ -175,7 +174,7 @@ async def reinstate_role(
         403: Forbidden Error
         404: Not Found Error
     """
-    return await None # _reinstate_role(auth, db, role_id, body)
+    return await None # _reinstate_role(auth, db, role_id)
 
 
 @router.post(
@@ -236,6 +235,36 @@ async def edit_user_role(
         404: Not Found Error
     """
     return None
+
+
+@router.post(
+    "admin/roles/users/{roleId}",
+    status_code=status.HTTP_200_OK,
+    summary="Get all users assigned to a specific role",
+)
+async def get_users_by_role(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.ADMIN]))],
+    db: Annotated[Session, Depends(get_db)],
+    role_id: Annotated[int, Path(alias="roleId")],
+) -> list[GetUserRoleResponse]:
+    """
+    Retrieve all users assigned to a specific role.
+
+    Args:
+        auth: the user's authentication details.
+        db: the current database session.
+        role_id: the ID of the role whose users are requested.
+
+    Returns:
+        A list of users assigned to the specified role.
+
+    Raises:
+        200: Successful Response.
+        422: Validation Error.
+        403: Forbidden Error.
+        404: Not Found Error.
+    """
+    return await _get_users_by_role(auth, db, role_id)
 
 
 @router.put(
@@ -363,6 +392,36 @@ async def _delete_role(db: Session, role_id: int) -> DeleteRoleResponse:
     )
 
 
+async def _reinstate_role(auth: Auth, db: Session, role_id: int) -> ReinstateRoleResponse:
+    # Standard roles must have an ID between 1 and 7 since those are the only ones that are always available 
+    if role_id < 1 or role_id > 7:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Role with ID {role_id} is not a standard role and cannot be reinstated."
+        )
+
+    result = await db.execute(select(Role).where(Role.id == role_id))
+    role = result.scalar_one_or_none()
+
+    if role:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Role with ID {role_id} is already in use."
+        )
+
+    # FIXME REINSTATE ROLE WITH THE PASSED ON ID HERE
+
+    result = await db.execute(select(Role).where(Role.id == role_id))
+    role = result.scalar_one_or_none()
+
+    return ReinstateRoleResponse(
+        Role=RoleAttributeResponse(**role.__dict__),
+        success=True,
+        message=f"Role with ID {role_id} has been reinstated.",
+        url=f"/roles/reinstate/{role_id}",
+        id=role_id
+    )
+
 
 async def _filter_roles(auth: Auth, db: Session, body: FilterRoleBody) -> list[FilterRoleResponse]:
     requested_permissions = body.permissions
@@ -428,6 +487,29 @@ async def _edit_user_role(auth: Auth, db: Session, user_id: str, body: EditUserR
         id=user.id,
         Role=role.name,  
     )
+
+
+
+async def _get_users_by_role(auth: Auth, db: Session, role_id: int) -> list[GetUserRoleResponse]:
+    
+    result = await db.execute(select(Role).where(Role.id == role_id))
+    role = result.scalar_one_or_none()
+
+    if role is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Role with ID {role_id} not found."
+        )
+
+    users_query = await db.execute(select(User).where(User.role_id == role_id))
+    users = users_query.scalars().all()
+
+    if not users:
+        return []
+
+    user_list: list[GetUserRoleResponse] = [GetUserRoleResponse(user=user) for user in users]
+
+    return user_list
 
 
 
