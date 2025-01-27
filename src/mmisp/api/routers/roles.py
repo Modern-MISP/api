@@ -1,7 +1,7 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status, Path
-from sqlalchemy.future import select
+from sqlalchemy.future import select, exists
 
 from mmisp.api.auth import Auth, AuthStrategy, authorize
 from mmisp.api_schemas.roles import (
@@ -96,7 +96,7 @@ async def add_role(
     returns:
         the new role
     """
-    return None
+    return _add_role(db, AddRoleBody)
 
 
 @router.delete(
@@ -323,6 +323,32 @@ async def _delete_role(db: Session, role_id: int) -> DeleteRoleResponse:
             ).dict(),
         )
 
+    if role.default_role:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=DeleteRoleResponse(
+                saved=False,
+                name="Can't delete default role",
+                message=f"Role with ID {role_id} is the default role. Can't be deleted",
+                url=f"/admin/roles/delete/{role_id}",
+                id=role_id,
+            ).dict(),
+        )
+    
+    user_exists = await db.execute(select(exists().where(User.role_id == role_id)))
+
+    if user_exists.scalar():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=DeleteRoleResponse(
+                saved=False,
+                name="Role in use",
+                message=f"Role with ID {role_id} cannot be deleted because it is assigned to one or more users.",
+                url=f"/admin/roles/delete/{role_id}",
+                id=role_id,
+            ).dict(),
+        )
+
     await db.delete(role)
     await db.commit()
 
@@ -400,6 +426,7 @@ async def _set_default_role(auth: Auth, db: Session, role_id: int) -> DefaultRol
     current_default_role = await db.execute(select(Role).where(Role.default_role == True))
     current_default_role = current_default_role.scalar_one_or_none()
 
+    # there should always be a default role, since the default role can't be deleted, but just in case...
     if current_default_role:
         current_default_role.default_role = False
         await db.commit()
