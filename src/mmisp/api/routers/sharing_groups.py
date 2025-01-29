@@ -997,8 +997,10 @@ async def _view_sharing_group_legacy(auth: Auth, db: Session, id: int | uuid.UUI
     for sharing_group_org in sharing_group_orgs:
         sharing_group_org_organisation: Organisation | None = await db.get(Organisation, sharing_group_org.org_id)
 
+        if sharing_group_org_organisation is None:
+            continue
         sharing_group_orgs_computed.append(
-            {**sharing_group_org.__dict__, "Organisation": getattr(sharing_group_org_organisation, "__dict__", None)}
+            {**sharing_group_org.asdict(), "Organisation": sharing_group_org_organisation.asdict()}
         )
 
     sharing_group_servers_computed: list[dict] = []
