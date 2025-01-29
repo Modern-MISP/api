@@ -3,8 +3,8 @@ from collections.abc import Sequence
 from typing import Annotated, Any, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Path, status
-from sqlalchemy import and_, delete, or_
-from sqlalchemy.future import select
+from sqlalchemy import delete, select
+from sqlalchemy.orm import selectinload
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize, check_permissions
 from mmisp.api.config import config
@@ -193,7 +193,6 @@ async def get_sharing_group_info(
 @router.patch(
     "/sharing_groups/{id}/organisations",
     status_code=status.HTTP_200_OK,
-    summary="Add an organisation",
 )
 @alog
 async def add_org_to_sharing_group(
@@ -653,95 +652,44 @@ async def _delete_sharing_group(auth: Auth, db: Session, id: int) -> dict:
 @alog
 async def _get_all_sharing_groups(auth: Auth, db: Session) -> dict:
     sharing_groups: Sequence[SharingGroup] = []
-
-    is_site_admin: bool = check_permissions(auth, [Permission.SITE_ADMIN])
-
-    if is_site_admin:
-        result = await db.execute(select(SharingGroup))
-        sharing_groups = result.scalars().all()
-    else:
-        user_org: Organisation | None = await db.get(Organisation, auth.org_id)
-        query = (
-            select(SharingGroup)
-            .join(
-                SharingGroupOrg,
-                SharingGroup.id == SharingGroupOrg.sharing_group_id,
-                isouter=True,
-            )
-            .join(
-                SharingGroupServer,
-                SharingGroup.id == SharingGroupServer.sharing_group_id,
-                isouter=True,
-            )
-        )
-        if user_org and user_org.local:
-            query = query.filter(
-                or_(
-                    SharingGroupOrg.org_id == auth.org_id,
-                    SharingGroup.org_id == auth.org_id,
-                    and_(SharingGroupServer.server_id == 0, SharingGroupServer.all_orgs.is_(True)),
-                )
-            )
-        else:
-            query = query.filter(
-                or_(
-                    SharingGroupOrg.org_id == auth.org_id,
-                    SharingGroup.org_id == auth.org_id,
-                )
-            )
-        result = await db.execute(query)
-        sharing_groups = result.scalars().all()
+    qry = select(SharingGroup).options(
+        selectinload(SharingGroup.sharing_group_orgs).options(selectinload(SharingGroupOrg.organisation)),
+        selectinload(SharingGroup.sharing_group_servers).options(selectinload(SharingGroupServer.server)),
+    )
+    result = await db.execute(qry)
+    sharing_groups = result.scalars().all()
 
     sharing_groups_computed: list[dict] = []
 
     for sharing_group in sharing_groups:
         organisation: Organisation | None = await db.get(Organisation, sharing_group.org_id)
 
-        result = await db.execute(select(SharingGroupOrg).filter(SharingGroupOrg.sharing_group_id == sharing_group.id))
-        sharing_group_orgs: Sequence[SharingGroupOrg] = result.scalars().all()
+        sharing_group_orgs: Sequence[SharingGroupOrg] = sharing_group.sharing_group_orgs
+        sharing_group_servers: Sequence[SharingGroupServer] = sharing_group.sharing_group_servers
 
-        result = await db.execute(
-            select(SharingGroupServer).filter(SharingGroupServer.sharing_group_id == sharing_group.id)
-        )
-        sharing_group_servers: Sequence[SharingGroupServer] = result.scalars().all()
-
-        sharing_group_orgs_computed: list[dict] = []
-
-        for sharing_group_org in sharing_group_orgs:
-            sharing_group_org_organisation: Organisation | None = await db.get(Organisation, sharing_group_org.org_id)
-            if sharing_group_org_organisation is None:
-                continue
-
-            sharing_group_orgs_computed.append(
-                {
-                    **sharing_group_org.__dict__,
-                    "Organisation": getattr(sharing_group_org_organisation, "__dict__", None),
-                }
-            )
+        sharing_group_orgs_computed = [
+            {
+                **sgo.asdict(),
+                "Organisation": sgo.organisation.asdict(),
+            }
+            for sgo in sharing_group_orgs
+        ]
 
         sharing_group_servers_computed: list[dict] = []
 
-        for sharing_group_server in sharing_group_servers:
-            sharing_group_server_server: Any | None = None
+        for sgs in sharing_group_servers:
+            sgs_server = LOCAL_INSTANCE_SERVER if sgs.server_id == 0 else sgs.server.asdict()
 
-            if sharing_group_server.server_id == 0:
-                sharing_group_server_server = LOCAL_INSTANCE_SERVER
-            else:
-                sharing_group_server_server = await db.get(Server, sharing_group_server.server_id)
-                sharing_group_server_server = getattr(sharing_group_server_server, "__dict__", None)
-
-            sharing_group_servers_computed.append(
-                {**sharing_group_server.__dict__, "Server": sharing_group_server_server}
-            )
+            sharing_group_servers_computed.append({**sgs.asdict(), "Server": sgs_server})
 
         sharing_groups_computed.append(
             {
-                "SharingGroup": {**sharing_group.__dict__, "org_count": len(sharing_group_orgs)},
-                "Organisation": organisation.__dict__,
+                "SharingGroup": {**sharing_group.asdict(), "org_count": len(sharing_group_orgs)},
+                "Organisation": organisation.asdict() if organisation is not None else None,
                 "SharingGroupOrg": sharing_group_orgs_computed,
                 "SharingGroupServer": sharing_group_servers_computed,
-                "editable": sharing_group.org_id == auth.org_id or is_site_admin,
-                "deletable": sharing_group.org_id == auth.org_id or is_site_admin,
+                "editable": True,
+                "deletable": True,
             }
         )
 
