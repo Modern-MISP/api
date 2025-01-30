@@ -612,10 +612,8 @@ async def _get_sharing_group(auth: Auth, db: Session, id: int | uuid.UUID) -> di
 async def _update_sharing_group(auth: Auth, db: Session, id: int, body: UpdateSharingGroupBody) -> dict:
     sharing_group: SharingGroup | None = await db.get(SharingGroup, id)
 
-    if not sharing_group:
+    if sharing_group is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
-
-    sharing_group = cast(SharingGroup, sharing_group)
 
     if sharing_group.org_id != auth.org_id and not check_permissions(auth, [Permission.SITE_ADMIN]):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
@@ -632,10 +630,8 @@ async def _update_sharing_group(auth: Auth, db: Session, id: int, body: UpdateSh
 async def _delete_sharing_group(auth: Auth, db: Session, id: int) -> dict:
     sharing_group: SharingGroup | None = await db.get(SharingGroup, id)
 
-    if not sharing_group:
+    if sharing_group is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
-
-    sharing_group = cast(SharingGroup, sharing_group)
 
     if sharing_group.org_id != auth.org_id and not check_permissions(auth, [Permission.SITE_ADMIN]):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
@@ -649,51 +645,48 @@ async def _delete_sharing_group(auth: Auth, db: Session, id: int) -> dict:
     return sharing_group.__dict__
 
 
+def _process_sharing_group(sharing_group: SharingGroup) -> dict:
+    organisation: Organisation | None = sharing_group.creator_org
+
+    sharing_group_orgs: Sequence[SharingGroupOrg] = sharing_group.sharing_group_orgs
+    sharing_group_servers: Sequence[SharingGroupServer] = sharing_group.sharing_group_servers
+
+    sharing_group_orgs_computed = [
+        {
+            **sgo.asdict(),
+            "Organisation": sgo.organisation.asdict(),
+        }
+        for sgo in sharing_group_orgs
+    ]
+
+    sharing_group_servers_computed: list[dict] = []
+
+    for sgs in sharing_group_servers:
+        sgs_server = LOCAL_INSTANCE_SERVER if sgs.server_id == 0 else sgs.server.asdict()
+
+        sharing_group_servers_computed.append({**sgs.asdict(), "Server": sgs_server})
+
+    return {
+        "SharingGroup": {**sharing_group.asdict(), "org_count": len(sharing_group_orgs)},
+        "Organisation": organisation.asdict() if organisation is not None else None,
+        "SharingGroupOrg": sharing_group_orgs_computed,
+        "SharingGroupServer": sharing_group_servers_computed,
+        "editable": True,
+        "deletable": True,
+    }
+
+
 @alog
 async def _get_all_sharing_groups(auth: Auth, db: Session) -> dict:
-    sharing_groups: Sequence[SharingGroup] = []
     qry = select(SharingGroup).options(
+        selectinload(SharingGroup.creator_org),
         selectinload(SharingGroup.sharing_group_orgs).options(selectinload(SharingGroupOrg.organisation)),
         selectinload(SharingGroup.sharing_group_servers).options(selectinload(SharingGroupServer.server)),
     )
     result = await db.execute(qry)
     sharing_groups = result.scalars().all()
 
-    sharing_groups_computed: list[dict] = []
-
-    for sharing_group in sharing_groups:
-        organisation: Organisation | None = await db.get(Organisation, sharing_group.org_id)
-
-        sharing_group_orgs: Sequence[SharingGroupOrg] = sharing_group.sharing_group_orgs
-        sharing_group_servers: Sequence[SharingGroupServer] = sharing_group.sharing_group_servers
-
-        sharing_group_orgs_computed = [
-            {
-                **sgo.asdict(),
-                "Organisation": sgo.organisation.asdict(),
-            }
-            for sgo in sharing_group_orgs
-        ]
-
-        sharing_group_servers_computed: list[dict] = []
-
-        for sgs in sharing_group_servers:
-            sgs_server = LOCAL_INSTANCE_SERVER if sgs.server_id == 0 else sgs.server.asdict()
-
-            sharing_group_servers_computed.append({**sgs.asdict(), "Server": sgs_server})
-
-        sharing_groups_computed.append(
-            {
-                "SharingGroup": {**sharing_group.asdict(), "org_count": len(sharing_group_orgs)},
-                "Organisation": organisation.asdict() if organisation is not None else None,
-                "SharingGroupOrg": sharing_group_orgs_computed,
-                "SharingGroupServer": sharing_group_servers_computed,
-                "editable": True,
-                "deletable": True,
-            }
-        )
-
-    return {"response": sharing_groups_computed}
+    return {"response": [_process_sharing_group(sg) for sg in sharing_groups]}
 
 
 @alog
