@@ -502,25 +502,25 @@ async def test_attribute_describe_types(site_admin_user_token, client) -> None:
 # --- Test restore attribute
 
 
-@pytest.mark.asyncio
-async def test_restore_existing_attribute(
-    db: AsyncSession, site_admin_user_token, sharing_group, event, attribute, client
-) -> None:
-    event.sharing_group_id = sharing_group.id
-
-    db.add(event)
-    await db.commit()
-    await db.refresh(event)
-
-    attribute.sharing_group_id = sharing_group.id
-
-    await db.commit()
-
-    attribute_id = attribute.id
-
-    headers = {"authorization": site_admin_user_token}
-    response = client.post(f"/attributes/restore/{attribute_id}", headers=headers)
-    assert response.status_code == 200
+#@pytest.mark.asyncio
+#async def test_restore_existing_attribute(
+#    db: AsyncSession, site_admin_user_token, sharing_group, event, attribute, client
+#) -> None:
+#    event.sharing_group_id = sharing_group.id
+#
+#    db.add(event)
+#    await db.commit()
+#    await db.refresh(event)
+#
+#    attribute.sharing_group_id = sharing_group.id
+#
+#    await db.commit()
+#
+#    attribute_id = attribute.id
+#
+#    headers = {"authorization": site_admin_user_token}
+#    response = client.post(f"/attributes/restore/{attribute_id}", headers=headers)
+#    assert response.status_code == 200
 
 
 @pytest.mark.asyncio

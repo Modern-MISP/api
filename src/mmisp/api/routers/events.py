@@ -81,9 +81,9 @@ router = APIRouter(tags=["events"])
 )
 @alog
 async def add_event(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.ADD]))],
-    db: Annotated[Session, Depends(get_db)],
-    body: AddEventBody,
+        auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.ADD]))],
+        db: Annotated[Session, Depends(get_db)],
+        body: AddEventBody,
 ) -> AddEditGetEventResponse:
     """Add a new event with the given details.
 
@@ -105,9 +105,9 @@ async def add_event(
 )
 @alog
 async def get_event_details(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
-    db: Annotated[Session, Depends(get_db)],
-    event_id: Annotated[int | uuid.UUID, Path(alias="eventId")],
+        auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+        db: Annotated[Session, Depends(get_db)],
+        event_id: Annotated[int | uuid.UUID, Path(alias="eventId")],
 ) -> AddEditGetEventResponse:
     """Retrieve details of a specific event either by its event ID, or via its UUID.
 
@@ -119,7 +119,7 @@ async def get_event_details(
     returns:
         the event details 
     """
-    return await _get_event_details(db, event_id)
+    return await _get_event_details(db, event_id, auth.user)
 
 
 @router.put(
@@ -129,10 +129,10 @@ async def get_event_details(
 )
 @alog
 async def update_event(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
-    db: Annotated[Session, Depends(get_db)],
-    event_id: Annotated[int | uuid.UUID, Path(alias="eventId")],
-    body: EditEventBody,
+        auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
+        db: Annotated[Session, Depends(get_db)],
+        event_id: Annotated[int | uuid.UUID, Path(alias="eventId")],
+        body: EditEventBody,
 ) -> AddEditGetEventResponse:
     """Update an existing event either by its event ID or via its UUID.
 
@@ -145,7 +145,7 @@ async def update_event(
     returns:
         the updated event
     """
-    return await _update_event(db, event_id, body)
+    return await _update_event(db, event_id, body, auth.user)
 
 
 @router.delete(
@@ -155,9 +155,9 @@ async def update_event(
 )
 @alog
 async def delete_event(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
-    db: Annotated[Session, Depends(get_db)],
-    event_id: Annotated[int | uuid.UUID, Path(alias="eventId")],
+        auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
+        db: Annotated[Session, Depends(get_db)],
+        event_id: Annotated[int | uuid.UUID, Path(alias="eventId")],
 ) -> DeleteEventResponse:
     """Delete an event either by its event ID or via its UUID.
 
@@ -169,7 +169,7 @@ async def delete_event(
     returns:
         the deleted event
     """
-    return await _delete_event(db, event_id)
+    return await _delete_event(db, event_id, auth.user)
 
 
 @router.get(
@@ -179,7 +179,7 @@ async def delete_event(
 )
 @alog
 async def get_all_events(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))], db: Annotated[Session, Depends(get_db)]
+        auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))], db: Annotated[Session, Depends(get_db)]
 ) -> list[GetAllEventsResponse]:
     """Retrieve a list of all events.
 
@@ -200,9 +200,9 @@ async def get_all_events(
 )
 @alog
 async def rest_search_events(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
-    db: Annotated[Session, Depends(get_db)],
-    body: SearchEventsBody,
+        auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+        db: Annotated[Session, Depends(get_db)],
+        body: SearchEventsBody,
 ) -> SearchEventsResponse:
     """Search for events based on various filters.
 
@@ -215,7 +215,7 @@ async def rest_search_events(
     returns:
         the searched events
     """
-    return await _rest_search_events(db, body)
+    return await _rest_search_events(db, body, auth.user)
 
 
 @router.post(
@@ -225,9 +225,9 @@ async def rest_search_events(
 )
 @alog
 async def index_events(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
-    db: Annotated[Session, Depends(get_db)],
-    body: IndexEventsBody,
+        auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+        db: Annotated[Session, Depends(get_db)],
+        body: IndexEventsBody,
 ) -> list[GetAllEventsResponse]:
     """Search for events based on various filters, which are more general than the ones in 'rest search'.
 
@@ -250,10 +250,10 @@ async def index_events(
 )
 @alog
 async def publish_event(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.PUBLISH]))],
-    db: Annotated[Session, Depends(get_db)],
-    event_id: Annotated[int | uuid.UUID, Path(alias="eventId")],
-    request: Request,
+        auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.PUBLISH]))],
+        db: Annotated[Session, Depends(get_db)],
+        event_id: Annotated[int | uuid.UUID, Path(alias="eventId")],
+        request: Request,
 ) -> PublishEventResponse:
     """Publish an event either by its event ID or via its UUID. .
 
@@ -276,10 +276,10 @@ async def publish_event(
 )
 @alog
 async def unpublish_event(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
-    db: Annotated[Session, Depends(get_db)],
-    event_id: Annotated[int | uuid.UUID, Path(alias="eventId")],
-    request: Request,
+        auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
+        db: Annotated[Session, Depends(get_db)],
+        event_id: Annotated[int | uuid.UUID, Path(alias="eventId")],
+        request: Request,
 ) -> UnpublishEventResponse:
     """Unpublish an event  either by its event ID or via its UUID.
 
@@ -292,7 +292,7 @@ async def unpublish_event(
     returns:
         the unpublished event
     """
-    return await _unpublish_event(db, event_id, request)
+    return await _unpublish_event(db, event_id, request, auth.user)
 
 
 @router.post(
@@ -302,11 +302,11 @@ async def unpublish_event(
 )
 @alog
 async def add_tag_to_event(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.TAGGER]))],
-    db: Annotated[Session, Depends(get_db)],
-    event_id: Annotated[int | uuid.UUID, Path(alias="eventId")],
-    tag_id: Annotated[str, Path(alias="tagId")],
-    local: str,
+        auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.TAGGER]))],
+        db: Annotated[Session, Depends(get_db)],
+        event_id: Annotated[int | uuid.UUID, Path(alias="eventId")],
+        tag_id: Annotated[str, Path(alias="tagId")],
+        local: str,
 ) -> AddRemoveTagEventsResponse:
     """Add a tag to an event by their ids.
 
@@ -346,7 +346,7 @@ async def remove_tag_from_event(
     returns:
         the result of removing the tag from the event given by the api
     """
-    return await _remove_tag_from_event(db, event_id, tag_id)
+    return await _remove_tag_from_event(db, event_id, tag_id, auth.user)
 
 
 @router.post(
@@ -356,9 +356,9 @@ async def remove_tag_from_event(
 )
 @alog
 async def start_freeTextImport(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
-    event_id: Annotated[int | uuid.UUID, Path(alias="eventID")],
-    body: AddAttributeViaFreeTextImportEventBody,
+        auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
+        event_id: Annotated[int | uuid.UUID, Path(alias="eventID")],
+        body: AddAttributeViaFreeTextImportEventBody,
 ) -> FreeTextProcessID:
     """Starts the freetext import process for an event by its ID or UUID, by submitting the freetext to the worker.
 
@@ -370,7 +370,7 @@ async def start_freeTextImport(
     returns:
         dict
     """
-    
+
     body_dict = body.dict()
     if body_dict["returnMetaAttributes"] is False:
         raise HTTPException(
@@ -411,9 +411,9 @@ async def start_freeTextImport(
 )
 @alog
 async def add_event_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
-    db: Annotated[Session, Depends(get_db)],
-    body: AddEventBody,
+        auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
+        db: Annotated[Session, Depends(get_db)],
+        body: AddEventBody,
 ) -> AddEditGetEventResponse:
     """Deprecated. Add a new event with the given details.
 
@@ -440,9 +440,9 @@ async def add_event_depr(
 )
 @alog
 async def get_event_details_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
-    db: Annotated[Session, Depends(get_db)],
-    event_id: Annotated[int, Path(alias="eventId")],
+        auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+        db: Annotated[Session, Depends(get_db)],
+        event_id: Annotated[int, Path(alias="eventId")],
 ) -> AddEditGetEventResponse:
     """Deprecated. Retrieve details of a specific attribute by its ID. 
 
@@ -470,10 +470,10 @@ async def get_event_details_depr(
 )
 @alog
 async def update_event_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
-    db: Annotated[Session, Depends(get_db)],
-    event_id: Annotated[int, Path(alias="eventId")],
-    body: EditEventBody,
+        auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
+        db: Annotated[Session, Depends(get_db)],
+        event_id: Annotated[int, Path(alias="eventId")],
+        body: EditEventBody,
 ) -> AddEditGetEventResponse:
     """Deprecated. Update an existing event by its ID.
 
@@ -502,9 +502,9 @@ async def update_event_depr(
 )
 @alog
 async def delete_event_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
-    db: Annotated[Session, Depends(get_db)],
-    event_id: Annotated[int, Path(..., alias="eventId")],
+        auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
+        db: Annotated[Session, Depends(get_db)],
+        event_id: Annotated[int, Path(..., alias="eventId")],
 ) -> DeleteEventResponse:
     """Deprecated. Delete an existing event by its ID.
 
@@ -558,8 +558,8 @@ async def _add_event(auth: Auth, db: Session, body: AddEventBody) -> AddEditGetE
 
     result = await db.execute(
         select(Event)
-        .filter(Event.id == new_event.id)
-        .options(
+            .filter(Event.id == new_event.id)
+            .options(
             selectinload(Event.org),
             selectinload(Event.orgc),
             selectinload(Event.eventtags_galaxy),
@@ -567,9 +567,9 @@ async def _add_event(auth: Auth, db: Session, body: AddEventBody) -> AddEditGetE
             selectinload(Event.eventtags),
             selectinload(Event.attributes).options(
                 selectinload(Attribute.attributetags_galaxy)
-                .selectinload(AttributeTag.tag)
-                .selectinload(Tag.galaxy_cluster)
-                .options(
+                    .selectinload(AttributeTag.tag)
+                    .selectinload(Tag.galaxy_cluster)
+                    .options(
                     selectinload(GalaxyCluster.org),
                     selectinload(GalaxyCluster.orgc),
                     selectinload(GalaxyCluster.galaxy),
@@ -579,7 +579,7 @@ async def _add_event(auth: Auth, db: Session, body: AddEventBody) -> AddEditGetE
             ),
             selectinload(Event.mispobjects),
         )
-        .execution_options(populate_existing=True)
+            .execution_options(populate_existing=True)
     )
     event = result.scalars().one()
 
@@ -684,7 +684,7 @@ async def _delete_event(db: Session, event_id: int | uuid.UUID) -> DeleteEventRe
     else:
         event = await db.get(Event, event_id)
 
-    if event is None:
+    if event is None or not event.can_edit(user):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=jsonable_encoder(DeleteEventResponse(
@@ -716,13 +716,13 @@ async def _get_events(db: Session, user: User | None) -> list[GetAllEventsRespon
             detail="invalid user")
             
     result = await db.execute(
-        select(Event).options(
+        select(Event).filter(Event.can_access(user)).options(
             selectinload(Event.org),
             selectinload(Event.orgc),
             selectinload(Event.eventtags_galaxy)
-            .selectinload(EventTag.tag)
-            .selectinload(Tag.galaxy_cluster)
-            .options(
+                .selectinload(EventTag.tag)
+                .selectinload(Tag.galaxy_cluster)
+                .options(
                 selectinload(GalaxyCluster.org),
                 selectinload(GalaxyCluster.orgc),
                 selectinload(GalaxyCluster.galaxy),
@@ -741,13 +741,12 @@ async def _get_events(db: Session, user: User | None) -> list[GetAllEventsRespon
 
     return event_responses
 
-
 @alog
-async def _rest_search_events(db: Session, body: SearchEventsBody) -> SearchEventsResponse:
+async def _rest_search_events(db: Session, body: SearchEventsBody, user: User) -> SearchEventsResponse:
     if body.returnFormat != "json":
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid output format.")
 
-    qry = select(Event).options(
+    qry = select(Event).filter(Event.can_access(user)).options(
         selectinload(Event.org),
         selectinload(Event.orgc),
         selectinload(Event.tags),
@@ -756,9 +755,9 @@ async def _rest_search_events(db: Session, body: SearchEventsBody) -> SearchEven
         selectinload(Event.mispobjects),
         selectinload(Event.attributes).options(
             selectinload(Attribute.attributetags_galaxy)
-            .selectinload(AttributeTag.tag)
-            .selectinload(Tag.galaxy_cluster)
-            .options(
+                .selectinload(AttributeTag.tag)
+                .selectinload(Tag.galaxy_cluster)
+                .options(
                 selectinload(GalaxyCluster.org),
                 selectinload(GalaxyCluster.orgc),
                 selectinload(GalaxyCluster.galaxy),
@@ -793,14 +792,14 @@ async def _index_events(db: Session, body: IndexEventsBody) -> list[GetAllEvents
 
     query: Select = (
         select(Event)
-        .options(
+            .options(
             selectinload(Event.org),
             selectinload(Event.orgc),
             selectinload(Event.tags),
             selectinload(Event.eventtags_galaxy)
-            .selectinload(EventTag.tag)
-            .selectinload(Tag.galaxy_cluster)
-            .options(
+                .selectinload(EventTag.tag)
+                .selectinload(Tag.galaxy_cluster)
+                .options(
                 selectinload(GalaxyCluster.org),
                 selectinload(GalaxyCluster.orgc),
                 selectinload(GalaxyCluster.galaxy),
@@ -809,9 +808,9 @@ async def _index_events(db: Session, body: IndexEventsBody) -> list[GetAllEvents
             selectinload(Event.eventtags),
             selectinload(Event.attributes).options(
                 selectinload(Attribute.attributetags_galaxy)
-                .selectinload(AttributeTag.tag)
-                .selectinload(Tag.galaxy_cluster)
-                .options(
+                    .selectinload(AttributeTag.tag)
+                    .selectinload(Tag.galaxy_cluster)
+                    .options(
                     selectinload(GalaxyCluster.org),
                     selectinload(GalaxyCluster.orgc),
                     selectinload(GalaxyCluster.galaxy),
@@ -820,8 +819,8 @@ async def _index_events(db: Session, body: IndexEventsBody) -> list[GetAllEvents
             ),
             selectinload(Event.mispobjects),
         )
-        .limit(limit)
-        .offset(offset)
+            .limit(limit)
+            .offset(offset)
     )
 
     result = await db.execute(query)
@@ -861,6 +860,10 @@ async def _unpublish_event(db: Session, event_id: int | uuid.UUID, request: Requ
     if not event:
         return UnpublishEventResponse(name="Invalid event.", message="Invalid event.", url=str(request.url.path))
 
+    if not event.can_edit(user):
+        return UnpublishEventResponse(name="Invalid access.", message="Invalid permissions.", url=str(request.url.path))
+
+
     setattr(event, "published", False)
     setattr(event, "publish_timestamp", 0)
 
@@ -878,7 +881,7 @@ async def _unpublish_event(db: Session, event_id: int | uuid.UUID, request: Requ
 
 @alog
 async def _add_tag_to_event(
-    db: Session, event_id: int | uuid.UUID, tag_id: str, local: str
+        db: Session, event_id: int | uuid.UUID, tag_id: str, local: str
 ) -> AddRemoveTagEventsResponse:
     
     if isinstance(event_id, uuid.UUID):
@@ -993,8 +996,8 @@ async def _prepare_event_response(db: Session, event: Event) -> AddEditGetEventD
         tag = eventtag.tag
         result = await db.execute(
             select(GalaxyCluster)
-            .filter(GalaxyCluster.tag_name == tag.name)
-            .options(
+                .filter(GalaxyCluster.tag_name == tag.name)
+                .options(
                 selectinload(GalaxyCluster.org),
                 selectinload(GalaxyCluster.orgc),
                 selectinload(GalaxyCluster.galaxy),
@@ -1027,7 +1030,7 @@ async def _prepare_event_response(db: Session, event: Event) -> AddEditGetEventD
 
 @alog
 async def _prepare_attribute_response(
-    db: Session, attribute_list: Sequence[Attribute]
+        db: Session, attribute_list: Sequence[Attribute]
 ) -> list[AddEditGetEventAttribute]:
     attribute_response_list = []
 
@@ -1095,7 +1098,7 @@ async def _prepare_tag_response(db: Session, tag_list: Sequence[EventTag | Attri
 
 @alog
 async def _prepare_single_galaxy_cluster_response(
-    db: Session, galaxy_cluster: GalaxyCluster, connecting_tag: AttributeTag | EventTag
+        db: Session, galaxy_cluster: GalaxyCluster, connecting_tag: AttributeTag | EventTag
 ) -> AddEditGetEventGalaxyCluster:
     galaxy_cluster_dict = galaxy_cluster.asdict()
 
@@ -1147,7 +1150,7 @@ async def _prepare_single_galaxy_cluster_response(
 
 @alog
 async def _prepare_galaxy_cluster_relation_response(
-    db: Session, galaxy_cluster_relation_list: Sequence[GalaxyReference]
+        db: Session, galaxy_cluster_relation_list: Sequence[GalaxyReference]
 ) -> list[AddEditGetEventGalaxyClusterRelation]:
     galaxy_cluster_relation_response_list = []
 
@@ -1181,18 +1184,18 @@ async def _prepare_object_response(db: Session, object_list: Sequence[Object]) -
 
         result = await db.execute(
             select(Attribute)
-            .options(
-                selectinload(Attribute.attributetags_galaxy)
-                .selectinload(AttributeTag.tag)
-                .selectinload(Tag.galaxy_cluster)
                 .options(
+                selectinload(Attribute.attributetags_galaxy)
+                    .selectinload(AttributeTag.tag)
+                    .selectinload(Tag.galaxy_cluster)
+                    .options(
                     selectinload(GalaxyCluster.org),
                     selectinload(GalaxyCluster.orgc),
                     selectinload(GalaxyCluster.galaxy),
                     selectinload(GalaxyCluster.galaxy_elements),
                 )
             )
-            .filter(Attribute.object_id == object.id)
+                .filter(Attribute.object_id == object.id)
         )
         object_attribute_list = result.scalars().all()
 
