@@ -687,7 +687,7 @@ async def _get_all_sharing_groups(auth: Auth, db: Session) -> GetSharingGroupsIn
     result = await db.execute(qry)
     sharing_groups = result.scalars().all()
 
-    return GetSharingGroupsIndex(response=[_process_sharing_group(sg) for sg in sharing_groups])
+    return GetSharingGroupsIndex.parse_obj({"response": [_process_sharing_group(sg) for sg in sharing_groups]})
 
 
 @alog
