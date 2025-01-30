@@ -18,6 +18,7 @@ from mmisp.api_schemas.sharing_groups import (
     CreateSharingGroupLegacyBody,
     CreateSharingGroupLegacyResponse,
     GetSharingGroupsIndex,
+    SharingGroupResponse,
     UpdateSharingGroupBody,
     UpdateSharingGroupLegacyBody,
     ViewUpdateSharingGroupLegacyResponse,
@@ -312,7 +313,7 @@ async def view_sharing_group_legacy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
     id: Annotated[int | uuid.UUID, Path(alias="sharingGroupId")],
-) -> dict:
+) -> SharingGroupResponse:
     """
     Retrieve details of a specific sharing group by its ID.
 
@@ -938,8 +939,16 @@ async def _create_sharing_group_legacy(auth: Auth, db: Session, body: CreateShar
 
 
 @alog
-async def _view_sharing_group_legacy(auth: Auth, db: Session, id: int | uuid.UUID) -> dict:
-    qry = select(SharingGroup).limit(1)
+async def _view_sharing_group_legacy(auth: Auth, db: Session, id: int | uuid.UUID) -> SharingGroupResponse:
+    qry = (
+        select(SharingGroup)
+        .limit(1)
+        .options(
+            selectinload(SharingGroup.creator_org),
+            selectinload(SharingGroup.sharing_group_orgs).options(selectinload(SharingGroupOrg.organisation)),
+            selectinload(SharingGroup.sharing_group_servers).options(selectinload(SharingGroupServer.server)),
+        )
+    )
     if isinstance(id, int):
         qry = qry.filter(SharingGroup.id == id)
     else:
@@ -947,75 +956,12 @@ async def _view_sharing_group_legacy(auth: Auth, db: Session, id: int | uuid.UUI
 
     sharing_group = (await db.execute(qry)).scalars().one_or_none()
 
-    if not sharing_group:
+    if sharing_group is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
-    if sharing_group.org_id != auth.org_id and not check_permissions(auth, [Permission.SITE_ADMIN]):
-        result = await db.execute(
-            select(SharingGroupOrg)
-            .filter(SharingGroupOrg.sharing_group_id == id, SharingGroupOrg.org_id == auth.org_id)
-            .limit(1)
-        )
-        sharing_group_org: SharingGroupOrg | None = result.scalars().first()
+    res = _process_sharing_group(sharing_group)
 
-        sharing_group_server: SharingGroupServer | None = None
-        user_org: Organisation | None = await db.get(Organisation, auth.org_id)
-
-        if user_org and user_org.local:
-            result = await db.execute(
-                select(SharingGroupServer)
-                .filter(
-                    SharingGroupServer.sharing_group_id == id,
-                    SharingGroupServer.server_id == 0,
-                    SharingGroupServer.all_orgs.is_(True),
-                )
-                .limit(1)
-            )
-            sharing_group_server = result.scalars().first()
-
-        if not sharing_group_org and not sharing_group_server:
-            raise HTTPException(status.HTTP_404_NOT_FOUND)
-
-    organisation: Organisation | None = await db.get(Organisation, sharing_group.org_id)
-
-    result = await db.execute(select(SharingGroupOrg).filter(SharingGroupOrg.sharing_group_id == sharing_group.id))
-    sharing_group_orgs: Sequence[SharingGroupOrg] = result.scalars().all()
-
-    result = await db.execute(
-        select(SharingGroupServer).filter(SharingGroupServer.sharing_group_id == sharing_group.id)
-    )
-    sharing_group_servers: Sequence[SharingGroupServer] = result.scalars().all()
-
-    sharing_group_orgs_computed: list[dict] = []
-
-    for sharing_group_org in sharing_group_orgs:
-        sharing_group_org_organisation: Organisation | None = await db.get(Organisation, sharing_group_org.org_id)
-
-        if sharing_group_org_organisation is None:
-            continue
-        sharing_group_orgs_computed.append(
-            {**sharing_group_org.asdict(), "Organisation": sharing_group_org_organisation.asdict()}
-        )
-
-    sharing_group_servers_computed: list[dict] = []
-
-    for sharing_group_server in sharing_group_servers:
-        sharing_group_server_server: Any | None = None
-
-        if sharing_group_server.server_id == 0:
-            sharing_group_server_server = LOCAL_INSTANCE_SERVER
-        else:
-            sharing_group_server_server = await db.get(Server, sharing_group_server.server_id)
-            sharing_group_server_server = getattr(sharing_group_server_server, "__dict__", None)
-
-        sharing_group_servers_computed.append({**sharing_group_server.__dict__, "Server": sharing_group_server_server})
-
-    return {
-        "SharingGroup": sharing_group.__dict__,
-        "Organisation": organisation.__dict__,
-        "SharingGroupOrg": sharing_group_orgs_computed,
-        "SharingGroupServer": sharing_group_servers_computed,
-    }
+    return SharingGroupResponse.parse_obj(res)
 
 
 @alog
