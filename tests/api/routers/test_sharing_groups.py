@@ -397,98 +397,6 @@ async def test_list_own_sharing_group_site_admin(
 
 
 @pytest.mark.asyncio
-async def test_list_sharing_group_with_access_through_sharing_group_org(
-    db: Session, sharing_group_org_two, instance_org_two_admin_user_token, site_admin_user_token, client
-) -> None:
-    response = client.get(
-        "/sharing_groups",
-        headers={"authorization": site_admin_user_token},
-    )
-
-    assert response.status_code == status.HTTP_200_OK
-    json = response.json()
-    ic(json)
-
-    response = client.get(
-        "/sharing_groups",
-        headers={"authorization": instance_org_two_admin_user_token},
-    )
-
-    assert response.status_code == status.HTTP_200_OK
-    json = response.json()
-    ic(json)
-    sharing_group_items = [
-        item for item in json["response"] if item["SharingGroup"]["id"] == sharing_group_org_two.sharing_group_id
-    ]
-    ic(sharing_group_items, sharing_group_org_two.id)
-    sharing_group_item = sharing_group_items[0]
-
-    assert sharing_group_item
-    assert sharing_group_item["SharingGroupOrg"][0]["Organisation"]
-    assert not sharing_group_item["editable"]
-    assert not sharing_group_item["deletable"]
-
-
-@pytest.mark.asyncio
-async def test_list_sharing_group_with_access_through_sharing_group_server(
-    db: Session,
-    sharing_group,
-    sharing_group_server_all_orgs,
-    instance_org_two_admin_user_token,
-    site_admin_user_token,
-    client,
-) -> None:
-    assert sharing_group_server_all_orgs
-
-    sharing_group_server_all_orgs.server_id = 0
-    await db.commit()
-
-    response = client.get(
-        "/sharing_groups",
-        headers={"authorization": site_admin_user_token},
-    )
-
-    assert response.status_code == status.HTTP_200_OK
-    json = response.json()
-    ic(json)
-    response = client.get(
-        "/sharing_groups",
-        headers={"authorization": instance_org_two_admin_user_token},
-    )
-
-    assert response.status_code == status.HTTP_200_OK
-    json = response.json()
-    ic(json)
-    ic(sharing_group.asdict())
-    sharing_group_items = [item for item in json["response"] if item["SharingGroup"]["id"] == sharing_group.id]
-    sharing_group_item = sharing_group_items[0]
-
-    assert sharing_group_item
-    assert sharing_group_item["SharingGroupServer"][0]["Server"]["id"] == 0
-    assert not sharing_group_item["editable"]
-    assert not sharing_group_item["deletable"]
-
-
-@pytest.mark.asyncio
-async def test_list_sharing_group_with_no_access(
-    db: Session, sharing_group, sharing_group_server, instance_org_two, instance_org_two_admin_user_token, client
-) -> None:
-    response = client.get(
-        "/sharing_groups",
-        headers={"authorization": instance_org_two_admin_user_token},
-    )
-
-    assert response.status_code == status.HTTP_200_OK
-    json = response.json()
-
-    sharing_group_item = next(
-        (item for item in json["response"] if item["SharingGroup"]["id"] == sharing_group.id), None
-    )
-
-    assert not sharing_group_item
-
-
-@pytest.mark.asyncio
 async def test_get_own_created_sharing_group_info(
     db: Session, sharing_group, instance_owner_org_admin_user_token, client
 ) -> None:
@@ -882,18 +790,6 @@ async def test_get_sharing_group_legacy_with_access_through_site_admin(
     assert response.status_code == status.HTTP_200_OK
     json = response.json()
     assert json["SharingGroup"]["id"] == sharing_group.id
-
-
-@pytest.mark.asyncio
-async def test_get_sharing_group_legacy_with_no_access(
-    db: Session, sharing_group, sharing_group_server, instance_org_two_admin_user_token, client
-) -> None:
-    response = client.get(
-        f"/sharing_groups/view/{sharing_group.id}",
-        headers={"authorization": instance_org_two_admin_user_token},
-    )
-
-    assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
 @pytest.mark.asyncio

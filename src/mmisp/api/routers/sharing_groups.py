@@ -17,6 +17,7 @@ from mmisp.api_schemas.sharing_groups import (
     CreateSharingGroupBody,
     CreateSharingGroupLegacyBody,
     CreateSharingGroupLegacyResponse,
+    GetSharingGroupsIndex,
     UpdateSharingGroupBody,
     UpdateSharingGroupLegacyBody,
     ViewUpdateSharingGroupLegacyResponse,
@@ -48,7 +49,7 @@ LOCAL_INSTANCE_SERVER = {"id": 0, "name": "Local instance", "url": config.OWN_UR
 async def get_all_sharing_groups(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
-) -> dict:
+) -> GetSharingGroupsIndex:
     """
     Retrieve a list of all sharing groups.
 
@@ -677,7 +678,7 @@ def _process_sharing_group(sharing_group: SharingGroup) -> dict:
 
 
 @alog
-async def _get_all_sharing_groups(auth: Auth, db: Session) -> dict:
+async def _get_all_sharing_groups(auth: Auth, db: Session) -> GetSharingGroupsIndex:
     qry = select(SharingGroup).options(
         selectinload(SharingGroup.creator_org),
         selectinload(SharingGroup.sharing_group_orgs).options(selectinload(SharingGroupOrg.organisation)),
@@ -686,7 +687,7 @@ async def _get_all_sharing_groups(auth: Auth, db: Session) -> dict:
     result = await db.execute(qry)
     sharing_groups = result.scalars().all()
 
-    return {"response": [_process_sharing_group(sg) for sg in sharing_groups]}
+    return GetSharingGroupsIndex(response=[_process_sharing_group(sg) for sg in sharing_groups])
 
 
 @alog
