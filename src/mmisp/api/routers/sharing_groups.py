@@ -18,7 +18,7 @@ from mmisp.api_schemas.sharing_groups import (
     CreateSharingGroupLegacyBody,
     CreateSharingGroupLegacyResponse,
     GetSharingGroupsIndex,
-    SharingGroupResponse,
+    SingleSharingGroupResponse,
     UpdateSharingGroupBody,
     UpdateSharingGroupLegacyBody,
     ViewUpdateSharingGroupLegacyResponse,
@@ -313,7 +313,7 @@ async def view_sharing_group_legacy(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
     id: Annotated[int | uuid.UUID, Path(alias="sharingGroupId")],
-) -> SharingGroupResponse:
+) -> SingleSharingGroupResponse:
     """
     Retrieve details of a specific sharing group by its ID.
 
@@ -939,7 +939,7 @@ async def _create_sharing_group_legacy(auth: Auth, db: Session, body: CreateShar
 
 
 @alog
-async def _view_sharing_group_legacy(auth: Auth, db: Session, id: int | uuid.UUID) -> SharingGroupResponse:
+async def _view_sharing_group_legacy(auth: Auth, db: Session, id: int | uuid.UUID) -> SingleSharingGroupResponse:
     qry = (
         select(SharingGroup)
         .limit(1)
@@ -961,7 +961,7 @@ async def _view_sharing_group_legacy(auth: Auth, db: Session, id: int | uuid.UUI
 
     res = _process_sharing_group(sharing_group)
 
-    return SharingGroupResponse.parse_obj(res)
+    return SingleSharingGroupResponse.parse_obj(res)
 
 
 @alog
