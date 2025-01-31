@@ -368,7 +368,7 @@ async def _load_galaxy_clusters_with_filters(db: Session, filters: GalaxyCluster
 
     query: Select
     if search_body.minimal:
-        query = select(GalaxyCluster.uuid, GalaxyCluster.version, GalaxyCluster.galaxy)
+        query = select(GalaxyCluster.uuid, GalaxyCluster.version, GalaxyCluster.galaxy.id)
     else:
         query = select(GalaxyCluster)
 
