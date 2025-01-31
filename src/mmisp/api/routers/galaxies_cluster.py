@@ -26,6 +26,8 @@ from mmisp.api_schemas.galaxy_clusters import (
     PutGalaxyClusterRequest,
     GalaxyClusterSearchResponse,
     GalaxyClusterSearchBody,
+    SearchGalaxyClusterGalaxyClusters,
+    SearchGalaxyClusterGalaxyClustersDetails,
 )
 from mmisp.api_schemas.galaxy_common import ShortCommonGalaxy, ShortCommonGalaxyCluster
 from mmisp.api_schemas.organisations import GetOrganisationResponse
@@ -346,11 +348,22 @@ async def restsearch(
 
 # --- endpoint logic ---
 async def _restsearch(db: Session, body: GalaxyClusterSearchBody) -> GalaxyClusterSearchResponse:
-    galaxy_clusters = await _get_galaxy_clusters_with_filters(db=db, filters=body)
-    return GalaxyClusterSearchResponse(response=galaxy_clusters)
+    minimal: bool = body.minimal
+
+    galaxy_clusters = await _load_galaxy_clusters_with_filters(db=db, filters=body)
+
+    galaxy_clusters_response_list: list[SearchGalaxyClusterGalaxyClusters] = []
+    if minimal:
+        for galaxy_cluster in galaxy_clusters:
+            galaxy_clusters_response_list.append(await _get_minimal_galaxy_cluster_search_response(db, galaxy_cluster))
+    else:
+        for galaxy_cluster in galaxy_clusters:
+            galaxy_clusters_response_list.append(await _get_galaxy_cluster_search_response(db, galaxy_cluster))
+
+    return GalaxyClusterSearchResponse(response=galaxy_clusters_response_list)
 
 
-async def _get_galaxy_clusters_with_filters(db: Session, filters: GalaxyClusterSearchBody) -> Sequence[GalaxyCluster]:
+async def _load_galaxy_clusters_with_filters(db: Session, filters: GalaxyClusterSearchBody) -> Sequence[GalaxyCluster]:
     search_body: GalaxyClusterSearchBody = filters
 
     query: Select
@@ -408,7 +421,50 @@ async def _get_galaxy_clusters_with_filters(db: Session, filters: GalaxyClusterS
     return result.scalars().all()
 
 
-@alog
+async def _get_minimal_galaxy_cluster_search_response(db: Session,
+                                                      galaxy_cluster: GalaxyCluster) -> SearchGalaxyClusterGalaxyClusters:
+    if galaxy_cluster.galaxy is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Galaxy not found")
+
+    parsed_cluster: SearchGalaxyClusterGalaxyClustersDetails = SearchGalaxyClusterGalaxyClustersDetails(
+        uuid=galaxy_cluster.uuid,
+        version=galaxy_cluster.version,
+        Galaxy=await _prepare_galaxy_response(db, galaxy_cluster.galaxy)
+    )
+    return SearchGalaxyClusterGalaxyClusters(GalaxyCluster=parsed_cluster)
+
+
+async def _get_galaxy_cluster_search_response(db: Session,
+                                              galaxy_cluster: GalaxyCluster) -> SearchGalaxyClusterGalaxyClusters:
+    if galaxy_cluster is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Galaxy cluster not found")
+
+    galaxy_cluster_dict = galaxy_cluster.asdict()
+    galaxy_cluster_dict = await _process_galaxy_cluster_dict(galaxy_cluster_dict)
+
+    # Get the Galaxy
+    galaxy = galaxy_cluster.galaxy
+
+    if galaxy is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Galaxy not found")
+
+    galaxy_cluster_dict["Galaxy"] = await _prepare_galaxy_response(db, galaxy)
+    # Get the GalaxyElements
+    galaxy_cluster_dict["GalaxyElement"] = [
+        ExportGalaxyGalaxyElement(**ge.__dict__.copy()) for ge in galaxy_cluster.galaxy_elements
+    ]
+
+    # Get the Organisations
+    org = galaxy_cluster.org if galaxy_cluster.org_id != 0 else GENERIC_MISP_ORGANISATION
+    orgc = galaxy_cluster.orgc if galaxy_cluster.orgc_id != 0 else GENERIC_MISP_ORGANISATION
+
+    galaxy_cluster_dict["Org"] = await _get_organisation_for_cluster(db, org)
+    galaxy_cluster_dict["Orgc"] = await _get_organisation_for_cluster(db, orgc)
+
+    return SearchGalaxyClusterGalaxyClusters(
+        GalaxyCluster=SearchGalaxyClusterGalaxyClustersDetails(**galaxy_cluster_dict))
+
+
 async def _import_galaxy_cluster(
     db: Session, body: list[ImportGalaxyBody], request: Request
 ) -> DeleteForceUpdateImportGalaxyResponse:
