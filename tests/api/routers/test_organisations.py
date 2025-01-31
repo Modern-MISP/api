@@ -101,7 +101,7 @@ async def test_add_organisation(client, site_admin_user_token, db: Session):
         "created_by": 0,
         "contacts": "contact",
         "local": True,
-        "restricted_to_domain": "domain",
+        "restricted_to_domain": ["domain"],
         "landingpage": "page",
     }
 
@@ -123,7 +123,7 @@ async def test_edit_organisation(client, site_admin_user_token, organisation):
         "sector": "secA1",
         "contacts": "contact1",
         "local": True,
-        "restricted_to_domain": "domain1",
+        "restricted_to_domain": ["domain1"],
         "landingpage": "page1",
     }
 
