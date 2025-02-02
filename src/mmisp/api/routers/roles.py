@@ -28,6 +28,8 @@ from mmisp.lib.logger import alog
 from fastapi import Path
 from mmisp.lib.permissions import Permission
 from mmisp.db.models.user import User
+from mmisp.lib.permissions import Permission
+from mmisp.lib.default_roles import get_standard_roles
 
 router = APIRouter(tags=["roles"])
 
@@ -174,7 +176,7 @@ async def reinstate_role(
         403: Forbidden Error
         404: Not Found Error
     """
-    return await None # _reinstate_role(auth, db, role_id)
+    return await _reinstate_role(auth, db, role_id)
 
 
 @router.post(
@@ -393,7 +395,6 @@ async def _delete_role(db: Session, role_id: int) -> DeleteRoleResponse:
 
 
 async def _reinstate_role(auth: Auth, db: Session, role_id: int) -> ReinstateRoleResponse:
-    # Standard roles must have an ID between 1 and 7 since those are the only ones that are always available 
     if role_id < 1 or role_id > 7:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -409,10 +410,16 @@ async def _reinstate_role(auth: Auth, db: Session, role_id: int) -> ReinstateRol
             detail=f"Role with ID {role_id} is already in use."
         )
 
-    # FIXME REINSTATE ROLE WITH THE PASSED ON ID HERE
+    standard_roles = get_standard_roles()
+    role = next((role for role in standard_roles if role.id == role_id), None)
 
-    result = await db.execute(select(Role).where(Role.id == role_id))
-    role = result.scalar_one_or_none()
+    db.add(role)
+
+    #The reinstated read-only role is no longer the default role
+    if role_id==7:
+        role.default_role = False
+
+    await db.commit()
 
     return ReinstateRoleResponse(
         Role=RoleAttributeResponse(**role.__dict__),
