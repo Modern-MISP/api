@@ -654,7 +654,6 @@ async def _edit_user_role(auth: Auth, db: Session, user_id: str, body: EditUserR
     )
 
 
-
 async def _get_users_by_role(auth: Auth, db: Session, role_id: int) -> list[GetUserRoleResponse]:
     result = await db.execute(select(Role).where(Role.id == role_id))
     role = result.scalar_one_or_none()
@@ -674,7 +673,6 @@ async def _get_users_by_role(auth: Auth, db: Session, role_id: int) -> list[GetU
     user_list: list[GetUserRoleResponse] = [GetUserRoleResponse(user=user) for user in users]
 
     return user_list
-
 
 
 async def _set_default_role(auth: Auth, db: Session, role_id: int) -> DefaultRoleResponse:
