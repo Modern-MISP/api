@@ -456,6 +456,12 @@ async def _update_role(db: Session, role_id: int, body: EditRoleBody) -> EditRol
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Role with ID {role_id} not found."
         )
+    
+    if all(value is None for value in body.dict().values()):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="At least one new attribute must be provided to update the role."
+        )
 
     if body.name is not None:
         role.name = body.name
