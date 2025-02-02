@@ -316,7 +316,6 @@ async def _get_roles(db: Session) -> list[GetRolesResponse]:
 
 
 async def _get_role(db: Session, role_id: int) -> GetRoleResponse:
-    
     result = await db.execute(select(Role).where(Role.id == role_id))
     role = result.scalar_one_or_none()
 
@@ -336,7 +335,11 @@ async def _get_role(db: Session, role_id: int) -> GetRoleResponse:
 
 
 async def _add_role(db: Session, body: AddRoleBody) -> AddRoleResponse:
-    # FIXME do we need a check of the body´s properties here?
+    if body is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,  
+            detail="Request body cannot be None."
+        )
 
     max_id_result = await db.execute(select(Role.id).order_by(Role.id.desc()).limit(1))
     max_id = max_id_result.scalar_one_or_none()
@@ -390,7 +393,6 @@ async def _add_role(db: Session, body: AddRoleBody) -> AddRoleResponse:
 
 
 async def _delete_role(db: Session, role_id: int) -> DeleteRoleResponse:
-    
     result = await db.execute(select(Role).where(Role.id == role_id))
     role = result.scalar_one_or_none()
 
@@ -447,7 +449,12 @@ async def _delete_role(db: Session, role_id: int) -> DeleteRoleResponse:
 
 
 async def _update_role(db: Session, role_id: int, body: EditRoleBody) -> EditRoleResponse:
-    
+    if body is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,  
+            detail="Request body cannot be None."
+        )
+
     result = await db.execute(select(Role).where(Role.id == role_id))
     role = result.scalar_one_or_none()
 
@@ -572,6 +579,12 @@ async def _reinstate_role(auth: Auth, db: Session, role_id: int) -> ReinstateRol
 
 
 async def _filter_roles(auth: Auth, db: Session, body: FilterRoleBody) -> list[FilterRoleResponse]:
+    if body is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,  
+            detail="Request body cannot be None."
+        )
+    
     requested_permissions = body.permissions
 
     if not requested_permissions:
@@ -595,8 +608,12 @@ async def _filter_roles(auth: Auth, db: Session, body: FilterRoleBody) -> list[F
     return filtered_roles
 
 
-
 async def _edit_user_role(auth: Auth, db: Session, user_id: str, body: EditUserRoleBody) -> EditUserRoleResponse:
+    if body is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,  
+            detail="Request body cannot be None."
+        )
 
     if not body.role_id:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="value 'role_id' is required")
@@ -639,7 +656,6 @@ async def _edit_user_role(auth: Auth, db: Session, user_id: str, body: EditUserR
 
 
 async def _get_users_by_role(auth: Auth, db: Session, role_id: int) -> list[GetUserRoleResponse]:
-    
     result = await db.execute(select(Role).where(Role.id == role_id))
     role = result.scalar_one_or_none()
 
@@ -662,7 +678,6 @@ async def _get_users_by_role(auth: Auth, db: Session, role_id: int) -> list[GetU
 
 
 async def _set_default_role(auth: Auth, db: Session, role_id: int) -> DefaultRoleResponse:
-    
     result = await db.execute(select(Role).where(Role.id == role_id))
     role = result.scalar_one_or_none()
 
