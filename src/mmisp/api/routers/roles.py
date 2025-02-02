@@ -147,7 +147,7 @@ async def update_role(
     returns:
         the updated event
     """
-    return None
+    return await _update_role(db, role_id, EditRoleBody)
 
 
 @router.post(
@@ -443,6 +443,89 @@ async def _delete_role(db: Session, role_id: int) -> DeleteRoleResponse:
         message="Role deleted",
         url=f"/admin/roles/delete/{role_id}",
         id=str(role_id),
+    )
+
+
+async def _update_role(db: Session, role_id: int, body: EditRoleBody) -> EditRoleResponse:
+    
+    result = await db.execute(select(Role).where(Role.id == role_id))
+    role = result.scalar_one_or_none()
+
+    if role is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Role with ID {role_id} not found."
+        )
+
+    if body.name is not None:
+        role.name = body.name
+    if body.perm_add is not None:
+        role.perm_add = body.perm_add
+    if body.perm_modify is not None:
+        role.perm_modify = body.perm_modify
+    if body.perm_modify_org is not None:
+        role.perm_modify_org = body.perm_modify_org
+    if body.perm_publish is not None:
+        role.perm_publish = body.perm_publish
+    if body.perm_delegate is not None:
+        role.perm_delegate = body.perm_delegate
+    if body.perm_sync_actions is not None:
+        role.perm_sync_actions = body.perm_sync_actions
+    if body.perm_admin is not None:
+        role.perm_admin = body.perm_admin
+    if body.perm_audit is not None:
+        role.perm_audit = body.perm_audit
+    if body.perm_auth is not None:
+        role.perm_auth = body.perm_auth
+    if body.perm_site_admin is not None:
+        role.perm_site_admin = body.perm_site_admin
+    if body.perm_regexp_access is not None:
+        role.perm_regexp_access = body.perm_regexp_access
+    if body.perm_tagger is not None:
+        role.perm_tagger = body.perm_tagger
+    if body.perm_template is not None:
+        role.perm_template = body.perm_template
+    if body.perm_sharing_group is not None:
+        role.perm_sharing_group = body.perm_sharing_group
+    if body.perm_tag_editor is not None:
+        role.perm_tag_editor = body.perm_tag_editor
+    if body.perm_sighting is not None:
+        role.perm_sighting = body.perm_sighting
+    if body.perm_object_template is not None:
+        role.perm_object_template = body.perm_object_template
+    if body.default_role is not None:
+        role.default_role = body.default_role
+    if body.memory_limit is not None:
+        role.memory_limit = body.memory_limit
+    if body.max_execution_time is not None:
+        role.max_execution_time = body.max_execution_time
+    if body.restricted_to_site_admin is not None:
+        role.restricted_to_site_admin = body.restricted_to_site_admin
+    if body.perm_publish_zmq is not None:
+        role.perm_publish_zmq = body.perm_publish_zmq
+    if body.perm_publish_kafka is not None:
+        role.perm_publish_kafka = body.perm_publish_kafka
+    if body.perm_decaying is not None:
+        role.perm_decaying = body.perm_decaying
+    if body.enforce_rate_limit is not None:
+        role.enforce_rate_limit = body.enforce_rate_limit
+    if body.rate_limit_count is not None:
+        role.rate_limit_count = body.rate_limit_count
+    if body.perm_galaxy_editor is not None:
+        role.perm_galaxy_editor = body.perm_galaxy_editor
+    if body.perm_warninglist is not None:
+        role.perm_warninglist = body.perm_warninglist
+    if body.perm_view_feed_correlations is not None:
+        role.perm_view_feed_correlations = body.perm_view_feed_correlations
+    if body.perm_skip_otp is not None:
+        role.perm_skip_otp = body.perm_skip_otp
+
+    await db.commit()
+
+    return EditRoleResponse(
+        role=RoleAttributeResponse(**role.__dict__),
+        updated=True,
+        message="Role with ID {role_id} successfully updated."
     )
 
 
