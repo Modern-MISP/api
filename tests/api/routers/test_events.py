@@ -337,12 +337,12 @@ async def test_publish_invalid_event(site_admin_user_token, client) -> None:
     assert response_json["name"] == "Invalid event."
     assert response_json["message"] == "Invalid event."
     assert response_json["url"] == "/events/publish/0"
-    response = client.post("/events/publish/invalid_id", headers=headers)
+    response = client.post("/events/publish/999999999", headers=headers)
     assert response.status_code == 200
     response_json = response.json()
     assert response_json["name"] == "Invalid event."
     assert response_json["message"] == "Invalid event."
-    assert response_json["url"] == "/events/publish/invalid_id"
+    assert response_json["url"] == "/events/publish/999999999"
 
 
 @pytest.mark.asyncio
