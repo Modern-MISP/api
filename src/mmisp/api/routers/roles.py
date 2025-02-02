@@ -1,7 +1,9 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status, Path
-from sqlalchemy.future import select, exists
+from sqlalchemy.future import select
+from sqlalchemy.sql import exists
+
 
 from mmisp.api.auth import Auth, AuthStrategy, authorize
 from mmisp.api_schemas.roles import (
