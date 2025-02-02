@@ -99,7 +99,7 @@ async def add_role(
     returns:
         the new role
     """
-    return _add_role(db, AddRoleBody)
+    return await _add_role(db, AddRoleBody)
 
 
 @router.delete(
@@ -315,7 +315,6 @@ async def _get_roles(db: Session) -> list[GetRolesResponse]:
     return role_list
 
 
-
 async def _get_role(db: Session, role_id: int) -> GetRoleResponse:
     
     result = await db.execute(select(Role).where(Role.id == role_id))
@@ -335,6 +334,59 @@ async def _get_role(db: Session, role_id: int) -> GetRoleResponse:
 
     return GetRoleResponse(Role=RoleAttributeResponse(**role.__dict__))
 
+
+async def _add_role(db: Session, body: AddRoleBody) -> AddRoleResponse:
+    # FIXME do we need a check of the body´s properties here?
+
+    max_id_result = await db.execute(select(Role.id).order_by(Role.id.desc()).limit(1))
+    max_id = max_id_result.scalar_one_or_none()
+    # ID 1-7 is reserved for the predefined standard roles
+    role_id = max(8, (max_id + 1) if max_id is not None else 8)
+
+    new_role = Role(
+        id=role_id,
+        name=body.name,
+        perm_add=body.perm_add,
+        perm_modify=body.perm_modify,
+        perm_modify_org=body.perm_modify_org,
+        perm_publish=body.perm_publish,
+        perm_delegate=body.perm_delegate,
+        perm_sync_actions=body.perm_sync_actions,
+        perm_admin=body.perm_admin,
+        perm_audit=body.perm_audit,
+        perm_auth=body.perm_auth,
+        perm_site_admin=body.perm_site_admin,
+        perm_regexp_access=body.perm_regexp_access,
+        perm_tagger=body.perm_tagger,
+        perm_template=body.perm_template,
+        perm_sharing_group=body.perm_sharing_group,
+        perm_tag_editor=body.perm_tag_editor,
+        perm_sighting=body.perm_sighting,
+        perm_object_template=body.perm_object_template,
+        default_role=body.default_role,
+        memory_limit=body.memory_limit,
+        max_execution_time=body.max_execution_time,
+        restricted_to_site_admin=body.restricted_to_site_admin,
+        perm_publish_zmq=body.perm_publish_zmq,
+        perm_publish_kafka=body.perm_publish_kafka,
+        perm_decaying=body.perm_decaying,
+        enforce_rate_limit=body.enforce_rate_limit,
+        rate_limit_count=body.rate_limit_count,
+        perm_galaxy_editor=body.perm_galaxy_editor,
+        perm_warninglist=body.perm_warninglist,
+        perm_view_feed_correlations=body.perm_view_feed_correlations,
+        perm_skip_otp=body.perm_skip_otp,
+    )
+
+    db.add(new_role)
+    await db.commit()
+    await db.refresh(new_role)
+
+    return AddRoleResponse(
+        role=new_role,
+        created=True,
+        message=f"Role '{new_role.name}' successfully created."
+    )
 
 
 async def _delete_role(db: Session, role_id: int) -> DeleteRoleResponse:
