@@ -197,5 +197,5 @@ generate_mkdocs:
     paths:
       - site
   services:
-    - name: registry.cert.kit.edu/hub/library/plantuml/plantuml-server
+    - name: registry.cert.kit.edu/hub/plantuml/plantuml-server
       alias: plantuml
