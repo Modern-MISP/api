@@ -8,6 +8,9 @@ from fastapi.testclient import TestClient
 from icecream import ic
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from datetime import datetime, timezone
+from mmisp.db.models.role import Role
+
 from mmisp.api.auth import encode_token
 from mmisp.api.main import init_app
 from mmisp.db.models.admin_setting import AdminSetting
@@ -377,3 +380,98 @@ async def failing_before_save_workflow(db):
     await db.delete(wf)
     await db.delete(setting)
     await db.commit()
+
+
+@pytest_asyncio.fixture
+async def admin_role(db):
+    role = Role(
+        id=-1,
+        name="test_admin",
+        created=datetime.now(timezone.utc),
+        perm_add=True,
+        perm_modify=True,
+        perm_modify_org=True,
+        perm_publish=True,
+        perm_delegate=True,
+        perm_sync=True,
+        perm_admin=True,
+        perm_audit=True,
+        perm_auth=True,
+        perm_site_admin=False,
+        perm_regexp_access=False,
+        perm_tagger=True,
+        perm_template=True,
+        perm_sharing_group=True,
+        perm_tag_editor=True,
+        perm_sighting=True,
+        perm_object_template=False,
+        default_role=False,
+        memory_limit="",
+        max_execution_time="",
+        restricted_to_site_admin=False,
+        perm_publish_zmq=True,
+        perm_publish_kafka=True,
+        perm_decaying=True,
+        enforce_rate_limit=False,
+        rate_limit_count=0,
+        perm_galaxy_editor=True,
+        perm_warninglist=False,
+        perm_view_feed_correlations=True
+    )
+
+    db.add(role)
+    await db.commit()
+    await db.refresh(role)
+
+    yield role
+
+    await db.delete(role)
+    await db.commit()
+
+
+@pytest_asyncio.fixture
+async def role_read_only(db):
+    role = Role(
+        id=-7,
+        name="test_read_only",
+        perm_add=False,
+        perm_modify=False,
+        perm_modify_org=False,
+        perm_publish=False,
+        perm_delegate=False,
+        perm_sync=False,
+        perm_admin=False,
+        perm_audit=False,
+        perm_auth=False,
+        perm_site_admin=False,
+        perm_regexp_access=False,
+        perm_tagger=False,
+        perm_template=False,
+        perm_sharing_group=False,
+        perm_tag_editor=False,
+        perm_sighting=False,
+        perm_object_template=False,
+        default_role=True,
+        memory_limit="",
+        max_execution_time="",
+        restricted_to_site_admin=False,
+        perm_publish_zmq=False,
+        perm_publish_kafka=False,
+        perm_decaying=False,
+        enforce_rate_limit=False,
+        rate_limit_count=0,
+        perm_galaxy_editor=False,
+        perm_warninglist=False,
+        perm_view_feed_correlations=False,
+        created=datetime.now(timezone.utc)
+    )
+
+    db.add(role)
+    await db.commit()
+    await db.refresh(role)
+
+    yield role
+
+    await db.delete(role)
+    await db.commit()
+

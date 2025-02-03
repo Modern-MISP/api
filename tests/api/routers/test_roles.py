@@ -55,10 +55,10 @@ async def test_roles_get(client, site_admin_user_token):
 
 
 @pytest.mark.asyncio
-async def test_role_get_with_specific_data(client, site_admin_user_token):
+async def test_role_get_with_specific_data(client, site_admin_user_token, admin_role):
     headers = {"authorization": site_admin_user_token}
     
-    response = client.get(f"/roles/{1}", headers=headers)
+    response = client.get(f"/roles/{admin_role.id}", headers=headers)
     
     assert response.status_code == 200
     assert isinstance(response.json(), dict)
@@ -66,8 +66,8 @@ async def test_role_get_with_specific_data(client, site_admin_user_token):
     response_json = response.json()
     role_data = response_json["Role"]
 
-    assert role_data["id"] == 1
-    assert role_data["name"] == "admin"
+    assert role_data["id"] == -1
+    assert role_data["name"] == "test_admin"
     assert role_data["perm_add"] is True
     assert role_data["perm_modify"] is True
     assert role_data["perm_modify_org"] is True
@@ -175,8 +175,8 @@ async def test_add_role_missing_body(client, site_admin_user_token):
 
 
 @pytest.mark.asyncio
-async def test_delete_role_success(client, site_admin_user_token):
-    role_id = 2  
+async def test_delete_role_success(client, site_admin_user_token, role_read_only):
+    role_id = role_read_only.id 
     headers = {"authorization": site_admin_user_token}
     
     response = client.delete(f"/admin/roles/delete/{role_id}", headers=headers)
@@ -208,8 +208,8 @@ async def test_delete_role_not_found(client, site_admin_user_token):
 
 
 @pytest.mark.asyncio
-async def test_delete_default_role(client, site_admin_user_token):
-    role_id = 7  # ID of read only - default role
+async def test_delete_default_role(client, site_admin_user_token, role_read_only):
+    role_id = role_read_only.id  # ID of read only - default role
     headers = {"authorization": site_admin_user_token}
     
     response = client.delete(f"/admin/roles/delete/{role_id}", headers=headers)
@@ -224,8 +224,8 @@ async def test_delete_default_role(client, site_admin_user_token):
 
 
 @pytest.mark.asyncio
-async def test_delete_role_in_use(client, site_admin_user_token):
-    role_id = 1
+async def test_delete_role_in_use(client, site_admin_user_token, admin_role):
+    role_id = admin_role.id
     headers = {"authorization": site_admin_user_token}
     
     response = client.delete(f"/admin/roles/delete/{role_id}", headers=headers)
@@ -240,8 +240,94 @@ async def test_delete_role_in_use(client, site_admin_user_token):
 
 
 @pytest.mark.asyncio
-async def test_reinstate_role_success(client, site_admin_user_token, db):
-    role_id = 2  
+async def test_update_role_success(client, site_admin_user_token, role_read_only):
+    headers = {"Authorization": site_admin_user_token}
+
+    role_id = role_read_only.id
+
+    update_data = {
+        "name": "updated_role_name",
+        "memory_limit": "42MB"
+    }
+
+    response = client.put(
+        f"/admin/roles/edit/{role_id}",
+        json=update_data,
+        headers=headers
+    )
+
+    assert response.status_code == 200
+    response_json = response.json()
+
+    assert response_json["updated"] is True
+    assert response_json["message"] == f"Role with ID {role_id} successfully updated."
+    assert response_json["role"]["name"] == "updated_role_name"
+    assert response_json["role"]["memory_limit"] == "42MB"
+
+
+@pytest.mark.asyncio
+async def test_update_role_not_found(client, site_admin_user_token):
+    headers = {"Authorization": site_admin_user_token}
+
+    role_id = 999999
+
+    update_data = {
+        "name": "updated_role_name"
+    }
+
+    response = client.put(
+        f"/admin/roles/edit/{role_id}",
+        json=update_data,
+        headers=headers
+    )
+
+    assert response.status_code == 404
+    response_json = response.json()
+    assert response_json["detail"] == f"Role with ID {role_id} not found."
+
+
+@pytest.mark.asyncio
+async def test_update_role_no_changes(client, site_admin_user_token, role_read_only):
+    headers = {"Authorization": site_admin_user_token}
+
+    role_id = role_read_only.id
+
+    update_data = {
+        "name": None,
+    }
+
+    response = client.put(
+        f"/admin/roles/edit/{role_id}",
+        json=update_data,
+        headers=headers
+    )
+
+    assert response.status_code == 400
+    response_json = response.json()
+    assert response_json["detail"] == "At least one new attribute must be provided to update the role."
+
+
+@pytest.mark.asyncio
+async def test_update_role_missing_body(client, site_admin_user_token, role_read_only):
+    headers = {"Authorization": site_admin_user_token}
+
+    role_id = role_read_only.id
+    update_data = None
+
+    response = client.put(
+        "/admin/roles/edit/{role_id}",
+        json=update_data,
+        headers=headers
+    )
+
+    assert response.status_code == 400
+    response_json = response.json()
+    assert response_json["detail"] == "Request body cannot be None."
+
+
+@pytest.mark.asyncio
+async def test_reinstate_role_success(client, site_admin_user_token, db, role_read_only):
+    role_id = role_read_only.id
     headers = {"authorization": site_admin_user_token}
     
     await db.execute(delete(Role).where(Role.id == role_id))
@@ -262,8 +348,8 @@ async def test_reinstate_role_success(client, site_admin_user_token, db):
 
 
 @pytest.mark.asyncio
-async def test_reinstate_role_already_exists(client, site_admin_user_token, db):
-    role_id = 1
+async def test_reinstate_role_already_exists(client, site_admin_user_token, db, admin_role):
+    role_id = admin_role.id
     headers = {"authorization": site_admin_user_token}
     
     role = await db.execute(select(Role).where(Role.id == role_id))
@@ -290,8 +376,8 @@ async def test_reinstate_role_not_standard_role(client, site_admin_user_token):
 
 
 @pytest.mark.asyncio
-async def test_reinstate_role_former_default_role(client, site_admin_user_token, db):
-    role_id = 7  
+async def test_reinstate_role_former_default_role(client, site_admin_user_token, db, role_read_only):
+    role_id = role_read_only.id 
     headers = {"authorization": site_admin_user_token}
     
     await db.execute(delete(Role).where(Role.id == role_id))

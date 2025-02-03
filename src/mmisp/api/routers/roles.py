@@ -540,7 +540,7 @@ async def _update_role(db: Session, role_id: int, body: EditRoleBody) -> EditRol
     return EditRoleResponse(
         role=RoleAttributeResponse(**role.__dict__),
         updated=True,
-        message="Role with ID {role_id} successfully updated."
+        message=f"Role with ID {role_id} successfully updated."
     )
 
 
