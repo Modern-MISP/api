@@ -353,7 +353,7 @@ async def _add_role(db: Session, body: AddRoleBody) -> AddRoleResponse:
         perm_modify_org=body.perm_modify_org,
         perm_publish=body.perm_publish,
         perm_delegate=body.perm_delegate,
-        perm_sync_actions=body.perm_sync_actions,
+        perm_sync=body.perm_sync,
         perm_admin=body.perm_admin,
         perm_audit=body.perm_audit,
         perm_auth=body.perm_auth,
@@ -481,8 +481,8 @@ async def _update_role(db: Session, role_id: int, body: EditRoleBody) -> EditRol
         role.perm_publish = body.perm_publish
     if body.perm_delegate is not None:
         role.perm_delegate = body.perm_delegate
-    if body.perm_sync_actions is not None:
-        role.perm_sync_actions = body.perm_sync_actions
+    if body.perm_sync is not None:
+        role.perm_sync = body.perm_sync
     if body.perm_admin is not None:
         role.perm_admin = body.perm_admin
     if body.perm_audit is not None:
