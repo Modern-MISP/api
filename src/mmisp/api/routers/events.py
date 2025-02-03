@@ -115,7 +115,7 @@ async def get_event_details(
         event_id: the ID or UUID of the event
 
     returns:
-        the event details
+        the event details 
     """
     return await _get_event_details(db, event_id)
 

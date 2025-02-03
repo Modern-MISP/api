@@ -2,8 +2,6 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status, Path
 from sqlalchemy.future import select
-from sqlalchemy.sql import exists
-
 
 from mmisp.api.auth import Auth, AuthStrategy, authorize
 from mmisp.api_schemas.roles import (
@@ -15,7 +13,6 @@ from mmisp.api_schemas.roles import (
     DeleteRoleResponse,
     EditRoleBody,
     EditRoleResponse,
-    ReinstateRoleBody,
     ReinstateRoleResponse,
     FilterRoleBody,
     FilterRoleResponse,
@@ -422,9 +419,10 @@ async def _delete_role(db: Session, role_id: int) -> DeleteRoleResponse:
             ).dict(),
         )
     
-    user_exists = await db.execute(select(exists().where(User.role_id == role_id)))
+    result = await db.execute(select(User.id).where(User.role_id == role_id))
+    user_exists = result.scalar_one_or_none() 
 
-    if user_exists.scalar():
+    if user_exists is not None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=DeleteRoleResponse(
@@ -554,7 +552,7 @@ async def _reinstate_role(auth: Auth, db: Session, role_id: int) -> ReinstateRol
     result = await db.execute(select(Role).where(Role.id == role_id))
     role = result.scalar_one_or_none()
 
-    if role:
+    if role is not None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Role with ID {role_id} is already in use."
@@ -697,7 +695,7 @@ async def _set_default_role(auth: Auth, db: Session, role_id: int) -> DefaultRol
     current_default_role = current_default_role.scalar_one_or_none()
 
     # there should always be a default role, since the default role can't be deleted, but just in case...
-    if current_default_role:
+    if current_default_role is not None:
         current_default_role.default_role = False
         await db.commit()
 
