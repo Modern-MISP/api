@@ -1,5 +1,10 @@
 import pytest
 
+from sqlalchemy.future import select
+from sqlalchemy import delete
+
+from mmisp.db.models.role import Role
+
 
 @pytest.mark.asyncio
 async def test_roles_get(client, site_admin_user_token):
@@ -93,6 +98,7 @@ async def test_role_get_with_specific_data(client, site_admin_user_token):
     assert role_data["perm_warninglist"] is False
     assert role_data["perm_view_feed_correlations"] is True
 
+
 @pytest.mark.asyncio
 async def test_role_not_found(client, site_admin_user_token):
     invalid_role_id = 999999  
@@ -100,3 +106,140 @@ async def test_role_not_found(client, site_admin_user_token):
     response = client.get(f"/roles/{invalid_role_id}", headers=headers)
     
     assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_delete_role_success(client, site_admin_user_token):
+    role_id = 2  
+    headers = {"authorization": site_admin_user_token}
+    
+    response = client.delete(f"/admin/roles/delete/{role_id}", headers=headers)
+    
+    assert response.status_code == 200
+    
+    response_json = response.json()
+    assert response_json["saved"] is True
+    assert response_json["success"] is True
+    assert response_json["name"] == "Role deleted"
+    assert response_json["message"] == "Role deleted"
+    assert response_json["id"] == str(role_id)
+
+
+@pytest.mark.asyncio
+async def test_delete_role_not_found(client, site_admin_user_token):
+    role_id = 999999
+    headers = {"authorization": site_admin_user_token}
+    
+    response = client.delete(f"/admin/roles/delete/{role_id}", headers=headers)
+    
+    assert response.status_code == 404
+    
+    response_json = response.json()
+    assert response_json["saved"] is False
+    assert response_json["name"] == "Role not found"
+    assert response_json["message"] == f"Role with ID {role_id} not found."
+    assert response_json["id"] == str(role_id)
+
+
+@pytest.mark.asyncio
+async def test_delete_default_role(client, site_admin_user_token):
+    role_id = 7  # ID of read only - default role
+    headers = {"authorization": site_admin_user_token}
+    
+    response = client.delete(f"/admin/roles/delete/{role_id}", headers=headers)
+    
+    assert response.status_code == 404
+    
+    response_json = response.json()
+    assert response_json["saved"] is False
+    assert response_json["name"] == "Can't delete default role"
+    assert response_json["message"] == f"Role with ID {role_id} is the default role. Can't be deleted"
+    assert response_json["id"] == str(role_id)
+
+
+@pytest.mark.asyncio
+async def test_delete_role_in_use(client, site_admin_user_token):
+    role_id = 1
+    headers = {"authorization": site_admin_user_token}
+    
+    response = client.delete(f"/admin/roles/delete/{role_id}", headers=headers)
+    
+    assert response.status_code == 400
+    
+    response_json = response.json()
+    assert response_json["saved"] is False
+    assert response_json["name"] == "Role in use"
+    assert response_json["message"] == f"Role with ID {role_id} cannot be deleted because it is assigned to one or more users."
+    assert response_json["id"] == str(role_id)
+
+
+@pytest.mark.asyncio
+async def test_reinstate_role_success(client, site_admin_user_token, db):
+    role_id = 2  
+    headers = {"authorization": site_admin_user_token}
+    
+    await db.execute(delete(Role).where(Role.id == role_id))
+    await db.commit()
+    
+    response = client.post(f"/roles/reinstate/{role_id}", headers=headers)
+    
+    assert response.status_code == 200
+    
+    response_json = response.json()
+    assert response_json["success"] is True
+    assert response_json["message"] == f"Role with ID {role_id} has been reinstated."
+    assert response_json["id"] == role_id
+    
+    result = await db.execute(select(Role).where(Role.id == role_id))
+    role = result.scalar_one_or_none()
+    assert role is not None
+
+
+@pytest.mark.asyncio
+async def test_reinstate_role_already_exists(client, site_admin_user_token, db):
+    role_id = 1
+    headers = {"authorization": site_admin_user_token}
+    
+    role = await db.execute(select(Role).where(Role.id == role_id))
+    role = role.scalar_one_or_none()
+    assert role is not None 
+    
+    response = client.post(f"/roles/reinstate/{role_id}", headers=headers)
+    assert response.status_code == 400
+    
+    response_json = response.json()
+    assert response_json["detail"] == f"Role with ID {role_id} is already in use."
+
+
+@pytest.mark.asyncio
+async def test_reinstate_role_not_standard_role(client, site_admin_user_token):
+    role_id = 8 
+    headers = {"authorization": site_admin_user_token}
+
+    response = client.post(f"/roles/reinstate/{role_id}", headers=headers)
+    assert response.status_code == 400
+    
+    response_json = response.json()
+    assert response_json["detail"] == f"Role with ID {role_id} is not a standard role and cannot be reinstated."
+
+
+@pytest.mark.asyncio
+async def test_reinstate_role_former_default_role(client, site_admin_user_token, db):
+    role_id = 7  
+    headers = {"authorization": site_admin_user_token}
+    
+    await db.execute(delete(Role).where(Role.id == role_id))
+    await db.commit()
+    
+    response = client.post(f"/roles/reinstate/{role_id}", headers=headers)
+    
+    assert response.status_code == 200
+    
+    response_json = response.json()
+    assert response_json["success"] is True
+    assert response_json["message"] == f"Role with ID {role_id} has been reinstated."
+    
+    result = await db.execute(select(Role).where(Role.id == role_id))
+    role = result.scalar_one_or_none()
+    assert role is not None
+    assert role.default_role is False
