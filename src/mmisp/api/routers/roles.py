@@ -376,8 +376,7 @@ async def _add_role(db: Session, body: AddRoleBody) -> AddRoleResponse:
         rate_limit_count=body.rate_limit_count,
         perm_galaxy_editor=body.perm_galaxy_editor,
         perm_warninglist=body.perm_warninglist,
-        perm_view_feed_correlations=body.perm_view_feed_correlations,
-        perm_skip_otp=body.perm_skip_otp,
+        perm_view_feed_correlations=body.perm_view_feed_correlations
     )
 
     db.add(new_role)
@@ -530,8 +529,6 @@ async def _update_role(db: Session, role_id: int, body: EditRoleBody) -> EditRol
         role.perm_warninglist = body.perm_warninglist
     if body.perm_view_feed_correlations is not None:
         role.perm_view_feed_correlations = body.perm_view_feed_correlations
-    if body.perm_skip_otp is not None:
-        role.perm_skip_otp = body.perm_skip_otp
 
     await db.commit()
 
