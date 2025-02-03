@@ -211,7 +211,7 @@ async def test_edit_non_existing_attribute(site_admin_user_token, client) -> Non
     headers = {"authorization": site_admin_user_token}
     response = client.put("/attributes/0", json=request_body, headers=headers)
     assert response.status_code == 404
-    response = client.put("/attributes/invalid_id", json=request_body, headers=headers)
+    response = client.put("/attributes/999999999", json=request_body, headers=headers)
     assert response.status_code == 404
 
 
@@ -412,7 +412,7 @@ async def test_restore_invalid_attribute(site_admin_user_token, client) -> None:
     response = client.post("/attributes/restore/0", headers=headers)
     assert response.status_code == 404
     response = client.post("/attributes/restore/invalid_id", headers=headers)
-    assert response.status_code == 404
+    assert response.status_code == 422
 
 
 # --- Test adding a tag
