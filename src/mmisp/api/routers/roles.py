@@ -2,7 +2,8 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status, Path
 from sqlalchemy.future import select
-from sqlalchemy.sql import func
+
+from datetime import datetime, timezone
 
 from mmisp.api.auth import Auth, AuthStrategy, authorize
 from mmisp.api_schemas.roles import (
@@ -99,7 +100,7 @@ async def add_role(
     returns:
         the new role
     """
-    return await _add_role(db, AddRoleBody)
+    return await _add_role(db, body)
 
 
 @router.delete(
@@ -133,7 +134,7 @@ async def delete_role(
 async def update_role(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
-    role_id: Annotated[str, Path(alias="roleId")],
+    role_id: Annotated[int, Path(alias="roleId")],
     body: EditRoleBody,
 ) -> EditRoleResponse:
     """Update an existing event either by its event ID or via its UUID.
@@ -147,7 +148,7 @@ async def update_role(
     returns:
         the updated event
     """
-    return await _update_role(db, role_id, EditRoleBody)
+    return await _update_role(db, role_id, body)
 
 
 @router.post(
@@ -158,7 +159,7 @@ async def update_role(
 async def reinstate_role(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
-    role_id: Annotated[str, Path(alias="roleId")],
+    role_id: Annotated[int, Path(alias="roleId")],
 ) -> ReinstateRoleResponse:
     """Reinstate a deleted standard role.
 
@@ -349,7 +350,7 @@ async def _add_role(db: Session, body: AddRoleBody) -> AddRoleResponse:
     new_role = Role(
         id=role_id,
         name=body.name,
-        created=func.now(),
+        created=datetime.now(timezone.utc),
         perm_add=body.perm_add,
         perm_modify=body.perm_modify,
         perm_modify_org=body.perm_modify_org,
@@ -532,7 +533,7 @@ async def _update_role(db: Session, role_id: int, body: EditRoleBody) -> EditRol
     if body.perm_view_feed_correlations is not None:
         role.perm_view_feed_correlations = body.perm_view_feed_correlations
 
-    role.modified=func.now()
+    role.modified=datetime.now(timezone.utc)
 
     await db.commit()
 
@@ -560,7 +561,7 @@ async def _reinstate_role(auth: Auth, db: Session, role_id: int) -> ReinstateRol
         )
 
     standard_roles = get_standard_roles()
-    role = next((role for role in standard_roles if role.id == role_id), None)
+    role = next(role for role in standard_roles if role.id == role_id)
 
     db.add(role)
 
@@ -692,8 +693,8 @@ async def _set_default_role(auth: Auth, db: Session, role_id: int) -> DefaultRol
             ).dict(),
         )
     
-    current_default_role = await db.execute(select(Role).where(Role.default_role == True))
-    current_default_role = current_default_role.scalar_one_or_none()
+    role_result = await db.execute(select(Role).where(Role.default_role == True))
+    current_default_role = role_result.scalar_one_or_none()
 
     # there should always be a default role, since the default role can't be deleted, but just in case...
     if current_default_role is not None:

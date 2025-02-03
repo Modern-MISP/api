@@ -698,8 +698,7 @@ async def _get_events(db: Session, user: User | None) -> list[GetAllEventsRespon
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN_BAD_REQUEST, 
             detail="invalid user")
-
-    
+            
     result = await db.execute(
         select(Event).options(
             selectinload(Event.org),
