@@ -2,6 +2,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status, Path
 from sqlalchemy.future import select
+from sqlalchemy.sql import func
 
 from mmisp.api.auth import Auth, AuthStrategy, authorize
 from mmisp.api_schemas.roles import (
@@ -348,6 +349,7 @@ async def _add_role(db: Session, body: AddRoleBody) -> AddRoleResponse:
     new_role = Role(
         id=role_id,
         name=body.name,
+        created=func.now(),
         perm_add=body.perm_add,
         perm_modify=body.perm_modify,
         perm_modify_org=body.perm_modify_org,
@@ -529,6 +531,8 @@ async def _update_role(db: Session, role_id: int, body: EditRoleBody) -> EditRol
         role.perm_warninglist = body.perm_warninglist
     if body.perm_view_feed_correlations is not None:
         role.perm_view_feed_correlations = body.perm_view_feed_correlations
+
+    role.modified=func.now()
 
     await db.commit()
 
