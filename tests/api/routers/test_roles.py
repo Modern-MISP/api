@@ -109,6 +109,72 @@ async def test_role_not_found(client, site_admin_user_token):
 
 
 @pytest.mark.asyncio
+async def test_add_role_success(client, site_admin_user_token):
+    headers = {"Authorization": site_admin_user_token}
+
+    role_data = {
+        "name": "new_role",
+        "perm_add": True,
+        "perm_modify": False,
+        "perm_modify_org": False,
+        "perm_publish": False,
+        "perm_delegate": False,
+        "perm_sync": False,
+        "perm_admin": False,
+        "perm_audit": False,
+        "perm_auth": False,
+        "perm_site_admin": False,
+        "perm_regexp_access": False,
+        "perm_tagger": False,
+        "perm_template": False,
+        "perm_sharing_group": False,
+        "perm_tag_editor": False,
+        "perm_sighting": False,
+        "perm_object_template": False,
+        "default_role": False,
+        "memory_limit": "",
+        "max_execution_time": "",
+        "restricted_to_site_admin": False,
+        "perm_publish_zmq": False,
+        "perm_publish_kafka": False,
+        "perm_decaying": False,
+        "enforce_rate_limit": False,
+        "rate_limit_count": 0,
+        "perm_galaxy_editor": False,
+        "perm_warninglist": False,
+        "perm_view_feed_correlations": False
+    }
+
+    response = client.post(
+        "/admin/roles/add",
+        json=role_data,
+        headers=headers
+    )
+
+    assert response.status_code == 200
+    response_json = response.json()
+
+    assert response_json["created"] is True
+    assert response_json["message"] == "Role 'new_role' successfully created."
+    assert "role" in response_json
+    assert response_json["role"]["name"] == "new_role"
+
+
+@pytest.mark.asyncio
+async def test_add_role_missing_body(client, site_admin_user_token):
+    headers = {"Authorization": site_admin_user_token}
+
+    response = client.post(
+        "/admin/roles/add",
+        headers=headers
+    )
+
+    assert response.status_code == 400
+    response_json = response.json()
+    assert response_json["detail"] == "Request body cannot be None."
+
+
+@pytest.mark.asyncio
 async def test_delete_role_success(client, site_admin_user_token):
     role_id = 2  
     headers = {"authorization": site_admin_user_token}
