@@ -65,7 +65,17 @@ from mmisp.db.models.user import User
 from mmisp.lib.actions import action_publish_event
 from mmisp.lib.galaxies import parse_galaxy_authors
 from mmisp.lib.logger import alog, log
+from mmisp.util.models import update_record
+from mmisp.util.partial import partial
+from mmisp.util.uuid import is_uuid
+from sqlalchemy.future import select
+from sqlalchemy.orm import selectinload
+from sqlalchemy.sql import Select
+from starlette import status
+from starlette.requests import Request
 
+from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
+from mmisp.api.config import config
 from ..workflow import execute_blocking_workflow, execute_workflow
 
 logger = logging.getLogger("mmisp")
