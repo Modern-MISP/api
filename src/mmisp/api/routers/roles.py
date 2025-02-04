@@ -152,7 +152,7 @@ async def update_role(
 
 
 @router.post(
-    "/roles/reinstate",
+    "/roles/reinstate/{roleId}",
     status_code=status.HTTP_200_OK,
     summary="Reinstate a deleted standard role",
 )
