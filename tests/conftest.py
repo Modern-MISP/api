@@ -425,6 +425,9 @@ async def admin_role(db):
 
     yield role
 
+    await db.delete(role)
+    await db.commit()
+
 
 @pytest_asyncio.fixture
 async def role_read_only(db):
@@ -449,6 +452,53 @@ async def role_read_only(db):
         perm_sighting=False,
         perm_object_template=False,
         default_role=True,
+        memory_limit="",
+        max_execution_time="",
+        restricted_to_site_admin=False,
+        perm_publish_zmq=False,
+        perm_publish_kafka=False,
+        perm_decaying=False,
+        enforce_rate_limit=False,
+        rate_limit_count=0,
+        perm_galaxy_editor=False,
+        perm_warninglist=False,
+        perm_view_feed_correlations=False,
+        created=datetime.now(timezone.utc)
+    )
+
+    db.add(role)
+    await db.commit()
+    await db.refresh(role)
+
+    yield role
+
+    await db.delete(role)
+    await db.commit()
+
+
+@pytest_asyncio.fixture
+async def random_test_role(db):
+    role = Role(
+        id=42,
+        name="test_role",
+        perm_add=False,
+        perm_modify=False,
+        perm_modify_org=False,
+        perm_publish=False,
+        perm_delegate=False,
+        perm_sync=False,
+        perm_admin=False,
+        perm_audit=False,
+        perm_auth=False,
+        perm_site_admin=False,
+        perm_regexp_access=False,
+        perm_tagger=False,
+        perm_template=False,
+        perm_sharing_group=False,
+        perm_tag_editor=False,
+        perm_sighting=False,
+        perm_object_template=False,
+        default_role=False,
         memory_limit="",
         max_execution_time="",
         restricted_to_site_admin=False,

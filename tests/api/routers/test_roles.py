@@ -174,11 +174,11 @@ async def test_add_role_missing_body(client, site_admin_user_token):
 
 
 @pytest.mark.asyncio
-async def test_delete_role_success(client, site_admin_user_token, role_read_only):
-    role_id = role_read_only.id 
+async def test_delete_role_success(client, site_admin_user_token, random_test_role):
+    role_id = random_test_role.id 
     headers = {"authorization": site_admin_user_token}
     
-    response = client.delete(f"/admin/roles/delete/{1}", headers=headers)
+    response = client.delete(f"/admin/roles/delete/{42}", headers=headers)
     
     assert response.status_code == 200
     
@@ -187,7 +187,7 @@ async def test_delete_role_success(client, site_admin_user_token, role_read_only
     assert response_json["success"] is True
     assert response_json["name"] == "Role deleted"
     assert response_json["message"] == "Role deleted"
-    assert response_json["id"] == str(role_id)
+    assert response_json["id"] == role_id
 
 
 @pytest.mark.asyncio
@@ -203,7 +203,7 @@ async def test_delete_role_not_found(client, site_admin_user_token):
     assert response_json["saved"] is False
     assert response_json["name"] == "Role not found"
     assert response_json["message"] == f"Role with ID {role_id} not found."
-    assert response_json["id"] == str(role_id)
+    assert response_json["id"] == role_id
 
 
 @pytest.mark.asyncio
@@ -213,13 +213,13 @@ async def test_delete_default_role(client, site_admin_user_token, role_read_only
     
     response = client.delete(f"/admin/roles/delete/{7}", headers=headers)
     
-    assert response.status_code == 404
+    assert response.status_code == 400
     
     response_json = response.json()
     assert response_json["saved"] is False
     assert response_json["name"] == "Can't delete default role"
     assert response_json["message"] == f"Role with ID {role_id} is the default role. Can't be deleted"
-    assert response_json["id"] == str(role_id)
+    assert response_json["id"] == role_id
 
 
 @pytest.mark.asyncio
@@ -235,14 +235,14 @@ async def test_delete_role_in_use(client, site_admin_user_token, admin_role):
     assert response_json["saved"] is False
     assert response_json["name"] == "Role in use"
     assert response_json["message"] == f"Role with ID {role_id} cannot be deleted because it is assigned to one or more users."
-    assert response_json["id"] == str(role_id)
+    assert response_json["id"] == role_id
 
 
 @pytest.mark.asyncio
-async def test_update_role_success(client, site_admin_user_token, role_read_only):
+async def test_update_role_success(client, site_admin_user_token, random_test_role):
     headers = {"Authorization": site_admin_user_token}
 
-    role_id = role_read_only.id
+    role_id = random_test_role.id
 
     update_data = {
         "name": "updated_role_name",
@@ -250,7 +250,7 @@ async def test_update_role_success(client, site_admin_user_token, role_read_only
     }
 
     response = client.put(
-        f"/admin/roles/edit/{7}",
+        f"/admin/roles/edit/{42}",
         json=update_data,
         headers=headers
     )
@@ -286,7 +286,8 @@ async def test_update_role_not_found(client, site_admin_user_token):
 
 
 @pytest.mark.asyncio
-async def test_update_role_no_changes(client, site_admin_user_token, role_read_only):
+async def test_update_role_no_changes(client, site_admin_user_token, random_test_role):
+    role_id = random_test_role.id
     headers = {"Authorization": site_admin_user_token}
 
     update_data = {
@@ -294,7 +295,7 @@ async def test_update_role_no_changes(client, site_admin_user_token, role_read_o
     }
 
     response = client.put(
-        f"/admin/roles/edit/{7}",
+        f"/admin/roles/edit/{42}",
         json=update_data,
         headers=headers
     )
@@ -358,11 +359,11 @@ async def test_reinstate_role_already_exists(client, site_admin_user_token, db, 
 
 
 @pytest.mark.asyncio
-async def test_reinstate_role_not_standard_role(client, site_admin_user_token):
-    role_id = 8 
+async def test_reinstate_role_not_standard_role(client, site_admin_user_token, random_test_role):
+    role_id = random_test_role.id 
     headers = {"authorization": site_admin_user_token}
 
-    response = client.post(f"/roles/reinstate/{8}", headers=headers)
+    response = client.post(f"/roles/reinstate/{42}", headers=headers)
     assert response.status_code == 400
     
     response_json = response.json()
