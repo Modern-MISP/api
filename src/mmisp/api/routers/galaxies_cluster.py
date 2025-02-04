@@ -46,8 +46,7 @@ from mmisp.lib.logger import alog, log
 from mmisp.lib.tags import get_or_create_instance_tag
 from mmisp.util.uuid import uuid
 from sqlalchemy import select
-from sqlalchemy.orm import selectinload
-from sqlalchemy.sql.expression import Select
+from sqlalchemy.orm import selectinload, joinedload
 from starlette import status
 from starlette.requests import Request
 
@@ -366,11 +365,7 @@ async def _restsearch(db: Session, body: GalaxyClusterSearchBody) -> GalaxyClust
 async def _load_galaxy_clusters_with_filters(db: Session, filters: GalaxyClusterSearchBody) -> Sequence[GalaxyCluster]:
     search_body: GalaxyClusterSearchBody = filters
 
-    query: Select
-    if search_body.minimal:
-        query = select(GalaxyCluster.uuid, GalaxyCluster.version, GalaxyCluster.galaxy.id)
-    else:
-        query = select(GalaxyCluster)
+    query = select(GalaxyCluster).options(joinedload(GalaxyCluster.galaxy))
 
     if search_body.id:
         query = query.filter(GalaxyCluster.id == search_body.id)
