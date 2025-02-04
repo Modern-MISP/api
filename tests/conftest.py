@@ -385,7 +385,7 @@ async def failing_before_save_workflow(db):
 @pytest_asyncio.fixture
 async def admin_role(db):
     role = Role(
-        id=-1,
+        id=999991,
         name="test_admin",
         created=datetime.now(timezone.utc),
         perm_add=True,
@@ -432,7 +432,7 @@ async def admin_role(db):
 @pytest_asyncio.fixture
 async def role_read_only(db):
     role = Role(
-        id=-7,
+        id=999997,
         name="test_read_only",
         perm_add=False,
         perm_modify=False,
