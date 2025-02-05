@@ -4,7 +4,7 @@ from sqlalchemy.future import select
 from sqlalchemy import delete
 
 from mmisp.db.models.role import Role
-from mmisp.db.models.user import User
+from mmisp.lib.permissions import Permission
 
 
 @pytest.mark.asyncio
@@ -414,7 +414,7 @@ async def test_filter_roles_success(client, site_admin_user_token, role_read_onl
     headers = {"authorization": site_admin_user_token}
 
     filter_data = {
-        "permissions": ["perm_sync", "perm_add"]
+        "permissions": [Permission.ADD, Permission.SYNC]
     }
 
     response = client.post(
@@ -440,7 +440,7 @@ async def test_filter_roles_no_results(client, site_admin_user_token, role_read_
     headers = {"authorization": site_admin_user_token}
 
     filter_data = {
-        "permissions": ["perm_admin"]
+        "permissions": [Permission.ADMIN]
     }
 
     response = client.post(
@@ -464,7 +464,7 @@ async def test_filter_roles_no_permissions(client, site_admin_user_token, role_r
     }
 
     response = client.post(
-        "/admin/roles/restSearch",
+        "/roles/restSearch",
         json=body,
         headers=headers
     )
