@@ -365,15 +365,15 @@ async def test_reinstate_role_success(client, site_admin_user_token, db, role_re
 
 
 @pytest.mark.asyncio
-async def test_reinstate_role_already_exists(client, site_admin_user_token, db, admin_role):
-    role_id = admin_role.id
+async def test_reinstate_role_already_exists(client, site_admin_user_token, db, test_standard_role):
+    role_id = test_standard_role.id
     headers = {"authorization": site_admin_user_token}
     
     role = await db.execute(select(Role).where(Role.id == role_id))
     role = role.scalar_one_or_none()
     assert role is not None 
     
-    response = client.post(f"/roles/reinstate/{1}", headers=headers)
+    response = client.post(f"/roles/reinstate/{5}", headers=headers)
     assert response.status_code == 400
     
     response_json = response.json()

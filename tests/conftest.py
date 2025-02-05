@@ -384,40 +384,39 @@ async def failing_before_save_workflow(db):
 
 
 @pytest_asyncio.fixture
-async def admin_role(db):
+async def test_standard_role(db):
     role = Role(
-        id=1,
-        name="test_admin",
-        created=datetime.now(timezone.utc),
+        id=5,
+        name="sync_user",
         perm_add=True,
         perm_modify=True,
         perm_modify_org=True,
         perm_publish=True,
         perm_delegate=True,
         perm_sync=True,
-        perm_admin=True,
-        perm_audit=True,
+        perm_admin=False,
+        perm_audit=False,
         perm_auth=True,
         perm_site_admin=False,
         perm_regexp_access=False,
-        perm_tagger=True,
-        perm_template=True,
+        perm_tagger=False,
+        perm_template=False,
         perm_sharing_group=True,
-        perm_tag_editor=True,
+        perm_tag_editor=False,
         perm_sighting=True,
         perm_object_template=False,
         default_role=False,
         memory_limit="",
         max_execution_time="",
         restricted_to_site_admin=False,
-        perm_publish_zmq=True,
-        perm_publish_kafka=True,
-        perm_decaying=True,
+        perm_publish_zmq=False,
+        perm_publish_kafka=False,
+        perm_decaying=False,
         enforce_rate_limit=False,
         rate_limit_count=0,
-        perm_galaxy_editor=True,
+        perm_galaxy_editor=False,
         perm_warninglist=False,
-        perm_view_feed_correlations=True
+        perm_view_feed_correlations=False
     )
 
     db.add(role)
@@ -428,6 +427,7 @@ async def admin_role(db):
 
     await db.delete(role)
     await db.commit()
+
 
 
 @pytest_asyncio.fixture

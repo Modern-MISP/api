@@ -512,6 +512,7 @@ async def _update_role(db: Session, role_id: int, body: EditRoleBody) -> EditRol
     role.modified=datetime.now(timezone.utc)
 
     await db.commit()
+    await db.refresh(role)
 
     return EditRoleResponse(
         role=RoleAttributeResponse(**role.__dict__),
