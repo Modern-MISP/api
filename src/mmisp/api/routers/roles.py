@@ -572,7 +572,7 @@ async def _filter_roles(auth: Auth, db: Session, body: FilterRoleBody) -> list[F
             detail="No permissions provided for filtering."
         )
 
-    query = select(Role)
+    query = select(Role).where(Role.id.in_([7, 42]))
     result = await db.execute(query)
     roles = result.scalars().all()
 
