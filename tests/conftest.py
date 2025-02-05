@@ -527,6 +527,7 @@ async def random_test_role(db):
 @pytest_asyncio.fixture
 async def random_test_user(db):
     user = User(
+        id=314, #we love pi
         email="test_user@lauch.com",
         password="very_safe_passwort",
         org_id=1,  

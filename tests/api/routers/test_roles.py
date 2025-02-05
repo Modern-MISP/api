@@ -228,12 +228,12 @@ async def test_delete_default_role(client, site_admin_user_token, role_read_only
 
 
 @pytest.mark.asyncio
-async def test_delete_role_in_use(client, site_admin_user_token, random_test_role, site_admin_user, db):
-    role_id = 1 #admin role id
+async def test_delete_role_in_use(client, site_admin_user_token, random_test_user, random_test_role, db):
+    role_id = 42
 
     headers = {"authorization": site_admin_user_token}
     
-    response = client.delete(f"/admin/roles/delete/{1}", headers=headers)
+    response = client.delete(f"/admin/roles/delete/{42}", headers=headers)
     
     assert response.status_code == 400
     
