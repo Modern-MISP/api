@@ -527,42 +527,27 @@ async def random_test_role(db):
 @pytest_asyncio.fixture
 async def random_test_user(db):
     user = User(
-        id=314, #we love pi
-        email="test_user@lauch.com",
         password="very_safe_passwort",
-        org_id=1,  
-        server_id=0,
-        role_id=42, 
-        autoalert=False,
-        invited_by=0,
-        gpgkey="",
-        certif_public="",
+        org_id=1,
+        role_id=42,
+        email="test_user@lauch.com",
+        authkey=None,
+        invited_by=314,
         nids_sid=0,
         termsaccepted=True,
-        newsread=0,
-        change_pw=0,
+        change_pw=True,
         contactalert=False,
         disabled=False,
-        force_logout=False,
-        date_created=int(datetime.now(timezone.utc).timestamp()),
-        date_modified=int(datetime.now(timezone.utc).timestamp()),
-        sub="random_test_user",
-        external_auth_required=False,
-        external_auth_key="",
-        last_api_access=0,
         notification_daily=False,
         notification_weekly=False,
         notification_monthly=False,
-        totp="",
-        hotp_counter=0,
-        last_pw_change=0
     )
 
     db.add(user)
     await db.commit()
     await db.refresh(user)
 
-    yield user
+    yield user 
 
-    await db.delete(user)
+    await db.delete(user) 
     await db.commit()
