@@ -146,7 +146,7 @@ async def test_add_role_success(client, site_admin_user_token, db):
         "perm_view_feed_correlations": False
     }
 
-    response = await client.post(
+    response = client.post(
         "/admin/roles/add",
         json=role_data,
         headers=headers
@@ -184,7 +184,7 @@ async def test_delete_role_success(client, site_admin_user_token, random_test_ro
     role_id = random_test_role.id 
     headers = {"authorization": site_admin_user_token}
     
-    response = await client.delete(f"/admin/roles/delete/{42}", headers=headers)
+    response = client.delete(f"/admin/roles/delete/{42}", headers=headers)
     
     assert response.status_code == 200
     
@@ -219,7 +219,7 @@ async def test_delete_default_role(client, site_admin_user_token, role_read_only
     role_id = role_read_only.id  # ID of read only - default role
     headers = {"authorization": site_admin_user_token}
     
-    response = await client.delete(f"/admin/roles/delete/{7}", headers=headers)
+    response = client.delete(f"/admin/roles/delete/{7}", headers=headers)
     
     assert response.status_code == 400
     
@@ -238,7 +238,7 @@ async def test_delete_role_in_use(client, site_admin_user_token, random_test_rol
 
     headers = {"authorization": site_admin_user_token}
     
-    response = await client.delete(f"/admin/roles/delete/{42}", headers=headers)
+    response = client.delete(f"/admin/roles/delete/{42}", headers=headers)
     
     assert response.status_code == 400
     
@@ -262,7 +262,7 @@ async def test_update_role_success(client, site_admin_user_token, random_test_ro
         "memory_limit": "42MB"
     }
 
-    response = await client.put(
+    response = client.put(
         f"/admin/roles/edit/{42}",
         json=update_data,
         headers=headers
@@ -276,11 +276,10 @@ async def test_update_role_success(client, site_admin_user_token, random_test_ro
     assert response_json["role"]["name"] == "updated_role_name"
     assert response_json["role"]["memory_limit"] == "42MB"
 
-    result = await db.execute(select(Role).where(Role.id == 42))
-    role = result.scalar_one_or_none()
+    await db.refresh(random_test_role)
 
-    assert role.name == "updated_role_name"
-    assert role.memory_limit == "42MB"
+    assert random_test_role.name == "updated_role_name"
+    assert random_test_role.memory_limit == "42MB"
 
 
 @pytest.mark.asyncio
@@ -346,7 +345,7 @@ async def test_reinstate_role_success(client, site_admin_user_token, db, role_re
     await db.execute(delete(Role).where(Role.id == role_id))
     await db.commit()
     
-    response = await client.post(f"/roles/reinstate/{7}", headers=headers)
+    response = client.post(f"/roles/reinstate/{7}", headers=headers)
     
     assert response.status_code == 200
     
@@ -396,7 +395,7 @@ async def test_reinstate_role_former_default_role(client, site_admin_user_token,
     await db.execute(delete(Role).where(Role.id == role_id))
     await db.commit()
     
-    response = await client.post(f"/roles/reinstate/{7}", headers=headers)
+    response = client.post(f"/roles/reinstate/{7}", headers=headers)
     
     assert response.status_code == 200
     
@@ -408,3 +407,69 @@ async def test_reinstate_role_former_default_role(client, site_admin_user_token,
     role = result.scalar_one_or_none()
     assert role is not None
     assert role.default_role is False
+
+
+@pytest.mark.asyncio
+async def test_filter_roles_success(client, site_admin_user_token, role_read_only, test_standard_role, db):
+    headers = {"authorization": site_admin_user_token}
+
+    filter_data = {
+        "permissions": ["perm_sync", "perm_add"]
+    }
+
+    response = client.post(
+        "/roles/restSearch",
+        json=filter_data,
+        headers=headers 
+    )
+
+    assert response.status_code == 200
+
+    response_json = response.json()
+
+    assert len(response_json) == 1
+    assert response_json[0]["Role"]["name"] == "sync_user"
+    assert response_json[0]["Role"]["id"] == 5
+
+    assert response_json[0]["Role"]["perm_sync"] is True
+    assert response_json[0]["Role"]["perm_add"] is True
+
+
+@pytest.mark.asyncio
+async def test_filter_roles_no_results(client, site_admin_user_token, role_read_only, test_standard_role, db):
+    headers = {"authorization": site_admin_user_token}
+
+    filter_data = {
+        "permissions": ["perm_admin"]
+    }
+
+    response = client.post(
+        "/roles/restSearch",
+        json=filter_data,
+        headers=headers  
+    )
+
+    assert response.status_code == 200
+
+    response_json = response.json()
+    assert len(response_json) == 0
+
+
+@pytest.mark.asyncio
+async def test_filter_roles_no_permissions(client, site_admin_user_token, role_read_only, test_standard_role):
+    headers = {"authorization": site_admin_user_token}
+
+    body = {
+        "permissions": []
+    }
+
+    response = client.post(
+        "/admin/roles/restSearch",
+        json=body,
+        headers=headers
+    )
+
+    assert response.status_code == 400
+
+    response_json = response.json()
+    assert response_json["detail"] == "No permissions provided for filtering."
