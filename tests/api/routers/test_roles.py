@@ -4,6 +4,7 @@ from sqlalchemy.future import select
 from sqlalchemy import delete
 
 from mmisp.db.models.role import Role
+from mmisp.db.models.user import User
 
 
 @pytest.mark.asyncio
@@ -109,7 +110,7 @@ async def test_role_not_found(client, site_admin_user_token):
 
 
 @pytest.mark.asyncio
-async def test_add_role_success(client, site_admin_user_token):
+async def test_add_role_success(client, site_admin_user_token, db):
     headers = {"Authorization": site_admin_user_token}
 
     role_data = {
@@ -159,6 +160,11 @@ async def test_add_role_success(client, site_admin_user_token):
     assert "role" in response_json
     assert response_json["role"]["name"] == "new_role"
 
+    result = await db.execute(select(Role).where(Role.name == "new_role"))
+    role = result.scalar_one_or_none()
+
+    assert role is not None
+
 
 @pytest.mark.asyncio
 async def test_add_role_missing_body(client, site_admin_user_token):
@@ -174,7 +180,7 @@ async def test_add_role_missing_body(client, site_admin_user_token):
 
 
 @pytest.mark.asyncio
-async def test_delete_role_success(client, site_admin_user_token, random_test_role):
+async def test_delete_role_success(client, site_admin_user_token, random_test_role, db):
     role_id = random_test_role.id 
     headers = {"authorization": site_admin_user_token}
     
@@ -189,6 +195,11 @@ async def test_delete_role_success(client, site_admin_user_token, random_test_ro
     assert response_json["message"] == "Role deleted"
     assert response_json["id"] == role_id
 
+    result = await db.execute(select(Role).where(Role.id == 42))
+    role = result.scalar_one_or_none()
+
+    assert role is None
+
 
 @pytest.mark.asyncio
 async def test_delete_role_not_found(client, site_admin_user_token):
@@ -200,11 +211,11 @@ async def test_delete_role_not_found(client, site_admin_user_token):
     assert response.status_code == 404
     
     response_json = response.json()
-    assert response_json["datail"] == f"Role with ID {role_id} not found."
+    assert response_json["detail"] == f"Role with ID {role_id} not found."
 
 
 @pytest.mark.asyncio
-async def test_delete_default_role(client, site_admin_user_token, role_read_only):
+async def test_delete_default_role(client, site_admin_user_token, role_read_only, db):
     role_id = role_read_only.id  # ID of read only - default role
     headers = {"authorization": site_admin_user_token}
     
@@ -215,22 +226,36 @@ async def test_delete_default_role(client, site_admin_user_token, role_read_only
     response_json = response.json()
     assert response_json["detail"] == f"Role with ID {role_id} is the default role. Can't be deleted"
 
+    result = await db.execute(select(Role).where(Role.id == 7))
+    role = result.scalar_one_or_none()
+
+    assert role is not None
+
+
 @pytest.mark.asyncio
-async def test_delete_role_in_use(client, site_admin_user_token, admin_role):
-    #add test user who is assigned to the admin role
-    role_id = admin_role.id
+async def test_delete_role_in_use(client, site_admin_user_token, random_test_role, random_test_user, db):
+    role_id = random_test_role.id
+
+    random_test_user.role_id == role_id
+    await db.commit()
+    
     headers = {"authorization": site_admin_user_token}
     
-    response = client.delete(f"/admin/roles/delete/{1}", headers=headers)
+    response = client.delete(f"/admin/roles/delete/{42}", headers=headers)
     
     assert response.status_code == 400
     
     response_json = response.json()
     assert response_json["detail"] == f"Role with ID {role_id} cannot be deleted because it is assigned to one or more users."
 
+    result = await db.execute(select(Role).where(Role.id == role_id))
+    role = result.scalar_one_or_none()
+
+    assert role is not None
+
 
 @pytest.mark.asyncio
-async def test_update_role_success(client, site_admin_user_token, random_test_role):
+async def test_update_role_success(client, site_admin_user_token, random_test_role, db):
     headers = {"Authorization": site_admin_user_token}
 
     role_id = random_test_role.id
@@ -253,6 +278,12 @@ async def test_update_role_success(client, site_admin_user_token, random_test_ro
     assert response_json["message"] == f"Role with ID {role_id} successfully updated."
     assert response_json["role"]["name"] == "updated_role_name"
     assert response_json["role"]["memory_limit"] == "42MB"
+
+    result = await db.execute(select(Role).where(Role.id == 42))
+    role = result.scalar_one_or_none()
+
+    assert role.name == "updated_role_name"
+    assert role.memory_limit == "42MB"
 
 
 @pytest.mark.asyncio
