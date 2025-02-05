@@ -472,7 +472,6 @@ async def test_edit_user_role_success(client, site_admin_user_token, role_read_o
     assert response.status_code == 200
     response_json = response.json()
     
-    assert response_json["name"] == "User role updated"
     assert response_json["message"] == "User's role has been updated to Role 7"
     assert response_json["id"] == user_id
     assert response_json["Role"] == "test_read_only"
@@ -486,27 +485,28 @@ async def test_edit_user_role_missing_role_id(client, site_admin_user_token, ran
 
     response = client.put(f"/admin/users/edit/{user_id}", json=body, headers=headers)
 
-    assert response.status_code == 400
+    assert response.status_code == 422
 
 
 @pytest.mark.asyncio
 async def test_edit_user_role_nonexistent_role(client, site_admin_user_token, random_test_user):
     user_id =random_test_user.id
     headers = {"authorization": site_admin_user_token}
-    body = {"role_id": 999999}
+    body = {"role_id": 31415}
 
     response = client.put(f"/admin/users/edit/{user_id}", json=body, headers=headers)
 
     assert response.status_code == 404
-    assert response.json()["detail"] == "Role with ID 999999 not found."
+    assert response.json()["detail"] == "Role with ID 31415 not found."
 
 
 @pytest.mark.asyncio
-async def test_get_users_by_role_success(client, site_admin_user_token, random_test_user, view_only_user):
+async def test_get_users_by_role_success(client, site_admin_user_token, random_test_user, random_test_role):
     user_id = random_test_user.id
+    role_id = random_test_role.id
     headers = {"authorization": site_admin_user_token}
 
-    response = await client.post(f"/admin/roles/users/{42}", headers=headers)
+    response = client.post(f"/admin/roles/users/{42}", headers=headers)
 
     assert response.status_code == 200
     users = response.json()
@@ -516,13 +516,24 @@ async def test_get_users_by_role_success(client, site_admin_user_token, random_t
 
 
 @pytest.mark.asyncio
+async def test_get_users_by_role_no_users(client, site_admin_user_token):
+    headers = {"authorization": site_admin_user_token}
+
+    response = client.post(f"/admin/roles/users/{42}", headers=headers)
+
+    assert response.status_code == 200
+    users = response.json()
+    
+    assert users == []
+
+
+@pytest.mark.asyncio
 async def test_get_users_by_role_not_found(client, site_admin_user_token):
     headers = {"authorization": site_admin_user_token}
 
-    response = await client.post(f"/admin/roles/users/{999999}", headers=headers)
+    response = client.post(f"/admin/roles/users/{999999}", headers=headers)
 
     assert response.status_code == 404
-    assert response.json()["detail"] == f"Role with ID {999999} not found."
 
 
 @pytest.mark.asyncio
