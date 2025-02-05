@@ -56,11 +56,11 @@ async def test_roles_get(client, site_admin_user_token):
 
 
 @pytest.mark.asyncio
-async def test_role_get_with_specific_data(client, site_admin_user_token, admin_role):
+async def test_role_get_with_specific_data(client, site_admin_user_token, random_test_role):
     headers = {"authorization": site_admin_user_token}
     
-    response = client.get(f"/roles/{1}", headers=headers)
-    role_id = admin_role.id
+    response = client.get(f"/roles/{42}", headers=headers)
+    role_id = random_test_role.id
     
     assert response.status_code == 200
     assert isinstance(response.json(), dict)
@@ -69,36 +69,36 @@ async def test_role_get_with_specific_data(client, site_admin_user_token, admin_
     role_data = response_json["Role"]
 
     assert role_data["id"] == role_id
-    assert role_data["name"] == "test_admin"
-    assert role_data["perm_add"] is True
-    assert role_data["perm_modify"] is True
-    assert role_data["perm_modify_org"] is True
-    assert role_data["perm_publish"] is True
-    assert role_data["perm_delegate"] is True
-    assert role_data["perm_sync"] is True
-    assert role_data["perm_admin"] is True
-    assert role_data["perm_audit"] is True
-    assert role_data["perm_auth"] is True
+    assert role_data["name"] == "test_role"
+    assert role_data["perm_add"] is False
+    assert role_data["perm_modify"] is False
+    assert role_data["perm_modify_org"] is False
+    assert role_data["perm_publish"] is False
+    assert role_data["perm_delegate"] is False
+    assert role_data["perm_sync"] is False
+    assert role_data["perm_admin"] is False
+    assert role_data["perm_audit"] is False
+    assert role_data["perm_auth"] is False
     assert role_data["perm_site_admin"] is False
     assert role_data["perm_regexp_access"] is False
-    assert role_data["perm_tagger"] is True
-    assert role_data["perm_template"] is True
-    assert role_data["perm_sharing_group"] is True
-    assert role_data["perm_tag_editor"] is True
-    assert role_data["perm_sighting"] is True
+    assert role_data["perm_tagger"] is False
+    assert role_data["perm_template"] is False
+    assert role_data["perm_sharing_group"] is False
+    assert role_data["perm_tag_editor"] is False
+    assert role_data["perm_sighting"] is False
     assert role_data["perm_object_template"] is False
     assert role_data["default_role"] is False
     assert role_data["memory_limit"] == ""
     assert role_data["max_execution_time"] == ""
     assert role_data["restricted_to_site_admin"] is False
-    assert role_data["perm_publish_zmq"] is True
-    assert role_data["perm_publish_kafka"] is True
-    assert role_data["perm_decaying"] is True
+    assert role_data["perm_publish_zmq"] is False
+    assert role_data["perm_publish_kafka"] is False
+    assert role_data["perm_decaying"] is False
     assert role_data["enforce_rate_limit"] is False
     assert role_data["rate_limit_count"] == 0
-    assert role_data["perm_galaxy_editor"] is True
+    assert role_data["perm_galaxy_editor"] is False
     assert role_data["perm_warninglist"] is False
-    assert role_data["perm_view_feed_correlations"] is True
+    assert role_data["perm_view_feed_correlations"] is False
 
 
 @pytest.mark.asyncio
@@ -238,7 +238,7 @@ async def test_delete_role_in_use(client, site_admin_user_token, random_test_rol
 
     random_test_user.role_id == role_id
     await db.commit()
-    
+
     headers = {"authorization": site_admin_user_token}
     
     response = client.delete(f"/admin/roles/delete/{42}", headers=headers)

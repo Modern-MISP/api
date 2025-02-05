@@ -30,7 +30,7 @@ from fastapi import Path
 from mmisp.lib.permissions import Permission
 from mmisp.db.models.user import User
 from mmisp.lib.permissions import Permission
-from mmisp.lib.default_roles import get_standard_roles
+from mmisp.lib.standard_roles import get_standard_roles
 
 router = APIRouter(tags=["roles"])
 
