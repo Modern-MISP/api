@@ -1293,7 +1293,7 @@ def _prepare_all_events_event_tag_response(event_tag_list: Sequence[EventTag]) -
 
 async def _get_event_by_uuid(
         event_id: uuid.UUID, db: Session, include_basic_event_attributes: bool = False, include_non_galaxy_attribute_tags: bool = False
-        )-> Event:
+        )-> Event | None:
     """ Get's an event by its UUID with varying amounts of included attributes loaded in.
 
     args:
@@ -1303,7 +1303,7 @@ async def _get_event_by_uuid(
         include_basic_event_attributes: whether to also include non galaxy attribute tags
 
     returns:
-        The event with the associated UUID of NONE in case of not being present. 
+        The event with the associated UUID or NONE in case of not being present. 
     
     """
     query: Select = (
@@ -1360,6 +1360,6 @@ async def _get_event_by_uuid(
         
 
     result = await db.execute(query)
-    event = result.scalars().one_or_none
+    event = result.scalars().one_or_none()
 
     return event

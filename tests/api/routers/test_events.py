@@ -143,6 +143,7 @@ async def test_get_existing_event_by_uuid(
     assert response.status_code == 200
     response_json = response.json()
     assert response_json["Event"]["id"] == event_id
+    assert response_json["Event"]["uuid"] == event_uuid
     assert response_json["Event"]["org_id"] == org_id
     assert response_json["Event"]["orgc_id"] == org_id
     assert response_json["Event"]["attribute_count"] == "1"
@@ -160,6 +161,13 @@ async def test_get_non_existing_event(db, site_admin_user_token, client) -> None
     response = client.get(f"/events/{unused_event_id}", headers=headers)
     assert response.status_code == 404
 
+@pytest.mark.asyncio
+async def test_get_non_existing_event_by_uuid(db, site_admin_user_token, client) -> None:
+    unused_event_id = "a469325efe2f4f32a6854579f415ec6a"    # just a random, valid uuid. Extremely unlikely,
+    headers = {"authorization": site_admin_user_token}      # that this one is already used in the db
+    response = client.get(f"/events/{unused_event_id}", headers=headers)
+    assert response.status_code == 404
+
 
 @pytest.mark.asyncio
 async def test_update_existing_event(event, site_admin_user_token, client) -> None:
@@ -168,6 +176,19 @@ async def test_update_existing_event(event, site_admin_user_token, client) -> No
 
     headers = {"authorization": site_admin_user_token}
     response = client.put(f"events/{event_id}", json=request_body, headers=headers)
+
+    assert response.status_code == 200
+    response_json = response.json()
+    assert response_json["Event"]["info"] == request_body["info"]
+
+
+@pytest.mark.asyncio
+async def test_update_existing_event_by_uuid(event, site_admin_user_token, client) -> None:
+    request_body = {"info": "updated info"}
+    event_uuid = event.uuid
+
+    headers = {"authorization": site_admin_user_token}
+    response = client.put(f"events/{event_uuid}", json=request_body, headers=headers)
 
     assert response.status_code == 200
     response_json = response.json()
@@ -206,6 +227,10 @@ async def test_update_non_existing_event(site_admin_user_token, client) -> None:
     response = client.put("/events/0", json=request_body, headers=headers)
     assert response.status_code == 404
 
+    # Test random UUID
+    response = client.put("/events/a469325efe2f4f32a6854579f415ec6a", json=request_body, headers=headers)
+    assert response.status_code == 404
+
     response = client.put("/events/invalid_id", json=request_body, headers=headers)
     assert response.status_code == 422
 
@@ -219,12 +244,25 @@ async def test_delete_existing_event(event, site_admin_user_token, client) -> No
 
     assert response.status_code == 200
 
+@pytest.mark.asyncio
+async def test_delete_existing_event_by_uuid(event, site_admin_user_token, client) -> None:
+    event_uuid = event.uuid
+
+    headers = {"authorization": site_admin_user_token}
+    response = client.delete(f"events/{event_uuid}", headers=headers)
+
+    assert response.status_code == 200
+
 
 @pytest.mark.asyncio
 async def test_delete_invalid_or_non_existing_event(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.delete("/events/0", headers=headers)
     assert response.status_code == 404
+
+    response = client.delete("/events/a469325efe2f4f32a6854579f415ec6a", headers=headers)
+    assert response.status_code == 404
+    
     response = client.delete("/events/invalid_id", headers=headers)
     assert response.status_code == 422
 

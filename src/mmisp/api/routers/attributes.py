@@ -933,7 +933,7 @@ async def _get_attribute_type_statistics(db: Session, percentage: bool) -> GetAt
 
     return GetAttributeStatisticsTypesResponse(**attribute_count_by_group_dict)
 
-async def _get_event_by_uuid(event_id: uuid.UUID, db: Session) -> Event:
+async def _get_event_by_uuid(event_id: uuid.UUID, db: Session) -> Event | None:
     """ Get's an event by its UUID.
 
     args:
@@ -949,12 +949,12 @@ async def _get_event_by_uuid(event_id: uuid.UUID, db: Session) -> Event:
         .filter(Event.uuid == event_id))        
 
     result = await db.execute(query)
-    event = result.scalars().one_or_none
+    event = result.scalars().one_or_none()
 
     return event
 
 
-async def _get_tag_by_attribute_uuid(db: Session, attribute_id: uuid.UUID, tag_id: int) -> AttributeTag:
+async def _get_tag_by_attribute_uuid(db: Session, attribute_id: uuid.UUID, tag_id: int) -> AttributeTag | None:
     """ Get's an attributes tag by the attributes UUID and the tags ID.
 
     args:
@@ -971,13 +971,13 @@ async def _get_tag_by_attribute_uuid(db: Session, attribute_id: uuid.UUID, tag_i
             .filter(AttributeTag.attribute_uuid == attribute_id, AttributeTag.tag_id == tag_id)
             .limit(1))
     
-    result = db.execute(query)
+    result = await db.execute(query)
     attribute_tag = result.scalars().one_or_none()
 
     return attribute_tag
 
 
-async def _get_all_tags_by_attribute_uuid(db: Session, attribute_id: uuid.UUID) -> list[AttributeTag]:
+async def _get_all_tags_by_attribute_uuid(db: Session, attribute_id: uuid.UUID) -> Sequence[AttributeTag] | None:
     """ Get's an attributes tags by the attributes UUID.
 
     args:
@@ -993,7 +993,7 @@ async def _get_all_tags_by_attribute_uuid(db: Session, attribute_id: uuid.UUID) 
             select(AttributeTag)
             .filter(AttributeTag.attribute_uuid == attribute_id))
     
-    result = db.execute(query)
+    result = await db.execute(query)
     attribute_tags = result.scalars().all()
 
     return attribute_tags
