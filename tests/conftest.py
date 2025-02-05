@@ -531,7 +531,7 @@ async def random_test_user(db):
         password="very_safe_passwort",
         org_id=1,  
         server_id=0,
-        role_id=7, 
+        role_id=42, 
         autoalert=False,
         invited_by=0,
         gpgkey="",

@@ -236,9 +236,6 @@ async def test_delete_default_role(client, site_admin_user_token, role_read_only
 async def test_delete_role_in_use(client, site_admin_user_token, random_test_role, random_test_user, db):
     role_id = random_test_role.id
 
-    random_test_user.role_id == role_id
-    await db.commit()
-
     headers = {"authorization": site_admin_user_token}
     
     response = client.delete(f"/admin/roles/delete/{42}", headers=headers)
@@ -281,6 +278,8 @@ async def test_update_role_success(client, site_admin_user_token, random_test_ro
 
     result = await db.execute(select(Role).where(Role.id == 42))
     role = result.scalar_one_or_none()
+
+    await db.refresh(role)
 
     assert role.name == "updated_role_name"
     assert role.memory_limit == "42MB"
