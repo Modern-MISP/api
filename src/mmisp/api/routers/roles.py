@@ -323,13 +323,7 @@ async def _get_role(db: Session, role_id: int) -> GetRoleResponse:
     if role is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=GetRoleResponse(
-                saved=False,
-                name="Role not found",
-                message=f"Role with ID {role_id} not found.",
-                url=f"/roles/{role_id}",
-                id=role_id,
-            ).dict(),
+            detail=f"Role with ID {role_id} not found."
         )
 
     return GetRoleResponse(Role=RoleAttributeResponse(**role.__dict__))
@@ -400,25 +394,13 @@ async def _delete_role(db: Session, role_id: int) -> DeleteRoleResponse:
     if role is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=DeleteRoleResponse(
-                saved=False,
-                name="Role not found",
-                message=f"Role with ID {role_id} not found.",
-                url=f"/admin/roles/delete/{role_id}",
-                id=role_id,
-            ).dict(),
+            detail=f"Role with ID {role_id} not found."
         )
 
     if role.default_role:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=DeleteRoleResponse(
-                saved=False,
-                name="Can't delete default role",
-                message=f"Role with ID {role_id} is the default role. Can't be deleted",
-                url=f"/admin/roles/delete/{role_id}",
-                id=role_id,
-            ).dict(),
+            detail=f"Role with ID {role_id} is the default role. Can't be deleted"
         )
     
     result = await db.execute(select(User.id).where(User.role_id == role_id))
@@ -427,13 +409,7 @@ async def _delete_role(db: Session, role_id: int) -> DeleteRoleResponse:
     if user_exists is not None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=DeleteRoleResponse(
-                saved=False,
-                name="Role in use",
-                message=f"Role with ID {role_id} cannot be deleted because it is assigned to one or more users.",
-                url=f"/admin/roles/delete/{role_id}",
-                id=role_id,
-            ).dict(),
+            detail=f"Role with ID {role_id} cannot be deleted because it is assigned to one or more users."
         )
 
     await db.delete(role)
@@ -633,13 +609,7 @@ async def _edit_user_role(auth: Auth, db: Session, user_id: str, body: EditUserR
     if role is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=EditUserRoleResponse(
-                saved=False,
-                name="Role not found",
-                message=f"Role with ID {body.role_id} not found.",
-                url=f"/admin/roles/delete/{body.role_id}",
-                id=body.role_id,
-            ).dict(),
+            detail=f"Role with ID {body.role_id} not found."
         )
 
     user.role_id = body.role_id  
@@ -684,13 +654,7 @@ async def _set_default_role(auth: Auth, db: Session, role_id: int) -> DefaultRol
     if role is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=DefaultRoleResponse(
-                saved=False,
-                name="Role not found",
-                message=f"Role with ID {role_id} not found.",
-                url=f"/admin/roles/delete/{role_id}",
-                id=role_id,
-            ).dict(),
+            detail=f"Role with ID {role_id} not found."
         )
     
     role_result = await db.execute(select(Role).where(Role.default_role == True))

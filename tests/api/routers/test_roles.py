@@ -200,10 +200,7 @@ async def test_delete_role_not_found(client, site_admin_user_token):
     assert response.status_code == 404
     
     response_json = response.json()
-    assert response_json["saved"] is False
-    assert response_json["name"] == "Role not found"
-    assert response_json["message"] == f"Role with ID {role_id} not found."
-    assert response_json["id"] == role_id
+    assert response_json["datail"] == f"Role with ID {role_id} not found."
 
 
 @pytest.mark.asyncio
@@ -216,14 +213,11 @@ async def test_delete_default_role(client, site_admin_user_token, role_read_only
     assert response.status_code == 400
     
     response_json = response.json()
-    assert response_json["saved"] is False
-    assert response_json["name"] == "Can't delete default role"
-    assert response_json["message"] == f"Role with ID {role_id} is the default role. Can't be deleted"
-    assert response_json["id"] == role_id
-
+    assert response_json["detail"] == f"Role with ID {role_id} is the default role. Can't be deleted"
 
 @pytest.mark.asyncio
 async def test_delete_role_in_use(client, site_admin_user_token, admin_role):
+    #add test user who is assigned to the admin role
     role_id = admin_role.id
     headers = {"authorization": site_admin_user_token}
     
@@ -232,10 +226,7 @@ async def test_delete_role_in_use(client, site_admin_user_token, admin_role):
     assert response.status_code == 400
     
     response_json = response.json()
-    assert response_json["saved"] is False
-    assert response_json["name"] == "Role in use"
-    assert response_json["message"] == f"Role with ID {role_id} cannot be deleted because it is assigned to one or more users."
-    assert response_json["id"] == role_id
+    assert response_json["detail"] == f"Role with ID {role_id} cannot be deleted because it is assigned to one or more users."
 
 
 @pytest.mark.asyncio
