@@ -111,7 +111,7 @@ async def test_role_not_found(client, site_admin_user_token):
 
 @pytest.mark.asyncio
 async def test_add_role_success(client, site_admin_user_token, db):
-    headers = {"Authorization": site_admin_user_token}
+    headers = {"authorization": site_admin_user_token}
 
     role_data = {
         "name": "new_role",
@@ -168,7 +168,7 @@ async def test_add_role_success(client, site_admin_user_token, db):
 
 @pytest.mark.asyncio
 async def test_add_role_missing_body(client, site_admin_user_token):
-    headers = {"Authorization": site_admin_user_token}
+    headers = {"authorization": site_admin_user_token}
 
     response = client.post(
         "/admin/roles/add",
@@ -253,7 +253,7 @@ async def test_delete_role_in_use(client, site_admin_user_token, random_test_rol
 
 @pytest.mark.asyncio
 async def test_update_role_success(client, site_admin_user_token, random_test_role, db):
-    headers = {"Authorization": site_admin_user_token}
+    headers = {"authorization": site_admin_user_token}
 
     role_id = random_test_role.id
 
@@ -284,7 +284,7 @@ async def test_update_role_success(client, site_admin_user_token, random_test_ro
 
 @pytest.mark.asyncio
 async def test_update_role_not_found(client, site_admin_user_token):
-    headers = {"Authorization": site_admin_user_token}
+    headers = {"authorization": site_admin_user_token}
 
     role_id = 999999
 
@@ -305,7 +305,7 @@ async def test_update_role_not_found(client, site_admin_user_token):
 
 @pytest.mark.asyncio
 async def test_update_role_no_changes(client, site_admin_user_token, random_test_role):
-    headers = {"Authorization": site_admin_user_token}
+    headers = {"authorization": site_admin_user_token}
 
     update_data = {
         "name": None,
@@ -324,9 +324,7 @@ async def test_update_role_no_changes(client, site_admin_user_token, random_test
 
 @pytest.mark.asyncio
 async def test_update_role_missing_body(client, site_admin_user_token, role_read_only):
-    headers = {"Authorization": site_admin_user_token}
-
-    role_id = role_read_only.id
+    headers = {"authorization": site_admin_user_token}
 
     response = client.put(
         f"/admin/roles/edit/{7}",
@@ -411,6 +409,7 @@ async def test_reinstate_role_former_default_role(client, site_admin_user_token,
 
 @pytest.mark.asyncio
 async def test_filter_roles_success(client, site_admin_user_token, role_read_only, test_standard_role, db):
+
     headers = {"authorization": site_admin_user_token}
 
     filter_data = {
@@ -437,6 +436,7 @@ async def test_filter_roles_success(client, site_admin_user_token, role_read_onl
 
 @pytest.mark.asyncio
 async def test_filter_roles_no_results(client, site_admin_user_token, role_read_only, test_standard_role, db):
+
     headers = {"authorization": site_admin_user_token}
 
     filter_data = {
@@ -456,7 +456,7 @@ async def test_filter_roles_no_results(client, site_admin_user_token, role_read_
 
 
 @pytest.mark.asyncio
-async def test_filter_roles_no_permissions(client, site_admin_user_token, role_read_only, test_standard_role):
+async def test_filter_roles_no_permissions(client, site_admin_user_token, role_read_only, test_standard_role, db):
     headers = {"authorization": site_admin_user_token}
 
     body = {
@@ -473,3 +473,56 @@ async def test_filter_roles_no_permissions(client, site_admin_user_token, role_r
 
     response_json = response.json()
     assert response_json["detail"] == "No permissions provided for filtering."
+
+
+@pytest.mark.asyncio
+async def test_set_default_role_success(client, site_admin_user_token, random_test_role, role_read_only, db):
+    role_id = random_test_role.id
+    headers = {"authorization": site_admin_user_token}
+
+    response = client.put(
+        f"/admin/roles/setDefault/{role_id}",
+        headers=headers
+    )
+
+    assert response.status_code == 200
+
+    response_json = response.json()
+    assert response_json["success"] is True
+    assert response_json["name"] == "Default Role Changed"
+    assert response_json["message"] == f"The default role has been changed to {random_test_role.name}."
+    assert response_json["id"] == role_id
+
+    await db.refresh(random_test_role)
+    assert random_test_role.default_role is True
+
+    await db.refresh(role_read_only)
+    assert role_read_only.default_role is False
+
+
+@pytest.mark.asyncio
+async def test_set_default_role_role_not_found(client, site_admin_user_token):
+    non_existent_role_id = 999999
+    headers = {"authorization": site_admin_user_token}
+
+    response = client.put(
+        f"/admin/roles/setDefault/{999999}",
+        headers=headers
+    )
+
+    assert response.status_code == 404
+
+    response_json = response.json()
+    assert response_json["detail"] == f"Role with ID {non_existent_role_id} not found."
+
+
+@pytest.mark.asyncio
+async def test_set_default_role_already_set(client, site_admin_user_token, role_read_only):
+    headers = {"authorization": site_admin_user_token}
+
+    response = client.put(
+        f"/admin/roles/setDefault/{7}",
+        headers=headers
+    )
+
+    assert response.status_code == 400

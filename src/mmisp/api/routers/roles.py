@@ -658,6 +658,12 @@ async def _set_default_role(auth: Auth, db: Session, role_id: int) -> DefaultRol
             detail=f"Role with ID {role_id} not found."
         )
     
+    if role.default_role == True:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Role with ID {role_id} is already the default role."
+        )
+
     role_result = await db.execute(select(Role).where(Role.default_role == True))
     current_default_role = role_result.scalar_one_or_none()
 
