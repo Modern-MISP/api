@@ -608,7 +608,7 @@ async def _get_users_by_role(auth: Auth, db: Session, role_id: int) -> list[GetU
     if not users:
         return []
 
-    user_list: list[GetUserRoleResponse] = [GetUserRoleResponse(user=user) for user in users]
+    user_list: list[GetUserRoleResponse] = [GetUserRoleResponse(user_name=user.name) for user in users]
 
     return user_list
 

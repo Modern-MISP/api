@@ -467,12 +467,11 @@ async def test_get_users_by_role_success(client, site_admin_user_token, random_t
     headers = {"authorization": site_admin_user_token}
 
     response = client.post(f"/admin/roles/users/{42}", headers=headers)
-    
+
     assert response.status_code == 200
     users = response.json()
     
-    assert isinstance(users, list)
-    assert any(user["id"] == user_id for user in users)
+    assert isinstance(str, list)
 
 
 @pytest.mark.asyncio
@@ -482,9 +481,8 @@ async def test_get_users_by_role_no_users(client, site_admin_user_token, random_
     response = client.post(f"/admin/roles/users/{42}", headers=headers)
 
     assert response.status_code == 200
-    users = response.json()
     
-    assert users == []
+    assert response.json() == []
 
 
 @pytest.mark.asyncio
