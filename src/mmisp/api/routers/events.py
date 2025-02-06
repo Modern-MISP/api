@@ -704,7 +704,7 @@ async def _delete_event(db: Session, event_id: int | uuid.UUID) -> DeleteEventRe
         name="Event deleted",
         message="Event deleted",
         url=f"/events/delete/{event_id}",
-        id=str(event_id),
+        id=event_id,
     )
 
 @alog
