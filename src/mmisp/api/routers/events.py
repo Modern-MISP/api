@@ -932,7 +932,7 @@ async def _prepare_event_response(db: Session, event: Event) -> AddEditGetEventD
 
     attribute_list = event.attributes
 
-    # event_dict["attribute_count"] = len(attribute_list) # there is a column in the db for that
+    # event_dict["attribute_count"] = len(attribute_list) # there is a column in the db for that 
 
     if len(attribute_list) > 0:
         event_dict["Attribute"] = await _prepare_attribute_response(db, attribute_list)

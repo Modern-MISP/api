@@ -416,8 +416,7 @@ async def test_filter_roles_success(client, site_admin_user_token, role_read_onl
 
     response_json = response.json()
 
-    assert len(response_json) == 2 # test_standard_role and another thrird role, that is misterously in the dp
-    # if I filter out all roles except roles with id 5 and 7 (the two abover) during the endpoint logic it works fine
+    assert len(response_json) == 2 # test_standard_role and the admin role used by the site_admin_user_token
 
 @pytest.mark.asyncio
 async def test_filter_roles_no_results(client, site_admin_user_token, role_read_only, test_standard_role, db):
@@ -437,8 +436,7 @@ async def test_filter_roles_no_results(client, site_admin_user_token, role_read_
     assert response.status_code == 200
 
     response_json = response.json()
-    assert len(response_json) == 1 # The another thrird role, that is misterously in the dp
-    # if I filter out all roles except roles with id 5 and 7 (the two abover) during the endpoint logic it works fine
+    assert len(response_json) == 1 # the admin role used by the site_admin_user_token
 
 
 @pytest.mark.asyncio

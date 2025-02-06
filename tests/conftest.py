@@ -525,10 +525,10 @@ async def random_test_role(db):
 
 
 @pytest_asyncio.fixture
-async def random_test_user(db):
+async def random_test_user(db,  instance_owner_org):
     user = User(
         password="very_safe_passwort",
-        org_id=1,
+        org_id=instance_owner_org.id,
         role_id=42,
         email="test_user@lauch.com",
         authkey=None,
