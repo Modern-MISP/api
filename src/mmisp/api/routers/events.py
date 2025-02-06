@@ -10,6 +10,8 @@ import uuid
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Path
 from sqlalchemy import select
+from fastapi.encoders import jsonable_encoder
+from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.sql import Select
 from starlette import status
@@ -685,13 +687,13 @@ async def _delete_event(db: Session, event_id: int | uuid.UUID) -> DeleteEventRe
     if event is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=DeleteEventResponse(
+            detail=jsonable_encoder(DeleteEventResponse(
                 saved=False,
                 name="Could not delete Event",
                 message="Could not delete Event",
                 url=f"/events/delete/{event_id}",
                 id=event_id,
-            ).dict(),
+            ).dict()),
         )
 
     await db.delete(event)
@@ -900,7 +902,7 @@ async def _add_tag_to_event(
     if local not in ["0", "1"]:
         local = "0"
 
-    new_event_tag = EventTag(event_id=event_id, tag_id=tag.id, local=True if int(local) == 1 else False)
+    new_event_tag = EventTag(event_id=event.id, tag_id=tag.id, local=True if int(local) == 1 else False)
 
     db.add(new_event_tag)
     await db.flush()
@@ -927,10 +929,8 @@ async def _remove_tag_from_event(db: Session, event_id: int | uuid.UUID, tag_id:
     if not await db.get(Tag, tag_id):
         return AddRemoveTagEventsResponse(saved=False, errors="Tag could not be removed.")
 
-    # if isinstance(event_id, uuid.UUID):
-    #   result = await db.execute(select(EventTag).filter(EventTag.event_uuid == event_id).limit(1))
-    # else:
-    result = await db.execute(select(EventTag).filter(EventTag.event_id == event_id).limit(1))
+
+    result = await db.execute(select(EventTag).filter(EventTag.event_id == event.id).limit(1))
 
     event_tag = result.scalars().first()
 

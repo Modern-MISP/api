@@ -72,14 +72,13 @@ async def rest_search_attributes(
 @router.post(
     "/attributes/{eventId}",
     status_code=status.HTTP_200_OK,
-    response_model=AddAttributeResponse,
     summary="Add new attribute",
 )
 @alog
 async def add_attribute(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.ADD]))],
     db: Annotated[Session, Depends(get_db)],
-    event_id: Annotated[int | uuid.UUID, Path(alias="eventId")],
+    event_id: Annotated[uuid.UUID | int, Path(alias="eventId")],
     body: AddAttributeBody,
 ) -> AddAttributeResponse:
     """Add a new attribute with the given details.
@@ -527,7 +526,7 @@ async def _add_attribute(db: Session, event_id: int | uuid.UUID, body: AddAttrib
     new_attribute = Attribute(
         **{
             **body.dict(),
-            "event_id": int(event_id),
+            "event_id": int(event.id),
             "category": body.category
             if body.category is not None
             else GetDescribeTypesAttributes().sane_defaults[body.type]["default_category"],

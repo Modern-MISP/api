@@ -577,16 +577,16 @@ async def test_remove_existing_tag_from_event(event, tag, eventtag, site_admin_u
     assert response_json["saved"]
     assert response_json["success"] == "Tag removed"
 
-#
-#@pytest.mark.asyncio
-#async def test_remove_existing_tag_from_event_by_uuid(event, tag, eventtag, site_admin_user_token, client) -> None:
-#    tag_id = tag.id
-#    event_uuid = event.uuid
-#
-#    headers = {"authorization": site_admin_user_token}
-#    response = client.post(f"/events/removeTag/{event_uuid}/{tag_id}", headers=headers)
-#
-#    assert response.status_code == 200
-#    response_json = response.json()
-#    assert response_json["saved"]
-#    assert response_json["success"] == "Tag removed"
+
+@pytest.mark.asyncio
+async def test_remove_existing_tag_from_event_by_uuid(event, tag, eventtag, site_admin_user_token, client) -> None:
+    tag_id = tag.id
+    event_uuid = event.uuid
+
+    headers = {"authorization": site_admin_user_token}
+    response = client.post(f"/events/removeTag/{event_uuid}/{tag_id}", headers=headers)
+
+    assert response.status_code == 200
+    response_json = response.json()
+    assert response_json["saved"]
+    assert response_json["success"] == "Tag removed"
