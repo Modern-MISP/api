@@ -262,7 +262,7 @@ async def test_delete_invalid_or_non_existing_event(site_admin_user_token, clien
 
     response = client.delete("/events/a469325efe2f4f32a6854579f415ec6a", headers=headers)
     assert response.status_code == 404
-    
+
     response = client.delete("/events/invalid_id", headers=headers)
     assert response.status_code == 422
 
@@ -326,6 +326,24 @@ async def test_publish_existing_event(organisation, event, site_admin_user_token
     assert response_json["message"] == "Job queued"
     assert response_json["url"] == f"/events/publish/{event_id}"
     assert response_json["id"] == event_id
+
+
+@pytest.mark.asyncio
+async def test_publish_existing_event(organisation, event, site_admin_user_token, client) -> None:
+    event_uuid = event.uuid
+
+    headers = {"authorization": site_admin_user_token}
+    response = client.post(f"/events/publish/{event_uuid}", headers=headers)
+
+    assert response.status_code == 200
+    response_json = response.json()
+
+    assert response_json["saved"]
+    assert response_json["success"]
+    assert response_json["name"] == "Job queued"
+    assert response_json["message"] == "Job queued"
+    assert response_json["url"] == f"/events/publish/{event_uuid}"
+    assert response_json["id"] == event_uuid
 
 
 @pytest.mark.asyncio
@@ -410,6 +428,7 @@ async def test_publish_invalid_event(site_admin_user_token, client) -> None:
     assert response_json["name"] == "Invalid event."
     assert response_json["message"] == "Invalid event."
     assert response_json["url"] == "/events/publish/0"
+
     response = client.post("/events/publish/999999999", headers=headers)
     assert response.status_code == 200
     response_json = response.json()
@@ -417,9 +436,17 @@ async def test_publish_invalid_event(site_admin_user_token, client) -> None:
     assert response_json["message"] == "Invalid event."
     assert response_json["url"] == "/events/publish/999999999"
 
+    response = client.post("/events/publish/a469325efe2f4f32a6854579f415ec6a", headers=headers)
+    assert response.status_code == 200
+    response_json = response.json()
+    assert response_json["name"] == "Invalid event."
+    assert response_json["message"] == "Invalid event."
+    assert response_json["url"] == "/events/publish/a469325efe2f4f32a6854579f415ec6a"
+
+
 
 @pytest.mark.asyncio
-async def test_publish_existing_event2(event, site_admin_user_token, client) -> None:
+async def test_unpublish_existing_event(event, site_admin_user_token, client) -> None:
     event_id = event.id
 
     headers = {"authorization": site_admin_user_token}
@@ -437,20 +464,48 @@ async def test_publish_existing_event2(event, site_admin_user_token, client) -> 
 
 
 @pytest.mark.asyncio
-async def test_publish_invalid_event2(site_admin_user_token, client) -> None:
+async def test_unpublish_existing_event_by_uuid(event, site_admin_user_token, client) -> None:
+    event_uuid = event.uuid
+
     headers = {"authorization": site_admin_user_token}
+    response = client.post(f"/events/unpublish/{event_uuid}", headers=headers)
+
+    assert response.status_code == 200
+    response_json = response.json()
+
+    assert response_json["saved"]
+    assert response_json["success"]
+    assert response_json["name"] == "Event unpublished."
+    assert response_json["message"] == "Event unpublished."
+    assert response_json["url"] == f"/events/unpublish/{event_uuid}"
+    assert response_json["id"] == event_uuid
+
+
+@pytest.mark.asyncio
+async def test_unpublish_invalid_event(site_admin_user_token, client) -> None:
+    headers = {"authorization": site_admin_user_token}
+
     response = client.post("/events/unpublish/0", headers=headers)
     assert response.status_code == 200
     response_json = response.json()
     assert response_json["name"] == "Invalid event."
     assert response_json["message"] == "Invalid event."
     assert response_json["url"] == "/events/unpublish/0"
+
     response = client.post("/events/unpublish/999999999", headers=headers)
     assert response.status_code == 200
     response_json = response.json()
     assert response_json["name"] == "Invalid event."
     assert response_json["message"] == "Invalid event."
     assert response_json["url"] == "/events/unpublish/999999999"
+
+    response = client.post("/events/unpublish/a469325efe2f4f32a6854579f415ec6a", headers=headers)
+    assert response.status_code == 200
+    response_json = response.json()
+    assert response_json["name"] == "Invalid event."
+    assert response_json["message"] == "Invalid event."
+    assert response_json["url"] == "/events/unpublish/a469325efe2f4f32a6854579f415ec6a"
+    
 
 
 @pytest.mark.asyncio
@@ -461,6 +516,24 @@ async def test_add_existing_tag_to_event(event, tag, site_admin_user_token, clie
     headers = {"authorization": site_admin_user_token}
     response = client.post(
         f"/events/addTag/{event_id}/{tag_id}/local:1",
+        headers=headers,
+    )
+
+    assert response.status_code == 200
+    response_json = response.json()
+    assert response_json["saved"]
+    assert response_json["success"] == "Tag added"
+    assert response_json["check_publish"]
+
+
+@pytest.mark.asyncio
+async def test_add_existing_tag_to_event_by_uuid(event, tag, site_admin_user_token, client) -> None:
+    tag_id = tag.id
+    event_uuid = event.uuid
+
+    headers = {"authorization": site_admin_user_token}
+    response = client.post(
+        f"/events/addTag/{event_uuid}/{tag_id}/local:1",
         headers=headers,
     )
 
@@ -499,6 +572,20 @@ async def test_remove_existing_tag_from_attribute(event, tag, eventtag, site_adm
 
     headers = {"authorization": site_admin_user_token}
     response = client.post(f"/events/removeTag/{event_id}/{tag_id}", headers=headers)
+
+    assert response.status_code == 200
+    response_json = response.json()
+    assert response_json["saved"]
+    assert response_json["success"] == "Tag removed"
+
+
+@pytest.mark.asyncio
+async def test_remove_existing_tag_from_attribute_by_uuid(event, tag, eventtag, site_admin_user_token, client) -> None:
+    tag_id = tag.id
+    event_uuid = event.uuid
+
+    headers = {"authorization": site_admin_user_token}
+    response = client.post(f"/events/removeTag/{event_uuid}/{tag_id}", headers=headers)
 
     assert response.status_code == 200
     response_json = response.json()

@@ -45,6 +45,42 @@ async def test_add_attribute_valid_data(site_admin_user_token, event, db, client
 
 
 @pytest.mark.asyncio
+async def test_add_attribute_valid_data_by_event_uuid(site_admin_user_token, event, db, client) -> None:
+    request_body = {
+        "value": "1.2.3.4",
+        "type": "ip-src",
+        "category": "Network activity",
+        "to_ids": True,
+        "distribution": "1",
+        "comment": "test comment",
+        "disable_correlation": False,
+    }
+    event_uuid = event.uuid
+    assert event.id is not None
+
+    headers = {"authorization": site_admin_user_token}
+    response = client.post(f"/attributes/{event_uuid}", json=request_body, headers=headers)
+
+    assert response.status_code == 200
+    response_json = response.json()
+    assert response_json["Attribute"]["value"] == request_body["value"]
+    assert response_json["Attribute"]["type"] == request_body["type"]
+    assert response_json["Attribute"]["category"] == request_body["category"]
+    assert response_json["Attribute"]["to_ids"] == request_body["to_ids"]
+    assert response_json["Attribute"]["distribution"] == request_body["distribution"]
+    assert response_json["Attribute"]["comment"] == request_body["comment"]
+    assert response_json["Attribute"]["disable_correlation"] == request_body["disable_correlation"]
+    assert response_json["Attribute"]["id"] is not None
+
+    # need to remove attribute, so teardown works
+    print(response_json["Attribute"]["id"])
+    stmt = sa.sql.text("DELETE FROM attributes WHERE id=:id")
+    #    stmt.bindparams(id=response_json["Attribute"]["id"])
+    await db.execute(stmt, {"id": response_json["Attribute"]["id"]})
+    await db.commit()
+
+
+@pytest.mark.asyncio
 async def test_add_attribute_invalid_event_id(site_admin_user_token, client) -> None:
     request_body = {
         "value": "1.2.3.4",
@@ -63,6 +99,23 @@ async def test_add_attribute_invalid_event_id(site_admin_user_token, client) -> 
     )
     ic(response)
     assert response.status_code == 404
+
+    response = client.post(
+        "/attributes/999999999",
+        json=request_body,
+        headers=headers,
+    )
+    ic(response)
+    assert response.status_code == 404
+
+    response = client.post(
+        "/attributes/a469325efe2f4f32a6854579f415ec6a",
+        json=request_body,
+        headers=headers,
+    )
+    ic(response)
+    assert response.status_code == 404
+
 
 
 @pytest.mark.asyncio
@@ -84,8 +137,6 @@ async def test_add_attribute_invalid_data(
 
 
 # --- Test get attribute by id
-
-
 @pytest.mark.asyncio
 async def test_get_existing_attribute(
     db: AsyncSession,
@@ -130,18 +181,68 @@ async def test_get_existing_attribute(
         assert response_json["Attribute"]["Tag"][0]["id"] == at.id
 
 
+# --- Test get attribute by uuid
+@pytest.mark.asyncio
+async def test_get_existing_attribute(
+    db: AsyncSession,
+    attribute_with_normal_tag,
+    site_admin_user_token,
+    client,
+) -> None:
+    attribute, at = attribute_with_normal_tag
+    attribute_uuid = attribute.uuid
+    attribute_id = attribute.id # FIXME shouldnt be necessary
+
+    ic(attribute.asdict())
+
+    headers = {"authorization": site_admin_user_token}
+    response = client.get(f"/attributes/{attribute_uuid}", headers=headers)
+
+    assert response.status_code == 200
+    response_json = response.json()
+    ic(response_json)
+    assert response_json["Attribute"]["id"] == attribute_id # FIXME 
+    assert response_json["Attribute"]["event_id"] == attribute.event_id
+    assert "id" in response_json["Attribute"]
+    assert "event_id" in response_json["Attribute"]
+    assert "object_id" in response_json["Attribute"]
+    assert "object_relation" in response_json["Attribute"]
+    assert "category" in response_json["Attribute"]
+    assert "type" in response_json["Attribute"]
+    assert "value" in response_json["Attribute"]
+    assert "to_ids" in response_json["Attribute"]
+    assert "uuid" in response_json["Attribute"]
+    assert "timestamp" in response_json["Attribute"]
+    assert "distribution" in response_json["Attribute"]
+    assert "sharing_group_id" in response_json["Attribute"]
+    assert "comment" in response_json["Attribute"]
+    assert "deleted" in response_json["Attribute"]
+    assert "disable_correlation" in response_json["Attribute"]
+    assert "first_seen" in response_json["Attribute"]
+    assert "last_seen" in response_json["Attribute"]
+    assert "event_uuid" in response_json["Attribute"]
+    assert "Tag" in response_json["Attribute"]
+    if len(response_json["Attribute"]["Tag"]) > 0:
+        print(response_json["Attribute"]["Tag"])
+        assert response_json["Attribute"]["Tag"][0]["id"] == at.id
+
+
 @pytest.mark.asyncio
 async def test_get_invalid_or_non_existing_attribute(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.get("/attributes/0", headers=headers)
     assert response.status_code == 404
+
+    response = client.get("/attributes/a469325efe2f4f32a6854579f415ec6a", headers=headers)
+    assert response.status_code == 404
+    
     response = client.get("/attributes/invalid_id", headers=headers)
     assert response.status_code == 422
 
 
+
+
 # --- Test edit attribute
-
-
 @pytest.mark.asyncio
 async def test_edit_existing_attribute(
     db: AsyncSession, site_admin_user_token, sharing_group, event, attribute, client

@@ -772,7 +772,7 @@ async def _remove_tag_from_attribute(
 ) -> AddRemoveTagAttributeResponse:
     
     if isinstance(attribute_id, uuid.UUID):
-        attirbute_tag = _get_tag_by_attribute_uuid(db, attribute_id, tag_id)
+        attirbute_tag = _get_tag_by_attribute_uuid(db, attribute_id, int(tag_id))
     else:
         result = await db.execute(
             select(AttributeTag)
@@ -818,12 +818,13 @@ async def _prepare_get_attribute_details_response(
 ) -> GetAttributeAttributes:
     
     attribute_dict = attribute.asdict().copy()
+    
     if "event_uuid" not in attribute_dict.keys():
         attribute_dict["event_uuid"] = attribute.event_uuid
 
 
     if isinstance(attribute_id, uuid.UUID):
-        db_attribute_tags = _get_all_tags_by_attribute_uuid(db, attribute_id)
+        db_attribute_tags = await _get_all_tags_by_attribute_uuid(db, attribute_id)
     else:
         result = await db.execute(select(AttributeTag).filter(AttributeTag.attribute_id == attribute_id))
         db_attribute_tags = result.scalars().all()
@@ -833,8 +834,11 @@ async def _prepare_get_attribute_details_response(
     if len(db_attribute_tags) > 0:
         for attribute_tag in db_attribute_tags:
             result = await db.execute(select(Tag).filter(Tag.id == attribute_tag.tag_id).limit(1))
-            tag = result.scalars().one()
-            # FIXME chacnge to one or none &   if none throw http error
+            tag = result.scalars().one_or_none()
+            
+            if not tag:
+                raise HTTPException(status.HTTP_404_NOT_FOUND)
+
 
             connected_tag = GetAttributeTag(
                 id=tag.id,
@@ -863,7 +867,7 @@ async def _prepare_edit_attribute_response(
             attribute_dict[field] = "0"
 
     if isinstance(attribute_id, uuid.UUID):
-        db_attribute_tags = _get_all_tags_by_attribute_uuid(db, attribute_id)
+        db_attribute_tags = await _get_all_tags_by_attribute_uuid(db, attribute_id)
     else:
         result = await db.execute(select(AttributeTag).filter(AttributeTag.attribute_id == attribute_id))
         db_attribute_tags = result.scalars().all()
