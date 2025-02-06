@@ -471,7 +471,8 @@ async def test_get_users_by_role_success(client, site_admin_user_token, random_t
     assert response.status_code == 200
     users = response.json()
     
-    assert isinstance(str, list)
+    assert isinstance(users, list)
+    assert len(users) == 1  
 
 
 @pytest.mark.asyncio
