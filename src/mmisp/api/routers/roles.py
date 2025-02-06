@@ -209,37 +209,6 @@ async def filter_roles(
     return await _filter_roles(auth, db, body)
 
 
-@router.put(
-    "/admin/users/edit/{user_id}",
-    status_code=status.HTTP_200_OK,
-    summary="Assign or reassign a user to a specific role",
-)
-async def edit_user_role(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.ADMIN]))],
-    db: Annotated[Session, Depends(get_db)],
-    user_id: Annotated[str, Path(alias="userId")],
-    body: EditUserRoleBody,
-) -> EditUserRoleResponse:
-    """Assign or reassign a user to a specific role.
-
-    args:
-        auth: authentication details
-        db: database session
-        user_id: ID of the user for whom the setting is to be updated
-        body: new role for updating the users roles
-
-    returns:
-        the updated user
-
-    raises:
-        200: Successful Response
-        422: Validation Error
-        403: Forbidden Error
-        404: Not Found Error
-    """
-    return None
-
-
 @router.post(
     "admin/roles/users/{roleId}",
     status_code=status.HTTP_200_OK,
@@ -298,6 +267,42 @@ async def set_default_role(
 
     """
     return await _set_default_role(auth, db, role_id)
+
+
+# --- deprecated ---
+
+
+# For updating the role of a user simply user PUT /users/{user_id} (async def update_user)
+# and use the new role ID as part of the request body
+@router.put(
+    "/admin/users/edit/{user_id}",
+    status_code=status.HTTP_200_OK,
+    summary="Assign or reassign a user to a specific role (Deprecated)",
+)
+async def edit_user_role_depr(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.ADMIN]))],
+    db: Annotated[Session, Depends(get_db)],
+    user_id: Annotated[str, Path(alias="userId")],
+    body: EditUserRoleBody,
+) -> EditUserRoleResponse:
+    """Assign or reassign a user to a specific role.
+
+    args:
+        auth: authentication details
+        db: database session
+        user_id: ID of the user for whom the setting is to be updated
+        body: new role for updating the users roles
+
+    returns:
+        the updated user
+
+    raises:
+        200: Successful Response
+        422: Validation Error
+        403: Forbidden Error
+        404: Not Found Error
+    """
+    return await _edit_user_role(auth, db, user_id, body)
 
 
 # --- endpoint logic ---
