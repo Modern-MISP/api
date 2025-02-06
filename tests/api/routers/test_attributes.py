@@ -56,7 +56,7 @@ async def test_add_attribute_valid_data_by_event_uuid(site_admin_user_token, eve
         "disable_correlation": False,
     }
     event_uuid = event.uuid
-    assert event.id is not None
+    assert event_uuid is not None
 
     headers = {"authorization": site_admin_user_token}
     response = client.post(f"/attributes/{event_uuid}", json=request_body, headers=headers)
@@ -183,7 +183,7 @@ async def test_get_existing_attribute(
 
 # --- Test get attribute by uuid
 @pytest.mark.asyncio
-async def test_get_existing_attribute(
+async def test_get_existing_attribute_by_uuid(
     db: AsyncSession,
     attribute_with_normal_tag,
     site_admin_user_token,
@@ -191,7 +191,6 @@ async def test_get_existing_attribute(
 ) -> None:
     attribute, at = attribute_with_normal_tag
     attribute_uuid = attribute.uuid
-    attribute_id = attribute.id # FIXME shouldnt be necessary
 
     ic(attribute.asdict())
 
@@ -201,7 +200,7 @@ async def test_get_existing_attribute(
     assert response.status_code == 200
     response_json = response.json()
     ic(response_json)
-    assert response_json["Attribute"]["id"] == attribute_id # FIXME 
+    assert response_json["Attribute"]["uuid"] == attribute_uuid 
     assert response_json["Attribute"]["event_id"] == attribute.event_id
     assert "id" in response_json["Attribute"]
     assert "event_id" in response_json["Attribute"]
@@ -211,7 +210,6 @@ async def test_get_existing_attribute(
     assert "type" in response_json["Attribute"]
     assert "value" in response_json["Attribute"]
     assert "to_ids" in response_json["Attribute"]
-    assert "uuid" in response_json["Attribute"]
     assert "timestamp" in response_json["Attribute"]
     assert "distribution" in response_json["Attribute"]
     assert "sharing_group_id" in response_json["Attribute"]
@@ -331,6 +329,24 @@ async def test_delete_existing_attribute(
 
     headers = {"authorization": site_admin_user_token}
     response = client.delete(f"/attributes/{attribute_id}", headers=headers)
+
+    assert response.status_code == 200
+
+    # --- Test delete attribute by id
+@pytest.mark.asyncio
+async def test_delete_existing_attribute_by_uuid(
+    db: AsyncSession, instance_org_two, site_admin_user_token, sharing_group, organisation, event, attribute, client
+) -> None:
+    event.sharing_group_id = sharing_group.id
+
+    setattr(attribute, "sharing_group_id", sharing_group.id)
+
+    await db.commit()
+
+    attribute_uuid = attribute.uuid
+
+    headers = {"authorization": site_admin_user_token}
+    response = client.delete(f"/attributes/{attribute_uuid}", headers=headers)
 
     assert response.status_code == 200
 

@@ -875,12 +875,13 @@ async def _prepare_edit_attribute_response(
 
     attribute_dict["Tag"] = []
 
-    if len(db_attribute_tags) > 0:
+    if db_attribute_tags is not None:
         for attribute_tag in db_attribute_tags:
             result = await db.execute(select(Tag).filter(Tag.id == attribute_tag.tag_id).limit(1))
-            tag = result.scalars().one()
-            # FIXME chacnge to one or none &   if none throw http error
-
+            tag = result.scalars().one_or_none()
+            
+            if not tag:
+                raise HTTPException(status.HTTP_404_NOT_FOUND)
 
             connected_tag = GetAttributeTag(
                 id=tag.id,

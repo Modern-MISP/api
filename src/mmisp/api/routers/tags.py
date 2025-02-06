@@ -120,7 +120,6 @@ async def search_tags(
 @router.put(
     "/tags/{tagId}",
     status_code=status.HTTP_200_OK,
-    response_model=TagResponse,
     summary="Edit tag",
 )
 @alog

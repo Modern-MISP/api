@@ -330,7 +330,7 @@ async def add_tag_to_event(
 async def remove_tag_from_event(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.TAGGER]))],
     db: Annotated[Session, Depends(get_db)],
-    event_id: Annotated[int | uuid.UUID, Path(alias="eventId")],
+    event_id: Annotated[uuid.UUID | int, Path(alias="eventId")],
     tag_id: Annotated[str, Path(alias="tagId")],
 ) -> AddRemoveTagEventsResponse:
     """Remove a tag to from an event by their IDs.
@@ -442,7 +442,7 @@ async def get_event_details_depr(
     db: Annotated[Session, Depends(get_db)],
     event_id: Annotated[int, Path(alias="eventId")],
 ) -> AddEditGetEventResponse:
-    """Deprecated. Retrieve details of a specific attribute by its ID.
+    """Deprecated. Retrieve details of a specific attribute by its ID. 
 
     args:
 
@@ -496,7 +496,6 @@ async def update_event_depr(
     "/events/delete/{eventId}",
     deprecated=True,
     status_code=status.HTTP_200_OK,
-    response_model=DeleteEventResponse,
     summary="Delete an event (Deprecated)",
 )
 @alog
@@ -928,7 +927,11 @@ async def _remove_tag_from_event(db: Session, event_id: int | uuid.UUID, tag_id:
     if not await db.get(Tag, tag_id):
         return AddRemoveTagEventsResponse(saved=False, errors="Tag could not be removed.")
 
+    # if isinstance(event_id, uuid.UUID):
+    #   result = await db.execute(select(EventTag).filter(EventTag.event_uuid == event_id).limit(1))
+    # else:
     result = await db.execute(select(EventTag).filter(EventTag.event_id == event_id).limit(1))
+
     event_tag = result.scalars().first()
 
     if not event_tag:
