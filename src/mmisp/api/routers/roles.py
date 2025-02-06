@@ -210,7 +210,7 @@ async def filter_roles(
 
 
 @router.post(
-    "admin/roles/users/{roleId}",
+    "/admin/roles/users/{roleId}",
     status_code=status.HTTP_200_OK,
     summary="Get all users assigned to a specific role",
 )
@@ -302,7 +302,7 @@ async def edit_user_role_depr(
         403: Forbidden Error
         404: Not Found Error
     """
-    return await _edit_user_role(auth, db, user_id, body)
+    return await _edit_user_role_depr(auth, db, user_id, body)
 
 
 # --- endpoint logic ---
@@ -592,46 +592,6 @@ async def _filter_roles(auth: Auth, db: Session, body: FilterRoleBody) -> list[F
     return filtered_roles
 
 
-async def _edit_user_role(auth: Auth, db: Session, user_id: str, body: EditUserRoleBody) -> EditUserRoleResponse:
-    if body is None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,  
-            detail="Request body cannot be None."
-        )
-
-    if not body.role_id:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="value 'role_id' is required")
-    if not isinstance(body.role_id, int):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN_BAD_REQUEST, detail="invalid 'role_id'")
-
-    user = await db.get(User, auth.user_id)
-    if user is None:
-        # this should never happen, it would mean, the user disappeared between auth and processing the request
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="user not available")
-
-    result = await db.execute(select(Role).where(Role.id == body.role_id))
-    role = result.scalar_one_or_none()
-
-    if role is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Role with ID {body.role_id} not found."
-        )
-
-    user.role_id = body.role_id  
-    await db.commit()
-
-    return EditUserRoleResponse(
-        saved=True,
-        success=True,
-        name="User role updated",
-        message=f"User's role has been updated to {role.name}.",
-        url=f"/admin/users/edit/{user_id}",
-        id=user.id,
-        Role=role.name,  
-    )
-
-
 async def _get_users_by_role(auth: Auth, db: Session, role_id: int) -> list[GetUserRoleResponse]:
     result = await db.execute(select(Role).where(Role.id == role_id))
     role = result.scalar_one_or_none()
@@ -688,4 +648,47 @@ async def _set_default_role(auth: Auth, db: Session, role_id: int) -> DefaultRol
         message=f"The default role has been changed to {role.name}.",
         url="/admin/roles/setDefault/{role_id}",
         id=role_id,
+    )
+
+
+# --- deprecated endpoint logic ---
+
+
+async def _edit_user_role_depr(auth: Auth, db: Session, user_id: str, body: EditUserRoleBody) -> EditUserRoleResponse:
+    if body is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,  
+            detail="Request body cannot be None."
+        )
+
+    if not body.role_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="value 'role_id' is required")
+    if not isinstance(body.role_id, int):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN_BAD_REQUEST, detail="invalid 'role_id'")
+
+    user = await db.get(User, auth.user_id)
+    if user is None:
+        # this should never happen, it would mean, the user disappeared between auth and processing the request
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="user not available")
+
+    result = await db.execute(select(Role).where(Role.id == body.role_id))
+    role = result.scalar_one_or_none()
+
+    if role is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Role with ID {body.role_id} not found."
+        )
+
+    user.role_id = body.role_id  
+    await db.commit()
+
+    return EditUserRoleResponse(
+        saved=True,
+        success=True,
+        name="User role updated",
+        message=f"User's role has been updated to {role.name}.",
+        url=f"/admin/users/edit/{user_id}",
+        id=user.id,
+        Role=role.name,  
     )
