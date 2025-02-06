@@ -247,7 +247,7 @@ async def test_delete_existing_event(event, site_admin_user_token, client) -> No
 @pytest.mark.asyncio
 async def test_delete_existing_event_by_uuid(event, site_admin_user_token, client) -> None:
     event_uuid = event.uuid
-
+    print(event_uuid)
     headers = {"authorization": site_admin_user_token}
     response = client.delete(f"events/{event_uuid}", headers=headers)
 

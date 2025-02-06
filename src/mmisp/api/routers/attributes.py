@@ -772,7 +772,7 @@ async def _remove_tag_from_attribute(
 ) -> AddRemoveTagAttributeResponse:
     
     if isinstance(attribute_id, uuid.UUID):
-        attirbute_tag = _get_tag_by_attribute_uuid(db, attribute_id, int(tag_id))
+        attirbute_tag = await _get_tag_by_attribute_uuid(db, attribute_id, int(tag_id))
     else:
         result = await db.execute(
             select(AttributeTag)
@@ -831,7 +831,8 @@ async def _prepare_get_attribute_details_response(
 
     attribute_dict["Tag"] = []
 
-    if len(db_attribute_tags) > 0:
+
+    if db_attribute_tags is not None:
         for attribute_tag in db_attribute_tags:
             result = await db.execute(select(Tag).filter(Tag.id == attribute_tag.tag_id).limit(1))
             tag = result.scalars().one_or_none()
@@ -964,7 +965,7 @@ async def _get_tag_by_attribute_uuid(db: Session, attribute_id: uuid.UUID, tag_i
     args:
         db: the current db
         attribute_id: the UUID of the attribute
-        tag_id: the ID of the tag
+        tag_id: the ID of the tag 
 
     returns:
         The tag of the attribute with the associated UUID an ID or None in case of not being present.
