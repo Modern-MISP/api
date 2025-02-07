@@ -200,7 +200,7 @@ async def test_get_existing_attribute_by_uuid(
     assert response.status_code == 200
     response_json = response.json()
     ic(response_json)
-    assert response_json["Attribute"]["uuid"] == attribute_uuid 
+    assert response_json["Attribute"]["uuid"] == attribute.uuid 
     assert response_json["Attribute"]["event_id"] == attribute.event_id
     assert "id" in response_json["Attribute"]
     assert "event_id" in response_json["Attribute"]
