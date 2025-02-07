@@ -337,8 +337,6 @@ async def _add_sighting(db: Session, body: SightingCreateBody) -> list[SightingA
 
 @alog
 async def _add_sightings_at_index(db: Session, attribute_id: int | uuid.UUID) -> SightingAttributesResponse:
-    attribute: Attribute | None 
-    
     if isinstance(attribute_id, uuid.UUID):
         attribute = await db.execute(select(Attribute).filter(attribute.uuid == attribute_id))
     else:
