@@ -637,7 +637,7 @@ async def _delete_selected_attributes(
         if not attribute:
             raise HTTPException(status.HTTP_404_NOT_FOUND)
 
-        if not attribute.event.id == int(event_id):
+        if not attribute.event.id == int(event.id):
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"No attribute with id '{attribute_id}' found in the given event.",
@@ -718,8 +718,13 @@ async def _rest_search_attributes(db: Session, body: SearchAttributesBody) -> Se
 
 @alog
 async def _restore_attribute(db: Session, attribute_id: int | uuid.UUID) -> GetAttributeResponse:
-    attribute: Attribute | None = await db.get(Attribute, attribute_id)
+    attribute: Attribute | None # I have no idea, why this type declaration is necessary
 
+    if isinstance(attribute_id, uuid.UUID):
+        attribute = await _get_attribute_by_uuid(db, attribute_id)
+    else:
+        attribute = await db.get(Attribute, attribute_id)
+    
     if not attribute:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
@@ -739,7 +744,12 @@ async def _restore_attribute(db: Session, attribute_id: int | uuid.UUID) -> GetA
 async def _add_tag_to_attribute(
     db: Session, attribute_id: int | uuid.UUID, tag_id: str, local: str
 ) -> AddRemoveTagAttributeResponse:
-    attribute: Attribute | None = await db.get(Attribute, attribute_id)
+    attribute: Attribute | None 
+    
+    if isinstance(attribute_id, uuid.UUID):
+        attribute = await _get_attribute_by_uuid(db, attribute_id)
+    else:
+        attribute = await db.get(Attribute, attribute_id)
 
     if not attribute:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
