@@ -551,7 +551,12 @@ async def _add_attribute(db: Session, event_id: int | uuid.UUID, body: AddAttrib
 
 @alog
 async def _get_attribute_details(db: Session, attribute_id: int | uuid.UUID) -> GetAttributeResponse:
-    attribute: Attribute | None = await db.get(Attribute, attribute_id)
+    attribute: Attribute | None # I have no idea, why this is necessary
+
+    if isinstance(attribute_id, uuid.UUID):
+        attribute = _get_attribute_by_uuid(db, attribute_id)
+    else:
+        attribute = await db.get(Attribute, attribute_id)
 
     if not attribute:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
@@ -957,6 +962,23 @@ async def _get_event_by_uuid(event_id: uuid.UUID, db: Session) -> Event | None:
     event = result.scalars().one_or_none()
 
     return event
+
+async def _get_attribute_by_uuid(db: Session, attribute_id: uuid.UUID) -> Attribute | None:
+    """ Get's an attribute by its UUID.
+
+    args:
+        db: the current db
+        attribute_id: the uuid of the attribute to get
+
+    returns:
+        The attribute with the associated UUID of NONE in case of not being present.
+    
+    """
+
+    result = await db.execute(select(Attribute).filter(Attribute.uuid == attribute_id))
+    attribute = result.scalars().one_or_none()
+
+    return attribute
 
 
 async def _get_tag_by_attribute_uuid(db: Session, attribute_id: uuid.UUID, tag_id: int) -> AttributeTag | None:
