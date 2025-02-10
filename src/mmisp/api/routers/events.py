@@ -678,11 +678,14 @@ async def _update_event(db: Session, event_id: int | uuid.UUID, body: EditEventB
     return AddEditGetEventResponse(Event=event_data)
 
 @alog
-async def _delete_event(db: Session, event_id: int | uuid.UUID) -> DeleteEventResponse:
+async def _delete_event(db: Session, event_id: int | uuid.UUID, user: User) -> DeleteEventResponse:
+   
     if isinstance(event_id, uuid.UUID):
         event = await _get_event_by_uuid(event_id, db)
     else:
         event = await db.get(Event, event_id)
+        
+    
 
     if event is None or not event.can_edit(user):
         raise HTTPException(

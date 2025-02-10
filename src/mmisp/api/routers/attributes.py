@@ -430,7 +430,7 @@ async def get_attribute_details_depr(
 
     the details of an attribute
     """
-    return await _get_attribute_details(db, attribute_id)
+    return await _get_attribute_details(db, attribute_id, auth.user)
 
 
 @router.put(
@@ -493,7 +493,7 @@ async def delete_attribute_depr(
 
     the response from the api for the deleting request
     """
-    return await _delete_attribute(db, attribute_id)
+    return await _delete_attribute(db, attribute_id, auth.user)
 
 
 # --- endpoint logic ---
@@ -806,7 +806,7 @@ async def _remove_tag_from_attribute(
 ) -> AddRemoveTagAttributeResponse:
     
     if isinstance(attribute_id, uuid.UUID):
-        attirbute_tag = await _get_tag_by_attribute_uuid(db, attribute_id, int(tag_id))
+        attribute_tag = await _get_tag_by_attribute_uuid(db, attribute_id, int(tag_id))
     else:
         result = await db.execute(
             select(AttributeTag)

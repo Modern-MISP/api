@@ -337,17 +337,20 @@ async def _add_sighting(db: Session, body: SightingCreateBody) -> list[SightingA
 
 @alog
 async def _add_sightings_at_index(db: Session, attribute_id: int | uuid.UUID) -> SightingAttributesResponse:
+    qry  = select(Attribute)
     if isinstance(attribute_id, uuid.UUID):
-        result = await db.execute(select(Attribute).filter(Attribute.uuid == attribute_id))
+        qry = qry.filter(Attribute.uuid == attribute_id)
     else:
-        result = await db.get(Attribute, attribute_id)
-    
+        qry = qry.filter(Attribute.id == attribute_id)
+
+    result = await db.execute(qry)
     attribute = result.scalars().one_or_none()
 
     if not attribute:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Attribute not found.")
     
     event = await db.get(Event, attribute.event_id)
+    
     if event is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Event not found.")
 
@@ -380,19 +383,20 @@ async def _add_sightings_at_index(db: Session, attribute_id: int | uuid.UUID) ->
 
 @alog
 async def _get_sightings_at_index(db: Session, event_id: int | uuid.UUID) -> list[SightingAttributesResponse]:
+    qry  = select(Event)
     if isinstance(event_id, uuid.UUID):
-        result = await db.execute(select(Event).filter(event.uuid == event_id))
+        qry = qry.filter(Event.uuid == event_id)
     else:
-        result = await db.get(Event, event_id)
+        qry = qry.filter(Event.id == event_id)
 
+    result = await db.execute(qry)
     event = result.scalars().one_or_none()
 
     if not event:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Event not found.")
     
 
-
-    result = await db.execute(select(Sighting).filter(Sighting.event_id == event_id))
+    result = await db.execute(select(Sighting).filter(Sighting.event_id == event.id))
     sightings: Sequence[Sighting] = result.scalars().all()
 
     for sighting in sightings:
