@@ -226,7 +226,7 @@ async def delete_sighting_depr(
     db: Annotated[Session, Depends(get_db)],
     sighting_id: Annotated[int, Path(alias="sightingId")],
 ) -> StandardStatusResponse:
-    """Deprecated. Delete a specific sighting using the old route.
+    """Deprecated. Delete a specific sighting, using the old route.
 
     args:
 
@@ -343,7 +343,6 @@ async def _add_sightings_at_index(db: Session, attribute_id: int | uuid.UUID) ->
         result = await db.get(Attribute, attribute_id)
     
     attribute = result.scalars().one_or_none()
-
 
     if not attribute:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Attribute not found.")

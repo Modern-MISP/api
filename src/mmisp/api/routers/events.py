@@ -458,7 +458,7 @@ async def get_event_details_depr(
 
     - the event details
     """
-    return await _get_event_details(db, event_id)
+    return await _get_event_details(db, event_id,auth.user)
 
 
 @router.put(
@@ -491,7 +491,7 @@ async def update_event_depr(
 
     - the updated event
     """
-    return await _update_event(db, event_id, body=body)
+    return await _update_event(db, event_id, body, auth.user)
 
 
 @router.delete(
@@ -520,7 +520,7 @@ async def delete_event_depr(
 
     - the deleted event
     """
-    return await _delete_event(db, event_id)
+    return await _delete_event(db, event_id, auth.user)
 
 
 # --- endpoint logic ---

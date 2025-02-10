@@ -286,7 +286,7 @@ async def get_attributes_category_statistics(
     returns:
         the attributes statistics for one category/type
     """
-    return await _get_attribute_category_statistics(db, percentage, auth.user)
+    return await _get_attribute_category_statistics(db, percentage)
 
 
 @router.post(
@@ -400,7 +400,7 @@ async def add_attribute_depr(
 
     the attribute
     """
-    return await _add_attribute(db, event_id, body)
+    return await _add_attribute(db, event_id, body, auth.user)
 
 
 @router.get(
@@ -463,7 +463,7 @@ async def update_attribute_depr(
 
     the updated version af an attribute
     """
-    return await _update_attribute(db, attribute_id, body)
+    return await _update_attribute(db, attribute_id, body, auth.user)
 
 
 @router.delete(
@@ -499,7 +499,7 @@ async def delete_attribute_depr(
 # --- endpoint logic ---
 
 @alog
-async def _add_attribute(db: Session, event_id: int | uuid.UUID, body: AddAttributeBody) -> AddAttributeResponse:
+async def _add_attribute(db: Session, event_id: int | uuid.UUID, body: AddAttributeBody, user: User) -> AddAttributeResponse:
     if isinstance(event_id, uuid.UUID):
         event = await _get_event_by_uuid(event_id, db)
     else:
@@ -547,7 +547,7 @@ async def _add_attribute(db: Session, event_id: int | uuid.UUID, body: AddAttrib
     return AddAttributeResponse(Attribute=attribute_data)
 
 @alog
-async def _get_attribute_details(db: Session, attribute_id: int | uuid.UUID) -> GetAttributeResponse:
+async def _get_attribute_details(db: Session, attribute_id: int | uuid.UUID, user: User) -> GetAttributeResponse:
     attribute: Attribute | None # I have no idea, why this type declaration is necessary
 
     if isinstance(attribute_id, uuid.UUID):
@@ -596,7 +596,7 @@ async def _update_attribute(
     return EditAttributeResponse(Attribute=attribute_data)
 
 @alog
-async def _delete_attribute(db: Session, attribute_id: int | uuid.UUID) -> DeleteAttributeResponse:
+async def _delete_attribute(db: Session, attribute_id: int | uuid.UUID, user: User) -> DeleteAttributeResponse:
     attribute: Attribute | None # I have no idea, why this type declaration is necessary
 
     if isinstance(attribute_id, uuid.UUID):
@@ -733,7 +733,7 @@ async def _rest_search_attributes(db: Session, body: SearchAttributesBody, user:
     return SearchAttributesResponse.parse_obj({"response": {"Attribute": response_list}})
 
 @alog
-async def _restore_attribute(db: Session, attribute_id: int | uuid.UUID) -> GetAttributeResponse:
+async def _restore_attribute(db: Session, attribute_id: int | uuid.UUID, user: User) -> GetAttributeResponse:
     attribute: Attribute | None # I have no idea, why this type declaration is necessary
 
     if isinstance(attribute_id, uuid.UUID):
