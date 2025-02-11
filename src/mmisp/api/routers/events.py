@@ -589,9 +589,8 @@ async def _add_event(auth: Auth, db: Session, body: AddEventBody) -> AddEditGetE
 
     return AddEditGetEventResponse(Event=event_data)
 
-
 @alog
-async def _get_event_details(db: Session, event_id: int | uuid.UUID) -> AddEditGetEventResponse:
+async def _get_event_details(db: Session, event_id: int | uuid.UUID, user: User | None) -> AddEditGetEventResponse:
     if isinstance(event_id, uuid.UUID):
         event = await _get_event_by_uuid(event_id, db, True, True)
     
@@ -633,7 +632,8 @@ async def _get_event_details(db: Session, event_id: int | uuid.UUID) -> AddEditG
     return AddEditGetEventResponse(Event=event_data)
 
 @alog
-async def _update_event(db: Session, event_id: int | uuid.UUID, body: EditEventBody) -> AddEditGetEventResponse:
+async def _update_event(db: Session, event_id: int | uuid.UUID, body: EditEventBody,
+                        user: User | None) -> AddEditGetEventResponse:
     
     if isinstance(event_id, uuid.UUID):
         event = await _get_event_by_uuid(event_id, db, True, False)
@@ -678,7 +678,7 @@ async def _update_event(db: Session, event_id: int | uuid.UUID, body: EditEventB
     return AddEditGetEventResponse(Event=event_data)
 
 @alog
-async def _delete_event(db: Session, event_id: int | uuid.UUID, user: User) -> DeleteEventResponse:
+async def _delete_event(db: Session, event_id: int | uuid.UUID, user: User | None) -> DeleteEventResponse:
    
     if isinstance(event_id, uuid.UUID):
         event = await _get_event_by_uuid(event_id, db)
@@ -745,7 +745,7 @@ async def _get_events(db: Session, user: User | None) -> list[GetAllEventsRespon
     return event_responses
 
 @alog
-async def _rest_search_events(db: Session, body: SearchEventsBody, user: User) -> SearchEventsResponse:
+async def _rest_search_events(db: Session, body: SearchEventsBody, user: User | None) -> SearchEventsResponse:
     if body.returnFormat != "json":
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid output format.")
 
@@ -853,7 +853,8 @@ async def _publish_event(db: Session, event_id: int | uuid.UUID, request: Reques
     )
 
 @alog
-async def _unpublish_event(db: Session, event_id: int | uuid.UUID, request: Request) -> UnpublishEventResponse:
+async def _unpublish_event(db: Session, event_id: int | uuid.UUID, request: Request,
+                           user: User | None) -> UnpublishEventResponse:
     if isinstance(event_id, uuid.UUID):
         event = await _get_event_by_uuid(event_id, db)
     else:
@@ -917,7 +918,8 @@ async def _add_tag_to_event(
     return AddRemoveTagEventsResponse(saved=True, success="Tag added", check_publish=True)
 
 @alog
-async def _remove_tag_from_event(db: Session, event_id: int | uuid.UUID, tag_id: str) -> AddRemoveTagEventsResponse:
+async def _remove_tag_from_event(db: Session, event_id: int | uuid.UUID, tag_id: str,
+                                 user: User | None) -> AddRemoveTagEventsResponse:
     if isinstance(event_id, uuid.UUID):
         event = await _get_event_by_uuid(event_id, db)
     else:

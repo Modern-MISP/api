@@ -499,7 +499,8 @@ async def delete_attribute_depr(
 # --- endpoint logic ---
 
 @alog
-async def _add_attribute(db: Session, event_id: int | uuid.UUID, body: AddAttributeBody, user: User) -> AddAttributeResponse:
+async def _add_attribute(db: Session, event_id: int | uuid.UUID, body: AddAttributeBody,
+                         user: User | None) -> AddAttributeResponse:
     if isinstance(event_id, uuid.UUID):
         event = await _get_event_by_uuid(event_id, db)
     else:
@@ -547,7 +548,8 @@ async def _add_attribute(db: Session, event_id: int | uuid.UUID, body: AddAttrib
     return AddAttributeResponse(Attribute=attribute_data)
 
 @alog
-async def _get_attribute_details(db: Session, attribute_id: int | uuid.UUID, user: User) -> GetAttributeResponse:
+async def _get_attribute_details(db: Session, attribute_id: int | uuid.UUID,
+                                 user: User | None) -> GetAttributeResponse:
     attribute: Attribute | None # I have no idea, why this type declaration is necessary
 
     if isinstance(attribute_id, uuid.UUID):
@@ -567,7 +569,7 @@ async def _get_attribute_details(db: Session, attribute_id: int | uuid.UUID, use
 
 @alog
 async def _update_attribute(
-    db: Session, attribute_id: int | uuid.UUID, body: EditAttributeBody, user: User
+    db: Session, attribute_id: int | uuid.UUID, body: EditAttributeBody, user: User | None
 ) -> EditAttributeResponse:
     attribute: Attribute | None = await db.get(Attribute, attribute_id)
 
@@ -596,7 +598,7 @@ async def _update_attribute(
     return EditAttributeResponse(Attribute=attribute_data)
 
 @alog
-async def _delete_attribute(db: Session, attribute_id: int | uuid.UUID, user: User) -> DeleteAttributeResponse:
+async def _delete_attribute(db: Session, attribute_id: int | uuid.UUID, user: User | None) -> DeleteAttributeResponse:
     attribute: Attribute | None # I have no idea, why this type declaration is necessary
 
     if isinstance(attribute_id, uuid.UUID):
@@ -616,7 +618,7 @@ async def _delete_attribute(db: Session, attribute_id: int | uuid.UUID, user: Us
     return DeleteAttributeResponse(message="Attribute deleted.")
 
 @alog
-async def _get_attributes(db: Session, user: User) -> list[GetAllAttributesResponse]:
+async def _get_attributes(db: Session, user: User | None) -> list[GetAllAttributesResponse]:
     result = await db.execute(select(Attribute).filter(Attribute.can_access(user)))
     attributes = result.scalars().all()
 
@@ -630,7 +632,7 @@ async def _get_attributes(db: Session, user: User) -> list[GetAllAttributesRespo
 
 @alog
 async def _delete_selected_attributes(
-    db: Session, event_id: int | uuid.UUID, body: DeleteSelectedAttributeBody, request: Request, user: User
+    db: Session, event_id: int | uuid.UUID, body: DeleteSelectedAttributeBody, request: Request, user: User | None
 ) -> DeleteSelectedAttributeResponse:
     if isinstance(event_id, uuid.UUID):
         event = await _get_event_by_uuid(event_id, db)
@@ -681,7 +683,8 @@ async def _delete_selected_attributes(
     )
 
 @alog
-async def _rest_search_attributes(db: Session, body: SearchAttributesBody, user: User) -> SearchAttributesResponse:
+async def _rest_search_attributes(db: Session, body: SearchAttributesBody,
+                                  user: User | None) -> SearchAttributesResponse:
     if body.returnFormat != "json":
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid output format.")
 
@@ -733,7 +736,8 @@ async def _rest_search_attributes(db: Session, body: SearchAttributesBody, user:
     return SearchAttributesResponse.parse_obj({"response": {"Attribute": response_list}})
 
 @alog
-async def _restore_attribute(db: Session, attribute_id: int | uuid.UUID, user: User) -> GetAttributeResponse:
+async def _restore_attribute(db: Session, attribute_id: int | uuid.UUID,
+                             user: User | None) -> GetAttributeResponse:
     attribute: Attribute | None # I have no idea, why this type declaration is necessary
 
     if isinstance(attribute_id, uuid.UUID):
@@ -760,7 +764,7 @@ async def _restore_attribute(db: Session, attribute_id: int | uuid.UUID, user: U
 
 @alog
 async def _add_tag_to_attribute(
-    db: Session, attribute_id: int | uuid.UUID, tag_id: str, local: str, user: User
+    db: Session, attribute_id: int | uuid.UUID, tag_id: str, local: str, user: User | None
 ) -> AddRemoveTagAttributeResponse:
     attribute: Attribute | None 
     
@@ -802,7 +806,7 @@ async def _add_tag_to_attribute(
 
 @alog
 async def _remove_tag_from_attribute(
-    db: Session, attribute_id: int | uuid.UUID, tag_id: str, user: User
+    db: Session, attribute_id: int | uuid.UUID, tag_id: str, user: User | None
 ) -> AddRemoveTagAttributeResponse:
     
     if isinstance(attribute_id, uuid.UUID):
@@ -950,7 +954,8 @@ async def _get_attribute_category_statistics(db: Session, percentage: bool) -> G
     return GetAttributeStatisticsCategoriesResponse(**attribute_count_by_category_dict)
 
 @alog
-async def _get_attribute_type_statistics(db: Session, percentage: bool, user: User) -> GetAttributeStatisticsTypesResponse:  # type: ignore
+async def _get_attribute_type_statistics(db: Session, percentage: bool,
+                                         user: User | None) -> GetAttributeStatisticsTypesResponse:  # type: ignore
     qry = select(Attribute.type, func.count(Attribute.type).label("count")).filter(Attribute.can_access(user)).group_by(Attribute.type)
     result = await db.execute(qry)
     attribute_count_by_group = result.all()
