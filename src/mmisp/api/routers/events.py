@@ -598,6 +598,7 @@ async def _get_event_details(db: Session, event_id: int | uuid.UUID, user: User 
         result = await db.execute(
             select(Event)
             .filter(Event.id == event_id)
+            .filter(Event.can_access(user))
             .options(
                 selectinload(Event.org),
                 selectinload(Event.orgc),
@@ -621,8 +622,7 @@ async def _get_event_details(db: Session, event_id: int | uuid.UUID, user: User 
                     ),
             )
         )
-    
-    event = result.scalars().one_or_none()
+        event = result.scalars().one_or_none()
 
     if not event:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
@@ -641,6 +641,7 @@ async def _update_event(db: Session, event_id: int | uuid.UUID, body: EditEventB
         result = await db.execute(
             select(Event)
             .filter(Event.id == event_id)
+            .filter(Event.can_edit(user))
             .options(
                 selectinload(Event.org),
                 selectinload(Event.orgc),
@@ -717,7 +718,8 @@ async def _get_events(db: Session, user: User | None) -> list[GetAllEventsRespon
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN_BAD_REQUEST, 
             detail="invalid user")
-            
+
+    
     result = await db.execute(
         select(Event).filter(Event.can_access(user)).options(
             selectinload(Event.org),
@@ -861,6 +863,7 @@ async def _unpublish_event(db: Session, event_id: int | uuid.UUID, request: Requ
         event = await db.get(Event, event_id)
 
 
+
     if not event:
         return UnpublishEventResponse(name="Invalid event.", message="Invalid event.", url=str(request.url.path))
 
@@ -936,6 +939,9 @@ async def _remove_tag_from_event(db: Session, event_id: int | uuid.UUID, tag_id:
 
     if not await db.get(Tag, tag_id):
         return AddRemoveTagEventsResponse(saved=False, errors="Tag could not be removed.")
+
+    if not event.can_edit(user):
+        return AddRemoveTagEventsResponse(saved=False, errors="Can not edit event.")
 
 
     result = await db.execute(select(EventTag).filter(EventTag.event_id == event.id).limit(1))

@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Path, Request, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.sql import Select
-from mmisp.db.models.user import User
+
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
 from mmisp.api_schemas.attributes import (
@@ -36,10 +36,12 @@ from mmisp.api_schemas.attributes import (
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.attribute import Attribute, AttributeTag
 from mmisp.db.models.event import Event
+from mmisp.db.models.user import User
 from mmisp.db.models.tag import Tag
 from mmisp.lib.attribute_search_filter import get_search_filters
 from mmisp.lib.logger import alog, log
 from mmisp.util.models import update_record
+
 
 from ..workflow import execute_workflow
 

@@ -76,7 +76,6 @@ async def get_role_info(
     returns:
         information about the role
     """
-
     return await _get_role(db, role_id)
 
 
@@ -664,7 +663,7 @@ async def _edit_user_role_depr(auth: Auth, db: Session, user_id: str, body: Edit
     if not body.role_id:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="value 'role_id' is required")
     if not isinstance(body.role_id, int):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN_BAD_REQUEST, detail="invalid 'role_id'")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="invalid 'role_id'")
 
     user = await db.get(User, auth.user_id)
     if user is None:
