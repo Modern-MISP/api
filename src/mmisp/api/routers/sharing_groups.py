@@ -18,6 +18,7 @@ from mmisp.api_schemas.sharing_groups import (
     CreateSharingGroupLegacyBody,
     CreateSharingGroupLegacyResponse,
     GetSharingGroupsIndex,
+    GetAllSharingGroupsResponse,
     SingleSharingGroupResponse,
     UpdateSharingGroupBody,
     UpdateSharingGroupLegacyBody,
