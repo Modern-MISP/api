@@ -85,7 +85,7 @@ async def get_role_info(
     summary="Add new role",
 )
 async def add_role(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.ADMIN]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     body: AddRoleBody,
 ) -> AddRoleResponse:
@@ -108,7 +108,7 @@ async def add_role(
     summary="Delete a role",
 )
 async def delete_role(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.ADMIN]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     role_id: Annotated[int, Path(alias="roleId")],
 ) -> DeleteRoleResponse:
@@ -131,7 +131,7 @@ async def delete_role(
     summary="Edit a role",
 )
 async def update_role(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.ADMIN]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     role_id: Annotated[int, Path(alias="roleId")],
     body: EditRoleBody,
@@ -156,7 +156,7 @@ async def update_role(
     summary="Reinstate a deleted standard role",
 )
 async def reinstate_role(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.ADMIN]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     role_id: Annotated[int, Path(alias="roleId")],
 ) -> ReinstateRoleResponse:
@@ -214,7 +214,7 @@ async def filter_roles(
     summary="Get all users assigned to a specific role",
 )
 async def get_users_by_role(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.ADMIN]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     role_id: Annotated[int, Path(alias="roleId")],
 ) -> list[GetUserRoleResponse]:
@@ -244,7 +244,7 @@ async def get_users_by_role(
     summary="Change the default role",
 )
 async def set_default_role(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.ADMIN]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     role_id: Annotated[int, Path(alias="roleId")],
 ) -> DefaultRoleResponse:
@@ -279,7 +279,7 @@ async def set_default_role(
     summary="Assign or reassign a user to a specific role (Deprecated)",
 )
 async def edit_user_role_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.ADMIN]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     user_id: Annotated[str, Path(alias="userId")],
     body: EditUserRoleBody,
