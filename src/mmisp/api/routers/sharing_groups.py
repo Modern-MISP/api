@@ -170,7 +170,7 @@ async def delete_sharing_group(
 @router.get(
     "/sharing_groups",
     status_code=status.HTTP_200_OK,
-    response_model=partial(GetAllSharingGroupsResponse),
+    response_model=GetAllSharingGroupsResponse,
     summary="Get all sharing groups",
 )
 async def get_all_sharing_groups(
@@ -181,14 +181,11 @@ async def get_all_sharing_groups(
     Retrieve a list of all sharing groups.
 
     args:
-
-    - auth: Authentication details
-
-    - db: Database session
+      auth: Authentication details
+      db: Database session
 
     returns:
-
-    - Representation of all sharing groups
+      Representation of all sharing groups
     """
     return await _get_all_sharing_groups(auth, db)
 
@@ -384,7 +381,7 @@ async def create_sharing_group_legacy(
     "/sharing_groups/view/{sharingGroupId}",
     deprecated=True,
     status_code=status.HTTP_200_OK,
-    response_model=partial(ViewUpdateSharingGroupLegacyResponse),
+    response_model=ViewUpdateSharingGroupLegacyResponse,
     summary="Get sharing groups details",
 )
 async def view_sharing_group_legacy(
@@ -396,16 +393,12 @@ async def view_sharing_group_legacy(
     Retrieve details of a specific sharing group by its ID.
 
     args:
-
-    - auth: Authentication details
-
-    - db: Database session
-
-    - id: ID of the sharing group to retrieve
+      auth: Authentication details
+      db: Database session
+      id: ID of the sharing group to retrieve
 
     returns:
-
-    - Representation of the sharing group details
+      Representation of the sharing group details
     """
     return await _view_sharing_group_legacy(auth, db, id)
 
