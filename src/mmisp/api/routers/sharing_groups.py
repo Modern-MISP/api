@@ -167,30 +167,6 @@ async def delete_sharing_group(
     """
     return await _delete_sharing_group(auth, db, id)
 
-
-@router.get(
-    "/sharing_groups",
-    status_code=status.HTTP_200_OK,
-    response_model=GetAllSharingGroupsResponse,
-    summary="Get all sharing groups",
-)
-async def get_all_sharing_groups(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
-    db: Annotated[Session, Depends(get_db)],
-) -> dict:
-    """
-    Retrieve a list of all sharing groups.
-
-    args:
-      auth: Authentication details
-      db: Database session
-
-    returns:
-      Representation of all sharing groups
-    """
-    return await _get_all_sharing_groups(auth, db)
-
-
 @router.get(
     "/sharing_groups/{id}/info",
     status_code=status.HTTP_200_OK,
@@ -376,32 +352,6 @@ async def create_sharing_group_legacy(
       Representation of the created sharing group
     """
     return await _create_sharing_group_legacy(auth, db, body)
-
-
-@router.get(
-    "/sharing_groups/view/{sharingGroupId}",
-    deprecated=True,
-    status_code=status.HTTP_200_OK,
-    response_model=ViewUpdateSharingGroupLegacyResponse,
-    summary="Get sharing groups details",
-)
-async def view_sharing_group_legacy(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
-    db: Annotated[Session, Depends(get_db)],
-    id: Annotated[int, Path(alias="sharingGroupId")],
-) -> dict:
-    """
-    Retrieve details of a specific sharing group by its ID.
-
-    args:
-      auth: Authentication details
-      db: Database session
-      id: ID of the sharing group to retrieve
-
-    returns:
-      Representation of the sharing group details
-    """
-    return await _view_sharing_group_legacy(auth, db, id)
 
 
 @router.post(
