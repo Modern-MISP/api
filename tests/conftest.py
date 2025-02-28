@@ -12,6 +12,8 @@ from datetime import datetime, timezone
 from mmisp.db.models.role import Role
 from mmisp.db.models.user import User
 
+import mmisp.lib.standard_roles as standard_roles
+
 from mmisp.api.auth import encode_token
 from mmisp.api.main import init_app
 from mmisp.db.models.admin_setting import AdminSetting
@@ -390,39 +392,7 @@ async def failing_before_save_workflow(db):
 
 @pytest_asyncio.fixture
 async def test_standard_role(db):
-    role = Role(
-        id=5,
-        name="sync_user",
-        perm_add=True,
-        perm_modify=True,
-        perm_modify_org=True,
-        perm_publish=True,
-        perm_delegate=True,
-        perm_sync=True,
-        perm_admin=False,
-        perm_audit=False,
-        perm_auth=True,
-        perm_site_admin=False,
-        perm_regexp_access=False,
-        perm_tagger=False,
-        perm_template=False,
-        perm_sharing_group=True,
-        perm_tag_editor=False,
-        perm_sighting=True,
-        perm_object_template=False,
-        default_role=False,
-        memory_limit="",
-        max_execution_time="",
-        restricted_to_site_admin=False,
-        perm_publish_zmq=False,
-        perm_publish_kafka=False,
-        perm_decaying=False,
-        enforce_rate_limit=False,
-        rate_limit_count=0,
-        perm_galaxy_editor=False,
-        perm_warninglist=False,
-        perm_view_feed_correlations=False,
-    )
+    role = standard_roles.sync_user_role
 
     db.add(role)
     await db.commit()
@@ -436,40 +406,7 @@ async def test_standard_role(db):
 
 @pytest_asyncio.fixture
 async def role_read_only(db):
-    role = Role(
-        id=7,
-        name="test_read_only",
-        perm_add=False,
-        perm_modify=False,
-        perm_modify_org=False,
-        perm_publish=False,
-        perm_delegate=False,
-        perm_sync=False,
-        perm_admin=False,
-        perm_audit=False,
-        perm_auth=False,
-        perm_site_admin=False,
-        perm_regexp_access=False,
-        perm_tagger=False,
-        perm_template=False,
-        perm_sharing_group=False,
-        perm_tag_editor=False,
-        perm_sighting=False,
-        perm_object_template=False,
-        default_role=True,
-        memory_limit="",
-        max_execution_time="",
-        restricted_to_site_admin=False,
-        perm_publish_zmq=False,
-        perm_publish_kafka=False,
-        perm_decaying=False,
-        enforce_rate_limit=False,
-        rate_limit_count=0,
-        perm_galaxy_editor=False,
-        perm_warninglist=False,
-        perm_view_feed_correlations=False,
-        created=datetime.now(timezone.utc),
-    )
+    role = standard_roles.read_only_role
 
     db.add(role)
     await db.commit()

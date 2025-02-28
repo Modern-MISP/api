@@ -206,14 +206,14 @@ async def test_delete_default_role(client, site_admin_user_token, role_read_only
     role_id = role_read_only.id  # ID of read only - default role
     headers = {"authorization": site_admin_user_token}
 
-    response = client.delete(f"/admin/roles/delete/{7}", headers=headers)
+    response = client.delete(f"/admin/roles/delete/{6}", headers=headers)
 
     assert response.status_code == 400
 
     response_json = response.json()
     assert response_json["detail"] == f"Role with ID {role_id} is the default role. Can't be deleted"
 
-    result = await db.execute(select(Role).where(Role.id == 7))
+    result = await db.execute(select(Role).where(Role.id == 6))
     role = result.scalar_one_or_none()
 
     assert role is not None
@@ -357,7 +357,7 @@ async def test_reinstate_role_former_default_role(client, site_admin_user_token,
     await db.execute(delete(Role).where(Role.id == role_id))
     await db.commit()
 
-    response = client.post(f"/roles/reinstate/{7}", headers=headers)
+    response = client.post(f"/roles/reinstate/{6}", headers=headers)
 
     assert response.status_code == 200
 
@@ -481,7 +481,7 @@ async def test_set_default_role_role_not_found(client, site_admin_user_token):
 async def test_set_default_role_already_set(client, site_admin_user_token, role_read_only):
     headers = {"authorization": site_admin_user_token}
 
-    response = client.put(f"/admin/roles/setDefault/{7}", headers=headers)
+    response = client.put(f"/admin/roles/setDefault/{6}", headers=headers)
 
     assert response.status_code == 400
 
@@ -493,14 +493,14 @@ endpoint edit_user_role is now edit_user_role_depr -> No tests needed anymore!
 async def test_edit_user_role_success(client, site_admin_user_token, role_read_only, db, random_test_user):
     user_id = random_test_user.id
     headers = {"authorization": site_admin_user_token}
-    body = {"role_id": 7} 
+    body = {"role_id": 6} 
 
     response = client.put(f"/admin/users/edit/{user_id}", json=body, headers=headers)
 
     assert response.status_code == 200
     response_json = response.json()
     
-    assert response_json["message"] == "User's role has been updated to Role 7"
+    assert response_json["message"] == "User's role has been updated to Role 6"
     assert response_json["id"] == user_id
     assert response_json["Role"] == "test_read_only"
     

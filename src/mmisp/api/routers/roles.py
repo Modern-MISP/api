@@ -337,8 +337,8 @@ async def _add_role(db: Session, body: AddRoleBody) -> AddRoleResponse:
 
     max_id_result = await db.execute(select(Role.id).order_by(Role.id.desc()).limit(1))
     max_id = max_id_result.scalar_one_or_none()
-    # ID 1-7 is reserved for the predefined standard roles
-    role_id = max(8, (max_id + 1) if max_id is not None else 8)
+    # ID 1-6 is reserved for the predefined standard roles
+    role_id = max(7, (max_id + 1) if max_id is not None else 7)
 
     new_role = Role(
         id=role_id,
@@ -508,7 +508,7 @@ async def _update_role(db: Session, role_id: int, body: EditRoleBody) -> EditRol
 
 
 async def _reinstate_role(auth: Auth, db: Session, role_id: int) -> ReinstateRoleResponse:
-    if role_id < 1 or role_id > 7:
+    if role_id < 1 or role_id > 6:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Role with ID {role_id} is not a standard role and cannot be reinstated.",
@@ -528,7 +528,7 @@ async def _reinstate_role(auth: Auth, db: Session, role_id: int) -> ReinstateRol
     db.add(role)
 
     # The reinstated read-only role is no longer the default role
-    if role_id == 7:
+    if role_id == 6:
         role.default_role = False
 
     await db.commit()
