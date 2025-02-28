@@ -392,7 +392,7 @@ async def failing_before_save_workflow(db):
 
 @pytest_asyncio.fixture
 async def test_standard_role(db):
-    role = standard_roles.sync_user_role
+    role = standard_roles.sync_user_role()
 
     db.add(role)
     await db.commit()
@@ -406,7 +406,7 @@ async def test_standard_role(db):
 
 @pytest_asyncio.fixture
 async def role_read_only(db):
-    role = standard_roles.read_only_role
+    role = standard_roles.read_only_role()
 
     db.add(role)
     await db.commit()
