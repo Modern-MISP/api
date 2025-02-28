@@ -656,10 +656,10 @@ async def event_read_only_1(db, organisation, access_test_user):
 
 
 @pytest.fixture
-async def attribute_read_only_1(db, access_test_user):
-    event_id = access_test_user.id
+async def attribute_read_only_1(db, event_read_only_1):
+    event_id = event_read_only_1.id
     attribute = generate_attribute(event_id)
-    access_test_user.attribute_count += 1
+    event_read_only_1.attribute_count += 1
 
     db.add(attribute)
     await db.commit()
@@ -668,5 +668,5 @@ async def attribute_read_only_1(db, access_test_user):
     yield attribute
 
     await db.delete(attribute)
-    access_test_user.attribute_count -= 1
+    event_read_only_1.attribute_count -= 1
     await db.commit()
