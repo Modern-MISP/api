@@ -860,8 +860,9 @@ async def _index_events(db: Session, body: IndexEventsBody) -> list[GetAllEvents
 
 
 @alog
-async def _publish_event(db: Session, event_id: int | uuid.UUID, request: Request,
-                         user: User | None) -> PublishEventResponse:
+async def _publish_event(
+    db: Session, event_id: int | uuid.UUID, request: Request, user: User | None
+) -> PublishEventResponse:
     if isinstance(event_id, uuid.UUID):
         event = await _get_event_by_uuid(event_id, db)
     else:

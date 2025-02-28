@@ -645,7 +645,7 @@ async def event_read_only_1(db, organisation, access_test_user):
     event.org_id = org_id
     event.orgc_id = org_id
     event.user_id = access_test_user.id
-    event.published = True
+    event.published = False
     event.distribution = 0
 
     db.add(event)

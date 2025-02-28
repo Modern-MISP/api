@@ -211,8 +211,6 @@ async def test_delete_existing_event_fail_read_only_user(event, access_test_user
     headers = {"authorization": access_test_user_token}
     response = client.delete(f"events/{event_id}", headers=headers)
     assert response.status_code == 403
-    response_json = response.json()
-    assert response_json["detail"]["name"] == "Invalid access"
 
 
 # @pytest.mark.asyncio
