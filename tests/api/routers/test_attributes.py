@@ -117,7 +117,6 @@ async def test_add_attribute_invalid_event_id(site_admin_user_token, client) -> 
     assert response.status_code == 404
 
 
-
 @pytest.mark.asyncio
 async def test_add_attribute_invalid_data(
     db: AsyncSession, event, site_admin_user_token, sharing_group, client
@@ -200,7 +199,7 @@ async def test_get_existing_attribute_by_uuid(
     assert response.status_code == 200
     response_json = response.json()
     ic(response_json)
-    assert response_json["Attribute"]["uuid"] == attribute.uuid 
+    assert response_json["Attribute"]["uuid"] == attribute.uuid
     assert response_json["Attribute"]["event_id"] == attribute.event_id
     assert "id" in response_json["Attribute"]
     assert "event_id" in response_json["Attribute"]
@@ -233,11 +232,9 @@ async def test_get_invalid_or_non_existing_attribute(site_admin_user_token, clie
 
     response = client.get("/attributes/a469325efe2f4f32a6854579f415ec6a", headers=headers)
     assert response.status_code == 404
-    
+
     response = client.get("/attributes/invalid_id", headers=headers)
     assert response.status_code == 422
-
-
 
 
 # --- Test edit attribute
@@ -333,6 +330,8 @@ async def test_delete_existing_attribute(
     assert response.status_code == 200
 
     # --- Test delete attribute by id
+
+
 @pytest.mark.asyncio
 async def test_delete_existing_attribute_by_uuid(
     db: AsyncSession, instance_org_two, site_admin_user_token, sharing_group, organisation, event, attribute, client
@@ -502,10 +501,10 @@ async def test_attribute_describe_types(site_admin_user_token, client) -> None:
 # --- Test restore attribute
 
 
-#@pytest.mark.asyncio
-#async def test_restore_existing_attribute(
+# @pytest.mark.asyncio
+# async def test_restore_existing_attribute(
 #    db: AsyncSession, site_admin_user_token, sharing_group, event, attribute, client
-#) -> None:
+# ) -> None:
 #    event.sharing_group_id = sharing_group.id
 #
 #    db.add(event)

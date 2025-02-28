@@ -167,6 +167,7 @@ async def delete_sharing_group(
     """
     return await _delete_sharing_group(auth, db, id)
 
+
 @router.get(
     "/sharing_groups/{id}/info",
     status_code=status.HTTP_200_OK,

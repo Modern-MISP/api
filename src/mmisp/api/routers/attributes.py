@@ -500,9 +500,11 @@ async def delete_attribute_depr(
 
 # --- endpoint logic ---
 
+
 @alog
-async def _add_attribute(db: Session, event_id: int | uuid.UUID, body: AddAttributeBody,
-                         user: User | None) -> AddAttributeResponse:
+async def _add_attribute(
+    db: Session, event_id: int | uuid.UUID, body: AddAttributeBody, user: User | None
+) -> AddAttributeResponse:
     if isinstance(event_id, uuid.UUID):
         event = await _get_event_by_uuid(event_id, db)
     else:
@@ -549,10 +551,10 @@ async def _add_attribute(db: Session, event_id: int | uuid.UUID, body: AddAttrib
 
     return AddAttributeResponse(Attribute=attribute_data)
 
+
 @alog
-async def _get_attribute_details(db: Session, attribute_id: int | uuid.UUID,
-                                 user: User | None) -> GetAttributeResponse:
-    attribute: Attribute | None # I have no idea, why this type declaration is necessary
+async def _get_attribute_details(db: Session, attribute_id: int | uuid.UUID, user: User | None) -> GetAttributeResponse:
+    attribute: Attribute | None  # I have no idea, why this type declaration is necessary
 
     if isinstance(attribute_id, uuid.UUID):
         attribute = await _get_attribute_by_uuid(db, attribute_id)
@@ -568,6 +570,7 @@ async def _get_attribute_details(db: Session, attribute_id: int | uuid.UUID,
     attribute_data = await _prepare_get_attribute_details_response(db, attribute_id, attribute)
 
     return GetAttributeResponse(Attribute=attribute_data)
+
 
 @alog
 async def _update_attribute(
@@ -599,9 +602,10 @@ async def _update_attribute(
 
     return EditAttributeResponse(Attribute=attribute_data)
 
+
 @alog
 async def _delete_attribute(db: Session, attribute_id: int | uuid.UUID, user: User | None) -> DeleteAttributeResponse:
-    attribute: Attribute | None # I have no idea, why this type declaration is necessary
+    attribute: Attribute | None  # I have no idea, why this type declaration is necessary
 
     if isinstance(attribute_id, uuid.UUID):
         attribute = await _get_attribute_by_uuid(db, attribute_id)
@@ -618,6 +622,7 @@ async def _delete_attribute(db: Session, attribute_id: int | uuid.UUID, user: Us
     await db.flush()
 
     return DeleteAttributeResponse(message="Attribute deleted.")
+
 
 @alog
 async def _get_attributes(db: Session, user: User | None) -> list[GetAllAttributesResponse]:
@@ -684,9 +689,11 @@ async def _delete_selected_attributes(
         id=str(event_id),
     )
 
+
 @alog
-async def _rest_search_attributes(db: Session, body: SearchAttributesBody,
-                                  user: User | None) -> SearchAttributesResponse:
+async def _rest_search_attributes(
+    db: Session, body: SearchAttributesBody, user: User | None
+) -> SearchAttributesResponse:
     if body.returnFormat != "json":
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid output format.")
 
@@ -737,16 +744,16 @@ async def _rest_search_attributes(db: Session, body: SearchAttributesBody,
         response_list.append(attribute_dict)
     return SearchAttributesResponse.parse_obj({"response": {"Attribute": response_list}})
 
+
 @alog
-async def _restore_attribute(db: Session, attribute_id: int | uuid.UUID,
-                             user: User | None) -> GetAttributeResponse:
-    attribute: Attribute | None # I have no idea, why this type declaration is necessary
+async def _restore_attribute(db: Session, attribute_id: int | uuid.UUID, user: User | None) -> GetAttributeResponse:
+    attribute: Attribute | None  # I have no idea, why this type declaration is necessary
 
     if isinstance(attribute_id, uuid.UUID):
         attribute = await _get_attribute_by_uuid(db, attribute_id)
     else:
         attribute = await db.get(Attribute, attribute_id)
-    
+
     if not attribute:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
     if not attribute.can_edit(user):
@@ -768,8 +775,8 @@ async def _restore_attribute(db: Session, attribute_id: int | uuid.UUID,
 async def _add_tag_to_attribute(
     db: Session, attribute_id: int | uuid.UUID, tag_id: str, local: str, user: User | None
 ) -> AddRemoveTagAttributeResponse:
-    attribute: Attribute | None 
-    
+    attribute: Attribute | None
+
     if isinstance(attribute_id, uuid.UUID):
         attribute = await _get_attribute_by_uuid(db, attribute_id)
     else:
@@ -806,11 +813,11 @@ async def _add_tag_to_attribute(
 
     return AddRemoveTagAttributeResponse(saved=True, success="Tag added", check_publish=True)
 
+
 @alog
 async def _remove_tag_from_attribute(
     db: Session, attribute_id: int | uuid.UUID, tag_id: str, user: User | None
 ) -> AddRemoveTagAttributeResponse:
-    
     if isinstance(attribute_id, uuid.UUID):
         attribute_tag = await _get_tag_by_attribute_uuid(db, attribute_id, int(tag_id))
     else:
@@ -856,9 +863,8 @@ def _prepare_attribute_response_get_all(attribute: Attribute) -> GetAllAttribute
 async def _prepare_get_attribute_details_response(
     db: Session, attribute_id: int | uuid.UUID, attribute: Attribute
 ) -> GetAttributeAttributes:
-    
     attribute_dict = attribute.asdict().copy()
-    
+
     if "event_uuid" not in attribute_dict.keys():
         attribute_dict["event_uuid"] = attribute.event_uuid
 
@@ -867,15 +873,13 @@ async def _prepare_get_attribute_details_response(
 
     attribute_dict["Tag"] = []
 
-
     if db_attribute_tags is not None:
         for attribute_tag in db_attribute_tags:
             result = await db.execute(select(Tag).filter(Tag.id == attribute_tag.tag_id).limit(1))
             tag = result.scalars().one_or_none()
-            
+
             if not tag:
                 raise HTTPException(status.HTTP_404_NOT_FOUND)
-
 
             connected_tag = GetAttributeTag(
                 id=tag.id,
@@ -903,7 +907,6 @@ async def _prepare_edit_attribute_response(
         else:
             attribute_dict[field] = "0"
 
-    
     result = await db.execute(select(AttributeTag).filter(AttributeTag.attribute_id == attribute.id))
     db_attribute_tags = result.scalars().all()
 
@@ -913,7 +916,7 @@ async def _prepare_edit_attribute_response(
         for attribute_tag in db_attribute_tags:
             result = await db.execute(select(Tag).filter(Tag.id == attribute_tag.tag_id).limit(1))
             tag = result.scalars().one_or_none()
-            
+
             if not tag:
                 raise HTTPException(status.HTTP_404_NOT_FOUND)
 
@@ -936,11 +939,10 @@ async def _prepare_edit_attribute_response(
 
 @alog
 async def _get_attribute_category_statistics(db: Session, percentage: bool) -> GetAttributeStatisticsCategoriesResponse:  # type: ignore
-    
     qry = select(Attribute.category, func.count(Attribute.category).label("count")).group_by(Attribute.category)
     result = await db.execute(qry)
     attribute_count_by_category = result.all()
-    
+
     attribute_count_by_category_dict: dict[str, int] = {
         x.category: cast(int, x.count) for x in attribute_count_by_category
     }
@@ -955,10 +957,16 @@ async def _get_attribute_category_statistics(db: Session, percentage: bool) -> G
 
     return GetAttributeStatisticsCategoriesResponse(**attribute_count_by_category_dict)
 
+
 @alog
-async def _get_attribute_type_statistics(db: Session, percentage: bool,
-                                         user: User | None) -> GetAttributeStatisticsTypesResponse:  # type: ignore
-    qry = select(Attribute.type, func.count(Attribute.type).label("count")).filter(Attribute.can_access(user)).group_by(Attribute.type)
+async def _get_attribute_type_statistics(
+    db: Session, percentage: bool, user: User | None
+) -> GetAttributeStatisticsTypesResponse:  # type: ignore
+    qry = (
+        select(Attribute.type, func.count(Attribute.type).label("count"))
+        .filter(Attribute.can_access(user))
+        .group_by(Attribute.type)
+    )
     result = await db.execute(qry)
     attribute_count_by_group = result.all()
     attribute_count_by_group_dict: dict[str, int] = {x.type: cast(int, x.count) for x in attribute_count_by_group}
@@ -973,8 +981,9 @@ async def _get_attribute_type_statistics(db: Session, percentage: bool,
 
     return GetAttributeStatisticsTypesResponse(**attribute_count_by_group_dict)
 
+
 async def _get_event_by_uuid(event_id: uuid.UUID, db: Session) -> Event | None:
-    """ Get's an event by its UUID.
+    """Get's an event by its UUID.
 
     args:
         event_id: the UUID of the event
@@ -982,19 +991,18 @@ async def _get_event_by_uuid(event_id: uuid.UUID, db: Session) -> Event | None:
 
     returns:
         The event with the associated UUID of NONE in case of not being present.
-    
+
     """
-    query: Select = (
-        select(Event)
-        .filter(Event.uuid == event_id))        
+    query: Select = select(Event).filter(Event.uuid == event_id)
 
     result = await db.execute(query)
     event = result.scalars().one_or_none()
 
     return event
 
+
 async def _get_attribute_by_uuid(db: Session, attribute_id: uuid.UUID) -> Attribute | None:
-    """ Get's an attribute by its UUID.
+    """Get's an attribute by its UUID.
 
     args:
         db: the current db
@@ -1002,7 +1010,7 @@ async def _get_attribute_by_uuid(db: Session, attribute_id: uuid.UUID) -> Attrib
 
     returns:
         The attribute with the associated UUID of NONE in case of not being present.
-    
+
     """
 
     result = await db.execute(select(Attribute).filter(Attribute.uuid == attribute_id))
@@ -1012,22 +1020,21 @@ async def _get_attribute_by_uuid(db: Session, attribute_id: uuid.UUID) -> Attrib
 
 
 async def _get_tag_by_attribute_uuid(db: Session, attribute_id: uuid.UUID, tag_id: int) -> AttributeTag | None:
-    """ Get's an attributes tag by the attributes UUID and the tags ID.
+    """Get's an attributes tag by the attributes UUID and the tags ID.
 
     args:
         db: the current db
         attribute_id: the UUID of the attribute
-        tag_id: the ID of the tag 
+        tag_id: the ID of the tag
 
     returns:
         The tag of the attribute with the associated UUID an ID or None in case of not being present.
-    
+
     """
     query: Select = (
-            select(AttributeTag)
-            .filter(AttributeTag.attribute_uuid == attribute_id, AttributeTag.tag_id == tag_id)
-            .limit(1))
-    
+        select(AttributeTag).filter(AttributeTag.attribute_uuid == attribute_id, AttributeTag.tag_id == tag_id).limit(1)
+    )
+
     result = await db.execute(query)
     attribute_tag = result.scalars().one_or_none()
 

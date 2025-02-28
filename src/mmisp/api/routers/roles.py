@@ -21,7 +21,8 @@ from mmisp.api_schemas.roles import (
     EditUserRoleBody,
     EditUserRoleResponse,
     GetUserRoleResponse,
-    DefaultRoleResponse)
+    DefaultRoleResponse,
+)
 
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.role import Role
@@ -45,7 +46,7 @@ async def get_all_roles(
     db: Annotated[Session, Depends(get_db)],
 ) -> list[GetRolesResponse]:
     """
-    Get all roles and their details. 
+    Get all roles and their details.
 
     args:
         auth: the user's authentification status
@@ -325,20 +326,14 @@ async def _get_role(db: Session, role_id: int) -> GetRoleResponse:
     role = result.scalar_one_or_none()
 
     if role is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Role with ID {role_id} not found."
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Role with ID {role_id} not found.")
 
     return GetRoleResponse(Role=RoleAttributeResponse(**role.__dict__))
 
 
 async def _add_role(db: Session, body: AddRoleBody) -> AddRoleResponse:
     if body is None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,  
-            detail="Request body cannot be None."
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Request body cannot be None.")
 
     max_id_result = await db.execute(select(Role.id).order_by(Role.id.desc()).limit(1))
     max_id = max_id_result.scalar_one_or_none()
@@ -377,18 +372,14 @@ async def _add_role(db: Session, body: AddRoleBody) -> AddRoleResponse:
         rate_limit_count=body.rate_limit_count,
         perm_galaxy_editor=body.perm_galaxy_editor,
         perm_warninglist=body.perm_warninglist,
-        perm_view_feed_correlations=body.perm_view_feed_correlations
+        perm_view_feed_correlations=body.perm_view_feed_correlations,
     )
 
     db.add(new_role)
     await db.commit()
     await db.refresh(new_role)
 
-    return AddRoleResponse(
-        role=new_role,
-        created=True,
-        message=f"Role '{new_role.name}' successfully created."
-    )
+    return AddRoleResponse(role=new_role, created=True, message=f"Role '{new_role.name}' successfully created.")
 
 
 async def _delete_role(db: Session, role_id: int) -> DeleteRoleResponse:
@@ -396,24 +387,21 @@ async def _delete_role(db: Session, role_id: int) -> DeleteRoleResponse:
     role = result.scalar_one_or_none()
 
     if role is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Role with ID {role_id} not found."
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Role with ID {role_id} not found.")
 
     if role.default_role:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Role with ID {role_id} is the default role. Can't be deleted"
+            detail=f"Role with ID {role_id} is the default role. Can't be deleted",
         )
-    
+
     result = await db.execute(select(User.id).where(User.role_id == role_id))
-    user_exists = result.scalar_one_or_none() 
+    user_exists = result.scalar_one_or_none()
 
     if user_exists is not None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Role with ID {role_id} cannot be deleted because it is assigned to one or more users."
+            detail=f"Role with ID {role_id} cannot be deleted because it is assigned to one or more users.",
         )
 
     await db.delete(role)
@@ -432,24 +420,18 @@ async def _delete_role(db: Session, role_id: int) -> DeleteRoleResponse:
 
 async def _update_role(db: Session, role_id: int, body: EditRoleBody) -> EditRoleResponse:
     if body is None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,  
-            detail="Request body cannot be None."
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Request body cannot be None.")
 
     result = await db.execute(select(Role).where(Role.id == role_id))
     role = result.scalar_one_or_none()
 
     if role is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Role with ID {role_id} not found."
-        )
-    
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Role with ID {role_id} not found.")
+
     if all(value is None for value in body.dict().values()):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="At least one new attribute must be provided to update the role."
+            detail="At least one new attribute must be provided to update the role.",
         )
 
     if body.name is not None:
@@ -513,7 +495,7 @@ async def _update_role(db: Session, role_id: int, body: EditRoleBody) -> EditRol
     if body.perm_view_feed_correlations is not None:
         role.perm_view_feed_correlations = body.perm_view_feed_correlations
 
-    role.modified=datetime.now(timezone.utc)
+    role.modified = datetime.now(timezone.utc)
 
     await db.commit()
     await db.refresh(role)
@@ -521,7 +503,7 @@ async def _update_role(db: Session, role_id: int, body: EditRoleBody) -> EditRol
     return EditRoleResponse(
         role=RoleAttributeResponse(**role.__dict__),
         updated=True,
-        message=f"Role with ID {role_id} successfully updated."
+        message=f"Role with ID {role_id} successfully updated.",
     )
 
 
@@ -529,7 +511,7 @@ async def _reinstate_role(auth: Auth, db: Session, role_id: int) -> ReinstateRol
     if role_id < 1 or role_id > 7:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Role with ID {role_id} is not a standard role and cannot be reinstated."
+            detail=f"Role with ID {role_id} is not a standard role and cannot be reinstated.",
         )
 
     result = await db.execute(select(Role).where(Role.id == role_id))
@@ -537,8 +519,7 @@ async def _reinstate_role(auth: Auth, db: Session, role_id: int) -> ReinstateRol
 
     if role is not None:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Role with ID {role_id} is already in use."
+            status_code=status.HTTP_400_BAD_REQUEST, detail=f"Role with ID {role_id} is already in use."
         )
 
     standard_roles = get_standard_roles()
@@ -546,8 +527,8 @@ async def _reinstate_role(auth: Auth, db: Session, role_id: int) -> ReinstateRol
 
     db.add(role)
 
-    #The reinstated read-only role is no longer the default role
-    if role_id==7:
+    # The reinstated read-only role is no longer the default role
+    if role_id == 7:
         role.default_role = False
 
     await db.commit()
@@ -557,24 +538,18 @@ async def _reinstate_role(auth: Auth, db: Session, role_id: int) -> ReinstateRol
         success=True,
         message=f"Role with ID {role_id} has been reinstated.",
         url=f"/roles/reinstate/{role_id}",
-        id=role_id
+        id=role_id,
     )
 
 
 async def _filter_roles(auth: Auth, db: Session, body: FilterRoleBody) -> list[FilterRoleResponse]:
     if body is None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,  
-            detail="Request body cannot be None."
-        )
-    
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Request body cannot be None.")
+
     requested_permissions = body.permissions
 
     if not requested_permissions:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="No permissions provided for filtering."
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No permissions provided for filtering.")
 
     query = select(Role)
     result = await db.execute(query)
@@ -596,10 +571,7 @@ async def _get_users_by_role(auth: Auth, db: Session, role_id: int) -> list[GetU
     role = result.scalar_one_or_none()
 
     if role is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Role with ID {role_id} not found."
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Role with ID {role_id} not found.")
 
     users_query = await db.execute(select(User).where(User.role_id == role_id))
     users = users_query.scalars().all()
@@ -617,15 +589,11 @@ async def _set_default_role(auth: Auth, db: Session, role_id: int) -> DefaultRol
     role = result.scalar_one_or_none()
 
     if role is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Role with ID {role_id} not found."
-        )
-    
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Role with ID {role_id} not found.")
+
     if role.default_role == True:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Role with ID {role_id} is already the default role."
+            status_code=status.HTTP_400_BAD_REQUEST, detail=f"Role with ID {role_id} is already the default role."
         )
 
     role_result = await db.execute(select(Role).where(Role.default_role == True))
@@ -655,10 +623,7 @@ async def _set_default_role(auth: Auth, db: Session, role_id: int) -> DefaultRol
 
 async def _edit_user_role_depr(auth: Auth, db: Session, user_id: str, body: EditUserRoleBody) -> EditUserRoleResponse:
     if body is None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,  
-            detail="Request body cannot be None."
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Request body cannot be None.")
 
     if not body.role_id:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="value 'role_id' is required")
@@ -674,12 +639,9 @@ async def _edit_user_role_depr(auth: Auth, db: Session, user_id: str, body: Edit
     role = result.scalar_one_or_none()
 
     if role is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Role with ID {body.role_id} not found."
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Role with ID {body.role_id} not found.")
 
-    user.role_id = body.role_id  
+    user.role_id = body.role_id
     await db.commit()
 
     return EditUserRoleResponse(
@@ -689,5 +651,5 @@ async def _edit_user_role_depr(auth: Auth, db: Session, user_id: str, body: Edit
         message=f"User's role has been updated to {role.name}.",
         url=f"/admin/users/edit/{user_id}",
         id=user.id,
-        Role=role.name,  
+        Role=role.name,
     )

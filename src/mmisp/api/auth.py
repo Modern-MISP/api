@@ -48,7 +48,7 @@ class AuthStrategy(StrEnum):
 @dataclass
 class Auth:
     """
-        Contains the result of an authentication process.
+    Contains the result of an authentication process.
     """
 
     user_id: int | None = None
@@ -63,16 +63,16 @@ async def _get_user(
     db: Session, authorization: str, strategy: AuthStrategy, permissions: list[Permission], is_readonly_route: bool
 ) -> tuple[User, int | None]:
     """
-        Fetches the user from the database. 
+        Fetches the user from the database.
 
-    args: 
+    args:
         db: the current db
         authorization: the authorization token
         strategy: the authorization strategy
         permissions: the list of permissions to be checked
         is_readonly_route: wether the route is read only
 
-    returns: 
+    returns:
         the user and, in case of an api key as the auth strategy the decoded api key
     """
 
@@ -116,21 +116,19 @@ async def user_login_allowed(db: Session, user_id: int, api_login: bool) -> User
 
 
 def authorize(
-    strategy: AuthStrategy, 
-    permissions: list[Permission] | None = None, 
-    is_readonly_route: bool = False
+    strategy: AuthStrategy, permissions: list[Permission] | None = None, is_readonly_route: bool = False
 ) -> Callable[[Session, str], Awaitable[Auth]]:
     """
     Generates a authorizer, which then returns an auth object.
 
-    args: 
+    args:
         strategy: the authentication strategy
         permissions: the required permissions of the action to be authorized
         is_readonly_route: wether the route is read only
 
     returns:
         An authorizer function and a db session
-    
+
     """
 
     if permissions is None:

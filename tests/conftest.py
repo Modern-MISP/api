@@ -416,7 +416,7 @@ async def test_standard_role(db):
         rate_limit_count=0,
         perm_galaxy_editor=False,
         perm_warninglist=False,
-        perm_view_feed_correlations=False
+        perm_view_feed_correlations=False,
     )
 
     db.add(role)
@@ -427,7 +427,6 @@ async def test_standard_role(db):
 
     await db.delete(role)
     await db.commit()
-
 
 
 @pytest_asyncio.fixture
@@ -464,7 +463,7 @@ async def role_read_only(db):
         perm_galaxy_editor=False,
         perm_warninglist=False,
         perm_view_feed_correlations=False,
-        created=datetime.now(timezone.utc)
+        created=datetime.now(timezone.utc),
     )
 
     db.add(role)
@@ -511,7 +510,7 @@ async def random_test_role(db):
         perm_galaxy_editor=False,
         perm_warninglist=False,
         perm_view_feed_correlations=False,
-        created=datetime.now(timezone.utc)
+        created=datetime.now(timezone.utc),
     )
 
     db.add(role)
@@ -525,7 +524,7 @@ async def random_test_role(db):
 
 
 @pytest_asyncio.fixture
-async def random_test_user(db,  instance_owner_org):
+async def random_test_user(db, instance_owner_org):
     user = User(
         password="very_safe_passwort",
         org_id=instance_owner_org.id,
@@ -547,7 +546,7 @@ async def random_test_user(db,  instance_owner_org):
     await db.commit()
     await db.refresh(user)
 
-    yield user 
+    yield user
 
-    await db.delete(user) 
+    await db.delete(user)
     await db.commit()

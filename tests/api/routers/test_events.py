@@ -136,7 +136,7 @@ async def test_get_existing_event_by_uuid(
 
     headers = {"authorization": site_admin_user_token}
     ic("event_id", event_id)
-    
+
     response = client.get(f"/events/{event_uuid}", headers=headers)
     ic("response", response)
 
@@ -161,10 +161,11 @@ async def test_get_non_existing_event(db, site_admin_user_token, client) -> None
     response = client.get(f"/events/{unused_event_id}", headers=headers)
     assert response.status_code == 404
 
+
 @pytest.mark.asyncio
 async def test_get_non_existing_event_by_uuid(db, site_admin_user_token, client) -> None:
-    unused_event_id = "a469325efe2f4f32a6854579f415ec6a"    # just a random, valid uuid. Extremely unlikely,
-    headers = {"authorization": site_admin_user_token}      # that this one is already used in the db
+    unused_event_id = "a469325efe2f4f32a6854579f415ec6a"  # just a random, valid uuid. Extremely unlikely,
+    headers = {"authorization": site_admin_user_token}  # that this one is already used in the db
     response = client.get(f"/events/{unused_event_id}", headers=headers)
     assert response.status_code == 404
 
@@ -214,7 +215,7 @@ async def test_update_existing_event_has_rolled_back_transaction(
         "Executed node `stop-execution`\n"
         "Node `stop-execution` from Workflow `Before save workflow` (1) executed "
         "successfully with status: partial-success",
-        "Finished executing workflow for trigger `Event Before Save` (1). Outcome: " "blocked",
+        "Finished executing workflow for trigger `Event Before Save` (1). Outcome: blocked",
     ]
     await db.execute(sa.delete(Log))
     await db.commit()
@@ -243,6 +244,7 @@ async def test_delete_existing_event(event, site_admin_user_token, client) -> No
     response = client.delete(f"events/{event_id}", headers=headers)
 
     assert response.status_code == 200
+
 
 @pytest.mark.asyncio
 async def test_delete_existing_event_by_uuid(event, site_admin_user_token, client) -> None:
@@ -364,8 +366,7 @@ async def test_publish_existing_event_workflow_blocked(
     assert response.status_code == 400
     assert response.json() == {
         "message": (
-            "Workflow 'event-publish' is blocking and failed with the following errors:\n"
-            "Stopped publish of test event"
+            "Workflow 'event-publish' is blocking and failed with the following errors:\nStopped publish of test event"
         )
     }
 
@@ -443,7 +444,6 @@ async def test_publish_invalid_event(site_admin_user_token, client) -> None:
     assert response_json["url"] == "/events/publish/a469325efe2f4f32a6854579f415ec6a"
 
 
-
 @pytest.mark.asyncio
 async def test_unpublish_existing_event(event, site_admin_user_token, client) -> None:
     event_id = event.id
@@ -504,7 +504,6 @@ async def test_unpublish_invalid_event(site_admin_user_token, client) -> None:
     assert response_json["name"] == "Invalid event."
     assert response_json["message"] == "Invalid event."
     assert response_json["url"] == "/events/unpublish/a469325efe2f4f32a6854579f415ec6a"
-    
 
 
 @pytest.mark.asyncio
