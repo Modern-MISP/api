@@ -668,6 +668,9 @@ async def _update_event(
     if not event:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
+    if not event.can_edit(user):
+        raise HTTPException(status.HTTP_403_FORBIDDEN)
+
     update_record(event, body.dict())
 
     await execute_blocking_workflow("event-before-save", db, event)

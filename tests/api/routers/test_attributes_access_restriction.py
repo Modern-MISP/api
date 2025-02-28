@@ -22,6 +22,7 @@ async def test_get_existing_attribute_read_only_user(
     response = client.get(f"/attributes/{attribute_id}", headers=headers)
     assert response.status_code == 200
 
+
 @pytest.mark.asyncio
 async def test_get_existing_attribute_fail_read_only_user(
     db: AsyncSession,
@@ -79,6 +80,7 @@ async def test_get_all_attributes_read_only_user(
         assert "first_seen" in attribute
         assert "last_seen" in attribute
 
+
 @pytest.mark.asyncio
 async def test_delete_existing_attribute_read_only_user(access_test_user_token, attribute, client) -> None:
     attribute_id = attribute.id
@@ -87,9 +89,6 @@ async def test_delete_existing_attribute_read_only_user(access_test_user_token, 
     response = client.delete(f"/attributes/{attribute_id}", headers=headers)
 
     assert response.status_code == 403
-
-
-
 
 
 @pytest.mark.asyncio

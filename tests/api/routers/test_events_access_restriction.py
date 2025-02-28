@@ -78,7 +78,9 @@ async def test_get_event_success_site_admin(event_read_only_1, site_admin_user_t
 
 
 @pytest.mark.asyncio
-async def test_valid_search_attribute_data_read_only_user(event_read_only_1, access_test_user_token, client) -> None:
+async def test_valid_search_attribute_data_read_only_user(
+    event_read_only_1, attribute_read_only_1, access_test_user_token, client
+) -> None:
     json = {"returnFormat": "json", "limit": 100}
     headers = {"authorization": access_test_user_token}
     response = client.post("/events/restSearch", json=json, headers=headers)
@@ -186,7 +188,7 @@ async def test_edit_existing_event_fail_read_only_user(event, access_test_user_t
     event_id = event.id
     headers = {"authorization": access_test_user_token}
     response = client.put(f"events/{event_id}", json=request_body, headers=headers)
-    assert response.status_code == 404
+    assert response.status_code == 403
     response_json = response.json()
     assert response_json["detail"] == "Not Found"
 

@@ -558,46 +558,14 @@ async def random_test_user(db, instance_owner_org):
 
 
 @pytest_asyncio.fixture
-async def access_test_user(db, instance_owner_org):
-    user = User(
-        password="very_safe_passwort",
-        org_id=instance_owner_org.id,
-        role_id=43,
-        email="test_user@lauch.com",
-        authkey=None,
-        invited_by=314,
-        nids_sid=0,
-        termsaccepted=True,
-        change_pw=True,
-        contactalert=False,
-        disabled=False,
-        notification_daily=False,
-        notification_weekly=False,
-        notification_monthly=False,
-    )
-
-    db.add(user)
-    await db.commit()
-    await db.refresh(user)
-
-    yield user
-
-    await db.delete(user)
-    await db.commit()
-
-@pytest.fixture
-def access_test_user_token(access_test_user):
-    return encode_token(access_test_user.id)
-
-@pytest_asyncio.fixture
 async def role_read_modify_only(db):
     role = Role(
         id=43,
-        name="test_read_only",
+        name="test_read_modify_only",
         perm_add=False,
         perm_modify=True,
         perm_modify_org=True,
-        perm_publish=False,
+        perm_publish=True,
         perm_delegate=False,
         perm_sync=False,
         perm_admin=False,
@@ -635,6 +603,41 @@ async def role_read_modify_only(db):
     await db.delete(role)
     await db.commit()
 
+
+@pytest_asyncio.fixture
+async def access_test_user(db, instance_owner_org):
+    user = User(
+        password="very_safe_passwort",
+        org_id=instance_owner_org.id,
+        role_id=43,
+        email="test_user@lauch.com",
+        authkey=None,
+        invited_by=314,
+        nids_sid=0,
+        termsaccepted=True,
+        change_pw=True,
+        contactalert=False,
+        disabled=False,
+        notification_daily=False,
+        notification_weekly=False,
+        notification_monthly=False,
+    )
+
+    db.add(user)
+    await db.commit()
+    await db.refresh(user)
+
+    yield user
+
+    await db.delete(user)
+    await db.commit()
+
+
+@pytest.fixture
+def access_test_user_token(access_test_user):
+    return encode_token(access_test_user.id)
+
+
 @pytest_asyncio.fixture
 async def event_read_only_1(db, organisation, access_test_user):
     org_id = organisation.id
@@ -659,6 +662,7 @@ async def event_read_only_1(db, organisation, access_test_user):
 async def attribute_read_only_1(db, event_read_only_1):
     event_id = event_read_only_1.id
     attribute = generate_attribute(event_id)
+    attribute.distribution = 0
     event_read_only_1.attribute_count += 1
 
     db.add(attribute)
