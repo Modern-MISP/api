@@ -598,7 +598,6 @@ async def _get_event_details(db: Session, event_id: int | uuid.UUID, user: User 
         result = await db.execute(
             select(Event)
             .filter(Event.id == event_id)
-            .filter(Event.can_access(user))
             .options(
                 selectinload(Event.org),
                 selectinload(Event.orgc),
@@ -624,6 +623,9 @@ async def _get_event_details(db: Session, event_id: int | uuid.UUID, user: User 
 
     if not event:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
+
+    if not event.can_access(user):
+        raise HTTPException(status.HTTP_403_FORBIDDEN)
 
     event_data = await _prepare_event_response(db, event)
 

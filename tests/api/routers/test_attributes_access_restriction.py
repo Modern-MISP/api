@@ -12,13 +12,13 @@ from mmisp.tests.generators.model_generators.tag_generator import generate_tag
 async def test_get_existing_attribute_read_only_user(
     db: AsyncSession,
     attribute_read_only_1,
-    read_only_user_token,
+    access_test_user_token,
     client,
 ) -> None:
     attribute, at = attribute_read_only_1
     attribute_id = attribute.id
     ic(attribute.asdict())
-    headers = {"authorization": read_only_user_token}
+    headers = {"authorization": access_test_user_token}
     response = client.get(f"/attributes/{attribute_id}", headers=headers)
     assert response.status_code == 200
 
@@ -26,13 +26,13 @@ async def test_get_existing_attribute_read_only_user(
 async def test_get_existing_attribute_fail_read_only_user(
     db: AsyncSession,
     attribute_with_normal_tag,
-    read_only_user_token,
+    access_test_user_token,
     client,
 ) -> None:
     attribute, at = attribute_with_normal_tag
     attribute_id = attribute.id
     ic(attribute.asdict())
-    headers = {"authorization": read_only_user_token}
+    headers = {"authorization": access_test_user_token}
     response = client.get(f"/attributes/{attribute_id}", headers=headers)
     assert response.status_code == 403
 
@@ -41,7 +41,7 @@ async def test_get_existing_attribute_fail_read_only_user(
 async def test_get_all_attributes_read_only_user(
     db: AsyncSession,
     event_read_only_1,
-    read_only_user_token,
+    access_test_user_token,
     sharing_group,
     organisation,
     attribute_read_only_1,
@@ -50,7 +50,7 @@ async def test_get_all_attributes_read_only_user(
     event_read_only_1.sharing_group_id = sharing_group.id
     await db.commit()
 
-    headers = {"authorization": read_only_user_token}
+    headers = {"authorization": access_test_user_token}
     response = client.get("/attributes", headers=headers)
 
     assert response.status_code == 200
@@ -80,10 +80,10 @@ async def test_get_all_attributes_read_only_user(
         assert "last_seen" in attribute
 
 @pytest.mark.asyncio
-async def test_delete_existing_attribute_read_only_user(read_only_user_token, attribute, client) -> None:
+async def test_delete_existing_attribute_read_only_user(access_test_user_token, attribute, client) -> None:
     attribute_id = attribute.id
 
-    headers = {"authorization": read_only_user_token}
+    headers = {"authorization": access_test_user_token}
     response = client.delete(f"/attributes/{attribute_id}", headers=headers)
 
     assert response.status_code == 403
@@ -93,7 +93,7 @@ async def test_delete_existing_attribute_read_only_user(read_only_user_token, at
 
 
 @pytest.mark.asyncio
-async def test_add_attribute_valid_data_read_only_user(read_only_user_token, event, db, client) -> None:
+async def test_add_attribute_valid_data_read_only_user(access_test_user_token, event, db, client) -> None:
     request_body = {
         "value": "1.2.3.4",
         "type": "ip-src",
@@ -106,7 +106,7 @@ async def test_add_attribute_valid_data_read_only_user(read_only_user_token, eve
     event_id = event.id
     assert event.id is not None
 
-    headers = {"authorization": read_only_user_token}
+    headers = {"authorization": access_test_user_token}
     response = client.post(f"/attributes/{event_id}", json=request_body, headers=headers)
 
     assert response.status_code == 403
@@ -114,7 +114,7 @@ async def test_add_attribute_valid_data_read_only_user(read_only_user_token, eve
 
 @pytest.mark.asyncio
 async def test_add_existing_tag_to_attribute_read_only(
-    db: AsyncSession, read_only_user_token, attribute, client
+    db: AsyncSession, access_test_user_token, attribute, client
 ) -> None:
     attribute_id = attribute.id
 
@@ -128,7 +128,7 @@ async def test_add_existing_tag_to_attribute_read_only(
 
     tag_id = tag.id
 
-    headers = {"authorization": read_only_user_token}
+    headers = {"authorization": access_test_user_token}
     response = client.post(
         f"/attributes/addTag/{attribute_id}/{tag_id}/local:1",
         headers=headers,
@@ -138,10 +138,10 @@ async def test_add_existing_tag_to_attribute_read_only(
 
 
 @pytest.mark.asyncio
-async def test_remove_existing_tag_from_attribute_read_only_user(read_only_user_token, attributetag, client) -> None:
+async def test_remove_existing_tag_from_attribute_read_only_user(access_test_user_token, attributetag, client) -> None:
     attribute_id = attributetag.attribute_id
     tag_id = attributetag.tag_id
-    headers = {"authorization": read_only_user_token}
+    headers = {"authorization": access_test_user_token}
     response = client.post(f"/attributes/removeTag/{attribute_id}/{tag_id}", headers=headers)
 
     assert response.status_code == 403

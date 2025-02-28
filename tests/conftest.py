@@ -558,12 +558,90 @@ async def random_test_user(db, instance_owner_org):
 
 
 @pytest_asyncio.fixture
-async def event_read_only_1(db, organisation, view_only_user):
+async def access_test_user(db, instance_owner_org):
+    user = User(
+        password="very_safe_passwort",
+        org_id=instance_owner_org.id,
+        role_id=43,
+        email="test_user@lauch.com",
+        authkey=None,
+        invited_by=314,
+        nids_sid=0,
+        termsaccepted=True,
+        change_pw=True,
+        contactalert=False,
+        disabled=False,
+        notification_daily=False,
+        notification_weekly=False,
+        notification_monthly=False,
+    )
+
+    db.add(user)
+    await db.commit()
+    await db.refresh(user)
+
+    yield user
+
+    await db.delete(user)
+    await db.commit()
+
+@pytest.fixture
+def access_test_user_token(access_test_user):
+    return encode_token(access_test_user.id)
+
+@pytest_asyncio.fixture
+async def role_read_modify_only(db):
+    role = Role(
+        id=43,
+        name="test_read_only",
+        perm_add=False,
+        perm_modify=True,
+        perm_modify_org=True,
+        perm_publish=False,
+        perm_delegate=False,
+        perm_sync=False,
+        perm_admin=False,
+        perm_audit=False,
+        perm_auth=True,
+        perm_site_admin=False,
+        perm_regexp_access=False,
+        perm_tagger=False,
+        perm_template=False,
+        perm_sharing_group=False,
+        perm_tag_editor=False,
+        perm_sighting=False,
+        perm_object_template=False,
+        default_role=True,
+        memory_limit="",
+        max_execution_time="",
+        restricted_to_site_admin=False,
+        perm_publish_zmq=False,
+        perm_publish_kafka=False,
+        perm_decaying=False,
+        enforce_rate_limit=False,
+        rate_limit_count=0,
+        perm_galaxy_editor=False,
+        perm_warninglist=False,
+        perm_view_feed_correlations=False,
+        created=datetime.now(timezone.utc),
+    )
+
+    db.add(role)
+    await db.commit()
+    await db.refresh(role)
+
+    yield role
+
+    await db.delete(role)
+    await db.commit()
+
+@pytest_asyncio.fixture
+async def event_read_only_1(db, organisation, access_test_user):
     org_id = organisation.id
     event = generate_event()
     event.org_id = org_id
     event.orgc_id = org_id
-    event.user_id = view_only_user.id
+    event.user_id = access_test_user.id
     event.published = True
     event.distribution = 0
 
@@ -578,10 +656,10 @@ async def event_read_only_1(db, organisation, view_only_user):
 
 
 @pytest.fixture
-async def attribute_read_only_1(db, event_read_only_1):
-    event_id = event_read_only_1.id
+async def attribute_read_only_1(db, access_test_user):
+    event_id = access_test_user.id
     attribute = generate_attribute(event_id)
-    event_read_only_1.attribute_count += 1
+    access_test_user.attribute_count += 1
 
     db.add(attribute)
     await db.commit()
@@ -590,5 +668,5 @@ async def attribute_read_only_1(db, event_read_only_1):
     yield attribute
 
     await db.delete(attribute)
-    event_read_only_1.attribute_count -= 1
+    access_test_user.attribute_count -= 1
     await db.commit()
