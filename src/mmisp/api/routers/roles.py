@@ -379,7 +379,8 @@ async def _add_role(db: Session, body: AddRoleBody) -> AddRoleResponse:
     await db.commit()
     await db.refresh(new_role)
 
-    return AddRoleResponse(role=new_role, created=True, message=f"Role '{new_role.name}' successfully created.")
+    return AddRoleResponse(Role=RoleAttributeResponse(**new_role.__dict__), 
+                           created=True, message=f"Role '{new_role.name}' successfully created.")
 
 
 async def _delete_role(db: Session, role_id: int) -> DeleteRoleResponse:

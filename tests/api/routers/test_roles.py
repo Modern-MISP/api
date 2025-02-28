@@ -153,8 +153,8 @@ async def test_add_role_success(client, site_admin_user_token, db):
 
     assert response_json["created"] is True
     assert response_json["message"] == "Role 'new_role' successfully created."
-    assert "role" in response_json
-    assert response_json["role"]["name"] == "new_role"
+    role_data = response_json["Role"]
+    assert role_data["name"] =="new_role"
 
     result = await db.execute(select(Role).where(Role.name == "new_role"))
     role = result.scalar_one_or_none()
