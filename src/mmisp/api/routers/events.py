@@ -266,7 +266,7 @@ async def publish_event(
     returns:
         the published event
     """
-    return await _publish_event(db, event_id, request)
+    return await _publish_event(db, event_id, request, auth.user)
 
 
 @router.post(
@@ -860,7 +860,8 @@ async def _index_events(db: Session, body: IndexEventsBody) -> list[GetAllEvents
 
 
 @alog
-async def _publish_event(db: Session, event_id: int | uuid.UUID, request: Request) -> PublishEventResponse:
+async def _publish_event(db: Session, event_id: int | uuid.UUID, request: Request,
+                         user: User | None) -> PublishEventResponse:
     if isinstance(event_id, uuid.UUID):
         event = await _get_event_by_uuid(event_id, db)
     else:
@@ -868,6 +869,9 @@ async def _publish_event(db: Session, event_id: int | uuid.UUID, request: Reques
 
     if not event:
         return PublishEventResponse(name="Invalid event.", message="Invalid event.", url=str(request.url.path))
+
+    if not event.can_edit(user):
+        raise HTTPException(status.HTTP_403_FORBIDDEN)
 
     await execute_blocking_workflow("event-publish", db, event)
 

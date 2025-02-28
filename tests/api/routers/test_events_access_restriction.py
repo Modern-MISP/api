@@ -92,7 +92,7 @@ async def test_valid_search_attribute_data_read_only_user(
 
 
 @pytest.mark.asyncio
-async def test_publish_existing_event_read_only_user(event_read_only_1, access_test_user_token, client) -> None:
+async def test_publish_existing_event_read_only_user(db, event_read_only_1, access_test_user_token, client) -> None:
     event_id = event_read_only_1.id
     headers = {"authorization": access_test_user_token}
     response = client.post(f"/events/publish/{event_id}", headers=headers)
@@ -190,7 +190,7 @@ async def test_edit_existing_event_fail_read_only_user(event, access_test_user_t
     response = client.put(f"events/{event_id}", json=request_body, headers=headers)
     assert response.status_code == 403
     response_json = response.json()
-    assert response_json["detail"] == "Not Found"
+    assert response_json["detail"] == "Forbidden"
 
 
 @pytest.mark.asyncio
