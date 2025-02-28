@@ -550,3 +550,39 @@ async def random_test_user(db, instance_owner_org):
 
     await db.delete(user)
     await db.commit()
+
+
+@pytest_asyncio.fixture
+async def event_read_only_1(db, organisation, view_only_user):
+    org_id = organisation.id
+    event = generate_event()
+    event.org_id = org_id
+    event.orgc_id = org_id
+    event.user_id = view_only_user.id
+    event.published = True
+
+    db.add(event)
+    await db.commit()
+    await db.refresh(event)
+
+    yield event
+
+    await db.delete(event)
+    await db.commit()
+
+
+@pytest.fixture
+async def attribute_read_only_1(db, event_read_only_1):
+    event_id = event_read_only_1.id
+    attribute = generate_attribute(event_id)
+    event_read_only_1.attribute_count += 1
+
+    db.add(attribute)
+    await db.commit()
+    await db.refresh(attribute)
+
+    yield attribute
+
+    await db.delete(attribute)
+    event_read_only_1.attribute_count -= 1
+    await db.commit()
