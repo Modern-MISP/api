@@ -241,6 +241,11 @@ async def view_only_user(db, user_role, instance_owner_org):
     await db.commit()
 
 
+@pytest.fixture
+def read_only_user_token(view_only_user):
+    return encode_token(view_only_user.id)
+
+
 @pytest_asyncio.fixture
 async def blocking_publish_workflow(db):
     setting = AdminSetting(setting="workflow_feature_enabled", value="True")

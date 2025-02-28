@@ -11,11 +11,6 @@ from mmisp.db.models.user import User
 from mmisp.db.models.user_setting import UserSetting
 
 
-@pytest.fixture
-def read_only_user_token(view_only_user):
-    return encode_token(view_only_user.id)
-
-
 @pytest.mark.asyncio
 async def test_users_me(site_admin_user_token, site_admin_user, client) -> None:
     response = client.get("/users/view/me", headers={"authorization": site_admin_user_token})
