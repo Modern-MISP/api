@@ -685,7 +685,7 @@ async def _delete_event(db: Session, event_id: int | uuid.UUID, user: User | Non
     else:
         event = await db.get(Event, event_id)
 
-    if event is None or not event.can_edit(user):
+    if event is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=jsonable_encoder(
@@ -693,6 +693,20 @@ async def _delete_event(db: Session, event_id: int | uuid.UUID, user: User | Non
                     saved=False,
                     name="Could not delete Event",
                     message="Could not delete Event",
+                    url=f"/events/delete/{event_id}",
+                    id=event_id,
+                ).dict()
+            ),
+        )
+
+    if not event.can_edit(user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=jsonable_encoder(
+                DeleteEventResponse(
+                    saved=False,
+                    name="Invalid access",
+                    message="Invalid permissions",
                     url=f"/events/delete/{event_id}",
                     id=event_id,
                 ).dict()

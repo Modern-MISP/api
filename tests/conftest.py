@@ -565,6 +565,7 @@ async def event_read_only_1(db, organisation, view_only_user):
     event.orgc_id = org_id
     event.user_id = view_only_user.id
     event.published = True
+    event.distribution = 0
 
     db.add(event)
     await db.commit()

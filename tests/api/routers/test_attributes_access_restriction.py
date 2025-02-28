@@ -11,6 +11,20 @@ from mmisp.tests.generators.model_generators.tag_generator import generate_tag
 @pytest.mark.asyncio
 async def test_get_existing_attribute_read_only_user(
     db: AsyncSession,
+    attribute_read_only_1,
+    read_only_user_token,
+    client,
+) -> None:
+    attribute, at = attribute_read_only_1
+    attribute_id = attribute.id
+    ic(attribute.asdict())
+    headers = {"authorization": read_only_user_token}
+    response = client.get(f"/attributes/{attribute_id}", headers=headers)
+    assert response.status_code == 200
+
+@pytest.mark.asyncio
+async def test_get_existing_attribute_fail_read_only_user(
+    db: AsyncSession,
     attribute_with_normal_tag,
     read_only_user_token,
     client,
@@ -20,16 +34,6 @@ async def test_get_existing_attribute_read_only_user(
     ic(attribute.asdict())
     headers = {"authorization": read_only_user_token}
     response = client.get(f"/attributes/{attribute_id}", headers=headers)
-    assert response.status_code == 403
-
-
-@pytest.mark.asyncio
-async def test_delete_existing_attribute_read_only_user(read_only_user_token, attribute, client) -> None:
-    attribute_id = attribute.id
-
-    headers = {"authorization": read_only_user_token}
-    response = client.delete(f"/attributes/{attribute_id}", headers=headers)
-
     assert response.status_code == 403
 
 
@@ -51,6 +55,8 @@ async def test_get_all_attributes_read_only_user(
 
     assert response.status_code == 200
     response_json = response.json()
+    assert isinstance(response_json, list)
+    assert len(response_json) == 1
     for attribute in response_json:
         assert isinstance(response_json, list)
         assert "id" in attribute
@@ -72,6 +78,18 @@ async def test_get_all_attributes_read_only_user(
         assert "disable_correlation" in attribute
         assert "first_seen" in attribute
         assert "last_seen" in attribute
+
+@pytest.mark.asyncio
+async def test_delete_existing_attribute_read_only_user(read_only_user_token, attribute, client) -> None:
+    attribute_id = attribute.id
+
+    headers = {"authorization": read_only_user_token}
+    response = client.delete(f"/attributes/{attribute_id}", headers=headers)
+
+    assert response.status_code == 403
+
+
+
 
 
 @pytest.mark.asyncio
