@@ -10,15 +10,13 @@ from mmisp.tests.generators.model_generators.tag_generator import generate_tag
 
 @pytest.mark.asyncio
 async def test_get_existing_attribute_read_only_user(
-    db: AsyncSession,
     event_read_only_1,
-    attribute_read_only_1,
+    attribute_with_normal_tag,
+    organisation,
     access_test_user_token,
     client,
 ) -> None:
-    attribute, at = attribute_read_only_1
-    attribute_id = attribute.id
-    ic(attribute.asdict())
+    attribute_id = attribute_with_normal_tag.id
     headers = {"authorization": access_test_user_token}
     response = client.get(f"/attributes/{attribute_id}", headers=headers)
     assert response.status_code == 200
@@ -93,13 +91,13 @@ async def test_add_attribute_valid_data_read_only_user(access_test_user_token, e
 
 @pytest.mark.asyncio
 async def test_add_existing_tag_to_attribute_read_only(
-    db: AsyncSession, access_test_user_token, attribute, client
+    db: AsyncSession, access_test_user_token, attribute_read_only_1, access_test_user, organistation, client
 ) -> None:
-    attribute_id = attribute.id
+    attribute_id = attribute_read_only_1.id
 
     tag = generate_tag()
-    setattr(tag, "user_id", 1)
-    setattr(tag, "org_id", 1)
+    setattr(tag, "user_id", access_test_user.id)
+    setattr(tag, "org_id", organistation.id)
 
     db.add(tag)
     await db.commit()
@@ -108,16 +106,14 @@ async def test_add_existing_tag_to_attribute_read_only(
     tag_id = tag.id
 
     headers = {"authorization": access_test_user_token}
-    response = client.post(
-        f"/attributes/addTag/{attribute_id}/{tag_id}/local:1",
-        headers=headers,
-    )
-
-    assert response.status_code == 403
+    response = client.post(f"/attributes/addTag/{attribute_id}/{tag_id}/local:1", headers=headers)
+    assert response.status_code == 200
 
 
 @pytest.mark.asyncio
-async def test_remove_existing_tag_from_attribute_read_only_user(access_test_user_token, attributetag, client) -> None:
+async def test_remove_existing_tag_from_attribute_read_only_user(access_test_user_token,
+                                                                 event_read_only_1, attribute_read_only_1,
+                                                                 attributetag, organisation, client) -> None:
     attribute_id = attributetag.attribute_id
     tag_id = attributetag.tag_id
     headers = {"authorization": access_test_user_token}

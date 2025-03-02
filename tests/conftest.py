@@ -576,8 +576,8 @@ def access_test_user_token(access_test_user):
 
 
 @pytest_asyncio.fixture
-async def event_read_only_1(db, organisation, access_test_user):
-    org_id = organisation.id
+async def event_read_only_1(db, instance_owner_org, access_test_user):
+    org_id = instance_owner_org.id
     event = generate_event()
     event.org_id = org_id
     event.orgc_id = org_id
@@ -596,10 +596,11 @@ async def event_read_only_1(db, organisation, access_test_user):
 
 
 @pytest.fixture
-async def attribute_read_only_1(db, event_read_only_1):
+async def attribute_read_only_1(db, instance_owner_org, event_read_only_1):
     event_id = event_read_only_1.id
     attribute = generate_attribute(event_id)
     attribute.distribution = 4
+    attribute.org_id = instance_owner_org.id
     event_read_only_1.attribute_count += 1
 
     db.add(attribute)
