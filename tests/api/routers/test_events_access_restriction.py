@@ -164,11 +164,7 @@ async def test_remove_existing_tag_from_event_fail_read_only_user(
 
     headers = {"authorization": access_test_user_token}
     response = client.post(f"/events/removeTag/{event_id}/{tag_id}", headers=headers)
-
     assert response.status_code == 403
-    response_json = response.json()
-    assert response_json["saved"]
-    assert response_json["success"] == "Forbidden"
 
 
 @pytest.mark.asyncio

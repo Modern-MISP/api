@@ -599,7 +599,7 @@ async def event_read_only_1(db, organisation, access_test_user):
 async def attribute_read_only_1(db, event_read_only_1):
     event_id = event_read_only_1.id
     attribute = generate_attribute(event_id)
-    attribute.distribution = 0
+    attribute.distribution = 4
     event_read_only_1.attribute_count += 1
 
     db.add(attribute)

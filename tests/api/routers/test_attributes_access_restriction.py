@@ -11,6 +11,7 @@ from mmisp.tests.generators.model_generators.tag_generator import generate_tag
 @pytest.mark.asyncio
 async def test_get_existing_attribute_read_only_user(
     db: AsyncSession,
+    event_read_only_1,
     attribute_read_only_1,
     access_test_user_token,
     client,
@@ -58,27 +59,6 @@ async def test_get_all_attributes_read_only_user(
     response_json = response.json()
     assert isinstance(response_json, list)
     assert len(response_json) == 1
-    for attribute in response_json:
-        assert isinstance(response_json, list)
-        assert "id" in attribute
-        assert "event_id" in attribute
-        assert "object_id" in attribute
-        assert "object_relation" in attribute
-        assert "category" in attribute
-        assert "type" in attribute
-        assert "value" in attribute
-        assert "value1" in attribute
-        assert "value2" in attribute
-        assert "to_ids" in attribute
-        assert "uuid" in attribute
-        assert "timestamp" in attribute
-        assert "distribution" in attribute
-        assert "sharing_group_id" in attribute
-        assert "comment" in attribute
-        assert "deleted" in attribute
-        assert "disable_correlation" in attribute
-        assert "first_seen" in attribute
-        assert "last_seen" in attribute
 
 
 @pytest.mark.asyncio

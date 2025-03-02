@@ -5,7 +5,7 @@ from mmisp.db.models.role import Role
 from mmisp.tests.compatibility_helpers import get_legacy_modern_diff
 
 
-'''
+"""
 #I AM NOT SURE HOW THAT WORKS YET BUT WILL FIGURE IT OUT
 
 @pytest.mark.asyncio
@@ -106,4 +106,4 @@ async def test_set_default_role(db, auth_key, client, site_admin_user_token, ran
     assert get_legacy_modern_diff("put", path, request_body, auth_key, client) == {}
 
 
-'''
+"""
