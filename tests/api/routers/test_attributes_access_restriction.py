@@ -3,6 +3,7 @@ import pytest_asyncio
 import sqlalchemy as sa
 from icecream import ic
 from sqlalchemy.ext.asyncio import AsyncSession
+from mmisp.lib.permissions import Permission
 
 from mmisp.db.models.attribute import AttributeTag
 from mmisp.tests.generators.model_generators.tag_generator import generate_tag

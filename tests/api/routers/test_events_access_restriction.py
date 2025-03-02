@@ -101,6 +101,7 @@ async def test_publish_existing_event_read_only_user(event_read_only_1, access_t
     event_id = event_read_only_1.id
     print("EVUser ID: " + str(event_read_only_1.user_id))
     print("User ID: " + str(access_test_user.id))
+    print("User RoleID: " + str(access_test_user.role_id))
     headers = {"authorization": access_test_user_token}
     response = client.post(f"/events/publish/{event_id}", headers=headers)
     assert response.status_code == 200
