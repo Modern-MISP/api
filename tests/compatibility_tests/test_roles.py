@@ -5,9 +5,6 @@ from mmisp.db.models.role import Role
 from mmisp.tests.compatibility_helpers import get_legacy_modern_diff
 
 
-"""
-#I AM NOT SURE HOW THAT WORKS YET BUT WILL FIGURE IT OUT
-
 @pytest.mark.asyncio
 async def test_get_all_standard_roles(db, auth_key, client, site_admin_user_token) -> None:
 
@@ -26,6 +23,9 @@ async def test_get_all_standard_roles(db, auth_key, client, site_admin_user_toke
 
     await db.commit()
 
+
+"""
+#I AM NOT SURE HOW THAT WORKS YET BUT WILL FIGURE IT OUT
 
 @pytest.mark.asyncio
 async def test_get_specific_role(db, auth_key, client, site_admin_user_token, role_read_only) -> None:
