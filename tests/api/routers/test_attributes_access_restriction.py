@@ -8,6 +8,7 @@ from mmisp.lib.permissions import Permission
 from mmisp.db.models.attribute import AttributeTag
 from mmisp.tests.generators.model_generators.tag_generator import generate_tag
 
+
 @pytest.mark.asyncio
 async def test_get_existing_attribute_read_only_user(
     db: AsyncSession,
@@ -21,6 +22,7 @@ async def test_get_existing_attribute_read_only_user(
     response = client.get(f"/attributes/{attribute_id}", headers=headers)
 
     assert response.status_code == 200
+
 
 @pytest.mark.asyncio
 async def test_get_existing_attribute_fail_read_only_user(
