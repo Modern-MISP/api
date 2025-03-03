@@ -294,7 +294,7 @@ async def test_update_role_no_changes(client, site_admin_user_token, random_test
 async def test_update_role_missing_body(client, site_admin_user_token, role_read_only):
     headers = {"authorization": site_admin_user_token}
 
-    response = client.put(f"/admin/roles/edit/{7}", json=None, headers=headers)
+    response = client.put(f"/admin/roles/edit/{6}", json=None, headers=headers)
 
     assert response.status_code == 422
 
@@ -307,7 +307,7 @@ async def test_reinstate_role_success(client, site_admin_user_token, db, role_re
     await db.execute(delete(Role).where(Role.id == role_id))
     await db.commit()
 
-    response = client.post(f"/roles/reinstate/{7}", headers=headers)
+    response = client.post(f"/roles/reinstate/{6}", headers=headers)
 
     assert response.status_code == 200
 
