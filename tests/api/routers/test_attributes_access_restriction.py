@@ -11,7 +11,7 @@ from mmisp.tests.generators.model_generators.tag_generator import generate_tag
 
 @pytest.mark.asyncio
 async def test_get_existing_attribute_read_only_user(
-        role_read_modify_only,
+    role_read_modify_only,
     db: AsyncSession,
     attribute3,
     read_only_user_token,
@@ -26,7 +26,8 @@ async def test_get_existing_attribute_read_only_user(
 
 
 @pytest.mark.asyncio
-async def test_get_existing_attribute_fail_read_only_user(role_read_modify_only,
+async def test_get_existing_attribute_fail_read_only_user(
+    role_read_modify_only,
     db: AsyncSession,
     attribute3,
     read_only_user_token,
@@ -120,8 +121,8 @@ async def test_add_existing_tag_to_attribute_read_only(
 
 
 @pytest.mark.asyncio
-async def test_remove_existing_tag_from_attribute_read_only_user(role_read_modify_only,
-    access_test_user_token, event_read_only_1, attribute, tag_read_only_1, organisation, client
+async def test_remove_existing_tag_from_attribute_read_only_user(
+    role_read_modify_only, access_test_user_token, event_read_only_1, attribute, tag_read_only_1, organisation, client
 ) -> None:
     attribute_id = attribute.id
     tag_id = tag_read_only_1.id
