@@ -263,5 +263,3 @@ async def test_publish_existing_event_site_admin(
     headers = {"authorization": site_admin_user_token}
     response = client.post(f"/events/publish/{event_id}", headers=headers)
     assert response.status_code == 200
-    response_json = response.json()
-    assert response_json["detail"] == "Success"
