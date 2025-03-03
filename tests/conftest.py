@@ -648,3 +648,17 @@ async def tag_read_only_1(db, access_test_user):
 
     await db.delete(tag)
     await db.commit()
+
+
+@pytest_asyncio.fixture
+async def eventtag_read_only_1(db, event, tag):
+    eventtag = EventTag(event_id=event.id, tag_id=tag.id, local=False)
+
+    db.add(eventtag)
+    await db.commit()
+    await db.refresh(eventtag)
+
+    yield eventtag
+
+    await db.delete(eventtag)
+    await db.commit()

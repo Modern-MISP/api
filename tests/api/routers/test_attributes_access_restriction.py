@@ -69,7 +69,7 @@ async def test_delete_existing_attribute_read_only_user(access_test_user_token, 
 
 
 @pytest.mark.asyncio
-async def test_add_attribute_valid_data_read_only_user(access_test_user_token, event, db, client) -> None:
+async def test_add_attribute_valid_data_read_only_user(access_test_user_token, event, client) -> None:
     request_body = {
         "value": "1.2.3.4",
         "type": "ip-src",
