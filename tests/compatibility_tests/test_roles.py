@@ -9,7 +9,7 @@ async def test_get_all_standard_roles(db, auth_key, client, site_admin_user_toke
     roles = get_standard_roles()
 
     for role in roles:
-        await db.add(role)
+        db.add(role)
         
     await db.commit()
 
@@ -18,7 +18,7 @@ async def test_get_all_standard_roles(db, auth_key, client, site_admin_user_toke
     assert get_legacy_modern_diff("get", path, auth_key, client) == {}
 
     for role in roles:
-        await db.delete(role)
+        db.delete(role)
         
     await db.commit()
 
