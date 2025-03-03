@@ -186,7 +186,8 @@ async def test_edit_existing_event_fail_read_only_user(event, access_test_user_t
 
 
 @pytest.mark.asyncio
-async def test_delete_existing_event_read_only_user(event_read_only_1, access_test_user_token, client) -> None:
+async def test_delete_existing_event_read_only_user(role_read_modify_only, access_test_user,
+                                                    event_read_only_1, access_test_user_token, client) -> None:
     event_id = event_read_only_1.id
 
     headers = {"authorization": access_test_user_token}
