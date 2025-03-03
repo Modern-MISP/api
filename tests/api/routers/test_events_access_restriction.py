@@ -191,8 +191,9 @@ async def test_delete_existing_event_read_only_user(event_read_only_1, access_te
 
     headers = {"authorization": access_test_user_token}
     response = client.delete(f"events/{event_id}", headers=headers)
-    assert response.status_code == 200
     response_json = response.json()
+    print("Response: " + str(response_json))
+    assert response.status_code == 200
     assert response_json["detail"]["name"] == "Success"
 
 
