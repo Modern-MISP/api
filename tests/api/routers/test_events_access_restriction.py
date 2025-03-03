@@ -10,7 +10,7 @@ from mmisp.db.models.log import Log
 
 @pytest.mark.asyncio
 async def test_list_all_events_read_only_user(
-    event_read_only_1, organisation, access_test_user_token, client
+    event, event5, event_read_only_1, organisation, access_test_user_token, client
 ) -> None:
     headers = {"authorization": access_test_user_token}
     response = client.get("/events", headers=headers)
@@ -22,8 +22,9 @@ async def test_list_all_events_read_only_user(
 
 
 @pytest.mark.asyncio
-async def test_list_all_events_admin(event3, event4, event5, organisation,
-                                     event_read_only_1, site_admin_user_token, client) -> None:
+async def test_list_all_events_admin(
+    event3, event4, event5, organisation, event_read_only_1, site_admin_user_token, client
+) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.get("/events", headers=headers)
     assert response.status_code == 200
@@ -33,8 +34,9 @@ async def test_list_all_events_admin(event3, event4, event5, organisation,
 
 
 @pytest.mark.asyncio
-async def test_get_event_success_read_only_user(event_read_only_1, organisation,
-                                                access_test_user_token, client) -> None:
+async def test_get_event_success_read_only_user(
+    event_read_only_1, organisation, access_test_user_token, client
+) -> None:
     headers = {"authorization": access_test_user_token}
     event_id = event_read_only_1.id
     print("Event ID: " + str(event_id))
@@ -47,14 +49,13 @@ async def test_get_event_success_read_only_user(event_read_only_1, organisation,
 
 
 @pytest.mark.asyncio
-async def test_get_event(event, site_admin_user_token, client) -> None:
+async def test_get_event(event_read_only_1, organisation, site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
-    event_id = event.id
+    event_id = event_read_only_1.id
     response = client.get(f"/events/{event_id}", headers=headers)
 
     assert response.status_code == 200
     response_json = response.json()
-    # assert "name" in response_json, f"'name' not found in response: {response_json}"
     assert response_json["Event"]["id"] == event_id
 
 
@@ -82,8 +83,8 @@ async def test_get_event_success_site_admin(event_read_only_1, site_admin_user_t
 
 
 @pytest.mark.asyncio
-async def test_valid_search_attribute_data_read_only_user(organisation,
-    event_read_only_1, attribute_read_only_1, access_test_user_token, client
+async def test_valid_search_attribute_data_read_only_user(
+    organisation, event_read_only_1, attribute_read_only_1, access_test_user_token, client
 ) -> None:
     json = {"returnFormat": "json", "limit": 100}
     headers = {"authorization": access_test_user_token}
@@ -96,12 +97,15 @@ async def test_valid_search_attribute_data_read_only_user(organisation,
 
 
 @pytest.mark.asyncio
-async def test_publish_existing_event_read_only_user(event_read_only_1, access_test_user,
-                                                     access_test_user_token, client) -> None:
-    event_id = event_read_only_1.id
-    print("EVUser ID: " + str(event_read_only_1.user_id))
+async def test_publish_existing_event_read_only_user(
+    event_read_only_2, access_test_user, access_test_user_token, client
+) -> None:
+    event_id = event_read_only_2.id
+    print("Event ID: " + str(event_id))
+    print("EVUser ID: " + str(event_read_only_2.user_id))
     print("User ID: " + str(access_test_user.id))
     print("User RoleID: " + str(access_test_user.role_id))
+
     headers = {"authorization": access_test_user_token}
     response = client.post(f"/events/publish/{event_id}", headers=headers)
     assert response.status_code == 200
@@ -124,10 +128,7 @@ async def test_add_existing_tag_to_event_read_only_user(event_read_only_1, tag, 
     event_id = event_read_only_1.id
 
     headers = {"authorization": access_test_user_token}
-    response = client.post(
-        f"/events/addTag/{event_id}/{tag_id}/local:1",
-        headers=headers,
-    )
+    response = client.post(f"/events/addTag/{event_id}/{tag_id}/local:1", headers=headers)
     response_json = response.json()
     assert response.status_code == 200
     assert response_json["detail"] == "Success"
@@ -177,8 +178,9 @@ async def test_remove_existing_tag_from_event_fail_read_only_user(
 
 
 @pytest.mark.asyncio
-async def test_edit_existing_event_read_only_user(event_read_only_1,
-                                                  organisation, access_test_user_token, client) -> None:
+async def test_edit_existing_event_read_only_user(
+    event_read_only_1, organisation, access_test_user_token, client
+) -> None:
     request_body = {"info": "updated info"}
     event_id = event_read_only_1.id
     headers = {"authorization": access_test_user_token}

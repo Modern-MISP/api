@@ -49,6 +49,8 @@ async def test_get_all_attributes_read_only_user(
     client,
 ) -> None:
     event_read_only_1.sharing_group_id = sharing_group.id
+    attribute_read_only_1.sharing_group_id = sharing_group.id
+
     await db.commit()
 
     headers = {"authorization": access_test_user_token}
@@ -92,7 +94,7 @@ async def test_add_attribute_valid_data_read_only_user(access_test_user_token, e
 
 @pytest.mark.asyncio
 async def test_add_existing_tag_to_attribute_read_only(
-    db: AsyncSession, access_test_user_token, attribute_read_only_1, access_test_user, organistation, client
+    db: AsyncSession, access_test_user_token, attribute_read_only_1, access_test_user, organisation, client
 ) -> None:
     attribute_id = attribute_read_only_1.id
 
@@ -112,11 +114,11 @@ async def test_add_existing_tag_to_attribute_read_only(
 
 
 @pytest.mark.asyncio
-async def test_remove_existing_tag_from_attribute_read_only_user(access_test_user_token,
-                                                                 event_read_only_1, attribute_read_only_1,
-                                                                 attributetag, organisation, client) -> None:
-    attribute_id = attributetag.attribute_id
-    tag_id = attributetag.tag_id
+async def test_remove_existing_tag_from_attribute_read_only_user(
+    access_test_user_token, event_read_only_1, attribute_read_only_1, tag_read_only_1, organisation, client
+) -> None:
+    attribute_id = attribute_read_only_1.id
+    tag_id = tag_read_only_1.id
     headers = {"authorization": access_test_user_token}
     response = client.post(f"/attributes/removeTag/{attribute_id}/{tag_id}", headers=headers)
 

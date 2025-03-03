@@ -28,6 +28,7 @@ from mmisp.tests.generators.model_generators.user_generator import generate_user
 from mmisp.tests.generators.model_generators.user_setting_generator import generate_user_name
 from mmisp.workflows.graph import Apperance, WorkflowGraph
 from mmisp.workflows.input import WorkflowInput
+from mmisp.tests.generators.model_generators.tag_generator import generate_tag
 from mmisp.workflows.modules import (
     ModuleAction,
     ModuleConfiguration,
@@ -595,6 +596,26 @@ async def event_read_only_1(db, instance_owner_org, access_test_user):
     await db.commit()
 
 
+@pytest_asyncio.fixture
+async def event_read_only_2(db, instance_owner_org, access_test_user):
+    org_id = instance_owner_org.id
+    event = generate_event()
+    event.org_id = org_id
+    event.orgc_id = org_id
+    event.user_id = access_test_user.id
+    event.published = False
+    event.distribution = 0
+
+    db.add(event)
+    await db.commit()
+    await db.refresh(event)
+
+    yield event
+
+    await db.delete(event)
+    await db.commit()
+
+
 @pytest.fixture
 async def attribute_read_only_1(db, instance_owner_org, event_read_only_1):
     event_id = event_read_only_1.id
@@ -611,4 +632,20 @@ async def attribute_read_only_1(db, instance_owner_org, event_read_only_1):
 
     await db.delete(attribute)
     event_read_only_1.attribute_count -= 1
+    await db.commit()
+
+
+@pytest.fixture
+async def tag_read_only_1(db, access_test_user):
+    tag = generate_tag()
+    tag.user_id = access_test_user.id
+    tag.org_id = access_test_user.org_id
+
+    db.add(tag)
+    await db.commit()
+    await db.refresh(tag)
+
+    yield tag
+
+    await db.delete(tag)
     await db.commit()
