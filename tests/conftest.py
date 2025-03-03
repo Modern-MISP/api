@@ -616,6 +616,26 @@ async def event_read_only_2(db, organisation, access_test_user):
     await db.commit()
 
 
+@pytest_asyncio.fixture
+async def event_test_wrong_org(db, site_admin_user):
+    org_id = 9999
+    event = generate_event()
+    event.org_id = org_id
+    event.orgc_id = org_id
+    event.user_id = site_admin_user.id
+    event.published = False
+    event.distribution = 0
+
+    db.add(event)
+    await db.commit()
+    await db.refresh(event)
+
+    yield event
+
+    await db.delete(event)
+    await db.commit()
+
+
 @pytest.fixture
 async def attribute_read_only_1(db, event_read_only_1):
     event_id = event_read_only_1.id
