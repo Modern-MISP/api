@@ -276,6 +276,7 @@ async def set_default_role(
 # and use the new role ID as part of the request body
 @router.put(
     "/admin/users/edit/{user_id}",
+    deprecated=True,
     status_code=status.HTTP_200_OK,
     summary="Assign or reassign a user to a specific role (Deprecated)",
 )
