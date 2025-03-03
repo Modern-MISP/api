@@ -11,6 +11,7 @@ from mmisp.tests.generators.model_generators.tag_generator import generate_tag
 
 @pytest.mark.asyncio
 async def test_get_existing_attribute_read_only_user(
+        role_read_modify_only,
     db: AsyncSession,
     attribute3,
     read_only_user_token,
@@ -25,7 +26,7 @@ async def test_get_existing_attribute_read_only_user(
 
 
 @pytest.mark.asyncio
-async def test_get_existing_attribute_fail_read_only_user(
+async def test_get_existing_attribute_fail_read_only_user(role_read_modify_only,
     db: AsyncSession,
     attribute3,
     read_only_user_token,
@@ -39,6 +40,7 @@ async def test_get_existing_attribute_fail_read_only_user(
 
 @pytest.mark.asyncio
 async def test_get_all_attributes_read_only_user(
+    role_read_modify_only,
     db: AsyncSession,
     event_read_only_1,
     access_test_user_token,
@@ -59,7 +61,9 @@ async def test_get_all_attributes_read_only_user(
 
 
 @pytest.mark.asyncio
-async def test_delete_existing_attribute_read_only_user(access_test_user_token, attribute, client) -> None:
+async def test_delete_existing_attribute_read_only_user(
+    role_read_modify_only, access_test_user_token, attribute, client
+) -> None:
     attribute_id = attribute.id
 
     headers = {"authorization": access_test_user_token}
@@ -69,7 +73,9 @@ async def test_delete_existing_attribute_read_only_user(access_test_user_token, 
 
 
 @pytest.mark.asyncio
-async def test_add_attribute_valid_data_read_only_user(access_test_user_token, event, client) -> None:
+async def test_add_attribute_valid_data_read_only_user(
+    role_read_modify_only, access_test_user_token, event, client
+) -> None:
     request_body = {
         "value": "1.2.3.4",
         "type": "ip-src",
@@ -90,7 +96,7 @@ async def test_add_attribute_valid_data_read_only_user(access_test_user_token, e
 
 @pytest.mark.asyncio
 async def test_add_existing_tag_to_attribute_read_only(
-    db: AsyncSession, access_test_user_token, sharing_group, event, attribute, client
+    role_read_modify_only, db: AsyncSession, access_test_user_token, sharing_group, event, attribute, client
 ) -> None:
     event.sharing_group_id = sharing_group.id
     setattr(attribute, "sharing_group_id", sharing_group.id)
@@ -114,7 +120,7 @@ async def test_add_existing_tag_to_attribute_read_only(
 
 
 @pytest.mark.asyncio
-async def test_remove_existing_tag_from_attribute_read_only_user(
+async def test_remove_existing_tag_from_attribute_read_only_user(role_read_modify_only,
     access_test_user_token, event_read_only_1, attribute, tag_read_only_1, organisation, client
 ) -> None:
     attribute_id = attribute.id

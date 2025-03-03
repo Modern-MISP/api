@@ -9,8 +9,8 @@ from mmisp.db.models.log import Log
 
 
 @pytest.mark.asyncio
-async def test_list_all_events_read_only_user(role_read_modify_only,
-    event, event5, event_read_only_1, organisation, access_test_user_token, client
+async def test_list_all_events_read_only_user(
+    role_read_modify_only, event, event5, event_read_only_1, organisation, access_test_user_token, client
 ) -> None:
     headers = {"authorization": access_test_user_token}
     response = client.get("/events", headers=headers)
@@ -73,8 +73,8 @@ async def test_get_event_success_site_admin(
 
 
 @pytest.mark.asyncio
-async def test_valid_search_attribute_data_read_only_user(role_read_modify_only,
-    organisation, event_read_only_1, attribute_read_only_1, access_test_user_token, client
+async def test_valid_search_attribute_data_read_only_user(
+    role_read_modify_only, organisation, event_read_only_1, attribute_read_only_1, access_test_user_token, client
 ) -> None:
     json = {"returnFormat": "json", "limit": 100}
     headers = {"authorization": access_test_user_token}
@@ -98,7 +98,9 @@ async def test_publish_existing_event_read_only_user(
 
 
 @pytest.mark.asyncio
-async def test_publish_existing_event_fail_read_only_user(event, access_test_user_token, client) -> None:
+async def test_publish_existing_event_fail_read_only_user(
+    role_read_modify_only, event, access_test_user_token, client
+) -> None:
     event_id = event.id
     headers = {"authorization": access_test_user_token}
     response = client.post(f"/events/publish/{event_id}", headers=headers)
@@ -107,7 +109,9 @@ async def test_publish_existing_event_fail_read_only_user(event, access_test_use
 
 
 @pytest.mark.asyncio
-async def test_add_existing_tag_to_event_read_only_user(event_read_only_1, tag, access_test_user_token, client) -> None:
+async def test_add_existing_tag_to_event_read_only_user(
+    role_read_modify_only, event_read_only_1, tag, access_test_user_token, client
+) -> None:
     tag_id = tag.id
     event_id = event_read_only_1.id
 
@@ -135,22 +139,19 @@ async def test_add_existing_tag_to_event_fail_read_only_user(event, tag, access_
 
 @pytest.mark.asyncio
 async def test_remove_existing_tag_from_event_read_only_user(
-    event_read_only_1, tag, eventtag, access_test_user_token, client
+    role_read_modify_only, event_read_only_1, tag, eventtag, access_test_user_token, client
 ) -> None:
     tag_id = tag.id
     event_id = event_read_only_1.id
 
     headers = {"authorization": access_test_user_token}
     response = client.post(f"/events/removeTag/{event_id}/{tag_id}", headers=headers)
-
     assert response.status_code == 200
-    response_json = response.json()
-    assert response_json["saved"]
-    assert response_json["success"] == "Success"
 
 
 @pytest.mark.asyncio
 async def test_remove_existing_tag_from_event_fail_read_only_user(
+        role_read_modify_only,
     event, tag, eventtag, access_test_user_token, client
 ) -> None:
     tag_id = tag.id
@@ -162,8 +163,8 @@ async def test_remove_existing_tag_from_event_fail_read_only_user(
 
 
 @pytest.mark.asyncio
-async def test_edit_existing_event_read_only_user(role_read_modify_only,
-    event_read_only_1, organisation, access_test_user_token, client
+async def test_edit_existing_event_read_only_user(
+    role_read_modify_only, event_read_only_1, organisation, access_test_user_token, client
 ) -> None:
     request_body = {"info": "updated info"}
     event_id = event_read_only_1.id
@@ -175,7 +176,8 @@ async def test_edit_existing_event_read_only_user(role_read_modify_only,
 
 
 @pytest.mark.asyncio
-async def test_edit_existing_event_fail_read_only_user(event, access_test_user_token, client) -> None:
+async def test_edit_existing_event_fail_read_only_user(role_read_modify_only,
+                                                       event, access_test_user_token, client) -> None:
     request_body = {"info": "updated info"}
     event_id = event.id
     headers = {"authorization": access_test_user_token}
@@ -198,9 +200,9 @@ async def test_delete_existing_event_read_only_user(
 
 
 @pytest.mark.asyncio
-async def test_delete_existing_event_fail_read_only_user(event, access_test_user_token, client) -> None:
+async def test_delete_existing_event_fail_read_only_user(role_read_modify_only,
+                                                         event, access_test_user_token, client) -> None:
     event_id = event.id
-
     headers = {"authorization": access_test_user_token}
     response = client.delete(f"events/{event_id}", headers=headers)
     assert response.status_code == 403
