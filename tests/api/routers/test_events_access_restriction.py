@@ -253,3 +253,15 @@ async def test_delete_existing_event_fail_read_only_user(event, access_test_user
 #     print(len(response_json["response"]))
 #     response_json_attribute = response_json["response"][0]
 #     assert "Event" in response_json_attribute
+
+@pytest.mark.asyncio
+async def test_publish_existing_event_site_admin(
+    event_read_only_1, event_read_only_2, site_admin_user_token, client
+) -> None:
+    event_id = event_read_only_2.id
+
+    headers = {"authorization": site_admin_user_token}
+    response = client.post(f"/events/publish/{event_id}", headers=headers)
+    assert response.status_code == 200
+    response_json = response.json()
+    assert response_json["detail"] == "Success"

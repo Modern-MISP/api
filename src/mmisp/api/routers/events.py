@@ -867,7 +867,31 @@ async def _publish_event(
     if isinstance(event_id, uuid.UUID):
         event = await _get_event_by_uuid(event_id, db)
     else:
-        event = await db.get(Event, event_id)
+        result = await db.execute(
+            select(Event)
+            .filter(Event.id == event_id)
+            .filter(Event.can_edit(user))
+            .options(
+                selectinload(Event.org),
+                selectinload(Event.orgc),
+                selectinload(Event.eventtags_galaxy),
+                selectinload(Event.tags),
+                selectinload(Event.eventtags),
+                selectinload(Event.mispobjects),
+                selectinload(Event.attributes).options(
+                    selectinload(Attribute.attributetags_galaxy)
+                    .selectinload(AttributeTag.tag)
+                    .selectinload(Tag.galaxy_cluster)
+                    .options(
+                        selectinload(GalaxyCluster.org),
+                        selectinload(GalaxyCluster.orgc),
+                        selectinload(GalaxyCluster.galaxy),
+                        selectinload(GalaxyCluster.galaxy_elements),
+                    ),
+                ),
+            )
+        )
+        event = result.scalars().one_or_none()
 
     if not event:
         return PublishEventResponse(name="Invalid event.", message="Invalid event.", url=str(request.url.path))
