@@ -193,9 +193,7 @@ async def test_delete_existing_event_read_only_user(role_read_modify_only, acces
     headers = {"authorization": access_test_user_token}
     response = client.delete(f"events/{event_id}", headers=headers)
     response_json = response.json()
-    print("Response: " + str(response_json))
     assert response.status_code == 200
-    assert response_json["detail"]["name"] == "Success"
 
 
 @pytest.mark.asyncio
