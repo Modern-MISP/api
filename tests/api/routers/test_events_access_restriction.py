@@ -86,13 +86,9 @@ async def test_valid_search_attribute_data_read_only_user(
 
 @pytest.mark.asyncio
 async def test_publish_existing_event_read_only_user(
-    role_read_modify_only, event_read_only_1, event_read_only_2, access_test_user, access_test_user_token, client
+    event_read_only_1, event_read_only_2, access_test_user_token, client
 ) -> None:
     event_id = event_read_only_2.id
-    print("Event ID: " + str(event_id))
-    print("EVUser ID: " + str(event_read_only_2.user_id))
-    print("User ID: " + str(access_test_user.id))
-    print("User RoleID: " + str(access_test_user.role_id))
 
     headers = {"authorization": access_test_user_token}
     response = client.post(f"/events/publish/{event_id}", headers=headers)
