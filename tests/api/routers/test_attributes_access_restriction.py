@@ -11,13 +11,16 @@ from mmisp.tests.generators.model_generators.tag_generator import generate_tag
 
 @pytest.mark.asyncio
 async def test_get_existing_attribute_read_only_user(
+    db: AsyncSession,
     event_read_only_1,
     attribute_with_normal_tag,
     organisation,
     access_test_user_token,
     client,
 ) -> None:
-    attribute_id = attribute_with_normal_tag.id
+    attribute, at = attribute_with_normal_tag
+    attribute_id = attribute.id
+
     headers = {"authorization": access_test_user_token}
     response = client.get(f"/attributes/{attribute_id}", headers=headers)
     assert response.status_code == 200
@@ -49,10 +52,7 @@ async def test_get_all_attributes_read_only_user(
     client,
 ) -> None:
     event_read_only_1.sharing_group_id = sharing_group.id
-    attribute_read_only_1.sharing_group_id = sharing_group.id
-
     await db.commit()
-
     headers = {"authorization": access_test_user_token}
     response = client.get("/attributes", headers=headers)
 
@@ -100,7 +100,7 @@ async def test_add_existing_tag_to_attribute_read_only(
 
     tag = generate_tag()
     setattr(tag, "user_id", access_test_user.id)
-    setattr(tag, "org_id", organistation.id)
+    setattr(tag, "org_id", organisation.id)
 
     db.add(tag)
     await db.commit()
@@ -115,9 +115,9 @@ async def test_add_existing_tag_to_attribute_read_only(
 
 @pytest.mark.asyncio
 async def test_remove_existing_tag_from_attribute_read_only_user(
-    access_test_user_token, event_read_only_1, attribute_read_only_1, tag_read_only_1, organisation, client
+    access_test_user_token, event_read_only_1, attribute_with_normal_tag, tag_read_only_1, organisation, client
 ) -> None:
-    attribute_id = attribute_read_only_1.id
+    attribute_id = attribute_with_normal_tag.id
     tag_id = tag_read_only_1.id
     headers = {"authorization": access_test_user_token}
     response = client.post(f"/attributes/removeTag/{attribute_id}/{tag_id}", headers=headers)
