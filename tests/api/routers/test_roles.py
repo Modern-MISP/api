@@ -6,6 +6,9 @@ from sqlalchemy import delete
 from mmisp.db.models.role import Role
 from mmisp.lib.permissions import Permission
 
+from mmisp.commandline_tool import main
+
+
 
 @pytest.mark.asyncio
 async def test_roles_get(client, site_admin_user_token):
@@ -107,6 +110,37 @@ async def test_role_not_found(client, site_admin_user_token):
     response = client.get(f"/roles/{999999}", headers=headers)
 
     assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_setup_standard_roles(db) -> None:
+    await main.setup_db()
+    query_site_admin = select(Role).where(Role.name == "site_admin")
+    site_admin_role = (await db.execute(query_site_admin)).scalar_one_or_none()
+    assert site_admin_role is not None
+    query_admin = select(Role).where(Role.name == "admin")
+    admin_role = (await db.execute(query_admin)).scalar_one_or_none()
+    assert admin_role is not None
+    query_user = select(Role).where(Role.name == "user")
+    user_role = (await db.execute(query_user)).scalar_one_or_none()
+    assert user_role is not None
+    query_admin = select(Role).where(Role.name == "publisher")
+    publisher_role = (await db.execute(query_admin)).scalar_one_or_none()
+    assert publisher_role is not None
+    query_admin = select(Role).where(Role.name == "sync_user")
+    sync_user_role = (await db.execute(query_admin)).scalar_one_or_none()
+    assert sync_user_role is not None
+    query_admin = select(Role).where(Role.name == "read_only")
+    read_only_role = (await db.execute(query_admin)).scalar_one_or_none()
+    assert read_only_role is not None
+
+    await db.delete(site_admin_role)
+    await db.delete(admin_role)
+    await db.delete(user_role)
+    await db.delete(publisher_role)
+    await db.delete(sync_user_role)
+    await db.delete(read_only_role)
+    await db.commit()
 
 
 @pytest.mark.asyncio
