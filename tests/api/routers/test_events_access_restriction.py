@@ -35,7 +35,7 @@ async def test_list_all_events_admin(
 
 @pytest.mark.asyncio
 async def test_get_event_success_read_only_user(
-    event_read_only_1, organisation, access_test_user, access_test_user_token, client
+    role_read_modify_only, access_test_user, event_read_only_1, organisation, access_test_user_token, client
 ) -> None:
     headers = {"authorization": access_test_user_token}
     event_id = event_read_only_1.id
@@ -186,8 +186,9 @@ async def test_edit_existing_event_fail_read_only_user(event, access_test_user_t
 
 
 @pytest.mark.asyncio
-async def test_delete_existing_event_read_only_user(role_read_modify_only, access_test_user,
-                                                    event_read_only_1, access_test_user_token, client) -> None:
+async def test_delete_existing_event_read_only_user(
+    role_read_modify_only, access_test_user, event_read_only_1, access_test_user_token, client
+) -> None:
     event_id = event_read_only_1.id
 
     headers = {"authorization": access_test_user_token}
