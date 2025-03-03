@@ -1,12 +1,17 @@
 import pytest
 
 from mmisp.tests.compatibility_helpers import get_legacy_modern_diff
+from mmisp.api_schemas.roles import RoleAttributeResponse
 
 
 @pytest.mark.asyncio
 async def test_get_all_roles(db, auth_key, client, site_admin_user_token, random_test_role) -> None:
     path = "/roles"
     request_body = None
+
+    role_dict = random_test_role.asdict()
+    role_dict['memory_limit'] = "" if role_dict['memory_limt'] is None else role_dict['memory_limit']
+    RoleAttributeResponse(**role_dict)
 
     assert get_legacy_modern_diff("get", path, request_body, auth_key, client) == {}
 
