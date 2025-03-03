@@ -511,7 +511,7 @@ async def role_read_modify_only(db):
         perm_auth=True,
         perm_site_admin=False,
         perm_regexp_access=False,
-        perm_tagger=False,
+        perm_tagger=True,
         perm_template=False,
         perm_sharing_group=False,
         perm_tag_editor=True,
