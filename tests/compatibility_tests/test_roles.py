@@ -6,8 +6,9 @@ from mmisp.tests.compatibility_helpers import get_legacy_modern_diff
 
 @pytest.mark.asyncio
 async def test_get_all_standard_roles(db, auth_key, client, site_admin_user_token) -> None:
-    # add all standard roles
-    for role in get_standard_roles():
+    roles = get_standard_roles()
+
+    for role in roles:
         await db.add(role)
         
     await db.commit()
@@ -16,7 +17,7 @@ async def test_get_all_standard_roles(db, auth_key, client, site_admin_user_toke
 
     assert get_legacy_modern_diff("get", path, auth_key, client) == {}
 
-    for role in get_standard_roles():
+    for role in roles:
         await db.delete(role)
         
     await db.commit()
