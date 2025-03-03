@@ -620,7 +620,7 @@ async def event_read_only_2(db, instance_owner_org, access_test_user):
 async def attribute_read_only_1(db, instance_owner_org, event_read_only_1):
     event_id = event_read_only_1.id
     attribute = generate_attribute(event_id)
-    attribute.distribution = 4
+    attribute.distribution = 0
     attribute.org_id = instance_owner_org.id
     event_read_only_1.attribute_count += 1
 
