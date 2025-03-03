@@ -9,7 +9,7 @@ from mmisp.db.models.log import Log
 
 
 @pytest.mark.asyncio
-async def test_list_all_events_read_only_user(
+async def test_list_all_events_read_only_user(role_read_modify_only,
     event, event5, event_read_only_1, organisation, access_test_user_token, client
 ) -> None:
     headers = {"authorization": access_test_user_token}
@@ -73,7 +73,7 @@ async def test_get_event_success_site_admin(
 
 
 @pytest.mark.asyncio
-async def test_valid_search_attribute_data_read_only_user(
+async def test_valid_search_attribute_data_read_only_user(role_read_modify_only,
     organisation, event_read_only_1, attribute_read_only_1, access_test_user_token, client
 ) -> None:
     json = {"returnFormat": "json", "limit": 100}
@@ -162,7 +162,7 @@ async def test_remove_existing_tag_from_event_fail_read_only_user(
 
 
 @pytest.mark.asyncio
-async def test_edit_existing_event_read_only_user(
+async def test_edit_existing_event_read_only_user(role_read_modify_only,
     event_read_only_1, organisation, access_test_user_token, client
 ) -> None:
     request_body = {"info": "updated info"}
