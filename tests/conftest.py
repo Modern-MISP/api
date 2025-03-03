@@ -617,11 +617,10 @@ async def event_read_only_2(db, organisation, access_test_user):
 
 
 @pytest.fixture
-async def attribute_read_only_1(db, event_read_only_1, sharing_group):
+async def attribute_read_only_1(db, event_read_only_1):
     event_id = event_read_only_1.id
     attribute = generate_attribute(event_id)
     attribute.distribution = 0
-    attribute.sharing_group = sharing_group.id
     event_read_only_1.attribute_count += 1
 
     db.add(attribute)

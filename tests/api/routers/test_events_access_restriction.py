@@ -85,7 +85,7 @@ async def test_valid_search_attribute_data_read_only_user(
 
 
 @pytest.mark.asyncio
-async def test_publish_existing_event_read_only_user(
+async def test_publish_existing_event_read_only_user(role_read_modify_only,
     event_read_only_1, event_read_only_2, access_test_user_token, client
 ) -> None:
     event_id = event_read_only_2.id
