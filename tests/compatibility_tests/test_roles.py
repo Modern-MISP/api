@@ -1,7 +1,6 @@
 import pytest
 
 from mmisp.lib.standard_roles import get_standard_roles
-from mmisp.db.models.role import Role
 from mmisp.tests.compatibility_helpers import get_legacy_modern_diff
 
 
@@ -9,18 +8,18 @@ from mmisp.tests.compatibility_helpers import get_legacy_modern_diff
 async def test_get_all_standard_roles(db, auth_key, client, site_admin_user_token) -> None:
 
     # add all standard roles
-    for Role in get_standard_roles():
-        db.add(Role)
-
+    for role in get_standard_roles():
+        await db.add(role)
+        
     await db.commit()
 
     path = "/roles"
 
     assert get_legacy_modern_diff("get", path, auth_key, client) == {}
 
-    for Role in get_standard_roles():
-        db.delete(Role)
-
+    for role in get_standard_roles():
+        await db.delete(role)
+        
     await db.commit()
 
 
