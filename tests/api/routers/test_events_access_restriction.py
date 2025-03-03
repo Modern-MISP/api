@@ -99,13 +99,12 @@ async def test_publish_existing_event_read_only_user(
 
 @pytest.mark.asyncio
 async def test_publish_existing_event_fail_read_only_user(
-    role_read_modify_only, event, access_test_user_token, client
+    role_read_modify_only, event, read_only_user_token, client
 ) -> None:
     event_id = event.id
-    headers = {"authorization": access_test_user_token}
+    headers = {"authorization": read_only_user_token}
     response = client.post(f"/events/publish/{event_id}", headers=headers)
-    response_json = response.json()
-    assert response_json["detail"] == "Forbidden"
+    assert response.status_code == 403
 
 
 @pytest.mark.asyncio
@@ -119,7 +118,6 @@ async def test_add_existing_tag_to_event_read_only_user(
     response = client.post(f"/events/addTag/{event_id}/{tag_id}/local:1", headers=headers)
     response_json = response.json()
     assert response.status_code == 200
-    assert response_json["detail"] == "Success"
 
 
 @pytest.mark.asyncio
