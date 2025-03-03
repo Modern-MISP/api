@@ -59,7 +59,8 @@ async def test_get_event_fail_read_only_user(event, access_test_user_token, clie
 
 
 @pytest.mark.asyncio
-async def test_get_event_success_site_admin(event_read_only_1, site_admin_user_token, client) -> None:
+async def test_get_event_success_site_admin(event_read_only_1, attribute_read_only_1,
+                                            tag_read_only_1, site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
     event_id = event_read_only_1.id
     response = client.get(f"/events/{event_id}", headers=headers)
