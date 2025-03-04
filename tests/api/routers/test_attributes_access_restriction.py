@@ -106,8 +106,8 @@ async def test_add_existing_tag_to_attribute_read_only(
 
     attribute_id = attribute.id
     tag = generate_tag()
-    setattr(tag, "user_id", 1)
-    setattr(tag, "org_id", 1)
+    setattr(tag, "user_id", event.user_id)
+    setattr(tag, "org_id", event.org_id)
 
     db.add(tag)
     await db.commit()
