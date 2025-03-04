@@ -5,7 +5,7 @@ from mmisp.api_schemas.roles import RoleAttributeResponse
 
 
 @pytest.mark.asyncio
-async def test_get_all_roles(db, auth_key, client, site_admin_user_token, random_test_role) -> None:
+async def test_get_all_roles(db, auth_key, client, site_admin_user_token) -> None:
     path = "/roles"
     request_body = None
 
