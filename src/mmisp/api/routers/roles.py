@@ -335,7 +335,12 @@ async def _get_role(db: Session, role_id: int) -> GetRoleResponse:
     if role is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Role with ID {role_id} not found.")
 
-    return GetRoleResponse(Role=RoleAttributeResponse(**role.__dict__))
+    # Compatibility-vallidation: mem limit and and ex time can't be Null
+    role_dict = role.asdict()
+    role_dict['memory_limit'] = "" if role_dict.get('memory_limit') is None else role_dict['memory_limit']
+    role_dict['max_execution_time'] = "" if role_dict.get('max_execution_time') is None else role_dict['max_execution_time']
+
+    return GetRoleResponse(Role=RoleAttributeResponse(**role_dict))
 
 
 async def _add_role(db: Session, body: AddRoleBody) -> AddRoleResponse:
