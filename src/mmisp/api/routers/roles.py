@@ -335,7 +335,7 @@ async def _get_role(db: Session, role_id: int) -> GetRoleResponse:
     if role is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Role with ID {role_id} not found.")
 
-    # Compatibility-vallidation: mem limit and and ex time can't be Null
+    # Compatibility-vallidation: mem limit and and ex time can't be None
     role_dict = role.asdict()
     role_dict['memory_limit'] = "" if role_dict.get('memory_limit') is None else role_dict['memory_limit']
     role_dict['max_execution_time'] = "" if role_dict.get('max_execution_time') is None else role_dict['max_execution_time']
@@ -352,7 +352,7 @@ async def _add_role(db: Session, body: AddRoleBody) -> AddRoleResponse:
     # ID 1-6 is reserved for the predefined standard roles
     role_id = max(7, (max_id + 1) if max_id is not None else 7)
 
-    new_role = Role(
+    role = Role(
         id=role_id,
         name=body.name,
         created=datetime.now(timezone.utc),
@@ -387,14 +387,19 @@ async def _add_role(db: Session, body: AddRoleBody) -> AddRoleResponse:
         perm_view_feed_correlations=body.perm_view_feed_correlations,
     )
 
-    db.add(new_role)
+    db.add(role)
     await db.commit()
-    await db.refresh(new_role)
+    await db.refresh(role)
+
+    # Compatibility-vallidation: mem limit and and ex time can't be None
+    role_dict = role.asdict()
+    role_dict['memory_limit'] = "" if role_dict.get('memory_limit') is None else role_dict['memory_limit']
+    role_dict['max_execution_time'] = "" if role_dict.get('max_execution_time') is None else role_dict['max_execution_time']
 
     return AddRoleResponse(
-        Role=RoleAttributeResponse(**new_role.__dict__),
+        Role=RoleAttributeResponse(**role_dict),
         created=True,
-        message=f"Role '{new_role.name}' successfully created.",
+        message=f"Role '{role.name}' successfully created.",
     )
 
 
