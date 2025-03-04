@@ -318,7 +318,13 @@ async def _get_roles(db: Session) -> list[GetRolesResponse]:
     role_list: list[GetRolesResponse] = []
 
     for role in roles:
-        role_list.append(GetRolesResponse(Role=RoleAttributeResponse(**role.__dict__)))
+
+        # Compatibility-vallidation: mem limit and and ex time can't be Null
+        role_dict = role.asdict()
+        role_dict['memory_limit'] = "" if role_dict.get('memory_limit') is None else role_dict['memory_limit']
+        role_dict['max_execution_time'] = "" if role_dict.get('max_execution_time') is None else role_dict['max_execution_time']
+
+        role_list.append(GetRolesResponse(Role=RoleAttributeResponse(**role_dict)))
     return role_list
 
 
