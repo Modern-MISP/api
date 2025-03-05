@@ -1,7 +1,6 @@
 import pytest
 
 from mmisp.tests.compatibility_helpers import get_legacy_modern_diff
-from mmisp.api_schemas.roles import RoleAttributeResponse
 
 
 @pytest.mark.asyncio
@@ -12,14 +11,12 @@ async def test_get_all_roles(db, auth_key, client, site_admin_user_token) -> Non
     assert get_legacy_modern_diff("get", path, request_body, auth_key, client) == {}
 
 
-"""
-#I AM NOT SURE HOW THAT WORKS YET BUT WILL FIGURE IT OUT
-
 @pytest.mark.asyncio
-async def test_get_specific_role(db, auth_key, client, site_admin_user_token, role_read_only) -> None:
+async def test_get_specific_role(db, auth_key, client, site_admin_user_token) -> None:
     path = "/roles/{6}"
+    request_body = None
 
-    assert get_legacy_modern_diff("get", path, auth_key, client) == {}
+    assert get_legacy_modern_diff("get", path, request_body, auth_key, client) == {}
 
 
 @pytest.mark.asyncio
@@ -63,22 +60,26 @@ async def test_add_role(db, auth_key, client, site_admin_user_token) -> None:
 
 
 @pytest.mark.asyncio
-async def test_delete_role_success(db, auth_key, client, site_admin_user_token, random_test_role) -> None:
-    path = "/admin/roles/delete/{42}"
+async def test_delete_role(db, auth_key, client, site_admin_user_token) -> None:
+    path = "/admin/roles/delete/{5}"
+    request_body = None
 
-    assert get_legacy_modern_diff("delete", path, auth_key, client) == {}
+    assert get_legacy_modern_diff("delete", path,request_body, auth_key, client) == {}
 
 
+'''
 @pytest.mark.asyncio
 async def test_delete_role_assigned_to_user(db, auth_key, client, site_admin_user_token, random_test_role, random_test_user) -> None:
     path = "/admin/roles/delete/{42}"
+    request_body = None
 
-    assert get_legacy_modern_diff("delete", path, auth_key, client) == {}
+    assert get_legacy_modern_diff("delete", path,request_body, auth_key, client) == {}
+'''
 
 
 @pytest.mark.asyncio
-async def test_edit_role(db, auth_key, client, site_admin_user_token, random_test_role) -> None:
-    path = "/admin/roles/edit/{42}"
+async def test_edit_role(db, auth_key, client, site_admin_user_token) -> None:
+    path = "/admin/roles/edit/{5}"
 
     request_body = {"name": "updated_role_name", "memory_limit": "42MB"}
 
@@ -86,12 +87,9 @@ async def test_edit_role(db, auth_key, client, site_admin_user_token, random_tes
 
 
 @pytest.mark.asyncio
-async def test_set_default_role(db, auth_key, client, site_admin_user_token, random_test_role) -> None:
-    path = "/admin/roles/setDefault/{42}"
+async def test_set_default_role(db, auth_key, client, site_admin_user_token) -> None:
+    path = "/admin/roles/setDefault/{5}"
 
-    request_body = {"name": "updated_role_name", "memory_limit": "42MB"}
+    request_body = None
 
     assert get_legacy_modern_diff("put", path, request_body, auth_key, client) == {}
-
-
-"""
