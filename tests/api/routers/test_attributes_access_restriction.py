@@ -75,9 +75,7 @@ async def test_delete_existing_attribute_read_only_user(
 
 
 @pytest.mark.asyncio
-async def test_add_attribute_fail_read_only_user(
-    role_read_modify_only, access_test_user_token, event, client
-) -> None:
+async def test_add_attribute_fail_read_only_user(role_read_modify_only, access_test_user_token, event, client) -> None:
     request_body = {
         "value": "1.2.3.4",
         "type": "ip-src",
@@ -98,18 +96,24 @@ async def test_add_attribute_fail_read_only_user(
 
 @pytest.mark.asyncio
 async def test_add_existing_tag_to_attribute_read_only(
-    role_read_modify_only, db: AsyncSession, access_test_user_token, sharing_group, event, attribute, client
+    role_read_modify_only,
+    db: AsyncSession,
+    access_test_user_token,
+    sharing_group,
+    event_read_only_1,
+    attribute_read_only_1,
+    tag_read_only_1,
+    client,
 ) -> None:
-    event.sharing_group_id = sharing_group.id
-    setattr(attribute, "sharing_group_id", sharing_group.id)
+    event_read_only_1.sharing_group_id = sharing_group.id
+    setattr(attribute_read_only_1, "sharing_group_id", sharing_group.id)
 
     await db.commit()
 
-    attribute_id = attribute.id
+    attribute_id = attribute_read_only_1.id
     tag = generate_tag()
-    setattr(tag, "user_id", event.user_id)
-    setattr(tag, "org_id", event.org_id)
-
+    setattr(tag, "user_id", event_read_only_1.user_id)
+    setattr(tag, "org_id", event_read_only_1.org_id)
     db.add(tag)
     await db.commit()
     await db.refresh(tag)
@@ -120,10 +124,16 @@ async def test_add_existing_tag_to_attribute_read_only(
     response = client.post(f"/attributes/addTag/{attribute_id}/{tag_id}/local:1", headers=headers)
     assert response.status_code == 200
 
+
 @pytest.mark.asyncio
 async def test_remove_existing_tag_from_attribute_read_only_user(
-    role_read_modify_only, access_test_user_token, event_read_only_1, attribute_read_only_1, tag_read_only_1,
-        organisation, client
+    role_read_modify_only,
+    access_test_user_token,
+    event_read_only_1,
+    attribute_read_only_1,
+    tag_read_only_1,
+    organisation,
+    client,
 ) -> None:
     attribute_id = attribute_read_only_1.id
     tag_id = tag_read_only_1.id
@@ -132,10 +142,16 @@ async def test_remove_existing_tag_from_attribute_read_only_user(
 
     assert response.status_code == 200
 
+
 @pytest.mark.asyncio
 async def test_remove_existing_tag_from_attribute_fail_read_only_user(
-    role_read_modify_only, access_test_user_token, event_test_wrong_org, attribute_read_only_2, tag_read_only_1,
-        organisation, client
+    role_read_modify_only,
+    access_test_user_token,
+    event_test_wrong_org,
+    attribute_read_only_2,
+    tag_read_only_1,
+    organisation,
+    client,
 ) -> None:
     attribute_id = attribute_read_only_2.id
     tag_id = tag_read_only_1.id

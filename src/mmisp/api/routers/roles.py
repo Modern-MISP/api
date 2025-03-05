@@ -318,11 +318,12 @@ async def _get_roles(db: Session) -> list[GetRolesResponse]:
     role_list: list[GetRolesResponse] = []
 
     for role in roles:
-
         # Compatibility-vallidation: mem limit and and ex time can't be Null
         role_dict = role.asdict()
-        role_dict['memory_limit'] = "" if role_dict.get('memory_limit') is None else role_dict['memory_limit']
-        role_dict['max_execution_time'] = "" if role_dict.get('max_execution_time') is None else role_dict['max_execution_time']
+        role_dict["memory_limit"] = "" if role_dict.get("memory_limit") is None else role_dict["memory_limit"]
+        role_dict["max_execution_time"] = (
+            "" if role_dict.get("max_execution_time") is None else role_dict["max_execution_time"]
+        )
 
         role_list.append(GetRolesResponse(Role=RoleAttributeResponse(**role_dict)))
     return role_list
@@ -337,8 +338,10 @@ async def _get_role(db: Session, role_id: int) -> GetRoleResponse:
 
     # Compatibility-vallidation: mem limit and and ex time can't be None
     role_dict = role.asdict()
-    role_dict['memory_limit'] = "" if role_dict.get('memory_limit') is None else role_dict['memory_limit']
-    role_dict['max_execution_time'] = "" if role_dict.get('max_execution_time') is None else role_dict['max_execution_time']
+    role_dict["memory_limit"] = "" if role_dict.get("memory_limit") is None else role_dict["memory_limit"]
+    role_dict["max_execution_time"] = (
+        "" if role_dict.get("max_execution_time") is None else role_dict["max_execution_time"]
+    )
 
     return GetRoleResponse(Role=RoleAttributeResponse(**role_dict))
 
@@ -393,8 +396,10 @@ async def _add_role(db: Session, body: AddRoleBody) -> AddRoleResponse:
 
     # Compatibility-vallidation: mem limit and and ex time can't be None
     role_dict = role.asdict()
-    role_dict['memory_limit'] = "" if role_dict.get('memory_limit') is None else role_dict['memory_limit']
-    role_dict['max_execution_time'] = "" if role_dict.get('max_execution_time') is None else role_dict['max_execution_time']
+    role_dict["memory_limit"] = "" if role_dict.get("memory_limit") is None else role_dict["memory_limit"]
+    role_dict["max_execution_time"] = (
+        "" if role_dict.get("max_execution_time") is None else role_dict["max_execution_time"]
+    )
 
     return AddRoleResponse(
         Role=RoleAttributeResponse(**role_dict),
@@ -430,8 +435,10 @@ async def _delete_role(db: Session, role_id: int) -> DeleteRoleResponse:
 
     # Compatibility-vallidation: mem limit and and ex time can't be None
     role_dict = role.asdict()
-    role_dict['memory_limit'] = "" if role_dict.get('memory_limit') is None else role_dict['memory_limit']
-    role_dict['max_execution_time'] = "" if role_dict.get('max_execution_time') is None else role_dict['max_execution_time']
+    role_dict["memory_limit"] = "" if role_dict.get("memory_limit") is None else role_dict["memory_limit"]
+    role_dict["max_execution_time"] = (
+        "" if role_dict.get("max_execution_time") is None else role_dict["max_execution_time"]
+    )
 
     return DeleteRoleResponse(
         Role=RoleAttributeResponse(**role_dict),
@@ -528,8 +535,10 @@ async def _update_role(db: Session, role_id: int, body: EditRoleBody) -> EditRol
 
     # Compatibility-vallidation: mem limit and and ex time can't be None
     role_dict = role.asdict()
-    role_dict['memory_limit'] = "" if role_dict.get('memory_limit') is None else role_dict['memory_limit']
-    role_dict['max_execution_time'] = "" if role_dict.get('max_execution_time') is None else role_dict['max_execution_time']
+    role_dict["memory_limit"] = "" if role_dict.get("memory_limit") is None else role_dict["memory_limit"]
+    role_dict["max_execution_time"] = (
+        "" if role_dict.get("max_execution_time") is None else role_dict["max_execution_time"]
+    )
 
     return EditRoleResponse(
         role=RoleAttributeResponse(**role_dict),
@@ -640,8 +649,10 @@ async def _set_default_role(auth: Auth, db: Session, role_id: int) -> DefaultRol
 
     # Compatibility-vallidation: mem limit and and ex time can't be None
     role_dict = role.asdict()
-    role_dict['memory_limit'] = "" if role_dict.get('memory_limit') is None else role_dict['memory_limit']
-    role_dict['max_execution_time'] = "" if role_dict.get('max_execution_time') is None else role_dict['max_execution_time']
+    role_dict["memory_limit"] = "" if role_dict.get("memory_limit") is None else role_dict["memory_limit"]
+    role_dict["max_execution_time"] = (
+        "" if role_dict.get("max_execution_time") is None else role_dict["max_execution_time"]
+    )
 
     return DefaultRoleResponse(
         Role=RoleAttributeResponse(**role_dict),

@@ -671,6 +671,7 @@ async def attribute_read_only_2(db, event_test_wrong_org):
     event_test_wrong_org.attribute_count -= 1
     await db.commit()
 
+
 @pytest_asyncio.fixture
 async def tag_read_only_1(db, access_test_user):
     tag = generate_tag()
