@@ -15,12 +15,12 @@ async def test_get_existing_attribute_read_only_user(
     db: AsyncSession,
     event_read_only_1,
     attribute_read_only_1,
-    read_only_user_token,
+    access_test_user_token,
     client,
 ) -> None:
     attribute_id = attribute_read_only_1.id
 
-    headers = {"authorization": read_only_user_token}
+    headers = {"authorization": access_test_user_token}
     response = client.get(f"/attributes/{attribute_id}", headers=headers)
 
     assert response.status_code == 200
@@ -139,7 +139,6 @@ async def test_remove_existing_tag_from_attribute_read_only_user(
     tag_id = tag_read_only_1.id
     headers = {"authorization": access_test_user_token}
     response = client.post(f"/attributes/removeTag/{attribute_id}/{tag_id}", headers=headers)
-
     assert response.status_code == 200
 
 
