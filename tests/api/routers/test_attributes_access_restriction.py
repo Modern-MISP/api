@@ -13,11 +13,11 @@ from mmisp.tests.generators.model_generators.tag_generator import generate_tag
 async def test_get_existing_attribute_read_only_user(
     role_read_modify_only,
     db: AsyncSession,
-    attribute3,
+    attribute_read_only_1,
     read_only_user_token,
     client,
 ) -> None:
-    attribute_id = attribute3.id
+    attribute_id = attribute_read_only_1.id
 
     headers = {"authorization": read_only_user_token}
     response = client.get(f"/attributes/{attribute_id}", headers=headers)
@@ -29,11 +29,11 @@ async def test_get_existing_attribute_read_only_user(
 async def test_get_existing_attribute_fail_read_only_user(
     role_read_modify_only,
     db: AsyncSession,
-    attribute3,
+    attribute_read_only_1,
     read_only_user_token,
     client,
 ) -> None:
-    attribute_id = attribute3.id
+    attribute_id = attribute_read_only_1.id
     headers = {"authorization": read_only_user_token}
     response = client.get(f"/attributes/{attribute_id}", headers=headers)
     assert response.status_code == 403

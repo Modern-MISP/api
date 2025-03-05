@@ -636,7 +636,7 @@ async def event_test_wrong_org(db, site_admin_user):
     await db.commit()
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def attribute_read_only_1(db, event_read_only_1):
     event_id = event_read_only_1.id
     attribute = generate_attribute(event_id)

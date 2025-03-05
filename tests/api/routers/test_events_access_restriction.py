@@ -87,7 +87,7 @@ async def test_valid_search_attribute_data_read_only_user(
 
 
 @pytest.mark.asyncio
-async def test_publish_existing_event_read_only_user(
+async def test_publish_existing_event_read_only_user(site_admin_role,
     role_read_modify_only, event_read_only_1, event_read_only_2, access_test_user_token, client
 ) -> None:
     event_id = event_read_only_2.id
@@ -160,7 +160,7 @@ async def test_remove_existing_tag_from_event_fail_read_only_user(
 
 
 @pytest.mark.asyncio
-async def test_edit_existing_event_read_only_user(
+async def test_edit_existing_event_read_only_user(site_admin_role,
     role_read_modify_only, event_read_only_1, organisation, access_test_user_token, client
 ) -> None:
     request_body = {"info": "updated info"}
