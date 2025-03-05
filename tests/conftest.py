@@ -654,7 +654,7 @@ async def attribute_read_only_1(db, event_read_only_1):
     await db.commit()
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def tag_read_only_1(db, access_test_user):
     tag = generate_tag()
     tag.user_id = access_test_user.id
