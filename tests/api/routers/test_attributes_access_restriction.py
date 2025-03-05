@@ -124,7 +124,7 @@ async def test_add_existing_tag_to_attribute_read_only(
 async def test_remove_existing_tag_from_attribute_read_only_user(
     role_read_modify_only, access_test_user_token, event_read_only_1, attribute_read_only_2, tag_read_only_1, organisation, client
 ) -> None:
-    attribute_id = attribute_read_only_1.id
+    attribute_id = attribute_read_only_2.id
     tag_id = tag_read_only_1.id
     headers = {"authorization": access_test_user_token}
     response = client.post(f"/attributes/removeTag/{attribute_id}/{tag_id}", headers=headers)
