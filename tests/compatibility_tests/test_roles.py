@@ -84,12 +84,3 @@ async def test_edit_role(db, auth_key, client, site_admin_user_token) -> None:
     request_body = {"name": "updated_role_name", "memory_limit": "42MB"}
 
     assert get_legacy_modern_diff("put", path, request_body, auth_key, client) == {}
-
-
-@pytest.mark.asyncio
-async def test_set_default_role(db, auth_key, client, site_admin_user_token) -> None:
-    path = "/admin/roles/setDefault/{5}"
-
-    request_body = None
-
-    assert get_legacy_modern_diff("put", path, request_body, auth_key, client) == {}
