@@ -655,11 +655,11 @@ async def attribute_read_only_1(db, event_read_only_1):
 
 
 @pytest_asyncio.fixture
-async def attribute_read_only_2(db, event5):
-    event_id = event5.id
+async def attribute_read_only_2(db, event_test_wrong_org):
+    event_id = event_test_wrong_org.id
     attribute = generate_attribute(event_id)
     attribute.distribution = 0
-    event5.attribute_count += 1
+    event_test_wrong_org.attribute_count += 1
 
     db.add(attribute)
     await db.commit()
@@ -668,7 +668,7 @@ async def attribute_read_only_2(db, event5):
     yield attribute
 
     await db.delete(attribute)
-    event5.attribute_count -= 1
+    event_test_wrong_org.attribute_count -= 1
     await db.commit()
 
 @pytest_asyncio.fixture

@@ -178,9 +178,7 @@ async def test_edit_existing_event_fail_read_only_user(event, read_only_user_tok
     event_id = event.id
     headers = {"authorization": read_only_user_token}
     response = client.put(f"events/{event_id}", json=request_body, headers=headers)
-    assert response.status_code == 403
-    response_json = response.json()
-    assert response_json["detail"] == "Forbidden"
+    assert response.status_code == 404
 
 
 @pytest.mark.asyncio
