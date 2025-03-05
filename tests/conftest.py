@@ -655,6 +655,23 @@ async def attribute_read_only_1(db, event_read_only_1):
 
 
 @pytest_asyncio.fixture
+async def attribute_read_only_2(db, event5):
+    event_id = event5.id
+    attribute = generate_attribute(event_id)
+    attribute.distribution = 0
+    event5.attribute_count += 1
+
+    db.add(attribute)
+    await db.commit()
+    await db.refresh(attribute)
+
+    yield attribute
+
+    await db.delete(attribute)
+    event5.attribute_count -= 1
+    await db.commit()
+
+@pytest_asyncio.fixture
 async def tag_read_only_1(db, access_test_user):
     tag = generate_tag()
     tag.user_id = access_test_user.id

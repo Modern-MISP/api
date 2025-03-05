@@ -122,7 +122,7 @@ async def test_add_existing_tag_to_attribute_read_only(
 
 @pytest.mark.asyncio
 async def test_remove_existing_tag_from_attribute_read_only_user(
-    role_read_modify_only, access_test_user_token, event_read_only_1, attribute_read_only_1, tag_read_only_1, organisation, client
+    role_read_modify_only, access_test_user_token, event_read_only_1, attribute_read_only_2, tag_read_only_1, organisation, client
 ) -> None:
     attribute_id = attribute_read_only_1.id
     tag_id = tag_read_only_1.id
