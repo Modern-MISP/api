@@ -428,8 +428,13 @@ async def _delete_role(db: Session, role_id: int) -> DeleteRoleResponse:
     await db.delete(role)
     await db.commit()
 
+    # Compatibility-vallidation: mem limit and and ex time can't be None
+    role_dict = role.asdict()
+    role_dict['memory_limit'] = "" if role_dict.get('memory_limit') is None else role_dict['memory_limit']
+    role_dict['max_execution_time'] = "" if role_dict.get('max_execution_time') is None else role_dict['max_execution_time']
+
     return DeleteRoleResponse(
-        Role=RoleAttributeResponse(**role.__dict__),
+        Role=RoleAttributeResponse(**role_dict),
         saved=True,
         success=True,
         name="Role deleted",
@@ -521,8 +526,13 @@ async def _update_role(db: Session, role_id: int, body: EditRoleBody) -> EditRol
     await db.commit()
     await db.refresh(role)
 
+    # Compatibility-vallidation: mem limit and and ex time can't be None
+    role_dict = role.asdict()
+    role_dict['memory_limit'] = "" if role_dict.get('memory_limit') is None else role_dict['memory_limit']
+    role_dict['max_execution_time'] = "" if role_dict.get('max_execution_time') is None else role_dict['max_execution_time']
+
     return EditRoleResponse(
-        role=RoleAttributeResponse(**role.__dict__),
+        role=RoleAttributeResponse(**role_dict),
         updated=True,
         message=f"Role with ID {role_id} successfully updated.",
     )
@@ -628,8 +638,13 @@ async def _set_default_role(auth: Auth, db: Session, role_id: int) -> DefaultRol
     role.default_role = True
     await db.commit()
 
+    # Compatibility-vallidation: mem limit and and ex time can't be None
+    role_dict = role.asdict()
+    role_dict['memory_limit'] = "" if role_dict.get('memory_limit') is None else role_dict['memory_limit']
+    role_dict['max_execution_time'] = "" if role_dict.get('max_execution_time') is None else role_dict['max_execution_time']
+
     return DefaultRoleResponse(
-        Role=RoleAttributeResponse(**role.__dict__),
+        Role=RoleAttributeResponse(**role_dict),
         saved=True,
         success=True,
         name="Default Role Changed",
