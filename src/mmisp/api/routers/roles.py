@@ -532,7 +532,7 @@ async def _reinstate_role(auth: Auth, db: Session, role_id: int) -> ReinstateRol
 
     db.add(role)
 
-    # The reinstated read-only role is no longer the default role
+    # The reinstated read-only role (id 6) is no longer the default role
     if role_id == 6:
         role.default_role = False
 
