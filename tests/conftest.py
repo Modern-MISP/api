@@ -1,5 +1,6 @@
 from contextlib import ExitStack
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from typing import Self, Tuple
 
 import pytest
@@ -8,27 +9,24 @@ from fastapi.testclient import TestClient
 from icecream import ic
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from datetime import datetime, timezone
-from mmisp.db.models.role import Role
-from mmisp.db.models.user import User
-
 import mmisp.lib.standard_roles as standard_roles
-
 from mmisp.api.auth import encode_token
 from mmisp.api.main import init_app
 from mmisp.db.models.admin_setting import AdminSetting
 from mmisp.db.models.event import EventTag
 from mmisp.db.models.galaxy_cluster import GalaxyCluster
+from mmisp.db.models.role import Role
 from mmisp.db.models.sharing_group import SharingGroupOrg, SharingGroupServer
+from mmisp.db.models.user import User
 from mmisp.db.models.workflow import Workflow
 from mmisp.tests.fixtures import *  # noqa
 from mmisp.tests.generators.model_generators.attribute_generator import generate_attribute
 from mmisp.tests.generators.model_generators.event_generator import generate_event
+from mmisp.tests.generators.model_generators.tag_generator import generate_tag
 from mmisp.tests.generators.model_generators.user_generator import generate_user
 from mmisp.tests.generators.model_generators.user_setting_generator import generate_user_name
 from mmisp.workflows.graph import Apperance, WorkflowGraph
 from mmisp.workflows.input import WorkflowInput
-from mmisp.tests.generators.model_generators.tag_generator import generate_tag
 from mmisp.workflows.modules import (
     ModuleAction,
     ModuleConfiguration,
@@ -578,7 +576,7 @@ def access_test_user_token(access_test_user):
 
 @pytest_asyncio.fixture
 async def event_read_only_1(db, organisation, access_test_user):
-    org_id = organisation.id
+    org_id = access_test_user.org_id
     event = generate_event()
     event.org_id = org_id
     event.orgc_id = org_id
