@@ -255,9 +255,39 @@ async def test_update_role_success(client, site_admin_user_token, random_test_ro
 
     role_id = random_test_role.id
 
-    update_data = {"name": "updated_role_name", "memory_limit": "42MB"}
+    update_data = {
+        "name": "updated_role_name",
+        "perm_add": True,
+        "perm_modify": False,
+        "perm_modify_org": True,
+        "perm_publish": False,
+        "perm_delegate": True,
+        "perm_sync": False,
+        "perm_admin": True,
+        "perm_audit": False,
+        "perm_auth": True,
+        "perm_site_admin": False,
+        "perm_regexp_access": True,
+        "perm_tagger": False,
+        "perm_template": True,
+        "perm_sharing_group": False,
+        "perm_tag_editor": True,
+        "perm_sighting": False,
+        "perm_object_template": True,
+        "default_role": False,
+        "memory_limit": "42",
+        "max_execution_time": "30",
+        "restricted_to_site_admin": False,
+        "perm_publish_zmq": True,
+        "perm_publish_kafka": False,
+        "perm_decaying": True,
+        "enforce_rate_limit": False,
+        "perm_galaxy_editor": False,
+        "perm_warninglist": True,
+        "perm_view_feed_correlations": False
+    }
 
-    response = client.put(f"/admin/roles/edit/{42}", json=update_data, headers=headers)
+    response = client.put(f"/admin/roles/edit/{role_id}", json=update_data, headers=headers)
 
     assert response.status_code == 200
     response_json = response.json()
@@ -265,7 +295,34 @@ async def test_update_role_success(client, site_admin_user_token, random_test_ro
     assert response_json["updated"] is True
     assert response_json["message"] == f"Role with ID {role_id} successfully updated."
     assert response_json["role"]["name"] == "updated_role_name"
-    assert response_json["role"]["memory_limit"] == "42MB"
+    assert response_json["role"]["memory_limit"] == "42"
+    assert response_json["role"]["max_execution_time"] == "30"
+    assert response_json["role"]["restricted_to_site_admin"] is False
+    assert response_json["role"]["default_role"] is False
+    assert response_json["role"]["perm_add"] is True
+    assert response_json["role"]["perm_modify"] is False
+    assert response_json["role"]["perm_modify_org"] is True
+    assert response_json["role"]["perm_publish"] is False
+    assert response_json["role"]["perm_delegate"] is True
+    assert response_json["role"]["perm_sync"] is False
+    assert response_json["role"]["perm_admin"] is True
+    assert response_json["role"]["perm_audit"] is False
+    assert response_json["role"]["perm_auth"] is True
+    assert response_json["role"]["perm_site_admin"] is False
+    assert response_json["role"]["perm_regexp_access"] is True
+    assert response_json["role"]["perm_tagger"] is False
+    assert response_json["role"]["perm_template"] is True
+    assert response_json["role"]["perm_sharing_group"] is False
+    assert response_json["role"]["perm_tag_editor"] is True
+    assert response_json["role"]["perm_sighting"] is False
+    assert response_json["role"]["perm_object_template"] is True
+    assert response_json["role"]["perm_publish_zmq"] is True
+    assert response_json["role"]["perm_publish_kafka"] is False
+    assert response_json["role"]["perm_decaying"] is True
+    assert response_json["role"]["enforce_rate_limit"] is False
+    assert response_json["role"]["perm_galaxy_editor"] is False
+    assert response_json["role"]["perm_warninglist"] is True
+    assert response_json["role"]["perm_view_feed_correlations"] is False
 
 
 @pytest.mark.asyncio
