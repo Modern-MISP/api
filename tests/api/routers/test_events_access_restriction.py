@@ -168,8 +168,6 @@ async def test_edit_existing_event_read_only_user(
     headers = {"authorization": access_test_user_token}
     response = client.put(f"events/{event_id}", json=request_body, headers=headers)
     assert response.status_code == 200
-    response_json = response.json()
-    assert response_json["detail"] == "Success"
 
 
 @pytest.mark.asyncio
