@@ -220,6 +220,12 @@ async def test_delete_role_success(client, site_admin_user_token, random_test_ro
     assert response_json["message"] == "Role deleted"
     assert response_json["id"] == role_id
 
+    await db.commit()
+    result = await db.execute(select(Role).where(Role.id == 42))
+    role = result.scalar_one_or_none()
+
+    assert role is None
+
 
 @pytest.mark.asyncio
 async def test_delete_role_not_found(client, site_admin_user_token):
