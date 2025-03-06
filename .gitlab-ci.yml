@@ -89,6 +89,7 @@ pytest:
     - ENV_FILE=.env.test.lite pytest --junitxml=report.xml --test-group-count $CI_NODE_TOTAL --test-group=$CI_NODE_INDEX  --cov --cov-report= tests/api/routers
   variables:
     COVERAGE_FILE: ".coverage.${CI_NODE_INDEX}"
+    DEBUG: true
   artifacts:
       when: always
       paths:
