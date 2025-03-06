@@ -649,7 +649,9 @@ async def _update_event(
                 selectinload(Event.orgc),
                 selectinload(Event.eventtags_galaxy),
                 selectinload(Event.tags),
-                selectinload(Event.eventtags),
+                selectinload(Event.eventtags).options(
+                    selectinload(Eventtag.tag)
+                ),
                 selectinload(Event.mispobjects),
                 selectinload(Event.attributes).options(
                     selectinload(Attribute.attributetags_galaxy)
