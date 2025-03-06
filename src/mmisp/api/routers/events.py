@@ -650,7 +650,7 @@ async def _update_event(
                 selectinload(Event.eventtags_galaxy),
                 selectinload(Event.tags),
                 selectinload(Event.eventtags).options(
-                    selectinload(Eventtag.tag)
+                    selectinload(EventTag.tag)
                 ),
                 selectinload(Event.mispobjects),
                 selectinload(Event.attributes).options(
