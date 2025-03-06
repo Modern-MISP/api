@@ -491,8 +491,6 @@ async def _update_role(db: Session, role_id: int, body: EditRoleBody) -> EditRol
         role.perm_decaying = body.perm_decaying
     if body.enforce_rate_limit is not None:
         role.enforce_rate_limit = body.enforce_rate_limit
-    if body.rate_limit_count is not None:
-        role.rate_limit_count = body.rate_limit_count
     if body.perm_galaxy_editor is not None:
         role.perm_galaxy_editor = body.perm_galaxy_editor
     if body.perm_warninglist is not None:
