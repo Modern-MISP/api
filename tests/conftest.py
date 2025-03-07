@@ -877,7 +877,7 @@ async def access_test_objects(db, site_admin_user, role_read_only):
     event_read_only_user = generate_event()
     event_read_only_user.org_id = org_read_only.id
     event_read_only_user.orgc_id = org_read_only.id
-    event_read_only_user.user_id = default_user_id
+    event_read_only_user.user_id = site_admin_user.id
     event_read_only_user.published = True
     event_read_only_user.distribution = EventDistributionLevels.OWN_ORGANIZATION
 
