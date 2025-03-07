@@ -293,8 +293,8 @@ async def test_update_role_success(client, site_admin_user_token, random_test_ro
     response_json = response.json()
 
     assert response_json["Role"]["name"] == "updated_role_name"
-    assert response_json["Role"]["memory_limit"] == "42MB"
-    assert response_json["Role"]["max_execution_time"] == "30s"
+    assert response_json["Role"]["memory_limit"] == "42"
+    assert response_json["Role"]["max_execution_time"] == "30"
     assert response_json["Role"]["restricted_to_site_admin"] is False
     assert response_json["Role"]["default_role"] is False
     assert response_json["Role"]["perm_add"] is True
