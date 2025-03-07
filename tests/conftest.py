@@ -867,6 +867,17 @@ async def access_test_objects(db, site_admin_user, role_read_only):
     await db.refresh(default_event)
     default_event_id = default_event.id
 
+    default_event_published = generate_event()
+    default_event_published.org_id = default_org_id
+    default_event_published.orgc_id = default_org_id
+    default_event_published.user_id = default_user_id
+    default_event_published.published = True
+    default_event_published.distribution = EventDistributionLevels.OWN_ORGANIZATION
+
+    db.add(default_event_published)
+    await db.commit()
+    await db.refresh(default_event_published)
+
     event_no_access = generate_event()
     event_no_access.org_id = org_no_users.id
     event_no_access.orgc_id = org_no_users.id
@@ -937,6 +948,7 @@ async def access_test_objects(db, site_admin_user, role_read_only):
         "default_user_token": default_user_token,
         "default_read_only_user_token": default_read_only_user_token,
         "default_event": default_event,
+        "default_event_published": default_event_published,
         "event_no_access": event_no_access,
         "event_dist_sg": event_dist_sg,
         "default_attribute": default_attribute,
@@ -955,6 +967,7 @@ async def access_test_objects(db, site_admin_user, role_read_only):
     default_event.attribute_count -= 1
     await db.delete(event_dist_sg)
     await db.delete(event_no_access)
+    await db.delete(default_event_published)
     await db.delete(default_event)
     await db.delete(default_read_only_user)
     await db.delete(default_user)
