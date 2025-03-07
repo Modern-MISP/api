@@ -706,6 +706,7 @@ async def eventtag_read_only_1(db, event, tag):
 
 @pytest_asyncio.fixture
 async def access_test_objects(db, site_admin_user):
+    site_admin_user_token = encode_token(site_admin_user.id)
     default_org = generate_organisation()
     db.add(default_org)
     await db.commit()
@@ -829,6 +830,7 @@ async def access_test_objects(db, site_admin_user):
     await db.commit()
     await db.refresh(default_user)
     default_user_id = default_user.id
+    default_user_token = encode_token(default_user.id)
     """
     default_read_only_user = User(
         password="very_safe_passwort",
@@ -918,9 +920,10 @@ async def access_test_objects(db, site_admin_user):
     await db.commit()
     await db.refresh(tag_no_access)
 
-    dict == {
+
+    dict = {
         "site_admin_user": site_admin_user,
-        "site_admin_user_token": encode_token(site_admin_user.id),
+        "site_admin_user_token": site_admin_user_token,
         "default_org": default_org,
         "org_no_users": org_no_users,
         "default_sharing_group_org": default_sharing_group_org,
@@ -929,7 +932,7 @@ async def access_test_objects(db, site_admin_user):
         #"default_role_read_only": default_role_read_only,
         "default_user": default_user,
         #"default_read_only_user": default_read_only_user,
-        "default_user_token": encode_token(default_user.id),
+        "default_user_token": default_user_token,
         #"default_read_only_user_token": encode_token(default_read_only_user.id),
         "default_event": default_event,
         "event_no_access": event_no_access,

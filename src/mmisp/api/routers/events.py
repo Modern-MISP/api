@@ -604,7 +604,7 @@ async def _get_event_details(db: Session, event_id: int | uuid.UUID, user: User 
                 selectinload(Event.orgc),
                 selectinload(Event.eventtags_galaxy),
                 selectinload(Event.tags),
-                selectinload(Event.eventtags),
+                selectinload(Event.eventtags).options(selectinload(EventTag.tag)),
                 selectinload(Event.mispobjects),
                 selectinload(Event.attributes).options(
                     selectinload(Attribute.attributetags_galaxy)
