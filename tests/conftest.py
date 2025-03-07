@@ -717,14 +717,14 @@ async def access_test_objects(db, site_admin_user):
     await db.commit()
     await db.refresh(org_no_users)
 
-    sharing_group_org = generate_organisation()
-    db.add(sharing_group_org)
+    default_sharing_group_org = generate_organisation()
+    db.add(default_sharing_group_org)
     await db.commit()
-    await db.refresh(sharing_group_org)
-    sharing_group_org_id = sharing_group_org.id
+    await db.refresh(default_sharing_group_org)
+    sharing_group_org_id = default_sharing_group_org.id
 
     default_sharing_group = generate_sharing_group()
-    default_sharing_group.organisation_uuid = sharing_group_org.uuid
+    default_sharing_group.organisation_uuid = default_sharing_group_org.uuid
     default_sharing_group.org_id = sharing_group_org_id
     db.add(default_sharing_group)
     await db.commit()
@@ -768,7 +768,7 @@ async def access_test_objects(db, site_admin_user):
     db.add(default_role_modify)
     await db.commit()
     await db.refresh(default_role_modify)
-
+    """
     default_role_read_only = Role(
         id=45,
         name="default_role_read_only",
@@ -807,6 +807,7 @@ async def access_test_objects(db, site_admin_user):
     db.add(default_role_read_only)
     await db.commit()
     await db.refresh(default_role_read_only)
+    """
 
     default_user = User(
         password="very_safe_passwort",
@@ -828,7 +829,7 @@ async def access_test_objects(db, site_admin_user):
     await db.commit()
     await db.refresh(default_user)
     default_user_id = default_user.id
-
+    """
     default_read_only_user = User(
         password="very_safe_passwort",
         org_id=default_org_id,
@@ -848,7 +849,7 @@ async def access_test_objects(db, site_admin_user):
     db.add(default_read_only_user)
     await db.commit()
     await db.refresh(default_read_only_user)
-
+    """
     default_event = generate_event()
     default_event.org_id = default_org_id
     default_event.orgc_id = default_org_id
@@ -922,14 +923,14 @@ async def access_test_objects(db, site_admin_user):
         "site_admin_user_token": encode_token(site_admin_user.id),
         "default_org": default_org,
         "org_no_users": org_no_users,
-        "sharing_group_org": sharing_group_org,
+        "default_sharing_group_org": default_sharing_group_org,
         "default_sharing_group": default_sharing_group,
         "default_role_modify": default_role_modify,
-        "default_role_read_only": default_role_read_only,
+        #"default_role_read_only": default_role_read_only,
         "default_user": default_user,
-        "default_read_only_user": default_read_only_user,
+        #"default_read_only_user": default_read_only_user,
         "default_user_token": encode_token(default_user.id),
-        "default_read_only_user_token": encode_token(default_read_only_user.id),
+        #"default_read_only_user_token": encode_token(default_read_only_user.id),
         "default_event": default_event,
         "event_no_access": event_no_access,
         "event_dist_sg": event_dist_sg,
@@ -950,11 +951,11 @@ async def access_test_objects(db, site_admin_user):
     await db.delete(event_dist_sg)
     await db.delete(event_no_access)
     await db.delete(default_event)
-    await db.delete(default_read_only_user)
+    #await db.delete(default_read_only_user)
     await db.delete(default_user)
-    await db.delete(default_role_read_only)
+    #await db.delete(default_role_read_only)
     await db.delete(default_role_modify)
-    await db.delete(default_sharing_group)
+    await db.delete(default_sharing_group_org)
     await db.delete(org_no_users)
     await db.delete(default_org)
 
