@@ -10,17 +10,13 @@ from mmisp.tests.generators.model_generators.tag_generator import generate_tag
 
 
 @pytest.mark.asyncio
-async def test_get_existing_attribute_read_only_user(
-    role_read_modify_only,
-    db: AsyncSession,
-    event_read_only_1,
-    attribute_read_only_1,
-    access_test_user_token,
+async def test_get_existing_attribute(
+    access_test_objects,
     client,
 ) -> None:
-    attribute_id = attribute_read_only_1.id
+    attribute_id = access_test_objects["default_attribute"].id
 
-    headers = {"authorization": access_test_user_token}
+    headers = {"authorization": access_test_objects["default_user_token"]}
     response = client.get(f"/attributes/{attribute_id}", headers=headers)
 
     assert response.status_code == 200
@@ -28,32 +24,21 @@ async def test_get_existing_attribute_read_only_user(
 
 @pytest.mark.asyncio
 async def test_get_existing_attribute_fail_read_only_user(
-    role_read_modify_only,
-    db: AsyncSession,
-    attribute_read_only_1,
-    read_only_user_token,
+    access_test_objects,
     client,
 ) -> None:
-    attribute_id = attribute_read_only_1.id
-    headers = {"authorization": read_only_user_token}
+    attribute_id = access_test_objects["default_attribute"].id
+    headers = {"authorization": access_test_objects["default_read_only_user_token"]}
     response = client.get(f"/attributes/{attribute_id}", headers=headers)
     assert response.status_code == 403
 
 
 @pytest.mark.asyncio
-async def test_get_all_attributes_read_only_user(
-    role_read_modify_only,
-    db: AsyncSession,
-    event_read_only_1,
-    access_test_user_token,
-    sharing_group,
-    organisation,
-    attribute_read_only_1,
+async def test_get_all_attributes(
+    access_test_objects,
     client,
 ) -> None:
-    event_read_only_1.sharing_group_id = sharing_group.id
-    await db.commit()
-    headers = {"authorization": access_test_user_token}
+    headers = {"authorization": access_test_objects["default_user_token"]}
     response = client.get("/attributes", headers=headers)
 
     assert response.status_code == 200
@@ -61,21 +46,43 @@ async def test_get_all_attributes_read_only_user(
     assert isinstance(response_json, list)
     assert len(response_json) == 1
 
+@pytest.mark.asyncio
+async def test_get_all_attributes_read_only_user(
+    access_test_objects,
+    client,
+) -> None:
+    headers = {"authorization": access_test_objects["default_read_only_user_token"]}
+    response = client.get("/attributes", headers=headers)
+
+    assert response.status_code == 200
+    response_json = response.json()
+    assert isinstance(response_json, list)
+    assert len(response_json) == 1
 
 @pytest.mark.asyncio
-async def test_delete_existing_attribute_read_only_user(
-    role_read_modify_only, access_test_user_token, attribute, client
+async def test_delete_existing_attribute(
+    access_test_objects, client
 ) -> None:
-    attribute_id = attribute.id
+    attribute_id = access_test_objects["default_attribute"].id
 
-    headers = {"authorization": access_test_user_token}
+    headers = {"authorization": access_test_objects["default_user_token"]}
     response = client.delete(f"/attributes/{attribute_id}", headers=headers)
+    assert response.status_code == 200
 
+
+@pytest.mark.asyncio
+async def test_delete_existing_attribute_fail_read_only_user(
+    access_test_objects, client
+) -> None:
+    attribute_id = access_test_objects["default_attribute"].id
+
+    headers = {"authorization": access_test_objects["default_read_only_user_token"]}
+    response = client.delete(f"/attributes/{attribute_id}", headers=headers)
     assert response.status_code == 403
 
 
 @pytest.mark.asyncio
-async def test_add_attribute_fail_read_only_user(role_read_modify_only, access_test_user_token, event, client) -> None:
+async def test_add_attribute_fail_read_only_user(access_test_objects, client) -> None:
     request_body = {
         "value": "1.2.3.4",
         "type": "ip-src",
@@ -85,10 +92,9 @@ async def test_add_attribute_fail_read_only_user(role_read_modify_only, access_t
         "comment": "test comment",
         "disable_correlation": False,
     }
-    event_id = event.id
-    assert event.id is not None
+    event_id = access_test_objects["default_event"].id
 
-    headers = {"authorization": access_test_user_token}
+    headers = {"authorization": access_test_objects["default_user_token"]}
     response = client.post(f"/attributes/{event_id}", json=request_body, headers=headers)
 
     assert response.status_code == 403
