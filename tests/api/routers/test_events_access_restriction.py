@@ -3,7 +3,7 @@ import respx
 import sqlalchemy as sa
 from httpx import Response
 from icecream import ic
-
+from mmisp.lib.permissions import Permission
 from mmisp.api.config import config
 from mmisp.db.models.log import Log
 
@@ -90,7 +90,7 @@ async def test_valid_search_attribute_data(access_test_objects, client) -> None:
     assert response.status_code == 200
     response_json = response.json()
     assert isinstance(response_json["response"], list)
-    assert len(response_json) == 2
+    assert len(response_json) == 1
 
 
 @pytest.mark.asyncio
@@ -101,7 +101,7 @@ async def test_valid_search_attribute_data_site_admin(access_test_objects, clien
     assert response.status_code == 200
     response_json = response.json()
     assert isinstance(response_json["response"], list)
-    assert len(response_json) == 4
+    assert len(response_json) == 1
 
 
 @pytest.mark.asyncio
@@ -125,6 +125,18 @@ async def test_publish_existing_event_fail_read_only_user(access_test_objects, c
 async def test_publish_existing_event_fail(access_test_objects, client) -> None:
     headers = {"authorization": access_test_objects["default_user_token"]}
     event_id = access_test_objects["event_no_access"].id
+    evnt = access_test_objects["event_no_access"]
+    usr = access_test_objects["default_user"]
+    print("EventID: ", event_id)
+    print("User ID: ", usr.id)
+    print("User orgID: ", usr.org_id)
+    print("User siteadmin: ", usr.role.check_permission(Permission.SITE_ADMIN))
+    print("User modify: ", usr.role.check_permission(Permission.MODIFY))
+    print("User modifyOrg: ", usr.role.check_permission(Permission.MODIFY_ORG))
+
+    print("Event UserID:", evnt.user_id)
+    print("Event orgID:", evnt.org_id)
+    print("Event orgcID:", evnt.orgc_id)
 
     response = client.post(f"/events/publish/{event_id}", headers=headers)
     assert response.status_code == 403

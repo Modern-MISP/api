@@ -771,47 +771,6 @@ async def access_test_objects(db, site_admin_user, role_read_only):
     await db.commit()
     await db.refresh(default_role_modify)
 
-    """
-    default_role_read_only = Role(
-        id=45,
-        name="default_role_read_only",
-        perm_add=False,
-        perm_modify=False,
-        perm_modify_org=False,
-        perm_publish=False,
-        perm_delegate=False,
-        perm_sync=False,
-        perm_admin=False,
-        perm_audit=False,
-        perm_auth=True,
-        perm_site_admin=False,
-        perm_regexp_access=False,
-        perm_tagger=False,
-        perm_template=False,
-        perm_sharing_group=False,
-        perm_tag_editor=False,
-        perm_sighting=False,
-        perm_object_template=False,
-        default_role=False,
-        memory_limit="",
-        max_execution_time="",
-        restricted_to_site_admin=False,
-        perm_publish_zmq=False,
-        perm_publish_kafka=False,
-        perm_decaying=False,
-        enforce_rate_limit=False,
-        rate_limit_count=0,
-        perm_galaxy_editor=False,
-        perm_warninglist=False,
-        perm_view_feed_correlations=False,
-        created=datetime.now(timezone.utc),
-    )
-
-    db.add(default_role_read_only)
-    await db.commit()
-    await db.refresh(default_role_read_only)
-    """
-
     default_user = User(
         password="very_safe_passwort",
         org_id=default_org_id,
@@ -855,6 +814,26 @@ async def access_test_objects(db, site_admin_user, role_read_only):
     await db.refresh(default_read_only_user)
     default_read_only_user_token = encode_token(default_read_only_user.id)
 
+    default_sharing_group_user = User(
+        password="very_safe_passwort",
+        org_id=default_org_id,
+        role_id=role_read_only.id,
+        email="default_sharing_group_user@lauch.com",
+        authkey=None,
+        invited_by=314,
+        nids_sid=0,
+        termsaccepted=True,
+        change_pw=True,
+        contactalert=False,
+        disabled=False,
+        notification_daily=False,
+        notification_weekly=False,
+        notification_monthly=False,
+    )
+    db.add(default_sharing_group_user)
+    await db.commit()
+    await db.refresh(default_sharing_group_user)
+
     default_event = generate_event()
     default_event.org_id = default_org_id
     default_event.orgc_id = default_org_id
@@ -881,7 +860,7 @@ async def access_test_objects(db, site_admin_user, role_read_only):
     event_no_access = generate_event()
     event_no_access.org_id = org_no_users.id
     event_no_access.orgc_id = org_no_users.id
-    event_no_access.user_id = site_admin_user.id
+    event_no_access.user_id = default_sharing_group_user.id
     event_no_access.published = False
     event_no_access.distribution = EventDistributionLevels.OWN_ORGANIZATION
 
@@ -947,6 +926,7 @@ async def access_test_objects(db, site_admin_user, role_read_only):
         "default_read_only_user": default_read_only_user,
         "default_user_token": default_user_token,
         "default_read_only_user_token": default_read_only_user_token,
+        "default_sharing_group_user": default_sharing_group_user,
         "default_event": default_event,
         "default_event_published": default_event_published,
         "event_no_access": event_no_access,
@@ -969,6 +949,7 @@ async def access_test_objects(db, site_admin_user, role_read_only):
     await db.delete(event_no_access)
     await db.delete(default_event_published)
     await db.delete(default_event)
+    await db.delete(default_sharing_group_user)
     await db.delete(default_read_only_user)
     await db.delete(default_user)
     # await db.delete(default_role_read_only)
