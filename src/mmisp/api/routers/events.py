@@ -661,6 +661,7 @@ async def _update_event(
                         selectinload(GalaxyCluster.galaxy),
                         selectinload(GalaxyCluster.galaxy_elements),
                     ),
+                    selectinload(Attribute.attributetags).selectinload(AttributeTag.tag),
                 ),
             )
         )
