@@ -228,7 +228,7 @@ async def test_edit_existing_event_fail_wrong_org(access_test_objects, client) -
 @pytest.mark.asyncio
 async def test_delete_existing_event_self_created(access_test_objects, client
 ) -> None:
-    event_id = access_test_objects["default_event"].id
+    event_id = access_test_objects["default_event_published"].id
 
     headers = {"authorization": access_test_objects["default_user_token"]}
     response = client.delete(f"events/{event_id}", headers=headers)
@@ -239,7 +239,7 @@ async def test_delete_existing_event_self_created(access_test_objects, client
 @pytest.mark.asyncio
 async def test_delete_existing_event_fail_read_only_user(access_test_objects, client
 ) -> None:
-    event_id = access_test_objects["default_event_published"].id
+    event_id = access_test_objects["default_event"].id
     headers = {"authorization": access_test_objects["default_read_only_user_token"]}
     response = client.delete(f"events/{event_id}", headers=headers)
     assert response.status_code == 403
