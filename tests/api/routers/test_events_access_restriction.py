@@ -20,6 +20,16 @@ async def test_list_all_events_self_created(access_test_objects, client) -> None
 
 
 @pytest.mark.asyncio
+async def test_list_all_events_read_only_user(access_test_objects, client) -> None:
+    headers = {"authorization": access_test_objects["default_read_only_user_token"]}
+    response = client.get("/events", headers=headers)
+    assert response.status_code == 200
+
+    response_json = response.json()
+    assert isinstance(response_json, list)
+    assert len(response_json) == 1
+
+@pytest.mark.asyncio
 async def test_list_all_events_admin(
     event3, event4, event5, organisation, event_read_only_1, site_admin_user_token, client
 ) -> None:
