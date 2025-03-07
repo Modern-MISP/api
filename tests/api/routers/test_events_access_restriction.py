@@ -137,6 +137,7 @@ async def test_publish_existing_event_fail(access_test_objects, client) -> None:
     print("Event UserID:", evnt.user_id)
     print("Event orgID:", evnt.org_id)
     print("Event orgcID:", evnt.orgc_id)
+    print("Event canEdit:", evnt.can_edit(usr))
 
     response = client.post(f"/events/publish/{event_id}", headers=headers)
     assert response.status_code == 403
