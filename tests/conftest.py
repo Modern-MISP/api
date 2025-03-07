@@ -719,6 +719,11 @@ async def access_test_objects(db, site_admin_user, role_read_only):
     await db.commit()
     await db.refresh(org_no_users)
 
+    org_read_only = generate_organisation()
+    db.add(org_read_only)
+    await db.commit()
+    await db.refresh(org_read_only)
+
     default_sharing_group_org = generate_organisation()
     db.add(default_sharing_group_org)
     await db.commit()
@@ -795,7 +800,7 @@ async def access_test_objects(db, site_admin_user, role_read_only):
 
     default_read_only_user = User(
         password="very_safe_passwort",
-        org_id=default_org_id,
+        org_id=org_read_only.id,
         role_id=role_read_only.id,
         email="default_read_only_user@lauch.com",
         authkey=None,
@@ -955,6 +960,7 @@ async def access_test_objects(db, site_admin_user, role_read_only):
     # await db.delete(default_role_read_only)
     await db.delete(default_role_modify)
     await db.delete(default_sharing_group_org)
+    await db.delete(org_read_only)
     await db.delete(org_no_users)
     await db.delete(default_org)
 
