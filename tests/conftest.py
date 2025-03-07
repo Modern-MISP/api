@@ -942,7 +942,7 @@ async def access_test_objects(db, site_admin_user, role_read_only):
         "default_sharing_group_org": default_sharing_group_org,
         "default_sharing_group": default_sharing_group,
         "default_role_modify": default_role_modify,
-        #"default_role_read_only": default_role_read_only,
+        # "default_role_read_only": default_role_read_only,
         "default_user": default_user,
         "default_read_only_user": default_read_only_user,
         "default_user_token": default_user_token,
@@ -971,7 +971,7 @@ async def access_test_objects(db, site_admin_user, role_read_only):
     await db.delete(default_event)
     await db.delete(default_read_only_user)
     await db.delete(default_user)
-    #await db.delete(default_role_read_only)
+    # await db.delete(default_role_read_only)
     await db.delete(default_role_modify)
     await db.delete(default_sharing_group_org)
     await db.delete(org_no_users)
