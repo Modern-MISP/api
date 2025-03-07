@@ -284,7 +284,7 @@ async def test_update_role_success(client, site_admin_user_token, random_test_ro
         "enforce_rate_limit": False,
         "perm_galaxy_editor": False,
         "perm_warninglist": True,
-        "perm_view_feed_correlations": False
+        "perm_view_feed_correlations": False,
     }
 
     response = client.put(f"/admin/roles/edit/{role_id}", json=update_data, headers=headers)

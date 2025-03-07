@@ -9,8 +9,7 @@ from mmisp.db.models.log import Log
 
 
 @pytest.mark.asyncio
-async def test_list_all_events_self_created(access_test_objects, client
-) -> None:
+async def test_list_all_events_self_created(access_test_objects, client) -> None:
     headers = {"authorization": access_test_objects["default_user_token"]}
     response = client.get("/events", headers=headers)
     assert response.status_code == 200

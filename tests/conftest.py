@@ -27,7 +27,7 @@ from mmisp.tests.generators.model_generators.user_generator import generate_user
 from mmisp.tests.generators.model_generators.user_setting_generator import generate_user_name
 from mmisp.tests.generators.model_generators.organisation_generator import generate_organisation
 from mmisp.tests.generators.model_generators.sharing_group_generator import generate_sharing_group
-from mmisp.tests.generators.model_generators.generators.model_generators.role_generator import generate_read_only_role
+from mmisp.tests.generators.model_generators.role_generator import generate_read_only_role
 from mmisp.lib.distribution import EventDistributionLevels, AttributeDistributionLevels
 from mmisp.workflows.graph import Apperance, WorkflowGraph
 from mmisp.workflows.input import WorkflowInput
