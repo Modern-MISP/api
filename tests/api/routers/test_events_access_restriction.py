@@ -125,20 +125,6 @@ async def test_publish_existing_event_fail_read_only_user(access_test_objects, c
 async def test_publish_existing_event_fail(access_test_objects, client) -> None:
     headers = {"authorization": access_test_objects["default_user_token"]}
     event_id = access_test_objects["event_no_access"].id
-    evnt = access_test_objects["event_no_access"]
-    usr = access_test_objects["default_user"]
-    print("EventID: ", event_id)
-    print("User ID: ", usr.id)
-    print("User orgID: ", usr.org_id)
-    print("User siteadmin: ", usr.role.check_permission(Permission.SITE_ADMIN))
-    print("User modify: ", usr.role.check_permission(Permission.MODIFY))
-    print("User modifyOrg: ", usr.role.check_permission(Permission.MODIFY_ORG))
-
-    print("Event UserID:", evnt.user_id)
-    print("Event orgID:", evnt.org_id)
-    print("Event orgcID:", evnt.orgc_id)
-    print("Event canEdit:", evnt.can_edit(usr))
-
     response = client.post(f"/events/publish/{event_id}", headers=headers)
     assert response.status_code == 200  # if event not found (because can_edit) repsonse is 200 because of check
     response_json = response.json()
@@ -195,9 +181,7 @@ async def test_remove_existing_tag_from_event(access_test_objects, client) -> No
 
 
 @pytest.mark.asyncio
-async def test_remove_existing_tag_from_event_fail_read_only_user(
-    access_test_objects, role_read_modify_only, event5, tag, read_only_user_token, client
-) -> None:
+async def test_remove_existing_tag_from_event_fail_read_only_user(access_test_objects, client) -> None:
     tag_id = access_test_objects["default_tag"].id
     event_id = access_test_objects["default_event"].id
     headers = {"authorization": access_test_objects["default_read_only_user_token"]}
@@ -215,21 +199,28 @@ async def test_remove_existing_tag_from_event_fail_read_only_user_no_perms(acces
 
 
 @pytest.mark.asyncio
-async def test_edit_existing_event_read_only_user(
-    site_admin_role, role_read_modify_only, event_read_only_1, organisation, access_test_user_token, client
-) -> None:
+async def test_edit_existing_event_self_created(access_test_objects, client) -> None:
     request_body = {"info": "updated info"}
-    event_id = event_read_only_1.id
-    headers = {"authorization": access_test_user_token}
+    event_id = access_test_objects["default_event"].id
+    headers = {"authorization": access_test_objects["default_user_token"]}
     response = client.put(f"events/{event_id}", json=request_body, headers=headers)
     assert response.status_code == 200
 
 
 @pytest.mark.asyncio
-async def test_edit_existing_event_fail_read_only_user(event, read_only_user_token, client) -> None:
+async def test_edit_existing_event_fail_read_only_user(access_test_objects, client) -> None:
     request_body = {"info": "updated info"}
-    event_id = event.id
-    headers = {"authorization": read_only_user_token}
+    event_id = access_test_objects["default_event"].id
+    headers = {"authorization": access_test_objects["default_read_only_user_token"]}
+    response = client.put(f"events/{event_id}", json=request_body, headers=headers)
+    assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_edit_existing_event_fail_wrong_org(access_test_objects, client) -> None:
+    request_body = {"info": "updated info"}
+    event_id = access_test_objects["event_no_access"].id
+    headers = {"authorization": access_test_objects["default_user_token"]}
     response = client.put(f"events/{event_id}", json=request_body, headers=headers)
     assert response.status_code == 404
 
