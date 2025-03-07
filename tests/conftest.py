@@ -705,8 +705,9 @@ async def eventtag_read_only_1(db, event, tag):
 
 
 @pytest_asyncio.fixture
-async def access_test_objects(db, site_admin_user):
+async def access_test_objects(db, site_admin_user, role_read_only):
     site_admin_user_token = encode_token(site_admin_user.id)
+
     default_org = generate_organisation()
     db.add(default_org)
     await db.commit()
@@ -769,6 +770,7 @@ async def access_test_objects(db, site_admin_user):
     db.add(default_role_modify)
     await db.commit()
     await db.refresh(default_role_modify)
+
     """
     default_role_read_only = Role(
         id=45,
@@ -831,11 +833,11 @@ async def access_test_objects(db, site_admin_user):
     await db.refresh(default_user)
     default_user_id = default_user.id
     default_user_token = encode_token(default_user.id)
-    """
+
     default_read_only_user = User(
         password="very_safe_passwort",
         org_id=default_org_id,
-        role_id=default_role_read_only.id,
+        role_id=role_read_only.id,
         email="test_user@lauch.com",
         authkey=None,
         invited_by=314,
@@ -851,7 +853,8 @@ async def access_test_objects(db, site_admin_user):
     db.add(default_read_only_user)
     await db.commit()
     await db.refresh(default_read_only_user)
-    """
+    default_read_only_user_token = encode_token(default_read_only_user.id)
+
     default_event = generate_event()
     default_event.org_id = default_org_id
     default_event.orgc_id = default_org_id
@@ -920,7 +923,6 @@ async def access_test_objects(db, site_admin_user):
     await db.commit()
     await db.refresh(tag_no_access)
 
-
     dict = {
         "site_admin_user": site_admin_user,
         "site_admin_user_token": site_admin_user_token,
@@ -931,9 +933,9 @@ async def access_test_objects(db, site_admin_user):
         "default_role_modify": default_role_modify,
         #"default_role_read_only": default_role_read_only,
         "default_user": default_user,
-        #"default_read_only_user": default_read_only_user,
+        "default_read_only_user": default_read_only_user,
         "default_user_token": default_user_token,
-        #"default_read_only_user_token": encode_token(default_read_only_user.id),
+        "default_read_only_user_token": default_read_only_user_token,
         "default_event": default_event,
         "event_no_access": event_no_access,
         "event_dist_sg": event_dist_sg,
