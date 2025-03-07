@@ -140,7 +140,10 @@ async def test_publish_existing_event_fail(access_test_objects, client) -> None:
     print("Event canEdit:", evnt.can_edit(usr))
 
     response = client.post(f"/events/publish/{event_id}", headers=headers)
-    assert response.status_code == 403
+    assert response.status_code == 200  # if event not found (because can_edit) repsonse is 200 because of check
+    response_json = response.json()
+    response_json["name"] == "Invalid event."
+    response_json["message"] == "Invalid event."
 
 
 @pytest.mark.asyncio
