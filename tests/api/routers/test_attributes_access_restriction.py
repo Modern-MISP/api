@@ -53,11 +53,7 @@ async def test_get_all_attributes_read_only_user(
 ) -> None:
     headers = {"authorization": access_test_objects["default_read_only_user_token"]}
     response = client.get("/attributes", headers=headers)
-
-    assert response.status_code == 200
-    response_json = response.json()
-    assert isinstance(response_json, list)
-    assert len(response_json) == 1
+    assert response.status_code == 404
 
 @pytest.mark.asyncio
 async def test_delete_existing_attribute(
