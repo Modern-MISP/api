@@ -25,6 +25,10 @@ from mmisp.tests.generators.model_generators.event_generator import generate_eve
 from mmisp.tests.generators.model_generators.tag_generator import generate_tag
 from mmisp.tests.generators.model_generators.user_generator import generate_user
 from mmisp.tests.generators.model_generators.user_setting_generator import generate_user_name
+from mmisp.tests.generators.model_generators.organisation_generator import generate_organisation
+from mmisp.tests.generators.model_generators.sharing_group_generator import generate_sharing_group
+from mmisp.tests.generators.model_generators.generators.model_generators.role_generator import generate_read_only_role
+from mmisp.lib.distribution import EventDistributionLevels, AttributeDistributionLevels
 from mmisp.workflows.graph import Apperance, WorkflowGraph
 from mmisp.workflows.input import WorkflowInput
 from mmisp.workflows.modules import (
@@ -697,4 +701,221 @@ async def eventtag_read_only_1(db, event, tag):
     yield eventtag
 
     await db.delete(eventtag)
+    await db.commit()
+
+
+@pytest_asyncio.fixture
+async def access_test_objects(db, site_admin_user):
+    default_org = generate_organisation()
+    db.add(default_org)
+    await db.commit()
+    await db.refresh(default_org)
+    default_org_id = default_org.id
+
+    org_no_users = generate_organisation()
+    db.add(org_no_users)
+    await db.commit()
+    await db.refresh(org_no_users)
+
+    default_sharing_group = generate_sharing_group()
+    default_sharing_group.organisation_uuid = default_org.uuid
+    default_sharing_group.org_id = default_org_id
+    db.add(default_sharing_group)
+    await db.commit()
+    await db.refresh(default_sharing_group)
+
+    default_role_modify = Role(
+        id=43,
+        name="test_read_modify_only",
+        perm_add=False,
+        perm_modify=True,
+        perm_modify_org=True,
+        perm_publish=True,
+        perm_delegate=False,
+        perm_sync=False,
+        perm_admin=False,
+        perm_audit=False,
+        perm_auth=True,
+        perm_site_admin=False,
+        perm_regexp_access=False,
+        perm_tagger=True,
+        perm_template=False,
+        perm_sharing_group=False,
+        perm_tag_editor=True,
+        perm_sighting=False,
+        perm_object_template=False,
+        default_role=False,
+        memory_limit="",
+        max_execution_time="",
+        restricted_to_site_admin=False,
+        perm_publish_zmq=False,
+        perm_publish_kafka=False,
+        perm_decaying=False,
+        enforce_rate_limit=False,
+        rate_limit_count=0,
+        perm_galaxy_editor=False,
+        perm_warninglist=False,
+        perm_view_feed_correlations=False,
+        created=datetime.now(timezone.utc),
+    )
+
+    db.add(default_role_modify)
+    await db.commit()
+    await db.refresh(default_role_modify)
+
+    role_read_only = generate_read_only_role()
+    db.add(role_read_only)
+    await db.commit()
+
+    await db.commit()
+
+    default_user = User(
+        password="very_safe_passwort",
+        org_id=default_org_id,
+        role_id=default_role_modify.id,
+        email="test_user@lauch.com",
+        authkey=None,
+        invited_by=314,
+        nids_sid=0,
+        termsaccepted=True,
+        change_pw=True,
+        contactalert=False,
+        disabled=False,
+        notification_daily=False,
+        notification_weekly=False,
+        notification_monthly=False,
+    )
+    db.add(default_user)
+    await db.commit()
+    await db.refresh(default_user)
+    default_user_id = default_user.id
+
+    read_only_user = User(
+        password="very_safe_passwort",
+        org_id=default_org_id,
+        role_id=role_read_only.id,
+        email="test_user@lauch.com",
+        authkey=None,
+        invited_by=314,
+        nids_sid=0,
+        termsaccepted=True,
+        change_pw=True,
+        contactalert=False,
+        disabled=False,
+        notification_daily=False,
+        notification_weekly=False,
+        notification_monthly=False,
+    )
+    db.add(read_only_user)
+    await db.commit()
+    await db.refresh(read_only_user)
+
+    default_event = generate_event()
+    default_event.org_id = default_org_id
+    default_event.orgc_id = default_org_id
+    default_event.user_id = default_user_id
+    default_event.published = False
+    default_event.distribution = EventDistributionLevels.OWN_ORGANIZATION
+
+    db.add(default_event)
+    await db.commit()
+    await db.refresh(default_event)
+    default_event_id = default_event.id
+
+    event_no_access = generate_event()
+    event_no_access.org_id = org_no_users.id
+    event_no_access.orgc_id = org_no_users.id
+    event_no_access.user_id = site_admin_user.id
+    event_no_access.published = False
+    event_no_access.distribution = EventDistributionLevels.OWN_ORGANIZATION
+
+    db.add(event_no_access)
+    await db.commit()
+    await db.refresh(event_no_access)
+    event_no_access_id = event_no_access.id
+
+    event_dist_sg = generate_event()
+    event_dist_sg.org_id = default_org_id
+    event_dist_sg.orgc_id = default_org_id
+    event_dist_sg.user_id = site_admin_user.id
+    event_dist_sg.published = True
+    event_dist_sg.distribution = EventDistributionLevels.SHARING_GROUP
+    event_dist_sg.sharing_group_id = default_sharing_group.id
+
+    db.add(event_dist_sg)
+    await db.commit()
+    await db.refresh(event_dist_sg)
+
+    default_attribute = generate_attribute(default_event_id)
+    default_attribute.distribution = 0
+    default_event.attribute_count += 1
+
+    db.add(default_attribute)
+    await db.commit()
+    await db.refresh(default_attribute)
+
+    attribute_no_access = generate_attribute(event_no_access_id)
+    attribute_no_access.distribution = 0
+    event_no_access.attribute_count += 1
+
+    db.add(attribute_no_access)
+    await db.commit()
+    await db.refresh(attribute_no_access)
+
+    default_tag = generate_tag()
+    default_tag.user_id = default_user_id
+    default_tag.org_id = default_org_id
+
+    db.add(default_tag)
+    await db.commit()
+    await db.refresh(default_tag)
+
+    tag_no_access = generate_tag()
+    tag_no_access.user_id = site_admin_user.id
+    tag_no_access.org_id = org_no_users.id
+
+    db.add(tag_no_access)
+    await db.commit()
+    await db.refresh(tag_no_access)
+
+    dict == {
+        "site_admin_user": site_admin_user,
+        "site_admin_user_token": encode_token(site_admin_user.id),
+        "default_org": default_org,
+        "org_no_users": org_no_users,
+        "default_sharing_group": default_sharing_group,
+        "default_role_modify": default_role_modify,
+        "role_read_only": role_read_only,
+        "default_user": default_user,
+        "read_only_user": read_only_user,
+        "default_user_token": encode_token(default_user.id),
+        "read_only_user_token": encode_token(read_only_user.id),
+        "default_event": default_event,
+        "event_no_access": event_no_access,
+        "event_dist_sg": event_dist_sg,
+        "default_attribute": default_attribute,
+        "attribute_no_access": attribute_no_access,
+        "default_tag": default_tag,
+        "tag_no_access": tag_no_access,
+    }
+
+    yield dict
+
+    await db.delete(tag_no_access)
+    await db.delete(default_tag)
+    await db.delete(attribute_no_access)
+    event_no_access.attribute_count -= 1
+    await db.delete(default_attribute)
+    default_event.attribute_count -= 1
+    await db.delete(event_dist_sg)
+    await db.delete(event_no_access)
+    await db.delete(default_event)
+    await db.delete(read_only_user)
+    await db.delete(default_user)
+    await db.delete(role_read_only)
+    await db.delete(default_role_modify)
+    await db.delete(default_sharing_group)
+    await db.delete(org_no_users)
+    await db.delete(default_org)
+
     await db.commit()

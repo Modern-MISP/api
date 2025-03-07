@@ -9,10 +9,9 @@ from mmisp.db.models.log import Log
 
 
 @pytest.mark.asyncio
-async def test_list_all_events_read_only_user(
-    role_read_modify_only, event, event5, event_read_only_1, organisation, access_test_user_token, client
+async def test_list_all_events_self_created(access_test_objects, client
 ) -> None:
-    headers = {"authorization": access_test_user_token}
+    headers = {"authorization": access_test_objects["default_user_token"]}
     response = client.get("/events", headers=headers)
     assert response.status_code == 200
 
@@ -39,9 +38,6 @@ async def test_get_event_success_read_only_user(
 ) -> None:
     headers = {"authorization": access_test_user_token}
     event_id = event_read_only_1.id
-    print("Event ID: " + str(event_id))
-    print("Event User ID: " + str(event_read_only_1.user_id))
-    print("User ID: " + str(access_test_user.id))
     response = client.get(f"/events/{event_id}", headers=headers)
 
     assert response.status_code == 200
