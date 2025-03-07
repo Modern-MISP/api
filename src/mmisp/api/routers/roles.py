@@ -503,11 +503,7 @@ async def _update_role(db: Session, role_id: int, body: EditRoleBody) -> EditRol
     await db.commit()
     await db.refresh(role)
 
-    return EditRoleResponse(
-        role=RoleAttributeResponse(**role.__dict__),
-        updated=True,
-        message=f"Role with ID {role_id} successfully updated.",
-    )
+    return EditRoleResponse(role=RoleAttributeResponse(**role.__dict__))
 
 
 async def _reinstate_role(auth: Auth, db: Session, role_id: int) -> ReinstateRoleResponse:

@@ -292,8 +292,6 @@ async def test_update_role_success(client, site_admin_user_token, random_test_ro
     assert response.status_code == 200
     response_json = response.json()
 
-    assert response_json["updated"] is True
-    assert response_json["message"] == f"Role with ID {role_id} successfully updated."
     assert response_json["role"]["name"] == "updated_role_name"
     assert response_json["role"]["memory_limit"] == "42"
     assert response_json["role"]["max_execution_time"] == "30"
