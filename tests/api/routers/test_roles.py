@@ -292,35 +292,35 @@ async def test_update_role_success(client, site_admin_user_token, random_test_ro
     assert response.status_code == 200
     response_json = response.json()
 
-    assert response_json["role"]["name"] == "updated_role_name"
-    assert response_json["role"]["memory_limit"] == "42"
-    assert response_json["role"]["max_execution_time"] == "30"
-    assert response_json["role"]["restricted_to_site_admin"] is False
-    assert response_json["role"]["default_role"] is False
-    assert response_json["role"]["perm_add"] is True
-    assert response_json["role"]["perm_modify"] is False
-    assert response_json["role"]["perm_modify_org"] is True
-    assert response_json["role"]["perm_publish"] is False
-    assert response_json["role"]["perm_delegate"] is True
-    assert response_json["role"]["perm_sync"] is False
-    assert response_json["role"]["perm_admin"] is True
-    assert response_json["role"]["perm_audit"] is False
-    assert response_json["role"]["perm_auth"] is True
-    assert response_json["role"]["perm_site_admin"] is False
-    assert response_json["role"]["perm_regexp_access"] is True
-    assert response_json["role"]["perm_tagger"] is False
-    assert response_json["role"]["perm_template"] is True
-    assert response_json["role"]["perm_sharing_group"] is False
-    assert response_json["role"]["perm_tag_editor"] is True
-    assert response_json["role"]["perm_sighting"] is False
-    assert response_json["role"]["perm_object_template"] is True
-    assert response_json["role"]["perm_publish_zmq"] is True
-    assert response_json["role"]["perm_publish_kafka"] is False
-    assert response_json["role"]["perm_decaying"] is True
-    assert response_json["role"]["enforce_rate_limit"] is False
-    assert response_json["role"]["perm_galaxy_editor"] is False
-    assert response_json["role"]["perm_warninglist"] is True
-    assert response_json["role"]["perm_view_feed_correlations"] is False
+    assert response_json["Role"]["name"] == "updated_role_name"
+    assert response_json["Role"]["memory_limit"] == "42MB"
+    assert response_json["Role"]["max_execution_time"] == "30s"
+    assert response_json["Role"]["restricted_to_site_admin"] is False
+    assert response_json["Role"]["default_role"] is False
+    assert response_json["Role"]["perm_add"] is True
+    assert response_json["Role"]["perm_modify"] is False
+    assert response_json["Role"]["perm_modify_org"] is True
+    assert response_json["Role"]["perm_publish"] is False
+    assert response_json["Role"]["perm_delegate"] is True
+    assert response_json["Role"]["perm_sync"] is False
+    assert response_json["Role"]["perm_admin"] is True
+    assert response_json["Role"]["perm_audit"] is False
+    assert response_json["Role"]["perm_auth"] is True
+    assert response_json["Role"]["perm_site_admin"] is False
+    assert response_json["Role"]["perm_regexp_access"] is True
+    assert response_json["Role"]["perm_tagger"] is False
+    assert response_json["Role"]["perm_template"] is True
+    assert response_json["Role"]["perm_sharing_group"] is False
+    assert response_json["Role"]["perm_tag_editor"] is True
+    assert response_json["Role"]["perm_sighting"] is False
+    assert response_json["Role"]["perm_object_template"] is True
+    assert response_json["Role"]["perm_publish_zmq"] is True
+    assert response_json["Role"]["perm_publish_kafka"] is False
+    assert response_json["Role"]["perm_decaying"] is True
+    assert response_json["Role"]["enforce_rate_limit"] is False
+    assert response_json["Role"]["perm_galaxy_editor"] is False
+    assert response_json["Role"]["perm_warninglist"] is True
+    assert response_json["Role"]["perm_view_feed_correlations"] is False
 
 
 @pytest.mark.asyncio
