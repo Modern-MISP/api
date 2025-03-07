@@ -329,7 +329,7 @@ async def _get_role(db: Session, role_id: int) -> GetRoleResponse:
     if role is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Role with ID {role_id} not found.")
 
-    return GetRoleResponse(Role=RoleAttributeResponse(**role.__dict__t))
+    return GetRoleResponse(Role=RoleAttributeResponse(**role.__dict__))
 
 
 async def _add_role(db: Session, body: AddRoleBody) -> AddRoleResponse:
