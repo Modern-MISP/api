@@ -1,8 +1,5 @@
 import pytest
 
-from sqlalchemy import delete
-
-from mmisp.db.models.role import Role
 from mmisp.tests.compatibility_helpers import get_legacy_modern_diff
 
 
