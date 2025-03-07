@@ -37,13 +37,13 @@ async def test_list_all_events_admin(access_test_objects, client) -> None:
     assert response.status_code == 200
     response_json = response.json()
     assert isinstance(response_json, list)
-    assert len(response_json) == 4
+    assert len(response_json) == 5
 
 
 @pytest.mark.asyncio
 async def test_get_event_success_read_only_user(access_test_objects, client) -> None:
     headers = {"authorization": access_test_objects["default_read_only_user_token"]}
-    event_id = access_test_objects["default_event_published"].id
+    event_id = access_test_objects["event_read_only_user"].id
     response = client.get(f"/events/{event_id}", headers=headers)
 
     assert response.status_code == 200
@@ -210,7 +210,7 @@ async def test_edit_existing_event_self_created(access_test_objects, client) -> 
 @pytest.mark.asyncio
 async def test_edit_existing_event_suc_read_only_user(access_test_objects, client) -> None:
     request_body = {"info": "updated info"}
-    event_id = access_test_objects["default_event"].id
+    event_id = access_test_objects["event_read_only_user"].id
     headers = {"authorization": access_test_objects["default_read_only_user_token"]}
     response = client.put(f"events/{event_id}", json=request_body, headers=headers)
     assert response.status_code == 200  # because read only user is in creator org
