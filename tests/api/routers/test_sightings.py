@@ -184,6 +184,30 @@ async def test_add_sightings_at_index_success(
 
     await delete_sighting(db, response_data["id"])
 
+@pytest.mark.asyncio
+async def test_add_sightings_at_uuid_index_success(
+    first_attribute_sighting_data,
+    sighting_data: dict[str, Any],
+    db: Session,
+    sharing_group,
+    event,
+    site_admin_user_token,
+    client,
+) -> None:
+    attribute = first_attribute_sighting_data
+    if sighting_data["filters"]:
+        sighting_data["filters"]["value1"] = attribute.value1
+
+    headers = {"authorization": site_admin_user_token}
+    response = client.post(f"/sightings/{attribute.uuid}", headers=headers)
+    assert response.status_code == 201
+    response_data = response.json()
+    assert "id" in response_data
+    assert "event_id" in response_data
+    assert "attribute_id" in response_data
+
+    await delete_sighting(db, response_data["id"])
+
 
 @pytest.mark.asyncio
 async def test_add_sighting_at_index_invalid_attribute(
@@ -206,6 +230,14 @@ async def test_add_sighting_at_index_invalid_attribute(
     assert response.status_code == 404
     assert response.json()["detail"] == "Attribute not found."
 
+    unused_uuid = "a469325efe2f4f32a6854579f415ec6a"  #Just a random UUID -> mostlikely unused
+    headers = {"authorization": site_admin_user_token}
+    response = client.post(f"/sightings/{unused_uuid}", headers=headers)
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Attribute not found."
+
+
+
 
 @pytest.mark.asyncio
 async def test_get_sighting_success(
@@ -218,6 +250,20 @@ async def test_get_sighting_success(
 
     headers = {"authorization": site_admin_user_token}
     response = client.get(f"/sightings/{event.id}", headers=headers)
+    assert response.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_get_sighting_by_uuid_success(
+    first_attribute_sighting_data, sighting_data: dict[str, Any], db: Session, event, site_admin_user_token, client
+) -> None:
+    attribute = first_attribute_sighting_data
+
+    if sighting_data["filters"]:
+        sighting_data["filters"]["value1"] = attribute.value1
+
+    headers = {"authorization": site_admin_user_token}
+    response = client.get(f"/sightings/{event.uuid}", headers=headers)
     assert response.status_code == 200
 
 
@@ -286,7 +332,8 @@ async def test_get_all_sightings_success(
     response = client.get("/sightings", headers=headers)
     assert response.status_code == 200
     assert isinstance(response.json()["sightings"], list)
-    await delete_sighting(db, real_sighting_id)
+    await delete_sighting(db, real_sighting_id
+    )
 
 
 @pytest.mark.asyncio
