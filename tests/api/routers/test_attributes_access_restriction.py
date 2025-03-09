@@ -160,3 +160,19 @@ async def test_remove_existing_tag_from_attribute_fail_read_only_user(
     response = client.post(f"/attributes/removeTag/{attribute_id}/{tag_id}", headers=headers)
 
     assert response.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_restore_attribute(
+    access_test_objects,
+     client,
+) -> None:
+    attribute_Id = access_test_objects["default_attribute"].id
+    headers = {"authorization": access_test_objects["default_user_token"]}
+    response = client.post(f"/attributes/restore/{attribute_Id}", headers=headers)
+
+    assert response.status_code == 200
+    response_json = response.json()
+    print(response_json)
+    assert response_json["Attribute"]["id"] == attribute_Id
+    assert response_json["Attribute"]["deleted"] is False
