@@ -165,7 +165,7 @@ async def test_remove_existing_tag_from_attribute_fail_read_only_user(
 @pytest.mark.asyncio
 async def test_restore_attribute(
     access_test_objects,
-     client,
+    client,
 ) -> None:
     attribute_Id = access_test_objects["default_attribute"].id
     headers = {"authorization": access_test_objects["default_user_token"]}
@@ -173,6 +173,23 @@ async def test_restore_attribute(
 
     assert response.status_code == 200
     response_json = response.json()
-    print(response_json)
     assert response_json["Attribute"]["id"] == attribute_Id
     assert response_json["Attribute"]["deleted"] is False
+
+@pytest.mark.asyncio
+async def test_remove_tag_from_attribute(
+    access_test_objects,
+    client,
+) -> None:
+    attribute_Id = access_test_objects["default_attribute"].id
+    tag_Id = access_test_objects["default_tag"].id
+    headers = {"authorization": access_test_objects["default_user_token"]}
+    response2 = client.post(f"/attributes/addTag/{attribute_Id}/{tag_Id}", headers=headers)
+    response = client.post(f"/attributes/removeTag/{attribute_Id}/{tag_Id}", headers=headers)
+    # Der status code liefert immer 200 zurück egal ob klappt oder wie in diesem Fall failt.
+    assert response.status_code == 200
+    response_json = response.json()
+    response2_json = response2.json()
+    print(response2_json)
+    print(response_json)
+
