@@ -208,7 +208,7 @@ async def test_update_attribute(
         "disable_correlation": False,
         "first_seen": "",
     }
-    headers = {"authorization": access_test_objects["site_admin_user_token"]}
+    headers = {"authorization": access_test_objects["default_user_token"]}
     response = client.put(f"/attributes/{attribute_Id}", json=request_body, headers=headers)
 
     assert response.status_code == 200
@@ -217,3 +217,17 @@ async def test_update_attribute(
     assert response_json["Attribute"]["id"] == attribute_Id
     assert response_json["Attribute"]["category"] == "Payload delivery"
 
+
+@pytest.mark.asyncio
+async def test_get_all_attributes_site_admin(
+    access_test_objects,
+    client,
+) -> None:
+    headers = {"authorization": access_test_objects["site_admin_user_token"]}
+    response = client.get("/attributes", headers=headers)
+
+    assert response.status_code == 200
+    response_json = response.json()
+    print(response_json)
+    assert isinstance(response_json, list)
+    assert len(response_json) == 2
