@@ -193,3 +193,27 @@ async def test_remove_tag_from_attribute(
     print(response2_json)
     print(response_json)
 
+@pytest.mark.asyncio
+async def test_update_attribute(
+    access_test_objects,
+    client,
+) -> None:
+    attribute_Id = access_test_objects["default_attribute"].id
+    request_body = {
+        "category": "Payload delivery",
+        "value": "2.3.4.5",
+        "to_ids": True,
+        "distribution": "1",
+        "comment": "new comment",
+        "disable_correlation": False,
+        "first_seen": "",
+    }
+    headers = {"authorization": access_test_objects["site_admin_user_token"]}
+    response = client.put(f"/attributes/{attribute_Id}", json=request_body, headers=headers)
+
+    assert response.status_code == 200
+    response_json = response.json()
+    print(response_json)
+    assert response_json["Attribute"]["id"] == attribute_Id
+    assert response_json["Attribute"]["category"] == "Payload delivery"
+
