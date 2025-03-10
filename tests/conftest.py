@@ -905,6 +905,14 @@ async def access_test_objects(db, site_admin_user, role_read_only):
     await db.commit()
     await db.refresh(default_attribute)
 
+    default_attribute_2 = generate_attribute(default_event_id)
+    default_attribute_2.distribution = 0
+    default_event.attribute_count += 1
+
+    db.add(default_attribute_2)
+    await db.commit()
+    await db.refresh(default_attribute_2)
+
     attribute_no_access = generate_attribute(event_no_access_id)
     attribute_no_access.distribution = 0
     event_no_access.attribute_count += 1
@@ -912,6 +920,14 @@ async def access_test_objects(db, site_admin_user, role_read_only):
     db.add(attribute_no_access)
     await db.commit()
     await db.refresh(attribute_no_access)
+
+    attribute_no_access_2 = generate_attribute(event_no_access_id)
+    attribute_no_access_2.distribution = 0
+    event_no_access.attribute_count += 1
+
+    db.add(attribute_no_access_2)
+    await db.commit()
+    await db.refresh(attribute_no_access_2)
 
     default_tag = generate_tag()
     default_tag.user_id = default_user_id
@@ -949,7 +965,9 @@ async def access_test_objects(db, site_admin_user, role_read_only):
         "event_no_access": event_no_access,
         "event_dist_sg": event_dist_sg,
         "default_attribute": default_attribute,
+        "default_attribute_2": default_attribute_2,
         "attribute_no_access": attribute_no_access,
+        "attribute_no_access_2": attribute_no_access_2,
         "default_tag": default_tag,
         "tag_no_access": tag_no_access,
     }
@@ -958,8 +976,12 @@ async def access_test_objects(db, site_admin_user, role_read_only):
 
     await db.delete(tag_no_access)
     await db.delete(default_tag)
+    await db.delete(attribute_no_access_2)
+    event_no_access.attribute_count -= 1
     await db.delete(attribute_no_access)
     event_no_access.attribute_count -= 1
+    await db.delete(default_attribute_2)
+    default_event.attribute_count -= 1
     await db.delete(default_attribute)
     default_event.attribute_count -= 1
     await db.delete(event_read_only_user)

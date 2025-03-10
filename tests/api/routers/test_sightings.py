@@ -184,6 +184,7 @@ async def test_add_sightings_at_index_success(
 
     await delete_sighting(db, response_data["id"])
 
+
 @pytest.mark.asyncio
 async def test_add_sightings_at_uuid_index_success(
     first_attribute_sighting_data,
@@ -230,13 +231,11 @@ async def test_add_sighting_at_index_invalid_attribute(
     assert response.status_code == 404
     assert response.json()["detail"] == "Attribute not found."
 
-    unused_uuid = "a469325efe2f4f32a6854579f415ec6a"  #Just a random UUID -> mostlikely unused
+    unused_uuid = "a469325efe2f4f32a6854579f415ec6a"  # Just a random UUID -> mostlikely unused
     headers = {"authorization": site_admin_user_token}
     response = client.post(f"/sightings/{unused_uuid}", headers=headers)
     assert response.status_code == 404
     assert response.json()["detail"] == "Attribute not found."
-
-
 
 
 @pytest.mark.asyncio
@@ -332,8 +331,7 @@ async def test_get_all_sightings_success(
     response = client.get("/sightings", headers=headers)
     assert response.status_code == 200
     assert isinstance(response.json()["sightings"], list)
-    await delete_sighting(db, real_sighting_id
-    )
+    await delete_sighting(db, real_sighting_id)
 
 
 @pytest.mark.asyncio
