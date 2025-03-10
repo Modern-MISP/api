@@ -183,7 +183,7 @@ async def test_update_attribute(
     access_test_objects,
     client,
 ) -> None:
-    attribute_Id = access_test_objects["default_attribute"].id
+    attribute_id = access_test_objects["default_attribute"].id
     request_body = {
         "category": "Payload delivery",
         "value": "2.3.4.5",
@@ -194,12 +194,12 @@ async def test_update_attribute(
         "first_seen": "",
     }
     headers = {"authorization": access_test_objects["default_user_token"]}
-    response = client.put(f"/attributes/{attribute_Id}", json=request_body, headers=headers)
+    response = client.put(f"/attributes/{attribute_id}", json=request_body, headers=headers)
 
     assert response.status_code == 200
     response_json = response.json()
     print(response_json)
-    assert response_json["Attribute"]["id"] == attribute_Id
+    assert response_json["Attribute"]["id"] == attribute_id
     assert response_json["Attribute"]["category"] == "Payload delivery"
 
 

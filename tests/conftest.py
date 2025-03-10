@@ -932,6 +932,8 @@ async def access_test_objects(db, site_admin_user, role_read_only):
     default_tag = generate_tag()
     default_tag.user_id = default_user_id
     default_tag.org_id = default_org_id
+    default_tag.is_galaxy = True
+    default_tag.exportable = True
 
     db.add(default_tag)
     await db.commit()
@@ -940,6 +942,8 @@ async def access_test_objects(db, site_admin_user, role_read_only):
     tag_no_access = generate_tag()
     tag_no_access.user_id = site_admin_user.id
     tag_no_access.org_id = org_no_users.id
+    tag_no_access.is_galaxy = True
+    tag_no_access.exportable = True
 
     db.add(tag_no_access)
     await db.commit()
