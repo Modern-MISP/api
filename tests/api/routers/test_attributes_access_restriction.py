@@ -100,7 +100,6 @@ async def test_get_existing_attribute_read_only_user_sg(
     print("Attribute: ", str(access_test_objects["attribute_dist_sg"].asdict()))
     print("Sharing Group: ", str(access_test_objects["default_sharing_group"].asdict()))
     print("Sharing Group Org: ", str(access_test_objects["default_sharing_group_org"].asdict()))
-    print("Sharing Group User: ", str(access_test_objects["default_sharing_group_user"].asdict()))
 
     headers = {"authorization": access_test_objects["default_sharing_group_user_token"]}
     response = client.get(f"/attributes/{attribute_id}", headers=headers)
