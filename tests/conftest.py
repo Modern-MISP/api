@@ -900,29 +900,27 @@ async def access_test_objects(db, site_admin_user, role_read_only):
     await db.refresh(event_read_only_user_2)
 
     event_dist_comm = generate_event()
-    event_dist_comm.org_id = org_no_users
-    event_dist_comm.orgc_id = org_no_users
+    event_dist_comm.org_id = org_no_users.id
+    event_dist_comm.orgc_id = org_no_users.id
     event_dist_comm.user_id = site_admin_user.id
     event_dist_comm.published = True
     event_dist_comm.distribution = EventDistributionLevels.COMMUNITY
 
-
     db.add(event_dist_comm)
     await db.commit()
     await db.refresh(event_dist_comm)
-    """
+
     event_dist_comm_2 = generate_event()
-    event_dist_comm_2.org_id = org_no_users
-    event_dist_comm_2.orgc_id = org_no_users
+    event_dist_comm_2.org_id = org_no_users.id
+    event_dist_comm_2.orgc_id = org_no_users.id
     event_dist_comm_2.user_id = site_admin_user.id
     event_dist_comm_2.published = False
     event_dist_comm_2.distribution = EventDistributionLevels.COMMUNITY
 
-
     db.add(event_dist_comm_2)
     await db.commit()
     await db.refresh(event_dist_comm_2)
-    """
+
     event_dist_sg = generate_event()
     event_dist_sg.org_id = default_org_id
     event_dist_sg.orgc_id = default_org_id
@@ -1021,7 +1019,7 @@ async def access_test_objects(db, site_admin_user, role_read_only):
         "event_dist_sg": event_dist_sg,
         "event_dist_sg_2": event_dist_sg_2,
         "event_dist_comm": event_dist_comm,
-       # "event_dist_comm_2": event_dist_comm_2,
+        "event_dist_comm_2": event_dist_comm_2,
         "default_attribute": default_attribute,
         "default_attribute_2": default_attribute_2,
         "attribute_no_access": attribute_no_access,
@@ -1042,7 +1040,7 @@ async def access_test_objects(db, site_admin_user, role_read_only):
     default_event.attribute_count -= 1
     await db.delete(default_attribute)
     default_event.attribute_count -= 1
-   # await db.delete(event_dist_comm_2)
+    await db.delete(event_dist_comm_2)
     await db.delete(event_dist_comm)
     await db.delete(event_dist_sg_2)
     await db.delete(event_dist_sg)
