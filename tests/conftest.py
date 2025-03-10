@@ -946,7 +946,7 @@ async def access_test_objects(db, site_admin_user, role_read_only):
     await db.refresh(event_dist_sg_2)
 
     default_attribute = generate_attribute(default_event_id)
-    default_attribute.distribution = 0
+    default_attribute.distribution = AttributeDistributionLevels.OWN_ORGANIZATION
     default_event.attribute_count += 1
 
     db.add(default_attribute)
@@ -954,7 +954,7 @@ async def access_test_objects(db, site_admin_user, role_read_only):
     await db.refresh(default_attribute)
 
     default_attribute_2 = generate_attribute(default_event_id)
-    default_attribute_2.distribution = 0
+    default_attribute_2.distribution = AttributeDistributionLevels.OWN_ORGANIZATION
     default_event.attribute_count += 1
 
     db.add(default_attribute_2)
@@ -962,7 +962,7 @@ async def access_test_objects(db, site_admin_user, role_read_only):
     await db.refresh(default_attribute_2)
 
     attribute_no_access = generate_attribute(event_no_access_id)
-    attribute_no_access.distribution = 0
+    attribute_no_access.distribution = AttributeDistributionLevels.OWN_ORGANIZATION
     event_no_access.attribute_count += 1
 
     db.add(attribute_no_access)
@@ -970,12 +970,60 @@ async def access_test_objects(db, site_admin_user, role_read_only):
     await db.refresh(attribute_no_access)
 
     attribute_no_access_2 = generate_attribute(event_no_access_id)
-    attribute_no_access_2.distribution = 0
+    attribute_no_access_2.distribution = AttributeDistributionLevels.OWN_ORGANIZATION
     event_no_access.attribute_count += 1
 
     db.add(attribute_no_access_2)
     await db.commit()
     await db.refresh(attribute_no_access_2)
+
+    attribute_event_read_only_user = generate_attribute(event_read_only_user.id)
+    attribute_event_read_only_user.distribution = AttributeDistributionLevels.OWN_ORGANIZATION
+    event_read_only_user.attribute_count += 1
+
+    db.add(attribute_no_access_2)
+    await db.commit()
+    await db.refresh(attribute_no_access_2)
+
+    attribute_event_read_only_user_2 = generate_attribute(event_read_only_user_2.id)
+    attribute_event_read_only_user_2.distribution = AttributeDistributionLevels.OWN_ORGANIZATION
+    event_read_only_user_2.attribute_count += 1
+
+    db.add(attribute_event_read_only_user_2)
+    await db.commit()
+    await db.refresh(attribute_event_read_only_user_2)
+
+    attribute_dist_comm = generate_attribute(event_dist_comm.id)
+    attribute_dist_comm.distribution = AttributeDistributionLevels.COMMUNITY
+    event_dist_comm.attribute_count += 1
+
+    db.add(attribute_dist_comm)
+    await db.commit()
+    await db.refresh(attribute_dist_comm)
+
+    attribute_dist_comm_2 = generate_attribute(event_dist_comm_2.id)
+    attribute_dist_comm_2.distribution = AttributeDistributionLevels.COMMUNITY
+    event_dist_comm_2.attribute_count += 1
+
+    db.add(attribute_dist_comm_2)
+    await db.commit()
+    await db.refresh(attribute_dist_comm_2)
+
+    attribute_dist_sg = generate_attribute(event_dist_sg.id)
+    attribute_dist_sg.distribution = AttributeDistributionLevels.SHARING_GROUP
+    event_dist_sg.attribute_count += 1
+
+    db.add(attribute_dist_sg)
+    await db.commit()
+    await db.refresh(attribute_dist_sg)
+
+    attribute_dist_sg_2 = generate_attribute(event_dist_sg_2.id)
+    attribute_dist_sg_2.distribution = AttributeDistributionLevels.SHARING_GROUP
+    event_dist_sg_2.attribute_count += 1
+
+    db.add(attribute_dist_sg_2)
+    await db.commit()
+    await db.refresh(attribute_dist_sg_2)
 
     default_tag = generate_tag()
     default_tag.user_id = default_user_id
@@ -1024,6 +1072,12 @@ async def access_test_objects(db, site_admin_user, role_read_only):
         "default_attribute_2": default_attribute_2,
         "attribute_no_access": attribute_no_access,
         "attribute_no_access_2": attribute_no_access_2,
+        "attribute_event_read_only_user": attribute_event_read_only_user,
+        "attribute_event_read_only_user_2": attribute_event_read_only_user_2,
+        "attribute_dist_comm": attribute_dist_comm,
+        "attribute_dist_comm_2": attribute_dist_comm_2,
+        "attribute_dist_sg": attribute_dist_sg,
+        "attribute_dist_sg_2": attribute_dist_sg_2,
         "default_tag": default_tag,
         "tag_no_access": tag_no_access,
     }
@@ -1032,6 +1086,18 @@ async def access_test_objects(db, site_admin_user, role_read_only):
 
     await db.delete(tag_no_access)
     await db.delete(default_tag)
+    await db.delete(attribute_event_read_only_user)
+    event_read_only_user.attribute_count -= 1
+    await db.delete(attribute_event_read_only_user_2)
+    event_read_only_user_2.attribute_count -= 1
+    await db.delete(attribute_dist_comm)
+    event_dist_comm.attribute_count -= 1
+    await db.delete(attribute_dist_comm_2)
+    event_dist_comm.attribute_count -= 1
+    await db.delete(attribute_dist_sg)
+    event_dist_sg.attribute_count -= 1
+    await db.delete(attribute_dist_sg_2)
+    event_dist_sg.attribute_count -= 1
     await db.delete(attribute_no_access_2)
     event_no_access.attribute_count -= 1
     await db.delete(attribute_no_access)
