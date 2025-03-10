@@ -898,26 +898,26 @@ async def access_test_objects(db, site_admin_user, role_read_only):
     db.add(event_read_only_user_2)
     await db.commit()
     await db.refresh(event_read_only_user_2)
-    """
+
     event_dist_comm = generate_event()
     event_dist_comm.org_id = org_no_users
     event_dist_comm.orgc_id = org_no_users
     event_dist_comm.user_id = site_admin_user.id
     event_dist_comm.published = True
     event_dist_comm.distribution = EventDistributionLevels.COMMUNITY
-    event_dist_comm.sharing_group_id = default_sharing_group.id
+
 
     db.add(event_dist_comm)
     await db.commit()
     await db.refresh(event_dist_comm)
-
+    """
     event_dist_comm_2 = generate_event()
     event_dist_comm_2.org_id = org_no_users
     event_dist_comm_2.orgc_id = org_no_users
     event_dist_comm_2.user_id = site_admin_user.id
     event_dist_comm_2.published = False
     event_dist_comm_2.distribution = EventDistributionLevels.COMMUNITY
-    event_dist_comm_2.sharing_group_id = default_sharing_group.id
+
 
     db.add(event_dist_comm_2)
     await db.commit()
@@ -1007,7 +1007,6 @@ async def access_test_objects(db, site_admin_user, role_read_only):
         "default_sharing_group_org": default_sharing_group_org,
         "default_sharing_group": default_sharing_group,
         "default_role_modify": default_role_modify,
-        # "default_role_read_only": default_role_read_only,
         "default_user": default_user,
         "default_read_only_user": default_read_only_user,
         "default_user_token": default_user_token,
@@ -1021,7 +1020,7 @@ async def access_test_objects(db, site_admin_user, role_read_only):
         "event_no_access": event_no_access,
         "event_dist_sg": event_dist_sg,
         "event_dist_sg_2": event_dist_sg_2,
-       # "event_dist_comm": event_dist_comm,
+        "event_dist_comm": event_dist_comm,
        # "event_dist_comm_2": event_dist_comm_2,
         "default_attribute": default_attribute,
         "default_attribute_2": default_attribute_2,
@@ -1044,7 +1043,7 @@ async def access_test_objects(db, site_admin_user, role_read_only):
     await db.delete(default_attribute)
     default_event.attribute_count -= 1
    # await db.delete(event_dist_comm_2)
-   # await db.delete(event_dist_comm)
+    await db.delete(event_dist_comm)
     await db.delete(event_dist_sg_2)
     await db.delete(event_dist_sg)
     await db.delete(event_read_only_user_2)
