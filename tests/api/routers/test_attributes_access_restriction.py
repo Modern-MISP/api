@@ -10,6 +10,20 @@ from mmisp.tests.generators.model_generators.tag_generator import generate_tag
 
 
 @pytest.mark.asyncio
+async def test_get_all_attributes(
+    access_test_objects,
+    client,
+) -> None:
+    headers = {"authorization": access_test_objects["default_user_token"]}
+    response = client.get("/attributes", headers=headers)
+
+    assert response.status_code == 200
+    response_json = response.json()
+    assert isinstance(response_json, list)
+    assert len(response_json) == 2
+
+
+@pytest.mark.asyncio
 async def test_get_existing_attribute(
     access_test_objects,
     client,
@@ -31,20 +45,6 @@ async def test_get_existing_attribute_fail_read_only_user(
     headers = {"authorization": access_test_objects["default_read_only_user_token"]}
     response = client.get(f"/attributes/{attribute_id}", headers=headers)
     assert response.status_code == 403
-
-
-@pytest.mark.asyncio
-async def test_get_all_attributes(
-    access_test_objects,
-    client,
-) -> None:
-    headers = {"authorization": access_test_objects["default_user_token"]}
-    response = client.get("/attributes", headers=headers)
-
-    assert response.status_code == 200
-    response_json = response.json()
-    assert isinstance(response_json, list)
-    assert len(response_json) == 2
 
 
 @pytest.mark.asyncio
@@ -73,6 +73,22 @@ async def test_delete_existing_attribute_fail_read_only_user(access_test_objects
     headers = {"authorization": access_test_objects["default_read_only_user_token"]}
     response = client.delete(f"/attributes/{attribute_id}", headers=headers)
     assert response.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_add_attribute(access_test_objects, client) -> None:
+    request_body = {
+        "value": "1.2.3.4",
+        "type": "ip-src",
+        "category": "Network activity",
+        "to_ids": True,
+        "distribution": "1",
+        "comment": "test comment",
+        "disable_correlation": False,
+    }
+    event_id = access_test_objects["default_event"].id
+    headers = {"authorization": access_test_objects["default_user_token"]}
+    response = client.post(f"/attributes/{event_id}", json=request_body, headers=headers)
 
 
 @pytest.mark.asyncio
@@ -302,4 +318,12 @@ async def test_attribute_category_absolute_statistics(access_test_objects, clien
 async def test_attribute_category_relative_statistics(access_test_objects, client) -> None:
     headers = {"authorization": access_test_objects["default_user_token"]}
     response = client.get("/attributes/attributeStatistics/category/1", headers=headers)
+    assert response.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_valid_search_attribute_data(access_test_objects, client) -> None:
+    request_body = {"returnFormat": "json", "limit": 100}
+    headers = {"authorization": access_test_objects["default_user_token"]}
+    response = client.post("/attributes/restSearch", json=request_body, headers=headers)
     assert response.status_code == 200

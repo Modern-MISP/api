@@ -847,7 +847,6 @@ async def _remove_tag_from_attribute(
     if not attribute_tag:
         return AddRemoveTagAttributeResponse(saved=False, errors="Invalid attribute - tag combination.")
 
-
     await db.delete(attribute_tag)
     await db.flush()
 
