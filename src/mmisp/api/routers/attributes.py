@@ -820,6 +820,20 @@ async def _add_tag_to_attribute(
 async def _remove_tag_from_attribute(
     db: Session, attribute_id: int | uuid.UUID, tag_id: str, user: User | None
 ) -> AddRemoveTagAttributeResponse:
+    attribute: Attribute | None
+
+    if isinstance(attribute_id, uuid.UUID):
+        attribute = await _get_attribute_by_uuid(db, attribute_id)
+    else:
+        attribute = await db.get(Attribute, attribute_id)
+
+    if not attribute:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
+
+    if not attribute.can_edit(user):
+        logger.debug("User cannot edit %s", attribute.id)
+        raise HTTPException(status.HTTP_403_FORBIDDEN)
+
     if isinstance(attribute_id, uuid.UUID):
         attribute_tag = await _get_tag_by_attribute_uuid(db, attribute_id, int(tag_id))
     else:
@@ -833,16 +847,6 @@ async def _remove_tag_from_attribute(
     if not attribute_tag:
         return AddRemoveTagAttributeResponse(saved=False, errors="Invalid attribute - tag combination.")
 
-    attribute: Attribute | None
-
-    if isinstance(attribute_id, uuid.UUID):
-        attribute = await _get_attribute_by_uuid(db, attribute_id)
-    else:
-        attribute = await db.get(Attribute, attribute_id)
-
-    if not attribute.can_edit(user):
-        logger.debug("User cannot edit %s", attribute.uuid)
-        raise HTTPException(status.HTTP_403_FORBIDDEN)
 
     await db.delete(attribute_tag)
     await db.flush()

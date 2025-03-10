@@ -76,6 +76,25 @@ async def test_delete_existing_attribute_fail_read_only_user(access_test_objects
 
 
 @pytest.mark.asyncio
+async def test_add_attribute_fail(access_test_objects, client) -> None:
+    request_body = {
+        "value": "1.2.3.4",
+        "type": "ip-src",
+        "category": "Network activity",
+        "to_ids": True,
+        "distribution": "1",
+        "comment": "test comment",
+        "disable_correlation": False,
+    }
+    event_id = access_test_objects["event_no_access"].id
+
+    headers = {"authorization": access_test_objects["default_user_token"]}
+    response = client.post(f"/attributes/{event_id}", json=request_body, headers=headers)
+
+    assert response.status_code == 403
+
+
+@pytest.mark.asyncio
 async def test_add_attribute_fail_read_only_user(access_test_objects, client) -> None:
     request_body = {
         "value": "1.2.3.4",
@@ -88,7 +107,7 @@ async def test_add_attribute_fail_read_only_user(access_test_objects, client) ->
     }
     event_id = access_test_objects["default_event"].id
 
-    headers = {"authorization": access_test_objects["default_user_token"]}
+    headers = {"authorization": access_test_objects["default_read_only_user_token"]}
     response = client.post(f"/attributes/{event_id}", json=request_body, headers=headers)
 
     assert response.status_code == 403
@@ -130,7 +149,6 @@ async def test_remove_existing_tag_from_attribute_fail(
     response = client.post(f"/attributes/removeTag/{attribute_id}/{tag_id}", headers=headers)
     print(response.json())
     assert response.status_code == 403
-
 
 
 @pytest.mark.asyncio
