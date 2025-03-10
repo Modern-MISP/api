@@ -886,6 +886,17 @@ async def access_test_objects(db, site_admin_user, role_read_only):
     await db.commit()
     await db.refresh(event_read_only_user)
 
+    event_read_only_user_2 = generate_event()
+    event_read_only_user_2.org_id = org_read_only.id
+    event_read_only_user_2.orgc_id = org_read_only.id
+    event_read_only_user_2.user_id = site_admin_user.id
+    event_read_only_user_2.published = False
+    event_read_only_user_2.distribution = EventDistributionLevels.OWN_ORGANIZATION
+
+    db.add(event_read_only_user_2)
+    await db.commit()
+    await db.refresh(event_read_only_user_2)
+
     event_dist_sg = generate_event()
     event_dist_sg.org_id = default_org_id
     event_dist_sg.orgc_id = default_org_id
@@ -989,6 +1000,7 @@ async def access_test_objects(db, site_admin_user, role_read_only):
     default_event.attribute_count -= 1
     await db.delete(default_attribute)
     default_event.attribute_count -= 1
+    await db.delete(event_read_only_user_2)
     await db.delete(event_read_only_user)
     await db.delete(event_dist_sg)
     await db.delete(event_no_access)
