@@ -140,7 +140,7 @@ async def test_delete_existing_attribute_fail_read_only_user(access_test_objects
 
     headers = {"authorization": access_test_objects["default_read_only_user_token"]}
     response = client.delete(f"/attributes/{attribute_id}", headers=headers)
-    assert response.status_code == 403
+    assert response.status_code == 404
 
 
 @pytest.mark.asyncio

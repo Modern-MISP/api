@@ -1093,11 +1093,11 @@ async def access_test_objects(db, site_admin_user, role_read_only):
     await db.delete(attribute_dist_comm)
     event_dist_comm.attribute_count -= 1
     await db.delete(attribute_dist_comm_2)
-    event_dist_comm.attribute_count -= 1
+    event_dist_comm_2.attribute_count -= 1
     await db.delete(attribute_dist_sg)
     event_dist_sg.attribute_count -= 1
     await db.delete(attribute_dist_sg_2)
-    event_dist_sg.attribute_count -= 1
+    event_dist_sg_2.attribute_count -= 1
     await db.delete(attribute_no_access_2)
     event_no_access.attribute_count -= 1
     await db.delete(attribute_no_access)
