@@ -32,6 +32,3 @@ async def test_add_event_data_empty_string(db, auth_key, client, access_test_obj
     request_body = {"info": "test event", "date": ""}
 
     assert get_legacy_modern_diff("post", path, request_body, auth_key, client) == {}
-
-
-

@@ -618,7 +618,7 @@ async def _get_event_details(db: Session, event_id: int | uuid.UUID, user: User 
                     ),
                     selectinload(Attribute.attributetags).selectinload(AttributeTag.tag),
                 ),
-                selectinload(Event.sharing_group)
+                selectinload(Event.sharing_group),
             )
         )
         event = result.scalars().one_or_none()
@@ -1402,7 +1402,7 @@ async def _get_event_by_uuid(
                 ),
                 selectinload(Attribute.attributetags).selectinload(AttributeTag.tag),
             ),
-            selectinload(Event.sharing_group)
+            selectinload(Event.sharing_group),
         )
 
     elif include_basic_event_attributes:
