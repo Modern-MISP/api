@@ -289,7 +289,8 @@ async def test_update_attribute(
     access_test_objects,
     client,
 ) -> None:
-    attribute_id = access_test_objects["default_attribute"].id
+    attribute = access_test_objects["default_attribute"]
+    attribute_id = attribute.id
     print("Attribute: ", str(access_test_objects["default_attribute"].asdict()))
     request_body = {
         "category": "Payload delivery",
@@ -299,11 +300,11 @@ async def test_update_attribute(
         "comment": "new comment",
         "disable_correlation": False,
         "first_seen": "",
-        "exportable": None,
-        "user_id": None,
-        "hide_tag": None,
-        "is_costum_galaxy": None,
-        "local_only": None,
+        "exportable": False,
+        "user_id": 0,
+        "hide_tag": False,
+        "is_costum_galaxy": False,
+        "local_only": False,
     }
     headers = {"authorization": access_test_objects["default_user_token"]}
     response = client.put(f"/attributes/{attribute_id}", json=request_body, headers=headers)
