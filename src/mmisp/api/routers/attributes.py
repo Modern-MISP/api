@@ -560,7 +560,15 @@ async def _get_attribute_details(db: Session, attribute_id: int | uuid.UUID, use
     if isinstance(attribute_id, uuid.UUID):
         attribute = await _get_attribute_by_uuid(db, attribute_id)
     else:
-        attribute = await db.get(Attribute, attribute_id)
+        result = await db.execute(
+            select(Attribute)
+            .filter(Attribute.id == attribute_id)
+            .filter(Attribute.can_edit(user))
+            .options(
+                selectinload(Attribute.sharing_group),
+            )
+        )
+        attribute = result.scalars().one_or_none()
 
     if not attribute:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
