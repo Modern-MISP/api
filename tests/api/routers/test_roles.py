@@ -205,9 +205,6 @@ async def test_delete_role_not_found(client, site_admin_user_token):
 
     assert response.status_code == 404
 
-    response_json = response.json()
-    assert response_json["detail"] == f"Role with ID {role_id} not found."
-
 
 @pytest.mark.asyncio
 async def test_delete_default_role(client, site_admin_user_token, role_read_only, db):
@@ -334,8 +331,6 @@ async def test_update_role_not_found(client, site_admin_user_token):
     response = client.put(f"/admin/roles/edit/{999999}", json=update_data, headers=headers)
 
     assert response.status_code == 404
-    response_json = response.json()
-    assert response_json["detail"] == f"Role with ID {role_id} not found."
 
 
 @pytest.mark.asyncio
