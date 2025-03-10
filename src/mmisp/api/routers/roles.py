@@ -397,7 +397,7 @@ async def _delete_role(db: Session, role_id: int) -> DeleteRoleResponse:
             detail={
                 "message": "Invalid Role",
                 "name": "Invalid Role",
-                "url": f"/admin/roles/edit/{role_id}"
+                "url": f"/admin/roles/delete/{role_id}"
             }
         )
 
