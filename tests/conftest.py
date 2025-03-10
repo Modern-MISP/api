@@ -822,7 +822,7 @@ async def access_test_objects(db, site_admin_user, role_read_only):
 
     default_sharing_group_user = User(
         password="very_safe_passwort",
-        org_id=default_org_id,
+        org_id=default_sharing_group_org.id,
         role_id=role_read_only.id,
         email="default_sharing_group_user@lauch.com",
         authkey=None,
@@ -839,6 +839,8 @@ async def access_test_objects(db, site_admin_user, role_read_only):
     db.add(default_sharing_group_user)
     await db.commit()
     await db.refresh(default_sharing_group_user)
+    default_sharing_group_user_id = default_sharing_group_user.id
+    default_sharing_group_user_token = encode_token(default_sharing_group_user.id)
 
     default_event = generate_event()
     default_event.org_id = default_org_id
@@ -866,7 +868,7 @@ async def access_test_objects(db, site_admin_user, role_read_only):
     event_no_access = generate_event()
     event_no_access.org_id = org_no_users.id
     event_no_access.orgc_id = org_no_users.id
-    event_no_access.user_id = default_sharing_group_user.id
+    event_no_access.user_id = default_sharing_group_user_id
     event_no_access.published = False
     event_no_access.distribution = EventDistributionLevels.OWN_ORGANIZATION
 
@@ -932,6 +934,18 @@ async def access_test_objects(db, site_admin_user, role_read_only):
     db.add(event_dist_sg)
     await db.commit()
     await db.refresh(event_dist_sg)
+
+    event_dist_sg_2 = generate_event()
+    event_dist_sg_2.org_id = default_org_id
+    event_dist_sg_2.orgc_id = default_org_id
+    event_dist_sg_2.user_id = site_admin_user.id
+    event_dist_sg_2.published = False
+    event_dist_sg_2.distribution = EventDistributionLevels.SHARING_GROUP
+    event_dist_sg_2.sharing_group_id = default_sharing_group.id
+
+    db.add(event_dist_sg_2)
+    await db.commit()
+    await db.refresh(event_dist_sg_2)
 
     default_attribute = generate_attribute(default_event_id)
     default_attribute.distribution = 0
@@ -999,12 +1013,14 @@ async def access_test_objects(db, site_admin_user, role_read_only):
         "default_user_token": default_user_token,
         "default_read_only_user_token": default_read_only_user_token,
         "default_sharing_group_user": default_sharing_group_user,
+        "default_sharing_group_user_token": default_sharing_group_user_token,
         "default_event": default_event,
         "default_event_published": default_event_published,
         "event_read_only_user": event_read_only_user,
         "event_read_only_user_2": event_read_only_user_2,
         "event_no_access": event_no_access,
         "event_dist_sg": event_dist_sg,
+        "event_dist_sg_2": event_dist_sg_2,
         "event_dist_comm": event_dist_comm,
         "event_dist_comm_2": event_dist_comm_2,
         "default_attribute": default_attribute,
@@ -1029,6 +1045,7 @@ async def access_test_objects(db, site_admin_user, role_read_only):
     default_event.attribute_count -= 1
     await db.delete(event_dist_comm_2)
     await db.delete(event_dist_comm)
+    await db.delete(event_dist_sg_2)
     await db.delete(event_dist_sg)
     await db.delete(event_read_only_user_2)
     await db.delete(event_read_only_user)
@@ -1038,7 +1055,6 @@ async def access_test_objects(db, site_admin_user, role_read_only):
     await db.delete(default_sharing_group_user)
     await db.delete(default_read_only_user)
     await db.delete(default_user)
-    # await db.delete(default_role_read_only)
     await db.delete(default_role_modify)
     await db.delete(default_sharing_group_org)
     await db.delete(org_read_only)

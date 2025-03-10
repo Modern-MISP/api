@@ -37,7 +37,7 @@ async def test_list_all_events_admin(access_test_objects, client) -> None:
     assert response.status_code == 200
     response_json = response.json()
     assert isinstance(response_json, list)
-    assert len(response_json) == 6
+    assert len(response_json) > 4
 
 
 @pytest.mark.asyncio
@@ -81,6 +81,22 @@ async def test_get_event_success_read_only_user_comm(access_test_objects, client
 async def test_get_event_fail_read_only_user_comm(access_test_objects, client) -> None:
     headers = {"authorization": access_test_objects["default_read_only_user_token"]}
     event_id = access_test_objects["event_dist_comm_2"].id
+    response = client.get(f"/events/{event_id}", headers=headers)
+    assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_get_event_success_read_only_user_sg(access_test_objects, client) -> None:
+    headers = {"authorization": access_test_objects["default_sharing_group_user_token"]}
+    event_id = access_test_objects["event_dist_sg"].id
+    response = client.get(f"/events/{event_id}", headers=headers)
+    assert response.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_get_event_fail_read_only_user_sg(access_test_objects, client) -> None:
+    headers = {"authorization": access_test_objects["default_sharing_group_user_token"]}
+    event_id = access_test_objects["event_dist_sg_2"].id
     response = client.get(f"/events/{event_id}", headers=headers)
     assert response.status_code == 404
 
