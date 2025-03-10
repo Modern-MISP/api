@@ -14,3 +14,24 @@ async def test_view_event_galaxy_cluster_tag(
     db: AsyncSession, event, attribute_with_galaxy_cluster_one_tag, auth_key, client
 ) -> None:
     assert get_legacy_modern_diff("get", f"/events/view/{event.id}", {}, auth_key, client) == {}
+
+
+@pytest.mark.asyncio
+async def test_add_event_valid_data(db, auth_key, client, access_test_objects) -> None:
+    path = "/events"
+
+    request_body = {"info": "test event"}
+
+    assert get_legacy_modern_diff("post", path, request_body, auth_key, client) == {}
+
+
+@pytest.mark.asyncio
+async def test_add_event_data_empty_string(db, auth_key, client, access_test_objects) -> None:
+    path = "/events"
+
+    request_body = {"info": "test event", "date": ""}
+
+    assert get_legacy_modern_diff("post", path, request_body, auth_key, client) == {}
+
+
+
