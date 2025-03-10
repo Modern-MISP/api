@@ -563,7 +563,7 @@ async def _get_attribute_details(db: Session, attribute_id: int | uuid.UUID, use
         result = await db.execute(
             select(Attribute)
             .filter(Attribute.id == attribute_id)
-            .filter(Attribute.can_edit(user))
+            .filter(Attribute.can_access(user))
             .options(
                 selectinload(Attribute.sharing_group),
             )
