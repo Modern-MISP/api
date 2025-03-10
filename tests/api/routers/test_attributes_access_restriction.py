@@ -290,6 +290,7 @@ async def test_update_attribute(
     client,
 ) -> None:
     attribute_id = access_test_objects["default_attribute"].id
+    print("Attribute: ", str(access_test_objects["default_attribute"].asdict()))
     request_body = {
         "category": "Payload delivery",
         "value": "2.3.4.5",
