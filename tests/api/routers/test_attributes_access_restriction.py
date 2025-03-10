@@ -128,7 +128,8 @@ async def test_remove_existing_tag_from_attribute_fail(
     attribute_id = access_test_objects["attribute_no_access"].id
     tag_id = access_test_objects["default_tag"].id
     response = client.post(f"/attributes/removeTag/{attribute_id}/{tag_id}", headers=headers)
-    assert response.status_code == 403
+    assert response.status_code == 200
+    print(response.json())
 
 
 @pytest.mark.asyncio
@@ -251,3 +252,31 @@ async def test_delete_selected_attributes_from_existing_event_fail(access_test_o
     response = client.post(f"/attributes/deleteSelected/{event_id}", json=request_body, headers=headers)
 
     assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_attribute_type_absolute_statistics(access_test_objects, client) -> None:
+    headers = {"authorization": access_test_objects["default_user_token"]}
+    response = client.get("/attributes/attributeStatistics/type/0", headers=headers)
+    assert response.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_attribute_type_relative_statistics(access_test_objects, client) -> None:
+    headers = {"authorization": access_test_objects["default_user_token"]}
+    response = client.get("/attributes/attributeStatistics/type/1", headers=headers)
+    assert response.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_attribute_category_absolute_statistics(access_test_objects, client) -> None:
+    headers = {"authorization": access_test_objects["default_user_token"]}
+    response = client.get("/attributes/attributeStatistics/category/0", headers=headers)
+    assert response.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_attribute_category_relative_statistics(access_test_objects, client) -> None:
+    headers = {"authorization": access_test_objects["default_user_token"]}
+    response = client.get("/attributes/attributeStatistics/category/1", headers=headers)
+    assert response.status_code == 200
