@@ -981,9 +981,9 @@ async def access_test_objects(db, site_admin_user, role_read_only):
     attribute_event_read_only_user.distribution = AttributeDistributionLevels.OWN_ORGANIZATION
     event_read_only_user.attribute_count += 1
 
-    db.add(attribute_no_access_2)
+    db.add(attribute_event_read_only_user)
     await db.commit()
-    await db.refresh(attribute_no_access_2)
+    await db.refresh(attribute_event_read_only_user)
 
     attribute_event_read_only_user_2 = generate_attribute(event_read_only_user_2.id)
     attribute_event_read_only_user_2.distribution = AttributeDistributionLevels.OWN_ORGANIZATION
