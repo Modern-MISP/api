@@ -833,6 +833,17 @@ async def _remove_tag_from_attribute(
     if not attribute_tag:
         return AddRemoveTagAttributeResponse(saved=False, errors="Invalid attribute - tag combination.")
 
+    attribute: Attribute | None
+
+    if isinstance(attribute_id, uuid.UUID):
+        attribute = await _get_attribute_by_uuid(db, attribute_id)
+    else:
+        attribute = await db.get(Attribute, attribute_id)
+
+    if not attribute.can_edit(user):
+        logger.debug("User cannot edit %s", attribute.uuid)
+        raise HTTPException(status.HTTP_403_FORBIDDEN)
+
     await db.delete(attribute_tag)
     await db.flush()
 
