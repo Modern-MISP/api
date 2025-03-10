@@ -20,7 +20,7 @@ async def test_view_event_galaxy_cluster_tag(
 async def test_add_event_valid_data(db, auth_key, client, access_test_objects) -> None:
     path = "/events"
 
-    request_body = {"info": "test event"}
+    request_body = {"info": "test ents from lotr"}
 
     assert get_legacy_modern_diff("post", path, request_body, auth_key, client) == {}
 
@@ -29,6 +29,6 @@ async def test_add_event_valid_data(db, auth_key, client, access_test_objects) -
 async def test_add_event_data_empty_string(db, auth_key, client, access_test_objects) -> None:
     path = "/events"
 
-    request_body = {"info": "test event", "date": ""}
+    request_body = {"info": "test ents", "date": ""}
 
     assert get_legacy_modern_diff("post", path, request_body, auth_key, client) == {}
