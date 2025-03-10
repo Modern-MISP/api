@@ -733,6 +733,7 @@ async def access_test_objects(db, site_admin_user, role_read_only):
     default_sharing_group = generate_sharing_group()
     default_sharing_group.organisation_uuid = default_sharing_group_org.uuid
     default_sharing_group.org_id = sharing_group_org_id
+
     db.add(default_sharing_group)
     await db.commit()
     await db.refresh(default_sharing_group)
