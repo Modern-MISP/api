@@ -1011,6 +1011,7 @@ async def access_test_objects(db, site_admin_user, role_read_only):
 
     attribute_dist_sg = generate_attribute(event_dist_sg.id)
     attribute_dist_sg.distribution = AttributeDistributionLevels.SHARING_GROUP
+    attribute_dist_sg.sharing_group_id = default_sharing_group.id
     event_dist_sg.attribute_count += 1
 
     db.add(attribute_dist_sg)
@@ -1019,6 +1020,7 @@ async def access_test_objects(db, site_admin_user, role_read_only):
 
     attribute_dist_sg_2 = generate_attribute(event_dist_sg_2.id)
     attribute_dist_sg_2.distribution = AttributeDistributionLevels.SHARING_GROUP
+    attribute_dist_sg_2.sharing_group_id = default_sharing_group.id
     event_dist_sg_2.attribute_count += 1
 
     db.add(attribute_dist_sg_2)
