@@ -20,7 +20,7 @@ async def test_get_all_attributes(
     assert response.status_code == 200
     response_json = response.json()
     assert isinstance(response_json, list)
-    assert len(response_json) == 2
+    assert len(response_json) == 3
 
 
 @pytest.mark.asyncio
@@ -46,12 +46,24 @@ async def test_get_existing_attribute_fail_read_only_user(
     response = client.get(f"/attributes/{attribute_id}", headers=headers)
     assert response.status_code == 403
 
+
 @pytest.mark.asyncio
 async def test_get_existing_attribute_read_only_user(
     access_test_objects,
     client,
 ) -> None:
-    attribute_id = access_test_objects["default_attribute"].id
+    attribute_id = access_test_objects["attribute_event_read_only_user"].id
+    headers = {"authorization": access_test_objects["default_read_only_user_token"]}
+    response = client.get(f"/attributes/{attribute_id}", headers=headers)
+    assert response.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_get_existing_attribute_read_only_user(
+    access_test_objects,
+    client,
+) -> None:
+    attribute_id = access_test_objects["attribute_event_read_only_user_2"].id
     headers = {"authorization": access_test_objects["default_read_only_user_token"]}
     response = client.get(f"/attributes/{attribute_id}", headers=headers)
     assert response.status_code == 403
@@ -65,7 +77,7 @@ async def test_get_all_attributes_read_only_user(
     response = client.get("/attributes", headers=headers)
     assert response.status_code == 200
     response_json = response.json()
-    assert len(response_json) == 3
+    assert len(response_json) == 2
 
 
 @pytest.mark.asyncio
