@@ -111,7 +111,7 @@ async def test_get_existing_attribute_fail_read_only_user_sg(
     access_test_objects,
     client,
 ) -> None:
-    attribute_id = access_test_objects["attribute_dist_sg"].id
+    attribute_id = access_test_objects["attribute_dist_sg_2"].id
     headers = {"authorization": access_test_objects["default_sharing_group_user_token"]}
     response = client.get(f"/attributes/{attribute_id}", headers=headers)
     assert response.status_code == 404
