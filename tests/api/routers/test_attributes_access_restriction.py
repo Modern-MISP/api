@@ -48,7 +48,7 @@ async def test_get_existing_attribute_fail_read_only_user(
 
 
 @pytest.mark.asyncio
-async def test_get_existing_attribute_read_only_user(
+async def test_get_existing_attribute_read_only_user_own_org(
     access_test_objects,
     client,
 ) -> None:
@@ -59,11 +59,32 @@ async def test_get_existing_attribute_read_only_user(
 
 
 @pytest.mark.asyncio
-async def test_get_existing_attribute_read_only_user(
+async def test_get_existing_attribute_fail_read_only_user_own_org(
     access_test_objects,
     client,
 ) -> None:
     attribute_id = access_test_objects["attribute_event_read_only_user_2"].id
+    headers = {"authorization": access_test_objects["default_read_only_user_token"]}
+    response = client.get(f"/attributes/{attribute_id}", headers=headers)
+    assert response.status_code == 403
+
+@pytest.mark.asyncio
+async def test_get_existing_attribute_read_only_user_comm(
+    access_test_objects,
+    client,
+) -> None:
+    attribute_id = access_test_objects["attribute_dist_comm"].id
+    headers = {"authorization": access_test_objects["default_read_only_user_token"]}
+    response = client.get(f"/attributes/{attribute_id}", headers=headers)
+    assert response.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_get_existing_attribute_fail_read_only_user_comm(
+    access_test_objects,
+    client,
+) -> None:
+    attribute_id = access_test_objects["attribute_dist_comm_2"].id
     headers = {"authorization": access_test_objects["default_read_only_user_token"]}
     response = client.get(f"/attributes/{attribute_id}", headers=headers)
     assert response.status_code == 403
