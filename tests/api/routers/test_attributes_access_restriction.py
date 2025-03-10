@@ -63,7 +63,9 @@ async def test_get_all_attributes_read_only_user(
 ) -> None:
     headers = {"authorization": access_test_objects["default_read_only_user_token"]}
     response = client.get("/attributes", headers=headers)
-    assert response.status_code == 404
+    assert response.status_code == 200
+    response_json = response.json()
+    assert len(response_json) == 3
 
 
 @pytest.mark.asyncio
@@ -263,7 +265,7 @@ async def test_get_all_attributes_site_admin(
     response_json = response.json()
     print(response_json)
     assert isinstance(response_json, list)
-    assert len(response_json) == 4
+    assert len(response_json) == 10
 
 
 @pytest.mark.asyncio
