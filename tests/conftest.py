@@ -1056,6 +1056,7 @@ async def access_test_objects(db, site_admin_user, role_read_only):
     await db.delete(default_read_only_user)
     await db.delete(default_user)
     await db.delete(default_role_modify)
+    await db.delete(default_sharing_group)
     await db.delete(default_sharing_group_org)
     await db.delete(org_read_only)
     await db.delete(org_no_users)
