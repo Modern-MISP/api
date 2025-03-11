@@ -585,7 +585,12 @@ async def _get_attribute_details(db: Session, attribute_id: int | uuid.UUID, use
 async def _update_attribute(
     db: Session, attribute_id: int | uuid.UUID, body: EditAttributeBody, user: User | None
 ) -> EditAttributeResponse:
-    attribute: Attribute | None = await db.get(Attribute, attribute_id)
+
+    if isinstance(attribute_id, uuid.UUID):
+        attribute = await _get_attribute_by_uuid(db, attribute_id)
+    else:
+        attribute = await db.get(Attribute, attribute_id)
+#    attribute: Attribute | None = await db.get(Attribute, attribute_id)
 
     if not attribute:
         raise HTTPException(status.HTTP_404_NOT_FOUND)

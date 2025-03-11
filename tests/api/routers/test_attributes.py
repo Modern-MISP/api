@@ -296,6 +296,61 @@ async def test_edit_existing_attribute(
 
     assert response_json["Attribute"]["first_seen"] is None
 
+@pytest.mark.asyncio
+async def test_edit_existing_attribute_by_uuid(
+    db: AsyncSession, site_admin_user_token, sharing_group, event, attribute, client
+) -> None:
+    request_body = {
+        "category": "Payload delivery",
+        "value": "2.3.4.5",
+        "to_ids": True,
+        "distribution": "1",
+        "comment": "new comment",
+        "disable_correlation": False,
+        "first_seen": "",
+    }
+    event.sharing_group_id = sharing_group.id
+    await db.commit()
+
+    event_id = event.id
+
+    attribute.sharing_group_id = sharing_group.id
+
+    await db.commit()
+
+    attribute_uuid = attribute.uuid
+    assert attribute.id is not None
+
+    headers = {"authorization": site_admin_user_token}
+    response = client.put(f"/attributes/{attribute_uuid}", json=request_body, headers=headers)
+
+    assert response.status_code == 200
+    response_json = response.json()
+
+    assert response_json["Attribute"]["uuid"] == attribute_uuid
+    assert response_json["Attribute"]["event_id"] == event_id
+    assert "id" in response_json["Attribute"]
+    assert "event_id" in response_json["Attribute"]
+    assert "object_id" in response_json["Attribute"]
+    assert "object_relation" in response_json["Attribute"]
+    assert "category" in response_json["Attribute"]
+    assert "type" in response_json["Attribute"]
+    assert "value" in response_json["Attribute"]
+    assert "to_ids" in response_json["Attribute"]
+    assert "uuid" in response_json["Attribute"]
+    assert "timestamp" in response_json["Attribute"]
+    assert "distribution" in response_json["Attribute"]
+    assert "sharing_group_id" in response_json["Attribute"]
+    assert "comment" in response_json["Attribute"]
+    assert "deleted" in response_json["Attribute"]
+    assert "disable_correlation" in response_json["Attribute"]
+    assert "first_seen" in response_json["Attribute"]
+    assert "last_seen" in response_json["Attribute"]
+    assert "Tag" in response_json["Attribute"]
+    assert "first_seen" in response_json["Attribute"]
+
+    assert response_json["Attribute"]["first_seen"] is None
+
 
 @pytest.mark.asyncio
 async def test_edit_non_existing_attribute(site_admin_user_token, client) -> None:
@@ -312,7 +367,8 @@ async def test_edit_non_existing_attribute(site_admin_user_token, client) -> Non
     assert response.status_code == 404
     response = client.put("/attributes/999999999", json=request_body, headers=headers)
     assert response.status_code == 404
-
+    response = client.get("/attributes/a469325efe2f4f32a6854579f415ec6a", headers=headers)
+    assert response.status_code == 404
 
 # --- Test delete attribute by id
 @pytest.mark.asyncio
