@@ -64,7 +64,8 @@ async def test_add_event_valid_data(db, site_admin_user_token, client) -> None:
     assert response_json["Event"]["info"] == request_body["info"]
     assert "id" in response_json["Event"]["Org"]
     assert "name" in response_json["Event"]["Org"]
-    assert "uuid" in response_json["Event"]["Org"]
+    assert uuid.UUID(response_json["Event"]["Org"]["uuid"])
+    assert uuid.UUID(response_json["Event"]["Orgc"]["uuid"])
     assert "local" in response_json["Event"]["Org"]
     assert uuid.UUID(response_json["Event"]["uuid"])
 
@@ -82,7 +83,8 @@ async def test_add_event_date_empty_string(db, site_admin_user_token, client) ->
     assert response_json["Event"]["info"] == request_body["info"]
     assert "id" in response_json["Event"]["Org"]
     assert "name" in response_json["Event"]["Org"]
-    assert "uuid" in response_json["Event"]["Org"]
+    assert uuid.UUID(response_json["Event"]["Org"]["uuid"])
+    assert uuid.UUID(response_json["Event"]["Orgc"]["uuid"])
     assert "local" in response_json["Event"]["Org"]
     assert uuid.UUID(response_json["Event"]["uuid"])
 
