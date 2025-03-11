@@ -410,8 +410,6 @@ async def test_standard_role(db):
 @pytest_asyncio.fixture
 async def role_read_only(db):
     role = standard_roles.read_only_role()
-    role.id = None
-
     db.add(role)
     await db.commit()
     await db.refresh(role)
