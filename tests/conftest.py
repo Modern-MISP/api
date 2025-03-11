@@ -499,7 +499,7 @@ async def random_test_user(db, instance_owner_org):
 
 
 @pytest_asyncio.fixture
-async def access_test_objects(db, site_admin_user, role_read_only):
+async def access_test_objects(db, site_admin_user):
     site_admin_user_token = encode_token(site_admin_user.id)
 
     default_org = generate_organisation()
@@ -572,6 +572,13 @@ async def access_test_objects(db, site_admin_user, role_read_only):
     await db.commit()
     await db.refresh(default_role_modify)
 
+    default_role_read_only = standard_roles.read_only_role()
+    default_role_read_only.id = None
+
+    db.add(default_role_read_only)
+    await db.commit()
+    await db.refresh(default_role_read_only)
+
     default_user = User(
         password="very_safe_passwort",
         org_id=default_org_id,
@@ -597,7 +604,7 @@ async def access_test_objects(db, site_admin_user, role_read_only):
     default_read_only_user = User(
         password="very_safe_passwort",
         org_id=org_read_only.id,
-        role_id=role_read_only.id,
+        role_id=default_role_read_only.id,
         email="default_read_only_user@lauch.com",
         authkey=None,
         invited_by=314,
@@ -618,7 +625,7 @@ async def access_test_objects(db, site_admin_user, role_read_only):
     default_sharing_group_user = User(
         password="very_safe_passwort",
         org_id=default_sharing_group_org.id,
-        role_id=role_read_only.id,
+        role_id=default_role_read_only.id,
         email="default_sharing_group_user@lauch.com",
         authkey=None,
         invited_by=314,
@@ -915,6 +922,7 @@ async def access_test_objects(db, site_admin_user, role_read_only):
     await db.delete(default_sharing_group_user)
     await db.delete(default_read_only_user)
     await db.delete(default_user)
+    await db.delete(default_role_read_only)
     await db.delete(default_role_modify)
     await db.delete(default_sharing_group)
     await db.delete(default_sharing_group_org)
