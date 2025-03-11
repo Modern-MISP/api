@@ -360,6 +360,8 @@ async def test_delete_invalid_or_non_existing_attribute(site_admin_user_token, c
     assert response.status_code == 404
     response = client.delete("/attributes/invalid_id", headers=headers)
     assert response.status_code == 422
+    response = client.get("/attributes/a469325efe2f4f32a6854579f415ec6a", headers=headers)
+    assert response.status_code == 404
 
 
 # --- Test get all attributes
