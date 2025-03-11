@@ -561,13 +561,35 @@ async def test_restore_existing_attribute(
 
 
 @pytest.mark.asyncio
+async def test_restore_existing_attribute_by_uuid(
+    db: AsyncSession, site_admin_user_token, sharing_group, event, attribute, client
+) -> None:
+    event.sharing_group_id = sharing_group.id
+
+    db.add(event)
+    await db.commit()
+    await db.refresh(event)
+
+    attribute.sharing_group_id = sharing_group.id
+
+    await db.commit()
+
+    attribute_uuid = attribute.uuid
+
+    headers = {"authorization": site_admin_user_token}
+    response = client.post(f"/attributes/restore/{attribute_uuid}", headers=headers)
+    assert response.status_code == 200
+
+
+@pytest.mark.asyncio
 async def test_restore_invalid_attribute(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.post("/attributes/restore/0", headers=headers)
     assert response.status_code == 404
     response = client.post("/attributes/restore/invalid_id", headers=headers)
     assert response.status_code == 422
-
+    response = client.post("/attributes/restore/a469325efe2f4f32a6854579f415ec6a", headers=headers)
+    assert response.status_code == 404
 
 # --- Test adding a tag
 
@@ -608,6 +630,41 @@ async def test_add_existing_tag_to_attribute(
 
 
 @pytest.mark.asyncio
+async def test_add_existing_tag_to_attribute_by_uuid(
+    db: AsyncSession, site_admin_user_token, sharing_group, event, attribute, client
+) -> None:
+    event.sharing_group_id = sharing_group.id
+
+    setattr(attribute, "sharing_group_id", sharing_group.id)
+
+    await db.commit()
+
+    attribute_uuid = attribute.uuid
+
+    tag = generate_tag()
+    setattr(tag, "user_id", 1)
+    setattr(tag, "org_id", 1)
+
+    db.add(tag)
+    await db.commit()
+    await db.refresh(tag)
+
+    tag_id = tag.id
+
+    headers = {"authorization": site_admin_user_token}
+    response = client.post(
+        f"/attributes/addTag/{attribute_uuid}/{tag_id}/local:1",
+        headers=headers,
+    )
+
+    assert response.status_code == 200
+    response_json = response.json()
+    assert response_json["saved"]
+    assert response_json["success"] == "Tag added"
+    assert response_json["check_publish"]
+
+
+@pytest.mark.asyncio
 async def test_add_invalid_or_non_existing_tag_to_attribute(
     db: AsyncSession, site_admin_user_token, event, sharing_group, attribute, client
 ) -> None:
@@ -634,6 +691,33 @@ async def test_add_invalid_or_non_existing_tag_to_attribute(
     response_json = response.json()
     assert response_json["saved"] is False
 
+
+@pytest.mark.asyncio
+async def test_add_invalid_or_non_existing_tag_to_attribute_by_uuid(
+    db: AsyncSession, site_admin_user_token, event, sharing_group, attribute, client
+) -> None:
+    event.sharing_group_id = sharing_group.id
+    attribute.sharing_group_id = sharing_group.id
+
+    await db.commit()
+
+    attribute_uuid = attribute.uuid
+
+    headers = {"authorization": site_admin_user_token}
+    response = client.post(
+        f"/attributes/addTag/{attribute_uuid}/0/local:0",
+        headers=headers,
+    )
+    assert response.status_code == 200
+    response_json = response.json()
+    assert response_json["saved"] is False
+    response = client.post(
+        f"/attributes/addTag/{attribute_uuid}/invalid_id/local:1",
+        headers=headers,
+    )
+    assert response.status_code == 200
+    response_json = response.json()
+    assert response_json["saved"] is False
 
 @pytest_asyncio.fixture
 async def attributetag(attribute, event, tag, db):
@@ -680,3 +764,4 @@ async def test_remove_existing_tag_from_attribute_by_uuid(
     ic(response_json)
     assert response_json["saved"]
     assert response_json["success"] == "Tag removed"
+
