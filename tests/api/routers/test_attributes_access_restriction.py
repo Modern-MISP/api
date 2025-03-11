@@ -300,11 +300,6 @@ async def test_update_attribute(
         "comment": "new comment",
         "disable_correlation": False,
         "first_seen": "",
-        "exportable": False,
-        "user_id": 0,
-        "hide_tag": False,
-        "is_costum_galaxy": False,
-        "local_only": False,
     }
     headers = {"authorization": access_test_objects["default_user_token"]}
     response = client.put(f"/attributes/{attribute_id}", json=request_body, headers=headers)
