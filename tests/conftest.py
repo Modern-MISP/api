@@ -410,6 +410,7 @@ async def test_standard_role(db):
 @pytest_asyncio.fixture
 async def role_read_only(db):
     role = standard_roles.read_only_role()
+    role.id = None
 
     db.add(role)
     await db.commit()
@@ -565,6 +566,7 @@ async def access_test_objects(db, site_admin_user, role_read_only):
         perm_view_feed_correlations=False,
         created=datetime.now(timezone.utc),
     )
+    default_role_modify.id = None
 
     db.add(default_role_modify)
     await db.commit()
