@@ -471,6 +471,7 @@ async def test_delete_selected_attributes_from_existing_event_by_uuid(
         assert response_json["message"] == "2 attributes deleted."
     assert response_json["url"] == f"/attributes/deleteSelected/{event_uuid}"
 
+
 # --- Test attribute statistics
 
 

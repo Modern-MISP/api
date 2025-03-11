@@ -394,11 +394,7 @@ async def _delete_role(db: Session, role_id: int) -> DeleteRoleResponse:
     if role is None:
         raise HTTPException(
             status_code=404,
-            detail={
-                "message": "Invalid Role",
-                "name": "Invalid Role",
-                "url": f"/admin/roles/delete/{role_id}"
-            }
+            detail={"message": "Invalid Role", "name": "Invalid Role", "url": f"/admin/roles/delete/{role_id}"},
         )
 
     if role.default_role:
@@ -440,11 +436,7 @@ async def _update_role(db: Session, role_id: int, body: EditRoleBody) -> EditRol
     if role is None:
         raise HTTPException(
             status_code=404,
-            detail={
-                "message": "Invalid Role",
-                "name": "Invalid Role",
-                "url": f"/admin/roles/edit/{role_id}"
-            }
+            detail={"message": "Invalid Role", "name": "Invalid Role", "url": f"/admin/roles/edit/{role_id}"},
         )
 
     if all(value is None for value in body.dict().values()):

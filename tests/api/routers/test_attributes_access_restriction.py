@@ -336,7 +336,6 @@ async def test_edit_existing_attribute(
     assert response_json["Attribute"]["first_seen"] is None
 
 
-
 @pytest.mark.asyncio
 async def test_get_all_attributes_site_admin(
     access_test_objects,

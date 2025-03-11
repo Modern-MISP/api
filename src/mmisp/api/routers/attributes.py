@@ -850,7 +850,6 @@ async def _remove_tag_from_attribute(
         logger.debug("User cannot edit %s", attribute.id)
         raise HTTPException(status.HTTP_403_FORBIDDEN)
 
-    
     result = await db.execute(
         select(AttributeTag)
         .filter(AttributeTag.attribute_id == int(attribute.id), AttributeTag.tag_id == int(tag_id))
