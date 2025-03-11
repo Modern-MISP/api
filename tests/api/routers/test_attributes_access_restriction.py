@@ -285,13 +285,10 @@ async def test_remove_tag_from_attribute(
 
 
 @pytest.mark.asyncio
-async def test_update_attribute(
+async def test_edit_existing_attribute(
     access_test_objects,
     client,
 ) -> None:
-    attribute = access_test_objects["default_attribute"]
-    attribute_id = attribute.id
-    print("Attribute: ", str(access_test_objects["default_attribute"].asdict()))
     request_body = {
         "category": "Payload delivery",
         "value": "2.3.4.5",
@@ -301,14 +298,43 @@ async def test_update_attribute(
         "disable_correlation": False,
         "first_seen": "",
     }
+    event = access_test_objects["event_dist_sg"]
+    attribute = access_test_objects["attribute_dist_sg"]
+    event_id = event.id
+
+    attribute_id = attribute.id
+    assert attribute.id is not None
+
     headers = {"authorization": access_test_objects["default_user_token"]}
     response = client.put(f"/attributes/{attribute_id}", json=request_body, headers=headers)
 
     assert response.status_code == 200
     response_json = response.json()
-    print(response_json)
+
     assert response_json["Attribute"]["id"] == attribute_id
-    assert response_json["Attribute"]["category"] == "Payload delivery"
+    assert response_json["Attribute"]["event_id"] == event_id
+    assert "id" in response_json["Attribute"]
+    assert "event_id" in response_json["Attribute"]
+    assert "object_id" in response_json["Attribute"]
+    assert "object_relation" in response_json["Attribute"]
+    assert "category" in response_json["Attribute"]
+    assert "type" in response_json["Attribute"]
+    assert "value" in response_json["Attribute"]
+    assert "to_ids" in response_json["Attribute"]
+    assert "uuid" in response_json["Attribute"]
+    assert "timestamp" in response_json["Attribute"]
+    assert "distribution" in response_json["Attribute"]
+    assert "sharing_group_id" in response_json["Attribute"]
+    assert "comment" in response_json["Attribute"]
+    assert "deleted" in response_json["Attribute"]
+    assert "disable_correlation" in response_json["Attribute"]
+    assert "first_seen" in response_json["Attribute"]
+    assert "last_seen" in response_json["Attribute"]
+    assert "Tag" in response_json["Attribute"]
+    assert "first_seen" in response_json["Attribute"]
+
+    assert response_json["Attribute"]["first_seen"] is None
+
 
 
 @pytest.mark.asyncio
