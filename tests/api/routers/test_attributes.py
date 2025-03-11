@@ -662,3 +662,20 @@ async def test_remove_existing_tag_from_attribute(
     ic(response_json)
     assert response_json["saved"]
     assert response_json["success"] == "Tag removed"
+
+
+@pytest.mark.asyncio
+async def test_remove_existing_tag_from_attribute_by_uuid(
+    db: AsyncSession, site_admin_user_token, attribute, attributetag, client
+) -> None:
+    attribute_uuid = attribute.uuid
+    tag_id = attributetag.tag_id
+
+    headers = {"authorization": site_admin_user_token}
+    response = client.post(f"/attributes/removeTag/{attribute_uuid}/{tag_id}", headers=headers)
+
+    assert response.status_code == 200
+    response_json = response.json()
+    ic(response_json)
+    assert response_json["saved"]
+    assert response_json["success"] == "Tag removed"
