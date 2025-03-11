@@ -216,7 +216,6 @@ async def test_add_existing_tag_to_attribute(
 @pytest.mark.asyncio
 async def test_remove_existing_tag_from_attribute(
     access_test_objects,
-    access_test_user_token,
     client,
 ) -> None:
     headers = {"authorization": access_test_objects["default_user_token"]}
