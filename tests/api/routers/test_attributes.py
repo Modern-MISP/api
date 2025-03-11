@@ -1,5 +1,6 @@
 import pytest
 import pytest_asyncio
+import uuid
 import sqlalchemy as sa
 from icecream import ic
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -35,6 +36,7 @@ async def test_add_attribute_valid_data(site_admin_user_token, event, db, client
     assert response_json["Attribute"]["comment"] == request_body["comment"]
     assert response_json["Attribute"]["disable_correlation"] == request_body["disable_correlation"]
     assert response_json["Attribute"]["id"] is not None
+    assert uuid.UUID(response_json["Attribute"]["uuid"])
 
     # need to remove attribute, so teardown works
     print(response_json["Attribute"]["id"])
@@ -71,6 +73,7 @@ async def test_add_attribute_valid_data_by_event_uuid(site_admin_user_token, eve
     assert response_json["Attribute"]["comment"] == request_body["comment"]
     assert response_json["Attribute"]["disable_correlation"] == request_body["disable_correlation"]
     assert response_json["Attribute"]["id"] is not None
+    assert uuid.UUID(response_json["Attribute"]["uuid"])
 
     # need to remove attribute, so teardown works
     print(response_json["Attribute"]["id"])
