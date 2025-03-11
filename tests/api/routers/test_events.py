@@ -3,6 +3,7 @@ import respx
 import sqlalchemy as sa
 from httpx import Response
 from icecream import ic
+import uuid
 
 from mmisp.api.config import config
 from mmisp.db.models.log import Log
@@ -65,6 +66,7 @@ async def test_add_event_valid_data(db, site_admin_user_token, client) -> None:
     assert "name" in response_json["Event"]["Org"]
     assert "uuid" in response_json["Event"]["Org"]
     assert "local" in response_json["Event"]["Org"]
+    assert uuid.UUID(response_json["Event"]["uuid"])
 
     await delete_event(db, response_json["Event"]["id"])
 
@@ -82,6 +84,7 @@ async def test_add_event_date_empty_string(db, site_admin_user_token, client) ->
     assert "name" in response_json["Event"]["Org"]
     assert "uuid" in response_json["Event"]["Org"]
     assert "local" in response_json["Event"]["Org"]
+    assert uuid.UUID(response_json["Event"]["uuid"])
 
     await delete_event(db, response_json["Event"]["id"])
 
