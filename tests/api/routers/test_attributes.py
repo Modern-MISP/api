@@ -434,6 +434,38 @@ async def test_delete_selected_attributes_from_existing_event(
     assert response_json["url"] == f"/attributes/deleteSelected/{event_id}"
 
 
+@pytest.mark.asyncio
+async def test_delete_selected_attributes_from_existing_event_by_uuid(
+    db: AsyncSession, site_admin_user_token, sharing_group, event, attribute, attribute2, client
+) -> None:
+    request_body = {"id": "1 2 3", "allow_hard_delete": False}
+
+    event_uuid = event.uuid
+    setattr(event, "sharing_group_id", sharing_group.id)
+    setattr(attribute, "sharing_group_id", sharing_group.id)
+    setattr(attribute2, "sharing_group_id", sharing_group.id)
+
+    await db.commit()
+
+    attribute_id = attribute.id
+    attribute2_id = attribute2.id
+
+    attribute_ids = str(attribute_id) + " " + str(attribute2_id)
+
+    request_body["id"] = attribute_ids
+
+    headers = {"authorization": site_admin_user_token}
+    response = client.post(f"/attributes/deleteSelected/{event_uuid}", json=request_body, headers=headers)
+
+    assert response.status_code == 200
+    response_json = response.json()
+    counter_of_selected_attributes = len(attribute_ids)
+    if counter_of_selected_attributes == 1:
+        assert response_json["message"] == "1 attribute deleted."
+    else:
+        assert response_json["message"] == "2 attributes deleted."
+    assert response_json["url"] == f"/attributes/deleteSelected/{event_uuid}"
+
 # --- Test attribute statistics
 
 
