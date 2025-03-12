@@ -31,3 +31,45 @@ async def test_get_existing_attribute(
 
     assert get_legacy_modern_diff("get", path, request_body, (clear_key, auth_key), client) == {}
 
+
+@pytest.mark.asyncio
+async def test_get_existing_attribute_fail_read_only_user(
+    access_test_objects,
+    client,
+) -> None:
+    attribute_id = access_test_objects["default_attribute"].id
+    path = f"/attributes/{attribute_id}"
+    request_body = {}
+    clear_key = access_test_objects["default_read_only_user_clear_key"]
+    auth_key = access_test_objects["default_read_only_user_auth_key"]
+
+    assert get_legacy_modern_diff("get", path, request_body, (clear_key, auth_key), client) == {}
+
+
+@pytest.mark.asyncio
+async def test_get_existing_attribute_read_only_user_own_org(
+    access_test_objects,
+    client,
+) -> None:
+    attribute_id = access_test_objects["attribute_event_read_only_user"].id
+    path = f"/attributes/{attribute_id}"
+    request_body = {}
+    clear_key = access_test_objects["default_read_only_user_clear_key"]
+    auth_key = access_test_objects["default_read_only_user_auth_key"]
+
+    assert get_legacy_modern_diff("get", path, request_body, (clear_key, auth_key), client) == {}
+
+
+@pytest.mark.asyncio
+async def test_get_existing_attribute_fail_read_only_user_own_org(
+    access_test_objects,
+    client,
+) -> None:
+    attribute_id = access_test_objects["attribute_event_read_only_user_2"].id
+    path = f"/attributes/{attribute_id}"
+    request_body = {}
+    clear_key = access_test_objects["default_read_only_user_clear_key"]
+    auth_key = access_test_objects["default_read_only_user_auth_key"]
+
+    assert get_legacy_modern_diff("get", path, request_body, (clear_key, auth_key), client) == {}
+
