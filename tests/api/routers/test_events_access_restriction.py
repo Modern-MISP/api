@@ -282,39 +282,12 @@ async def test_delete_existing_event_fail_read_only_user(access_test_objects, cl
     assert response.status_code == 403
 
 
-# @pytest.mark.asyncio
-# async def test_create_event(organisation, site_admin_user_token, client) -> None:
-#    org_body = {
-#        "id": organisation.id,
-#        "name": organisation.name,
-#        "uuid": organisation.uuid,
-#        "local": organisation.local,
-#    }
-#
-#    request_body = {
-#        "info": "string",
-#        "org_id": 0,
-#        "distribution": 1,
-#        "orgc_id": 0,
-#        "org": org_body,
-#        "org_c": org_body,
-#        "uuid": "f1b356c7-777a-4f6b-8833-37e5525e9aaf",
-#        "published": True,
-#        "analysis": True,
-#        "attribute_count": "string",
-#        "timestamp": 0,
-#        "sharing_group_id": 0,
-#        "proposal_email_lock": True,
-#        "locked": True,
-#        "threat_level_id": 0,
-#        "publish_timestamp": "string",
-#        "sighting_timestamp": "string",
-#        "disable_correlation": True,
-#        "extends_uuid": "string",
-#    }
-#    headers = {"authorization": site_admin_user_token}
-#    response = client.post("/events", json=request_body, headers=headers)
-#    assert response.status_code == 200
+@pytest.mark.asyncio
+async def test_add_event_valid_data_fail_read_only_user(access_test_objects, client) -> None:
+    request_body = {"info": "test event"}
+    headers = {"authorization": access_test_objects["default_read_only_user_token"]}
+    response = client.post("/events", json=request_body, headers=headers)
+    assert response.status_code == 403
 
 
 @pytest.mark.asyncio
