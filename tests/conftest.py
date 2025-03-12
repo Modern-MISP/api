@@ -585,7 +585,7 @@ async def access_test_objects(db, site_admin_user):
         org_id=default_org_id,
         role_id=default_role_modify.id,
         email="default_user@lauch.com",
-        authkey="auth key",
+        authkey=None,
         invited_by=314,
         nids_sid=0,
         termsaccepted=True,
@@ -602,7 +602,7 @@ async def access_test_objects(db, site_admin_user):
     default_user_id = default_user.id
     default_user_token = encode_token(default_user.id)
 
-    default_user_clear_key = "default_user".ljust(40, "0")
+    default_user_clear_key = "defaultuser".ljust(40, "0")
 
     default_user_auth_key = generate_auth_key()
     default_user_auth_key.user_id = default_user_id
@@ -620,7 +620,7 @@ async def access_test_objects(db, site_admin_user):
         org_id=org_read_only.id,
         role_id=default_role_read_only.id,
         email="default_read_only_user@lauch.com",
-        authkey="auth key",
+        authkey=None,
         invited_by=314,
         nids_sid=0,
         termsaccepted=True,
@@ -636,7 +636,7 @@ async def access_test_objects(db, site_admin_user):
     await db.refresh(default_read_only_user)
     default_read_only_user_token = encode_token(default_read_only_user.id)
 
-    default_read_only_user_clear_key = "default_read_only_user".ljust(40, "0")
+    default_read_only_user_clear_key = "defaultreadonlyuser".ljust(40, "0")
 
     default_read_only_user_auth_key = generate_auth_key()
     default_read_only_user_auth_key.user_id = default_read_only_user.id
@@ -654,7 +654,7 @@ async def access_test_objects(db, site_admin_user):
         org_id=default_sharing_group_org.id,
         role_id=default_role_read_only.id,
         email="default_sharing_group_user@lauch.com",
-        authkey="auth key",
+        authkey=None,
         invited_by=314,
         nids_sid=0,
         termsaccepted=True,
@@ -671,7 +671,7 @@ async def access_test_objects(db, site_admin_user):
     default_sharing_group_user_id = default_sharing_group_user.id
     default_sharing_group_user_token = encode_token(default_sharing_group_user.id)
 
-    default_sharing_group_user_clear_key = "default_sharing_group_user".ljust(40, "0")
+    default_sharing_group_user_clear_key = "defaultsharinggroupuser".ljust(40, "0")
 
     default_sharing_group_user_auth_key = generate_auth_key()
     default_sharing_group_user_auth_key.user_id = default_sharing_group_user_id
