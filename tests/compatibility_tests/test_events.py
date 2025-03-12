@@ -1,7 +1,6 @@
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from mmisp.tests.api.routers.test_events import get_max_event_id
 from mmisp.tests.compatibility_helpers import get_legacy_modern_diff
 
 
@@ -49,11 +48,12 @@ async def test_get_existing_event(db, auth_key, client, event) -> None:
 
 @pytest.mark.asyncio
 async def test_get_non_existing_event(db, auth_key, client, event) -> None:
-    unused_event_id = await get_max_event_id(db) + 1
-    path = f"/events/{unused_event_id}"
+
+    path = f"/events/{9999}"
 
     request_body = {}
 
     assert get_legacy_modern_diff("get", path, request_body, auth_key, client) == {}
+
 
 
