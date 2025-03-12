@@ -296,6 +296,7 @@ async def test_edit_existing_attribute(
 
     assert response_json["Attribute"]["first_seen"] is None
 
+
 @pytest.mark.asyncio
 async def test_edit_existing_attribute_by_uuid(
     db: AsyncSession, site_admin_user_token, sharing_group, event, attribute, client
@@ -369,6 +370,7 @@ async def test_edit_non_existing_attribute(site_admin_user_token, client) -> Non
     assert response.status_code == 404
     response = client.get("/attributes/a469325efe2f4f32a6854579f415ec6a", headers=headers)
     assert response.status_code == 404
+
 
 # --- Test delete attribute by id
 @pytest.mark.asyncio
@@ -647,6 +649,7 @@ async def test_restore_invalid_attribute(site_admin_user_token, client) -> None:
     response = client.post("/attributes/restore/a469325efe2f4f32a6854579f415ec6a", headers=headers)
     assert response.status_code == 404
 
+
 # --- Test adding a tag
 
 
@@ -775,6 +778,7 @@ async def test_add_invalid_or_non_existing_tag_to_attribute_by_uuid(
     response_json = response.json()
     assert response_json["saved"] is False
 
+
 @pytest_asyncio.fixture
 async def attributetag(attribute, event, tag, db):
     attribute_tag = AttributeTag(attribute_id=attribute.id, event_id=event.id, tag_id=tag.id, local=False)
@@ -820,4 +824,3 @@ async def test_remove_existing_tag_from_attribute_by_uuid(
     ic(response_json)
     assert response_json["saved"]
     assert response_json["success"] == "Tag removed"
-

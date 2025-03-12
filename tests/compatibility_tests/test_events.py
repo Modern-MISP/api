@@ -17,7 +17,11 @@ async def test_view_event_galaxy_cluster_tag(
 
 
 @pytest.mark.asyncio
-async def test_add_event_valid_data(db, auth_key, client,) -> None:
+async def test_add_event_valid_data(
+    db,
+    auth_key,
+    client,
+) -> None:
     path = "/events"
 
     request_body = {"info": "test ents from lotr"}

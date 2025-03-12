@@ -8,6 +8,8 @@ import pytest_asyncio
 from fastapi.testclient import TestClient
 from icecream import ic
 from sqlalchemy.ext.asyncio import AsyncSession
+from mmisp.util.crypto import hash_secret
+from .generators.model_generators.auth_key_generator import generate_auth_key
 
 import mmisp.lib.standard_roles as standard_roles
 from mmisp.api.auth import encode_token
@@ -599,6 +601,19 @@ async def access_test_objects(db, site_admin_user):
     default_user_id = default_user.id
     default_user_token = encode_token(default_user.id)
 
+    default_user_clear_key = "default_user".ljust(40, "0")
+
+    default_user_auth_key = generate_auth_key()
+    default_user_auth_key.user_id = default_user_id
+    default_user_auth_key.authkey = hash_secret(default_user_clear_key)
+    default_user_auth_key.authkey_start = default_user_clear_key[:4]
+    default_user_auth_key.authkey_end = default_user_clear_key[-4:]
+
+    db.add(default_user_auth_key)
+
+    await db.commit()
+    await db.refresh(default_user_auth_key)
+
     default_read_only_user = User(
         password="very_safe_passwort",
         org_id=org_read_only.id,
@@ -619,6 +634,19 @@ async def access_test_objects(db, site_admin_user):
     await db.commit()
     await db.refresh(default_read_only_user)
     default_read_only_user_token = encode_token(default_read_only_user.id)
+
+    default_read_only_user_clear_key = "default_read_only_user".ljust(40, "0")
+
+    default_read_only_user_auth_key = generate_auth_key()
+    default_read_only_user_auth_key.user_id = default_user_id
+    default_read_only_user_auth_key.authkey = hash_secret(default_read_only_user_clear_key)
+    default_read_only_user_auth_key.authkey_start = default_read_only_user_clear_key[:4]
+    default_read_only_user_auth_key.authkey_end = default_read_only_user_clear_key[-4:]
+
+    db.add(default_read_only_user_auth_key)
+
+    await db.commit()
+    await db.refresh(default_read_only_user_auth_key)
 
     default_sharing_group_user = User(
         password="very_safe_passwort",
@@ -641,6 +669,19 @@ async def access_test_objects(db, site_admin_user):
     await db.refresh(default_sharing_group_user)
     default_sharing_group_user_id = default_sharing_group_user.id
     default_sharing_group_user_token = encode_token(default_sharing_group_user.id)
+
+    default_sharing_group_user_clear_key = "default_sharing_group_user".ljust(40, "0")
+
+    default_sharing_group_user_auth_key = generate_auth_key()
+    default_sharing_group_user_auth_key.user_id = default_user_id
+    default_sharing_group_user_auth_key.authkey = hash_secret(default_sharing_group_user_clear_key)
+    default_sharing_group_user_auth_key.authkey_start = default_sharing_group_user_clear_key[:4]
+    default_sharing_group_user_auth_key.authkey_end = default_sharing_group_user_clear_key[-4:]
+
+    db.add(default_sharing_group_user_auth_key)
+
+    await db.commit()
+    await db.refresh(default_sharing_group_user_auth_key)
 
     default_event = generate_event()
     default_event.org_id = default_org_id
@@ -856,10 +897,14 @@ async def access_test_objects(db, site_admin_user):
         "default_sharing_group": default_sharing_group,
         "default_role_modify": default_role_modify,
         "default_user": default_user,
+        "default_user_auth_key": default_user_auth_key,
+        "default_user_clear_key": default_user_clear_key,
         "default_read_only_user": default_read_only_user,
         "default_user_token": default_user_token,
+        "default_read_only_user_auth_key": default_read_only_user_auth_key,
         "default_read_only_user_token": default_read_only_user_token,
         "default_sharing_group_user": default_sharing_group_user,
+        "default_sharing_group_user_auth_key": default_sharing_group_user_auth_key,
         "default_sharing_group_user_token": default_sharing_group_user_token,
         "default_event": default_event,
         "default_event_published": default_event_published,
@@ -917,8 +962,11 @@ async def access_test_objects(db, site_admin_user):
     await db.delete(event_no_access)
     await db.delete(default_event_published)
     await db.delete(default_event)
+    await db.delete(default_sharing_group_user_auth_key)
     await db.delete(default_sharing_group_user)
+    await db.delete(default_read_only_user_auth_key)
     await db.delete(default_read_only_user)
+    await db.delete(default_user_auth_key)
     await db.delete(default_user)
     await db.delete(default_role_read_only)
     await db.delete(default_role_modify)
