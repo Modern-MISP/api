@@ -36,3 +36,14 @@ async def test_add_event_data_empty_string(db, auth_key, client) -> None:
     request_body = {"info": "test ents", "date": "", "distribution": 0}
 
     assert get_legacy_modern_diff("post", path, request_body, auth_key, client) == {}
+
+@pytest.mark.asyncio
+async def test_get_existing_event(db, auth_key, client, event) -> None:
+
+    path = f"/events/{event.id}"
+
+    request_body = {}
+
+    assert get_legacy_modern_diff("get", path, request_body, auth_key, client) == {}
+
+
