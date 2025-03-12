@@ -6,7 +6,7 @@ from datetime import date
 from time import gmtime
 from typing import Annotated
 import uuid
-
+from datetime import datetime
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Path
 from sqlalchemy import select
@@ -675,7 +675,7 @@ async def _update_event(
         raise HTTPException(status.HTTP_403_FORBIDDEN)
 
     update_record(event, body.dict())
-
+    event.timestamp = int(datetime.now().timestamp())
     await execute_blocking_workflow("event-before-save", db, event)
     await db.flush()
     await db.refresh(event)
