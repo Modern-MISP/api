@@ -674,7 +674,7 @@ async def access_test_objects(db, site_admin_user):
     default_sharing_group_user_clear_key = "default_sharing_group_user".ljust(40, "0")
 
     default_sharing_group_user_auth_key = generate_auth_key()
-    default_sharing_group_user_auth_key.user_id = default_user_id
+    default_sharing_group_user_auth_key.user_id = default_sharing_group_user_id
     default_sharing_group_user_auth_key.authkey = hash_secret(default_sharing_group_user_clear_key)
     default_sharing_group_user_auth_key.authkey_start = default_sharing_group_user_clear_key[:4]
     default_sharing_group_user_auth_key.authkey_end = default_sharing_group_user_clear_key[-4:]
