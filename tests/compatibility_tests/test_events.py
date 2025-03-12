@@ -37,20 +37,42 @@ async def test_add_event_data_empty_string(db, auth_key, client) -> None:
 
     assert get_legacy_modern_diff("post", path, request_body, auth_key, client) == {}
 
-
 @pytest.mark.asyncio
 async def test_get_existing_event(db, auth_key, client, event) -> None:
+
     path = f"/events/{event.id}"
 
     request_body = {}
 
     assert get_legacy_modern_diff("get", path, request_body, auth_key, client) == {}
 
-
 @pytest.mark.asyncio
-async def test_get_non_existing_event(db, auth_key, client, event) -> None:
+async def test_get_non_existing_event(db, auth_key, client) -> None:
+
     path = f"/events/{9999}"
 
     request_body = {}
 
     assert get_legacy_modern_diff("get", path, request_body, auth_key, client) == {}
+
+@pytest.mark.asyncio
+async def test_update_existing_event(db, auth_key, client, event) -> None:
+
+    path = f"/events/{event.id}"
+
+    request_body = {"info": "updated info"}
+
+    assert get_legacy_modern_diff("put", path, request_body, auth_key, client) == {}
+
+
+@pytest.mark.asyncio
+async def test_update_non_existing_event(db, auth_key, client) -> None:
+
+    path = f"/events/{9999}"
+
+    request_body = {"info": "updated info"}
+
+    assert get_legacy_modern_diff("put", path, request_body, auth_key, client) == {}
+
+
+
