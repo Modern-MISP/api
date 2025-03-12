@@ -24,7 +24,7 @@ async def test_add_event_valid_data(
 ) -> None:
     path = "/events"
 
-    request_body = {"info": "test ents from lotr"}
+    request_body = {"info": "test ents from lotr", "distribution": 0}
 
     assert get_legacy_modern_diff("post", path, request_body, auth_key, client) == {}
 
@@ -33,6 +33,6 @@ async def test_add_event_valid_data(
 async def test_add_event_data_empty_string(db, auth_key, client) -> None:
     path = "/events"
 
-    request_body = {"info": "test ents", "date": ""}
+    request_body = {"info": "test ents", "date": "", "distribution": 0}
 
     assert get_legacy_modern_diff("post", path, request_body, auth_key, client) == {}
