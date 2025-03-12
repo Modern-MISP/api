@@ -13,8 +13,21 @@ async def test_get_all_attributes(
 
     path = "/attributes"
     request_body = {}
-   # clear_key = access_test_objects["default_read_only_user_clear_key"]
+    clear_key = access_test_objects["default_read_only_user_clear_key"]
     auth_key = access_test_objects["default_read_only_user_auth_key"]
 
-    assert get_legacy_modern_diff("get", path, request_body, auth_key, client) == {}
+    assert get_legacy_modern_diff("get", path, request_body, (clear_key, auth_key), client) == {}
+
+@pytest.mark.asyncio
+async def test_get_existing_attribute(
+    access_test_objects,
+    client,
+) -> None:
+    attribute_id = access_test_objects["default_attribute"].id
+    path = f"/attributes/{attribute_id}"
+    request_body = {}
+    clear_key = access_test_objects["default_user_clear_key"]
+    auth_key = access_test_objects["default_user_auth_key"]
+
+    assert get_legacy_modern_diff("get", path, request_body, (clear_key, auth_key), client) == {}
 
