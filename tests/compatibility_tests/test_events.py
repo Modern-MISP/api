@@ -82,7 +82,7 @@ async def test_delete_existing_event(db, auth_key, client, event) -> None:
 
     path = f"/events/{event.id}"
 
-    request_body = {}
+    request_body = None
 
     assert get_legacy_modern_diff("delete", path, request_body, auth_key, client) == {}
 
@@ -93,7 +93,7 @@ async def test_delete_non_existing_event(db, auth_key, client) -> None:
 
     path = f"/events/{9999}"
 
-    request_body = {}
+    request_body = None
 
     assert get_legacy_modern_diff("delete", path, request_body, auth_key, client) == {}
 
