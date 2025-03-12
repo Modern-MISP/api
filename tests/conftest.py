@@ -9,7 +9,7 @@ from fastapi.testclient import TestClient
 from icecream import ic
 from sqlalchemy.ext.asyncio import AsyncSession
 from mmisp.util.crypto import hash_secret
-from .generators.model_generators.auth_key_generator import generate_auth_key
+
 
 import mmisp.lib.standard_roles as standard_roles
 from mmisp.api.auth import encode_token
@@ -30,6 +30,7 @@ from mmisp.tests.generators.model_generators.user_setting_generator import gener
 from mmisp.tests.generators.model_generators.organisation_generator import generate_organisation
 from mmisp.tests.generators.model_generators.sharing_group_generator import generate_sharing_group
 from mmisp.tests.generators.model_generators.role_generator import generate_read_only_role
+from mmisp.tests.generators.model_generators.auth_key_generator import generate_auth_key
 from mmisp.lib.distribution import EventDistributionLevels, AttributeDistributionLevels
 from mmisp.workflows.graph import Apperance, WorkflowGraph
 from mmisp.workflows.input import WorkflowInput
