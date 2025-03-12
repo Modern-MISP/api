@@ -56,7 +56,7 @@ async def test_get_event_fail_read_only_user_not_published(access_test_objects, 
 async def test_get_event_success_read_only_user_comm(access_test_objects, client) -> None:
     def preprocessor(modern, legacy):
         del modern["Event"]["event_creator_email"]
-        del legacy["Event"]["event_creator_email"]
+    #    del legacy["Event"]["event_creator_email"]
 
     path = "/events/" + str(access_test_objects["event_dist_comm"].id)
     request_body = {"distribution": 0}
