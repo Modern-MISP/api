@@ -270,7 +270,6 @@ async def test_delete_existing_event_self_created(access_test_objects, client) -
 
     headers = {"authorization": access_test_objects["default_user_token"]}
     response = client.delete(f"events/{event_id}", headers=headers)
-    response_json = response.json()
     assert response.status_code == 200
 
 
