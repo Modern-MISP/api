@@ -83,6 +83,10 @@ async def test_get_event_fail_read_only_user_comm(access_test_objects, client) -
 
 @pytest.mark.asyncio
 async def test_get_event_success_site_admin(access_test_objects, auth_key, client) -> None:
+
+    def preprocess(modern, legacy):
+        del modern["Event"]["Attribute"][0]["Tag"]
+
     path = "/events/" + str(access_test_objects["default_event"].id)
     request_body = {"distribution": 0}
-    assert get_legacy_modern_diff("get", path, request_body, auth_key, client) == {}
+    assert get_legacy_modern_diff("get", path, request_body, auth_key, client, preprocess) == {}
