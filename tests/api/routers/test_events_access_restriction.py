@@ -167,8 +167,8 @@ async def test_publish_existing_event_fail(access_test_objects, client) -> None:
     response = client.post(f"/events/publish/{event_id}", headers=headers)
     assert response.status_code == 200  # if event not found (because can_edit) repsonse is 200 because of check
     response_json = response.json()
-    response_json["name"] == "Invalid event."
-    response_json["message"] == "Invalid event."
+    response_json["name"] == "You do not have the permission to do that."
+    response_json["message"] == "You do not have the permission to do that."
 
 
 @pytest.mark.asyncio

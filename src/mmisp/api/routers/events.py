@@ -897,7 +897,7 @@ async def _publish_event(
         event = result.scalars().one_or_none()
 
     if not event:
-        return PublishEventResponse(name="Invalid event.", message="Invalid event.", url=str(request.url.path))
+        return PublishEventResponse(name="You do not have the permission to do that.", message="You do not have the permission to do that.", url=str(request.url.path))
 
     if not event.can_edit(user):
         raise HTTPException(status.HTTP_403_FORBIDDEN)
