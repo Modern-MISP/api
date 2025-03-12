@@ -22,11 +22,14 @@ async def test_add_event_valid_data(
     auth_key,
     client,
 ) -> None:
+    def preprocessor(modern, legacy):
+        del modern["Event"]["timestamp"]
+        del legacy["Event"]["timestamp"]
     path = "/events"
 
     request_body = {"info": "test ents from lotr", "distribution": 0}
 
-    assert get_legacy_modern_diff("post", path, request_body, auth_key, client) == {}
+    assert get_legacy_modern_diff("post", path, request_body, auth_key, client, preprocessor) == {}
 
 
 @pytest.mark.asyncio
