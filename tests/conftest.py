@@ -639,7 +639,7 @@ async def access_test_objects(db, site_admin_user):
     default_read_only_user_clear_key = "default_read_only_user".ljust(40, "0")
 
     default_read_only_user_auth_key = generate_auth_key()
-    default_read_only_user_auth_key.user_id = default_user_id
+    default_read_only_user_auth_key.user_id = default_read_only_user.id
     default_read_only_user_auth_key.authkey = hash_secret(default_read_only_user_clear_key)
     default_read_only_user_auth_key.authkey_start = default_read_only_user_clear_key[:4]
     default_read_only_user_auth_key.authkey_end = default_read_only_user_clear_key[-4:]
