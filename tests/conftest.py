@@ -585,7 +585,7 @@ async def access_test_objects(db, site_admin_user):
         org_id=default_org_id,
         role_id=default_role_modify.id,
         email="default_user@lauch.com",
-        authkey="default user",
+        authkey=None,
         invited_by=314,
         nids_sid=0,
         termsaccepted=True,
@@ -620,7 +620,7 @@ async def access_test_objects(db, site_admin_user):
         org_id=org_read_only.id,
         role_id=default_role_read_only.id,
         email="default_read_only_user@lauch.com",
-        authkey="default read only user",
+        authkey=None,
         invited_by=314,
         nids_sid=0,
         termsaccepted=True,
@@ -654,7 +654,7 @@ async def access_test_objects(db, site_admin_user):
         org_id=default_sharing_group_org.id,
         role_id=default_role_read_only.id,
         email="default_sharing_group_user@lauch.com",
-        authkey="default sharing group user",
+        authkey=None,
         invited_by=314,
         nids_sid=0,
         termsaccepted=True,
@@ -910,7 +910,7 @@ async def access_test_objects(db, site_admin_user):
     await db.refresh(default_tag_2)
 
     tag_no_access = generate_tag()
-    tag_no_access.user_id = default_site_admin_user.id
+    tag_no_access.user_id = site_admin_user.id
     tag_no_access.org_id = org_no_users.id
     tag_no_access.is_galaxy = True
     tag_no_access.exportable = True
