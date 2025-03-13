@@ -126,7 +126,7 @@ async def test_valid_search_attribute_data(access_test_objects, client) -> None:
 @pytest.mark.asyncio
 async def test_valid_search_attribute_data_site_admin(auth_key, client) -> None:
     path = "/events/restSearch"
-    request_body = {"returnFormat": "json", "limit": 100, "distribution": 0}
+    request_body = {"returnFormat": "json", "limit": 100, "distribution": 0, "event_creator_mail": "test.com"}
     assert get_legacy_modern_diff("post", path, request_body, auth_key, client) == {}
 
 
