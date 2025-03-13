@@ -1092,6 +1092,7 @@ async def _prepare_event_response(db: Session, event: Event) -> AddEditGetEventD
     event_dict["date"] = str(event_dict["date"])
 
     user = await db.get(User, event.user_id)
+    logger.warning("_prepare_event_response User id: %s", event.user_id)
     if user is not None:
         event_dict["event_creator_email"] = user.email
     else:
@@ -1305,7 +1306,7 @@ def _prepare_all_events_response(event: Event, request_type: str) -> GetAllEvent
 
     event_dict["GalaxyCluster"] = _prepare_all_events_galaxy_cluster_response(event.eventtags_galaxy)
     event_dict["date"] = str(event_dict["date"])
-    logger.warning("Event creator id : %s", event.user_id)
+    logger.warning("_prepare_all_events_response Event creator id : %s", event.user_id)
     if event.user_id:
         event_dict["event_creator_email"] = event.creator.email
 
