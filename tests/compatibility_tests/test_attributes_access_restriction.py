@@ -328,7 +328,7 @@ async def test_edit_existing_attribute(
         "disable_correlation": False,
         "first_seen": "",
     }
-    attribute = access_test_objects["attribute_dist_sg"]
+    attribute = access_test_objects["default_attribute"]
 
     path = f"/attributes/{attribute.id}"
     clear_key = access_test_objects["default_user_clear_key"]

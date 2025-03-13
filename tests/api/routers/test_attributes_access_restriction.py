@@ -297,8 +297,8 @@ async def test_edit_existing_attribute(
         "disable_correlation": False,
         "first_seen": "",
     }
-    event = access_test_objects["event_dist_sg"]
-    attribute = access_test_objects["attribute_dist_sg"]
+    event = access_test_objects["default_event"]
+    attribute = access_test_objects["default_attribute"]
     event_id = event.id
 
     attribute_id = attribute.id
