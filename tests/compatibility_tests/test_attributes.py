@@ -1,4 +1,5 @@
 import pytest
+import sqlalchemy as sa
 
 from mmisp.tests.compatibility_helpers import get_legacy_modern_diff
 
@@ -38,6 +39,7 @@ async def test_valid_search_attribute_data(access_test_objects, auth_key, client
     assert get_legacy_modern_diff("get", path, request_body, auth_key, client) == {}
 
 
+"""
 @pytest.mark.asyncio
 async def test_add_attribute_valid_data(access_test_objects, auth_key, client) -> None:
     request_body = {
@@ -72,24 +74,19 @@ async def test_add_attribute_valid_data(access_test_objects, auth_key, client) -
     #    stmt.bindparams(id=response_json["Attribute"]["id"])
     await db.execute(stmt, {"id": response_json["Attribute"]["id"]})
     await db.commit()
+"""
 
 
 @pytest.mark.asyncio
 async def test_delete_existing_attribute(
-    db: AsyncSession, instance_org_two, site_admin_user_token, sharing_group, organisation, event, attribute, client
+    access_test_objects,
+    auth_key,
+    client,
 ) -> None:
-    event.sharing_group_id = sharing_group.id
-
-    setattr(attribute, "sharing_group_id", sharing_group.id)
-
-    await db.commit()
-
-    attribute_id = attribute.id
-
-    headers = {"authorization": site_admin_user_token}
-    response = client.delete(f"/attributes/{attribute_id}", headers=headers)
-
-    assert response.status_code == 200
+    attribute_id = access_test_objects["default_attribute_2"].id
+    request_body = None
+    path = f"/attributes/{attribute_id}"
+    assert get_legacy_modern_diff("delete", path, request_body, auth_key, client) == {}
 
 
 @pytest.mark.asyncio

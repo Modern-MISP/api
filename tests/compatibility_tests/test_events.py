@@ -1,8 +1,16 @@
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
+import sqlalchemy as sa
 
 from mmisp.tests.compatibility_helpers import get_legacy_modern_diff
-from api.tests.api.routers import delete_event
+
+
+async def delete_event(db, id):
+    stmt = sa.sql.text("DELETE FROM events WHERE id=:id")
+    result = await db.execute(stmt, {"id": id})
+    await db.commit()
+    assert result.rowcount == 1
+
 
 @pytest.mark.asyncio
 async def test_view_event_normal_attribute_tag(db, event, attribute_with_normal_tag, auth_key, client) -> None:
