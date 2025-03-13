@@ -1090,6 +1090,8 @@ async def _prepare_event_response(db: Session, event: Event) -> AddEditGetEventD
     user = await db.get(User, event.user_id)
     if user is not None:
         event_dict["event_creator_email"] = user.email
+    else:
+        logger.warning("User not found with id: %s Event id: %s", event.user_id, event.id)
 
     return AddEditGetEventDetails(**event_dict)
 
