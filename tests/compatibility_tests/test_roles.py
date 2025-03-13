@@ -24,11 +24,9 @@ async def test_edit_role(db, auth_key, client, site_admin_user_token) -> None:
     assert get_legacy_modern_diff("put", path, request_body, auth_key, client, preprocessor=preprocessor) == {}
 
 
-"""
 @pytest.mark.asyncio
 async def test_edit_role_not_found(db, auth_key, client, site_admin_user_token) -> None:
     path = "/admin/roles/edit/314"
     request_body = None
 
     assert get_legacy_modern_diff("put", path, request_body, auth_key, client) == {}
-"""
