@@ -108,7 +108,8 @@ async def test_get_event_success_site_admin(access_test_objects, auth_key, clien
 @pytest.mark.asyncio
 async def test_valid_search_attribute_data_read_only_user(access_test_objects, client) -> None:
     def preprocess(modern, legacy):
-        del modern["response"]["Tag"]
+        del modern["response"][0]["Event"]["Tag"]
+        del modern["response"][0]["Event"]["Attribute"]["Tag"]
 
     path = "/events/restSearch"
     request_body = {"returnFormat": "json", "limit": 100, "distribution": 0}
@@ -120,7 +121,8 @@ async def test_valid_search_attribute_data_read_only_user(access_test_objects, c
 @pytest.mark.asyncio
 async def test_valid_search_attribute_data(access_test_objects, client) -> None:
     def preprocess(modern, legacy):
-        del modern["response"]["Tag"]
+        del modern["Event"]["Tag"]
+        del modern["Event"]["Attribute"]["Tag"]
 
     path = "/events/restSearch"
     request_body = {"returnFormat": "json", "limit": 100, "distribution": 0}
@@ -132,11 +134,12 @@ async def test_valid_search_attribute_data(access_test_objects, client) -> None:
 @pytest.mark.asyncio
 async def test_valid_search_attribute_data_site_admin(auth_key, client) -> None:
     def preprocess(modern, legacy):
-        del modern["response"]["Tag"]
+        del modern["Event"]["Tag"]
+        del modern["Event"]["Attribute"]["Tag"]
 
     path = "/events/restSearch"
     request_body = {"returnFormat": "json", "limit": 100, "distribution": 0, "event_creator_mail": "test.com"}
-    assert get_legacy_modern_diff("post", path, request_body, auth_key, client, preprocess) == {}
+    assert get_legacy_modern_diff("post", path, request_body, auth_key, client) == {}
 
 
 @pytest.mark.asyncio
