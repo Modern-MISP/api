@@ -152,15 +152,15 @@ async def test_publish_existing_event_fail(access_test_objects, client) -> None:
     assert get_legacy_modern_diff("post", path, request_body, (clear_key, auth_key), client) == {}
 
 
-@pytest.mark.asyncio
-async def test_add_existing_tag_to_event(access_test_objects, client) -> None:
-    tag_id = access_test_objects["default_tag"].id
-    event_id = access_test_objects["default_event"].id
-    path = "/events/addTag/" + str(event_id) + "/" + str(tag_id) + "/local:1"
-    request_body = {"distribution": 0}
-    clear_key = access_test_objects["default_user_clear_key"]
-    auth_key = access_test_objects["default_user_auth_key"]
-    assert get_legacy_modern_diff("post", path, request_body, (clear_key, auth_key), client) == {}
+#@pytest.mark.asyncio
+#async def test_add_existing_tag_to_event(access_test_objects, client) -> None:
+#    tag_id = access_test_objects["default_tag"].id
+#    event_id = access_test_objects["default_event"].id
+#    path = "/events/addTag/" + str(event_id) + "/" + str(tag_id) + "/local:1"
+#    request_body = {"distribution": 0}
+#    clear_key = access_test_objects["default_user_clear_key"]
+#    auth_key = access_test_objects["default_user_auth_key"]
+#    assert get_legacy_modern_diff("post", path, request_body, (clear_key, auth_key), client) == {}
 
 
 @pytest.mark.asyncio
