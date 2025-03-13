@@ -43,7 +43,6 @@ async def test_add_event_valid_data(
 
     assert get_legacy_modern_diff("post", path, request_body, auth_key, client, preprocessor) == {}
 
-    await delete_event(db, 6)
 
 
 @pytest.mark.asyncio
