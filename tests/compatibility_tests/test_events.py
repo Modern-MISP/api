@@ -49,7 +49,7 @@ async def test_add_event_data_empty_string(db, auth_key, client) -> None:
         del legacy["Event"]["id"]
 
     path = "/events"
-    request_body = {"info": "test events", "date": "", "distribution": 0, "sharing_group_id":0}
+    request_body = {"info": "test events", "date": "", "distribution": 0, "sharing_group_id": 0}
 
     assert get_legacy_modern_diff("post", path, request_body, auth_key, client, preprocessor) == {}
 

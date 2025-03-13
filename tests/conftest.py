@@ -899,6 +899,16 @@ async def access_test_objects(db, site_admin_user):
     await db.commit()
     await db.refresh(default_tag)
 
+    default_tag_2 = generate_tag()
+    default_tag_2.user_id = default_user_id
+    default_tag_2.org_id = default_org_id
+    default_tag_2.is_galaxy = True
+    default_tag_2.exportable = True
+
+    db.add(default_tag_2)
+    await db.commit()
+    await db.refresh(default_tag_2)
+
     tag_no_access = generate_tag()
     tag_no_access.user_id = site_admin_user.id
     tag_no_access.org_id = org_no_users.id
@@ -949,12 +959,14 @@ async def access_test_objects(db, site_admin_user):
         "attribute_dist_sg": attribute_dist_sg,
         "attribute_dist_sg_2": attribute_dist_sg_2,
         "default_tag": default_tag,
+        "default_tag_2": default_tag_2,
         "tag_no_access": tag_no_access,
     }
 
     yield dict
 
     await db.delete(tag_no_access)
+    await db.delete(default_tag_2)
     await db.delete(default_tag)
     await db.delete(attribute_event_read_only_user)
     event_read_only_user.attribute_count -= 1

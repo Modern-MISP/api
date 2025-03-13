@@ -20,12 +20,12 @@ async def test_list_all_events_read_only_user(access_test_objects, client) -> No
     auth_key = access_test_objects["default_read_only_user_auth_key"]
     assert get_legacy_modern_diff("get", path, request_body, (clear_key, auth_key), client) == {}
 
+
 @pytest.mark.asyncio
 async def test_list_all_events_admin(auth_key, client) -> None:
     path = "/events"
     request_body = {}
     assert get_legacy_modern_diff("get", path, request_body, auth_key, client) == {}
-
 
 
 @pytest.mark.asyncio
@@ -96,7 +96,6 @@ async def test_get_event_fail_read_only_user_sg(access_test_objects, client) -> 
 
 @pytest.mark.asyncio
 async def test_get_event_success_site_admin(access_test_objects, auth_key, client) -> None:
-
     def preprocess(modern, legacy):
         del modern["Event"]["Attribute"][0]["Tag"]
 
@@ -169,8 +168,8 @@ async def test_publish_existing_event_fail(access_test_objects, client) -> None:
     assert get_legacy_modern_diff("post", path, request_body, (clear_key, auth_key), client) == {}
 
 
-#@pytest.mark.asyncio
-#async def test_add_existing_tag_to_event(access_test_objects, client) -> None:
+# @pytest.mark.asyncio
+# async def test_add_existing_tag_to_event(access_test_objects, client) -> None:
 #    tag_id = access_test_objects["default_tag"].id
 #    event_id = access_test_objects["default_event"].id
 #    path = "/events/addTag/" + str(event_id) + "/" + str(tag_id) + "/local:1"
@@ -244,6 +243,7 @@ async def test_edit_existing_event_self_created(access_test_objects, client) -> 
     auth_key = access_test_objects["default_user_auth_key"]
     assert get_legacy_modern_diff("put", path, request_body, (clear_key, auth_key), client) == {}
 
+
 @pytest.mark.asyncio
 async def test_edit_existing_event_fail_wrong_org(access_test_objects, client) -> None:
     event_id = access_test_objects["event_no_access"].id
@@ -289,4 +289,3 @@ async def test_publish_existing_event_site_admin(access_test_objects, auth_key, 
     path = "/events/publish/" + str(event_id)
     request_body = None
     assert get_legacy_modern_diff("post", path, request_body, auth_key, client) == {}
-
