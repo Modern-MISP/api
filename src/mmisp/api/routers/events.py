@@ -850,6 +850,7 @@ async def _index_events(db: Session, body: IndexEventsBody) -> list[GetAllEvents
                 )
             ),
             selectinload(Event.mispobjects),
+            selectinload(Event.creator),
         )
         .limit(limit)
         .offset(offset)
