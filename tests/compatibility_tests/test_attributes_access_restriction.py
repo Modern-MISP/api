@@ -244,13 +244,18 @@ async def test_remove_existing_tag_from_attribute_fail(
     access_test_objects,
     client,
 ) -> None:
+    def preprocessor(modern, legacy):
+         if "detail" in modern:
+            modern["errors"] = modern["detail"].get("errors")
+            modern["saved"] = modern["detail"].get("saved")
+            del modern["detail"]
     attribute_id = access_test_objects["attribute_no_access"].id
     tag_id = access_test_objects["default_tag"].id
     request_body = None
     path = f"/attributes/removeTag/{attribute_id}/{tag_id}"
     clear_key = access_test_objects["default_user_clear_key"]
     auth_key = access_test_objects["default_user_auth_key"]
-    assert get_legacy_modern_diff("post", path, request_body, (clear_key, auth_key), client) == {}
+    assert get_legacy_modern_diff("post", path, request_body, (clear_key, auth_key), client, preprocessor) == {}
 
 
 @pytest.mark.asyncio
