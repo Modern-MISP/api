@@ -2,7 +2,7 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mmisp.tests.compatibility_helpers import get_legacy_modern_diff
-
+from api.tests.api.routers import delete_event
 
 @pytest.mark.asyncio
 async def test_view_event_normal_attribute_tag(db, event, attribute_with_normal_tag, auth_key, client) -> None:
@@ -34,6 +34,8 @@ async def test_add_event_valid_data(
     request_body = {"info": "test events", "distribution": 0, "sharing_group_id": 0}
 
     assert get_legacy_modern_diff("post", path, request_body, auth_key, client, preprocessor) == {}
+
+    await delete_event(db, 6)
 
 
 @pytest.mark.asyncio
