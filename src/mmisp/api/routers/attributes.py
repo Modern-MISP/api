@@ -852,7 +852,9 @@ async def _remove_tag_from_attribute(
 
     if not attribute.can_edit(user):
         logger.debug("User cannot edit %s", attribute.id)
-        raise HTTPException(status.HTTP_403_FORBIDDEN)
+        raise HTTPException(
+         status.HTTP_403_FORBIDDEN,
+         detail={"errors": "You do not have permission to do that.", "saved": False})
 
     result = await db.execute(
         select(AttributeTag)
