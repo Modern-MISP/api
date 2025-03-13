@@ -500,8 +500,28 @@ async def random_test_user(db, instance_owner_org):
 
 
 @pytest_asyncio.fixture
-async def access_test_objects(db, site_admin_user):
-    site_admin_user_token = encode_token(site_admin_user.id)
+async def access_test_objects(db, site_admin_role, instance_owner_org):
+    default_site_admin_user = User(
+        password="very_safe_passwort",
+        org_id=instance_owner_org.id,
+        role_id=site_admin_role.id,
+        email="default_site_admin_user@lauch.com",
+        authkey=None,
+        invited_by=314,
+        nids_sid=0,
+        termsaccepted=True,
+        change_pw=True,
+        contactalert=False,
+        disabled=False,
+        notification_daily=False,
+        notification_weekly=False,
+        notification_monthly=False,
+    )
+    db.add(default_site_admin_user)
+    await db.commit()
+    await db.refresh(default_site_admin_user)
+
+    site_admin_user_token = encode_token(default_site_admin_user.id)
 
     default_org = generate_organisation()
     db.add(default_org)
@@ -722,7 +742,7 @@ async def access_test_objects(db, site_admin_user):
     event_read_only_user = generate_event()
     event_read_only_user.org_id = org_read_only.id
     event_read_only_user.orgc_id = org_read_only.id
-    event_read_only_user.user_id = site_admin_user.id
+    event_read_only_user.user_id = default_site_admin_user.id
     event_read_only_user.published = True
     event_read_only_user.distribution = EventDistributionLevels.OWN_ORGANIZATION
 
@@ -733,7 +753,7 @@ async def access_test_objects(db, site_admin_user):
     event_read_only_user_2 = generate_event()
     event_read_only_user_2.org_id = org_read_only.id
     event_read_only_user_2.orgc_id = org_read_only.id
-    event_read_only_user_2.user_id = site_admin_user.id
+    event_read_only_user_2.user_id = default_site_admin_user.id
     event_read_only_user_2.published = False
     event_read_only_user_2.distribution = EventDistributionLevels.OWN_ORGANIZATION
 
@@ -744,7 +764,7 @@ async def access_test_objects(db, site_admin_user):
     event_dist_comm = generate_event()
     event_dist_comm.org_id = org_no_users.id
     event_dist_comm.orgc_id = org_no_users.id
-    event_dist_comm.user_id = site_admin_user.id
+    event_dist_comm.user_id = default_site_admin_user.id
     event_dist_comm.published = True
     event_dist_comm.distribution = EventDistributionLevels.COMMUNITY
 
@@ -755,7 +775,7 @@ async def access_test_objects(db, site_admin_user):
     event_dist_comm_2 = generate_event()
     event_dist_comm_2.org_id = org_no_users.id
     event_dist_comm_2.orgc_id = org_no_users.id
-    event_dist_comm_2.user_id = site_admin_user.id
+    event_dist_comm_2.user_id = default_site_admin_user.id
     event_dist_comm_2.published = False
     event_dist_comm_2.distribution = EventDistributionLevels.COMMUNITY
 
@@ -766,7 +786,7 @@ async def access_test_objects(db, site_admin_user):
     event_dist_sg = generate_event()
     event_dist_sg.org_id = default_org_id
     event_dist_sg.orgc_id = default_org_id
-    event_dist_sg.user_id = site_admin_user.id
+    event_dist_sg.user_id = default_site_admin_user.id
     event_dist_sg.published = True
     event_dist_sg.distribution = EventDistributionLevels.SHARING_GROUP
     event_dist_sg.sharing_group_id = default_sharing_group.id
@@ -778,7 +798,7 @@ async def access_test_objects(db, site_admin_user):
     event_dist_sg_2 = generate_event()
     event_dist_sg_2.org_id = default_org_id
     event_dist_sg_2.orgc_id = default_org_id
-    event_dist_sg_2.user_id = site_admin_user.id
+    event_dist_sg_2.user_id = default_site_admin_user.id
     event_dist_sg_2.published = False
     event_dist_sg_2.distribution = EventDistributionLevels.SHARING_GROUP
     event_dist_sg_2.sharing_group_id = default_sharing_group.id
@@ -910,7 +930,7 @@ async def access_test_objects(db, site_admin_user):
     await db.refresh(default_tag_2)
 
     tag_no_access = generate_tag()
-    tag_no_access.user_id = site_admin_user.id
+    tag_no_access.user_id = default_site_admin_user.id
     tag_no_access.org_id = org_no_users.id
     tag_no_access.is_galaxy = True
     tag_no_access.exportable = True
@@ -920,7 +940,7 @@ async def access_test_objects(db, site_admin_user):
     await db.refresh(tag_no_access)
 
     dict = {
-        "site_admin_user": site_admin_user,
+        "site_admin_user": default_site_admin_user,
         "site_admin_user_token": site_admin_user_token,
         "default_org": default_org,
         "org_no_users": org_no_users,
@@ -1010,5 +1030,6 @@ async def access_test_objects(db, site_admin_user):
     await db.delete(org_read_only)
     await db.delete(org_no_users)
     await db.delete(default_org)
+    await db.delete(default_site_admin_user)
 
     await db.commit()
