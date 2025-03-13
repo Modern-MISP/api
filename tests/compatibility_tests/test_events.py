@@ -62,11 +62,15 @@ async def test_get_non_existing_event(db, auth_key, client) -> None:
 
 @pytest.mark.asyncio
 async def test_update_existing_event(db, auth_key, client, event) -> None:
+    def preprocessor(modern, legacy):
+        del modern["Event"]["timestamp"]
+        del legacy["Event"]["timestamp"]
+
     path = f"/events/{event.id}"
 
     request_body = {"info": "updated info"}
 
-    assert get_legacy_modern_diff("put", path, request_body, auth_key, client) == {}
+    assert get_legacy_modern_diff("put", path, request_body, auth_key, client, preprocessor) == {}
 
 
 @pytest.mark.asyncio
