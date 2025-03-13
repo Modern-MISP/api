@@ -138,7 +138,7 @@ legacy_misp:
   image: ${REGISTRY_DOMAIN}/${REGISTRY_PROJECT}/api:${CI_COMMIT_SHA}
   script:
     - while [ ! -f "$MISP_READY_FILE" ]; do sleep 10; done
-    - pytest tests/compatibility_tests
+    - pytest --junitxml=report.xml tests/compatibility_tests
   services:
     - name: registry.cert.kit.edu/hub/library/mariadb:11.5
       alias: db
@@ -170,6 +170,12 @@ legacy_misp:
     DASHBOARD_URL: https://dashboard.mmisp.service
     DEBUG: true
     MISP_READY_FILE: '${CI_PROJECT_DIR}/misp_ready'
+  artifacts:
+      when: always
+      paths:
+        - ".coverage.*"
+      reports:
+        junit: report.xml
 
 
 create_api_spec:
