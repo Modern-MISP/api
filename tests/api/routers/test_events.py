@@ -430,22 +430,22 @@ async def test_publish_invalid_event(site_admin_user_token, client) -> None:
     response = client.post("/events/publish/0", headers=headers)
     assert response.status_code == 200
     response_json = response.json()
-    assert response_json["name"] == "Invalid event."
-    assert response_json["message"] == "Invalid event."
+    assert response_json["name"] == "You do not have the permission to do that."
+    assert response_json["message"] == "You do not have the permission to do that."
     assert response_json["url"] == "/events/publish/0"
 
     response = client.post("/events/publish/999999999", headers=headers)
     assert response.status_code == 200
     response_json = response.json()
-    assert response_json["name"] == "Invalid event."
-    assert response_json["message"] == "Invalid event."
+    assert response_json["name"] == "You do not have the permission to do that."
+    assert response_json["message"] == "You do not have the permission to do that."
     assert response_json["url"] == "/events/publish/999999999"
 
     response = client.post("/events/publish/a469325efe2f4f32a6854579f415ec6a", headers=headers)
     assert response.status_code == 200
     response_json = response.json()
-    assert response_json["name"] == "Invalid event."
-    assert response_json["message"] == "Invalid event."
+    assert response_json["name"] == "You do not have the permission to do that."
+    assert response_json["message"] == "You do not have the permission to do that."
     assert response_json["url"] == "/events/publish/a469325efe2f4f32a6854579f415ec6a"
 
 
