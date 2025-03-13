@@ -98,6 +98,8 @@ pytest:
         junit: report.xml
 
 pytest_coverage_combine:
+  needs:
+    - pytest
   stage: coverage
   image: ${REGISTRY_DOMAIN}/${REGISTRY_PROJECT}/api:${CI_COMMIT_SHA}
   script:
