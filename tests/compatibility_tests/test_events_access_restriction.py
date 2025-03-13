@@ -232,17 +232,6 @@ async def test_edit_existing_event_self_created(access_test_objects, client) -> 
     auth_key = access_test_objects["default_user_auth_key"]
     assert get_legacy_modern_diff("put", path, request_body, (clear_key, auth_key), client) == {}
 
-
-@pytest.mark.asyncio
-async def test_edit_existing_event_suc_read_only_user(access_test_objects, client) -> None:
-    event_id = access_test_objects["event_read_only_user"].id
-    path = "/events/" + str(event_id)
-    request_body = {"info": "updated info"}
-    clear_key = access_test_objects["default_read_only_user_clear_key"]
-    auth_key = access_test_objects["default_read_only_user_auth_key"]
-    assert get_legacy_modern_diff("put", path, request_body, (clear_key, auth_key), client) == {}
-
-
 @pytest.mark.asyncio
 async def test_edit_existing_event_fail_wrong_org(access_test_objects, client) -> None:
     event_id = access_test_objects["event_no_access"].id

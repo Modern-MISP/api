@@ -10,13 +10,13 @@ async def test_get_all_attributes(
     access_test_objects,
     client,
 ) -> None:
-
     path = "/attributes"
     request_body = {}
     clear_key = access_test_objects["default_read_only_user_clear_key"]
     auth_key = access_test_objects["default_read_only_user_auth_key"]
 
     assert get_legacy_modern_diff("get", path, request_body, (clear_key, auth_key), client) == {}
+
 
 @pytest.mark.asyncio
 async def test_get_existing_attribute(
@@ -73,6 +73,7 @@ async def test_get_existing_attribute_fail_read_only_user_own_org(
 
     assert get_legacy_modern_diff("get", path, request_body, (clear_key, auth_key), client) == {}
 
+
 @pytest.mark.asyncio
 async def test_get_existing_attribute_read_only_user_comm(
     access_test_objects,
@@ -85,6 +86,7 @@ async def test_get_existing_attribute_read_only_user_comm(
     auth_key = access_test_objects["default_read_only_user_auth_key"]
 
     assert get_legacy_modern_diff("get", path, request_body, (clear_key, auth_key), client) == {}
+
 
 @pytest.mark.asyncio
 async def test_get_existing_attribute_fail_read_only_user_comm(
@@ -99,6 +101,7 @@ async def test_get_existing_attribute_fail_read_only_user_comm(
 
     assert get_legacy_modern_diff("get", path, request_body, (clear_key, auth_key), client) == {}
 
+
 @pytest.mark.asyncio
 async def test_get_existing_attribute_read_only_user_sg(
     access_test_objects,
@@ -111,6 +114,7 @@ async def test_get_existing_attribute_read_only_user_sg(
     auth_key = access_test_objects["default_read_only_user_auth_key"]
 
     assert get_legacy_modern_diff("get", path, request_body, (clear_key, auth_key), client) == {}
+
 
 @pytest.mark.asyncio
 async def test_get_existing_attribute_fail_read_only_user_sg(
@@ -137,10 +141,11 @@ async def test_get_all_attributes_read_only_user(
     auth_key = access_test_objects["default_read_only_user_auth_key"]
     assert get_legacy_modern_diff("get", path, request_body, (clear_key, auth_key), client) == {}
 
+
 @pytest.mark.asyncio
 async def test_delete_existing_attribute(access_test_objects, client) -> None:
     def preprocessor(modern, legacy):
-         if "detail" in modern:
+        if "detail" in modern:
             modern["errors"] = modern["detail"].get("errors")
             modern["saved"] = modern["detail"].get("saved")
             del modern["detail"]
@@ -251,7 +256,7 @@ async def test_remove_existing_tag_from_attribute_fail(
     client,
 ) -> None:
     def preprocessor(modern, legacy):
-         if "detail" in modern:
+        if "detail" in modern:
             modern["errors"] = modern["detail"].get("errors")
             modern["saved"] = modern["detail"].get("saved")
             del modern["detail"]
@@ -333,7 +338,8 @@ async def test_edit_existing_attribute(
 
 @pytest.mark.asyncio
 async def test_get_all_attributes_site_admin(
-    access_test_objects, auth_key,
+    access_test_objects,
+    auth_key,
     client,
 ) -> None:
     request_body = None

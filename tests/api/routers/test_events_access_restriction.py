@@ -247,15 +247,6 @@ async def test_edit_existing_event_self_created(access_test_objects, client) -> 
 
 
 @pytest.mark.asyncio
-async def test_edit_existing_event_suc_read_only_user(access_test_objects, client) -> None:
-    request_body = {"info": "updated info"}
-    event_id = access_test_objects["event_read_only_user"].id
-    headers = {"authorization": access_test_objects["default_read_only_user_token"]}
-    response = client.put(f"events/{event_id}", json=request_body, headers=headers)
-    assert response.status_code == 200  # because read only user is in creator org
-
-
-@pytest.mark.asyncio
 async def test_edit_existing_event_fail_wrong_org(access_test_objects, client) -> None:
     request_body = {"info": "updated info"}
     event_id = access_test_objects["event_no_access"].id

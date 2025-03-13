@@ -853,8 +853,8 @@ async def _remove_tag_from_attribute(
     if not attribute.can_edit(user):
         logger.debug("User cannot edit %s", attribute.id)
         raise HTTPException(
-         status.HTTP_403_FORBIDDEN,
-         detail={"errors": "You do not have permission to do that.", "saved": False})
+            status.HTTP_403_FORBIDDEN, detail={"errors": "You do not have permission to do that.", "saved": False}
+        )
 
     result = await db.execute(
         select(AttributeTag)
@@ -997,10 +997,7 @@ async def _get_attribute_category_statistics(db: Session, percentage: bool) -> G
 async def _get_attribute_type_statistics(
     db: Session, percentage: bool, user: User | None
 ) -> GetAttributeStatisticsTypesResponse:  # type: ignore
-    qry = (
-        select(Attribute.type, func.count(Attribute.type).label("count"))
-        .group_by(Attribute.type)
-    )
+    qry = select(Attribute.type, func.count(Attribute.type).label("count")).group_by(Attribute.type)
     result = await db.execute(qry)
     attribute_count_by_group = result.all()
     attribute_count_by_group_dict: dict[str, int] = {x.type: cast(int, x.count) for x in attribute_count_by_group}
