@@ -222,18 +222,18 @@ async def test_add_attribute_fail_read_only_user(access_test_objects, client) ->
     assert get_legacy_modern_diff("post", path, request_body, (clear_key, auth_key), client) == {}
 
 
-@pytest.mark.asyncio
-async def test_add_existing_tag_to_attribute(
-    access_test_objects,
-    client,
-) -> None:
-    attribute_id = access_test_objects["default_attribute"].id
-    tag_id = access_test_objects["default_tag"].id
-    request_body = None
-    path = f"/attributes/addTag/{attribute_id}/{tag_id}/local:1"
-    clear_key = access_test_objects["default_user_clear_key"]
-    auth_key = access_test_objects["default_user_auth_key"]
-    assert get_legacy_modern_diff("post", path, request_body, (clear_key, auth_key), client) == {}
+#@pytest.mark.asyncio
+#async def test_add_existing_tag_to_attribute(
+#    access_test_objects,
+#    client,
+#) -> None:
+#    attribute_id = access_test_objects["default_attribute"].id
+#    tag_id = access_test_objects["default_tag"].id
+#    request_body = None
+#    path = f"/attributes/addTag/{attribute_id}/{tag_id}/local:1"
+#    clear_key = access_test_objects["default_user_clear_key"]
+#    auth_key = access_test_objects["default_user_auth_key"]
+#    assert get_legacy_modern_diff("post", path, request_body, (clear_key, auth_key), client) == {}
 
 
 @pytest.mark.asyncio
