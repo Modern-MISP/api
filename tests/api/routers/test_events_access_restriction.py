@@ -59,7 +59,7 @@ async def test_get_event_fail_read_only_user(access_test_objects, client) -> Non
 
 
 @pytest.mark.asyncio
-async def test_get_event_fail_read_only_user_not_published(access_test_objects, client) -> None:
+async def test_get_event_fail_read_only_user_not_same_corg(access_test_objects, client) -> None:
     headers = {"authorization": access_test_objects["default_read_only_user_token"]}
     event_id = access_test_objects["event_read_only_user_2"].id
     response = client.get(f"/events/{event_id}", headers=headers)
