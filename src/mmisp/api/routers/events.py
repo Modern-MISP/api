@@ -1305,6 +1305,7 @@ def _prepare_all_events_response(event: Event, request_type: str) -> GetAllEvent
 
     event_dict["GalaxyCluster"] = _prepare_all_events_galaxy_cluster_response(event.eventtags_galaxy)
     event_dict["date"] = str(event_dict["date"])
+    logger.warning("Event creator id : %s", event.user_id)
     if event.user_id:
         event_dict["event_creator_email"] = event.creator.email
 
