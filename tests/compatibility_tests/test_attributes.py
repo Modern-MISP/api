@@ -151,6 +151,11 @@ async def test_edit_existing_attribute(
     auth_key,
     client,
 ) -> None:
+
+    def preprocessor(modern, legacy):
+        del modern["Attribute"]["timestamp"]
+        del legacy["Attribute"]["timestamp"]
+
     request_body = {
         "category": "Payload delivery",
         "value": "2.3.4.5",
@@ -162,7 +167,7 @@ async def test_edit_existing_attribute(
     }
     attribute = access_test_objects["default_attribute_2"]
     path = f"/attributes/{attribute.id}"
-    assert get_legacy_modern_diff("put", path, request_body, auth_key, client) == {}
+    assert get_legacy_modern_diff("put", path, request_body, auth_key, client, preprocessor) == {}
 
 
 @pytest.mark.asyncio
