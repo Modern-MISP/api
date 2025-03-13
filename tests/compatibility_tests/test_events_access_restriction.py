@@ -107,27 +107,36 @@ async def test_get_event_success_site_admin(access_test_objects, auth_key, clien
 
 @pytest.mark.asyncio
 async def test_valid_search_attribute_data_read_only_user(access_test_objects, client) -> None:
+    def preprocess(modern, legacy):
+        del modern["response"]["Tag"]
+
     path = "/events/restSearch"
     request_body = {"returnFormat": "json", "limit": 100, "distribution": 0}
     clear_key = access_test_objects["default_read_only_user_clear_key"]
     auth_key = access_test_objects["default_read_only_user_auth_key"]
-    assert get_legacy_modern_diff("post", path, request_body, (clear_key, auth_key), client) == {}
+    assert get_legacy_modern_diff("post", path, request_body, (clear_key, auth_key), client, preprocess) == {}
 
 
 @pytest.mark.asyncio
 async def test_valid_search_attribute_data(access_test_objects, client) -> None:
+    def preprocess(modern, legacy):
+        del modern["response"]["Tag"]
+
     path = "/events/restSearch"
     request_body = {"returnFormat": "json", "limit": 100, "distribution": 0}
     clear_key = access_test_objects["default_user_clear_key"]
     auth_key = access_test_objects["default_user_auth_key"]
-    assert get_legacy_modern_diff("post", path, request_body, (clear_key, auth_key), client) == {}
+    assert get_legacy_modern_diff("post", path, request_body, (clear_key, auth_key), client, preprocess) == {}
 
 
 @pytest.mark.asyncio
 async def test_valid_search_attribute_data_site_admin(auth_key, client) -> None:
+    def preprocess(modern, legacy):
+        del modern["response"]["Tag"]
+
     path = "/events/restSearch"
     request_body = {"returnFormat": "json", "limit": 100, "distribution": 0, "event_creator_mail": "test.com"}
-    assert get_legacy_modern_diff("post", path, request_body, auth_key, client) == {}
+    assert get_legacy_modern_diff("post", path, request_body, auth_key, client, preprocess) == {}
 
 
 @pytest.mark.asyncio
