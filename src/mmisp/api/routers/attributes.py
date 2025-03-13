@@ -999,7 +999,6 @@ async def _get_attribute_type_statistics(
 ) -> GetAttributeStatisticsTypesResponse:  # type: ignore
     qry = (
         select(Attribute.type, func.count(Attribute.type).label("count"))
-        .filter(Attribute.can_access(user))
         .group_by(Attribute.type)
     )
     result = await db.execute(qry)
