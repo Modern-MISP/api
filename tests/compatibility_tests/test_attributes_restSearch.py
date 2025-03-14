@@ -83,7 +83,7 @@ async def test_valid_search_attribute_data_read_only_user(db: AsyncSession, acce
     request_body = {"returnFormat": "json", "limit": 100, "distribution": 0}
     clear_key = access_test_objects["default_read_only_user_clear_key"]
     auth_key = access_test_objects["default_read_only_user_auth_key"]
-    assert get_legacy_modern_diff("post", path, request_body, (clear_key, auth_key), client, preprocess) == {}
+    assert get_legacy_modern_diff("post", path, request_body, (clear_key, auth_key), client) == {}
 
 
 @pytest.mark.asyncio
@@ -96,5 +96,5 @@ async def test_valid_search_attribute_data_event(db: AsyncSession, access_test_o
     request_body = {"returnFormat": "json", "limit": 100, "distribution": 0}
     clear_key = access_test_objects["default_user_clear_key"]
     auth_key = access_test_objects["default_user_auth_key"]
-    assert get_legacy_modern_diff("post", path, request_body, (clear_key, auth_key), client, preprocess) == {}
+    assert get_legacy_modern_diff("post", path, request_body, (clear_key, auth_key), client) == {}
 
