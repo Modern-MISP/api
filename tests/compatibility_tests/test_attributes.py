@@ -94,7 +94,7 @@ async def test_restore_attribute_site_admin(
     auth_key,
     client,
 ) -> None:
-    attribute_id = access_test_objects["default_attribute_2"].id
+    attribute_id = access_test_objects["attribute_no_access"].id
     request_body = {"sharing_group_id": 0}
     path = f"/attributes/restore/{attribute_id}"
     assert get_legacy_modern_diff("post", path, request_body, auth_key, client) == {}
