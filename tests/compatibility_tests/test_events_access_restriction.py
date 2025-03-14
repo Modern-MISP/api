@@ -131,8 +131,8 @@ async def test_valid_search_attribute_data(
     clear_key = access_test_objects["default_user_clear_key"]
     auth_key = access_test_objects["default_user_auth_key"]
     assert get_legacy_modern_diff("post", path, request_body, (clear_key, auth_key), client, preprocess) == {}
-
-
+# this was moved to compability tests/attributes_restSearch
+'''
 @pytest.mark.asyncio
 async def test_valid_search_attribute_data_site_admin(
     db: AsyncSession, auth_key, client) -> None:
@@ -143,7 +143,7 @@ async def test_valid_search_attribute_data_site_admin(
     path = "/events/restSearch"
     request_body = {"returnFormat": "json", "limit": 100, "distribution": 0}
     assert get_legacy_modern_diff("post", path, request_body, auth_key, client) == {}
-
+'''
 
 @pytest.mark.asyncio
 async def test_publish_existing_event_self_created(access_test_objects, client) -> None:
