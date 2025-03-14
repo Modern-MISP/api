@@ -761,9 +761,7 @@ async def _get_events(db: Session, user: User | None) -> list[GetAllEventsRespon
             selectinload(Event.tags),
             selectinload(Event.eventtags).selectinload(EventTag.tag),
             selectinload(Event.creator),
-            selectinload(Event.sharing_group).options(
-                selectinload(SharingGroup.organisations)
-            ),
+            selectinload(Event.sharing_group).selectinload(SharingGroup.organisation),
         )
     )
     events: Sequence[Event] = result.scalars().all()
@@ -803,9 +801,7 @@ async def _rest_search_events(db: Session, body: SearchEventsBody, user: User | 
                 ),
                 selectinload(Attribute.attributetags).selectinload(AttributeTag.tag),
             ),
-            selectinload(Event.sharing_group).options(
-                selectinload(SharingGroup.organisations)
-            ),
+            selectinload(Event.sharing_group).selectinload(SharingGroup.organisations),
         )
     )
     if body.limit is not None:
