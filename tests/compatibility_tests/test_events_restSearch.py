@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from mmisp.tests.compatibility_helpers import get_legacy_modern_diff
 
+
 @pytest.mark.asyncio
 async def test_valid_search_attribute_data_site_admin(db: AsyncSession, auth_key, client) -> None:
     def preprocessor(modern, legacy):
@@ -17,7 +18,7 @@ async def test_valid_search_attribute_data_site_admin(db: AsyncSession, auth_key
 @pytest.mark.asyncio
 async def test_valid_search_attribute_data_read_only_user(db: AsyncSession, access_test_objects, client) -> None:
     def preprocessor(modern, legacy):
-        #del modern["response"][0]["Event"]["Tag"]
+        # del modern["response"][0]["Event"]["Tag"]
         del modern["response"][0]["Event"]["Attribute"][0]["Tag"]
 
     path = "/events/restSearch"
@@ -38,4 +39,3 @@ async def test_valid_search_attribute_data(db: AsyncSession, access_test_objects
     clear_key = access_test_objects["default_user_clear_key"]
     auth_key = access_test_objects["default_user_auth_key"]
     assert get_legacy_modern_diff("post", path, request_body, (clear_key, auth_key), client, preprocessor) == {}
-
