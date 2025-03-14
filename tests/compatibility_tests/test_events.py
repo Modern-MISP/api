@@ -57,7 +57,7 @@ async def test_add_event_data_empty_string(db, site_admin_user_token, auth_key, 
     path = "/events"
     request_body = {"info": "test events", "date": "", "distribution": 0, "sharing_group_id": 0}
 
-    response = await client.post(path, json=request_body, headers={"Authorization": site_admin_user_token})
+    response = client.post(path, json=request_body, headers={"Authorization": site_admin_user_token})
     assert response.status_code == 200
     event_id = response.json()["Event"]["id"]
     assert event_id is not None
