@@ -39,8 +39,8 @@ async def pause_workers(
     response.headers["x-worker-name-header"] = api_response.headers[
         "x-worker-name-header"
     ]  # possible to use an attribute but i am lazy feel free to change
-    if api_response.status_code == 400:
-        raise HTTPException(status_code=400, detail="Name of worker is not valid")
+    if api_response.status_code == 404:
+        raise HTTPException(status_code=404, detail="Name of worker is not valid")
     elif api_response.status_code != 200:
         raise HTTPException(status_code=500, detail="Unexpected error occurred")
 
@@ -69,8 +69,8 @@ async def unpause_workers(
     response.headers["x-worker-name-header"] = api_response.headers["x-worker-name-header"]
     # possible to use an attribute but i am lazy feel free to change
     # if so dont forget to delete the header in main.py
-    if api_response.status_code == 400:
-        raise HTTPException(status_code=400, detail="Name of worker is not valid")
+    if api_response.status_code == 404:
+        raise HTTPException(status_code=404, detail="Name of worker is not valid")
     elif api_response.status_code != 200:
         raise HTTPException(status_code=500, detail="Unexpected error occurred")
 
