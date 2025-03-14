@@ -737,7 +737,7 @@ async def _delete_event(db: Session, event_id: int | uuid.UUID, user: User | Non
 @alog
 async def _get_events(db: Session, user: User | None) -> list[GetAllEventsResponse]:
     if not user:  # Since the auth.user can be User or None
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN_BAD_REQUEST, detail="invalid user")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="invalid user")
 
     result = await db.execute(
         select(Event)
@@ -761,8 +761,8 @@ async def _get_events(db: Session, user: User | None) -> list[GetAllEventsRespon
     )
     events: Sequence[Event] = result.scalars().all()
 
-    if not events:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No events found.")
+    #if not events:
+       # raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No events found.")
 
     event_responses = [_prepare_all_events_response(event, "get_all") for event in events]
 
