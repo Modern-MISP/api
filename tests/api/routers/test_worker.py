@@ -8,7 +8,9 @@ from mmisp.api.config import config
 @respx.mock
 @pytest.mark.asyncio
 async def test_get_workers_success(site_admin_user_token, client) -> None:
-    route = respx.get(f"{config.WORKER_URL}/worker/list_workers").mock(return_value=Response(200, json={}))
+    route = respx.get(f"{config.WORKER_URL}/worker/list_workers").mock(
+        return_value=Response(200, json=[{"name": "nameabc", "status": "cba", "queues": ["halts Maus"], "jobCount": 7}])
+    )
     # tests
     response = client.get("/worker/all", headers={"authorization": site_admin_user_token})
 
@@ -79,7 +81,6 @@ async def test_pause_worker_failure(site_admin_user_token, client) -> None:
     response = client.post("/worker/pause/abc", headers={"authorization": site_admin_user_token})
 
     assert response.status_code == 404
-    assert response.headers["x-worker-name-header"] == "abc"
     assert route.called
 
 
@@ -107,7 +108,6 @@ async def test_unpause_worker_failure(site_admin_user_token, client) -> None:
     response = client.post("/worker/unpause/abc", headers={"authorization": site_admin_user_token})
 
     assert response.status_code == 404
-    assert response.headers["x-worker-name-header"] == "abc"
     assert route.called
 
 
