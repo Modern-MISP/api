@@ -79,6 +79,7 @@ async def test_pause_worker_failure(site_admin_user_token, client) -> None:
     response = client.post("/worker/pause/abc", headers={"authorization": site_admin_user_token})
 
     assert response.status_code == 404
+    assert response.headers["x-worker-name-header"] == "abc"
     assert route.called
 
 
@@ -106,6 +107,7 @@ async def test_unpause_worker_failure(site_admin_user_token, client) -> None:
     response = client.post("/worker/unpause/abc", headers={"authorization": site_admin_user_token})
 
     assert response.status_code == 404
+    assert response.headers["x-worker-name-header"] == "abc"
     assert route.called
 
 
