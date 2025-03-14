@@ -64,9 +64,9 @@ async def test_add_event_data_empty_string(db, site_admin_user_token, auth_key, 
     event2_id = int(event_id) + 1
     assert get_legacy_modern_diff("post", path, request_body, auth_key, client, preprocessor) == {}
 
-    delete_response = await client.delete(f"events/{event_id}", headers={"Authorization": site_admin_user_token})
+    delete_response = client.delete(f"events/{event_id}", headers={"Authorization": site_admin_user_token})
     assert delete_response.status_code == 200
-    delete_diff = await client.delete(f"events/{event2_id}", headers={"Authorization": site_admin_user_token})
+    delete_diff = client.delete(f"events/{event2_id}", headers={"Authorization": site_admin_user_token})
     assert delete_diff.status_code == 200
 
 
