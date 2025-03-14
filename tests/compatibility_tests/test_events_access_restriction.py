@@ -129,9 +129,11 @@ async def test_valid_search_attribute_data(
         del modern["response"][0]["Event"]["Tag"]
         del modern["response"][0]["Event"]["Attribute"][0]["Tag"]
         del modern["response"][1]["Event"]["Tag"]
-        del modern["response"][1]["Event"]["Attribute"][0]["Tag"]
         del modern["response"][2]["Event"]["Tag"]
         del modern["response"][2]["Event"]["Attribute"][0]["Tag"]
+        del modern['response'][0]['Event']['event_creator_email']
+        del modern['response'][1]['Event']['event_creator_email']
+        del modern['response'][2]['Event']['event_creator_email']
 
     path = "/events/restSearch"
     request_body = {"returnFormat": "json", "limit": 100, "distribution": 0}
