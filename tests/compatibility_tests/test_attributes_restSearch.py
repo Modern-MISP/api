@@ -76,7 +76,7 @@ async def test_valid_search_attribute_data_site_admin(db: AsyncSession, auth_key
 @pytest.mark.asyncio
 async def test_valid_search_attribute_data_read_only_user(db: AsyncSession, access_test_objects, client) -> None:
     def preprocessor(modern, legacy):
-        del modern["response"][0]["Event"]["Tag"]
+        #del modern["response"][0]["Event"]["Tag"]
         del modern["response"][0]["Event"]["Attribute"][0]["Tag"]
         del modern["response"][1]["Event"]["Attribute"][0]["Tag"]
 
@@ -93,9 +93,9 @@ async def test_valid_search_attribute_data_event(db: AsyncSession, access_test_o
         del modern["response"][0]["Event"]["Tag"]
         del modern["response"][1]["Event"]["Tag"]
         del modern["response"][2]["Event"]["Tag"]
-        del modern["response"][0]["Event"]["Attribute"][0]["Tag"]
-        del modern["response"][1]["Event"]["Attribute"][0]["Tag"]
-        del modern["response"][2]["Event"]["Attribute"][0]["Tag"]
+        del modern["response"][0]["Event"]["Attribute"]["Tag"]
+        del modern["response"][1]["Event"]["Attribute"]["Tag"]
+        del modern["response"][2]["Event"]["Attribute"]["Tag"]
 
     path = "/events/restSearch"
     request_body = {"returnFormat": "json", "limit": 100, "distribution": 0}
