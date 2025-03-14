@@ -3,29 +3,29 @@ import sqlalchemy as sa
 
 from mmisp.tests.compatibility_helpers import get_legacy_modern_diff
 # Following test are already in compability_tests/test_attribute_statistics.py
-#@pytest.mark.asyncio
-#async def test_attribute_type_absolute_statistics(access_test_objects, auth_key, client) -> None:
+# @pytest.mark.asyncio
+# async def test_attribute_type_absolute_statistics(access_test_objects, auth_key, client) -> None:
 #    path = "/attributes/attributeStatistics/type/0"
 #    request_body = None
 #    assert get_legacy_modern_diff("get", path, request_body, auth_key, client) == {}
 
 
-#@pytest.mark.asyncio
-#async def test_attribute_type_relative_statistics(access_test_objects, auth_key, client) -> None:
+# @pytest.mark.asyncio
+# async def test_attribute_type_relative_statistics(access_test_objects, auth_key, client) -> None:
 #    path = "/attributes/attributeStatistics/type/1"
 #    request_body = None
 #    assert get_legacy_modern_diff("get", path, request_body, auth_key, client) == {}
 
 
-#@pytest.mark.asyncio
-#async def test_attribute_category_absolute_statistics(access_test_objects, auth_key, client) -> None:
+# @pytest.mark.asyncio
+# async def test_attribute_category_absolute_statistics(access_test_objects, auth_key, client) -> None:
 #    path = "/attributes/attributeStatistics/category/0"
 #    request_body = None
 #    assert get_legacy_modern_diff("get", path, request_body, auth_key, client) == {}
 
 
-#@pytest.mark.asyncio
-#async def test_attribute_category_relative_statistics(access_test_objects, auth_key, client) -> None:
+# @pytest.mark.asyncio
+# async def test_attribute_category_relative_statistics(access_test_objects, auth_key, client) -> None:
 #    request_body = None
 #    path = "/attributes/attributeStatistics/category/1"
 #    assert get_legacy_modern_diff("get", path, request_body, auth_key, client) == {}
@@ -76,12 +76,12 @@ async def test_add_attribute_valid_data(access_test_objects, auth_key, client) -
 """
 
 
-#@pytest.mark.asyncio
-#async def test_delete_existing_attribute(
+# @pytest.mark.asyncio
+# async def test_delete_existing_attribute(
 #    access_test_objects,
 #    auth_key,
 #    client,
-#) -> None:
+# ) -> None:
 #    attribute_id = access_test_objects["default_attribute_2"].id
 #    request_body = None
 #    path = f"/attributes/{attribute_id}"
@@ -150,7 +150,6 @@ async def test_edit_existing_attribute(
     auth_key,
     client,
 ) -> None:
-
     def preprocessor(modern, legacy):
         del modern["Attribute"]["timestamp"]
         del legacy["Attribute"]["timestamp"]

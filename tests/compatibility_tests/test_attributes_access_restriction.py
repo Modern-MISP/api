@@ -375,8 +375,10 @@ async def test_delete_selected_attributes_from_existing_event_fail(access_test_o
     clear_key = access_test_objects["default_user_clear_key"]
     auth_key = access_test_objects["default_user_auth_key"]
     assert get_legacy_modern_diff("post", path, request_body, (clear_key, auth_key), client) == {}
+
+
 # Following tests were moved to compability_tests/test_attribute_statistics
-'''
+"""
 @pytest.mark.asyncio
 async def test_attribute_type_absolute_statistics(access_test_objects, client) -> None:
     request_body = None
@@ -411,7 +413,8 @@ async def test_attribute_category_relative_statistics(access_test_objects, clien
     clear_key = access_test_objects["default_user_clear_key"]
     auth_key = access_test_objects["default_user_auth_key"]
     assert get_legacy_modern_diff("get", path, request_body, (clear_key, auth_key), client) == {}
-'''
+"""
+
 
 @pytest.mark.asyncio
 async def test_valid_search_attribute_data(access_test_objects, client) -> None:
