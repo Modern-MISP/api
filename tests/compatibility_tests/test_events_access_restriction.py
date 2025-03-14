@@ -11,15 +11,17 @@ async def test_list_all_events_self_created(access_test_objects, client) -> None
     request_body = None
     clear_key = access_test_objects["default_user_clear_key"]
     auth_key = access_test_objects["default_user_auth_key"]
-    print("default_event: ", access_test_objects["default_event"])
-    print("default_event_published: ", access_test_objects["default_event_published"])
-    print("event_no_access: ", access_test_objects["event_no_access"])
-    print("event_read_only_user: ", access_test_objects["event_read_only_user"])
-    print("event_read_only_user_2: ", access_test_objects["event_read_only_user_2"])
-    print("event_dist_comm: ", access_test_objects["event_dist_comm"])
-    print("event_dist_comm_2: ", access_test_objects["event_dist_comm_2"])
-    print("event_dist_sg: ", access_test_objects["event_dist_sg"])
-    print("event_dist_sg_2: ", access_test_objects["event_dist_sg_2"])
+    user = access_test_objects["default_user"]
+
+    print("test_list_all_events_self_created default_event: ", access_test_objects["default_event"].can_access(user))
+    print("test_list_all_events_self_created default_event_published: ", access_test_objects["default_event_published"].can_access(user))
+    print("test_list_all_events_self_created event_no_access: ", access_test_objects["event_no_access"].can_access(user))
+    print("test_list_all_events_self_created event_read_only_user: ", access_test_objects["event_read_only_user"].can_access(user))
+    print("test_list_all_events_self_created event_read_only_user_2: ", access_test_objects["event_read_only_user_2"].can_access(user))
+    print("test_list_all_events_self_created event_dist_comm: ", access_test_objects["event_dist_comm"].can_access(user))
+    print("test_list_all_events_self_created event_dist_comm_2: ", access_test_objects["event_dist_comm_2"].can_access(user))
+    print("test_list_all_events_self_created event_dist_sg: ", access_test_objects["event_dist_sg"].can_access(user))
+    print("test_list_all_events_self_created event_dist_sg_2: ", access_test_objects["event_dist_sg_2"].can_access(user))
 
     assert get_legacy_modern_diff("get", path, request_body, (clear_key, auth_key), client) == {}
 
@@ -92,6 +94,8 @@ async def test_get_event_fail_read_only_user_comm(access_test_objects, client) -
 async def test_get_event_success_read_only_user_sg(access_test_objects, client) -> None:
     path = "/events/" + str(access_test_objects["event_dist_sg"].id)
     request_body = {}
+    print("test_get_event_success_read_only_user_sg event_dist_sg: ", access_test_objects["event_dist_sg"].__dict__)
+    print("test_get_event_success_read_only_user_sg event_dist_sg id : ", access_test_objects["event_dist_sg"].id)
     clear_key = access_test_objects["default_sharing_group_user_clear_key"]
     auth_key = access_test_objects["default_sharing_group_user_auth_key"]
     assert get_legacy_modern_diff("get", path, request_body, (clear_key, auth_key), client) == {}
