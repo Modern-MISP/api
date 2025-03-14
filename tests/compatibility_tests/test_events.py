@@ -61,7 +61,7 @@ async def test_add_event_data_empty_string(db, site_admin_user_token, auth_key, 
     assert response.status_code == 200
     event_id = response.json()["Event"]["id"]
     assert event_id is not None
-    event2_id = event_id + 1
+    event2_id = int(event_id) + 1
     assert get_legacy_modern_diff("post", path, request_body, auth_key, client, preprocessor) == {}
 
     delete_response = await client.delete(f"events/{event_id}", headers={"Authorization": site_admin_user_token})
