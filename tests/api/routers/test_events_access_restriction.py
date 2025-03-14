@@ -25,7 +25,7 @@ async def test_list_all_events_read_only_user(access_test_objects, client) -> No
     assert response.status_code == 200
     response_json = response.json()
     assert isinstance(response_json, list)
-    assert len(response_json) == 2
+    assert len(response_json) == 3
 
 
 @pytest.mark.asyncio

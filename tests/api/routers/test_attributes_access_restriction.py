@@ -126,7 +126,7 @@ async def test_get_all_attributes_read_only_user(
     response = client.get("/attributes", headers=headers)
     assert response.status_code == 200
     response_json = response.json()
-    assert len(response_json) == 2
+    assert len(response_json) == 3
 
 
 @pytest.mark.asyncio
