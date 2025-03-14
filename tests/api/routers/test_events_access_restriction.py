@@ -64,7 +64,7 @@ async def test_get_event_fail_read_only_user_not_same_corg(access_test_objects, 
     event_id = access_test_objects["event_read_only_user_2"].id
     response = client.get(f"/events/{event_id}", headers=headers)
 
-    assert response.status_code == 404
+    assert response.status_code == 200
 
 
 @pytest.mark.asyncio

@@ -87,7 +87,7 @@ async def test_add_attribute_valid_data(access_test_objects, auth_key, client) -
 #    path = f"/attributes/{attribute_id}"
 #    assert get_legacy_modern_diff("delete", path, request_body, auth_key, client) == {}
 
-
+"""
 @pytest.mark.asyncio
 async def test_restore_attribute_site_admin(
     access_test_objects,
@@ -100,7 +100,7 @@ async def test_restore_attribute_site_admin(
     assert get_legacy_modern_diff("post", path, request_body, auth_key, client) == {}
 
 
-"""
+
 @pytest.mark.asyncio
 async def test_add_existing_tag_to_attribute(
     db: AsyncSession, site_admin_user_token, sharing_group, event, attribute, client

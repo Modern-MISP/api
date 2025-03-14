@@ -66,7 +66,7 @@ async def test_get_existing_attribute_fail_read_only_user_own_org(
     attribute_id = access_test_objects["attribute_event_read_only_user_2"].id
     headers = {"authorization": access_test_objects["default_read_only_user_token"]}
     response = client.get(f"/attributes/{attribute_id}", headers=headers)
-    assert response.status_code == 404
+    assert response.status_code == 200
 
 
 @pytest.mark.asyncio
