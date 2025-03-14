@@ -90,6 +90,8 @@ async def test_valid_search_attribute_data_read_only_user(db: AsyncSession, acce
 async def test_valid_search_attribute_data_event(db: AsyncSession, access_test_objects, client) -> None:
     def preprocessor(modern, legacy):
         del modern["response"][0]["Event"]["Tag"]
+        del modern["response"][1]["Event"]["Tag"]
+        del modern["response"][2]["Event"]["Tag"]
         #del modern["response"][0]["Event"]["Attribute"][0]["Tag"]
 
     path = "/events/restSearch"
