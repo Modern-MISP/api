@@ -9,7 +9,7 @@ from mmisp.api.config import config
 @pytest.mark.asyncio
 async def test_get_workers_success(site_admin_user_token, client) -> None:
     route = respx.get(f"{config.WORKER_URL}/worker/list_workers").mock(return_value=Response(200, json={}))
-
+    # tests
     response = client.get("/worker/all", headers={"authorization": site_admin_user_token})
 
     assert response.status_code == 200
