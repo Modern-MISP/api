@@ -790,7 +790,7 @@ async def access_test_objects(db, site_admin_user):
     default_attribute = generate_attribute(default_event_id)
     default_attribute.distribution = AttributeDistributionLevels.OWN_ORGANIZATION
     default_attribute.uuid = uuid()
-    default_attribute.value = "default attribute example value"
+    default_attribute.comment = "default attribute example comment"
     default_event.attribute_count += 1
 
     db.add(default_attribute)
@@ -800,7 +800,7 @@ async def access_test_objects(db, site_admin_user):
     default_attribute_2 = generate_attribute(default_event_id)
     default_attribute_2.distribution = AttributeDistributionLevels.OWN_ORGANIZATION
     default_attribute_2.uuid = uuid()
-    default_attribute_2.value = "default attribute 2 example value"
+    default_attribute_2.comment = "default attribute 2 example comment"
     default_event.attribute_count += 1
 
     db.add(default_attribute_2)
@@ -810,7 +810,7 @@ async def access_test_objects(db, site_admin_user):
     attribute_no_access = generate_attribute(event_no_access_id)
     attribute_no_access.distribution = AttributeDistributionLevels.OWN_ORGANIZATION
     attribute_no_access.uuid = uuid()
-    attribute_no_access.value = "attribute no access example value"
+    attribute_no_access.comment = "attribute no access example comment"
     event_no_access.attribute_count += 1
 
     db.add(attribute_no_access)
@@ -820,7 +820,7 @@ async def access_test_objects(db, site_admin_user):
     attribute_no_access_2 = generate_attribute(event_no_access_id)
     attribute_no_access_2.distribution = AttributeDistributionLevels.OWN_ORGANIZATION
     attribute_no_access_2.uuid = uuid()
-    attribute_no_access_2.value = "attribute no access 2 example value"
+    attribute_no_access_2.comment = "attribute no access 2 example comment"
     event_no_access.attribute_count += 1
 
     db.add(attribute_no_access_2)
@@ -830,7 +830,7 @@ async def access_test_objects(db, site_admin_user):
     attribute_event_read_only_user = generate_attribute(event_read_only_user.id)
     attribute_event_read_only_user.distribution = AttributeDistributionLevels.OWN_ORGANIZATION
     attribute_event_read_only_user.uuid = uuid()
-    attribute_event_read_only_user.value = "attribute event read only user example value"
+    attribute_event_read_only_user.comment = "attribute event read only user example comment"
     event_read_only_user.attribute_count += 1
 
     db.add(attribute_event_read_only_user)
@@ -840,7 +840,7 @@ async def access_test_objects(db, site_admin_user):
     attribute_event_read_only_user_2 = generate_attribute(event_read_only_user_2.id)
     attribute_event_read_only_user_2.distribution = AttributeDistributionLevels.OWN_ORGANIZATION
     attribute_event_read_only_user_2.uuid = uuid()
-    attribute_event_read_only_user_2.value = "attribute event read only user 2 example value"
+    attribute_event_read_only_user_2.comment = "attribute event read only user 2 example comment"
     event_read_only_user_2.attribute_count += 1
 
     db.add(attribute_event_read_only_user_2)
@@ -850,7 +850,7 @@ async def access_test_objects(db, site_admin_user):
     attribute_dist_comm = generate_attribute(event_dist_comm.id)
     attribute_dist_comm.distribution = AttributeDistributionLevels.COMMUNITY
     attribute_dist_comm.uuid = uuid()
-    attribute_dist_comm.value = "attribute dist comm example value"
+    attribute_dist_comm.comment = "attribute dist comm example comment"
     event_dist_comm.attribute_count += 1
 
     db.add(attribute_dist_comm)
@@ -860,7 +860,7 @@ async def access_test_objects(db, site_admin_user):
     attribute_dist_comm_2 = generate_attribute(event_dist_comm_2.id)
     attribute_dist_comm_2.distribution = AttributeDistributionLevels.COMMUNITY
     attribute_dist_comm_2.uuid = uuid()
-    attribute_dist_comm_2.value = "attribute dist comm 2 example value"
+    attribute_dist_comm_2.comment = "attribute dist comm 2 example comment"
     event_dist_comm_2.attribute_count += 1
 
     db.add(attribute_dist_comm_2)
@@ -871,7 +871,7 @@ async def access_test_objects(db, site_admin_user):
     attribute_dist_sg.distribution = AttributeDistributionLevels.SHARING_GROUP
     attribute_dist_sg.sharing_group_id = default_sharing_group.id
     attribute_dist_sg.uuid = uuid()
-    attribute_dist_sg.value = "attribute dist sg example value"
+    attribute_dist_sg.comment = "attribute dist sg example comment"
     event_dist_sg.attribute_count += 1
 
     db.add(attribute_dist_sg)
@@ -882,7 +882,7 @@ async def access_test_objects(db, site_admin_user):
     attribute_dist_sg_2.distribution = AttributeDistributionLevels.SHARING_GROUP
     attribute_dist_sg_2.sharing_group_id = default_sharing_group.id
     attribute_dist_sg_2.uuid = uuid()
-    attribute_dist_sg_2.value = "attribute dist sg 2 example value"
+    attribute_dist_sg_2.comment = "attribute dist sg 2 example comment"
     event_dist_sg_2.attribute_count += 1
 
     db.add(attribute_dist_sg_2)
