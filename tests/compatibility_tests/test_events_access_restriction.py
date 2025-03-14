@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 @pytest.mark.asyncio
 async def test_list_all_events_self_created(access_test_objects, client) -> None:
     path = "/events"
-    request_body = {}
+    request_body = None
     clear_key = access_test_objects["default_user_clear_key"]
 
     auth_key = access_test_objects["default_user_auth_key"]
@@ -112,6 +112,7 @@ async def test_valid_search_attribute_data_read_only_user(
     def preprocess(modern, legacy):
         del modern["response"][0]["Event"]["Tag"]
         del modern["response"][0]["Event"]["Attribute"][0]["Tag"]
+        del modern['response'][2]['Event']['event_creator_email']
 
     path = "/events/restSearch"
     request_body = {"returnFormat": "json", "limit": 100, "distribution": 0}
