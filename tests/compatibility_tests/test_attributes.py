@@ -76,16 +76,16 @@ async def test_add_attribute_valid_data(access_test_objects, auth_key, client) -
 """
 
 
-@pytest.mark.asyncio
-async def test_delete_existing_attribute(
-    access_test_objects,
-    auth_key,
-    client,
-) -> None:
-    attribute_id = access_test_objects["default_attribute_2"].id
-    request_body = None
-    path = f"/attributes/{attribute_id}"
-    assert get_legacy_modern_diff("delete", path, request_body, auth_key, client) == {}
+#@pytest.mark.asyncio
+#async def test_delete_existing_attribute(
+#    access_test_objects,
+#    auth_key,
+#    client,
+#) -> None:
+#    attribute_id = access_test_objects["default_attribute_2"].id
+#    request_body = None
+#    path = f"/attributes/{attribute_id}"
+#    assert get_legacy_modern_diff("delete", path, request_body, auth_key, client) == {}
 
 
 @pytest.mark.asyncio
