@@ -23,12 +23,10 @@ async def test_view_event_galaxy_cluster_tag(
 ) -> None:
     assert get_legacy_modern_diff("get", f"/events/view/{event.id}", {}, auth_key, client) == {}
 
-
-"""
+'''
 @pytest.mark.asyncio
 async def test_add_event_valid_data(
     db,
-    instance_owner_org,
     auth_key,
     client,
 ) -> None:
@@ -41,16 +39,14 @@ async def test_add_event_valid_data(
         del legacy["Event"]["id"]
 
     path = "/events"
-    request_body = {"info": "test events", "distribution": 0, "sharing_group_id": 0,
-                    "org_id": instance_owner_org.id,
-                    "orgc_id": instance_owner_org.id}
+    request_body = {"info": "test events", "distribution": 0, "sharing_group_id": 0}
 
     assert get_legacy_modern_diff("post", path, request_body, auth_key, client, preprocessor) == {}
 
 
 
 @pytest.mark.asyncio
-async def test_add_event_data_empty_string(db, site_admin_user_token, instance_owner_org, auth_key, client) -> None:
+async def test_add_event_data_empty_string(db, auth_key, client) -> None:
     def preprocessor(modern, legacy):
         del modern["Event"]["timestamp"]
         del legacy["Event"]["timestamp"]
@@ -60,25 +56,20 @@ async def test_add_event_data_empty_string(db, site_admin_user_token, instance_o
         del legacy["Event"]["id"]
 
     path = "/events"
-    request_body = {"info": "test events", "date": "", "distribution": 0, "sharing_group_id": 0,
-                    "org_id": instance_owner_org.id,
-                    "orgc_id": instance_owner_org.id
-                    }
+    request_body = {"info": "test events", "date": "", "distribution": 0, "sharing_group_id": 0}
 
-    #response = client.post(path, json=request_body, headers={"Authorization": site_admin_user_token})
-    #assert response.status_code == 200
-    #event_id = response.json()["Event"]["id"]
-    #assert event_id is not None
-    #event2_id = int(event_id) + 1
+    response = await client.post(path, json = request_body, headers={"Authorization": auth_key})
+    assert response.status_code == 200
+    event_id = response.json()["Event"]["id"]
+    assert event_id is not None
+    event2_id = event_id + 1
     assert get_legacy_modern_diff("post", path, request_body, auth_key, client, preprocessor) == {}
 
-    #delete_response = client.delete(f"events/{event_id}", headers={"Authorization": site_admin_user_token})
-    #assert delete_response.status_code == 200
-    #delete_diff = client.delete(f"events/{event2_id}", headers={"Authorization": site_admin_user_token})
-    #assert delete_diff.status_code == 200
-"""
-
-
+    delete_response = await client.delete(f"events/{event_id}", headers={"Authorization": auth_key})
+    assert delete_response.status_code == 200
+    delete_diff = await client.delete(f"events/{event2_id}", headers={"Authorization": auth_key})
+    assert delete_diff.status_code == 200
+'''
 @pytest.mark.asyncio
 async def test_get_existing_event(db, auth_key, client, event) -> None:
     path = f"/events/{event.id}"

@@ -4,14 +4,13 @@ from mmisp.tests.compatibility_helpers import get_legacy_modern_diff
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-
 @pytest.mark.asyncio
 async def test_list_all_events_self_created(access_test_objects, client) -> None:
     path = "/events"
-    request_body = None
+    request_body = {}
     clear_key = access_test_objects["default_user_clear_key"]
-    auth_key = access_test_objects["default_user_auth_key"]
 
+    auth_key = access_test_objects["default_user_auth_key"]
     assert get_legacy_modern_diff("get", path, request_body, (clear_key, auth_key), client) == {}
 
 
@@ -25,7 +24,7 @@ async def test_list_all_events_read_only_user(access_test_objects, client) -> No
 
 
 @pytest.mark.asyncio
-async def test_list_all_events_admin(access_test_objects, auth_key, client) -> None:
+async def test_list_all_events_admin(auth_key, client) -> None:
     path = "/events"
     request_body = {}
     assert get_legacy_modern_diff("get", path, request_body, auth_key, client) == {}
@@ -83,8 +82,6 @@ async def test_get_event_fail_read_only_user_comm(access_test_objects, client) -
 async def test_get_event_success_read_only_user_sg(access_test_objects, client) -> None:
     path = "/events/" + str(access_test_objects["event_dist_sg"].id)
     request_body = {}
-    print("test_get_event_success_read_only_user_sg event_dist_sg: ", access_test_objects["event_dist_sg"].__dict__)
-    print("test_get_event_success_read_only_user_sg event_dist_sg id : ", access_test_objects["event_dist_sg"].id)
     clear_key = access_test_objects["default_sharing_group_user_clear_key"]
     auth_key = access_test_objects["default_sharing_group_user_auth_key"]
     assert get_legacy_modern_diff("get", path, request_body, (clear_key, auth_key), client) == {}
@@ -110,7 +107,8 @@ async def test_get_event_success_site_admin(access_test_objects, auth_key, clien
 
 
 @pytest.mark.asyncio
-async def test_valid_search_attribute_data_read_only_user(db: AsyncSession, access_test_objects, client) -> None:
+async def test_valid_search_attribute_data_read_only_user(
+    db:AsyncSession, access_test_objects, client) -> None:
     def preprocess(modern, legacy):
         del modern["response"][0]["Event"]["Tag"]
         del modern["response"][0]["Event"]["Attribute"][0]["Tag"]
@@ -123,8 +121,9 @@ async def test_valid_search_attribute_data_read_only_user(db: AsyncSession, acce
 
 
 @pytest.mark.asyncio
-async def test_valid_search_attribute_data(db: AsyncSession, access_test_objects, client) -> None:
-    def preprocessor(modern, legacy):
+async def test_valid_search_attribute_data(
+    db:AsyncSession, access_test_objects, client) -> None:
+    def preprocess(modern, legacy):
         del modern["response"][0]["Event"]["Tag"]
         del modern["response"][0]["Event"]["Attribute"][0]["Tag"]
 
@@ -136,8 +135,9 @@ async def test_valid_search_attribute_data(db: AsyncSession, access_test_objects
 # this was moved to compability tests/attributes_restSearch
 '''
 @pytest.mark.asyncio
-async def test_valid_search_attribute_data_site_admin(db: AsyncSession, auth_key, client) -> None:
-    def preprocessor(modern, legacy):
+async def test_valid_search_attribute_data_site_admin(
+    db: AsyncSession, auth_key, client) -> None:
+    def preprocess(modern, legacy):
         del modern["Event"]["Tag"]
         del modern["Event"]["Attribute"]["Tag"]
 
