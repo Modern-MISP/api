@@ -800,7 +800,7 @@ async def access_test_objects(db, site_admin_user):
     default_attribute_2 = generate_attribute(default_event_id)
     default_attribute_2.distribution = AttributeDistributionLevels.OWN_ORGANIZATION
     default_attribute_2.uuid = uuid()
-    default_attribute_2.comment = "default attribute 2 example comment"
+    default_attribute_2.comment = "def.atr.2"
     default_event.attribute_count += 1
 
     db.add(default_attribute_2)
