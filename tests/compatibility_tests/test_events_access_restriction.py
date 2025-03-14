@@ -24,7 +24,7 @@ async def test_list_all_events_read_only_user(access_test_objects, client) -> No
 
 
 @pytest.mark.asyncio
-async def test_list_all_events_admin(auth_key, client) -> None:
+async def test_list_all_events_admin(access_test_objects, auth_key, client) -> None:
     path = "/events"
     request_body = {}
     assert get_legacy_modern_diff("get", path, request_body, auth_key, client) == {}
