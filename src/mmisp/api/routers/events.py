@@ -671,6 +671,9 @@ async def _update_event(
     if not event:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
+    if not event.can_access(user):
+        raise HTTPException(status.HTTP_403_FORBIDDEN)
+
     if not event.can_edit(user):
         raise HTTPException(status.HTTP_403_FORBIDDEN)
 
