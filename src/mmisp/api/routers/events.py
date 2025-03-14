@@ -59,6 +59,7 @@ from mmisp.db.models.attribute import Attribute, AttributeTag
 from mmisp.db.models.event import Event, EventReport, EventTag
 from mmisp.db.models.galaxy_cluster import GalaxyCluster, GalaxyReference
 from mmisp.db.models.object import Object
+from mmisp.db.models.sharing_group import SharingGroup
 from mmisp.db.models.tag import Tag
 from mmisp.db.models.user import User
 from mmisp.lib.actions import action_publish_event
@@ -760,6 +761,9 @@ async def _get_events(db: Session, user: User | None) -> list[GetAllEventsRespon
             selectinload(Event.tags),
             selectinload(Event.eventtags).selectinload(EventTag.tag),
             selectinload(Event.creator),
+            selectinload(Event.sharing_group).options(
+                selectinload(SharingGroup.organisations)
+            ),
         )
     )
     events: Sequence[Event] = result.scalars().all()
@@ -798,6 +802,9 @@ async def _rest_search_events(db: Session, body: SearchEventsBody, user: User | 
                     selectinload(GalaxyCluster.galaxy_elements),
                 ),
                 selectinload(Attribute.attributetags).selectinload(AttributeTag.tag),
+            ),
+            selectinload(Event.sharing_group).options(
+                selectinload(SharingGroup.organisations)
             ),
         )
     )
