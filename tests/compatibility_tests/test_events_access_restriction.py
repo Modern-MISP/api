@@ -121,7 +121,7 @@ async def test_valid_search_attribute_data_read_only_user(db: AsyncSession, acce
 
 @pytest.mark.asyncio
 async def test_valid_search_attribute_data(db: AsyncSession, access_test_objects, client) -> None:
-    def preprocess(modern, legacy):
+    def preprocessor(modern, legacy):
         del modern["response"][0]["Event"]["Tag"]
         del modern["response"][0]["Event"]["Attribute"][0]["Tag"]
 
@@ -134,7 +134,7 @@ async def test_valid_search_attribute_data(db: AsyncSession, access_test_objects
 '''
 @pytest.mark.asyncio
 async def test_valid_search_attribute_data_site_admin(db: AsyncSession, auth_key, client) -> None:
-    def preprocess(modern, legacy):
+    def preprocessor(modern, legacy):
         del modern["Event"]["Tag"]
         del modern["Event"]["Attribute"]["Tag"]
 
