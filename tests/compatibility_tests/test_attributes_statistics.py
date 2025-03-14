@@ -89,9 +89,45 @@ async def test_attribute_statistics_type_relative(db: AsyncSession, attribute_fo
 
 
 @pytest.mark.asyncio
-async def test_attribute_statistics_type_relative_user(db: AsyncSession, attribute_for_statistics, auth_key, client, access_test_objects) -> None:
+async def test_attribute_statistics_type_relative_user(db: AsyncSession, attribute_for_statistics, client, access_test_objects) -> None:
     path = "/attributes/attributeStatistics/type/1"
     request_body = None
     clear_key = access_test_objects["default_user_clear_key"]
     auth_key = access_test_objects["default_user_auth_key"]
     assert get_legacy_modern_diff("get", path, request_body, (clear_key,auth_key), client) == {}
+
+@pytest.mark.asyncio
+async def test_attribute_type_absolute_statistics(access_test_objects, client) -> None:
+    request_body = None
+    path = "/attributes/attributeStatistics/type/0"
+    clear_key = access_test_objects["default_user_clear_key"]
+    auth_key = access_test_objects["default_user_auth_key"]
+    assert get_legacy_modern_diff("get", path, request_body, (clear_key, auth_key), client) == {}
+
+
+@pytest.mark.asyncio
+async def test_attribute_type_relative_statistics(access_test_objects, client) -> None:
+    request_body = None
+    path = "/attributes/attributeStatistics/type/1"
+    clear_key = access_test_objects["default_user_clear_key"]
+    auth_key = access_test_objects["default_user_auth_key"]
+    assert get_legacy_modern_diff("get", path, request_body, (clear_key, auth_key), client) == {}
+
+
+@pytest.mark.asyncio
+async def test_attribute_category_absolute_statistics(access_test_objects, client) -> None:
+    request_body = None
+    path = "/attributes/attributeStatistics/category/0"
+    clear_key = access_test_objects["default_user_clear_key"]
+    auth_key = access_test_objects["default_user_auth_key"]
+    assert get_legacy_modern_diff("get", path, request_body, (clear_key, auth_key), client) == {}
+
+
+@pytest.mark.asyncio
+async def test_attribute_category_relative_statistics(access_test_objects, client) -> None:
+    request_body = None
+    path = "/attributes/attributeStatistics/category/1"
+    clear_key = access_test_objects["default_user_clear_key"]
+    auth_key = access_test_objects["default_user_auth_key"]
+    assert get_legacy_modern_diff("get", path, request_body, (clear_key, auth_key), client) == {}
+

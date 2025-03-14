@@ -121,7 +121,7 @@ async def test_valid_search_attribute_data_read_only_user(access_test_objects, c
 async def test_valid_search_attribute_data(access_test_objects, client) -> None:
     def preprocess(modern, legacy):
         del modern["response"][0]["Event"]["Tag"]
-        del modern["response"][0]["Event"]["Attribute"]["Tag"]
+        del modern["response"][0]["Event"]["Attribute"][0]["Tag"]
 
     path = "/events/restSearch"
     request_body = {"returnFormat": "json", "limit": 100, "distribution": 0}
