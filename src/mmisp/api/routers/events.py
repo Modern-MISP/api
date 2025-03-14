@@ -761,7 +761,7 @@ async def _get_events(db: Session, user: User | None) -> list[GetAllEventsRespon
             selectinload(Event.tags),
             selectinload(Event.eventtags).selectinload(EventTag.tag),
             selectinload(Event.creator),
-            selectinload(Event.sharing_group).selectinload(SharingGroup.organisation),
+            selectinload(Event.sharing_group).selectinload(SharingGroup.organisations),
         )
     )
     events: Sequence[Event] = result.scalars().all()
