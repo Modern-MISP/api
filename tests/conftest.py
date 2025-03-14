@@ -702,6 +702,7 @@ async def access_test_objects(db, site_admin_user):
     default_event_published.user_id = default_user_id
     default_event_published.published = True
     default_event_published.distribution = EventDistributionLevels.OWN_ORGANIZATION
+    default_event_published.sharing_group_id = 0
 
     db.add(default_event_published)
     await db.commit()
@@ -713,6 +714,7 @@ async def access_test_objects(db, site_admin_user):
     event_no_access.user_id = default_sharing_group_user_id
     event_no_access.published = False
     event_no_access.distribution = EventDistributionLevels.OWN_ORGANIZATION
+    event_no_access.sharing_group_id = 0
 
     db.add(event_no_access)
     await db.commit()
@@ -725,6 +727,7 @@ async def access_test_objects(db, site_admin_user):
     event_read_only_user.user_id = site_admin_user.id
     event_read_only_user.published = True
     event_read_only_user.distribution = EventDistributionLevels.OWN_ORGANIZATION
+    event_read_only_user.sharing_group_id = 0
 
     db.add(event_read_only_user)
     await db.commit()
@@ -736,6 +739,7 @@ async def access_test_objects(db, site_admin_user):
     event_read_only_user_2.user_id = site_admin_user.id
     event_read_only_user_2.published = False
     event_read_only_user_2.distribution = EventDistributionLevels.OWN_ORGANIZATION
+    event_read_only_user_2.sharing_group_id = 0
 
     db.add(event_read_only_user_2)
     await db.commit()
@@ -747,6 +751,7 @@ async def access_test_objects(db, site_admin_user):
     event_dist_comm.user_id = site_admin_user.id
     event_dist_comm.published = True
     event_dist_comm.distribution = EventDistributionLevels.COMMUNITY
+    event_dist_comm.sharing_group_id = 0
 
     db.add(event_dist_comm)
     await db.commit()
@@ -758,6 +763,7 @@ async def access_test_objects(db, site_admin_user):
     event_dist_comm_2.user_id = site_admin_user.id
     event_dist_comm_2.published = False
     event_dist_comm_2.distribution = EventDistributionLevels.COMMUNITY
+    event_dist_comm_2.sharing_group_id = 0
 
     db.add(event_dist_comm_2)
     await db.commit()
