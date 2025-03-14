@@ -58,8 +58,17 @@ async def test_add_event_data_empty_string(db, auth_key, client) -> None:
     path = "/events"
     request_body = {"info": "test events", "date": "", "distribution": 0, "sharing_group_id": 0}
 
+    response = await client.post(path, json = request_body, headers={"Authorization": auth_key})
+    assert response.status_code == 200
+    event_id = response.json()["Event"]["id"]
+    assert event_id is not None
+    event2_id = event_id + 1
     assert get_legacy_modern_diff("post", path, request_body, auth_key, client, preprocessor) == {}
 
+    delete_response = await client.delete(f"events/{event_id}", headers={"Authorization": auth_key})
+    assert delete_response.status_code == 200
+    delete_diff = await client.delete(f"events/{event2_id}", headers={"Authorization": auth_key})
+    assert delete_diff.status_code == 200
 
 @pytest.mark.asyncio
 async def test_get_existing_event(db, auth_key, client, event) -> None:
