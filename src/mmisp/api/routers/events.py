@@ -7,13 +7,14 @@ from datetime import date, datetime
 from time import gmtime
 from typing import Annotated
 
+from fastapi.responses import RedirectResponse
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Path
 from fastapi.encoders import jsonable_encoder
+from fastapi import APIRouter, Depends, HTTPException, Path, status
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload, with_loader_criteria
 from sqlalchemy.sql import Select
-from starlette import status
 from starlette.requests import Request
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
@@ -361,8 +362,8 @@ async def start_freeTextImport(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     event_id: Annotated[int | uuid.UUID, Path(alias="eventID")],
     body: AddAttributeViaFreeTextImportEventBody,
-) -> FreeTextProcessID:
-    """Starts the freetext import process for an event by its ID or UUID, by submitting the freetext to the worker.
+) -> RedirectResponse:
+    """Starts the freetext import process by submitting the freetext to the worker.
 
     args:
         auth: the user's authentification status
@@ -397,7 +398,7 @@ async def start_freeTextImport(
     response_data = response.json()
     job_id = response_data["job_id"]
 
-    return FreeTextProcessID(id=job_id)
+    return RedirectResponse(f"/jobs/{job_id}", status_code=status.HTTP_303_SEE_OTHER)
 
 
 # --- deprecated ---

@@ -31,10 +31,11 @@ async def test_freetext_import(client, site_admin_user_token):
         "/events/freeTextImport/123",
         json={"value": "security leak at website.com", "returnMetaAttributes": True},
         headers={"Authorization": site_admin_user_token},
+        follow_redirects=False,
     )
 
-    assert response.status_code == 307
-    assert response.json() == {"id": "777"}
+    assert response.status_code == 303
+    assert response.headers['location'] == "/jobs/777"
 
 
 async def get_max_event_id(db):
