@@ -55,7 +55,11 @@ def init_app(*, init_db: bool = False) -> FastAPI:
         lifespan = None  # type: ignore
 
     app = FastAPI(
-        title="Modern MISP API", version=version("mmisp-api"), lifespan=lifespan, default_response_class=ORJSONResponse
+        title="Modern MISP API",
+        version=version("mmisp-api"),
+        lifespan=lifespan,
+        default_response_class=ORJSONResponse,
+        debug=config.DEBUG,
     )
 
     app.add_middleware(
