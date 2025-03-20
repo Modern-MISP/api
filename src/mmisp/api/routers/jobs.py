@@ -1,3 +1,4 @@
+import json
 from typing import Annotated
 
 import httpx
@@ -40,5 +41,9 @@ async def get_job(
         raise HTTPException(status_code=404, detail="Job does not exist")
     elif response.status_code != 200:
         raise HTTPException(status_code=500, detail="Unexpected error occurred")
+    try:
+        data = response.json()
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=500, detail="ERROR -- JSON from Worker API was not parsable")
 
-    return response.json()
+    return data
