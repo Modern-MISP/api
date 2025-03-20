@@ -13,9 +13,10 @@ router = APIRouter(tags=["jobs"])
 
 @router.get("/jobs/{id}")
 @alog
-async def get_job(
+async def get_job( # noqa
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))], id: str
-) -> dict:
+    #) -> dict:
+):
     """Gets a job.
 
     args:

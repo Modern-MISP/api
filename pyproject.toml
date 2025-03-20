@@ -9,7 +9,7 @@ requires-python = ">=3.11.0"
 
 dependencies = [
   "mmisp-lib==0.9.0",
-  "fastapi==0.104.1",
+  "fastapi==0.115.11",
   "SQLAlchemy[asyncio]>=1.4.46",
   "pydantic==1.10.13",
   "uvicorn[standard]==0.24.0.post1",
