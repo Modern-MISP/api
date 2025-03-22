@@ -11,9 +11,8 @@ from fastapi.responses import ORJSONResponse
 
 import mmisp.db.all_models  # noqa: F401
 from mmisp.api.config import config
-from mmisp.api.dry_run_middleware import DryRunMiddleware
 from mmisp.api.exception_handler import register_exception_handler
-from mmisp.api.logging_middleware import LogMiddleware
+from mmisp.api.middleware import DryRunMiddleware, LogMiddleware
 from mmisp.db.config import config as db_config
 from mmisp.db.database import sessionmanager
 
