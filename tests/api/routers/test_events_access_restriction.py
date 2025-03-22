@@ -1,11 +1,39 @@
 import pytest
-import respx
-import sqlalchemy as sa
-from httpx import Response
-from icecream import ic
-from mmisp.lib.permissions import Permission
-from mmisp.api.config import config
-from mmisp.db.models.log import Log
+
+access_test_objects_user_event_access_expect_granted = [
+    ("default_read_only_user", "event_read_only_user"),
+    ("default_read_only_user", "event_dist_comm"),
+    ("default_sharing_group_user", "event_dist_sg"),
+    ("site_admin_user", "default_event"),
+]
+
+access_test_objects_user_event_access_expect_denied = [
+    ("default_read_only_user", "default_event"),
+    ("default_read_only_user", "event_dist_comm_2"),
+    ("default_sharing_group_user", "event_dist_sg_2"),
+]
+
+
+@pytest.mark.parametrize("user_key, event_key", access_test_objects_user_event_access_expect_denied)
+@pytest.mark.asyncio
+async def test_get_event_fail_read_only_user(access_test_objects, user_key, event_key, client) -> None:
+    headers = {"authorization": access_test_objects[f"{user_key}_token"]}
+    event_id = access_test_objects[event_key].id
+    response = client.get(f"/events/{event_id}", headers=headers)
+
+    assert response.status_code == 404
+
+
+@pytest.mark.parametrize("user_key, event_key", access_test_objects_user_event_access_expect_granted)
+@pytest.mark.asyncio
+async def test_get_event_success(access_test_objects, user_key, event_key, client) -> None:
+    headers = {"authorization": access_test_objects[f"{user_key}_token"]}
+    event_id = access_test_objects[event_key].id
+    response = client.get(f"/events/{event_id}", headers=headers)
+
+    assert response.status_code == 200
+    response_json = response.json()
+    assert response_json["Event"]["id"] == event_id
 
 
 @pytest.mark.asyncio
@@ -39,75 +67,12 @@ async def test_list_all_events_admin(access_test_objects, client) -> None:
 
 
 @pytest.mark.asyncio
-async def test_get_event_success_read_only_user(access_test_objects, client) -> None:
-    headers = {"authorization": access_test_objects["default_read_only_user_token"]}
-    event_id = access_test_objects["event_read_only_user"].id
-    response = client.get(f"/events/{event_id}", headers=headers)
-
-    assert response.status_code == 200
-
-
-@pytest.mark.asyncio
-async def test_get_event_fail_read_only_user(access_test_objects, client) -> None:
-    headers = {"authorization": access_test_objects["default_read_only_user_token"]}
-    event_id = access_test_objects["default_event"].id
-    response = client.get(f"/events/{event_id}", headers=headers)
-
-    assert response.status_code == 404  # 403, falls sql filter für legacy misp entfernt werden muss
-    # response_json = response.json()
-    # assert response_json["detail"] == "Forbidden"
-
-
-@pytest.mark.asyncio
 async def test_get_event_fail_read_only_user_not_same_corg(access_test_objects, client) -> None:
     headers = {"authorization": access_test_objects["default_read_only_user_token"]}
     event_id = access_test_objects["event_read_only_user_2"].id
     response = client.get(f"/events/{event_id}", headers=headers)
 
     assert response.status_code == 200
-
-
-@pytest.mark.asyncio
-async def test_get_event_success_read_only_user_comm(access_test_objects, client) -> None:
-    headers = {"authorization": access_test_objects["default_read_only_user_token"]}
-    event_id = access_test_objects["event_dist_comm"].id
-    response = client.get(f"/events/{event_id}", headers=headers)
-    assert response.status_code == 200
-
-
-@pytest.mark.asyncio
-async def test_get_event_fail_read_only_user_comm(access_test_objects, client) -> None:
-    headers = {"authorization": access_test_objects["default_read_only_user_token"]}
-    event_id = access_test_objects["event_dist_comm_2"].id
-    response = client.get(f"/events/{event_id}", headers=headers)
-    assert response.status_code == 404
-
-
-@pytest.mark.asyncio
-async def test_get_event_success_read_only_user_sg(access_test_objects, client) -> None:
-    headers = {"authorization": access_test_objects["default_sharing_group_user_token"]}
-    event_id = access_test_objects["event_dist_sg"].id
-    response = client.get(f"/events/{event_id}", headers=headers)
-    assert response.status_code == 200
-
-
-@pytest.mark.asyncio
-async def test_get_event_fail_read_only_user_sg(access_test_objects, client) -> None:
-    headers = {"authorization": access_test_objects["default_sharing_group_user_token"]}
-    event_id = access_test_objects["event_dist_sg_2"].id
-    response = client.get(f"/events/{event_id}", headers=headers)
-    assert response.status_code == 404
-
-
-@pytest.mark.asyncio
-async def test_get_event_success_site_admin(access_test_objects, client) -> None:
-    headers = {"authorization": access_test_objects["site_admin_user_token"]}
-    event_id = access_test_objects["default_event"].id
-    response = client.get(f"/events/{event_id}", headers=headers)
-
-    assert response.status_code == 200
-    response_json = response.json()
-    assert response_json["Event"]["id"] == event_id
 
 
 @pytest.mark.asyncio
