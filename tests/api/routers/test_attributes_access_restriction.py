@@ -1,4 +1,5 @@
 import pytest
+import sqlalchemy as sa
 
 
 @pytest.mark.asyncio
@@ -136,7 +137,7 @@ async def test_delete_existing_attribute_fail_read_only_user(access_test_objects
 
 
 @pytest.mark.asyncio
-async def test_add_attribute(access_test_objects, client) -> None:
+async def test_add_attribute(db, access_test_objects, client) -> None:
     request_body = {
         "value": "1.2.3.4",
         "type": "ip-src",
@@ -151,6 +152,11 @@ async def test_add_attribute(access_test_objects, client) -> None:
     response = client.post(f"/attributes/{event_id}", json=request_body, headers=headers)
 
     assert response.status_code == 200
+
+    stmt = sa.sql.text("DELETE FROM attributes WHERE id=:id")
+    #    stmt.bindparams(id=response_json["Attribute"]["id"])
+    await db.execute(stmt, {"id": response.json()["Attribute"]["id"]})
+    await db.commit()
 
 
 @pytest.mark.asyncio

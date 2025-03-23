@@ -40,9 +40,7 @@ async def test_add_attribute_valid_data(site_admin_user_token, event, db, client
     assert uuid.UUID(response_json["Attribute"]["uuid"])
 
     # need to remove attribute, so teardown works
-    print(response_json["Attribute"]["id"])
     stmt = sa.sql.text("DELETE FROM attributes WHERE id=:id")
-    #    stmt.bindparams(id=response_json["Attribute"]["id"])
     await db.execute(stmt, {"id": response_json["Attribute"]["id"]})
     await db.commit()
 
