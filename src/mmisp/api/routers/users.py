@@ -462,12 +462,7 @@ async def _get_all_users(
                         user[0].notification_daily or user[0].notification_weekly or user[0].notification_monthly
                     ),
                 ),
-                Role=RoleUsersResponse(
-                    id=user[0].role_id,
-                    name=roles_by_id[user[0].role_id].name,
-                    perm_auth=roles_by_id[user[0].role_id].perm_auth,
-                    perm_site_admin=roles_by_id[user[0].role_id].perm_site_admin,
-                ),
+                Role=RoleUsersResponse(**roles_by_id[user[0].role_id]),
                 Organisation=OrganisationUsersResponse(
                     id=user[0].org_id,
                     name=organisations_by_id[user[0].org_id].name,
