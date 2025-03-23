@@ -1,3 +1,4 @@
+import uuid
 from collections.abc import Sequence
 from time import time
 from typing import Annotated
@@ -5,7 +6,6 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Path, status
 from sqlalchemy import and_, select
 from sqlalchemy.sql.expression import Select
-import uuid
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
 from mmisp.api_schemas.responses.standard_status_response import StandardStatusResponse

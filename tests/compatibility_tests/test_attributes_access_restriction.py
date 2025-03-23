@@ -1,7 +1,5 @@
 import pytest
 
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from mmisp.tests.compatibility_helpers import get_legacy_modern_diff
 
 
@@ -141,6 +139,7 @@ async def test_get_all_attributes_read_only_user(
     auth_key = access_test_objects["default_read_only_user_auth_key"]
     assert get_legacy_modern_diff("get", path, request_body, (clear_key, auth_key), client) == {}
 
+
 """
 @pytest.mark.asyncio
 async def test_delete_existing_attribute(access_test_objects, client) -> None:
@@ -157,6 +156,7 @@ async def test_delete_existing_attribute(access_test_objects, client) -> None:
     auth_key = access_test_objects["default_user_auth_key"]
     assert get_legacy_modern_diff("delete", path, request_body, (clear_key, auth_key), client, preprocessor) == {}
 """
+
 
 @pytest.mark.asyncio
 async def test_delete_existing_attribute_fail_read_only_user(access_test_objects, client) -> None:
@@ -283,6 +283,7 @@ async def test_remove_existing_tag_from_attribute_fail_read_only_user(
     auth_key = access_test_objects["default_read_only_user_auth_key"]
     assert get_legacy_modern_diff("post", path, request_body, (clear_key, auth_key), client) == {}
 
+
 """
 @pytest.mark.asyncio
 async def test_restore_attribute(
@@ -296,6 +297,7 @@ async def test_restore_attribute(
     auth_key = access_test_objects["default_user_auth_key"]
     assert get_legacy_modern_diff("post", path, request_body, (clear_key, auth_key), client) == {}
 """
+
 
 @pytest.mark.asyncio
 async def test_remove_tag_from_attribute(
@@ -312,6 +314,7 @@ async def test_remove_tag_from_attribute(
     clear_key = access_test_objects["default_user_clear_key"]
     auth_key = access_test_objects["default_user_auth_key"]
     assert get_legacy_modern_diff("post", path, request_body, (clear_key, auth_key), client) == {}
+
 
 """
 @pytest.mark.asyncio
@@ -336,6 +339,7 @@ async def test_edit_existing_attribute(
     assert get_legacy_modern_diff("put", path, request_body, (clear_key, auth_key), client) == {}
 """
 
+
 @pytest.mark.asyncio
 async def test_get_all_attributes_site_admin(
     access_test_objects,
@@ -345,6 +349,7 @@ async def test_get_all_attributes_site_admin(
     request_body = None
     path = "/attributes"
     assert get_legacy_modern_diff("get", path, request_body, auth_key, client) == {}
+
 
 """
 @pytest.mark.asyncio
@@ -362,6 +367,7 @@ async def test_delete_selected_attributes_from_existing_event(access_test_object
     assert get_legacy_modern_diff("post", path, request_body, (clear_key, auth_key), client) == {}
 """
 
+
 @pytest.mark.asyncio
 async def test_delete_selected_attributes_from_existing_event_fail(access_test_objects, client) -> None:
     request_body = {"id": "1 2", "allow_hard_delete": False}
@@ -375,8 +381,10 @@ async def test_delete_selected_attributes_from_existing_event_fail(access_test_o
     clear_key = access_test_objects["default_user_clear_key"]
     auth_key = access_test_objects["default_user_auth_key"]
     assert get_legacy_modern_diff("post", path, request_body, (clear_key, auth_key), client) == {}
+
+
 # Following tests were moved to compability_tests/test_attribute_statistics
-'''
+"""
 @pytest.mark.asyncio
 async def test_attribute_type_absolute_statistics(access_test_objects, client) -> None:
     request_body = None
@@ -411,7 +419,8 @@ async def test_attribute_category_relative_statistics(access_test_objects, clien
     clear_key = access_test_objects["default_user_clear_key"]
     auth_key = access_test_objects["default_user_auth_key"]
     assert get_legacy_modern_diff("get", path, request_body, (clear_key, auth_key), client) == {}
-'''
+"""
+
 
 @pytest.mark.asyncio
 async def test_valid_search_attribute_data(access_test_objects, client) -> None:

@@ -1,6 +1,7 @@
+import uuid
+
 import pytest
 import pytest_asyncio
-import uuid
 import sqlalchemy as sa
 from icecream import ic
 from sqlalchemy.ext.asyncio import AsyncSession

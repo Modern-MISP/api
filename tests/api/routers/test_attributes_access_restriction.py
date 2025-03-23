@@ -1,12 +1,4 @@
 import pytest
-import pytest_asyncio
-import sqlalchemy as sa
-from icecream import ic
-from sqlalchemy.ext.asyncio import AsyncSession
-from mmisp.lib.permissions import Permission
-
-from mmisp.db.models.attribute import AttributeTag
-from mmisp.tests.generators.model_generators.tag_generator import generate_tag
 
 
 @pytest.mark.asyncio
@@ -157,6 +149,8 @@ async def test_add_attribute(access_test_objects, client) -> None:
     event_id = access_test_objects["default_event"].id
     headers = {"authorization": access_test_objects["default_user_token"]}
     response = client.post(f"/attributes/{event_id}", json=request_body, headers=headers)
+
+    assert response.status_code == 200
 
 
 @pytest.mark.asyncio

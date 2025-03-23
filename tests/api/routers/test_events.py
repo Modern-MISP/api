@@ -1,9 +1,10 @@
+import uuid
+
 import pytest
 import respx
 import sqlalchemy as sa
 from httpx import Response
 from icecream import ic
-import uuid
 
 from mmisp.api.config import config
 from mmisp.db.models.log import Log

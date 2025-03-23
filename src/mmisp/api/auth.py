@@ -142,12 +142,12 @@ def authorize(
         """
         Generates an auth object, which contains the result of the authentication proccess.
 
-        args: 
+        args:
             db: the current db
-            authorization: The auth key from the header 
+            authorization: The auth key from the header
 
         returns:
-            An auth object 
+            An auth object
         """
 
         if not is_readonly_route and config.READONLY_MODE:

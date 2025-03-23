@@ -6,7 +6,6 @@ from icecream import ic
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from mmisp.api.auth import encode_token
 from mmisp.db.models.user import User
 from mmisp.db.models.user_setting import UserSetting
 

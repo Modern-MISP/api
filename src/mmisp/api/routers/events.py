@@ -1,17 +1,16 @@
 import logging
+import uuid
 from calendar import timegm
 from collections import defaultdict
 from collections.abc import Sequence
-from datetime import date
+from datetime import date, datetime
 from time import gmtime
 from typing import Annotated
-import uuid
-from datetime import datetime
+
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Path
-from sqlalchemy import select
 from fastapi.encoders import jsonable_encoder
-from sqlalchemy.future import select
+from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.sql import Select
 from starlette import status
@@ -59,14 +58,13 @@ from mmisp.db.models.attribute import Attribute, AttributeTag
 from mmisp.db.models.event import Event, EventReport, EventTag
 from mmisp.db.models.galaxy_cluster import GalaxyCluster, GalaxyReference
 from mmisp.db.models.object import Object
-from mmisp.db.models.sharing_group import SharingGroup, SharingGroupOrg
+from mmisp.db.models.sharing_group import SharingGroup
 from mmisp.db.models.tag import Tag
 from mmisp.db.models.user import User
 from mmisp.lib.actions import action_publish_event
 from mmisp.lib.galaxies import parse_galaxy_authors
 from mmisp.lib.logger import alog, log
 from mmisp.util.models import update_record
-from mmisp.util.partial import partial
 
 from ..workflow import execute_blocking_workflow, execute_workflow
 
@@ -763,8 +761,8 @@ async def _get_events(db: Session, user: User | None) -> list[GetAllEventsRespon
     )
     events: Sequence[Event] = result.scalars().all()
 
-    #if not events:
-       # raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No events found.")
+    # if not events:
+    # raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No events found.")
 
     event_responses = [_prepare_all_events_response(event, "get_all") for event in events]
 
@@ -798,7 +796,7 @@ async def _rest_search_events(db: Session, body: SearchEventsBody, user: User | 
                 ),
                 selectinload(Attribute.attributetags).selectinload(AttributeTag.tag),
             ),
-            #selectinload(Event.sharing_group).options(selectinload(SharingGroup.organisations)),
+            # selectinload(Event.sharing_group).options(selectinload(SharingGroup.organisations)),
         )
     )
     if body.limit is not None:

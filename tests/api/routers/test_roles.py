@@ -1,12 +1,9 @@
 import pytest
-
-from sqlalchemy.future import select
 from sqlalchemy import delete
+from sqlalchemy.future import select
 
 from mmisp.db.models.role import Role
 from mmisp.lib.permissions import Permission
-
-from mmisp.commandline_tool import main
 
 
 @pytest.mark.asyncio
@@ -198,7 +195,6 @@ async def test_delete_role_success(client, site_admin_user_token, random_test_ro
 
 @pytest.mark.asyncio
 async def test_delete_role_not_found(client, site_admin_user_token):
-    role_id = 999999
     headers = {"authorization": site_admin_user_token}
 
     response = client.delete(f"/admin/roles/delete/{999999}", headers=headers)
@@ -323,8 +319,6 @@ async def test_update_role_success(client, site_admin_user_token, random_test_ro
 @pytest.mark.asyncio
 async def test_update_role_not_found(client, site_admin_user_token):
     headers = {"authorization": site_admin_user_token}
-
-    role_id = 999999
 
     update_data = {"name": "updated_role_name"}
 
@@ -474,7 +468,6 @@ async def test_filter_roles_no_permissions(client, site_admin_user_token, role_r
 
 @pytest.mark.asyncio
 async def test_get_users_by_role_success(client, site_admin_user_token, random_test_user, random_test_role):
-    user_id = random_test_user.id
     headers = {"authorization": site_admin_user_token}
 
     response = client.post(f"/admin/roles/users/{42}", headers=headers)
@@ -544,30 +537,30 @@ async def test_set_default_role_already_set(client, site_admin_user_token, role_
     assert response.status_code == 400
 
 
-"""  
+"""
 endpoint edit_user_role is now edit_user_role_depr -> No tests needed anymore!
 
 @pytest.mark.asyncio
 async def test_edit_user_role_success(client, site_admin_user_token, role_read_only, db, random_test_user):
     user_id = random_test_user.id
     headers = {"authorization": site_admin_user_token}
-    body = {"role_id": 6} 
+    body = {"role_id": 6}
 
     response = client.put(f"/admin/users/edit/{user_id}", json=body, headers=headers)
 
     assert response.status_code == 200
     response_json = response.json()
-    
+
     assert response_json["message"] == "User's role has been updated to Role 6"
     assert response_json["id"] == user_id
     assert response_json["Role"] == "test_read_only"
-    
+
 
 @pytest.mark.asyncio
 async def test_edit_user_role_missing_role_id(client, site_admin_user_token, random_test_user):
     user_id = random_test_user.id
     headers = {"authorization": site_admin_user_token}
-    body = {}  
+    body = {}
 
     response = client.put(f"/admin/users/edit/{user_id}", json=body, headers=headers)
 

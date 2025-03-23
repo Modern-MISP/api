@@ -1,35 +1,31 @@
+from datetime import datetime, timezone
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status, Path
+from fastapi import APIRouter, Depends, HTTPException, Path, status
 from sqlalchemy.future import select
-
-from datetime import datetime, timezone
 
 from mmisp.api.auth import Auth, AuthStrategy, authorize
 from mmisp.api_schemas.roles import (
-    GetRolesResponse,
-    GetRoleResponse,
-    RoleAttributeResponse,
     AddRoleBody,
     AddRoleResponse,
+    DefaultRoleResponse,
     DeleteRoleResponse,
     EditRoleBody,
     EditRoleResponse,
-    ReinstateRoleResponse,
-    FilterRoleBody,
-    FilterRoleResponse,
     EditUserRoleBody,
     EditUserRoleResponse,
+    FilterRoleBody,
+    FilterRoleResponse,
+    GetRoleResponse,
+    GetRolesResponse,
     GetUserRoleResponse,
-    DefaultRoleResponse,
+    ReinstateRoleResponse,
+    RoleAttributeResponse,
 )
-
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.role import Role
-from mmisp.lib.logger import alog
-from fastapi import Path
-from mmisp.lib.permissions import Permission
 from mmisp.db.models.user import User
+from mmisp.lib.logger import alog
 from mmisp.lib.permissions import Permission
 from mmisp.lib.standard_roles import get_standard_roles
 
@@ -596,12 +592,12 @@ async def _set_default_role(auth: Auth, db: Session, role_id: int) -> DefaultRol
     if role is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Role with ID {role_id} not found.")
 
-    if role.default_role == True:
+    if role.default_role:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail=f"Role with ID {role_id} is already the default role."
         )
 
-    role_result = await db.execute(select(Role).where(Role.default_role == True))
+    role_result = await db.execute(select(Role).where(Role.default_role))
     current_default_role = role_result.scalar_one_or_none()
 
     # there should always be a default role, since the default role can't be deleted, but just in case...

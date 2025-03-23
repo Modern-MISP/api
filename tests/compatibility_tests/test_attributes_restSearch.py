@@ -63,8 +63,7 @@ async def test_valid_search_galaxy_tag_attribute_data(
 
 
 @pytest.mark.asyncio
-async def test_valid_search_attribute_data_site_admin(
-    db: AsyncSession, auth_key, client) -> None:
+async def test_valid_search_attribute_data_site_admin(db: AsyncSession, auth_key, client) -> None:
     def preprocessor(modern, legacy):
         del modern["Event"]["Tag"]
         del modern["Event"]["Attribute"]["Tag"]
@@ -72,4 +71,3 @@ async def test_valid_search_attribute_data_site_admin(
     path = "/events/restSearch"
     request_body = {"returnFormat": "json", "limit": 100, "distribution": 0}
     assert get_legacy_modern_diff("post", path, request_body, auth_key, client) == {}
-
