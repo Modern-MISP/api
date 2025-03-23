@@ -462,7 +462,7 @@ async def _get_all_users(
                         user[0].notification_daily or user[0].notification_weekly or user[0].notification_monthly
                     ),
                 ),
-                Role=RoleUsersResponse(**roles_by_id[user[0].role_id]),
+                Role=RoleUsersResponse(**roles_by_id[user[0].role_id].asdict()),
                 Organisation=OrganisationUsersResponse(
                     id=user[0].org_id,
                     name=organisations_by_id[user[0].org_id].name,

@@ -531,7 +531,7 @@ async def access_test_objects(db, site_admin_user):
 
         default_sharing_group = await add_to_db(dsg)
 
-        default_role_modify = standard_roles.user_role()
+        default_role_modify = standard_roles.publisher_role()
         default_role_modify.id = None
         default_role_modify = await add_to_db(default_role_modify)
 
