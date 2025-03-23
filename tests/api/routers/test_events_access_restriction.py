@@ -1,17 +1,9 @@
 import pytest
 
-access_test_objects_user_event_access_expect_granted = [
-    ("default_read_only_user", "event_read_only_user"),
-    ("default_read_only_user", "event_dist_comm"),
-    ("default_sharing_group_user", "event_dist_sg"),
-    ("site_admin_user", "default_event"),
-]
-
-access_test_objects_user_event_access_expect_denied = [
-    ("default_read_only_user", "default_event"),
-    ("default_read_only_user", "event_dist_comm_2"),
-    ("default_sharing_group_user", "event_dist_sg_2"),
-]
+from mmisp.tests.maps import (
+    access_test_objects_user_event_access_expect_denied,
+    access_test_objects_user_event_access_expect_granted,
+)
 
 
 @pytest.mark.parametrize("user_key, event_key", access_test_objects_user_event_access_expect_denied)
