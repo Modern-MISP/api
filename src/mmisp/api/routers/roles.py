@@ -314,7 +314,7 @@ async def _get_roles(db: Session) -> list[GetRolesResponse]:
     role_list: list[GetRolesResponse] = []
 
     for role in roles:
-        role_list.append(GetRolesResponse(Role=RoleAttributeResponse(**role.__dict__)))
+        role_list.append(GetRolesResponse(Role=RoleAttributeResponse(**role.asdict())))
     return role_list
 
 
@@ -325,7 +325,7 @@ async def _get_role(db: Session, role_id: int) -> GetRoleResponse:
     if role is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Role with ID {role_id} not found.")
 
-    return GetRoleResponse(Role=RoleAttributeResponse(**role.__dict__))
+    return GetRoleResponse(Role=RoleAttributeResponse(**role.asdict()))
 
 
 async def _add_role(db: Session, body: AddRoleBody) -> AddRoleResponse:
@@ -377,7 +377,7 @@ async def _add_role(db: Session, body: AddRoleBody) -> AddRoleResponse:
     await db.refresh(role)
 
     return AddRoleResponse(
-        Role=RoleAttributeResponse(**role.__dict__),
+        Role=RoleAttributeResponse(**role.asdict()),
         created=True,
         message=f"Role '{role.name}' successfully created.",
     )
@@ -412,7 +412,7 @@ async def _delete_role(db: Session, role_id: int) -> DeleteRoleResponse:
     await db.commit()
 
     return DeleteRoleResponse(
-        Role=RoleAttributeResponse(**role.__dict__),
+        Role=RoleAttributeResponse(**role.asdict()),
         saved=True,
         success=True,
         name="Role deleted",
@@ -505,7 +505,7 @@ async def _update_role(db: Session, role_id: int, body: EditRoleBody) -> EditRol
     await db.commit()
     await db.refresh(role)
 
-    return EditRoleResponse(Role=RoleAttributeResponse(**role.__dict__))
+    return EditRoleResponse(Role=RoleAttributeResponse(**role.asdict()))
 
 
 async def _reinstate_role(auth: Auth, db: Session, role_id: int) -> ReinstateRoleResponse:
@@ -535,7 +535,7 @@ async def _reinstate_role(auth: Auth, db: Session, role_id: int) -> ReinstateRol
     await db.commit()
 
     return ReinstateRoleResponse(
-        Role=RoleAttributeResponse(**role.__dict__),
+        Role=RoleAttributeResponse(**role.asdict()),
         success=True,
         message=f"Role with ID {role_id} has been reinstated.",
         url=f"/roles/reinstate/{role_id}",
@@ -562,7 +562,7 @@ async def _filter_roles(auth: Auth, db: Session, body: FilterRoleBody) -> list[F
         role_permissions = role.get_permissions()
 
         if all(permission in role_permissions for permission in requested_permissions):
-            filtered_roles.append(FilterRoleResponse(Role=RoleAttributeResponse(**role.__dict__)))
+            filtered_roles.append(FilterRoleResponse(Role=RoleAttributeResponse(**role.asdict())))
 
     return filtered_roles
 
@@ -609,7 +609,7 @@ async def _set_default_role(auth: Auth, db: Session, role_id: int) -> DefaultRol
     await db.commit()
 
     return DefaultRoleResponse(
-        Role=RoleAttributeResponse(**role.__dict__),
+        Role=RoleAttributeResponse(**role.asdict()),
         saved=True,
         success=True,
         name="Default Role Changed",

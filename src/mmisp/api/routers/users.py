@@ -598,8 +598,8 @@ async def _get_user(auth: Auth, db: Session, userID: str) -> GetUsersElement:
             contact=user.contactalert,
             notification=(user.notification_daily or user.notification_weekly or user.notification_monthly),
         ),
-        Role=RoleUsersResponse(**role.__dict__),
-        Organisation=OrganisationUsersResponse(**organisation.__dict__),
+        Role=RoleUsersResponse(**role.asdict()),
+        Organisation=OrganisationUsersResponse(**organisation.asdict()),
         UserSetting=user_settings_dict,
     )
 
