@@ -13,6 +13,7 @@ import mmisp.lib.standard_roles as standard_roles
 from mmisp.api.auth import encode_token
 from mmisp.api.main import init_app
 from mmisp.db.models.admin_setting import AdminSetting
+from mmisp.db.models.auth_key import AuthKey
 from mmisp.db.models.event import EventTag
 from mmisp.db.models.galaxy_cluster import GalaxyCluster
 from mmisp.db.models.role import Role
@@ -22,7 +23,6 @@ from mmisp.db.models.workflow import Workflow
 from mmisp.lib.distribution import AttributeDistributionLevels, EventDistributionLevels
 from mmisp.tests.fixtures import *  # noqa
 from mmisp.tests.generators.model_generators.attribute_generator import generate_attribute
-from mmisp.tests.generators.model_generators.auth_key_generator import generate_auth_key
 from mmisp.tests.generators.model_generators.event_generator import generate_event
 from mmisp.tests.generators.model_generators.organisation_generator import generate_organisation
 from mmisp.tests.generators.model_generators.sharing_group_generator import generate_sharing_group
@@ -499,6 +499,15 @@ async def random_test_user(db, instance_owner_org):
 
 @pytest_asyncio.fixture
 async def access_test_objects(db, site_admin_user):
+    def generate_auth_key(clear_key, user_id) -> AuthKey:
+        return AuthKey(
+            authkey=hash_secret(clear_key),
+            authkey_start=clear_key[:4],
+            authkey_end=clear_key[-4:],
+            comment="test comment",
+            user_id=user_id,
+        )
+
     async with AsyncExitStack() as stack:
 
         async def add_to_db(elem):
@@ -522,40 +531,7 @@ async def access_test_objects(db, site_admin_user):
 
         default_sharing_group = await add_to_db(dsg)
 
-        default_role_modify = Role(
-            id=44,
-            name="test_read_modify_only",
-            perm_add=False,
-            perm_modify=True,
-            perm_modify_org=True,
-            perm_publish=True,
-            perm_delegate=False,
-            perm_sync=False,
-            perm_admin=False,
-            perm_audit=False,
-            perm_auth=True,
-            perm_site_admin=False,
-            perm_regexp_access=False,
-            perm_tagger=True,
-            perm_template=False,
-            perm_sharing_group=False,
-            perm_tag_editor=True,
-            perm_sighting=False,
-            perm_object_template=False,
-            default_role=False,
-            memory_limit="",
-            max_execution_time="",
-            restricted_to_site_admin=False,
-            perm_publish_zmq=False,
-            perm_publish_kafka=False,
-            perm_decaying=False,
-            enforce_rate_limit=False,
-            rate_limit_count=0,
-            perm_galaxy_editor=False,
-            perm_warninglist=False,
-            perm_view_feed_correlations=False,
-            created=datetime.now(timezone.utc),
-        )
+        default_role_modify = standard_roles.user_role()
         default_role_modify.id = None
         default_role_modify = await add_to_db(default_role_modify)
 
@@ -585,12 +561,7 @@ async def access_test_objects(db, site_admin_user):
 
         default_user_clear_key = "defaultuser".ljust(40, "0")
 
-        default_user_auth_key = generate_auth_key()
-        default_user_auth_key.user_id = default_user_id
-        default_user_auth_key.authkey = hash_secret(default_user_clear_key)
-        default_user_auth_key.authkey_start = default_user_clear_key[:4]
-        default_user_auth_key.authkey_end = default_user_clear_key[-4:]
-        default_user_auth_key = await add_to_db(default_user_auth_key)
+        default_user_auth_key = await add_to_db(generate_auth_key(default_user_clear_key, default_user_id))
 
         default_read_only_user = await add_to_db(
             User(
@@ -613,14 +584,9 @@ async def access_test_objects(db, site_admin_user):
         default_read_only_user_token = encode_token(default_read_only_user.id)
 
         default_read_only_user_clear_key = "defaultreadonlyuser".ljust(40, "0")
-
-        default_read_only_user_auth_key = generate_auth_key()
-        default_read_only_user_auth_key.user_id = default_read_only_user.id
-        default_read_only_user_auth_key.authkey = hash_secret(default_read_only_user_clear_key)
-        default_read_only_user_auth_key.authkey_start = default_read_only_user_clear_key[:4]
-        default_read_only_user_auth_key.authkey_end = default_read_only_user_clear_key[-4:]
-
-        default_read_only_user_auth_key = await add_to_db(default_read_only_user_auth_key)
+        default_read_only_user_auth_key = await add_to_db(
+            generate_auth_key(default_read_only_user_clear_key, default_read_only_user.id)
+        )
 
         default_sharing_group_user = await add_to_db(
             User(
@@ -646,13 +612,9 @@ async def access_test_objects(db, site_admin_user):
 
         default_sharing_group_user_clear_key = "defaultsharinggroupuser".ljust(40, "0")
 
-        default_sharing_group_user_auth_key = generate_auth_key()
-        default_sharing_group_user_auth_key.user_id = default_sharing_group_user_id
-        default_sharing_group_user_auth_key.authkey = hash_secret(default_sharing_group_user_clear_key)
-        default_sharing_group_user_auth_key.authkey_start = default_sharing_group_user_clear_key[:4]
-        default_sharing_group_user_auth_key.authkey_end = default_sharing_group_user_clear_key[-4:]
-
-        default_sharing_group_user_auth_key = await add_to_db(default_sharing_group_user_auth_key)
+        default_sharing_group_user_auth_key = await add_to_db(
+            generate_auth_key(default_sharing_group_user_clear_key, default_sharing_group_user_id)
+        )
 
         default_event = generate_event()
         default_event.org_id = default_org_id
