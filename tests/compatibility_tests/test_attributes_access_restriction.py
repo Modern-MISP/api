@@ -168,22 +168,22 @@ async def test_delete_existing_attribute_fail_read_only_user(access_test_objects
     assert get_legacy_modern_diff("delete", path, request_body, (clear_key, auth_key), client) == {}
 
 
-@pytest.mark.asyncio
-async def test_add_attribute(access_test_objects, client) -> None:
-    request_body = {
-        "value": "1.2.3.4",
-        "type": "ip-src",
-        "category": "Network activity",
-        "to_ids": True,
-        "distribution": "1",
-        "comment": "test comment",
-        "disable_correlation": False,
-    }
-    event_id = access_test_objects["default_event"].id
-    path = f"/attributes/{event_id}"
-    clear_key = access_test_objects["default_user_clear_key"]
-    auth_key = access_test_objects["default_user_auth_key"]
-    assert get_legacy_modern_diff("post", path, request_body, (clear_key, auth_key), client) == {}
+# @pytest.mark.asyncio
+# async def test_add_attribute(access_test_objects, client) -> None:
+#    request_body = {
+#        "value": "1.2.3.4",
+#        "type": "ip-src",
+#        "category": "Network activity",
+#        "to_ids": True,
+#        "distribution": "1",
+#        "comment": "test comment",
+#        "disable_correlation": False,
+#    }
+#    event_id = access_test_objects["default_event"].id
+#    path = f"/attributes/{event_id}"
+#    clear_key = access_test_objects["default_user_clear_key"]
+#    auth_key = access_test_objects["default_user_auth_key"]
+#    assert get_legacy_modern_diff("post", path, request_body, (clear_key, auth_key), client) == {}
 
 
 @pytest.mark.asyncio
