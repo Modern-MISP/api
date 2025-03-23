@@ -2,6 +2,10 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mmisp.tests.compatibility_helpers import get_legacy_modern_diff
+from mmisp.tests.maps import (
+    access_test_objects_user_event_access_expect_denied,
+    access_test_objects_user_event_access_expect_granted,
+)
 
 """
 @pytest.mark.asyncio
@@ -32,83 +36,24 @@ async def test_list_all_events_admin(auth_key, client) -> None:
     assert get_legacy_modern_diff("get", path, request_body, auth_key, client) == {}
 
 
+@pytest.mark.parametrize("user_key, event_key", access_test_objects_user_event_access_expect_granted)
 @pytest.mark.asyncio
-async def test_get_event_success_read_only_user(access_test_objects, client) -> None:
-    path = "/events/" + str(access_test_objects["event_read_only_user"].id)
-    request_body = {}
-    clear_key = access_test_objects["default_read_only_user_clear_key"]
-    auth_key = access_test_objects["default_read_only_user_auth_key"]
-    assert get_legacy_modern_diff("get", path, request_body, (clear_key, auth_key), client) == {}
-
-
-@pytest.mark.asyncio
-async def test_get_event_fail_read_only_user(access_test_objects, client) -> None:
-    path = "/events/" + str(access_test_objects["default_event"].id)
-    request_body = {}
-    clear_key = access_test_objects["default_read_only_user_clear_key"]
-    auth_key = access_test_objects["default_read_only_user_auth_key"]
-    assert get_legacy_modern_diff("get", path, request_body, (clear_key, auth_key), client) == {}
-
-
-@pytest.mark.asyncio
-async def test_get_event_fail_read_only_user_not_same_corg(access_test_objects, client) -> None:
-    path = "/events/" + str(access_test_objects["event_read_only_user_2"].id)
-    request_body = {}
-    clear_key = access_test_objects["default_read_only_user_clear_key"]
-    auth_key = access_test_objects["default_read_only_user_auth_key"]
-    assert get_legacy_modern_diff("get", path, request_body, (clear_key, auth_key), client) == {}
-
-
-@pytest.mark.asyncio
-async def test_get_event_success_read_only_user_comm(access_test_objects, client) -> None:
-    def preprocessor(modern, legacy):
-        del modern["Event"]["event_creator_email"]
-
-    path = "/events/" + str(access_test_objects["event_dist_comm"].id)
-    request_body = {}
-    clear_key = access_test_objects["default_read_only_user_clear_key"]
-    auth_key = access_test_objects["default_read_only_user_auth_key"]
-    assert get_legacy_modern_diff("get", path, request_body, (clear_key, auth_key), client, preprocessor) == {}
-
-
-@pytest.mark.asyncio
-async def test_get_event_fail_read_only_user_comm(access_test_objects, client) -> None:
-    path = "/events/" + str(access_test_objects["event_dist_comm_2"].id)
-    request_body = {}
-    clear_key = access_test_objects["default_read_only_user_clear_key"]
-    auth_key = access_test_objects["default_read_only_user_auth_key"]
-    assert get_legacy_modern_diff("get", path, request_body, (clear_key, auth_key), client) == {}
-
-
-"""
-@pytest.mark.asyncio
-async def test_get_event_success_read_only_user_sg(access_test_objects, client) -> None:
-    path = "/events/" + str(access_test_objects["event_dist_sg"].id)
-    print("Event dist sg: ", access_test_objects["event_dist_sg"].__dict__)
+async def test_get_event_success(access_test_objects, user_key, event_key, client) -> None:
+    path = f"/events/{access_test_objects[event_key].id}"
     request_body = None
-    clear_key = access_test_objects["default_sharing_group_user_clear_key"]
-    auth_key = access_test_objects["default_sharing_group_user_auth_key"]
-    assert get_legacy_modern_diff("get", path, request_body, (clear_key, auth_key), client) == {}
-"""
-
-
-@pytest.mark.asyncio
-async def test_get_event_fail_read_only_user_sg(access_test_objects, client) -> None:
-    path = "/events/" + str(access_test_objects["event_dist_sg_2"].id)
-    request_body = {}
-    clear_key = access_test_objects["default_sharing_group_user_clear_key"]
-    auth_key = access_test_objects["default_sharing_group_user_auth_key"]
+    clear_key = access_test_objects[f"{user_key}_clear_key"]
+    auth_key = access_test_objects[f"{user_key}_auth_key"]
     assert get_legacy_modern_diff("get", path, request_body, (clear_key, auth_key), client) == {}
 
 
+@pytest.mark.parametrize("user_key, event_key", access_test_objects_user_event_access_expect_denied)
 @pytest.mark.asyncio
-async def test_get_event_success_site_admin(access_test_objects, auth_key, client) -> None:
-    def preprocess(modern, legacy):
-        del modern["Event"]["Attribute"][0]["Tag"]
-
-    path = "/events/" + str(access_test_objects["default_event"].id)
-    request_body = {}
-    assert get_legacy_modern_diff("get", path, request_body, auth_key, client, preprocess) == {}
+async def test_get_event_fail(access_test_objects, user_key, event_key, client) -> None:
+    path = f"/events/{access_test_objects[event_key].id}"
+    request_body = None
+    clear_key = access_test_objects[f"{user_key}_clear_key"]
+    auth_key = access_test_objects[f"{user_key}_auth_key"]
+    assert get_legacy_modern_diff("get", path, request_body, (clear_key, auth_key), client) == {}
 
 
 @pytest.mark.asyncio
