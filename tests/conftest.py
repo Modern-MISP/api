@@ -1,3 +1,4 @@
+import logging
 import random
 import string
 import uuid as libuuid
@@ -45,10 +46,12 @@ from mmisp.workflows.modules import (
 )
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture(autouse=True, scope="module")
 def app():
     with ExitStack():
-        yield init_app()
+        app = init_app()
+        logging.getLogger("mmisp").addHandler(logging.StreamHandler())
+        yield app
 
 
 @pytest_asyncio.fixture

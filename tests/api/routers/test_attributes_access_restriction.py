@@ -15,7 +15,7 @@ async def test_get_attribute_success(access_test_objects, user_key, attribute_ke
     attribute_id = attribute.id
     print(attribute.asdict())
 
-    response = client.get(f"/attribute/{attribute_id}", headers=headers)
+    response = client.get(f"/attributes/view/{attribute_id}", headers=headers)
     print(response.json())
     assert response.status_code == 200
     response_json = response.json()
@@ -27,9 +27,9 @@ async def test_get_attribute_success(access_test_objects, user_key, attribute_ke
 async def test_get_attribute_fail(access_test_objects, user_key, attribute_key, client) -> None:
     headers = {"authorization": access_test_objects[f"{user_key}_token"]}
     attribute_id = access_test_objects[attribute_key].id
-    response = client.get(f"/attribute/{attribute_id}", headers=headers)
+    response = client.get(f"/attributes/view/{attribute_id}", headers=headers)
 
-    assert response.status_code > 400
+    assert response.status_code == 403
 
 
 @pytest.mark.asyncio
