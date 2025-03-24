@@ -597,7 +597,6 @@ async def _get_event_details(db: Session, event_id: int | uuid.UUID, user: User 
         result = await db.execute(
             select(Event)
             .filter(Event.id == event_id)
-            .filter(Event.can_access(user))
             .options(
                 selectinload(Event.org),
                 selectinload(Event.orgc),

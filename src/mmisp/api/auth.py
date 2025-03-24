@@ -16,7 +16,7 @@ import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import APIKeyHeader
 from sqlalchemy import or_, select
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 
 from mmisp.api.config import config
 from mmisp.db.database import Session, get_db
@@ -102,7 +102,9 @@ async def _get_user(
 
 
 async def user_login_allowed(db: Session, user_id: int, api_login: bool) -> User:
-    result = await db.execute(select(User).options(joinedload(User.role)).filter(User.id == user_id).limit(1))
+    result = await db.execute(
+        select(User).options(joinedload(User.role), selectinload(User.org)).filter(User.id == user_id).limit(1)
+    )
     user = result.scalars().one_or_none()
     if user is not None:
         if not api_login and user.force_logout:

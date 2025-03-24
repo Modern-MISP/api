@@ -3,17 +3,18 @@ import pytest
 from mmisp.tests.maps import (
     access_test_objects_user_event_access_expect_denied,
     access_test_objects_user_event_access_expect_granted,
+    user_to_event_count,
 )
 
 
 @pytest.mark.parametrize("user_key, event_key", access_test_objects_user_event_access_expect_denied)
 @pytest.mark.asyncio
-async def test_get_event_fail_read_only_user(access_test_objects, user_key, event_key, client) -> None:
+async def test_get_event_fail(access_test_objects, user_key, event_key, client) -> None:
     headers = {"authorization": access_test_objects[f"{user_key}_token"]}
     event_id = access_test_objects[event_key].id
     response = client.get(f"/events/{event_id}", headers=headers)
 
-    assert response.status_code == 404
+    assert response.status_code == 403
 
 
 @pytest.mark.parametrize("user_key, event_key", access_test_objects_user_event_access_expect_granted)
@@ -28,43 +29,19 @@ async def test_get_event_success(access_test_objects, user_key, event_key, clien
     assert response_json["Event"]["id"] == event_id
 
 
+@pytest.mark.parametrize("user_key, count", user_to_event_count)
 @pytest.mark.asyncio
-async def test_list_all_events_self_created(access_test_objects, client) -> None:
-    headers = {"authorization": access_test_objects["default_user_token"]}
-    response = client.get("/events", headers=headers)
+async def test_get_all_events(access_test_objects, user_key, count, client) -> None:
+    headers = {"authorization": access_test_objects[f"{user_key}_token"]}
+    response = client.get("/events/", headers=headers)
+
     assert response.status_code == 200
     response_json = response.json()
+
     assert isinstance(response_json, list)
-    assert len(response_json) == 3
-
-
-@pytest.mark.asyncio
-async def test_list_all_events_read_only_user(access_test_objects, client) -> None:
-    headers = {"authorization": access_test_objects["default_read_only_user_token"]}
-    response = client.get("/events", headers=headers)
-    assert response.status_code == 200
-    response_json = response.json()
-    assert isinstance(response_json, list)
-    assert len(response_json) == 3
-
-
-@pytest.mark.asyncio
-async def test_list_all_events_admin(access_test_objects, client) -> None:
-    headers = {"authorization": access_test_objects["site_admin_user_token"]}
-    response = client.get("/events", headers=headers)
-    assert response.status_code == 200
-    response_json = response.json()
-    assert isinstance(response_json, list)
-    assert len(response_json) == 9
-
-
-@pytest.mark.asyncio
-async def test_get_event_fail_read_only_user_not_same_corg(access_test_objects, client) -> None:
-    headers = {"authorization": access_test_objects["default_read_only_user_token"]}
-    event_id = access_test_objects["event_read_only_user_2"].id
-    response = client.get(f"/events/{event_id}", headers=headers)
-
-    assert response.status_code == 200
+    print(response_json)
+    print(list(x["Event"]["Info"] for x in response_json))
+    assert len(response_json) == count
 
 
 @pytest.mark.asyncio
