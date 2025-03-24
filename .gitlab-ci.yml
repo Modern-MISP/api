@@ -82,7 +82,7 @@ pytest_mariadb:
 
 
 pytest:
-  parallel: 8
+  parallel: 12
   stage: test
   image: ${REGISTRY_DOMAIN}/${REGISTRY_PROJECT}/api:${CI_COMMIT_SHA}
   script:
@@ -94,6 +94,8 @@ pytest:
       when: always
       paths:
         - ".coverage.*"
+        - "report.xml"
+        - "gl-*-report.json"
       reports:
         junit: report.xml
 
@@ -130,18 +132,18 @@ mypy:
   stage: test
   image: ${REGISTRY_DOMAIN}/${REGISTRY_PROJECT}/api:${CI_COMMIT_SHA}
   script:
-    - pip install "sqlalchemy>=2.0"
+    - pip install "ruff>=0.3.7" "mypy==1.10.0" "sqlalchemy>=2.0"
     - MYPYPATH=src mypy --explicit-package-bases src/mmisp/api
 
 legacy_misp:
-  parallel: 8
+  parallel: 4
   tags:
       - kgr1-instance-standard
   stage: test
   image: ${REGISTRY_DOMAIN}/${REGISTRY_PROJECT}/api:${CI_COMMIT_SHA}
   script:
     - while [ ! -f "$MISP_READY_FILE" ]; do sleep 10; done
-    - pytest --junitxml=report.xml tests/compatibility_tests
+    - pytest --test-group-count $CI_NODE_TOTAL --test-group=$CI_NODE_INDEX --junitxml=report.xml tests/compatibility_tests
   services:
     - name: registry.cert.kit.edu/hub/library/mariadb:11.5
       alias: db
@@ -177,6 +179,8 @@ legacy_misp:
       when: always
       paths:
         - ".coverage.*"
+        - "report.xml"
+        - "gl-*-report.json"
       reports:
         junit: report.xml
 

@@ -1,0 +1,15 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+
+# Byte-compiled / optimized / DLL files
+**/__pycache__/
+**/*.py[cod]
+
+.venv
+*.egg-info
+*.egg
+.*cache
+.local

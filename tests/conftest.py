@@ -769,3 +769,4 @@ async def access_test_objects(db, site_admin_user, site_admin_role, auth_key):
             "tag_no_access": tag_no_access,
             **ret,
         }
+    await db.commit()
