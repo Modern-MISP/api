@@ -1,6 +1,9 @@
+import random
+import string
+import uuid as libuuid
 from contextlib import AsyncExitStack, ExitStack
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from typing import Self, Tuple
 
 import pytest
@@ -16,16 +19,16 @@ from mmisp.db.models.admin_setting import AdminSetting
 from mmisp.db.models.auth_key import AuthKey
 from mmisp.db.models.event import EventTag
 from mmisp.db.models.galaxy_cluster import GalaxyCluster
+from mmisp.db.models.organisation import Organisation
 from mmisp.db.models.role import Role
-from mmisp.db.models.sharing_group import SharingGroupOrg, SharingGroupServer
+from mmisp.db.models.sharing_group import SharingGroup, SharingGroupOrg, SharingGroupServer
 from mmisp.db.models.user import User
 from mmisp.db.models.workflow import Workflow
+from mmisp.lib.attributes import AttributeCategories
 from mmisp.lib.distribution import AttributeDistributionLevels, EventDistributionLevels
 from mmisp.tests.fixtures import *  # noqa
 from mmisp.tests.generators.model_generators.attribute_generator import generate_attribute
 from mmisp.tests.generators.model_generators.event_generator import generate_event
-from mmisp.tests.generators.model_generators.organisation_generator import generate_organisation
-from mmisp.tests.generators.model_generators.sharing_group_generator import generate_sharing_group
 from mmisp.tests.generators.model_generators.tag_generator import generate_tag
 from mmisp.tests.generators.model_generators.user_generator import generate_user
 from mmisp.tests.generators.model_generators.user_setting_generator import generate_user_name
@@ -498,7 +501,24 @@ async def random_test_user(db, instance_owner_org):
 
 
 @pytest_asyncio.fixture
-async def access_test_objects(db, site_admin_user):
+async def access_test_objects(db, site_admin_user, site_admin_role, auth_key):
+    """
+    This is a massive fixture to provide scenarios to test access control.
+
+    Nomenclature:
+        - orgs are numbered org1, org2, ...
+        - roles are named according to their db name
+        - users have the pattern start with `user_<org>_<role>`, e.g. user_org1_modify
+        - auth_keys and similar are the user attributes suffixed with _auth_key, _clear_key and _token
+        - events have the pattern `event_<org>_<distributionlevel>_<published/unpublished>`
+        - attributes have the pattern `attribute_<org>_<eventdistributionlevel>_<attributedistributionlevel>`
+        - if the distributionlevel is sharing_group the sharing group is appended.
+        - sharing groups have the pattern `sg_<org1>_<org2>`
+    """
+    instance_id = f"{''.join(random.choices(string.ascii_letters, k = 15))}"
+
+    site_admin_user_clear_key, site_admin_user_auth_key = auth_key
+
     def generate_auth_key(clear_key, user_id) -> AuthKey:
         return AuthKey(
             authkey=hash_secret(clear_key),
@@ -508,353 +528,241 @@ async def access_test_objects(db, site_admin_user):
             user_id=user_id,
         )
 
-    async with AsyncExitStack() as stack:
-
-        async def add_to_db(elem):
-            return await stack.enter_async_context(DBManager(db, elem))
-
-        site_admin_user_token = encode_token(site_admin_user.id)
-
-        default_org = await add_to_db(generate_organisation())
-        default_org_id = default_org.id
-
-        org_no_users = await add_to_db(generate_organisation())
-
-        org_read_only = await add_to_db(generate_organisation())
-
-        default_sharing_group_org = await add_to_db(generate_organisation())
-        sharing_group_org_id = default_sharing_group_org.id
-
-        dsg = generate_sharing_group()
-        dsg.organisation_uuid = default_sharing_group_org.uuid
-        dsg.org_id = sharing_group_org_id
-
-        default_sharing_group = await add_to_db(dsg)
-
-        default_role_modify = standard_roles.publisher_role()
-        default_role_modify.id = None
-        default_role_modify = await add_to_db(default_role_modify)
-
-        default_role_read_only = standard_roles.read_only_role()
-        default_role_read_only.id = None
-        default_role_read_only = await add_to_db(default_role_read_only)
-
-        default_user = User(
+    def generate_user(org, role) -> User:
+        return User(
             password="very_safe_passwort",
-            org_id=default_org_id,
-            role_id=default_role_modify.id,
-            email="default_user@lauch.com",
+            org_id=org.id,
+            role_id=role.id,
+            email=f"{instance_id}_{org.name}{role.name}@example.com",
             authkey=None,
             invited_by=314,
             nids_sid=0,
             termsaccepted=True,
-            change_pw=True,
+            change_pw=False,
             contactalert=False,
             disabled=False,
             notification_daily=False,
             notification_weekly=False,
             notification_monthly=False,
         )
-        default_user = await add_to_db(default_user)
-        default_user_id = default_user.id
-        default_user_token = encode_token(default_user.id)
 
-        default_user_clear_key = "defaultuser".ljust(40, "0")
-
-        default_user_auth_key = await add_to_db(generate_auth_key(default_user_clear_key, default_user_id))
-
-        default_read_only_user = await add_to_db(
-            User(
-                password="very_safe_passwort",
-                org_id=org_read_only.id,
-                role_id=default_role_read_only.id,
-                email="default_read_only_user@lauch.com",
-                authkey=None,
-                invited_by=314,
-                nids_sid=0,
-                termsaccepted=True,
-                change_pw=True,
-                contactalert=False,
-                disabled=False,
-                notification_daily=False,
-                notification_weekly=False,
-                notification_monthly=False,
-            )
-        )
-        default_read_only_user_token = encode_token(default_read_only_user.id)
-
-        default_read_only_user_clear_key = "defaultreadonlyuser".ljust(40, "0")
-        default_read_only_user_auth_key = await add_to_db(
-            generate_auth_key(default_read_only_user_clear_key, default_read_only_user.id)
+    def generate_organisation(id) -> Organisation:
+        return Organisation(
+            name=f"{instance_id}_{id}",
+            uuid=libuuid.uuid4(),
+            description=f"{instance_id}_{id}",
+            type=f"{instance_id}_{id}",
+            nationality="earthian",
+            sector="software",
+            created_by=0,
+            contacts="Test Org",
+            local=True,
+            restricted_to_domain=[],
+            landingpage="",
         )
 
-        default_sharing_group_user = await add_to_db(
-            User(
-                password="very_safe_passwort",
-                org_id=default_sharing_group_org.id,
-                role_id=default_role_read_only.id,
-                email="default_sharing_group_user@lauch.com",
-                authkey=None,
-                invited_by=314,
-                nids_sid=0,
-                termsaccepted=True,
-                change_pw=True,
-                contactalert=False,
-                disabled=False,
-                notification_daily=False,
-                notification_weekly=False,
-                notification_monthly=False,
-            )
+    def generate_sharing_group(org1, org2) -> SharingGroup:
+        return SharingGroup(
+            name=f"{libuuid.uuid4().hex}",
+            description=f"sg_{org1.name}_{org2.name}",
+            releasability="this is yet another description field",
+            organisation_uuid=org1.uuid,
+            org_id=org1.id,
+            sync_user_id=0,
+            active=True,
+            local=True,
+            created=datetime.now(),
+            modified=datetime.now(),
         )
 
-        default_sharing_group_user_id = default_sharing_group_user.id
-        default_sharing_group_user_token = encode_token(default_sharing_group_user.id)
+    async with AsyncExitStack() as stack:
 
-        default_sharing_group_user_clear_key = "defaultsharinggroupuser".ljust(40, "0")
+        async def add_to_db(elem):
+            return await stack.enter_async_context(DBManager(db, elem))
 
-        default_sharing_group_user_auth_key = await add_to_db(
-            generate_auth_key(default_sharing_group_user_clear_key, default_sharing_group_user_id)
-        )
+        ret = {}
 
-        default_event = generate_event()
-        default_event.org_id = default_org_id
-        default_event.orgc_id = default_org_id
-        default_event.user_id = default_user_id
-        default_event.published = False
-        default_event.distribution = EventDistributionLevels.OWN_ORGANIZATION
+        site_admin_user_token = encode_token(site_admin_user.id)
 
-        default_event = await add_to_db(default_event)
-        default_event_id = default_event.id
+        role_publisher = standard_roles.publisher_role()
+        role_publisher.id = None
+        role_publisher = await add_to_db(role_publisher)
 
-        default_event_published = generate_event()
-        default_event_published.org_id = default_org_id
-        default_event_published.orgc_id = default_org_id
-        default_event_published.user_id = default_user_id
-        default_event_published.published = True
-        default_event_published.distribution = EventDistributionLevels.OWN_ORGANIZATION
-        default_event_published.sharing_group_id = 0
+        role_read_only = standard_roles.read_only_role()
+        role_read_only.id = None
+        role_read_only = await add_to_db(role_read_only)
 
-        default_event_published = await add_to_db(default_event_published)
+        role_user = standard_roles.user_role()
+        role_user.id = None
+        role_user = await add_to_db(role_user)
 
-        event_no_access = generate_event()
-        event_no_access.org_id = org_no_users.id
-        event_no_access.orgc_id = org_no_users.id
-        event_no_access.user_id = default_sharing_group_user_id
-        event_no_access.published = False
-        event_no_access.distribution = EventDistributionLevels.OWN_ORGANIZATION
-        event_no_access.sharing_group_id = 0
+        all_roles = [role_publisher, role_read_only, role_user]
 
-        event_no_access = await add_to_db(event_no_access)
-        event_no_access_id = event_no_access.id
+        # create orgs and users
+        for i in range(1, 4):
+            ret[f"org{i}"] = await add_to_db(generate_organisation(i))
 
-        event_read_only_user = generate_event()
-        event_read_only_user.org_id = org_read_only.id
-        event_read_only_user.orgc_id = org_read_only.id
-        event_read_only_user.user_id = site_admin_user.id
-        event_read_only_user.published = True
-        event_read_only_user.distribution = EventDistributionLevels.OWN_ORGANIZATION
-        event_read_only_user.sharing_group_id = 0
+            for role in all_roles:
+                ret[f"user_org{i}_{role.name}"] = await add_to_db(generate_user(ret[f"org{i}"], role))
+                ret[f"user_org{i}_{role.name}_clear_key"] = f"user_org{i}_{role.name}".replace("_", "").ljust(40, "0")
+                ret[f"user_org{i}_{role.name}_auth_key"] = await add_to_db(
+                    generate_auth_key(ret[f"user_org{i}_{role.name}_clear_key"], ret[f"user_org{i}_{role.name}"].id)
+                )
+                ret[f"user_org{i}_{role.name}_token"] = encode_token(ret[f"user_org{i}_{role.name}"].id)
 
-        event_read_only_user = await add_to_db(event_read_only_user)
+        # create sharing groups
+        # need to greate sg_org1_org2, sg_org1_org3, sg_org2_org3
+        ret["sg_org1_org2"] = await add_to_db(generate_sharing_group(ret["org1"], ret["org2"]))
+        await add_to_db(SharingGroupOrg(sharing_group_id=ret["sg_org1_org2"].id, org_id=ret["org1"].id))
+        await add_to_db(SharingGroupOrg(sharing_group_id=ret["sg_org1_org2"].id, org_id=ret["org2"].id))
+        ret["sg_org1_org3"] = await add_to_db(generate_sharing_group(ret["org1"], ret["org3"]))
+        await add_to_db(SharingGroupOrg(sharing_group_id=ret["sg_org1_org3"].id, org_id=ret["org1"].id))
+        await add_to_db(SharingGroupOrg(sharing_group_id=ret["sg_org1_org3"].id, org_id=ret["org3"].id))
+        ret["sg_org2_org3"] = await add_to_db(generate_sharing_group(ret["org2"], ret["org3"]))
+        await add_to_db(SharingGroupOrg(sharing_group_id=ret["sg_org2_org3"].id, org_id=ret["org2"].id))
+        await add_to_db(SharingGroupOrg(sharing_group_id=ret["sg_org2_org3"].id, org_id=ret["org3"].id))
 
-        event_read_only_user_2 = generate_event()
-        event_read_only_user_2.org_id = org_read_only.id
-        event_read_only_user_2.orgc_id = org_read_only.id
-        event_read_only_user_2.user_id = site_admin_user.id
-        event_read_only_user_2.published = False
-        event_read_only_user_2.distribution = EventDistributionLevels.OWN_ORGANIZATION
-        event_read_only_user_2.sharing_group_id = 0
+        # create events
+        for i in range(1, 4):
+            for edl in EventDistributionLevels:
+                for published in [False, True]:
+                    s_published = f"{'un' if not published else ''}published"
+                    if edl != EventDistributionLevels.SHARING_GROUP:
+                        eventkey = f"event_org{i}_{edl}_{s_published}"
+                        ret[eventkey] = await add_to_db(
+                            Event(
+                                org_id=ret[f"org{i}"].id,
+                                orgc_id=ret[f"org{i}"].id,
+                                user_id=1,
+                                uuid=libuuid.uuid4(),
+                                sharing_group_id=0,
+                                threat_level_id=1,
+                                info=eventkey,
+                                date=date(year=2024, month=2, day=13),
+                                analysis=1,
+                                distribution=edl,
+                                published=published,
+                            )
+                        )
+                        for adl in AttributeDistributionLevels:
+                            if adl != AttributeDistributionLevels.SHARING_GROUP:
+                                attributekey = f"attribute_org{i}_{edl}_{s_published}_{adl}"
+                                ret[eventkey].attribute_count += 1
+                                ret[attributekey] = await add_to_db(
+                                    Attribute(
+                                        value=attributekey,
+                                        type="text",
+                                        category=AttributeCategories.OTHER.value,
+                                        event_id=ret[eventkey].id,
+                                        distribution=adl,
+                                        sharing_group_id=0,
+                                    )
+                                )
+                            else:
+                                for asg_key in ["sg_org1_org2", "sg_org1_org3", "sg_org2_org3"]:
+                                    if f"org{i}" not in asg_key:
+                                        # we skip creating events for orgs not in the sharing group
+                                        continue
+                                    attributekey = f"attribute_org{i}_{edl}_{s_published}_{adl}_{asg_key}"
+                                    ret[eventkey].attribute_count += 1
+                                    ret[attributekey] = await add_to_db(
+                                        Attribute(
+                                            value=attributekey,
+                                            type="text",
+                                            category=AttributeCategories.OTHER.value,
+                                            event_id=ret[eventkey].id,
+                                            distribution=adl,
+                                            sharing_group_id=ret[asg_key].id,
+                                        )
+                                    )
 
-        event_read_only_user_2 = await add_to_db(event_read_only_user_2)
-
-        event_dist_comm = generate_event()
-        event_dist_comm.org_id = org_no_users.id
-        event_dist_comm.orgc_id = org_no_users.id
-        event_dist_comm.user_id = site_admin_user.id
-        event_dist_comm.published = True
-        event_dist_comm.distribution = EventDistributionLevels.COMMUNITY
-        event_dist_comm.sharing_group_id = 0
-
-        event_dist_comm = await add_to_db(event_dist_comm)
-
-        event_dist_comm_2 = generate_event()
-        event_dist_comm_2.org_id = org_no_users.id
-        event_dist_comm_2.orgc_id = org_no_users.id
-        event_dist_comm_2.user_id = site_admin_user.id
-        event_dist_comm_2.published = False
-        event_dist_comm_2.distribution = EventDistributionLevels.COMMUNITY
-        event_dist_comm_2.sharing_group_id = 0
-
-        event_dist_comm_2 = await add_to_db(event_dist_comm_2)
-
-        event_dist_sg = generate_event()
-        event_dist_sg.org_id = default_org_id
-        event_dist_sg.orgc_id = default_org_id
-        event_dist_sg.user_id = site_admin_user.id
-        event_dist_sg.published = True
-        event_dist_sg.distribution = EventDistributionLevels.SHARING_GROUP
-        event_dist_sg.sharing_group_id = default_sharing_group.id
-
-        event_dist_sg = await add_to_db(event_dist_sg)
-
-        event_dist_sg_2 = generate_event()
-        event_dist_sg_2.org_id = default_org_id
-        event_dist_sg_2.orgc_id = default_org_id
-        event_dist_sg_2.user_id = site_admin_user.id
-        event_dist_sg_2.published = False
-        event_dist_sg_2.distribution = EventDistributionLevels.SHARING_GROUP
-        event_dist_sg_2.sharing_group_id = default_sharing_group.id
-
-        event_dist_sg_2 = await add_to_db(event_dist_sg_2)
-
-        default_attribute = generate_attribute(default_event_id)
-        default_attribute.distribution = AttributeDistributionLevels.OWN_ORGANIZATION
-        default_attribute.uuid = uuid()
-        # default_attribute.comment = "default attribute example comment"
-        default_event.attribute_count += 1
-
-        default_attribute = await add_to_db(default_attribute)
-
-        default_attribute_2 = generate_attribute(default_event_id)
-        default_attribute_2.distribution = AttributeDistributionLevels.OWN_ORGANIZATION
-        default_attribute_2.uuid = uuid()
-        # default_attribute_2.comment = "def.atr.2"
-        default_event.attribute_count += 1
-
-        default_attribute_2 = await add_to_db(default_attribute_2)
-
-        attribute_no_access = generate_attribute(event_no_access_id)
-        attribute_no_access.distribution = AttributeDistributionLevels.OWN_ORGANIZATION
-        attribute_no_access.uuid = uuid()
-        # attribute_no_access.comment = "attribute no access example comment"
-        event_no_access.attribute_count += 1
-
-        attribute_no_access = await add_to_db(attribute_no_access)
-
-        attribute_no_access_2 = generate_attribute(event_no_access_id)
-        attribute_no_access_2.distribution = AttributeDistributionLevels.OWN_ORGANIZATION
-        attribute_no_access_2.uuid = uuid()
-        # attribute_no_access_2.comment = "attribute no access 2 example comment"
-        event_no_access.attribute_count += 1
-
-        attribute_no_access_2 = await add_to_db(attribute_no_access_2)
-
-        attribute_event_read_only_user = generate_attribute(event_read_only_user.id)
-        attribute_event_read_only_user.distribution = AttributeDistributionLevels.OWN_ORGANIZATION
-        attribute_event_read_only_user.uuid = uuid()
-        # attribute_event_read_only_user.comment = "attribute event read only user example comment"
-        event_read_only_user.attribute_count += 1
-
-        attribute_event_read_only_user = await add_to_db(attribute_event_read_only_user)
-
-        attribute_event_read_only_user_2 = generate_attribute(event_read_only_user_2.id)
-        attribute_event_read_only_user_2.distribution = AttributeDistributionLevels.OWN_ORGANIZATION
-        attribute_event_read_only_user_2.uuid = uuid()
-        # attribute_event_read_only_user_2.comment = "attribute event read only user 2 example comment"
-        event_read_only_user_2.attribute_count += 1
-
-        attribute_event_read_only_user_2 = await add_to_db(attribute_event_read_only_user_2)
-
-        attribute_dist_comm = generate_attribute(event_dist_comm.id)
-        attribute_dist_comm.distribution = AttributeDistributionLevels.COMMUNITY
-        attribute_dist_comm.uuid = uuid()
-        # attribute_dist_comm.comment = "attribute dist comm example comment"
-        event_dist_comm.attribute_count += 1
-
-        attribute_dist_comm = await add_to_db(attribute_dist_comm)
-
-        attribute_dist_comm_2 = generate_attribute(event_dist_comm_2.id)
-        attribute_dist_comm_2.distribution = AttributeDistributionLevels.COMMUNITY
-        attribute_dist_comm_2.uuid = uuid()
-        # attribute_dist_comm_2.comment = "attribute dist comm 2 example comment"
-        event_dist_comm_2.attribute_count += 1
-
-        attribute_dist_comm_2 = await add_to_db(attribute_dist_comm_2)
-
-        attribute_dist_sg = generate_attribute(event_dist_sg.id)
-        attribute_dist_sg.distribution = AttributeDistributionLevels.SHARING_GROUP
-        attribute_dist_sg.sharing_group_id = default_sharing_group.id
-        attribute_dist_sg.uuid = uuid()
-        # attribute_dist_sg.comment = "attribute dist sg example comment"
-        event_dist_sg.attribute_count += 1
-
-        attribute_dist_sg = await add_to_db(attribute_dist_sg)
-
-        attribute_dist_sg_2 = generate_attribute(event_dist_sg_2.id)
-        attribute_dist_sg_2.distribution = AttributeDistributionLevels.SHARING_GROUP
-        attribute_dist_sg_2.sharing_group_id = default_sharing_group.id
-        attribute_dist_sg_2.uuid = uuid()
-        # attribute_dist_sg_2.comment = "attribute dist sg 2 example comment"
-        event_dist_sg_2.attribute_count += 1
-
-        attribute_dist_sg_2 = await add_to_db(attribute_dist_sg_2)
+                    else:
+                        for sg_key in ["sg_org1_org2", "sg_org1_org3", "sg_org2_org3"]:
+                            if f"org{i}" not in sg_key:
+                                # we skip creating events for orgs not in the sharing group
+                                continue
+                            eventkey = f"event_org{i}_{edl}_{sg_key}_{s_published}"
+                            ret[eventkey] = await add_to_db(
+                                Event(
+                                    org_id=ret[f"org{i}"].id,
+                                    orgc_id=ret[f"org{i}"].id,
+                                    user_id=1,
+                                    uuid=libuuid.uuid4(),
+                                    sharing_group_id=ret[sg_key].id,
+                                    threat_level_id=1,
+                                    info=eventkey,
+                                    date=date(year=2024, month=2, day=13),
+                                    analysis=1,
+                                    distribution=edl,
+                                    published=published,
+                                )
+                            )
+                            for adl in AttributeDistributionLevels:
+                                if adl != AttributeDistributionLevels.SHARING_GROUP:
+                                    ret[eventkey].attribute_count += 1
+                                    attributekey = f"attribute_org{i}_{edl}_{sg_key}_{s_published}_{adl}"
+                                    ret[attributekey] = await add_to_db(
+                                        Attribute(
+                                            value=f"attribute_{eventkey}",
+                                            type="text",
+                                            category=AttributeCategories.OTHER.value,
+                                            event_id=ret[eventkey].id,
+                                            distribution=adl,
+                                            sharing_group_id=0,
+                                        )
+                                    )
+                                else:
+                                    for asg_key in ["sg_org1_org2", "sg_org1_org3", "sg_org2_org3"]:
+                                        if f"org{i}" not in asg_key:
+                                            # we skip creating events for orgs not in the sharing group
+                                            continue
+                                        attributekey = f"attribute_org{i}_{edl}_{sg_key}_{s_published}_{adl}_{asg_key}"
+                                        ret[eventkey].attribute_count += 1
+                                        ret[attributekey] = await add_to_db(
+                                            Attribute(
+                                                value=f"attribute_{eventkey}",
+                                                type="text",
+                                                category=AttributeCategories.OTHER.value,
+                                                event_id=ret[eventkey].id,
+                                                distribution=adl,
+                                                sharing_group_id=ret[asg_key].id,
+                                            )
+                                        )
 
         default_tag = generate_tag()
-        default_tag.user_id = default_user_id
-        default_tag.org_id = default_org_id
-        default_tag.is_galaxy = True
+        default_tag.user_id = site_admin_user.id
+        default_tag.org_id = ret["org1"].id
+        default_tag.is_galaxy = False
         default_tag.exportable = True
 
         default_tag = await add_to_db(default_tag)
 
         default_tag_2 = generate_tag()
-        default_tag_2.user_id = default_user_id
-        default_tag_2.org_id = default_org_id
-        default_tag_2.is_galaxy = True
+        default_tag_2.user_id = site_admin_user.id
+        default_tag_2.org_id = ret["org1"].id
+        default_tag_2.is_galaxy = False
         default_tag_2.exportable = True
 
         default_tag_2 = await add_to_db(default_tag_2)
 
         tag_no_access = generate_tag()
         tag_no_access.user_id = site_admin_user.id
-        tag_no_access.org_id = org_no_users.id
-        tag_no_access.is_galaxy = True
+        tag_no_access.org_id = ret["org1"].id
+        tag_no_access.is_galaxy = False
         tag_no_access.exportable = True
 
         tag_no_access = await add_to_db(tag_no_access)
 
         await db.commit()
 
+        print(ret)
         yield {
             "site_admin_user": site_admin_user,
             "site_admin_user_token": site_admin_user_token,
-            "default_org": default_org,
-            "org_no_users": org_no_users,
-            "default_sharing_group_org": default_sharing_group_org,
-            "default_sharing_group": default_sharing_group,
-            "default_role_modify": default_role_modify,
-            "default_user": default_user,
-            "default_user_auth_key": default_user_auth_key,
-            "default_user_clear_key": default_user_clear_key,
-            "default_read_only_user": default_read_only_user,
-            "default_user_token": default_user_token,
-            "default_read_only_user_auth_key": default_read_only_user_auth_key,
-            "default_read_only_user_clear_key": default_read_only_user_clear_key,
-            "default_read_only_user_token": default_read_only_user_token,
-            "default_sharing_group_user": default_sharing_group_user,
-            "default_sharing_group_user_auth_key": default_sharing_group_user_auth_key,
-            "default_sharing_group_user_clear_key": default_sharing_group_user_clear_key,
-            "default_sharing_group_user_token": default_sharing_group_user_token,
-            "default_event": default_event,
-            "default_event_published": default_event_published,
-            "event_read_only_user": event_read_only_user,
-            "event_read_only_user_2": event_read_only_user_2,
-            "event_no_access": event_no_access,
-            "event_dist_sg": event_dist_sg,
-            "event_dist_sg_2": event_dist_sg_2,
-            "event_dist_comm": event_dist_comm,
-            "event_dist_comm_2": event_dist_comm_2,
-            "default_attribute": default_attribute,
-            "default_attribute_2": default_attribute_2,
-            "attribute_no_access": attribute_no_access,
-            "attribute_no_access_2": attribute_no_access_2,
-            "attribute_event_read_only_user": attribute_event_read_only_user,
-            "attribute_event_read_only_user_2": attribute_event_read_only_user_2,
-            "attribute_dist_comm": attribute_dist_comm,
-            "attribute_dist_comm_2": attribute_dist_comm_2,
-            "attribute_dist_sg": attribute_dist_sg,
-            "attribute_dist_sg_2": attribute_dist_sg_2,
+            "site_admin_user_clear_key": site_admin_user_clear_key,
+            "site_admin_user_auth_key": site_admin_user_auth_key,
             "default_tag": default_tag,
             "default_tag_2": default_tag_2,
             "tag_no_access": tag_no_access,
+            **ret,
         }
