@@ -566,7 +566,7 @@ async def access_test_objects(db, site_admin_user, site_admin_role, auth_key):
             name=f"{libuuid.uuid4().hex}",
             description=f"sg_{org1.name}_{org2.name}",
             releasability="this is yet another description field",
-            organisation_uuid=org1.uuid,
+            organisation_uuid=str(org1.uuid),
             org_id=org1.id,
             sync_user_id=0,
             active=True,
