@@ -11,9 +11,12 @@ from mmisp.tests.maps import (
 @pytest.mark.asyncio
 async def test_get_attribute_success(access_test_objects, user_key, attribute_key, client) -> None:
     headers = {"authorization": access_test_objects[f"{user_key}_token"]}
-    attribute_id = access_test_objects[attribute_key].id
-    response = client.get(f"/attribute/{attribute_id}", headers=headers)
+    attribute = access_test_objects[attribute_key]
+    attribute_id = attribute.id
+    print(attribute.asdict())
 
+    response = client.get(f"/attribute/{attribute_id}", headers=headers)
+    print(response.json())
     assert response.status_code == 200
     response_json = response.json()
     assert response_json["Attribute"]["id"] == attribute_id
