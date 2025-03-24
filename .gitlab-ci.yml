@@ -134,6 +134,7 @@ mypy:
     - MYPYPATH=src mypy --explicit-package-bases src/mmisp/api
 
 legacy_misp:
+  parallel: 8
   tags:
       - kgr1-instance-standard
   stage: test

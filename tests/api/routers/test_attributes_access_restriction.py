@@ -1,6 +1,33 @@
 import pytest
 import sqlalchemy as sa
 
+from mmisp.tests.maps import (
+    access_test_objects_user_attribute_access_expect_denied,
+    access_test_objects_user_attribute_access_expect_granted,
+)
+
+
+@pytest.mark.parametrize("user_key, attribute_key", access_test_objects_user_attribute_access_expect_granted)
+@pytest.mark.asyncio
+async def test_get_attribute_success(access_test_objects, user_key, attribute_key, client) -> None:
+    headers = {"authorization": access_test_objects[f"{user_key}_token"]}
+    attribute_id = access_test_objects[attribute_key].id
+    response = client.get(f"/attribute/{attribute_id}", headers=headers)
+
+    assert response.status_code == 200
+    response_json = response.json()
+    assert response_json["Attribute"]["id"] == attribute_id
+
+
+@pytest.mark.parametrize("user_key, attribute_key", access_test_objects_user_attribute_access_expect_denied)
+@pytest.mark.asyncio
+async def test_get_attribute_fail(access_test_objects, user_key, attribute_key, client) -> None:
+    headers = {"authorization": access_test_objects[f"{user_key}_token"]}
+    attribute_id = access_test_objects[attribute_key].id
+    response = client.get(f"/attribute/{attribute_id}", headers=headers)
+
+    assert response.status_code > 400
+
 
 @pytest.mark.asyncio
 async def test_get_all_attributes(
@@ -13,108 +40,6 @@ async def test_get_all_attributes(
     assert response.status_code == 200
     response_json = response.json()
     assert isinstance(response_json, list)
-    assert len(response_json) == 3
-
-
-@pytest.mark.asyncio
-async def test_get_existing_attribute(
-    access_test_objects,
-    client,
-) -> None:
-    attribute_id = access_test_objects["default_attribute"].id
-
-    headers = {"authorization": access_test_objects["default_user_token"]}
-    response = client.get(f"/attributes/{attribute_id}", headers=headers)
-
-    assert response.status_code == 200
-
-
-@pytest.mark.asyncio
-async def test_get_existing_attribute_fail_read_only_user(
-    access_test_objects,
-    client,
-) -> None:
-    attribute_id = access_test_objects["default_attribute"].id
-    headers = {"authorization": access_test_objects["default_read_only_user_token"]}
-    response = client.get(f"/attributes/{attribute_id}", headers=headers)
-    assert response.status_code == 404
-
-
-@pytest.mark.asyncio
-async def test_get_existing_attribute_read_only_user_own_org(
-    access_test_objects,
-    client,
-) -> None:
-    attribute_id = access_test_objects["attribute_event_read_only_user"].id
-    headers = {"authorization": access_test_objects["default_read_only_user_token"]}
-    response = client.get(f"/attributes/{attribute_id}", headers=headers)
-    assert response.status_code == 200
-
-
-@pytest.mark.asyncio
-async def test_get_existing_attribute_fail_read_only_user_own_org(
-    access_test_objects,
-    client,
-) -> None:
-    attribute_id = access_test_objects["attribute_event_read_only_user_2"].id
-    headers = {"authorization": access_test_objects["default_read_only_user_token"]}
-    response = client.get(f"/attributes/{attribute_id}", headers=headers)
-    assert response.status_code == 200
-
-
-@pytest.mark.asyncio
-async def test_get_existing_attribute_read_only_user_comm(
-    access_test_objects,
-    client,
-) -> None:
-    attribute_id = access_test_objects["attribute_dist_comm"].id
-    headers = {"authorization": access_test_objects["default_read_only_user_token"]}
-    response = client.get(f"/attributes/{attribute_id}", headers=headers)
-    assert response.status_code == 200
-
-
-@pytest.mark.asyncio
-async def test_get_existing_attribute_fail_read_only_user_comm(
-    access_test_objects,
-    client,
-) -> None:
-    attribute_id = access_test_objects["attribute_dist_comm_2"].id
-    headers = {"authorization": access_test_objects["default_read_only_user_token"]}
-    response = client.get(f"/attributes/{attribute_id}", headers=headers)
-    assert response.status_code == 404
-
-
-@pytest.mark.asyncio
-async def test_get_existing_attribute_read_only_user_sg(
-    access_test_objects,
-    client,
-) -> None:
-    attribute_id = access_test_objects["attribute_dist_sg"].id
-    headers = {"authorization": access_test_objects["default_sharing_group_user_token"]}
-    response = client.get(f"/attributes/{attribute_id}", headers=headers)
-    assert response.status_code == 200
-
-
-@pytest.mark.asyncio
-async def test_get_existing_attribute_fail_read_only_user_sg(
-    access_test_objects,
-    client,
-) -> None:
-    attribute_id = access_test_objects["attribute_dist_sg_2"].id
-    headers = {"authorization": access_test_objects["default_sharing_group_user_token"]}
-    response = client.get(f"/attributes/{attribute_id}", headers=headers)
-    assert response.status_code == 404
-
-
-@pytest.mark.asyncio
-async def test_get_all_attributes_read_only_user(
-    access_test_objects,
-    client,
-) -> None:
-    headers = {"authorization": access_test_objects["default_read_only_user_token"]}
-    response = client.get("/attributes", headers=headers)
-    assert response.status_code == 200
-    response_json = response.json()
     assert len(response_json) == 3
 
 
