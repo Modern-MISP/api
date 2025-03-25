@@ -1,4 +1,6 @@
 import pytest
+from deepdiff import DeepDiff
+from icecream import ic
 
 from mmisp.tests.maps import (
     access_test_objects_user_event_access_expect_denied,
@@ -41,7 +43,9 @@ async def test_get_all_events(access_test_objects, user_key, events, client) -> 
     assert isinstance(response_json, list)
     print(response_json)
     event_keys = list(x["info"] for x in response_json)
-    assert events == event_keys
+    diff = DeepDiff(events, event_keys, ignore_order=True, verbose_level=2)
+    ic(diff)
+    assert diff == {}
 
 
 @pytest.mark.asyncio
