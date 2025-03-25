@@ -3,7 +3,7 @@ import pytest
 from mmisp.tests.maps import (
     access_test_objects_user_event_access_expect_denied,
     access_test_objects_user_event_access_expect_granted,
-    user_to_event_count,
+    user_to_events,
 )
 
 
@@ -29,9 +29,9 @@ async def test_get_event_success(access_test_objects, user_key, event_key, clien
     assert response_json["Event"]["id"] == event_id
 
 
-@pytest.mark.parametrize("user_key, count", user_to_event_count)
+@pytest.mark.parametrize("user_key, events", user_to_events)
 @pytest.mark.asyncio
-async def test_get_all_events(access_test_objects, user_key, count, client) -> None:
+async def test_get_all_events(access_test_objects, user_key, events, client) -> None:
     headers = {"authorization": access_test_objects[f"{user_key}_token"]}
     response = client.get("/events/", headers=headers)
 
@@ -40,8 +40,8 @@ async def test_get_all_events(access_test_objects, user_key, count, client) -> N
 
     assert isinstance(response_json, list)
     print(response_json)
-    print(list(x["info"] for x in response_json))
-    assert len(response_json) == count
+    event_keys = list(x["info"] for x in response_json)
+    assert events == event_keys
 
 
 @pytest.mark.asyncio

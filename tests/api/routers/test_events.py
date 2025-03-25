@@ -149,7 +149,7 @@ async def test_get_existing_event_by_uuid(
     assert response.status_code == 200
     response_json = response.json()
     assert response_json["Event"]["id"] == event_id
-    assert response_json["Event"]["uuid"] == event_uuid
+    assert response_json["Event"]["uuid"] == str(event_uuid)
     assert response_json["Event"]["org_id"] == org_id
     assert response_json["Event"]["orgc_id"] == org_id
     assert response_json["Event"]["attribute_count"] == "1"
@@ -350,7 +350,7 @@ async def test_publish_existing_event_by_uuid(organisation, event, site_admin_us
     assert response_json["name"] == "Job queued"
     assert response_json["message"] == "Job queued"
     assert response_json["url"] == f"/events/publish/{event_uuid}"
-    assert response_json["id"] == event_uuid
+    assert response_json["id"] == str(event_uuid)
 
 
 @pytest.mark.asyncio
@@ -483,7 +483,7 @@ async def test_unpublish_existing_event_by_uuid(event, site_admin_user_token, cl
     assert response_json["name"] == "Event unpublished."
     assert response_json["message"] == "Event unpublished."
     assert response_json["url"] == f"/events/unpublish/{event_uuid}"
-    assert response_json["id"] == event_uuid
+    assert response_json["id"] == str(event_uuid)
 
 
 @pytest.mark.asyncio
