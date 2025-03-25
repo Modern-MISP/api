@@ -46,7 +46,7 @@ from mmisp.workflows.modules import (
 )
 
 
-@pytest.fixture(autouse=True, scope="module")
+@pytest.fixture(autouse=True)
 def app():
     with ExitStack():
         app = init_app()
