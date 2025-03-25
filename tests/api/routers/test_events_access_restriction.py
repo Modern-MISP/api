@@ -40,7 +40,7 @@ async def test_get_all_events(access_test_objects, user_key, count, client) -> N
 
     assert isinstance(response_json, list)
     print(response_json)
-    print(list(x["Event"]["Info"] for x in response_json))
+    print(list(x["info"] for x in response_json))
     assert len(response_json) == count
 
 
