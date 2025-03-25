@@ -41,7 +41,7 @@ dev = [
   "icecream",
   "types-Pygments",
   "types-passlib",
-  "deepdiff==7.0.1",
+  "deepdiff==8.4.2",
   "pyinstrument",
 ]
 lint = [

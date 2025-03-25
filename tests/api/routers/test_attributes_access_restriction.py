@@ -1,9 +1,12 @@
 import pytest
 import sqlalchemy as sa
+from deepdiff import DeepDiff
+from icecream import ic
 
 from mmisp.tests.maps import (
     access_test_objects_user_attribute_access_expect_denied,
     access_test_objects_user_attribute_access_expect_granted,
+    user_to_attributes,
 )
 
 
@@ -32,18 +35,25 @@ async def test_get_attribute_fail(access_test_objects, user_key, attribute_key, 
     assert response.status_code == 403
 
 
+@pytest.mark.parametrize("user_key, attributes", user_to_attributes)
 @pytest.mark.asyncio
 async def test_get_all_attributes(
     access_test_objects,
+    user_key,
+    attributes,
     client,
 ) -> None:
-    headers = {"authorization": access_test_objects["default_user_token"]}
-    response = client.get("/attributes", headers=headers)
+    headers = {"authorization": access_test_objects[f"{user_key}_token"]}
+    response = client.get("/attributes?limit=1000", headers=headers)
 
     assert response.status_code == 200
     response_json = response.json()
+    #    ic(response_json)
     assert isinstance(response_json, list)
-    assert len(response_json) == 3
+    attribute_values = [x["value"] for x in response_json]
+    diff = DeepDiff(attributes, attribute_values, ignore_order=True, verbose_level=2)
+    ic(diff)
+    assert diff == {}
 
 
 @pytest.mark.asyncio
@@ -257,21 +267,6 @@ async def test_edit_existing_attribute(
     assert "first_seen" in response_json["Attribute"]
 
     assert response_json["Attribute"]["first_seen"] is None
-
-
-@pytest.mark.asyncio
-async def test_get_all_attributes_site_admin(
-    access_test_objects,
-    client,
-) -> None:
-    headers = {"authorization": access_test_objects["site_admin_user_token"]}
-    response = client.get("/attributes", headers=headers)
-
-    assert response.status_code == 200
-    response_json = response.json()
-    print(response_json)
-    assert isinstance(response_json, list)
-    assert len(response_json) == 10
 
 
 @pytest.mark.asyncio
