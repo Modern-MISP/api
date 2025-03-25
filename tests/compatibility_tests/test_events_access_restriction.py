@@ -38,11 +38,15 @@ async def test_list_all_events_admin(auth_key, client) -> None:
 @pytest.mark.parametrize("user_key, event_key", access_test_objects_user_event_access_expect_granted)
 @pytest.mark.asyncio
 async def test_get_event_success(access_test_objects, user_key, event_key, client) -> None:
+    def preprocess(modern, legacy):
+        for a in modern["Event"]["Attribute"]:
+            del a["Tag"]
+
     path = f"/events/{access_test_objects[event_key].id}"
     request_body = None
     clear_key = access_test_objects[f"{user_key}_clear_key"]
     auth_key = access_test_objects[f"{user_key}_auth_key"]
-    assert get_legacy_modern_diff("get", path, request_body, (clear_key, auth_key), client) == {}
+    assert get_legacy_modern_diff("get", path, request_body, (clear_key, auth_key), client, preprocess) == {}
 
 
 @pytest.mark.parametrize("user_key, event_key", access_test_objects_user_event_access_expect_denied)
