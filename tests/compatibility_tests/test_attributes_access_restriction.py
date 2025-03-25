@@ -45,7 +45,6 @@ async def test_get_existing_attribute_fail(
     attribute_id = attribute.id
     print(attribute.asdict())
     path = f"/attributes/{attribute_id}"
-    attribute_id = access_test_objects["default_attribute"].id
     request_body = None
     clear_key = access_test_objects[f"{user_key}_clear_key"]
     auth_key = access_test_objects[f"{user_key}_auth_key"]
