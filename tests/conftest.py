@@ -17,6 +17,7 @@ import mmisp.lib.standard_roles as standard_roles
 from mmisp.api.auth import encode_token
 from mmisp.api.main import init_app
 from mmisp.db.models.admin_setting import AdminSetting
+from mmisp.db.models.attribute import Attribute
 from mmisp.db.models.auth_key import AuthKey
 from mmisp.db.models.event import EventTag
 from mmisp.db.models.galaxy_cluster import GalaxyCluster
@@ -706,7 +707,7 @@ async def access_test_objects(db, site_admin_user, site_admin_role, auth_key):
                                     attributekey = f"attribute_org{i}_{edl}_{sg_key}_{s_published}_{adl}"
                                     ret[attributekey] = await add_to_db(
                                         Attribute(
-                                            value=f"attribute_{eventkey}",
+                                            value=attributekey,
                                             type="text",
                                             category=AttributeCategories.OTHER.value,
                                             event_id=ret[eventkey].id,
@@ -723,7 +724,7 @@ async def access_test_objects(db, site_admin_user, site_admin_role, auth_key):
                                         ret[eventkey].attribute_count += 1
                                         ret[attributekey] = await add_to_db(
                                             Attribute(
-                                                value=f"attribute_{eventkey}",
+                                                value=attributekey,
                                                 type="text",
                                                 category=AttributeCategories.OTHER.value,
                                                 event_id=ret[eventkey].id,

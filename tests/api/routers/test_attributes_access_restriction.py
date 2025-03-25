@@ -38,6 +38,7 @@ async def test_get_attribute_fail(access_test_objects, user_key, attribute_key, 
 @pytest.mark.parametrize("user_key, attributes", user_to_attributes)
 @pytest.mark.asyncio
 async def test_get_all_attributes(
+    db,
     access_test_objects,
     user_key,
     attributes,
@@ -50,6 +51,7 @@ async def test_get_all_attributes(
     response_json = response.json()
     #    ic(response_json)
     assert isinstance(response_json, list)
+    ic(len(response_json))
     attribute_values = [x["value"] for x in response_json]
     diff = DeepDiff(attributes, attribute_values, ignore_order=True, verbose_level=2)
     ic(diff)
