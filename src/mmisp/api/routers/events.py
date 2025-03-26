@@ -563,14 +563,14 @@ async def _add_event(auth: Auth, db: Session, body: AddEventBody) -> AddEditGetE
         user,
         include_basic_event_attributes=True,
         include_non_galaxy_attribute_tags=True,
-        populate_existing=True,
+        #        populate_existing=True,
     )
     if event is None:
         raise ValueError("event is not available after adding")
 
     await execute_workflow("event-after-save", db, event)
 
-    event_data = await _prepare_event_response(db, event)
+    event_data = await _prepare_event_response(db, event, user)
 
     return AddEditGetEventResponse(Event=event_data)
 
@@ -587,7 +587,7 @@ async def _get_event_details(db: Session, event_id: int | uuid.UUID, user: User 
     if not event.can_access(user):
         raise HTTPException(status.HTTP_403_FORBIDDEN)
 
-    event_data = await _prepare_event_response(db, event)
+    event_data = await _prepare_event_response(db, event, user)
 
     return AddEditGetEventResponse(Event=event_data)
 
@@ -613,7 +613,7 @@ async def _update_event(
     await db.refresh(event)
     await execute_workflow("event-after-save", db, event)
 
-    event_data = await _prepare_event_response(db, event)
+    event_data = await _prepare_event_response(db, event, user)
 
     return AddEditGetEventResponse(Event=event_data)
 
@@ -696,7 +696,7 @@ async def _get_events(db: Session, user: User | None) -> list[GetAllEventsRespon
     # if not events:
     # raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No events found.")
 
-    event_responses = [_prepare_all_events_response(event, "get_all") for event in events]
+    event_responses = [_prepare_all_events_response(event, "get_all", user) for event in events]
 
     return event_responses
 
@@ -750,7 +750,7 @@ async def _rest_search_events(db: Session, body: SearchEventsBody, user: User | 
 
     response_list = []
     for event in events:
-        response_list.append(AddEditGetEventResponse(Event=await _prepare_event_response(db, event)))
+        response_list.append(AddEditGetEventResponse(Event=await _prepare_event_response(db, event, user)))
 
     return SearchEventsResponse(response=response_list)
 
@@ -804,7 +804,7 @@ async def _index_events(db: Session, body: IndexEventsBody, user: User | None) -
     result = await db.execute(query)
     events: Sequence[Event] = result.scalars().all()
 
-    response_list = [_prepare_all_events_response(event, "index") for event in events]
+    response_list = [_prepare_all_events_response(event, "index", user) for event in events]
 
     return response_list
 
@@ -935,7 +935,7 @@ async def _remove_tag_from_event(
 
 
 @alog
-async def _prepare_event_response(db: Session, event: Event) -> AddEditGetEventDetails:
+async def _prepare_event_response(db: Session, event: Event, user: User | None) -> AddEditGetEventDetails:
     event_dict = event.asdict()
 
     fields_to_convert = ["sharing_group_id", "timestamp", "publish_timestamp"]
@@ -1017,11 +1017,14 @@ async def _prepare_event_response(db: Session, event: Event) -> AddEditGetEventD
     event_dict["Galaxy"] = galaxy_response_list
     event_dict["date"] = str(event_dict["date"])
 
-    user = await db.get(User, event.user_id)
-    logger.warning("_prepare_event_response User id: %s", event.user_id)
-    if user is not None:
-        logger.warning("_prepare_event_response User: %s", user.__dict__)
-        event_dict["event_creator_email"] = user.email
+    if event.creator is not None and user is not None:
+        if (
+            user.role.check_permission(Permission.SITE_ADMIN)
+            or event.orgc_id == user.org_id
+            and user.role.check_permission(Permission.AUDIT)
+        ):
+            event_dict["event_creator_email"] = event.creator.email
+
     else:
         logger.warning("User not found with id: %s Event id: %s", event.user_id, event.id)
         logger.warning("_prepare_event_response Event: %s", event.__dict__)
@@ -1233,7 +1236,7 @@ def _prepare_event_report_response(event_report_list: Sequence[EventReport]) -> 
 
 
 @log
-def _prepare_all_events_response(event: Event, request_type: str) -> GetAllEventsResponse:
+def _prepare_all_events_response(event: Event, request_type: str, user: User | None) -> GetAllEventsResponse:
     event_dict = event.asdict()
 
     org_dict = event.org.asdict()
@@ -1246,9 +1249,14 @@ def _prepare_all_events_response(event: Event, request_type: str) -> GetAllEvent
 
     event_dict["GalaxyCluster"] = _prepare_all_events_galaxy_cluster_response(event.eventtags_galaxy)
     event_dict["date"] = str(event_dict["date"])
-    logger.warning("_prepare_all_events_response Event creator id : %s", event.user_id)
-    if event.user_id:
-        event_dict["event_creator_email"] = event.creator.email
+
+    # if event.creator is not None and user is not None:
+    #    if (
+    #        user.role.check_permission(Permission.SITE_ADMIN)
+    #        or event.orgc_id == user.org_id
+    #        and user.role.check_permission(Permission.AUDIT)
+    #    ):
+    #        event_dict["event_creator_email"] = event.creator.email
 
     if event.sharing_group is not None:
         event_dict["SharingGroup"] = event.sharing_group.asdict()
@@ -1380,6 +1388,7 @@ async def _get_event(
             selectinload(Event.orgc),
             selectinload(Event.eventtags_galaxy),
             selectinload(Event.tags),
+            selectinload(Event.creator),
             selectinload(Event.eventtags),
             selectinload(Event.mispobjects),
             selectinload(Event.attributes).options(
