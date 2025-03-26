@@ -126,6 +126,28 @@ async def test_get_existing_event(
 
 
 @pytest.mark.asyncio
+async def test_get_event_sharing_group(event_unpublished_sharing_group, site_admin_user_token, client) -> None:
+    event = event_unpublished_sharing_group
+    event_id = event.id
+
+    headers = {"authorization": site_admin_user_token}
+    ic("event_id", event_id)
+
+    response = client.get(f"/events/{event_id}", headers=headers)
+    ic("response", response)
+
+    assert response.status_code == 200
+    response_json = response.json()
+    ic(response_json)
+    assert "SharingGroup" in response_json["Event"]
+    assert "organisation_uuid" in response_json["Event"]["SharingGroup"]
+    assert "Organisation" in response_json["Event"]["SharingGroup"]
+    assert "SharingGroupOrg" in response_json["Event"]["SharingGroup"]
+    assert "Organisation" in response_json["Event"]["SharingGroup"]["SharingGroupOrg"][0]
+    assert "SharingGroupServer" in response_json["Event"]["SharingGroup"]
+
+
+@pytest.mark.asyncio
 async def test_get_existing_event_by_uuid(
     organisation, event, attribute, galaxy, galaxy_cluster, tag, site_admin_user_token, eventtag, client
 ) -> None:

@@ -56,16 +56,6 @@ def app():
 
 
 @pytest_asyncio.fixture
-async def sharing_group_org(db, sharing_group, instance_owner_org):
-    sharing_group_org = SharingGroupOrg(sharing_group_id=sharing_group.id, org_id=instance_owner_org.id)
-    db.add(sharing_group_org)
-    await db.commit()
-    yield sharing_group_org
-    await db.delete(sharing_group_org)
-    await db.commit()
-
-
-@pytest_asyncio.fixture
 async def sharing_group_org_two(db, sharing_group, instance_org_two):
     ic(instance_org_two)
     sharing_group_org = SharingGroupOrg(sharing_group_id=sharing_group.id, org_id=instance_org_two.id)

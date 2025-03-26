@@ -53,12 +53,15 @@ from mmisp.api_schemas.jobs import (
     FreeTextImportWorkerUser,
     FreeTextProcessID,
 )
+from mmisp.api_schemas.sharing_groups import (
+    EventSharingGroupResponse,
+)
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.attribute import Attribute, AttributeTag
 from mmisp.db.models.event import Event, EventReport, EventTag
 from mmisp.db.models.galaxy_cluster import GalaxyCluster, GalaxyReference
 from mmisp.db.models.object import Object
-from mmisp.db.models.sharing_group import SharingGroup
+from mmisp.db.models.sharing_group import SharingGroup, SharingGroupOrg
 from mmisp.db.models.tag import Tag
 from mmisp.db.models.user import User
 from mmisp.lib.actions import action_publish_event
@@ -554,32 +557,15 @@ async def _add_event(auth: Auth, db: Session, body: AddEventBody) -> AddEditGetE
     await db.flush()
     await db.refresh(new_event)
 
-    result = await db.execute(
-        select(Event)
-        .filter(Event.id == new_event.id)
-        .options(
-            selectinload(Event.org),
-            selectinload(Event.orgc),
-            selectinload(Event.eventtags_galaxy),
-            selectinload(Event.tags),
-            selectinload(Event.eventtags),
-            selectinload(Event.attributes).options(
-                selectinload(Attribute.attributetags_galaxy)
-                .selectinload(AttributeTag.tag)
-                .selectinload(Tag.galaxy_cluster)
-                .options(
-                    selectinload(GalaxyCluster.org),
-                    selectinload(GalaxyCluster.orgc),
-                    selectinload(GalaxyCluster.galaxy),
-                    selectinload(GalaxyCluster.galaxy_elements),
-                ),
-                selectinload(Attribute.attributetags).selectinload(AttributeTag.tag),
-            ),
-            selectinload(Event.mispobjects),
-        )
-        .execution_options(populate_existing=True)
+    event = await _get_event(
+        new_event.id,
+        db,
+        include_basic_event_attributes=True,
+        include_non_galaxy_attribute_tags=True,
+        populate_existing=True,
     )
-    event = result.scalars().one()
+    if event is None:
+        raise ValueError("event is not available after adding")
 
     await execute_workflow("event-after-save", db, event)
 
@@ -590,7 +576,7 @@ async def _add_event(auth: Auth, db: Session, body: AddEventBody) -> AddEditGetE
 
 @alog
 async def _get_event_details(db: Session, event_id: int | uuid.UUID, user: User | None) -> AddEditGetEventResponse:
-    event = await _get_event(event_id, db, True, True)
+    event = await _get_event(event_id, db, include_basic_event_attributes=True, include_non_galaxy_attribute_tags=True)
 
     if not event:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
@@ -607,7 +593,7 @@ async def _get_event_details(db: Session, event_id: int | uuid.UUID, user: User 
 async def _update_event(
     db: Session, event_id: int | uuid.UUID, body: EditEventBody, user: User | None
 ) -> AddEditGetEventResponse:
-    event = await _get_event(event_id, db, True, False)
+    event = await _get_event(event_id, db, include_basic_event_attributes=True, include_non_galaxy_attribute_tags=False)
 
     if not event:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
@@ -629,7 +615,7 @@ async def _update_event(
 
 @alog
 async def _delete_event(db: Session, event_id: int | uuid.UUID, user: User | None) -> DeleteEventResponse:
-    event = await _get_event(event_id, db, True, False)
+    event = await _get_event(event_id, db, include_basic_event_attributes=True, include_non_galaxy_attribute_tags=False)
 
     if event is None:
         raise HTTPException(
@@ -695,7 +681,7 @@ async def _get_events(db: Session, user: User | None) -> list[GetAllEventsRespon
             selectinload(Event.tags),
             selectinload(Event.eventtags).selectinload(EventTag.tag),
             selectinload(Event.creator),
-            selectinload(Event.sharing_group).selectinload(SharingGroup.organisations),
+            selectinload(Event.sharing_group),
         )
     )
     events: Sequence[Event] = result.scalars().all()
@@ -724,6 +710,11 @@ async def _rest_search_events(db: Session, body: SearchEventsBody, user: User | 
             selectinload(Event.eventtags),
             selectinload(Event.mispobjects),
             selectinload(Event.attributes).options(
+                selectinload(Attribute.sharing_group).options(
+                    selectinload(SharingGroup.sharing_group_orgs),
+                    selectinload(SharingGroup.organisations),
+                    selectinload(SharingGroup.creator_org),
+                ),
                 selectinload(Attribute.attributetags_galaxy)
                 .selectinload(AttributeTag.tag)
                 .selectinload(Tag.galaxy_cluster)
@@ -735,7 +726,11 @@ async def _rest_search_events(db: Session, body: SearchEventsBody, user: User | 
                 ),
                 selectinload(Attribute.attributetags).selectinload(AttributeTag.tag),
             ),
-            # selectinload(Event.sharing_group).options(selectinload(SharingGroup.organisations)),
+            selectinload(Event.sharing_group).options(
+                selectinload(SharingGroup.sharing_group_orgs),
+                selectinload(SharingGroup.organisations),
+                selectinload(SharingGroup.creator_org),
+            ),
         )
     )
     if body.limit is not None:
@@ -791,6 +786,7 @@ async def _index_events(db: Session, body: IndexEventsBody) -> list[GetAllEvents
             ),
             selectinload(Event.mispobjects),
             selectinload(Event.creator),
+            selectinload(Event.sharing_group),
         )
         .limit(limit)
         .offset(offset)
@@ -808,7 +804,7 @@ async def _index_events(db: Session, body: IndexEventsBody) -> list[GetAllEvents
 async def _publish_event(
     db: Session, event_id: int | uuid.UUID, request: Request, user: User | None
 ) -> PublishEventResponse:
-    event = await _get_event(event_id, db, True, False)
+    event = await _get_event(event_id, db, include_basic_event_attributes=True, include_non_galaxy_attribute_tags=False)
 
     if not event:
         return PublishEventResponse(
@@ -833,7 +829,7 @@ async def _publish_event(
 async def _unpublish_event(
     db: Session, event_id: int | uuid.UUID, request: Request, user: User | None
 ) -> UnpublishEventResponse:
-    event = await _get_event(event_id, db, True, False)
+    event = await _get_event(event_id, db, include_basic_event_attributes=True, include_non_galaxy_attribute_tags=False)
 
     if not event:
         return UnpublishEventResponse(name="Invalid event.", message="Invalid event.", url=str(request.url.path))
@@ -861,7 +857,7 @@ async def _unpublish_event(
 async def _add_tag_to_event(
     db: Session, event_id: int | uuid.UUID, tag_id: str, local: str
 ) -> AddRemoveTagEventsResponse:
-    event = await _get_event(event_id, db, True, False)
+    event = await _get_event(event_id, db, include_basic_event_attributes=True, include_non_galaxy_attribute_tags=False)
 
     if not event:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
@@ -892,7 +888,7 @@ async def _add_tag_to_event(
 async def _remove_tag_from_event(
     db: Session, event_id: int | uuid.UUID, tag_id: str, user: User | None
 ) -> AddRemoveTagEventsResponse:
-    event = await _get_event(event_id, db, True, False)
+    event = await _get_event(event_id, db, include_basic_event_attributes=True, include_non_galaxy_attribute_tags=False)
 
     if not event:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
@@ -923,7 +919,7 @@ async def _remove_tag_from_event(
 
 @alog
 async def _prepare_event_response(db: Session, event: Event) -> AddEditGetEventDetails:
-    event_dict = event.__dict__.copy()
+    event_dict = event.asdict()
 
     fields_to_convert = ["sharing_group_id", "timestamp", "publish_timestamp"]
     for field in fields_to_convert:
@@ -944,7 +940,15 @@ async def _prepare_event_response(db: Session, event: Event) -> AddEditGetEventD
 
     attribute_list = event.attributes
 
-    # event_dict["attribute_count"] = len(attribute_list) # there is a column in the db for that
+    if event.sharing_group is not None:
+        sgos = list(_compute_sgos_dict(x) for x in event.sharing_group.sharing_group_orgs)
+
+        event_dict["SharingGroup"] = EventSharingGroupResponse(
+            **event.sharing_group.asdict(),
+            Organisation=event.sharing_group.creator_org.asdict(),
+            SharingGroupOrg=sgos,
+            SharingGroupServer=[],
+        )
 
     if len(attribute_list) > 0:
         event_dict["Attribute"] = await _prepare_attribute_response(db, attribute_list)
@@ -1019,8 +1023,16 @@ async def _prepare_attribute_response(
 
         print("attribute sharing group", attribute.sharing_group)
         if attribute.sharing_group is not None:
-            attribute_dict["SharingGroup"] = attribute.sharing_group.asdict()
-            print(attribute_dict["SharingGroup"])
+            sgos = list(_compute_sgos_dict(x) for x in attribute.sharing_group.sharing_group_orgs)
+
+            attribute_dict["SharingGroup"] = EventSharingGroupResponse(
+                **attribute.sharing_group.asdict(),
+                Organisation=attribute.sharing_group.creator_org.asdict(),
+                SharingGroupOrg=sgos,
+                SharingGroupServer=[],
+            )
+            #            attribute_dict["SharingGroup"] = attribute.sharing_group.asdict()
+            #            print(attribute_dict["SharingGroup"])
 
         attribute_tag_list = attribute.attributetags
 
@@ -1205,11 +1217,10 @@ def _prepare_event_report_response(event_report_list: Sequence[EventReport]) -> 
 
 @log
 def _prepare_all_events_response(event: Event, request_type: str) -> GetAllEventsResponse:
-    event_dict = event.__dict__.copy()
-    event_dict["sharing_group_id"] = "0"
+    event_dict = event.asdict()
 
-    org_dict = event.org.__dict__.copy()
-    orgc_dict = event.orgc.__dict__.copy()
+    org_dict = event.org.asdict()
+    orgc_dict = event.orgc.asdict()
 
     event_dict["Org"] = GetAllEventsOrg(**org_dict)
     event_dict["Orgc"] = GetAllEventsOrg(**orgc_dict)
@@ -1221,6 +1232,9 @@ def _prepare_all_events_response(event: Event, request_type: str) -> GetAllEvent
     logger.warning("_prepare_all_events_response Event creator id : %s", event.user_id)
     if event.user_id:
         event_dict["event_creator_email"] = event.creator.email
+
+    if event.sharing_group is not None:
+        event_dict["SharingGroup"] = event.sharing_group.asdict()
 
     response_strategy = {"get_all": GetAllEventsResponse, "index": IndexEventsAttributes}
 
@@ -1286,8 +1300,10 @@ def _prepare_all_events_event_tag_response(event_tag_list: Sequence[EventTag]) -
 async def _get_event(
     event_id: int | uuid.UUID,
     db: Session,
+    *,
     include_basic_event_attributes: bool = False,
     include_non_galaxy_attribute_tags: bool = False,
+    populate_existing: bool = False,
 ) -> Event | None:
     """Get's an event by its UUID with varying amounts of included attributes loaded in.
 
@@ -1316,7 +1332,11 @@ async def _get_event(
             selectinload(Event.eventtags),
             selectinload(Event.mispobjects),
             selectinload(Event.attributes).options(
-                selectinload(Attribute.sharing_group),
+                selectinload(Attribute.sharing_group).options(
+                    selectinload(SharingGroup.sharing_group_orgs),
+                    selectinload(SharingGroup.organisations),
+                    selectinload(SharingGroup.creator_org),
+                ),
                 selectinload(Attribute.attributetags_galaxy)
                 .selectinload(AttributeTag.tag)
                 .selectinload(Tag.galaxy_cluster)
@@ -1328,7 +1348,11 @@ async def _get_event(
                 ),
                 selectinload(Attribute.attributetags).selectinload(AttributeTag.tag),
             ),
-            selectinload(Event.sharing_group),
+            selectinload(Event.sharing_group).options(
+                selectinload(SharingGroup.sharing_group_orgs),
+                selectinload(SharingGroup.organisations),
+                selectinload(SharingGroup.creator_org),
+            ),
         )
 
     elif include_basic_event_attributes:
@@ -1340,6 +1364,11 @@ async def _get_event(
             selectinload(Event.eventtags),
             selectinload(Event.mispobjects),
             selectinload(Event.attributes).options(
+                selectinload(Attribute.sharing_group).options(
+                    selectinload(SharingGroup.sharing_group_orgs),
+                    selectinload(SharingGroup.organisations),
+                    selectinload(SharingGroup.creator_org),
+                ),
                 selectinload(Attribute.attributetags_galaxy)
                 .selectinload(AttributeTag.tag)
                 .selectinload(Tag.galaxy_cluster)
@@ -1350,9 +1379,22 @@ async def _get_event(
                     selectinload(GalaxyCluster.galaxy_elements),
                 ),
             ),
+            selectinload(Event.sharing_group).options(
+                selectinload(SharingGroup.sharing_group_orgs),
+                selectinload(SharingGroup.organisations),
+                selectinload(SharingGroup.creator_org),
+            ),
         )
+    if populate_existing:
+        query = query.execution_options(populate_existing=True)
 
     result = await db.execute(query)
     event = result.scalars().one_or_none()
 
     return event
+
+
+def _compute_sgos_dict(sgo: SharingGroupOrg) -> dict:
+    sgo_dict = sgo.asdict()
+    sgo_dict["Organisation"] = sgo.organisation.asdict()
+    return sgo_dict
