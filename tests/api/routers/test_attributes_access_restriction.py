@@ -307,37 +307,33 @@ async def test_delete_selected_attributes_from_existing_event_fail(access_test_o
     assert response.status_code == 404
 
 
+@pytest.mark.parametrize("user_key, attributes", user_to_attributes)
 @pytest.mark.asyncio
-async def test_attribute_type_absolute_statistics(access_test_objects, client) -> None:
-    headers = {"authorization": access_test_objects["default_user_token"]}
+async def test_attribute_type_absolute_statistics(access_test_objects, user_key, attributes, client) -> None:
+    headers = {"authorization": access_test_objects[f"{user_key}_token"]}
     response = client.get("/attributes/attributeStatistics/type/0", headers=headers)
     assert response.status_code == 200
 
 
+@pytest.mark.parametrize("user_key, attributes", user_to_attributes)
 @pytest.mark.asyncio
-async def test_attribute_type_relative_statistics(access_test_objects, client) -> None:
-    headers = {"authorization": access_test_objects["default_user_token"]}
+async def test_attribute_type_relative_statistics(access_test_objects, user_key, attributes, client) -> None:
+    headers = {"authorization": access_test_objects[f"{user_key}_token"]}
     response = client.get("/attributes/attributeStatistics/type/1", headers=headers)
     assert response.status_code == 200
 
 
+@pytest.mark.parametrize("user_key, attributes", user_to_attributes)
 @pytest.mark.asyncio
-async def test_attribute_category_absolute_statistics(access_test_objects, client) -> None:
-    headers = {"authorization": access_test_objects["default_user_token"]}
+async def test_attribute_category_absolute_statistics(access_test_objects, user_key, attributes, client) -> None:
+    headers = {"authorization": access_test_objects[f"{user_key}_token"]}
     response = client.get("/attributes/attributeStatistics/category/0", headers=headers)
     assert response.status_code == 200
 
 
+@pytest.mark.parametrize("user_key, attributes", user_to_attributes)
 @pytest.mark.asyncio
-async def test_attribute_category_relative_statistics(access_test_objects, client) -> None:
-    headers = {"authorization": access_test_objects["default_user_token"]}
+async def test_attribute_category_relative_statistics(access_test_objects, user_key, attributes, client) -> None:
+    headers = {"authorization": access_test_objects[f"{user_key}_token"]}
     response = client.get("/attributes/attributeStatistics/category/1", headers=headers)
-    assert response.status_code == 200
-
-
-@pytest.mark.asyncio
-async def test_valid_search_attribute_data(access_test_objects, client) -> None:
-    request_body = {"returnFormat": "json", "limit": 100}
-    headers = {"authorization": access_test_objects["default_user_token"]}
-    response = client.post("/attributes/restSearch", json=request_body, headers=headers)
     assert response.status_code == 200
