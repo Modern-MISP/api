@@ -11,7 +11,7 @@ import httpx
 from fastapi import APIRouter, Depends, HTTPException, Path
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy import select
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import selectinload, with_loader_criteria
 from sqlalchemy.sql import Select
 from starlette import status
 from starlette.requests import Request
@@ -242,7 +242,7 @@ async def index_events(
     returns:
         the searched events
     """
-    return await _index_events(db, body)
+    return await _index_events(db, body, auth.user)
 
 
 @router.post(
@@ -322,7 +322,7 @@ async def add_tag_to_event(
     returns:
         the result of adding the tag to the event given by the api
     """
-    return await _add_tag_to_event(db, event_id, tag_id, local)
+    return await _add_tag_to_event(db, event_id, tag_id, local, auth.user)
 
 
 @router.post(
@@ -534,7 +534,7 @@ async def _add_event(auth: Auth, db: Session, body: AddEventBody) -> AddEditGetE
     if not isinstance(body.info, str):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN_BAD_REQUEST, detail="invalid 'info'")
 
-    user = await db.get(User, auth.user_id)
+    user = auth.user
     if user is None:
         # this should never happen, it would mean, the user disappeared between auth and processing the request
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="user not available")
@@ -560,6 +560,7 @@ async def _add_event(auth: Auth, db: Session, body: AddEventBody) -> AddEditGetE
     event = await _get_event(
         new_event.id,
         db,
+        user,
         include_basic_event_attributes=True,
         include_non_galaxy_attribute_tags=True,
         populate_existing=True,
@@ -576,7 +577,9 @@ async def _add_event(auth: Auth, db: Session, body: AddEventBody) -> AddEditGetE
 
 @alog
 async def _get_event_details(db: Session, event_id: int | uuid.UUID, user: User | None) -> AddEditGetEventResponse:
-    event = await _get_event(event_id, db, include_basic_event_attributes=True, include_non_galaxy_attribute_tags=True)
+    event = await _get_event(
+        event_id, db, user, include_basic_event_attributes=True, include_non_galaxy_attribute_tags=True
+    )
 
     if not event:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
@@ -593,7 +596,9 @@ async def _get_event_details(db: Session, event_id: int | uuid.UUID, user: User 
 async def _update_event(
     db: Session, event_id: int | uuid.UUID, body: EditEventBody, user: User | None
 ) -> AddEditGetEventResponse:
-    event = await _get_event(event_id, db, include_basic_event_attributes=True, include_non_galaxy_attribute_tags=False)
+    event = await _get_event(
+        event_id, db, user, include_basic_event_attributes=True, include_non_galaxy_attribute_tags=False
+    )
 
     if not event:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
@@ -615,7 +620,9 @@ async def _update_event(
 
 @alog
 async def _delete_event(db: Session, event_id: int | uuid.UUID, user: User | None) -> DeleteEventResponse:
-    event = await _get_event(event_id, db, include_basic_event_attributes=True, include_non_galaxy_attribute_tags=False)
+    event = await _get_event(
+        event_id, db, user, include_basic_event_attributes=True, include_non_galaxy_attribute_tags=False
+    )
 
     if event is None:
         raise HTTPException(
@@ -726,6 +733,7 @@ async def _rest_search_events(db: Session, body: SearchEventsBody, user: User | 
                 ),
                 selectinload(Attribute.attributetags).selectinload(AttributeTag.tag),
             ),
+            with_loader_criteria(Attribute, Attribute.can_access(user)),
             selectinload(Event.sharing_group).options(
                 selectinload(SharingGroup.sharing_group_orgs),
                 selectinload(SharingGroup.organisations),
@@ -748,7 +756,7 @@ async def _rest_search_events(db: Session, body: SearchEventsBody, user: User | 
 
 
 @alog
-async def _index_events(db: Session, body: IndexEventsBody) -> list[GetAllEventsResponse]:
+async def _index_events(db: Session, body: IndexEventsBody, user: User | None) -> list[GetAllEventsResponse]:
     limit = 25
     offset = 0
 
@@ -784,6 +792,7 @@ async def _index_events(db: Session, body: IndexEventsBody) -> list[GetAllEvents
                     selectinload(GalaxyCluster.galaxy_elements),
                 )
             ),
+            with_loader_criteria(Attribute, Attribute.can_access(user)),
             selectinload(Event.mispobjects),
             selectinload(Event.creator),
             selectinload(Event.sharing_group),
@@ -804,7 +813,9 @@ async def _index_events(db: Session, body: IndexEventsBody) -> list[GetAllEvents
 async def _publish_event(
     db: Session, event_id: int | uuid.UUID, request: Request, user: User | None
 ) -> PublishEventResponse:
-    event = await _get_event(event_id, db, include_basic_event_attributes=True, include_non_galaxy_attribute_tags=False)
+    event = await _get_event(
+        event_id, db, user, include_basic_event_attributes=True, include_non_galaxy_attribute_tags=False
+    )
 
     if not event:
         return PublishEventResponse(
@@ -821,7 +832,7 @@ async def _publish_event(
     await action_publish_event(db, event)
 
     return PublishEventResponse(
-        saved=True, success=True, name="Job queued", message="Job queued", url=str(request.url.path), id=str(event_id)
+        saved=True, success=True, name="Job queued", message="Job queued", url=str(request.url.path), id=event_id
     )
 
 
@@ -829,7 +840,9 @@ async def _publish_event(
 async def _unpublish_event(
     db: Session, event_id: int | uuid.UUID, request: Request, user: User | None
 ) -> UnpublishEventResponse:
-    event = await _get_event(event_id, db, include_basic_event_attributes=True, include_non_galaxy_attribute_tags=False)
+    event = await _get_event(
+        event_id, db, user, include_basic_event_attributes=True, include_non_galaxy_attribute_tags=False
+    )
 
     if not event:
         return UnpublishEventResponse(name="Invalid event.", message="Invalid event.", url=str(request.url.path))
@@ -849,15 +862,17 @@ async def _unpublish_event(
         name="Event unpublished.",
         message="Event unpublished.",
         url=str(request.url.path),
-        id=str(event_id),
+        id=event_id,
     )
 
 
 @alog
 async def _add_tag_to_event(
-    db: Session, event_id: int | uuid.UUID, tag_id: str, local: str
+    db: Session, event_id: int | uuid.UUID, tag_id: str, local: str, user: User | None
 ) -> AddRemoveTagEventsResponse:
-    event = await _get_event(event_id, db, include_basic_event_attributes=True, include_non_galaxy_attribute_tags=False)
+    event = await _get_event(
+        event_id, db, user, include_basic_event_attributes=True, include_non_galaxy_attribute_tags=False
+    )
 
     if not event:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
@@ -888,7 +903,9 @@ async def _add_tag_to_event(
 async def _remove_tag_from_event(
     db: Session, event_id: int | uuid.UUID, tag_id: str, user: User | None
 ) -> AddRemoveTagEventsResponse:
-    event = await _get_event(event_id, db, include_basic_event_attributes=True, include_non_galaxy_attribute_tags=False)
+    event = await _get_event(
+        event_id, db, user, include_basic_event_attributes=True, include_non_galaxy_attribute_tags=False
+    )
 
     if not event:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
@@ -1300,6 +1317,7 @@ def _prepare_all_events_event_tag_response(event_tag_list: Sequence[EventTag]) -
 async def _get_event(
     event_id: int | uuid.UUID,
     db: Session,
+    user: User | None,
     *,
     include_basic_event_attributes: bool = False,
     include_non_galaxy_attribute_tags: bool = False,
@@ -1348,6 +1366,7 @@ async def _get_event(
                 ),
                 selectinload(Attribute.attributetags).selectinload(AttributeTag.tag),
             ),
+            with_loader_criteria(Attribute, Attribute.can_access(user)),
             selectinload(Event.sharing_group).options(
                 selectinload(SharingGroup.sharing_group_orgs),
                 selectinload(SharingGroup.organisations),
@@ -1379,6 +1398,7 @@ async def _get_event(
                     selectinload(GalaxyCluster.galaxy_elements),
                 ),
             ),
+            with_loader_criteria(Attribute, Attribute.can_access(user)),
             selectinload(Event.sharing_group).options(
                 selectinload(SharingGroup.sharing_group_orgs),
                 selectinload(SharingGroup.organisations),
