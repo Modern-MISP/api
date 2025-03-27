@@ -1,3 +1,6 @@
+import random
+import string
+
 import pytest
 import sqlalchemy as sa
 
@@ -86,31 +89,35 @@ async def test_delete_existing_attribute_fail(access_test_objects, client, user_
 @pytest.mark.parametrize("user_key, event_key", access_test_objects_user_event_edit_expect_granted)
 @pytest.mark.asyncio
 async def test_add_attribute(db, access_test_objects, client, user_key, event_key) -> None:
-    headers = {"authorization": access_test_objects[f"{user_key}_token"]}
+    clear_key = access_test_objects[f"{user_key}_clear_key"]
+    auth_key = access_test_objects[f"{user_key}_auth_key"]
+
+    random_test = "".join(random.choices(string.ascii_letters, k=20))
     request_body = {
         "value": "1.2.3.4",
-        "type": "ip-src",
-        "category": "Network activity",
+        "type": "text",
+        "category": "other",
         "to_ids": True,
         "distribution": "1",
         "comment": "test comment",
         "disable_correlation": False,
     }
     event_id = access_test_objects[event_key].id
-    response = client.post(f"/attributes/{event_id}", json=request_body, headers=headers)
+    path = f"/attributes/{event_id}"
+    assert get_legacy_modern_diff("post", path, request_body, (clear_key, auth_key), client, dry_run=True) == {}
 
-    assert response.status_code == 200
-
-    stmt = sa.sql.text("DELETE FROM attributes WHERE id=:id")
+    stmt = sa.sql.text("DELETE FROM attributes WHERE value1=:val")
     #    stmt.bindparams(id=response_json["Attribute"]["id"])
-    await db.execute(stmt, {"id": response.json()["Attribute"]["id"]})
+    await db.execute(stmt, {"val": random_test})
     await db.commit()
 
 
 @pytest.mark.parametrize("user_key, event_key", access_test_objects_user_event_edit_expect_denied)
 @pytest.mark.asyncio
 async def test_add_attribute_fail(access_test_objects, client, user_key, event_key) -> None:
-    headers = {"authorization": access_test_objects[f"{user_key}_token"]}
+    clear_key = access_test_objects[f"{user_key}_clear_key"]
+    auth_key = access_test_objects[f"{user_key}_auth_key"]
+
     request_body = {
         "value": "1.2.3.4",
         "type": "ip-src",
@@ -121,9 +128,8 @@ async def test_add_attribute_fail(access_test_objects, client, user_key, event_k
         "disable_correlation": False,
     }
     event_id = access_test_objects[event_key].id
-    response = client.post(f"/attributes/{event_id}", json=request_body, headers=headers)
-
-    assert response.status_code == 403
+    path = f"/attributes/{event_id}"
+    assert get_legacy_modern_diff("post", path, request_body, (clear_key, auth_key), client) == {}
 
 
 # @pytest.mark.asyncio
