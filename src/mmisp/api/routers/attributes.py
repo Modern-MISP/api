@@ -625,7 +625,6 @@ async def _delete_attribute(db: Session, attribute_id: int | uuid.UUID, user: Us
         result = await db.execute(
             select(Attribute)
             .filter(Attribute.id == attribute_id)
-            .filter(Attribute.can_edit(user))
             .options(
                 selectinload(Attribute.sharing_group),
             )
