@@ -984,7 +984,7 @@ async def _get_attribute_category_statistics(db: Session, percentage: bool) -> G
     if percentage:
         total_count_of_attributes = sum(cast(int, x.count) for x in attribute_count_by_category)
         percentages = {
-            k: f"{str(round(v / total_count_of_attributes * 100, 3)).rstrip('.0')}%"
+            k: f"{str(round(v / total_count_of_attributes * 100, 3)).rstrip('0').rstrip('.')}%"
             for k, v in attribute_count_by_category_dict.items()
         }
         return GetAttributeStatisticsCategoriesResponse(**percentages)
@@ -1004,7 +1004,7 @@ async def _get_attribute_type_statistics(
     if percentage:
         total_count_of_attributes = sum(cast(int, x.count) for x in attribute_count_by_group)
         percentages = {
-            k: f"{str(round(v / total_count_of_attributes * 100, 3)).strip('.0')}%"
+            k: f"{str(round(v / total_count_of_attributes * 100, 3)).rstrip('0').rstrip('.')}%"
             for k, v in attribute_count_by_group_dict.items()
         }
         return GetAttributeStatisticsTypesResponse(**percentages)

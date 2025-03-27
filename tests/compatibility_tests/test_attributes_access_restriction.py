@@ -1,9 +1,14 @@
 import pytest
+import sqlalchemy as sa
 
 from mmisp.tests.compatibility_helpers import get_legacy_modern_diff
 from mmisp.tests.maps import (
     access_test_objects_user_attribute_access_expect_denied,
     access_test_objects_user_attribute_access_expect_granted,
+    access_test_objects_user_attribute_edit_expect_denied,
+    access_test_objects_user_attribute_edit_expect_granted,
+    access_test_objects_user_event_edit_expect_denied,
+    access_test_objects_user_event_edit_expect_granted,
 )
 
 # @pytest.mark.asyncio
@@ -50,6 +55,75 @@ async def test_get_existing_attribute_fail(
     auth_key = access_test_objects[f"{user_key}_auth_key"]
 
     assert get_legacy_modern_diff("get", path, request_body, (clear_key, auth_key), client) == {}
+
+
+@pytest.mark.parametrize("user_key, attribute_key", access_test_objects_user_attribute_edit_expect_granted)
+@pytest.mark.asyncio
+async def test_delete_existing_attribute(access_test_objects, client, user_key, attribute_key) -> None:
+    clear_key = access_test_objects[f"{user_key}_clear_key"]
+    auth_key = access_test_objects[f"{user_key}_auth_key"]
+    attribute = access_test_objects[attribute_key]
+    attribute_id = attribute.id
+    request_body = None
+
+    path = f"/attributes/{attribute_id}"
+    assert get_legacy_modern_diff("delete", path, request_body, (clear_key, auth_key), client, dry_run=True) == {}
+
+
+@pytest.mark.parametrize("user_key, attribute_key", access_test_objects_user_attribute_edit_expect_denied)
+@pytest.mark.asyncio
+async def test_delete_existing_attribute_fail(access_test_objects, client, user_key, attribute_key) -> None:
+    clear_key = access_test_objects[f"{user_key}_clear_key"]
+    auth_key = access_test_objects[f"{user_key}_auth_key"]
+    attribute = access_test_objects[attribute_key]
+    attribute_id = attribute.id
+    request_body = None
+
+    path = f"/attributes/{attribute_id}"
+    assert get_legacy_modern_diff("delete", path, request_body, (clear_key, auth_key), client, dry_run=True) == {}
+
+
+@pytest.mark.parametrize("user_key, event_key", access_test_objects_user_event_edit_expect_granted)
+@pytest.mark.asyncio
+async def test_add_attribute(db, access_test_objects, client, user_key, event_key) -> None:
+    headers = {"authorization": access_test_objects[f"{user_key}_token"]}
+    request_body = {
+        "value": "1.2.3.4",
+        "type": "ip-src",
+        "category": "Network activity",
+        "to_ids": True,
+        "distribution": "1",
+        "comment": "test comment",
+        "disable_correlation": False,
+    }
+    event_id = access_test_objects[event_key].id
+    response = client.post(f"/attributes/{event_id}", json=request_body, headers=headers)
+
+    assert response.status_code == 200
+
+    stmt = sa.sql.text("DELETE FROM attributes WHERE id=:id")
+    #    stmt.bindparams(id=response_json["Attribute"]["id"])
+    await db.execute(stmt, {"id": response.json()["Attribute"]["id"]})
+    await db.commit()
+
+
+@pytest.mark.parametrize("user_key, event_key", access_test_objects_user_event_edit_expect_denied)
+@pytest.mark.asyncio
+async def test_add_attribute_fail(access_test_objects, client, user_key, event_key) -> None:
+    headers = {"authorization": access_test_objects[f"{user_key}_token"]}
+    request_body = {
+        "value": "1.2.3.4",
+        "type": "ip-src",
+        "category": "Network activity",
+        "to_ids": True,
+        "distribution": "1",
+        "comment": "test comment",
+        "disable_correlation": False,
+    }
+    event_id = access_test_objects[event_key].id
+    response = client.post(f"/attributes/{event_id}", json=request_body, headers=headers)
+
+    assert response.status_code == 403
 
 
 # @pytest.mark.asyncio
