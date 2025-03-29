@@ -62,6 +62,55 @@ async def test_get_existing_attribute_fail(
 
 @pytest.mark.parametrize("user_key, attribute_key", access_test_objects_user_attribute_edit_expect_granted)
 @pytest.mark.asyncio
+async def test_edit_existing_attribute(access_test_objects, client, user_key, attribute_key) -> None:
+    def preprocessor(modern, legacy):
+        del modern["Attribute"]["timestamp"]
+        del legacy["Attribute"]["timestamp"]
+
+    clear_key = access_test_objects[f"{user_key}_clear_key"]
+    auth_key = access_test_objects[f"{user_key}_auth_key"]
+    attribute = access_test_objects[attribute_key]
+    attribute_id = attribute.id
+
+    request_body = {
+        "category": "Payload delivery",
+        "value": "2.3.4.5",
+        "to_ids": True,
+        "distribution": "1",
+        "comment": "new comment",
+        "disable_correlation": False,
+        "first_seen": "",
+    }
+    path = f"/attributes/{attribute_id}"
+    assert (
+        get_legacy_modern_diff("put", path, request_body, (clear_key, auth_key), client, preprocessor, dry_run=True)
+        == {}
+    )
+
+
+@pytest.mark.parametrize("user_key, attribute_key", access_test_objects_user_attribute_edit_expect_denied)
+@pytest.mark.asyncio
+async def test_edit_existing_attribute_fail(access_test_objects, client, user_key, attribute_key) -> None:
+    clear_key = access_test_objects[f"{user_key}_clear_key"]
+    auth_key = access_test_objects[f"{user_key}_auth_key"]
+    attribute = access_test_objects[attribute_key]
+    attribute_id = attribute.id
+
+    request_body = {
+        "category": "Payload delivery",
+        "value": "2.3.4.5",
+        "to_ids": True,
+        "distribution": "1",
+        "comment": "new comment",
+        "disable_correlation": False,
+        "first_seen": "",
+    }
+    path = f"/attributes/{attribute_id}"
+    assert get_legacy_modern_diff("put", path, request_body, (clear_key, auth_key), client, dry_run=True) == {}
+
+
+@pytest.mark.parametrize("user_key, attribute_key", access_test_objects_user_attribute_edit_expect_granted)
+@pytest.mark.asyncio
 async def test_delete_existing_attribute(access_test_objects, client, user_key, attribute_key) -> None:
     clear_key = access_test_objects[f"{user_key}_clear_key"]
     auth_key = access_test_objects[f"{user_key}_auth_key"]

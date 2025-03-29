@@ -145,30 +145,6 @@ async def test_remove_existing_tag_from_attribute(
 
 
 @pytest.mark.asyncio
-async def test_edit_existing_attribute(
-    access_test_objects,
-    auth_key,
-    client,
-) -> None:
-    def preprocessor(modern, legacy):
-        del modern["Attribute"]["timestamp"]
-        del legacy["Attribute"]["timestamp"]
-
-    request_body = {
-        "category": "Payload delivery",
-        "value": "2.3.4.5",
-        "to_ids": True,
-        "distribution": "1",
-        "comment": "new comment",
-        "disable_correlation": False,
-        "first_seen": "",
-    }
-    attribute = access_test_objects["default_attribute_2"]
-    path = f"/attributes/{attribute.id}"
-    assert get_legacy_modern_diff("put", path, request_body, auth_key, client, preprocessor) == {}
-
-
-@pytest.mark.asyncio
 async def test_update_non_existing_event(db, auth_key, client) -> None:
     path = f"/events/{9999}"
 
