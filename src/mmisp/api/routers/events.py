@@ -437,6 +437,8 @@ async def add_event_depr(
 
     - the new event
     """
+
+    print(f"add_event_depr input_body: {body}")
     return await _add_event(auth, db, body)
 
 
@@ -558,6 +560,8 @@ async def _add_event(auth: Auth, db: AsyncSession, body: AddEventBody) -> AddEdi
             "user_id": user.id,
         }
     )
+
+    print(f"_add_event new_event: {new_event}")
 
     await execute_blocking_workflow("event-before-save", db, new_event)
     db.add(new_event)
