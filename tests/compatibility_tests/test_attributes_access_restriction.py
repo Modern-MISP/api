@@ -393,38 +393,6 @@ async def test_edit_existing_attribute(
 """
 
 
-"""
-@pytest.mark.asyncio
-async def test_delete_selected_attributes_from_existing_event(access_test_objects, client) -> None:
-    request_body = {"id": "1 2", "allow_hard_delete": False}
-    event_id = access_test_objects["default_event"].id
-    attribute_id = access_test_objects["default_attribute"].id
-    attribute2_id = access_test_objects["default_attribute_2"].id
-    attribute_ids = str(attribute_id) + " " + str(attribute2_id)
-    request_body["id"] = attribute_ids
-
-    path = f"/attributes/deleteSelected/{event_id}"
-    clear_key = access_test_objects["default_user_clear_key"]
-    auth_key = access_test_objects["default_user_auth_key"]
-    assert get_legacy_modern_diff("post", path, request_body, (clear_key, auth_key), client) == {}
-"""
-
-
-# @pytest.mark.asyncio
-# async def test_delete_selected_attributes_from_existing_event_fail(access_test_objects, client) -> None:
-#    request_body = {"id": "1 2", "allow_hard_delete": False}
-#    event_id = access_test_objects["default_event"].id
-#
-#    attribute_id = access_test_objects["attribute_no_access"].id
-#    attribute2_id = access_test_objects["attribute_no_access_2"].id
-#    attribute_ids = str(attribute_id) + " " + str(attribute2_id)
-#    request_body["id"] = attribute_ids
-#    path = f"/attributes/deleteSelected/{event_id}"
-#    clear_key = access_test_objects["default_user_clear_key"]
-#    auth_key = access_test_objects["default_user_auth_key"]
-#    assert get_legacy_modern_diff("post", path, request_body, (clear_key, auth_key), client) == {}
-
-
 # @pytest.mark.asyncio
 # async def test_valid_search_attribute_data(access_test_objects, client) -> None:
 #    request_body = {"returnFormat": "json", "limit": 100}
