@@ -617,7 +617,7 @@ async def access_test_objects(db, site_admin_user, site_admin_role, auth_key):
         await add_to_db(SharingGroupOrg(sharing_group_id=ret["sg_org2_org3"].id, org_id=ret["org3"].id))
 
         # create events
-        for i in range(1, 4):
+        for i in range(1, 3):  # dont create events for org3
             for edl in EventDistributionLevels:
                 for published in [False, True]:
                     s_published = f"{'un' if not published else ''}published"

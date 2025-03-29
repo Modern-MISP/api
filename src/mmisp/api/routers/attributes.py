@@ -39,6 +39,7 @@ from mmisp.db.models.event import Event
 from mmisp.db.models.tag import Tag
 from mmisp.db.models.user import User
 from mmisp.lib.attribute_search_filter import get_search_filters
+from mmisp.lib.distribution import AttributeDistributionLevels
 from mmisp.lib.logger import alog, log
 from mmisp.util.models import update_record
 
@@ -602,6 +603,30 @@ async def _update_attribute(
     for seen in ["first_seen", "last_seen"]:
         if seen in payload and not payload[seen]:
             payload[seen] = None
+
+    if "distribution" in payload and user is not None:
+        sharing_group_id: int | None = payload.get("sharing_group_id", None)
+        if payload["distribution"] == AttributeDistributionLevels.SHARING_GROUP:
+            # sharing group_id can be anything > 0
+            if sharing_group_id not in user.org._sharing_group_ids:
+                raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY)
+        elif payload["distribution"] == AttributeDistributionLevels.INHERIT_EVENT:
+            event_sharing_group_id = attribute.event.sharing_group_id
+
+            if sharing_group_id is None:
+                sharing_group_id = event_sharing_group_id
+            # sharing_group_id must be the same as event
+            if sharing_group_id != event_sharing_group_id:
+                raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY)
+
+            payload["sharing_group_id"] = sharing_group_id
+        else:
+            # sharing_group_id must be 0
+            if sharing_group_id is None:
+                payload["sharing_group_id"] = 0
+            elif sharing_group_id > 0:
+                raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY)
+            payload["sharing_group_id"] = 0
 
     update_record(attribute, payload)
 
