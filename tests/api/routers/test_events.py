@@ -329,7 +329,7 @@ async def test_invalid_search_attribute_data(site_admin_user_token, client) -> N
 
 @pytest.mark.asyncio
 async def test_index_events_valid_data(organisation, event, site_admin_user_token, client) -> None:
-    json = {"distribution": "1"}
+    json = {"distribution": 1}
     headers = {"authorization": site_admin_user_token}
     response = client.post("/events/index", json=json, headers=headers)
     assert response.status_code == 200

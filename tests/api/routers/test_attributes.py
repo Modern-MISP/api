@@ -17,7 +17,7 @@ async def test_add_attribute_valid_data(site_admin_user_token, event, db, client
         "type": "ip-src",
         "category": "Network activity",
         "to_ids": True,
-        "distribution": "1",
+        "distribution": 1,
         "comment": "test comment",
         "disable_correlation": False,
     }
@@ -52,7 +52,7 @@ async def test_add_attribute_valid_data_by_event_uuid(site_admin_user_token, eve
         "type": "ip-src",
         "category": "Network activity",
         "to_ids": True,
-        "distribution": "1",
+        "distribution": 1,
         "comment": "test comment",
         "disable_correlation": False,
     }
@@ -89,7 +89,7 @@ async def test_add_attribute_invalid_event_id(site_admin_user_token, client) -> 
         "type": "ip-src",
         "category": "Network activity",
         "to_ids": True,
-        "distribution": "1",
+        "distribution": 1,
         "comment": "test comment",
         "disable_correlation": False,
     }
@@ -248,7 +248,7 @@ async def test_edit_existing_attribute(
         "category": "Payload delivery",
         "value": "2.3.4.5",
         "to_ids": True,
-        "distribution": "1",
+        "distribution": 1,
         "comment": "new comment",
         "disable_correlation": False,
         "first_seen": "",
@@ -304,7 +304,7 @@ async def test_edit_existing_attribute_by_uuid(
         "category": "Payload delivery",
         "value": "2.3.4.5",
         "to_ids": True,
-        "distribution": "1",
+        "distribution": 1,
         "comment": "new comment",
         "disable_correlation": False,
         "first_seen": "",
@@ -358,7 +358,7 @@ async def test_edit_non_existing_attribute(site_admin_user_token, client) -> Non
         "category": "Payload delivery",
         "value": "2.3.4.5",
         "to_ids": True,
-        "distribution": "1",
+        "distribution": 1,
         "comment": "new comment",
         "disable_correlation": False,
     }
