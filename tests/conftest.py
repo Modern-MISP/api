@@ -627,7 +627,7 @@ async def access_test_objects(db, site_admin_user, site_admin_role, auth_key):
                             Event(
                                 org_id=ret[f"org{i}"].id,
                                 orgc_id=ret[f"org{i}"].id,
-                                user_id=1,
+                                user_id=site_admin_user.id,
                                 uuid=libuuid.uuid4(),
                                 sharing_group_id=0,
                                 threat_level_id=1,
@@ -680,7 +680,7 @@ async def access_test_objects(db, site_admin_user, site_admin_role, auth_key):
                                 Event(
                                     org_id=ret[f"org{i}"].id,
                                     orgc_id=ret[f"org{i}"].id,
-                                    user_id=1,
+                                    user_id=site_admin_user.id,
                                     uuid=libuuid.uuid4(),
                                     sharing_group_id=ret[sg_key].id,
                                     threat_level_id=1,
