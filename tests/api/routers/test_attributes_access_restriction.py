@@ -176,18 +176,22 @@ async def test_remove_existing_tag_from_attribute_fail_read_only_user(
     assert response.status_code == 403
 
 
+@pytest.mark.parametrize("user_key, attribute_key", access_test_objects_user_attribute_edit_expect_granted)
 @pytest.mark.asyncio
-async def test_restore_attribute(
-    access_test_objects,
-    client,
-) -> None:
-    attribute_Id = access_test_objects["default_attribute"].id
-    headers = {"authorization": access_test_objects["default_user_token"]}
-    response = client.post(f"/attributes/restore/{attribute_Id}", headers=headers)
+async def test_restore_attribute(db, access_test_objects, client, user_key, attribute_key) -> None:
+    attribute = access_test_objects[attribute_key]
+    attribute_id = attribute.id
+    headers = {"authorization": access_test_objects[f"{user_key}_token"]}
+    response = client.delete(f"/attributes/{attribute_id}", headers=headers)
+
+    await db.refresh(attribute)
+    assert attribute.deleted
+
+    response = client.post(f"/attributes/restore/{attribute_id}", headers=headers)
 
     assert response.status_code == 200
     response_json = response.json()
-    assert response_json["Attribute"]["id"] == attribute_Id
+    assert response_json["Attribute"]["id"] == attribute_id
     assert response_json["Attribute"]["deleted"] is False
 
 
@@ -209,11 +213,11 @@ async def test_remove_tag_from_attribute(
     print(response_json)
 
 
+@pytest.mark.parametrize("user_key, attribute_key", access_test_objects_user_attribute_edit_expect_granted)
 @pytest.mark.asyncio
-async def test_edit_existing_attribute(
-    access_test_objects,
-    client,
-) -> None:
+async def test_edit_existing_attribute(access_test_objects, client, user_key, attribute_key) -> None:
+    attribute = access_test_objects[attribute_key]
+
     request_body = {
         "category": "Payload delivery",
         "value": "2.3.4.5",
@@ -223,21 +227,18 @@ async def test_edit_existing_attribute(
         "disable_correlation": False,
         "first_seen": "",
     }
-    event = access_test_objects["default_event"]
-    attribute = access_test_objects["default_attribute"]
-    event_id = event.id
 
     attribute_id = attribute.id
     assert attribute.id is not None
 
-    headers = {"authorization": access_test_objects["default_user_token"]}
+    headers = {"authorization": access_test_objects[f"{user_key}_token"]}
     response = client.put(f"/attributes/{attribute_id}", json=request_body, headers=headers)
 
     assert response.status_code == 200
     response_json = response.json()
 
     assert response_json["Attribute"]["id"] == attribute_id
-    assert response_json["Attribute"]["event_id"] == event_id
+    assert response_json["Attribute"]["uuid"] == attribute.uuid
     assert "id" in response_json["Attribute"]
     assert "event_id" in response_json["Attribute"]
     assert "object_id" in response_json["Attribute"]
@@ -246,10 +247,9 @@ async def test_edit_existing_attribute(
     assert "type" in response_json["Attribute"]
     assert "value" in response_json["Attribute"]
     assert "to_ids" in response_json["Attribute"]
-    assert "uuid" in response_json["Attribute"]
     assert "timestamp" in response_json["Attribute"]
-    assert "distribution" in response_json["Attribute"]
-    assert "sharing_group_id" in response_json["Attribute"]
+    assert response_json["Attribute"]["distribution"] == 1
+    assert response_json["Attribute"]["sharing_group_id"] == 0
     assert "comment" in response_json["Attribute"]
     assert "deleted" in response_json["Attribute"]
     assert "disable_correlation" in response_json["Attribute"]
