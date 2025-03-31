@@ -10,6 +10,25 @@ from mmisp.db.models.attribute import AttributeTag
 from mmisp.tests.generators.model_generators.tag_generator import generate_tag
 
 
+async def remove_attribute_tag(db, attribute_id, tag_id):
+    stmt = sa.sql.text("DELETE FROM attribute_tags WHERE tag_id=:tag_id and attribute_id=attribute_id")
+    await db.execute(stmt, {"tag_id": tag_id, "attribute_id": attribute_id})
+    await db.commit()
+
+
+@pytest_asyncio.fixture
+async def attributetag(attribute, event, tag, db):
+    attribute_tag = AttributeTag(attribute_id=attribute.id, event_id=event.id, tag_id=tag.id, local=False)
+
+    db.add(attribute_tag)
+    await db.commit()
+
+    yield attribute_tag
+
+    await db.delete(attribute_tag)
+    await db.commit()
+
+
 @pytest.mark.asyncio
 async def test_add_attribute_valid_data(site_admin_user_token, event, db, client) -> None:
     request_body = {
@@ -619,6 +638,8 @@ async def test_add_existing_tag_to_attribute(
     assert response_json["success"] == "Tag added"
     assert response_json["check_publish"]
 
+    await remove_attribute_tag(db, attribute_id, tag_id)
+
 
 @pytest.mark.asyncio
 async def test_add_existing_tag_to_attribute_by_uuid(
@@ -631,6 +652,7 @@ async def test_add_existing_tag_to_attribute_by_uuid(
     await db.commit()
 
     attribute_uuid = attribute.uuid
+    attribute_id = attribute.id
 
     tag = generate_tag()
     setattr(tag, "user_id", 1)
@@ -653,6 +675,8 @@ async def test_add_existing_tag_to_attribute_by_uuid(
     assert response_json["saved"]
     assert response_json["success"] == "Tag added"
     assert response_json["check_publish"]
+
+    await remove_attribute_tag(db, attribute_id, tag_id)
 
 
 @pytest.mark.asyncio
@@ -709,19 +733,6 @@ async def test_add_invalid_or_non_existing_tag_to_attribute_by_uuid(
     assert response.status_code == 200
     response_json = response.json()
     assert response_json["saved"] is False
-
-
-@pytest_asyncio.fixture
-async def attributetag(attribute, event, tag, db):
-    attribute_tag = AttributeTag(attribute_id=attribute.id, event_id=event.id, tag_id=tag.id, local=False)
-
-    db.add(attribute_tag)
-    await db.commit()
-
-    yield attribute_tag
-
-    await db.delete(attribute_tag)
-    await db.commit()
 
 
 @pytest.mark.asyncio
