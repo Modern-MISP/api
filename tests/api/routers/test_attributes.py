@@ -11,7 +11,7 @@ from mmisp.tests.generators.model_generators.tag_generator import generate_tag
 
 
 async def remove_attribute_tag(db, attribute_id, tag_id):
-    stmt = sa.sql.text("DELETE FROM attribute_tags WHERE tag_id=:tag_id and attribute_id=attribute_id")
+    stmt = sa.sql.text("DELETE FROM attribute_tags WHERE tag_id=:tag_id and attribute_id=:attribute_id")
     await db.execute(stmt, {"tag_id": tag_id, "attribute_id": attribute_id})
     await db.commit()
 

@@ -14,6 +14,12 @@ from mmisp.tests.maps import (
 )
 
 
+async def remove_attribute_tag(db, attribute_id, tag_id):
+    stmt = sa.sql.text("DELETE FROM attribute_tags WHERE tag_id=:tag_id and attribute_id=:attribute_id")
+    await db.execute(stmt, {"tag_id": tag_id, "attribute_id": attribute_id})
+    await db.commit()
+
+
 @pytest.mark.parametrize("user_key, attribute_key", access_test_objects_user_attribute_access_expect_granted)
 @pytest.mark.asyncio
 async def test_get_attribute_success(access_test_objects, user_key, attribute_key, client) -> None:
@@ -127,53 +133,48 @@ async def test_add_attribute_fail(access_test_objects, client, user_key, event_k
     assert response.status_code == 403
 
 
+@pytest.mark.parametrize("user_key, attribute_key", access_test_objects_user_attribute_edit_expect_granted)
 @pytest.mark.asyncio
-async def test_add_existing_tag_to_attribute(
-    access_test_objects,
-    client,
-) -> None:
-    headers = {"authorization": access_test_objects["default_user_token"]}
-    attribute_id = access_test_objects["default_attribute"].id
+async def test_add_existing_tag_to_attribute(access_test_objects, user_key, attribute_key, client, db) -> None:
+    headers = {"authorization": access_test_objects[f"{user_key}_token"]}
+    attribute_id = access_test_objects[attribute_key].id
     tag_id = access_test_objects["default_tag"].id
     response = client.post(f"/attributes/addTag/{attribute_id}/{tag_id}/local:1", headers=headers)
     assert response.status_code == 200
 
+    await remove_attribute_tag(db, attribute_id, tag_id)
 
+
+@pytest.mark.parametrize("user_key, attribute_key", access_test_objects_user_attribute_edit_expect_granted)
 @pytest.mark.asyncio
-async def test_remove_existing_tag_from_attribute(
-    access_test_objects,
-    client,
-) -> None:
-    headers = {"authorization": access_test_objects["default_user_token"]}
-    attribute_id = access_test_objects["default_attribute"].id
+async def test_remove_existing_tag_from_attribute(access_test_objects, client, user_key, attribute_key) -> None:
+    headers = {"authorization": access_test_objects[f"{user_key}_token"]}
+    attribute_id = access_test_objects[attribute_key].id
     tag_id = access_test_objects["default_tag"].id
+    response = client.post(f"/attributes/addTag/{attribute_id}/{tag_id}/local:1", headers=headers)
+    assert response.status_code == 200
+
     response = client.post(f"/attributes/removeTag/{attribute_id}/{tag_id}", headers=headers)
     assert response.status_code == 200
 
 
+@pytest.mark.parametrize("user_key, attribute_key", access_test_objects_user_attribute_edit_expect_denied)
 @pytest.mark.asyncio
 async def test_remove_existing_tag_from_attribute_fail(
-    access_test_objects,
-    client,
+    access_test_objects, client, user_key, attribute_key, db
 ) -> None:
-    headers = {"authorization": access_test_objects["default_user_token"]}
-    attribute_id = access_test_objects["attribute_no_access"].id
+    attribute_id = access_test_objects[attribute_key].id
     tag_id = access_test_objects["default_tag"].id
+
+    headers = {"authorization": access_test_objects["site_admin_user_token"]}
+    response = client.post(f"/attributes/addTag/{attribute_id}/{tag_id}/local:1", headers=headers)
+
+    headers = {"authorization": access_test_objects[f"{user_key}_token"]}
     response = client.post(f"/attributes/removeTag/{attribute_id}/{tag_id}", headers=headers)
     print(response.json())
     assert response.status_code == 403
 
-
-@pytest.mark.asyncio
-async def test_remove_existing_tag_from_attribute_fail_read_only_user(
-    access_test_objects,
-    client,
-) -> None:
-    headers = {"authorization": access_test_objects["default_read_only_user_token"]}
-    attribute_id = access_test_objects["default_attribute"].id
-    tag_id = access_test_objects["default_tag"].id
-    response = client.post(f"/attributes/removeTag/{attribute_id}/{tag_id}", headers=headers)
-    assert response.status_code == 403
+    await remove_attribute_tag(db, attribute_id, tag_id)
 
 
 @pytest.mark.parametrize("user_key, attribute_key", access_test_objects_user_attribute_edit_expect_granted)
@@ -195,14 +196,12 @@ async def test_restore_attribute(db, access_test_objects, client, user_key, attr
     assert response_json["Attribute"]["deleted"] is False
 
 
+@pytest.mark.parametrize("user_key, attribute_key", access_test_objects_user_attribute_edit_expect_granted)
 @pytest.mark.asyncio
-async def test_remove_tag_from_attribute(
-    access_test_objects,
-    client,
-) -> None:
-    attribute_Id = access_test_objects["default_attribute"].id
+async def test_remove_tag_from_attribute(access_test_objects, client, user_key, attribute_key) -> None:
+    attribute_Id = access_test_objects[attribute_key].id
     tag_Id = access_test_objects["default_tag"].id
-    headers = {"authorization": access_test_objects["default_user_token"]}
+    headers = {"authorization": access_test_objects[f"{user_key}_token"]}
     response2 = client.post(f"/attributes/addTag/{attribute_Id}/{tag_Id}", headers=headers)
     response = client.post(f"/attributes/removeTag/{attribute_Id}/{tag_Id}", headers=headers)
     # Der status code liefert immer 200 zurück egal, ob klappt oder wie in diesem Fall fehlschlägt.

@@ -749,7 +749,6 @@ async def access_test_objects(db, site_admin_user, site_admin_role, auth_key):
 
         await db.commit()
 
-        print(ret)
         yield {
             "site_admin_user": site_admin_user,
             "site_admin_user_token": site_admin_user_token,
