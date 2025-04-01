@@ -749,7 +749,7 @@ async def test_remove_existing_tag_from_attribute(
     response_json = response.json()
     ic(response_json)
     assert response_json["saved"]
-    assert response_json["success"] == "Tag removed"
+    assert response_json["success"] == "Tag removed."
 
 
 @pytest.mark.asyncio
@@ -766,4 +766,4 @@ async def test_remove_existing_tag_from_attribute_by_uuid(
     response_json = response.json()
     ic(response_json)
     assert response_json["saved"]
-    assert response_json["success"] == "Tag removed"
+    assert response_json["success"] == "Tag removed."

@@ -81,3 +81,11 @@ async def test_attribute_access(db, access_test_objects, user_key) -> None:
         assert not attribute.can_access(user)
 
     assert len(can_access_attributes) + len(can_not_access_attributes) == len(all_attributes)
+
+
+async def test_time(access_test_objects) -> None:
+    assert False
+
+
+async def test_time2(access_test_objects) -> None:
+    assert False

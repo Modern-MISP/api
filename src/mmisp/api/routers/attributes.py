@@ -775,7 +775,8 @@ async def _remove_tag_from_attribute(
     await db.delete(attribute_tag)
     await db.flush()
 
-    return AddRemoveTagAttributeResponse(saved=True, success="Tag removed", check_publish=True)
+    check_publish = not bool(attribute_tag.local)
+    return AddRemoveTagAttributeResponse(saved=True, success="Tag removed.", check_publish=check_publish)
 
 
 @log

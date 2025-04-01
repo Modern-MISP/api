@@ -1,3 +1,4 @@
+import atexit
 import logging
 import random
 import string
@@ -14,6 +15,7 @@ from icecream import ic
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import mmisp.lib.standard_roles as standard_roles
+import mmisp.util.crypto
 from mmisp.api.auth import encode_token
 from mmisp.api.main import init_app
 from mmisp.db.models.admin_setting import AdminSetting
@@ -760,3 +762,11 @@ async def access_test_objects(db, site_admin_user, site_admin_role, auth_key):
             **ret,
         }
     await db.commit()
+
+
+def cache_report():
+    print("Hash Secret Cache", mmisp.util.crypto.hash_secret.cache_info())
+    print("Verify Secret Cache", mmisp.util.crypto.verify_secret.cache_info())
+
+
+atexit.register(cache_report)
