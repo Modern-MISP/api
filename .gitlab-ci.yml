@@ -45,7 +45,7 @@ build_image:
 
 
 pytest_mariadb:
-  parallel: 8
+  parallel: 16
   needs:
     - pytest
   stage: test
@@ -69,7 +69,7 @@ pytest_mariadb:
 
 
 pytest:
-  parallel: 12
+  parallel: 24
   stage: test
   image: ${REGISTRY_DOMAIN}/${REGISTRY_PROJECT}/api:${CI_COMMIT_SHA}
   script:
@@ -108,7 +108,7 @@ pytest_coverage_combine:
 pytest_sa2:
   needs:
     - pytest
-  parallel: 8
+  parallel: 16
   stage: test
   image: ${REGISTRY_DOMAIN}/${REGISTRY_PROJECT}/api:${CI_COMMIT_SHA}
   script:
@@ -123,7 +123,7 @@ mypy:
     - MYPYPATH=src mypy --explicit-package-bases src/mmisp/api
 
 legacy_misp:
-  parallel: 4
+  parallel: 12
   tags:
       - kgr1-instance-standard
   stage: test
