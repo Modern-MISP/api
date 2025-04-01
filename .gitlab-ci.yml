@@ -51,20 +51,7 @@ pytest_mariadb:
   stage: test
   image: ${REGISTRY_DOMAIN}/${REGISTRY_PROJECT}/api:${CI_COMMIT_SHA}
   script:
-    - |
-      python -c "
-      import time
-      import mysql.connector
-      connection_available = False
-      while not connection_available:
-        try:
-          conn = mysql.connector.connect(user='root',
-            password='misp', host='db', database='mmisp-tests')
-          connection_available = True
-        except mysql.connector.errors.DatabaseError as e:
-          print(e)
-          time.sleep(3)
-      conn.close()"
+    - mmisp-db setup --create_init_values=False
     - pytest --test-group-count $CI_NODE_TOTAL --test-group=$CI_NODE_INDEX tests/api/routers
   services:
     - name: registry.cert.kit.edu/hub/library/mariadb:11.5
