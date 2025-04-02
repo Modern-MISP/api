@@ -13,6 +13,7 @@ stages:
   - test
   - coverage
   - docs
+  - release
 
 cache:
   paths:
@@ -200,3 +201,24 @@ generate_mkdocs:
   services:
     - name: registry.cert.kit.edu/hub/plantuml/plantuml-server
       alias: plantuml
+
+
+pypi_release:
+  before_script: []
+  stage: release
+  image: ${REGISTRY_DOMAIN}/${REGISTRY_PROJECT}/api:${CI_COMMIT_SHA}
+  script:
+    - python -m build --sdist
+    - twine upload dist/mmisp_api-*.tar.gz
+  artifacts:
+    paths:
+      - site
+  rules:
+    - if: $CI_PROJECT_NAMESPACE != "kit/kit-cert/mmisp"
+      when: never
+    - if: $CI_COMMIT_BRANCH != "main"
+      when: never
+    - when: manual
+  variables:
+    TWINE_USERNAME: "__token__"
+    TWINE_PASSWORD: "${PYPI_TOKEN}"
