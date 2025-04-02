@@ -60,7 +60,7 @@ async def import_galaxy_cluster(
 ) -> DeleteForceUpdateImportGalaxyResponse:
     """Add a new galaxy cluster to an existing galaxy.
 
-    Input:
+    args:
 
     - the user's authentification status
 
@@ -70,7 +70,7 @@ async def import_galaxy_cluster(
 
     - the request
 
-    Output:
+    returns:
 
     - the new galaxy cluster
     """
@@ -90,7 +90,7 @@ async def get_galaxy_cluster(
 ) -> GalaxyClusterResponse:
     """Returns information from a galaxy cluster selected by its id.
 
-    Input:
+    args:
 
     - the user's authentification status
 
@@ -98,7 +98,7 @@ async def get_galaxy_cluster(
 
     - the galaxy id
 
-    Output:
+    returns:
 
     - the information of the galaxy cluster
     """
@@ -119,7 +119,7 @@ async def export_galaxy(
 ) -> list[ExportGalaxyClusterResponse]:
     """Export galaxy cluster.
 
-    Input:
+    args:
 
     - the user's authentification status
 
@@ -129,7 +129,7 @@ async def export_galaxy(
 
     - the request body
 
-    Output:
+    returns:
 
     - the exported galaxy cluster
     """
@@ -152,7 +152,7 @@ async def galaxies_attachCluster(
 ) -> AttachClusterGalaxyResponse:
     """Attach a Galaxy Cluster to given Galaxy.
 
-    Input:
+    args:
 
     - the user's authentification status
 
@@ -166,7 +166,7 @@ async def galaxies_attachCluster(
 
     - local
 
-    Output:
+    returns:
 
     - the attached galaxy cluster and the attach target
     """
@@ -191,7 +191,7 @@ async def get_galaxy_cluster_view(
     """Deprecated
     Returns information from a galaxy cluster selected by its id.
 
-    Input:
+    args:
 
     - the user's authentification status
 
@@ -199,7 +199,7 @@ async def get_galaxy_cluster_view(
 
     - the galaxy id
 
-    Output:
+    returns:
 
     - the information of the galaxy cluster
     """

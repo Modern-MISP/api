@@ -34,13 +34,13 @@ async def add_organisation(
     """
     Adds a new organisation.
 
-    Input:
+    args:
 
     - Data representing the organisation to be added
 
     - The current database
 
-    Output:
+    returns:
 
     - The added organisation data
     """
@@ -59,11 +59,11 @@ async def get_organisations(
     """
     Gets all organisations as a list.
 
-    Input:
+    args:
 
     - The current database
 
-    Output:
+    returns:
 
     - List of all organisations
     """
@@ -83,7 +83,7 @@ async def get_organisation(
     """
     Gets an organisation by its ID.
 
-    Input:
+    args:
 
     - ID of the organisation to get
 
@@ -91,7 +91,7 @@ async def get_organisation(
 
     - new: The Users authentification status
 
-    Output:
+    returns:
 
     - Data of the searched organisation
     """
@@ -111,13 +111,13 @@ async def delete_organisation(
     """
     Deletes an organisation by its ID.
 
-    Input:
+    args:
 
     - ID of the organisation to delete
 
     - The current database
 
-    Output:
+    returns:
 
     - Response indicating success or failure
     """
@@ -138,7 +138,7 @@ async def update_organisation(
     """
     Updates an organisation by its ID.
 
-    Input:
+    args:
 
     - ID of the organisation to update
 
@@ -146,7 +146,7 @@ async def update_organisation(
 
     - The current database
 
-    Output:
+    returns:
 
     - Updated organisation data
     """
@@ -169,11 +169,11 @@ async def get_organisations_deprecated(
     """
     Gets all organisations as a list.
 
-    Input:
+    args:
 
     - The current database
 
-    Output:
+    returns:
 
     - List of all organisations
     """

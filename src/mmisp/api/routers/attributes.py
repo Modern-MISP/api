@@ -1,9 +1,12 @@
+import logging
+import uuid
 from collections.abc import Sequence
 from typing import Annotated, cast
 
-from fastapi import APIRouter, Depends, HTTPException, Path, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Path, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import selectinload
+from sqlalchemy.sql import Select
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
 from mmisp.api_schemas.attributes import (
@@ -12,8 +15,6 @@ from mmisp.api_schemas.attributes import (
     AddAttributeResponse,
     AddRemoveTagAttributeResponse,
     DeleteAttributeResponse,
-    DeleteSelectedAttributeBody,
-    DeleteSelectedAttributeResponse,
     EditAttributeAttributes,
     EditAttributeBody,
     EditAttributeResponse,
@@ -34,11 +35,15 @@ from mmisp.db.database import Session, get_db
 from mmisp.db.models.attribute import Attribute, AttributeTag
 from mmisp.db.models.event import Event
 from mmisp.db.models.tag import Tag
+from mmisp.db.models.user import User
 from mmisp.lib.attribute_search_filter import get_search_filters
+from mmisp.lib.distribution import AttributeDistributionLevels
 from mmisp.lib.logger import alog, log
 from mmisp.util.models import update_record
 
 from ..workflow import execute_workflow
+
+logger = logging.getLogger("mmisp")
 
 router = APIRouter(tags=["attributes"])
 
@@ -56,51 +61,41 @@ async def rest_search_attributes(
 ) -> SearchAttributesResponse:
     """Search for attributes based on various filters.
 
-    Input:
+    args:
+        auth: the user's authentification status
+        db: the current database
+        body: the search body
 
-    - the user's authentification status
-
-    - the current database
-
-    - the search body
-
-    Output:
-
-    - the attributes the search finds
+    returns:
+        the attributes the search finds
     """
-    return await _rest_search_attributes(db, body)
+    return await _rest_search_attributes(db, body, auth.user)
 
 
 @router.post(
     "/attributes/{eventId}",
     status_code=status.HTTP_200_OK,
-    response_model=AddAttributeResponse,
     summary="Add new attribute",
 )
 @alog
 async def add_attribute(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.ADD]))],
     db: Annotated[Session, Depends(get_db)],
-    event_id: Annotated[str, Path(alias="eventId")],
+    event_id: Annotated[uuid.UUID | int, Path(alias="eventId")],
     body: AddAttributeBody,
 ) -> AddAttributeResponse:
     """Add a new attribute with the given details.
 
-    Input:
+    args:
+        auth: the user's authentification status
+        db: the current database
+        event_id: the ID or UUID of the event
+        body: the body for adding an attribute
 
-    - the user's authentification status
-
-    - the current database
-
-    - the id of the event
-
-    - the body for adding an attribute
-
-    Output:
-
-    - the response of the added attribute from the api
+    returns:
+        the response of the added attribute from the api
     """
-    return await _add_attribute(db, event_id, body)
+    return await _add_attribute(db, event_id, body, auth.user)
 
 
 @router.get(
@@ -114,13 +109,11 @@ async def get_attributes_describe_types(
 ) -> GetDescribeTypesResponse:
     """Retrieve a list of all available attribute types and categories.
 
-    Input:
+    args:
+        auth: the user's authentification status
 
-    - the user's authentification status
-
-    Output:
-
-    - the attributes describe types
+    returns:
+        the attributes describe types
     """
     return GetDescribeTypesResponse(result=GetDescribeTypesAttributes())
 
@@ -128,62 +121,51 @@ async def get_attributes_describe_types(
 @router.get(
     "/attributes/{attributeId}",
     status_code=status.HTTP_200_OK,
-    response_model=GetAttributeResponse,
     summary="Get attribute details",
 )
 @alog
 async def get_attribute_details(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    attribute_id: Annotated[int, Path(alias="attributeId")],
+    attribute_id: Annotated[int | uuid.UUID, Path(alias="attributeId")],
 ) -> GetAttributeResponse:
-    """Retrieve details of a specific attribute by its ID.
+    """Retrieve details of a specific attribute by either by its ID or UUID.
 
-    Input:
+    args:
+        auth: the user's authentification status
+        db: the current database
+        attribute_id: the ID or UUID of the attribute
 
-    - the user's authentification status
-
-    - the current database
-
-    - the id of the attribute
-
-    Output:
-
-    - the attribute details
+    returns:
+        the attribute details
     """
-    return await _get_attribute_details(db, attribute_id)
+    return await _get_attribute_details(db, attribute_id, auth.user)
 
 
 @router.put(
     "/attributes/{attributeId}",
     status_code=status.HTTP_200_OK,
-    response_model=EditAttributeResponse,
     summary="Update an attribute",
 )
 @alog
 async def update_attribute(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
-    attribute_id: Annotated[str, Path(alias="attributeId")],
+    attribute_id: Annotated[int | uuid.UUID, Path(alias="attributeId")],
     body: EditAttributeBody,
 ) -> EditAttributeResponse:
     """Update an existing attribute by its ID.
 
-    Input:
+    args:
+        auth: the user's authentification status
+        db: the current database
+        attribute_id: the ID or UUID of the attribute
+        body: the body for editing the attribute
 
-    - the user's authentification status
-
-    - the current database
-
-    - the id of the attribute
-
-    - the body for editing the attribute
-
-    Output:
-
-    - the response from the api for the edit request
+    returns:
+        the response from the api for the edit/update request
     """
-    return await _update_attribute(db, attribute_id, body)
+    return await _update_attribute(db, attribute_id, body, auth.user)
 
 
 @router.delete(
@@ -196,23 +178,20 @@ async def update_attribute(
 async def delete_attribute(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
-    attribute_id: Annotated[str, Path(alias="attributeId")],
+    attribute_id: Annotated[int | uuid.UUID, Path(alias="attributeId")],
+    hard: bool = False,
 ) -> DeleteAttributeResponse:
-    """Delete an attribute by its ID.
+    """Delete an attribute by either by its ID or UUID.
 
-    Input:
+    args:
+        auth: the user's authentification status
+        db: the current database
+        attribute_id: the ID or UUID of the attribute
 
-    - the user's authentification status
-
-    - the current database
-
-    - the id of the attribute
-
-    Output:
-
-    - the response from the api for the delete request
+    returns:
+        the response from the api for the delete request
     """
-    return await _delete_attribute(db, attribute_id)
+    return await _delete_attribute(db, attribute_id, hard, auth.user)
 
 
 @router.get(
@@ -226,50 +205,13 @@ async def get_attributes(
 ) -> list[GetAllAttributesResponse]:
     """Retrieve a list of all attributes.
 
-    Input:
+    args:
+        auth: the user's authentification status
 
-    - the user's authentification status
-
-    Output:
-
-    - the list of all attributes
+    returns:
+        the list of all attributes
     """
-    return await _get_attributes(db)
-
-
-@router.post(
-    "/attributes/deleteSelected/{eventId}",
-    status_code=status.HTTP_200_OK,
-    response_model=DeleteSelectedAttributeResponse,
-    summary="Delete the selected attributes",
-)
-@alog
-async def delete_selected_attributes(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
-    db: Annotated[Session, Depends(get_db)],
-    event_id: Annotated[str, Path(alias="eventId")],
-    body: DeleteSelectedAttributeBody,
-    request: Request,
-) -> DeleteSelectedAttributeResponse:
-    """Deletes the attributes associated with the event from the list in the body.
-
-    Input:
-
-    - the user's authentification status
-
-    - the current database
-
-    - the id of the event
-
-    - the body for deleting the selected attributes
-
-    - the request
-
-    Output:
-
-    - the response from the api for the deleting of the selection
-    """
-    return await _delete_selected_attributes(db, event_id, body, request)
+    return await _get_attributes(db, auth.user)
 
 
 @router.get(
@@ -286,17 +228,15 @@ async def get_attributes_type_statistics(
 ) -> GetAttributeStatisticsTypesResponse:  # type: ignore
     """Get the count/percentage of attributes per category/type.
 
-    Input:
+    args:
+        auth: the user's authentification status
+        db: the current database
+        percentage: percentage request or not
 
-    - the user's authentification status
-    - the current database
-    - percentage
-
-    Output:
-
-    - the attributes statistics for one category/type
+    returns:
+        the attributes statistics for one category/type
     """
-    return await _get_attribute_type_statistics(db, percentage)
+    return await _get_attribute_type_statistics(db, percentage, auth.user)
 
 
 @router.get(
@@ -313,15 +253,13 @@ async def get_attributes_category_statistics(
 ) -> GetAttributeStatisticsCategoriesResponse:  # type: ignore
     """Get the count/percentage of attributes per category/type.
 
-    Input:
+    args:
+        auth: the user's authentification status
+        db: the current database
+        percentage: percentage request or not
 
-    - the user's authentification status
-    - the current database
-    - percentage
-
-    Output:
-
-    - the attributes statistics for one category/type
+    returns:
+        the attributes statistics for one category/type
     """
     return await _get_attribute_category_statistics(db, percentage)
 
@@ -329,97 +267,79 @@ async def get_attributes_category_statistics(
 @router.post(
     "/attributes/restore/{attributeId}",
     status_code=status.HTTP_200_OK,
-    response_model=GetAttributeResponse,
     summary="Restore an attribute",
 )
 @alog
 async def restore_attribute(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
-    attribute_id: Annotated[str, Path(alias="attributeId")],
+    attribute_id: Annotated[int | uuid.UUID, Path(alias="attributeId")],
 ) -> GetAttributeResponse:
-    """Restore an attribute by its ID.
+    """Restore an attribute either by its ID or UUID.
 
-    Input:
+    args:
+        auth: the user's authentification status
+        db: the current database
+        attribute_id: the ID or UUID of the attribute
 
-    - the user's authentification status
-
-    - the current database
-
-    - the id of the attribute
-
-    Output:
-
-    - the restored attribute
+    returns:
+        the restored attribute
     """
-    return await _restore_attribute(db, attribute_id)
+    return await _restore_attribute(db, attribute_id, auth.user)
 
 
 @router.post(
     "/attributes/addTag/{attributeId}/{tagId}/local:{local}",
     status_code=status.HTTP_200_OK,
-    response_model=AddRemoveTagAttributeResponse,
     summary="Add tag to attribute",
 )
 @alog
 async def add_tag_to_attribute(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.TAGGER]))],
     db: Annotated[Session, Depends(get_db)],
-    attribute_id: Annotated[str, Path(alias="attributeId")],
+    attribute_id: Annotated[int | uuid.UUID, Path(alias="attributeId")],
     tag_id: Annotated[str, Path(alias="tagId")],
     local: str,
 ) -> AddRemoveTagAttributeResponse:
-    """Add a tag to an attribute by there ids.
+    """Add a tag to an attribute by there IDs.
 
-    Input:
+    args:
+        auth: the user's authentification status
+        db: the current database
+        attribute_id: the ID or UUID of the attribute
+        tag_id: the ID of the tag
+        local: "1" for local
 
-    - the user's authentification status
-
-    - the current database
-
-    - the id of the attribute
-
-    - the id of the tag
-
-    - local
-
-    Output:
-
-    - the response from the api for adding a tag to an attribute
+    returns:
+        the response from the api for adding a tag to an attribute
     """
-    return await _add_tag_to_attribute(db, attribute_id, tag_id, local)
+    return await _add_tag_to_attribute(db, attribute_id, tag_id, local, auth.user)
 
 
 @router.post(
     "/attributes/removeTag/{attributeId}/{tagId}",
     status_code=status.HTTP_200_OK,
-    response_model=AddRemoveTagAttributeResponse,
     summary="Remove tag from attribute",
 )
 @alog
 async def remove_tag_from_attribute(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.TAGGER]))],
     db: Annotated[Session, Depends(get_db)],
-    attribute_id: Annotated[str, Path(alias="attributeId")],
+    attribute_id: Annotated[int | uuid.UUID, Path(alias="attributeId")],
     tag_id: Annotated[str, Path(alias="tagId")],
 ) -> AddRemoveTagAttributeResponse:
-    """Remove a tag from an attribute by there ids.
+    """Remove a tag from an attribute by there IDs.
 
-    Input:
+    args:
+        auth: the user's authentification status
+        db: the current database
+        attribute_id: the ID or UUID of the attribute
+        tag_id: the ID of the tag
 
-    - the user's authentification status
-
-    - the current database
-
-    - the id of the attribute
-
-    - the id of the tag
-
-    Output:
-
-    - the response from the api for removing a tag to an attribute
+    returns:
+        the response from the api for removing a tag to an attribute
     """
-    return await _remove_tag_from_attribute(db, attribute_id, tag_id)
+    return await _remove_tag_from_attribute(db, attribute_id, tag_id, auth.user)
 
 
 # --- deprecated ---
@@ -436,26 +356,26 @@ async def remove_tag_from_attribute(
 async def add_attribute_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
-    event_id: Annotated[str, Path(alias="eventId")],
+    event_id: Annotated[int, Path(alias="eventId")],
     body: AddAttributeBody,
 ) -> AddAttributeResponse:
     """Deprecated. Add a new attribute with the given details using the old route.
 
-    Input:
+    args:
 
-    - the user's authentification status
+    the user's authentification status
 
-    - the current database
+    the current database
 
-    - the id of the event
+    the id of the event
 
-    - the body
+    the body
 
-    Output:
+    returns:
 
-    - the attribute
+    the attribute
     """
-    return await _add_attribute(db, event_id, body)
+    return await _add_attribute(db, event_id, body, auth.user)
 
 
 @router.get(
@@ -473,19 +393,19 @@ async def get_attribute_details_depr(
 ) -> GetAttributeResponse:
     """Deprecated. Retrieve details of a specific attribute by its ID using the old route.
 
-    Input:
+    args:
 
-    - the user's authentification status
+    the user's authentification status
 
-    - the current database
+    the current database
 
-    - the id of the attribute
+    the id of the attribute
 
-    Output:
+    returns:
 
-    - the details of an attribute
+    the details of an attribute
     """
-    return await _get_attribute_details(db, attribute_id)
+    return await _get_attribute_details(db, attribute_id, auth.user)
 
 
 @router.put(
@@ -499,67 +419,73 @@ async def get_attribute_details_depr(
 async def update_attribute_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
-    attribute_id: Annotated[str, Path(alias="attributeId")],
+    attribute_id: Annotated[int, Path(alias="attributeId")],
     body: EditAttributeBody,
 ) -> EditAttributeResponse:
     """Deprecated. Update an existing attribute by its ID using the old route.
 
-    Input:
+    args:
 
-    - the user's authentification status
+    the user's authentification status
 
-    - the current database
+    the current database
 
-    - the id of the attribute
+    the id of the attribute
 
-    - the body
+    the body
 
-    Output:
+    returns:
 
-    - the updated version af an attribute
+    the updated version af an attribute
     """
-    return await _update_attribute(db, attribute_id, body)
+    return await _update_attribute(db, attribute_id, body, auth.user)
 
 
 @router.delete(
     "/attributes/delete/{attributeId}",
     deprecated=True,
     status_code=status.HTTP_200_OK,
-    response_model=DeleteAttributeResponse,
-    summary="Delete an Attribute (Deprecated)",
 )
 @alog
 async def delete_attribute_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
-    attribute_id: Annotated[str, Path(alias="attributeId")],
+    attribute_id: Annotated[int, Path(alias="attributeId")],
+    hard: bool = False,
 ) -> DeleteAttributeResponse:
     """Deprecated. Delete an attribute by its ID using the old route.
 
-    Input:
+    args:
 
-    - the user's authentification status
+    the user's authentification status
 
-    - the current database
+    the current database
 
-    - the id of the attribute
+    the id of the attribute
 
-    Output:
+    returns:
 
-    - the response from the api for the deleting request
+    the response from the api for the deleting request
     """
-    return await _delete_attribute(db, attribute_id)
+    return await _delete_attribute(db, attribute_id, hard, auth.user)
 
 
 # --- endpoint logic ---
 
 
 @alog
-async def _add_attribute(db: Session, event_id: str, body: AddAttributeBody) -> AddAttributeResponse:
-    event: Event | None = await db.get(Event, event_id)
+async def _add_attribute(
+    db: Session, event_id: int | uuid.UUID, body: AddAttributeBody, user: User | None
+) -> AddAttributeResponse:
+    if isinstance(event_id, uuid.UUID):
+        event = await _get_event_by_uuid(event_id, db)
+    else:
+        event = await db.get(Event, event_id)
 
     if not event:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
+    if not event.can_edit(user):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Can not edit event")
     if not body.value:
         if not body.value1:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="'value' or 'value1' is required")
@@ -574,7 +500,7 @@ async def _add_attribute(db: Session, event_id: str, body: AddAttributeBody) -> 
     new_attribute = Attribute(
         **{
             **body.dict(),
-            "event_id": int(event_id),
+            "event_id": int(event.id),
             "category": body.category
             if body.category is not None
             else GetDescribeTypesAttributes().sane_defaults[body.type]["default_category"],
@@ -599,11 +525,16 @@ async def _add_attribute(db: Session, event_id: str, body: AddAttributeBody) -> 
 
 
 @alog
-async def _get_attribute_details(db: Session, attribute_id: int) -> GetAttributeResponse:
-    attribute: Attribute | None = await db.get(Attribute, attribute_id)
+async def _get_attribute_details(db: Session, attribute_id: int | uuid.UUID, user: User | None) -> GetAttributeResponse:
+    attribute: Attribute | None  # I have no idea, why this type declaration is necessary
+
+    attribute = await _get_attribute(db, attribute_id, load_sharing_group=True)
 
     if not attribute:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
+
+    if not attribute.can_access(user):
+        raise HTTPException(status.HTTP_403_FORBIDDEN)
 
     attribute_data = await _prepare_get_attribute_details_response(db, attribute_id, attribute)
 
@@ -611,11 +542,16 @@ async def _get_attribute_details(db: Session, attribute_id: int) -> GetAttribute
 
 
 @alog
-async def _update_attribute(db: Session, attribute_id: str, body: EditAttributeBody) -> EditAttributeResponse:
-    attribute: Attribute | None = await db.get(Attribute, attribute_id)
+async def _update_attribute(
+    db: Session, attribute_id: int | uuid.UUID, body: EditAttributeBody, user: User | None
+) -> EditAttributeResponse:
+    attribute = await _get_attribute(db, attribute_id)
 
     if not attribute:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
+
+    if not attribute.can_edit(user):
+        raise HTTPException(status.HTTP_403_FORBIDDEN)
 
     # first_seen/last_seen being an empty string is accepted by legacy MISP
     # and implies "field is not set".
@@ -623,6 +559,30 @@ async def _update_attribute(db: Session, attribute_id: str, body: EditAttributeB
     for seen in ["first_seen", "last_seen"]:
         if seen in payload and not payload[seen]:
             payload[seen] = None
+
+    if "distribution" in payload and user is not None:
+        sharing_group_id: int | None = payload.get("sharing_group_id", None)
+        if payload["distribution"] == AttributeDistributionLevels.SHARING_GROUP:
+            # sharing group_id can be anything > 0
+            if sharing_group_id not in user.org._sharing_group_ids:
+                raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY)
+        elif payload["distribution"] == AttributeDistributionLevels.INHERIT_EVENT:
+            event_sharing_group_id = attribute.event.sharing_group_id
+
+            if sharing_group_id is None:
+                sharing_group_id = event_sharing_group_id
+            # sharing_group_id must be the same as event
+            if sharing_group_id != event_sharing_group_id:
+                raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY)
+
+            payload["sharing_group_id"] = sharing_group_id
+        else:
+            # sharing_group_id must be 0
+            if sharing_group_id is None:
+                payload["sharing_group_id"] = 0
+            elif sharing_group_id > 0:
+                raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY)
+            payload["sharing_group_id"] = 0
 
     update_record(attribute, payload)
 
@@ -637,21 +597,32 @@ async def _update_attribute(db: Session, attribute_id: str, body: EditAttributeB
 
 
 @alog
-async def _delete_attribute(db: Session, attribute_id: str) -> DeleteAttributeResponse:
-    attribute: Attribute | None = await db.get(Attribute, attribute_id)
+async def _delete_attribute(
+    db: Session, attribute_id: int | uuid.UUID, hard: bool, user: User | None
+) -> DeleteAttributeResponse:
+    attribute: Attribute | None  # I have no idea, why this type declaration is necessary
+
+    attribute = await _get_attribute(db, attribute_id)
 
     if not attribute:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
-    await db.delete(attribute)
-    await db.flush()
+    if not attribute.can_edit(user):
+        raise HTTPException(status.HTTP_403_FORBIDDEN)
+
+    attribute.event.attribute_count -= 1
+    if hard:
+        await db.delete(attribute)
+        await db.flush()
+    else:
+        attribute.deleted = True
 
     return DeleteAttributeResponse(message="Attribute deleted.")
 
 
 @alog
-async def _get_attributes(db: Session) -> list[GetAllAttributesResponse]:
-    result = await db.execute(select(Attribute))
+async def _get_attributes(db: Session, user: User | None) -> list[GetAllAttributesResponse]:
+    result = await db.execute(select(Attribute).filter(Attribute.can_access(user)))
     attributes = result.scalars().all()
 
     if not attributes:
@@ -663,52 +634,9 @@ async def _get_attributes(db: Session) -> list[GetAllAttributesResponse]:
 
 
 @alog
-async def _delete_selected_attributes(
-    db: Session, event_id: str, body: DeleteSelectedAttributeBody, request: Request
-) -> DeleteSelectedAttributeResponse:
-    event: Event | None = await db.get(Event, event_id)
-
-    if not event:
-        raise HTTPException(status.HTTP_404_NOT_FOUND)
-
-    attribute_ids = body.id.split(" ")
-
-    for attribute_id in attribute_ids:
-        attribute: Attribute | None = await db.get(Attribute, attribute_id)
-
-        if not attribute:
-            raise HTTPException(status.HTTP_404_NOT_FOUND)
-
-        if not attribute.event.id == int(event_id):
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"No attribute with id '{attribute_id}' found in the given event.",
-            )
-
-        if body.allow_hard_delete:
-            await db.delete(attribute)
-            await db.flush()
-        else:
-            setattr(attribute, "deleted", True)
-            await db.flush()
-
-            await db.refresh(attribute)
-
-    attribute_count = len(attribute_ids)
-    attribute_str = "attribute" if attribute_count == 1 else "attributes"
-
-    return DeleteSelectedAttributeResponse(
-        saved=True,
-        success=True,
-        name=f"{attribute_count} {attribute_str} deleted.",
-        message=f"{attribute_count} {attribute_str} deleted.",
-        url=str(request.url.path),
-        id=str(event_id),
-    )
-
-
-@alog
-async def _rest_search_attributes(db: Session, body: SearchAttributesBody) -> SearchAttributesResponse:
+async def _rest_search_attributes(
+    db: Session, body: SearchAttributesBody, user: User | None
+) -> SearchAttributesResponse:
     if body.returnFormat != "json":
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid output format.")
 
@@ -716,6 +644,7 @@ async def _rest_search_attributes(db: Session, body: SearchAttributesBody) -> Se
     qry = (
         select(Attribute)
         .filter(filter)
+        .filter(Attribute.can_access(user))
         .options(
             selectinload(Attribute.local_tags),
             selectinload(Attribute.nonlocal_tags),
@@ -760,11 +689,13 @@ async def _rest_search_attributes(db: Session, body: SearchAttributesBody) -> Se
 
 
 @alog
-async def _restore_attribute(db: Session, attribute_id: str) -> GetAttributeResponse:
-    attribute: Attribute | None = await db.get(Attribute, attribute_id)
+async def _restore_attribute(db: Session, attribute_id: int | uuid.UUID, user: User | None) -> GetAttributeResponse:
+    attribute = await _get_attribute(db, attribute_id)
 
     if not attribute:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
+    if not attribute.can_edit(user):
+        raise HTTPException(status.HTTP_403_FORBIDDEN)
 
     setattr(attribute, "deleted", False)
 
@@ -780,12 +711,16 @@ async def _restore_attribute(db: Session, attribute_id: str) -> GetAttributeResp
 
 @alog
 async def _add_tag_to_attribute(
-    db: Session, attribute_id: str, tag_id: str, local: str
+    db: Session, attribute_id: int | uuid.UUID, tag_id: str, local: str, user: User | None
 ) -> AddRemoveTagAttributeResponse:
-    attribute: Attribute | None = await db.get(Attribute, attribute_id)
+    attribute = await _get_attribute(db, attribute_id)
 
     if not attribute:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
+
+    if not attribute.can_edit(user):
+        logger.debug("User cannot edit %s", attribute.uuid)
+        raise HTTPException(status.HTTP_403_FORBIDDEN)
 
     try:
         int(tag_id)
@@ -814,13 +749,25 @@ async def _add_tag_to_attribute(
 
 
 @alog
-async def _remove_tag_from_attribute(db: Session, attribute_id: str, tag_id: str) -> AddRemoveTagAttributeResponse:
+async def _remove_tag_from_attribute(
+    db: Session, attribute_id: int | uuid.UUID, tag_id: str, user: User | None
+) -> AddRemoveTagAttributeResponse:
+    attribute = await _get_attribute(db, attribute_id)
+    if not attribute:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
+
+    if not attribute.can_edit(user):
+        logger.debug("User cannot edit %s", attribute.id)
+        raise HTTPException(
+            status.HTTP_403_FORBIDDEN, detail={"errors": "You do not have permission to do that.", "saved": False}
+        )
+
     result = await db.execute(
         select(AttributeTag)
-        .filter(AttributeTag.attribute_id == int(attribute_id), AttributeTag.tag_id == int(tag_id))
+        .filter(AttributeTag.attribute_id == int(attribute.id), AttributeTag.tag_id == int(tag_id))
         .limit(1)
     )
-    attribute_tag = result.scalars().first()
+    attribute_tag = result.scalars().one_or_none()
 
     if not attribute_tag:
         return AddRemoveTagAttributeResponse(saved=False, errors="Invalid attribute - tag combination.")
@@ -828,7 +775,8 @@ async def _remove_tag_from_attribute(db: Session, attribute_id: str, tag_id: str
     await db.delete(attribute_tag)
     await db.flush()
 
-    return AddRemoveTagAttributeResponse(saved=True, success="Tag removed", check_publish=True)
+    check_publish = not bool(attribute_tag.local)
+    return AddRemoveTagAttributeResponse(saved=True, success="Tag removed.", check_publish=check_publish)
 
 
 @log
@@ -855,21 +803,25 @@ def _prepare_attribute_response_get_all(attribute: Attribute) -> GetAllAttribute
 
 @alog
 async def _prepare_get_attribute_details_response(
-    db: Session, attribute_id: int, attribute: Attribute
+    db: Session, attribute_id: int | uuid.UUID, attribute: Attribute
 ) -> GetAttributeAttributes:
     attribute_dict = attribute.asdict().copy()
+
     if "event_uuid" not in attribute_dict.keys():
         attribute_dict["event_uuid"] = attribute.event_uuid
 
-    result = await db.execute(select(AttributeTag).filter(AttributeTag.attribute_id == attribute_id))
+    result = await db.execute(select(AttributeTag).filter(AttributeTag.attribute_id == attribute.id))
     db_attribute_tags = result.scalars().all()
 
     attribute_dict["Tag"] = []
 
-    if len(db_attribute_tags) > 0:
+    if db_attribute_tags is not None:
         for attribute_tag in db_attribute_tags:
             result = await db.execute(select(Tag).filter(Tag.id == attribute_tag.tag_id).limit(1))
-            tag = result.scalars().one()
+            tag = result.scalars().one_or_none()
+
+            if not tag:
+                raise HTTPException(status.HTTP_404_NOT_FOUND)
 
             connected_tag = GetAttributeTag(
                 id=tag.id,
@@ -886,7 +838,7 @@ async def _prepare_get_attribute_details_response(
 
 @alog
 async def _prepare_edit_attribute_response(
-    db: Session, attribute_id: str, attribute: Attribute
+    db: Session, attribute_id: int | uuid.UUID, attribute: Attribute
 ) -> EditAttributeAttributes:
     attribute_dict = attribute.asdict().copy()
 
@@ -897,14 +849,19 @@ async def _prepare_edit_attribute_response(
         else:
             attribute_dict[field] = "0"
 
-    result = await db.execute(select(AttributeTag).filter(AttributeTag.attribute_id == attribute_id))
+    result = await db.execute(select(AttributeTag).filter(AttributeTag.attribute_id == attribute.id))
     db_attribute_tags = result.scalars().all()
+
     attribute_dict["Tag"] = []
 
-    if len(db_attribute_tags) > 0:
+    if db_attribute_tags is not None:
         for attribute_tag in db_attribute_tags:
             result = await db.execute(select(Tag).filter(Tag.id == attribute_tag.tag_id).limit(1))
-            tag = result.scalars().one()
+            tag = result.scalars().one_or_none()
+
+            if not tag:
+                raise HTTPException(status.HTTP_404_NOT_FOUND)
+
             connected_tag = GetAttributeTag(
                 id=tag.id,
                 name=tag.name,
@@ -927,6 +884,7 @@ async def _get_attribute_category_statistics(db: Session, percentage: bool) -> G
     qry = select(Attribute.category, func.count(Attribute.category).label("count")).group_by(Attribute.category)
     result = await db.execute(qry)
     attribute_count_by_category = result.all()
+
     attribute_count_by_category_dict: dict[str, int] = {
         x.category: cast(int, x.count) for x in attribute_count_by_category
     }
@@ -934,7 +892,7 @@ async def _get_attribute_category_statistics(db: Session, percentage: bool) -> G
     if percentage:
         total_count_of_attributes = sum(cast(int, x.count) for x in attribute_count_by_category)
         percentages = {
-            k: f"{str(round(v / total_count_of_attributes * 100, 3)).rstrip('.0')}%"
+            k: f"{str(round(v / total_count_of_attributes * 100, 3)).rstrip('0').rstrip('.')}%"
             for k, v in attribute_count_by_category_dict.items()
         }
         return GetAttributeStatisticsCategoriesResponse(**percentages)
@@ -943,7 +901,9 @@ async def _get_attribute_category_statistics(db: Session, percentage: bool) -> G
 
 
 @alog
-async def _get_attribute_type_statistics(db: Session, percentage: bool) -> GetAttributeStatisticsTypesResponse:  # type: ignore
+async def _get_attribute_type_statistics(
+    db: Session, percentage: bool, user: User | None
+) -> GetAttributeStatisticsTypesResponse:  # type: ignore
     qry = select(Attribute.type, func.count(Attribute.type).label("count")).group_by(Attribute.type)
     result = await db.execute(qry)
     attribute_count_by_group = result.all()
@@ -952,9 +912,78 @@ async def _get_attribute_type_statistics(db: Session, percentage: bool) -> GetAt
     if percentage:
         total_count_of_attributes = sum(cast(int, x.count) for x in attribute_count_by_group)
         percentages = {
-            k: f"{str(round(v / total_count_of_attributes * 100, 3)).strip('.0')}%"
+            k: f"{str(round(v / total_count_of_attributes * 100, 3)).rstrip('0').rstrip('.')}%"
             for k, v in attribute_count_by_group_dict.items()
         }
         return GetAttributeStatisticsTypesResponse(**percentages)
 
     return GetAttributeStatisticsTypesResponse(**attribute_count_by_group_dict)
+
+
+async def _get_event_by_uuid(event_id: uuid.UUID, db: Session) -> Event | None:
+    """Get's an event by its UUID.
+
+    args:
+        event_id: the UUID of the event
+        db: the current db
+
+    returns:
+        The event with the associated UUID of NONE in case of not being present.
+
+    """
+    query: Select = select(Event).filter(Event.uuid == event_id)
+
+    result = await db.execute(query)
+    event = result.scalars().one_or_none()
+
+    return event
+
+
+async def _get_attribute(
+    db: Session, attribute_id: int | uuid.UUID, load_sharing_group: bool = False
+) -> Attribute | None:
+    """Get's an attribute by its ID or UUID.
+
+    args:
+        db: the current db
+        attribute_id: the uuid of the attribute to get
+
+    returns:
+        The attribute with the associated UUID of NONE in case of not being present.
+
+    """
+    query = select(Attribute)
+    if isinstance(attribute_id, int):
+        query = query.filter(Attribute.id == attribute_id)
+    else:
+        query = query.filter(Attribute.uuid == attribute_id)
+
+    if load_sharing_group:
+        query = query.options(selectinload(Attribute.sharing_group))
+
+    result = await db.execute(query)
+    attribute = result.scalars().one_or_none()
+
+    return attribute
+
+
+async def _get_tag_by_attribute_uuid(db: Session, attribute_id: uuid.UUID, tag_id: int) -> AttributeTag | None:
+    """Get's an attributes tag by the attributes UUID and the tags ID.
+
+    args:
+        db: the current db
+        attribute_id: the UUID of the attribute
+        tag_id: the ID of the tag
+
+    returns:
+        The tag of the attribute with the associated UUID an ID or None in case of not being present.
+
+    """
+    query: Select = (
+        select(AttributeTag).filter(AttributeTag.attribute_uuid == attribute_id, AttributeTag.tag_id == tag_id).limit(1)
+    )
+
+    result = await db.execute(query)
+    attribute_tag = result.scalars().one_or_none()
+
+    return attribute_tag

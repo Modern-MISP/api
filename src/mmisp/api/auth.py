@@ -16,7 +16,7 @@ import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import APIKeyHeader
 from sqlalchemy import or_, select
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 
 from mmisp.api.config import config
 from mmisp.db.database import Session, get_db
@@ -33,7 +33,7 @@ class AuthStrategy(StrEnum):
 
     - jwt: Use only jwts after login
     - api_key: Use only api-key
-    - jwt/api_key: Either jwt or api_key
+    - jwt/api_key: Either jwt or api_key (Hybrid)
     - worker_key: Only accessible for modern misp worker
     - all: Use any authentication method
     """
@@ -62,6 +62,20 @@ class Auth:
 async def _get_user(
     db: Session, authorization: str, strategy: AuthStrategy, permissions: list[Permission], is_readonly_route: bool
 ) -> tuple[User, int | None]:
+    """
+        Fetches the user from the database.
+
+    args:
+        db: the current db
+        authorization: the authorization token
+        strategy: the authorization strategy
+        permissions: the list of permissions to be checked
+        is_readonly_route: wether the route is read only
+
+    returns:
+        the user and, in case of an api key as the auth strategy the decoded api key
+    """
+
     user_id: int | None = None
     auth_key_id: int | None = None
 
@@ -88,7 +102,9 @@ async def _get_user(
 
 
 async def user_login_allowed(db: Session, user_id: int, api_login: bool) -> User:
-    result = await db.execute(select(User).options(joinedload(User.role)).filter(User.id == user_id).limit(1))
+    result = await db.execute(
+        select(User).options(joinedload(User.role), selectinload(User.org)).filter(User.id == user_id).limit(1)
+    )
     user = result.scalars().one_or_none()
     if user is not None:
         if not api_login and user.force_logout:
@@ -104,6 +120,19 @@ async def user_login_allowed(db: Session, user_id: int, api_login: bool) -> User
 def authorize(
     strategy: AuthStrategy, permissions: list[Permission] | None = None, is_readonly_route: bool = False
 ) -> Callable[[Session, str], Awaitable[Auth]]:
+    """
+    Generates a authorizer, which then returns an auth object.
+
+    args:
+        strategy: the authentication strategy
+        permissions: the required permissions of the action to be authorized
+        is_readonly_route: wether the route is read only
+
+    returns:
+        An authorizer function and a db session
+
+    """
+
     if permissions is None:
         permissions = []
 
@@ -112,6 +141,16 @@ def authorize(
         authorization: Annotated[str, Depends(APIKeyHeader(name="authorization"))],
     ) -> Auth:
         authorization = authorization.replace("Bearer ", "")
+        """
+        Generates an auth object, which contains the result of the authentication proccess.
+
+        args:
+            db: the current db
+            authorization: The auth key from the header
+
+        returns:
+            An auth object
+        """
 
         if not is_readonly_route and config.READONLY_MODE:
             raise HTTPException(status.HTTP_403_FORBIDDEN, detail="Readonly mode is active, but route is not readonly")
@@ -136,6 +175,17 @@ def authorize(
 
 
 def check_permissions(auth: Auth, permissions: list[Permission] = []) -> bool:
+    """
+    Checks the permission list against the permissions of the user's auth.
+
+    args:
+        auth: the clients authentication
+        permissions: the permissions to check against the client's
+
+    returns:
+        True if the client has all the requested permissions.
+    """
+
     if auth.user is None:
         raise ValueError
     role = auth.user.role

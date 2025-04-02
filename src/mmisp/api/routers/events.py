@@ -1,15 +1,17 @@
 import logging
+import uuid
 from calendar import timegm
 from collections import defaultdict
 from collections.abc import Sequence
-from datetime import date
+from datetime import date, datetime
 from time import gmtime
 from typing import Annotated
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Path
+from fastapi.encoders import jsonable_encoder
 from sqlalchemy import select
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import selectinload, with_loader_criteria
 from sqlalchemy.sql import Select
 from starlette import status
 from starlette.requests import Request
@@ -51,18 +53,21 @@ from mmisp.api_schemas.jobs import (
     FreeTextImportWorkerUser,
     FreeTextProcessID,
 )
+from mmisp.api_schemas.sharing_groups import (
+    EventSharingGroupResponse,
+)
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.attribute import Attribute, AttributeTag
 from mmisp.db.models.event import Event, EventReport, EventTag
 from mmisp.db.models.galaxy_cluster import GalaxyCluster, GalaxyReference
 from mmisp.db.models.object import Object
+from mmisp.db.models.sharing_group import SharingGroup, SharingGroupOrg
 from mmisp.db.models.tag import Tag
 from mmisp.db.models.user import User
 from mmisp.lib.actions import action_publish_event
 from mmisp.lib.galaxies import parse_galaxy_authors
 from mmisp.lib.logger import alog, log
 from mmisp.util.models import update_record
-from mmisp.util.partial import partial
 
 from ..workflow import execute_blocking_workflow, execute_workflow
 
@@ -74,28 +79,23 @@ router = APIRouter(tags=["events"])
 @router.post(
     "/events",
     status_code=status.HTTP_200_OK,
-    response_model=AddEditGetEventResponse,
     summary="Add new event",
 )
 @alog
 async def add_event(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.ADD]))],
     db: Annotated[Session, Depends(get_db)],
     body: AddEventBody,
 ) -> AddEditGetEventResponse:
-    """Add a new event with the gi ven details.
+    """Add a new event with the given details.
 
-    Input:
+    args:
+        auth: the user's authentification status
+        db: the current database
+        body: the request body
 
-    - the user's authentification status
-
-    - the current database
-
-    - the request body
-
-    Output:
-
-    - the new event
+    returns:
+        the new event
     """
     return await _add_event(auth, db, body)
 
@@ -109,84 +109,69 @@ async def add_event(
 async def get_event_details(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    event_id: Annotated[int, Path(alias="eventId")],
+    event_id: Annotated[int | uuid.UUID, Path(alias="eventId")],
 ) -> AddEditGetEventResponse:
-    """Retrieve details of a specific event by ist ID.
+    """Retrieve details of a specific event either by its event ID, or via its UUID.
 
-    Input:
+    args:
+        auth: the user's authentification status
+        db: the current database
+        event_id: the ID or UUID of the event
 
-    - the user's authentification status
-
-    - the current database
-
-    - the id of the event
-
-    Output:
-
-    - the event details
+    returns:
+        the event details
     """
-    return await _get_event_details(db, event_id)
+    return await _get_event_details(db, event_id, auth.user)
 
 
 @router.put(
     "/events/{eventId}",
     status_code=status.HTTP_200_OK,
-    response_model=AddEditGetEventResponse,
     summary="Update an event",
 )
 @alog
 async def update_event(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
-    event_id: Annotated[str, Path(alias="eventId")],
+    event_id: Annotated[int | uuid.UUID, Path(alias="eventId")],
     body: EditEventBody,
 ) -> AddEditGetEventResponse:
-    """Update an existing event by its ID.
+    """Update an existing event either by its event ID or via its UUID.
 
-    Input:
+    args:
+        auth: the user's authentification status
+        db: the current database
+        event_id: the ID or UUID of the event
+        body: the request body
 
-    - the user's authentification status
-
-    - the current database
-
-    - the id of the event
-
-    - the request body
-
-    Output:
-
-    - the updated event
+    returns:
+        the updated event
     """
-    return await _update_event(db, event_id, body)
+    return await _update_event(db, event_id, body, auth.user)
 
 
 @router.delete(
     "/events/{eventId}",
     status_code=status.HTTP_200_OK,
-    response_model=DeleteEventResponse,
     summary="Delete an event",
 )
 @alog
 async def delete_event(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
-    event_id: Annotated[int, Path(alias="eventId")],
+    event_id: Annotated[int | uuid.UUID, Path(alias="eventId")],
 ) -> DeleteEventResponse:
-    """Delete an attribute by its ID.
+    """Delete an event either by its event ID or via its UUID.
 
-    Input:
+    args:
+        auth: the user's authentification status
+        db: the current database
+        event_id: the ID or UUID of the event
 
-    - the user's authentification status
-
-    - the current database
-
-    - the event id
-
-    Output:
-
-    - the deleted event
+    returns:
+        the deleted event
     """
-    return await _delete_event(db, event_id)
+    return await _delete_event(db, event_id, auth.user)
 
 
 @router.get(
@@ -200,23 +185,19 @@ async def get_all_events(
 ) -> list[GetAllEventsResponse]:
     """Retrieve a list of all events.
 
-    Input:
+    args:
+        auth: the user's authentification status
+        db: the current database
 
-    - the user's authentification status
-
-    - the current database
-
-    Output:
-
-    - all events as a list
+    returns:
+        all events as a list
     """
-    return await _get_events(db)
+    return await _get_events(db, auth.user)
 
 
 @router.post(
     "/events/restSearch",
     status_code=status.HTTP_200_OK,
-    response_model=partial(SearchEventsResponse),
     summary="Search events",
 )
 @alog
@@ -227,19 +208,16 @@ async def rest_search_events(
 ) -> SearchEventsResponse:
     """Search for events based on various filters.
 
-    Input:
+    args:
+        auth: the user's authentification status
+        db: the current database
+        body: the request body
 
-    - the user's authentification status
 
-    - the current database
-
-    - the request body
-
-    Output:
-
-    - the searched events
+    returns:
+        the searched events
     """
-    return await _rest_search_events(db, body)
+    return await _rest_search_events(db, body, auth.user)
 
 
 @router.post(
@@ -255,83 +233,68 @@ async def index_events(
 ) -> list[GetAllEventsResponse]:
     """Search for events based on various filters, which are more general than the ones in 'rest search'.
 
-    Input:
+    args:
+        auth: the user's authentification status
+        db: the current database
+        body: the request body
 
-    - the user's authentification status
 
-    - the current database
-
-    - the request body
-
-    Output:
-
-    - the searched events
+    returns:
+        the searched events
     """
-    return await _index_events(db, body)
+    return await _index_events(db, body, auth.user)
 
 
 @router.post(
     "/events/publish/{eventId}",
     status_code=status.HTTP_200_OK,
-    response_model=PublishEventResponse,
     summary="Publish an event",
 )
 @alog
 async def publish_event(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.PUBLISH]))],
     db: Annotated[Session, Depends(get_db)],
-    event_id: Annotated[str, Path(alias="eventId")],
+    event_id: Annotated[int | uuid.UUID, Path(alias="eventId")],
     request: Request,
 ) -> PublishEventResponse:
-    """Publish an event by ist ID.
+    """Publish an event either by its event ID or via its UUID. .
 
-    Input:
+    args:
+        auth: the user's authentification status
+        db: the current database
+        event_id: the ID or UUID of the event
+        request: the request
 
-    - the user's authentification status
-
-    - the current database
-
-    - the event id
-
-    - the request
-
-    Output:
-
-    - the published event
+    returns:
+        the published event
     """
-    return await _publish_event(db, event_id, request)
+    return await _publish_event(db, event_id, request, auth.user)
 
 
 @router.post(
     "/events/unpublish/{eventId}",
     status_code=status.HTTP_200_OK,
-    response_model=UnpublishEventResponse,
     summary="Unpublish an event",
 )
 @alog
 async def unpublish_event(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
-    event_id: Annotated[str, Path(alias="eventId")],
+    event_id: Annotated[int | uuid.UUID, Path(alias="eventId")],
     request: Request,
 ) -> UnpublishEventResponse:
-    """Unpublish an event by its ID.
+    """Unpublish an event  either by its event ID or via its UUID.
 
-    Input:
+    args:
+        auth: the user's authentification status
+        db: the current database
+        event_id: the ID or UUID of the event
+        request: the request
 
-    - the user's authentification status
-
-    - the current database
-
-    - the event id
-
-    - the request
-
-    Output:
-
-    - the unpublished event
+    returns:
+        the unpublished event
     """
-    return await _unpublish_event(db, event_id, request)
+    return await _unpublish_event(db, event_id, request, auth.user)
 
 
 @router.post(
@@ -341,89 +304,75 @@ async def unpublish_event(
 )
 @alog
 async def add_tag_to_event(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.TAGGER]))],
     db: Annotated[Session, Depends(get_db)],
-    event_id: Annotated[str, Path(alias="eventId")],
+    event_id: Annotated[int | uuid.UUID, Path(alias="eventId")],
     tag_id: Annotated[str, Path(alias="tagId")],
     local: str,
 ) -> AddRemoveTagEventsResponse:
-    """Add a tag to an attribute by their ids.
+    """Add a tag to an event by their ids.
 
-    Input:
+    args:
+        auth: the user's authentification status
+        db: the current database
+        event_id: the event ID or UUID
+        tag_id: the tag ID
+        local: "1" if local
 
-    - the user's authentification status
-
-    - the current database
-
-    - the event id
-
-    - the tag id
-
-    - local
-
-    Output:
-
-    - the result of adding the tag to the event given by the api
+    returns:
+        the result of adding the tag to the event given by the api
     """
-    return await _add_tag_to_event(db, event_id, tag_id, local)
+    return await _add_tag_to_event(db, event_id, tag_id, local, auth.user)
 
 
 @router.post(
     "/events/removeTag/{eventId}/{tagId}",
     status_code=status.HTTP_200_OK,
-    response_model=AddRemoveTagEventsResponse,
     summary="Remove tag of event",
 )
 @alog
 async def remove_tag_from_event(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.TAGGER]))],
     db: Annotated[Session, Depends(get_db)],
-    event_id: Annotated[str, Path(alias="eventId")],
+    event_id: Annotated[uuid.UUID | int, Path(alias="eventId")],
     tag_id: Annotated[str, Path(alias="tagId")],
 ) -> AddRemoveTagEventsResponse:
-    """Remove a tag to from an event by their id.
+    """Remove a tag to from an event by their IDs.
 
-    Input:
+    args:
+        auth: the user's authentification status
+        db: the current database
+        event_id: the event ID or UUID
+        tag_id: the tag ID
 
-    - the user's authentification status
-
-    - the current database
-
-    - the event id
-
-    - the tag id
-
-    Output:
-
-    - the result of removing the tag from the event given by the api
+    returns:
+        the result of removing the tag from the event given by the api
     """
-    return await _remove_tag_from_event(db, event_id, tag_id)
+    return await _remove_tag_from_event(db, event_id, tag_id, auth.user)
 
 
 @router.post(
     "/events/freeTextImport/{eventID}",
     status_code=status.HTTP_307_TEMPORARY_REDIRECT,
-    response_model=FreeTextProcessID,
     summary="start the freetext import process via worker",
 )
 @alog
 async def start_freeTextImport(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
-    event_id: Annotated[str, Path(alias="eventID")],
+    event_id: Annotated[int | uuid.UUID, Path(alias="eventID")],
     body: AddAttributeViaFreeTextImportEventBody,
 ) -> FreeTextProcessID:
-    """Starts the freetext import process by submitting the freetext to the worker.
+    """Starts the freetext import process for an event by its ID or UUID, by submitting the freetext to the worker.
 
-    Input:
+    args:
+        auth: the user's authentification status
+        event_id: the event ID or UUID
+        body: the body of the freetext
 
-    - the user's authentification status
-
-    - the body of the freetext
-
-    Output:
-
-    - dict
+    returns:
+        dict
     """
+
     body_dict = body.dict()
     if body_dict["returnMetaAttributes"] is False:
         raise HTTPException(
@@ -469,7 +418,7 @@ async def add_event_depr(
 ) -> AddEditGetEventResponse:
     """Deprecated. Add a new event with the given details.
 
-    Input:
+    args:
 
     - the user's authentification status
 
@@ -477,7 +426,7 @@ async def add_event_depr(
 
     - the request body
 
-    Output:
+    returns:
 
     - the new event
     """
@@ -498,19 +447,19 @@ async def get_event_details_depr(
 ) -> AddEditGetEventResponse:
     """Deprecated. Retrieve details of a specific attribute by its ID.
 
-    Input:
+    args:
 
     - the user's authentification status
 
     - the current database
 
-    - the event id
+    - the event ID
 
-    Output:
+    returns:
 
     - the event details
     """
-    return await _get_event_details(db, event_id)
+    return await _get_event_details(db, event_id, auth.user)
 
 
 @router.put(
@@ -524,12 +473,12 @@ async def get_event_details_depr(
 async def update_event_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
-    event_id: Annotated[str, Path(alias="eventId")],
+    event_id: Annotated[int, Path(alias="eventId")],
     body: EditEventBody,
 ) -> AddEditGetEventResponse:
     """Deprecated. Update an existing event by its ID.
 
-    Input:
+    args:
 
     - the user's authentification status
 
@@ -539,18 +488,17 @@ async def update_event_depr(
 
     - the request body
 
-    Output:
+    returns:
 
     - the updated event
     """
-    return await _update_event(db, event_id, body=body)
+    return await _update_event(db, event_id, body, auth.user)
 
 
 @router.delete(
     "/events/delete/{eventId}",
     deprecated=True,
     status_code=status.HTTP_200_OK,
-    response_model=DeleteEventResponse,
     summary="Delete an event (Deprecated)",
 )
 @alog
@@ -561,7 +509,7 @@ async def delete_event_depr(
 ) -> DeleteEventResponse:
     """Deprecated. Delete an existing event by its ID.
 
-    Input:
+    args:
 
     - the user's authentification status
 
@@ -569,11 +517,11 @@ async def delete_event_depr(
 
     - the event id
 
-    Output:
+    returns:
 
     - the deleted event
     """
-    return await _delete_event(db, event_id)
+    return await _delete_event(db, event_id, auth.user)
 
 
 # --- endpoint logic ---
@@ -586,7 +534,7 @@ async def _add_event(auth: Auth, db: Session, body: AddEventBody) -> AddEditGetE
     if not isinstance(body.info, str):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN_BAD_REQUEST, detail="invalid 'info'")
 
-    user = await db.get(User, auth.user_id)
+    user = auth.user
     if user is None:
         # this should never happen, it would mean, the user disappeared between auth and processing the request
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="user not available")
@@ -609,132 +557,99 @@ async def _add_event(auth: Auth, db: Session, body: AddEventBody) -> AddEditGetE
     await db.flush()
     await db.refresh(new_event)
 
-    result = await db.execute(
-        select(Event)
-        .filter(Event.id == new_event.id)
-        .options(
-            selectinload(Event.org),
-            selectinload(Event.orgc),
-            selectinload(Event.eventtags_galaxy),
-            selectinload(Event.tags),
-            selectinload(Event.eventtags),
-            selectinload(Event.attributes).options(
-                selectinload(Attribute.attributetags_galaxy)
-                .selectinload(AttributeTag.tag)
-                .selectinload(Tag.galaxy_cluster)
-                .options(
-                    selectinload(GalaxyCluster.org),
-                    selectinload(GalaxyCluster.orgc),
-                    selectinload(GalaxyCluster.galaxy),
-                    selectinload(GalaxyCluster.galaxy_elements),
-                ),
-                selectinload(Attribute.attributetags).selectinload(AttributeTag.tag),
-            ),
-            selectinload(Event.mispobjects),
-        )
-        .execution_options(populate_existing=True)
+    event = await _get_event(
+        new_event.id,
+        db,
+        user,
+        include_basic_event_attributes=True,
+        include_non_galaxy_attribute_tags=True,
+        #        populate_existing=True,
     )
-    event = result.scalars().one()
+    if event is None:
+        raise ValueError("event is not available after adding")
 
     await execute_workflow("event-after-save", db, event)
 
-    event_data = await _prepare_event_response(db, event)
+    event_data = await _prepare_event_response(db, event, user)
 
     return AddEditGetEventResponse(Event=event_data)
 
 
 @alog
-async def _get_event_details(db: Session, event_id: int) -> AddEditGetEventResponse:
-    result = await db.execute(
-        select(Event)
-        .filter(Event.id == event_id)
-        .options(
-            selectinload(Event.org),
-            selectinload(Event.orgc),
-            selectinload(Event.eventtags_galaxy),
-            selectinload(Event.tags),
-            selectinload(Event.eventtags),
-            selectinload(Event.attributes).options(
-                selectinload(Attribute.attributetags_galaxy)
-                .selectinload(AttributeTag.tag)
-                .selectinload(Tag.galaxy_cluster)
-                .options(
-                    selectinload(GalaxyCluster.org),
-                    selectinload(GalaxyCluster.orgc),
-                    selectinload(GalaxyCluster.galaxy),
-                    selectinload(GalaxyCluster.galaxy_elements),
-                ),
-                selectinload(Attribute.attributetags).selectinload(AttributeTag.tag),
-            ),
-            selectinload(Event.mispobjects),
-        )
+async def _get_event_details(db: Session, event_id: int | uuid.UUID, user: User | None) -> AddEditGetEventResponse:
+    event = await _get_event(
+        event_id, db, user, include_basic_event_attributes=True, include_non_galaxy_attribute_tags=True
     )
-    event = result.scalars().one_or_none()
 
     if not event:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
-    event_data = await _prepare_event_response(db, event)
+    if not event.can_access(user):
+        raise HTTPException(status.HTTP_403_FORBIDDEN)
+
+    event_data = await _prepare_event_response(db, event, user)
 
     return AddEditGetEventResponse(Event=event_data)
 
 
 @alog
-async def _update_event(db: Session, event_id: str, body: EditEventBody) -> AddEditGetEventResponse:
-    result = await db.execute(
-        select(Event)
-        .filter(Event.id == event_id)
-        .options(
-            selectinload(Event.org),
-            selectinload(Event.orgc),
-            selectinload(Event.eventtags_galaxy),
-            selectinload(Event.tags),
-            selectinload(Event.eventtags),
-            selectinload(Event.mispobjects),
-            selectinload(Event.attributes).options(
-                selectinload(Attribute.attributetags_galaxy)
-                .selectinload(AttributeTag.tag)
-                .selectinload(Tag.galaxy_cluster)
-                .options(
-                    selectinload(GalaxyCluster.org),
-                    selectinload(GalaxyCluster.orgc),
-                    selectinload(GalaxyCluster.galaxy),
-                    selectinload(GalaxyCluster.galaxy_elements),
-                ),
-            ),
-        )
+async def _update_event(
+    db: Session, event_id: int | uuid.UUID, body: EditEventBody, user: User | None
+) -> AddEditGetEventResponse:
+    event = await _get_event(
+        event_id, db, user, include_basic_event_attributes=True, include_non_galaxy_attribute_tags=False
     )
-    event = result.scalars().one_or_none()
 
     if not event:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
+
+    if not event.can_edit(user):
+        raise HTTPException(status.HTTP_403_FORBIDDEN)
 
     update_record(event, body.dict())
-
+    event.timestamp = int(datetime.now().timestamp())
     await execute_blocking_workflow("event-before-save", db, event)
     await db.flush()
     await db.refresh(event)
     await execute_workflow("event-after-save", db, event)
 
-    event_data = await _prepare_event_response(db, event)
+    event_data = await _prepare_event_response(db, event, user)
 
     return AddEditGetEventResponse(Event=event_data)
 
 
 @alog
-async def _delete_event(db: Session, event_id: int) -> DeleteEventResponse:
-    event = await db.get(Event, event_id)
+async def _delete_event(db: Session, event_id: int | uuid.UUID, user: User | None) -> DeleteEventResponse:
+    event = await _get_event(
+        event_id, db, user, include_basic_event_attributes=True, include_non_galaxy_attribute_tags=False
+    )
 
     if event is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=DeleteEventResponse(
-                saved=False,
-                name="Could not delete Event",
-                message="Could not delete Event",
-                url=f"/events/delete/{event_id}",
-                id=event_id,
-            ).dict(),
+            detail=jsonable_encoder(
+                DeleteEventResponse(
+                    saved=False,
+                    name="Could not delete Event",
+                    message="Could not delete Event",
+                    url=f"/events/delete/{event_id}",
+                    id=event_id,
+                ).dict()
+            ),
+        )
+
+    if not event.can_edit(user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=jsonable_encoder(
+                DeleteEventResponse(
+                    saved=False,
+                    name="Invalid access",
+                    message="Invalid permissions",
+                    url=f"/events/delete/{event_id}",
+                    id=event_id,
+                ).dict()
+            ),
         )
 
     await db.delete(event)
@@ -746,14 +661,19 @@ async def _delete_event(db: Session, event_id: int) -> DeleteEventResponse:
         name="Event deleted",
         message="Event deleted",
         url=f"/events/delete/{event_id}",
-        id=str(event_id),
+        id=event_id,
     )
 
 
 @alog
-async def _get_events(db: Session) -> list[GetAllEventsResponse]:
+async def _get_events(db: Session, user: User | None) -> list[GetAllEventsResponse]:
+    if not user:  # Since the auth.user can be User or None
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="invalid user")
+
     result = await db.execute(
-        select(Event).options(
+        select(Event)
+        .filter(Event.can_access(user))
+        .options(
             selectinload(Event.org),
             selectinload(Event.orgc),
             selectinload(Event.eventtags_galaxy)
@@ -767,42 +687,59 @@ async def _get_events(db: Session) -> list[GetAllEventsResponse]:
             ),
             selectinload(Event.tags),
             selectinload(Event.eventtags).selectinload(EventTag.tag),
+            selectinload(Event.creator),
+            selectinload(Event.sharing_group),
         )
     )
     events: Sequence[Event] = result.scalars().all()
 
-    if not events:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No events found.")
+    # if not events:
+    # raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No events found.")
 
-    event_responses = [_prepare_all_events_response(event, "get_all") for event in events]
+    event_responses = [_prepare_all_events_response(event, "get_all", user) for event in events]
 
     return event_responses
 
 
 @alog
-async def _rest_search_events(db: Session, body: SearchEventsBody) -> SearchEventsResponse:
+async def _rest_search_events(db: Session, body: SearchEventsBody, user: User | None) -> SearchEventsResponse:
     if body.returnFormat != "json":
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid output format.")
 
-    qry = select(Event).options(
-        selectinload(Event.org),
-        selectinload(Event.orgc),
-        selectinload(Event.tags),
-        selectinload(Event.eventtags_galaxy),
-        selectinload(Event.eventtags),
-        selectinload(Event.mispobjects),
-        selectinload(Event.attributes).options(
-            selectinload(Attribute.attributetags_galaxy)
-            .selectinload(AttributeTag.tag)
-            .selectinload(Tag.galaxy_cluster)
-            .options(
-                selectinload(GalaxyCluster.org),
-                selectinload(GalaxyCluster.orgc),
-                selectinload(GalaxyCluster.galaxy),
-                selectinload(GalaxyCluster.galaxy_elements),
+    qry = (
+        select(Event)
+        .filter(Event.can_access(user))
+        .options(
+            selectinload(Event.org),
+            selectinload(Event.orgc),
+            selectinload(Event.tags),
+            selectinload(Event.eventtags_galaxy),
+            selectinload(Event.eventtags),
+            selectinload(Event.mispobjects),
+            selectinload(Event.attributes).options(
+                selectinload(Attribute.sharing_group).options(
+                    selectinload(SharingGroup.sharing_group_orgs),
+                    selectinload(SharingGroup.organisations),
+                    selectinload(SharingGroup.creator_org),
+                ),
+                selectinload(Attribute.attributetags_galaxy)
+                .selectinload(AttributeTag.tag)
+                .selectinload(Tag.galaxy_cluster)
+                .options(
+                    selectinload(GalaxyCluster.org),
+                    selectinload(GalaxyCluster.orgc),
+                    selectinload(GalaxyCluster.galaxy),
+                    selectinload(GalaxyCluster.galaxy_elements),
+                ),
+                selectinload(Attribute.attributetags).selectinload(AttributeTag.tag),
             ),
-            selectinload(Attribute.attributetags).selectinload(AttributeTag.tag),
-        ),
+            with_loader_criteria(Attribute, Attribute.can_access(user)),
+            selectinload(Event.sharing_group).options(
+                selectinload(SharingGroup.sharing_group_orgs),
+                selectinload(SharingGroup.organisations),
+                selectinload(SharingGroup.creator_org),
+            ),
+        )
     )
     if body.limit is not None:
         page = body.page or 1
@@ -813,13 +750,13 @@ async def _rest_search_events(db: Session, body: SearchEventsBody) -> SearchEven
 
     response_list = []
     for event in events:
-        response_list.append(AddEditGetEventResponse(Event=await _prepare_event_response(db, event)))
+        response_list.append(AddEditGetEventResponse(Event=await _prepare_event_response(db, event, user)))
 
     return SearchEventsResponse(response=response_list)
 
 
 @alog
-async def _index_events(db: Session, body: IndexEventsBody) -> list[GetAllEventsResponse]:
+async def _index_events(db: Session, body: IndexEventsBody, user: User | None) -> list[GetAllEventsResponse]:
     limit = 25
     offset = 0
 
@@ -855,7 +792,10 @@ async def _index_events(db: Session, body: IndexEventsBody) -> list[GetAllEvents
                     selectinload(GalaxyCluster.galaxy_elements),
                 )
             ),
+            with_loader_criteria(Attribute, Attribute.can_access(user)),
             selectinload(Event.mispobjects),
+            selectinload(Event.creator),
+            selectinload(Event.sharing_group),
         )
         .limit(limit)
         .offset(offset)
@@ -864,33 +804,51 @@ async def _index_events(db: Session, body: IndexEventsBody) -> list[GetAllEvents
     result = await db.execute(query)
     events: Sequence[Event] = result.scalars().all()
 
-    response_list = [_prepare_all_events_response(event, "index") for event in events]
+    response_list = [_prepare_all_events_response(event, "index", user) for event in events]
 
     return response_list
 
 
 @alog
-async def _publish_event(db: Session, event_id: str, request: Request) -> PublishEventResponse:
-    event = await db.get(Event, event_id)
+async def _publish_event(
+    db: Session, event_id: int | uuid.UUID, request: Request, user: User | None
+) -> PublishEventResponse:
+    event = await _get_event(
+        event_id, db, user, include_basic_event_attributes=True, include_non_galaxy_attribute_tags=False
+    )
 
     if not event:
-        return PublishEventResponse(name="Invalid event.", message="Invalid event.", url=str(request.url.path))
+        return PublishEventResponse(
+            name="You do not have the permission to do that.",
+            message="You do not have the permission to do that.",
+            url=str(request.url.path),
+        )
+
+    if not event.can_edit(user):
+        raise HTTPException(status.HTTP_403_FORBIDDEN)
 
     await execute_blocking_workflow("event-publish", db, event)
 
     await action_publish_event(db, event)
 
     return PublishEventResponse(
-        saved=True, success=True, name="Job queued", message="Job queued", url=str(request.url.path), id=str(event_id)
+        saved=True, success=True, name="Job queued", message="Job queued", url=str(request.url.path), id=event_id
     )
 
 
 @alog
-async def _unpublish_event(db: Session, event_id: str, request: Request) -> UnpublishEventResponse:
-    event = await db.get(Event, event_id)
+async def _unpublish_event(
+    db: Session, event_id: int | uuid.UUID, request: Request, user: User | None
+) -> UnpublishEventResponse:
+    event = await _get_event(
+        event_id, db, user, include_basic_event_attributes=True, include_non_galaxy_attribute_tags=False
+    )
 
     if not event:
         return UnpublishEventResponse(name="Invalid event.", message="Invalid event.", url=str(request.url.path))
+
+    if not event.can_edit(user):
+        return UnpublishEventResponse(name="Invalid access.", message="Invalid permissions.", url=str(request.url.path))
 
     setattr(event, "published", False)
     setattr(event, "publish_timestamp", 0)
@@ -904,13 +862,17 @@ async def _unpublish_event(db: Session, event_id: str, request: Request) -> Unpu
         name="Event unpublished.",
         message="Event unpublished.",
         url=str(request.url.path),
-        id=str(event_id),
+        id=event_id,
     )
 
 
 @alog
-async def _add_tag_to_event(db: Session, event_id: str, tag_id: str, local: str) -> AddRemoveTagEventsResponse:
-    event: Event | None = await db.get(Event, event_id)
+async def _add_tag_to_event(
+    db: Session, event_id: int | uuid.UUID, tag_id: str, local: str, user: User | None
+) -> AddRemoveTagEventsResponse:
+    event = await _get_event(
+        event_id, db, user, include_basic_event_attributes=True, include_non_galaxy_attribute_tags=False
+    )
 
     if not event:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
@@ -928,7 +890,7 @@ async def _add_tag_to_event(db: Session, event_id: str, tag_id: str, local: str)
     if local not in ["0", "1"]:
         local = "0"
 
-    new_event_tag = EventTag(event_id=event_id, tag_id=tag.id, local=True if int(local) == 1 else False)
+    new_event_tag = EventTag(event_id=event.id, tag_id=tag.id, local=True if int(local) == 1 else False)
 
     db.add(new_event_tag)
     await db.flush()
@@ -938,8 +900,12 @@ async def _add_tag_to_event(db: Session, event_id: str, tag_id: str, local: str)
 
 
 @alog
-async def _remove_tag_from_event(db: Session, event_id: str, tag_id: str) -> AddRemoveTagEventsResponse:
-    event: Event | None = await db.get(Event, event_id)
+async def _remove_tag_from_event(
+    db: Session, event_id: int | uuid.UUID, tag_id: str, user: User | None
+) -> AddRemoveTagEventsResponse:
+    event = await _get_event(
+        event_id, db, user, include_basic_event_attributes=True, include_non_galaxy_attribute_tags=False
+    )
 
     if not event:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
@@ -952,7 +918,11 @@ async def _remove_tag_from_event(db: Session, event_id: str, tag_id: str) -> Add
     if not await db.get(Tag, tag_id):
         return AddRemoveTagEventsResponse(saved=False, errors="Tag could not be removed.")
 
-    result = await db.execute(select(EventTag).filter(EventTag.event_id == event_id).limit(1))
+    if not event.can_edit(user):
+        return AddRemoveTagEventsResponse(saved=False, errors="Can not edit event.")
+
+    result = await db.execute(select(EventTag).filter(EventTag.event_id == event.id).limit(1))
+
     event_tag = result.scalars().first()
 
     if not event_tag:
@@ -965,8 +935,8 @@ async def _remove_tag_from_event(db: Session, event_id: str, tag_id: str) -> Add
 
 
 @alog
-async def _prepare_event_response(db: Session, event: Event) -> AddEditGetEventDetails:
-    event_dict = event.__dict__.copy()
+async def _prepare_event_response(db: Session, event: Event, user: User | None) -> AddEditGetEventDetails:
+    event_dict = event.asdict()
 
     fields_to_convert = ["sharing_group_id", "timestamp", "publish_timestamp"]
     for field in fields_to_convert:
@@ -987,7 +957,15 @@ async def _prepare_event_response(db: Session, event: Event) -> AddEditGetEventD
 
     attribute_list = event.attributes
 
-    # event_dict["attribute_count"] = len(attribute_list) # there is a column in the db for that
+    if event.sharing_group is not None:
+        sgos = list(_compute_sgos_dict(x) for x in event.sharing_group.sharing_group_orgs)
+
+        event_dict["SharingGroup"] = EventSharingGroupResponse(
+            **event.sharing_group.asdict(),
+            Organisation=event.sharing_group.creator_org.asdict(),
+            SharingGroupOrg=sgos,
+            SharingGroupServer=[],
+        )
 
     if len(attribute_list) > 0:
         event_dict["Attribute"] = await _prepare_attribute_response(db, attribute_list)
@@ -1039,9 +1017,17 @@ async def _prepare_event_response(db: Session, event: Event) -> AddEditGetEventD
     event_dict["Galaxy"] = galaxy_response_list
     event_dict["date"] = str(event_dict["date"])
 
-    user = await db.get(User, event.user_id)
-    if user is not None:
-        event_dict["event_creator_email"] = user.email
+    if event.creator is not None and user is not None:
+        if (
+            user.role.check_permission(Permission.SITE_ADMIN)
+            or event.orgc_id == user.org_id
+            and user.role.check_permission(Permission.AUDIT)
+        ):
+            event_dict["event_creator_email"] = event.creator.email
+
+    else:
+        logger.warning("User not found with id: %s Event id: %s", event.user_id, event.id)
+        logger.warning("_prepare_event_response Event: %s", event.__dict__)
 
     return AddEditGetEventDetails(**event_dict)
 
@@ -1054,6 +1040,19 @@ async def _prepare_attribute_response(
 
     for attribute in attribute_list:
         attribute_dict = attribute.asdict()
+
+        print("attribute sharing group", attribute.sharing_group)
+        if attribute.sharing_group is not None:
+            sgos = list(_compute_sgos_dict(x) for x in attribute.sharing_group.sharing_group_orgs)
+
+            attribute_dict["SharingGroup"] = EventSharingGroupResponse(
+                **attribute.sharing_group.asdict(),
+                Organisation=attribute.sharing_group.creator_org.asdict(),
+                SharingGroupOrg=sgos,
+                SharingGroupServer=[],
+            )
+            #            attribute_dict["SharingGroup"] = attribute.sharing_group.asdict()
+            #            print(attribute_dict["SharingGroup"])
 
         attribute_tag_list = attribute.attributetags
 
@@ -1237,12 +1236,11 @@ def _prepare_event_report_response(event_report_list: Sequence[EventReport]) -> 
 
 
 @log
-def _prepare_all_events_response(event: Event, request_type: str) -> GetAllEventsResponse:
-    event_dict = event.__dict__.copy()
-    event_dict["sharing_group_id"] = "0"
+def _prepare_all_events_response(event: Event, request_type: str, user: User | None) -> GetAllEventsResponse:
+    event_dict = event.asdict()
 
-    org_dict = event.org.__dict__.copy()
-    orgc_dict = event.orgc.__dict__.copy()
+    org_dict = event.org.asdict()
+    orgc_dict = event.orgc.asdict()
 
     event_dict["Org"] = GetAllEventsOrg(**org_dict)
     event_dict["Orgc"] = GetAllEventsOrg(**orgc_dict)
@@ -1251,8 +1249,17 @@ def _prepare_all_events_response(event: Event, request_type: str) -> GetAllEvent
 
     event_dict["GalaxyCluster"] = _prepare_all_events_galaxy_cluster_response(event.eventtags_galaxy)
     event_dict["date"] = str(event_dict["date"])
-    if event.user_id:
-        event_dict["event_creator_email"] = event.creator.email
+
+    # if event.creator is not None and user is not None:
+    #    if (
+    #        user.role.check_permission(Permission.SITE_ADMIN)
+    #        or event.orgc_id == user.org_id
+    #        and user.role.check_permission(Permission.AUDIT)
+    #    ):
+    #        event_dict["event_creator_email"] = event.creator.email
+
+    if event.sharing_group is not None:
+        event_dict["SharingGroup"] = event.sharing_group.asdict()
 
     response_strategy = {"get_all": GetAllEventsResponse, "index": IndexEventsAttributes}
 
@@ -1313,3 +1320,110 @@ def _prepare_all_events_event_tag_response(event_tag_list: Sequence[EventTag]) -
         event_tag_response_list.append(GetAllEventsEventTag(**event_tag_dict))
 
     return event_tag_response_list
+
+
+async def _get_event(
+    event_id: int | uuid.UUID,
+    db: Session,
+    user: User | None,
+    *,
+    include_basic_event_attributes: bool = False,
+    include_non_galaxy_attribute_tags: bool = False,
+    populate_existing: bool = False,
+) -> Event | None:
+    """Get's an event by its UUID with varying amounts of included attributes loaded in.
+
+    args:
+        event_id: the UUID of the event
+        db: the current db
+        include_basic_event_attributes: whether to include additional load-in's
+        include_basic_event_attributes: whether to also include non galaxy attribute tags
+
+    returns:
+        The event with the associated UUID or NONE in case of not being present.
+
+    """
+    query: Select = select(Event)
+    if isinstance(event_id, uuid.UUID):
+        query = query.filter(Event.uuid == event_id)
+    else:
+        query = query.filter(Event.id == event_id)
+
+    if include_basic_event_attributes and include_non_galaxy_attribute_tags:
+        query = query.options(
+            selectinload(Event.org),
+            selectinload(Event.orgc),
+            selectinload(Event.eventtags_galaxy),
+            selectinload(Event.tags),
+            selectinload(Event.eventtags),
+            selectinload(Event.mispobjects),
+            selectinload(Event.attributes).options(
+                selectinload(Attribute.sharing_group).options(
+                    selectinload(SharingGroup.sharing_group_orgs),
+                    selectinload(SharingGroup.organisations),
+                    selectinload(SharingGroup.creator_org),
+                ),
+                selectinload(Attribute.attributetags_galaxy)
+                .selectinload(AttributeTag.tag)
+                .selectinload(Tag.galaxy_cluster)
+                .options(
+                    selectinload(GalaxyCluster.org),
+                    selectinload(GalaxyCluster.orgc),
+                    selectinload(GalaxyCluster.galaxy),
+                    selectinload(GalaxyCluster.galaxy_elements),
+                ),
+                selectinload(Attribute.attributetags).selectinload(AttributeTag.tag),
+            ),
+            with_loader_criteria(Attribute, Attribute.can_access(user)),
+            selectinload(Event.sharing_group).options(
+                selectinload(SharingGroup.sharing_group_orgs),
+                selectinload(SharingGroup.organisations),
+                selectinload(SharingGroup.creator_org),
+            ),
+        )
+
+    elif include_basic_event_attributes:
+        query = query.options(
+            selectinload(Event.org),
+            selectinload(Event.orgc),
+            selectinload(Event.eventtags_galaxy),
+            selectinload(Event.tags),
+            selectinload(Event.creator),
+            selectinload(Event.eventtags),
+            selectinload(Event.mispobjects),
+            selectinload(Event.attributes).options(
+                selectinload(Attribute.sharing_group).options(
+                    selectinload(SharingGroup.sharing_group_orgs),
+                    selectinload(SharingGroup.organisations),
+                    selectinload(SharingGroup.creator_org),
+                ),
+                selectinload(Attribute.attributetags_galaxy)
+                .selectinload(AttributeTag.tag)
+                .selectinload(Tag.galaxy_cluster)
+                .options(
+                    selectinload(GalaxyCluster.org),
+                    selectinload(GalaxyCluster.orgc),
+                    selectinload(GalaxyCluster.galaxy),
+                    selectinload(GalaxyCluster.galaxy_elements),
+                ),
+            ),
+            with_loader_criteria(Attribute, Attribute.can_access(user)),
+            selectinload(Event.sharing_group).options(
+                selectinload(SharingGroup.sharing_group_orgs),
+                selectinload(SharingGroup.organisations),
+                selectinload(SharingGroup.creator_org),
+            ),
+        )
+    if populate_existing:
+        query = query.execution_options(populate_existing=True)
+
+    result = await db.execute(query)
+    event = result.scalars().one_or_none()
+
+    return event
+
+
+def _compute_sgos_dict(sgo: SharingGroupOrg) -> dict:
+    sgo_dict = sgo.asdict()
+    sgo_dict["Organisation"] = sgo.organisation.asdict()
+    return sgo_dict

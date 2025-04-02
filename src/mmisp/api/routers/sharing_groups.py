@@ -824,7 +824,7 @@ async def _remove_org_from_sharing_group(auth: Auth, db: Session, id: int, organ
     await db.delete(sharing_group_org)
     await db.flush()
 
-    return sharing_group_org.__dict__
+    return sharing_group_org.asdict()
 
 
 @alog

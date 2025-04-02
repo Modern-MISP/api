@@ -40,7 +40,7 @@ async def add_warninglist(
     """
     Add a new warninglist with given details.
 
-    Input:
+    args:
 
     - auth: Authentication details
 
@@ -48,7 +48,7 @@ async def add_warninglist(
 
     - body: CreateWarninglistBody, Data for creating the new warninglist
 
-    Output:
+    returns:
 
     - WarninglistResponse: Response with details of the new warninglist
     """
@@ -69,7 +69,7 @@ async def get_warninglist_details(
     """
     Retrieve details of a specific warninglist by its ID.
 
-    Input:
+    args:
 
     - auth: Authentication details
 
@@ -77,7 +77,7 @@ async def get_warninglist_details(
 
     - warninglist_id: ID of the warninglist to fetch
 
-    Output:
+    returns:
 
     - WarninglistResponse: Response with details of the searched warninglist
     """
@@ -99,7 +99,7 @@ async def post_toggleEnable(
     """
     Disable/Enable a specific warninglist by its ID or name.
 
-    Input:
+    args:
 
     - auth: Authentication details
 
@@ -107,7 +107,7 @@ async def post_toggleEnable(
 
     - body: ToggleEnableWarninglistsBody, Data to toggle enable status of the warninglist
 
-    Output:
+    returns:
 
     - ToggleEnableWarninglistsResponse: Response showing success or failure
     """
@@ -128,7 +128,7 @@ async def delete_warninglist(
     """
     Delete a specific warninglist.
 
-    Input:
+    args:
 
     - auth: Authentication details
 
@@ -136,7 +136,7 @@ async def delete_warninglist(
 
     - warninglist_id: ID of the warninglist to delete
 
-    Output:
+    returns:
 
     - WarninglistResponse: Response showing success or failure
     """
@@ -160,7 +160,7 @@ async def get_all_or_selected_warninglists(
         list of warninglists for which the value matches either the name, description, or type and enabled matches \
         given parameter.
 
-    Input:
+    args:
 
     - auth: Authentication details
 
@@ -170,7 +170,7 @@ async def get_all_or_selected_warninglists(
 
     - enabled: bool | None, Status filter (enabled or disabled)
 
-    Output:
+    returns:
 
     - GetSelectedAllWarninglistsResponse: Response containing filtered or all warninglists
     """
@@ -192,7 +192,7 @@ async def get_warninglists_by_value(
     Retrieve a list of ID and name of enabled warninglists, \
         which match has the given search term as entry.
 
-    Input:
+    args:
 
     - auth: Authentication details
 
@@ -200,7 +200,7 @@ async def get_warninglists_by_value(
 
     - body: CheckValueWarninglistsBody, Data for searching warninglists by value
 
-    Output:
+    returns:
 
     - CheckValueResponse | dict: Response with searched warninglists
     """
@@ -220,13 +220,13 @@ async def update_all_warninglists(
     """
     Update all warninglists.
 
-    Input:
+    args:
 
     - auth: Authentication details
 
     - db: Database session
 
-    Output:
+    returns:
 
     - StandardStatusResponse: Response indicating success or failure
     """
@@ -251,7 +251,7 @@ async def get_warninglist_details_depr(
     """
     Deprecated. Retrieve details of a specific warninglist by its ID using the old route.
 
-    Input:
+    args:
 
     - auth: Authentication details
 
@@ -259,7 +259,7 @@ async def get_warninglist_details_depr(
 
     - warninglist_id: ID of the warninglist to fetch
 
-    Output:
+    returns:
 
     - WarninglistResponse: Response with details of the searched warninglist
     """
@@ -281,7 +281,7 @@ async def search_warninglists(
     """
     Retrieve a list of warninglists, which match given search terms using the old route.
 
-    Input:
+    args:
 
     - auth: Authentication details
 
@@ -289,7 +289,7 @@ async def search_warninglists(
 
     - body: GetSelectedWarninglistsBody, Data for filtering warninglists
 
-    Output:
+    returns:
 
     - GetSelectedAllWarninglistsResponse: Response containing filtered warninglists
     """
@@ -310,13 +310,13 @@ async def update_all_warninglists_depr(
     """
     Deprecated. Update all warninglists.
 
-    Input:
+    args:
 
     - auth: Authentication details
 
     - db: Database session
 
-    Output:
+    returns:
 
     - StandardStatusResponse: Response indicating success or failure
     """

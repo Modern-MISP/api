@@ -13,6 +13,7 @@ stages:
   - test
   - coverage
   - docs
+  - release
 
 cache:
   paths:
@@ -40,34 +41,21 @@ build_image:
       --build-arg LIB_REPO_URL=${LIB_REPO_URL}
       --build-arg BRANCH=${CI_COMMIT_BRANCH}
       --build-arg INSTALL_LIB=true
-      --destination ${REGISTRY_DOMAIN}/${REGISTRY_PROJECT}/api:${CI_COMMIT_BRANCH}
+      --destination ${REGISTRY_DOMAIN}/${REGISTRY_PROJECT}/api:$(echo $CI_COMMIT_BRANCH | tr -c '[:alnum:]_' '_')
       --destination ${REGISTRY_DOMAIN}/${REGISTRY_PROJECT}/api:${CI_COMMIT_SHA}
 
 
 pytest_mariadb:
-  parallel: 8
+  parallel: 16
   needs:
     - pytest
   stage: test
   image: ${REGISTRY_DOMAIN}/${REGISTRY_PROJECT}/api:${CI_COMMIT_SHA}
   script:
-    - |
-      python -c "
-      import time
-      import mysql.connector
-      connection_available = False
-      while not connection_available:
-        try:
-          conn = mysql.connector.connect(user='root',
-            password='misp', host='db', database='mmisp-tests')
-          connection_available = True
-        except mysql.connector.errors.DatabaseError as e:
-          print(e)
-          time.sleep(3)
-      conn.close()"
+    - mmisp-db setup --create_init_values=False
     - pytest --test-group-count $CI_NODE_TOTAL --test-group=$CI_NODE_INDEX tests/api/routers
   services:
-    - name: mariadb:11.5
+    - name: registry.cert.kit.edu/hub/library/mariadb:11.5
       alias: db
   variables:
     MARIADB_ROOT_PASSWORD: misp
@@ -82,21 +70,26 @@ pytest_mariadb:
 
 
 pytest:
-  parallel: 8
+  parallel: 24
   stage: test
   image: ${REGISTRY_DOMAIN}/${REGISTRY_PROJECT}/api:${CI_COMMIT_SHA}
   script:
     - ENV_FILE=.env.test.lite pytest --junitxml=report.xml --test-group-count $CI_NODE_TOTAL --test-group=$CI_NODE_INDEX  --cov --cov-report= tests/api/routers
   variables:
     COVERAGE_FILE: ".coverage.${CI_NODE_INDEX}"
+    DEBUG: true
   artifacts:
       when: always
       paths:
         - ".coverage.*"
+        - "report.xml"
+        - "gl-*-report.json"
       reports:
         junit: report.xml
 
 pytest_coverage_combine:
+  needs:
+    - pytest
   stage: coverage
   image: ${REGISTRY_DOMAIN}/${REGISTRY_PROJECT}/api:${CI_COMMIT_SHA}
   script:
@@ -116,7 +109,7 @@ pytest_coverage_combine:
 pytest_sa2:
   needs:
     - pytest
-  parallel: 8
+  parallel: 16
   stage: test
   image: ${REGISTRY_DOMAIN}/${REGISTRY_PROJECT}/api:${CI_COMMIT_SHA}
   script:
@@ -127,19 +120,20 @@ mypy:
   stage: test
   image: ${REGISTRY_DOMAIN}/${REGISTRY_PROJECT}/api:${CI_COMMIT_SHA}
   script:
-    - pip install "sqlalchemy>=2.0"
+    - pip install "ruff>=0.3.7" "mypy==1.10.0" "sqlalchemy>=2.0"
     - MYPYPATH=src mypy --explicit-package-bases src/mmisp/api
 
 legacy_misp:
+  parallel: 12
   tags:
       - kgr1-instance-standard
   stage: test
   image: ${REGISTRY_DOMAIN}/${REGISTRY_PROJECT}/api:${CI_COMMIT_SHA}
   script:
     - while [ ! -f "$MISP_READY_FILE" ]; do sleep 10; done
-    - pytest tests/compatibility_tests
+    - pytest --test-group-count $CI_NODE_TOTAL --test-group=$CI_NODE_INDEX --junitxml=report.xml tests/compatibility_tests
   services:
-    - name: mariadb:11.5
+    - name: registry.cert.kit.edu/hub/library/mariadb:11.5
       alias: db
       variables:
         HEALTHCHECK_TCP_PORT: 3306
@@ -169,6 +163,14 @@ legacy_misp:
     DASHBOARD_URL: https://dashboard.mmisp.service
     DEBUG: true
     MISP_READY_FILE: '${CI_PROJECT_DIR}/misp_ready'
+  artifacts:
+      when: always
+      paths:
+        - ".coverage.*"
+        - "report.xml"
+        - "gl-*-report.json"
+      reports:
+        junit: report.xml
 
 
 create_api_spec:
@@ -197,5 +199,26 @@ generate_mkdocs:
     paths:
       - site
   services:
-    - name: plantuml/plantuml-server
+    - name: registry.cert.kit.edu/hub/plantuml/plantuml-server
       alias: plantuml
+
+
+pypi_release:
+  before_script: []
+  stage: release
+  image: ${REGISTRY_DOMAIN}/${REGISTRY_PROJECT}/api:${CI_COMMIT_SHA}
+  script:
+    - python -m build --sdist
+    - twine upload dist/mmisp_api-*.tar.gz
+  artifacts:
+    paths:
+      - site
+  rules:
+    - if: $CI_PROJECT_NAMESPACE != "kit/kit-cert/mmisp"
+      when: never
+    - if: $CI_COMMIT_BRANCH != "main"
+      when: never
+    - when: manual
+  variables:
+    TWINE_USERNAME: "__token__"
+    TWINE_PASSWORD: "${PYPI_TOKEN}"

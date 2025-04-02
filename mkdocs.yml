@@ -23,6 +23,7 @@ nav:
       - Noticelists: routers/noticelists.md
       - Objects: routers/objects.md
       - Organisations: routers/organisations.md
+      - Roles: routers/roles.md
       - Servers: routers/servers.md
       - Sharing Groups: routers/sharing_groups.md
       - Sightings: routers/sightings.md
@@ -46,6 +47,8 @@ plugins:
             show_source: false
             separate_signature: true
             show_signature_annotations: true
+
+            
   - plantuml:
       puml_url: http://plantuml:8080/
       num_workers: 4

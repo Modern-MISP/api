@@ -1,3 +1,4 @@
+import uuid
 from collections.abc import Sequence
 from time import time
 from typing import Annotated
@@ -40,17 +41,13 @@ async def add_sighting(
 ) -> list[SightingAttributesResponse]:
     """Add a new sighting for each given value.
 
-    Input:
+    args:
+        auth: Authentication details
+        db: Database session
+        body: Sighting creation data
 
-    - auth: Authentication details
-
-    - db: Database session
-
-    - body: Sighting creation data
-
-    Output:
-
-    - Details of the new sighting
+    returns:
+        details of the new sighting
     """
     return await _add_sighting(db, body)
 
@@ -64,21 +61,17 @@ async def add_sighting(
 async def add_sightings_at_index(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SIGHTING]))],
     db: Annotated[Session, Depends(get_db)],
-    attribute_id: Annotated[int, Path(alias="attributeId")],
+    attribute_id: Annotated[int | uuid.UUID, Path(alias="attributeId")],
 ) -> SightingAttributesResponse:
     """Add a new sighting for a specific attribute.
 
-    Input:
+    args:
+        auth: Authentication
+        db: Database session
+        attribute_id: ID or UUID of the attribute
 
-    - auth: Authentication
-
-    - db: Database session
-
-    - attribute_id: ID of the attribute
-
-    Output:
-
-    - Details of new sightings
+    returns:
+        details of new sightings
     """
     return await _add_sightings_at_index(db, attribute_id)
 
@@ -92,21 +85,17 @@ async def add_sightings_at_index(
 async def get_sightings_at_index(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    event_id: Annotated[int, Path(alias="eventId")],
+    event_id: Annotated[int | uuid.UUID, Path(alias="eventId")],
 ) -> list[SightingAttributesResponse]:
-    """Retrieve all sightings associated with a specific event ID.
+    """Retrieve all sightings associated with a specific event ID or UUID.
 
-    Input:
+    args:
+        auth: Authentication
+        db: Database session
+        event_id: ID or UUID of the event
 
-    - auth: Authentication details
-
-    - db: Database session
-
-    - event_id: ID of the event
-
-    Output:
-
-    - Details of the sightings at index
+    returns:
+        details of the sightings at index
     """
     return await _get_sightings_at_index(db, event_id)
 
@@ -124,7 +113,7 @@ async def delete_sighting(
 ) -> StandardStatusResponse:
     """Delete a specific sighting.
 
-    Input:
+    args:
 
     - auth: Authentication details
 
@@ -132,7 +121,7 @@ async def delete_sighting(
 
     - sighting_id: ID of the sighting
 
-    Output:
+    returns:
 
     - Status response indicating success or failure
     """
@@ -151,13 +140,13 @@ async def get_sightings(
 ) -> SightingsGetResponse:
     """Retrieve a list of all sightings.
 
-    Input:
+    args:
 
     - auth: Authentication details
 
     - db: Database session
 
-    Output:
+    returns:
 
     - Status response indicating success or failure
     """
@@ -181,7 +170,7 @@ async def add_sighting_depr(
 ) -> list[SightingAttributesResponse]:
     """Deprecated. Add a new sighting using the old route.
 
-    Input:
+    args:
 
     - auth: Authentication details
 
@@ -189,7 +178,7 @@ async def add_sighting_depr(
 
     - body: Sighting creation data
 
-    Output:
+    returns:
 
     - List of sighting attributes
     """
@@ -210,7 +199,7 @@ async def add_sightings_at_index_depr(
 ) -> SightingAttributesResponse:
     """Deprecated. Add a new sighting for a specific attribute using the old route.
 
-    Input:
+    args:
 
     - auth: Authentication details
 
@@ -218,7 +207,7 @@ async def add_sightings_at_index_depr(
 
     - attribute_id: ID of the attribute
 
-    Output:
+    returns:
 
     - Details of the new sightings
     """
@@ -237,9 +226,9 @@ async def delete_sighting_depr(
     db: Annotated[Session, Depends(get_db)],
     sighting_id: Annotated[int, Path(alias="sightingId")],
 ) -> StandardStatusResponse:
-    """Deprecated. Delete a specific sighting using the old route.
+    """Deprecated. Delete a specific sighting, using the old route.
 
-    Input:
+    args:
 
     - auth: Authentication details
 
@@ -247,7 +236,7 @@ async def delete_sighting_depr(
 
     - sighting_id: ID of the sighting
 
-    Output:
+    returns:
 
     - Status response indicating success or failure
     """
@@ -268,7 +257,7 @@ async def get_sightings_at_index_depr(
 ) -> list[SightingAttributesResponse]:
     """Deprecated. Retrieve all sightings associated with a specific event ID using the old route.
 
-    Input:
+    args:
 
     - auth: Authentication details
 
@@ -276,7 +265,7 @@ async def get_sightings_at_index_depr(
 
     - event_id: ID of the event
 
-    Output:
+    returns:
 
     - Details of the sightings at index
     """
@@ -348,17 +337,26 @@ async def _add_sighting(db: Session, body: SightingCreateBody) -> list[SightingA
 
 
 @alog
-async def _add_sightings_at_index(db: Session, attribute_id: int) -> SightingAttributesResponse:
-    attribute: Attribute | None = await db.get(Attribute, attribute_id)
+async def _add_sightings_at_index(db: Session, attribute_id: int | uuid.UUID) -> SightingAttributesResponse:
+    qry = select(Attribute)
+    if isinstance(attribute_id, uuid.UUID):
+        qry = qry.filter(Attribute.uuid == attribute_id)
+    else:
+        qry = qry.filter(Attribute.id == attribute_id)
+
+    result = await db.execute(qry)
+    attribute = result.scalars().one_or_none()
 
     if not attribute:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Attribute not found.")
+
     event = await db.get(Event, attribute.event_id)
+
     if event is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Event not found.")
 
     sighting: Sighting = Sighting(
-        attribute_id=int(attribute_id),
+        attribute_id=int(attribute.id),
         event_id=int(attribute.event_id),
         org_id=int(event.org_id),
         date_sighting=int(time()),
@@ -386,11 +384,20 @@ async def _add_sightings_at_index(db: Session, attribute_id: int) -> SightingAtt
 
 
 @alog
-async def _get_sightings_at_index(db: Session, event_id: int) -> list[SightingAttributesResponse]:
-    if not await db.get(Event, event_id):
+async def _get_sightings_at_index(db: Session, event_id: int | uuid.UUID) -> list[SightingAttributesResponse]:
+    qry = select(Event)
+    if isinstance(event_id, uuid.UUID):
+        qry = qry.filter(Event.uuid == event_id)
+    else:
+        qry = qry.filter(Event.id == event_id)
+
+    result = await db.execute(qry)
+    event = result.scalars().one_or_none()
+
+    if not event:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Event not found.")
 
-    result = await db.execute(select(Sighting).filter(Sighting.event_id == event_id))
+    result = await db.execute(select(Sighting).filter(Sighting.event_id == event.id))
     sightings: Sequence[Sighting] = result.scalars().all()
 
     for sighting in sightings:

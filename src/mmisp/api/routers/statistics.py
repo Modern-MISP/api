@@ -26,11 +26,11 @@ async def get_statistics(
 ) -> UsageDataResponseModel:
     """Gets all usage statistics as a list.
 
-    Input:
+    args:
 
     - db: Database session
 
-    Output:
+    returns:
 
     - List of all usage statistics
     """
@@ -49,12 +49,12 @@ async def get_statistics_by_org(
 ) -> OrgDataResponseModel:
     """Gets all attrtibute-related statistics by organisation as a list.
 
-    Input:
+    args:
 
     - db: Database session
     - orgID: organisation ID
 
-    Output:
+    returns:
 
     - List of all statistics related to an organisation
     """
@@ -73,11 +73,11 @@ async def get_logincount(
 ) -> int:
     """Gets the login count of the past 4 months.
 
-    Input:
+    args:
 
     - db: Database session
 
-    Output:
+    returns:
 
     - Count of all logins in the past 4 months
     """

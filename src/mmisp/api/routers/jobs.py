@@ -17,13 +17,13 @@ async def get_job(
 ) -> dict:
     """Gets a job.
 
-    Input:
+    args:
 
     - the user's authentification status
 
     - the id
 
-    Output:
+    returns:
 
     - dict
     """

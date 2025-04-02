@@ -45,13 +45,13 @@ async def add_user(
     """
     Adds a new user with the given details.
 
-    Input:
+    args:
 
     - Data representing the new user to be added
 
     - The current database
 
-    Output:
+    returns:
 
     - Data representing the attributes of the new user
     """
@@ -67,11 +67,11 @@ async def get_logged_in_user_info(
     """
     Retrieves information about the logged in user.
 
-    Input:
+    args:
 
     - Authentication details of the logged in user
 
-    Output:
+    returns:
 
     - Information about the logged in user
     """
@@ -91,11 +91,11 @@ async def get_all_users(
     """
     Retrieves a list of all users.
 
-    Input:
+    args:
 
     - None
 
-    Output:
+    returns:
 
     - List containing all users
     """
@@ -115,13 +115,13 @@ async def get_user_by_id(
     """
     Retrieves a user specified by id.
 
-    Input:
+    args:
 
     - ID of the user to get
 
     - The current database
 
-    Output:
+    returns:
 
     - Data representing the attributes of the searched user
     """
@@ -141,7 +141,7 @@ async def delete_user(
     """
     Deletes a user by their ID.
 
-    Input:
+    args:
 
     - ID of the user to delete
 
@@ -149,7 +149,7 @@ async def delete_user(
 
     - The current database
 
-    Output:
+    returns:
     - StandardStatusIdentifiedResponse: Response indicating success or failure
     """
     return await _delete_user(user_id=user_id, auth=auth, db=db)
@@ -169,13 +169,13 @@ async def delete_user_token(
     """
     Deletes a users login token by their ID.
 
-    Input:
+    args:
 
     - ID of the user with the token to delete
 
     - The current database
 
-    Output:
+    returns:
 
     - Response indicating success or failure
     """
@@ -197,7 +197,7 @@ async def update_user(
     """
     Updates an existing user by their ID.
 
-    Input:
+    args:
 
     - ID of the user to update
 
@@ -205,7 +205,7 @@ async def update_user(
 
     - The current database
 
-    Output:
+    returns:
 
     - Data representing the updated attributes of the user
     """
@@ -229,13 +229,13 @@ async def add_user_deprecated(
     """
     Adds a new user with the given details.
 
-    Input:
+    args:
 
     - Data representing the new user to be added
 
     - The current database
 
-    Output:
+    returns:
 
     - Data representing the attributes of the new user
     """
@@ -257,7 +257,7 @@ async def update_user_depr(
     """
     Deprecated. Updates an existing user using the old route.
 
-    Input:
+    args:
 
     - ID of the user to update
 
@@ -265,7 +265,7 @@ async def update_user_depr(
 
     - The current database
 
-    Output:
+    returns:
 
     - Data representing the updated attributes of the user
     """
@@ -286,13 +286,13 @@ async def get_user_by_id_depr(
     """
     Deprecated. Retrieves a user specified by id with the old route.
 
-    Input:
+    args:
 
     - ID of the user to get
 
     - The current database
 
-    Output:
+    returns:
 
     - Data representing the attributes of the searched user
     """
@@ -312,11 +312,11 @@ async def get_all_users_deprecated(
     """
     Retrieves a list of all users.
 
-    Input:
+    args:
 
     - None
 
-    Output:
+    returns:
 
     - List containing all users
     """
@@ -337,7 +337,7 @@ async def delete_user_depr(
     """
     Deprecated. Deletes a user by their ID with the old route.
 
-    Input:
+    args:
 
     - ID of the user to delete
 
@@ -345,7 +345,7 @@ async def delete_user_depr(
 
     - The current database
 
-    Output:
+    returns:
     - StandardStatusIdentifiedResponse: Response indicating success or failure
     """
     return await _delete_user(user_id=user_id, auth=auth, db=db)
@@ -462,12 +462,7 @@ async def _get_all_users(
                         user[0].notification_daily or user[0].notification_weekly or user[0].notification_monthly
                     ),
                 ),
-                Role=RoleUsersResponse(
-                    id=user[0].role_id,
-                    name=roles_by_id[user[0].role_id].name,
-                    perm_auth=roles_by_id[user[0].role_id].perm_auth,
-                    perm_site_admin=roles_by_id[user[0].role_id].perm_site_admin,
-                ),
+                Role=RoleUsersResponse(**roles_by_id[user[0].role_id].asdict()),
                 Organisation=OrganisationUsersResponse(
                     id=user[0].org_id,
                     name=organisations_by_id[user[0].org_id].name,
@@ -598,8 +593,8 @@ async def _get_user(auth: Auth, db: Session, userID: str) -> GetUsersElement:
             contact=user.contactalert,
             notification=(user.notification_daily or user.notification_weekly or user.notification_monthly),
         ),
-        Role=RoleUsersResponse(**role.__dict__),
-        Organisation=OrganisationUsersResponse(**organisation.__dict__),
+        Role=RoleUsersResponse(**role.asdict()),
+        Organisation=OrganisationUsersResponse(**organisation.asdict()),
         UserSetting=user_settings_dict,
     )
 
