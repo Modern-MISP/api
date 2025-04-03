@@ -7,11 +7,10 @@ from datetime import date, datetime
 from time import gmtime
 from typing import Annotated
 
-from fastapi.responses import RedirectResponse
 import httpx
-from fastapi import APIRouter, Depends, HTTPException, Path
-from fastapi.encoders import jsonable_encoder
 from fastapi import APIRouter, Depends, HTTPException, Path, status
+from fastapi.encoders import jsonable_encoder
+from fastapi.responses import RedirectResponse
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload, with_loader_criteria
 from sqlalchemy.sql import Select
@@ -52,7 +51,6 @@ from mmisp.api_schemas.jobs import (
     FreeTextImportWorkerBody,
     FreeTextImportWorkerData,
     FreeTextImportWorkerUser,
-    FreeTextProcessID,
 )
 from mmisp.api_schemas.sharing_groups import (
     EventSharingGroupResponse,
