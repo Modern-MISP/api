@@ -336,6 +336,14 @@ async def _get_taxonomy_details(db: Session, taxonomy_id: int) -> GetIdTaxonomyR
         taxonomy_entries_of_taxonomy_predicate = result.scalars().all()
 
         for taxonomy_entry_of_taxonomy_predicate in taxonomy_entries_of_taxonomy_predicate:
+            tp_expanded = taxonomy_predicate.expanded
+            tpe_expanded = taxonomy_entry_of_taxonomy_predicate.expanded
+            if tp_expanded is None:
+                tp_expanded = taxonomy_predicate.value
+            if tpe_expanded is None:
+                tpe_expanded = taxonomy_entry_of_taxonomy_predicate.value
+            expanded = tp_expanded + ":" + tpe_expanded
+
             tag_name = await _get_tag_name(db, taxonomy_entry_of_taxonomy_predicate)
 
             result = await db.execute(select(Tag).filter(Tag.name == tag_name).limit(1))
@@ -348,7 +356,7 @@ async def _get_taxonomy_details(db: Session, taxonomy_id: int) -> GetIdTaxonomyR
             taxonomy_entries.append(
                 TaxonomyEntrySchema(
                     tag=tag_name,
-                    expanded=taxonomy_predicate.expanded + ":" + taxonomy_entry_of_taxonomy_predicate.expanded,
+                    expanded=expanded,
                     exclusive_predicate=taxonomy_predicate.exclusive,
                     description=taxonomy_entry_of_taxonomy_predicate.description,
                     existing_tag=existing_tag,
@@ -465,6 +473,13 @@ async def _get_taxonomy_details_extended(db: Session, taxonomy_id: int) -> GetTa
         taxonomy_entries_of_taxonomy_predicate = result.scalars().all()
 
         for taxonomy_entry_of_taxonomy_predicate in taxonomy_entries_of_taxonomy_predicate:
+            tp_expanded = taxonomy_predicate.expanded
+            tpe_expanded = taxonomy_entry_of_taxonomy_predicate.expanded
+            if tp_expanded is None:
+                tp_expanded = taxonomy_predicate.value
+            if tpe_expanded is None:
+                tpe_expanded = taxonomy_entry_of_taxonomy_predicate.value
+            expanded = tp_expanded + ":" + tpe_expanded
             events = 0
             attributes = 0
             tag_name = await _get_tag_name(db, taxonomy_entry_of_taxonomy_predicate)
@@ -488,7 +503,7 @@ async def _get_taxonomy_details_extended(db: Session, taxonomy_id: int) -> GetTa
             taxonomy_entries.append(
                 TaxonomyTagEntrySchema(
                     tag=tag_name,
-                    expanded=taxonomy_predicate.expanded + ":" + taxonomy_entry_of_taxonomy_predicate.expanded,
+                    expanded=expanded,
                     exclusive_predicate=taxonomy_predicate.exclusive,
                     description=taxonomy_entry_of_taxonomy_predicate.description,
                     existing_tag=existing_tag,
