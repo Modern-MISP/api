@@ -492,7 +492,7 @@ async def update_event_depr(
 
     - the current database
 
-    - the event id
+    - the event id or uuid
 
     - the request body
 
