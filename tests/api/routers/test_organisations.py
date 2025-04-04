@@ -2,9 +2,8 @@ from time import time
 
 import pytest
 import pytest_asyncio
-from sqlalchemy.orm import Session
-
 from mmisp.tests.generators.model_generators.organisation_generator import generate_organisation
+from sqlalchemy.orm import Session
 
 
 @pytest_asyncio.fixture
@@ -38,6 +37,7 @@ async def organisation2(db):
 @pytest.mark.asyncio
 async def test_get_organisation_by_id(db: Session, site_admin_user_token, client, organisation) -> None:
     org_id = organisation.id
+    org_uuid = organisation.uuid
 
     headers = {"authorization": site_admin_user_token}
     response = client.get(f"organisations/{org_id}", headers=headers)
@@ -52,6 +52,34 @@ async def test_get_organisation_by_id(db: Session, site_admin_user_token, client
     assert response_json["nationality"] == organisation.nationality
     assert response_json["sector"] == organisation.sector
 
+    response = client.get(f"organisations/{org_uuid}", headers=headers)
+    assert response.status_code == 200
+    response_json = response.json()
+    assert response_json["id"] == org_id
+
+
+@pytest.mark.asyncio
+async def test_get_organisation_by_id_depr(db: Session, site_admin_user_token, client, organisation) -> None:
+    org_id = organisation.id
+    org_uuid = organisation.uuid
+
+    headers = {"authorization": site_admin_user_token}
+    response = client.get(f"organisations/view/{org_id}", headers=headers)
+
+    assert response.status_code == 200
+
+    response_json = response.json()["Organisation"]
+
+    assert response_json["id"] == org_id
+    assert response_json["name"] == organisation.name
+    assert response_json["description"] == organisation.description
+    assert response_json["nationality"] == organisation.nationality
+    assert response_json["sector"] == organisation.sector
+
+    response = client.get(f"organisations/view/{org_uuid}", headers=headers)
+    assert response.status_code == 200
+    response_json = response.json()["Organisation"]
+    assert response_json["id"] == org_id
 
 @pytest.mark.asyncio
 async def test_get_all_organisations(db: Session, site_admin_user_token, client, organisation, organisation2) -> None:

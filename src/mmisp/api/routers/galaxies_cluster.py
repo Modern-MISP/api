@@ -31,6 +31,7 @@ from mmisp.api_schemas.galaxy_clusters import (
 )
 from mmisp.api_schemas.galaxy_common import ShortCommonGalaxy, ShortCommonGalaxyCluster
 from mmisp.api_schemas.organisations import GetOrganisationResponse
+from mmisp.api_schemas.organisations import GetOrganisationElement
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.attribute import Attribute, AttributeTag
 from mmisp.db.models.event import Event, EventTag
@@ -630,7 +631,7 @@ async def _get_organisation_for_cluster(db: Session, org: Organisation) -> GetOr
     if org is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Organisation not found")
 
-    return GetOrganisationResponse(
+    return GetOrganisationElement(
         id=org.id,
         name=org.name,
         date_created=org.date_created,

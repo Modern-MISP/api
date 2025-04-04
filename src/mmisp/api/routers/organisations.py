@@ -3,9 +3,6 @@ from datetime import datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Path, status
-from sqlalchemy.future import select
-
-from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize, check_permissions
 from mmisp.api_schemas.organisations import (
     AddOrganisation,
     DeleteForceUpdateOrganisationResponse,
@@ -13,10 +10,14 @@ from mmisp.api_schemas.organisations import (
     GetAllOrganisationResponse,
     GetAllOrganisationsOrganisation,
     GetOrganisationResponse,
+    GetOrganisationElement,
 )
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.organisation import Organisation
 from mmisp.lib.logger import alog
+from sqlalchemy.future import select
+
+from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize, check_permissions
 
 router = APIRouter(tags=["organisations"])
 
@@ -27,10 +28,10 @@ router = APIRouter(tags=["organisations"])
 )
 @alog
 async def add_organisation(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
-    db: Annotated[Session, Depends(get_db)],
-    body: AddOrganisation,
-) -> GetOrganisationResponse:
+        auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+        db: Annotated[Session, Depends(get_db)],
+        body: AddOrganisation,
+) -> GetOrganisationElement:
     """
     Adds a new organisation.
 
@@ -53,8 +54,8 @@ async def add_organisation(
 )
 @alog
 async def get_organisations(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
-    db: Annotated[Session, Depends(get_db)],
+        auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+        db: Annotated[Session, Depends(get_db)],
 ) -> list[GetAllOrganisationResponse]:
     """
     Gets all organisations as a list.
@@ -109,10 +110,10 @@ async def get_organisations_deprecated(
 )
 @alog
 async def get_organisation(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
-    db: Annotated[Session, Depends(get_db)],
-    organisation_id: Annotated[int | uuid.UUID, Path(alias="orgId")],
-) -> GetOrganisationResponse:
+        auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+        db: Annotated[Session, Depends(get_db)],
+        organisation_id: Annotated[str, Path(alias="orgId")],
+) -> GetOrganisationElement:
     """
     Gets an organisation by its ID.
 
@@ -131,15 +132,38 @@ async def get_organisation(
     return await _get_organisation(auth, db, organisation_id)
 
 
+@router.get("/organisations/view/{orgId}", summary="Gets an organisation by its ID or UUID")
+async def get_organisation_depr(
+        auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+        db: Annotated[Session, Depends(get_db)],
+        organisation_id: Annotated[str, Path(alias="orgId")],
+) -> GetOrganisationResponse:
+    """
+    Gets an organisation by its ID or UUID.
+
+    Input:
+
+    - ID or UUID of the organisation to get
+
+    - The current database
+
+    Output:
+
+    - Data of the searched organisation
+    """
+    return await _get_organisation_depr(auth, db, organisation_id)
+
+
 @router.delete(
+
     "/organisations/delete/{orgId}",
     summary="Deletes an organisation by its ID",
 )
 @alog
 async def delete_organisation(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
-    db: Annotated[Session, Depends(get_db)],
-    organisation_id: Annotated[str, Path(alias="orgId")],
+        auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+        db: Annotated[Session, Depends(get_db)],
+        organisation_id: Annotated[str, Path(alias="orgId")],
 ) -> DeleteForceUpdateOrganisationResponse:
     """
     Deletes an organisation by its ID.
@@ -163,11 +187,11 @@ async def delete_organisation(
 )
 @alog
 async def update_organisation(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
-    db: Annotated[Session, Depends(get_db)],
-    organisation_id: Annotated[str, Path(alias="orgId")],
-    body: EditOrganisation,
-) -> GetOrganisationResponse:
+        auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+        db: Annotated[Session, Depends(get_db)],
+        organisation_id: Annotated[str, Path(alias="orgId")],
+        body: EditOrganisation,
+) -> GetOrganisationElement:
     """
     Updates an organisation by its ID.
 
@@ -187,6 +211,30 @@ async def update_organisation(
 
 
 # --- deprecated ---
+
+
+@router.get(
+    "/organisations",
+    summary="Gets a list of all organisations",
+    deprecated=True,
+)
+@alog
+async def get_organisations_deprecated(
+        auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+        db: Annotated[Session, Depends(get_db)],
+) -> list[GetAllOrganisationResponse]:
+    """
+    Gets all organisations as a list.
+
+    args:
+
+    - The current database
+
+    returns:
+
+    - List of all organisations
+    """
+    return await _get_organisations(auth, db)
 
 
 # --- endpoint logic ---
@@ -283,7 +331,7 @@ async def _get_organisation(auth: Auth, db: Session, organisation_id: int | uuid
     if organisation is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Organisation not found")
 
-    return GetOrganisationResponse(
+    return GetOrganisationElement(
         id=organisation.id,
         name=organisation.name,
         date_created=organisation.date_created,
@@ -334,8 +382,8 @@ async def _delete_organisation(auth: Auth, db: Session, organisationID: str) -> 
 
 @alog
 async def _update_organisation(
-    auth: Auth, db: Session, organisationID: str, body: EditOrganisation
-) -> GetOrganisationResponse:
+        auth: Auth, db: Session, organisationID: str, body: EditOrganisation
+) -> GetOrganisationElement:
     if not (check_permissions(auth, [Permission.SITE_ADMIN]) and check_permissions(auth, [Permission.ADMIN])):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
@@ -370,7 +418,7 @@ async def _update_organisation(
 
     await db.flush()
     await db.refresh(org)
-    return GetOrganisationResponse(
+    return GetOrganisationElement(
         id=org.id,
         name=org.name,
         date_created=org.date_created,
