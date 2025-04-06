@@ -547,6 +547,12 @@ async def _add_event(auth: Auth, db: AsyncSession, body: AddEventBody) -> AddEdi
         # this should never happen, it would mean, the user disappeared between auth and processing the request
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="user not available")
 
+    if body.uuid:
+        existing_event: Event | None = (await db.execute(
+            select(Event).where(Event.uuid == body.uuid))).scalars().one_or_none()
+        if existing_event:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Event with this UUID already exists.")
+
     new_event = Event(
         **{
             **body.model_dump(),
