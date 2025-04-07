@@ -17,6 +17,7 @@ from mmisp.api_schemas.galaxies import (
     GetAllSearchGalaxiesAttributes,
     ImportGalaxyBody,
 )
+from mmisp.api_schemas.galaxies import RestSearchGalaxyBody
 from mmisp.api_schemas.galaxy_clusters import (
     AddGalaxyClusterRequest,
     ExportGalaxyClusterResponse,
@@ -422,10 +423,14 @@ async def _get_minimal_galaxy_cluster_search_response(db: Session,
     if galaxy_cluster.galaxy is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Galaxy not found")
 
+    galaxy_dict: dict = (await _prepare_galaxy_response(db, galaxy_cluster.galaxy)).dict()
+    galaxy_dict['created'] = str(galaxy_dict['created'])
+    galaxy_dict['modified'] = str(galaxy_dict['modified'])
+
     parsed_cluster: SearchGalaxyClusterGalaxyClustersDetails = SearchGalaxyClusterGalaxyClustersDetails(
         uuid=galaxy_cluster.uuid,
         version=galaxy_cluster.version,
-        Galaxy=await _prepare_galaxy_response(db, galaxy_cluster.galaxy)
+        Galaxy=RestSearchGalaxyBody(**galaxy_dict),
     )
     return SearchGalaxyClusterGalaxyClusters(GalaxyCluster=parsed_cluster)
 
