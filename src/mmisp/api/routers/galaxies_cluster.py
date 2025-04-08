@@ -196,7 +196,7 @@ async def galaxies_attachCluster(
 async def get_galaxy_cluster_view(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    cluster_id: Annotated[int, Path(alias="galaxyClusterId")],
+        cluster_id: Annotated[int | str, Path(alias="galaxyClusterId")],
 ) -> GalaxyClusterResponse:
     """Deprecated
     Returns information from a galaxy cluster selected by its id.
@@ -222,13 +222,20 @@ async def get_galaxy_cluster_view(
 async def put_galaxy_cluster(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
-    galaxy_cluster_id: Annotated[int, Path(alias="galaxy_cluster_id")],
+        galaxy_cluster_id: Annotated[int | str, Path(alias="galaxy_cluster_id")],
     body: PutGalaxyClusterRequest,
 ) -> GalaxyClusterResponse:
+    if isinstance(galaxy_cluster_id, int) or galaxy_cluster_id.isdigit():
+        filter_rule = GalaxyCluster.id == int(galaxy_cluster_id)
+    elif is_uuid(galaxy_cluster_id):
+        filter_rule = GalaxyCluster.uuid == galaxy_cluster_id
+    else:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="Invalid cluster ID")
+
     # get galaxy
     qry = (
         select(GalaxyCluster)
-        .filter(GalaxyCluster.id == galaxy_cluster_id)
+        .filter(filter_rule)
         .options(selectinload(GalaxyCluster.galaxy_elements))
     )
 
@@ -586,11 +593,17 @@ async def _process_galaxy_cluster_dict(cluster_dict: dict) -> dict:
     return cluster_dict
 
 
-@alog
-async def _load_galaxy_cluster(db: Session, cluster_id: int) -> GalaxyCluster | None:
+async def _load_galaxy_cluster(db: Session, cluster_id: int | str) -> GalaxyCluster | None:
+    if isinstance(cluster_id, int) or cluster_id.isdigit():
+        filter_rule = GalaxyCluster.id == int(cluster_id)
+    elif is_uuid(cluster_id):
+        filter_rule = GalaxyCluster.uuid == cluster_id
+    else:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="Invalid cluster ID")
+
     result = await db.execute(
         select(GalaxyCluster)
-        .filter(GalaxyCluster.id == cluster_id)
+        .filter(filter_rule)
         .options(
             selectinload(GalaxyCluster.org),
             selectinload(GalaxyCluster.orgc),
