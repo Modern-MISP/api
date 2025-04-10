@@ -377,10 +377,10 @@ async def _load_galaxy_clusters_with_filters(db: Session, filters: GalaxyCluster
     query = select(GalaxyCluster).options(joinedload(GalaxyCluster.galaxy))
 
     if search_body.id:
-        query = query.filter(GalaxyCluster.id == search_body.id)
+        query = query.filter(GalaxyCluster.id.in_(search_body.id))
 
     if search_body.uuid:
-        query = query.filter(GalaxyCluster.uuid == search_body.uuid)
+        query = query.filter(GalaxyCluster.uuid.in_(search_body.uuid))
 
     if search_body.galaxy_id:
         query = query.filter(GalaxyCluster.galaxy_id == search_body.galaxy_id)
