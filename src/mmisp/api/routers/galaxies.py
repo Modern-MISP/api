@@ -2,11 +2,6 @@ from collections.abc import Sequence
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Path
-from sqlalchemy import delete, select
-from starlette import status
-from starlette.requests import Request
-
-from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
 from mmisp.api_schemas.galaxies import (
     DeleteForceUpdateImportGalaxyResponse,
     ExportGalaxyGalaxyElement,
@@ -19,7 +14,12 @@ from mmisp.api_schemas.galaxies import (
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.galaxy import Galaxy
 from mmisp.db.models.galaxy_cluster import GalaxyCluster, GalaxyElement
-from mmisp.lib.logger import alog
+from mmisp.util.uuid import is_uuid
+from sqlalchemy import delete, select
+from starlette import status
+from starlette.requests import Request
+
+from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
 
 router = APIRouter(tags=["galaxies"])
 
@@ -234,7 +234,17 @@ async def delete_galaxy_depr(
 
 @alog
 async def _get_galaxy_details(db: Session, galaxy_id: str) -> GetGalaxyResponse:
-    galaxy: Galaxy | None = await db.get(Galaxy, galaxy_id)
+    if isinstance(galaxy_id, int) or galaxy_id.isdigit():
+        filter_rule = Galaxy.id == int(galaxy_id)
+    elif is_uuid(galaxy_id):
+        filter_rule = Galaxy.uuid == galaxy_id
+    else:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="Invalid galaxy ID")
+
+    qry = (select(Galaxy).filter(filter_rule))
+
+    result = await db.execute(qry)
+    galaxy: Galaxy | None = result.scalars().one_or_none()
 
     if not galaxy:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
