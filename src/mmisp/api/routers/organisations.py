@@ -245,7 +245,6 @@ async def _add_organisation(auth: Auth, db: Session, body: AddOrganisation) -> G
     if not (check_permissions(auth, [Permission.SITE_ADMIN]) or check_permissions(auth, [Permission.ADMIN])):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
     org = Organisation(
-        id=body.id,
         name=body.name,
         date_created=datetime.now(),
         date_modified=datetime.now(),
