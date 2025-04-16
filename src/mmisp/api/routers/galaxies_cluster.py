@@ -56,6 +56,9 @@ from starlette.requests import Request
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
 
 router = APIRouter(tags=["galaxy_clusters"])
+_log = logging.getLogger(__name__)
+# TODO: Remove this later
+_log.setLevel(logging.DEBUG)
 
 
 @router.post(
@@ -383,7 +386,9 @@ async def _restsearch(db: Session, body: GalaxyClusterSearchBody) -> GalaxyClust
 async def _load_galaxy_clusters_with_filters(db: Session, filters: GalaxyClusterSearchBody) -> Sequence[GalaxyCluster]:
     search_body: GalaxyClusterSearchBody = filters
 
-    query = select(GalaxyCluster).options(joinedload(GalaxyCluster.galaxy))
+    query = select(GalaxyCluster).options(joinedload(GalaxyCluster.galaxy),
+                                          joinedload(GalaxyCluster.galaxy_elements),
+                                          joinedload(GalaxyCluster.org), )
 
     if search_body.id:
         query = query.filter(GalaxyCluster.id.in_(search_body.id))
@@ -431,7 +436,7 @@ async def _load_galaxy_clusters_with_filters(db: Session, filters: GalaxyCluster
         query = query.limit(int(search_body.limit))
 
     result = await db.execute(query)
-    return result.scalars().all()
+    return result.unique().scalars().all()
 
 
 async def _get_minimal_galaxy_cluster_search_response(db: Session,
