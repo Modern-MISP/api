@@ -1,3 +1,4 @@
+import logging
 import time
 from collections.abc import Sequence
 from enum import StrEnum
@@ -261,11 +262,18 @@ async def put_galaxy_cluster(
 async def add_galaxy_cluster(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
-    galaxy_id: Annotated[int, Path(alias="galaxyId")],
+        galaxy_id: Annotated[int | str, Path(alias="galaxyId")],
     body: AddGalaxyClusterRequest,
 ) -> GalaxyClusterResponse:
+    if isinstance(galaxy_id, int) or galaxy_id.isdigit():
+        filter_rule = Galaxy.id == int(galaxy_id)
+    elif is_uuid(galaxy_id):
+        filter_rule = Galaxy.uuid == galaxy_id
+    else:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="Invalid galaxy ID. Has to be an int or uuid.")
+
     # get galaxy
-    result = await db.execute(select(Galaxy).filter(Galaxy.id == galaxy_id))
+    result = await db.execute(select(Galaxy).filter(filter_rule))
     galaxy = result.scalar_one_or_none()
 
     if galaxy is None:
@@ -276,11 +284,11 @@ async def add_galaxy_cluster(
     tag_name = galaxy_tag_name(galaxy.type, new_uuid)
 
     new_galaxy_cluster = GalaxyCluster(
-        uuid=new_uuid,
+        uuid=body.uuid,
         value=body.value,
         description=body.description,
         source=body.source,
-        galaxy_id=galaxy_id,
+        galaxy_id=galaxy.id,
         distribution=body.distribution,
         authors=body.authors,
         tag_name=tag_name,
@@ -288,6 +296,7 @@ async def add_galaxy_cluster(
         org_id=auth.org_id,
         orgc_id=auth.org_id,
         version=int(time.time()),
+        locked=body.locked,
     )
     db.add(new_galaxy_cluster)
     await db.flush()
