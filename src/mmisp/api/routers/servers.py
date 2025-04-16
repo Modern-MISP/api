@@ -157,7 +157,7 @@ async def get_version(
 
 @router.post(
     "/servers/remote/edit/{server_id}",
-    summary="Edits remote servers",
+    summary="Edits remote server",
 )
 @alog
 async def update_remote_server(
@@ -167,19 +167,18 @@ async def update_remote_server(
     body: EditServer,
 ) -> AddServerResponse:
     """
-    Edits servers given by org_id.
+    Edits server given by server_id.
 
-    args:
-
-    - org_id
-
-    - The current database
-
-    - auth: Authentication details
-
-    returns:
-
-    - Updated servers as a list
+    :param server_id: The id of the server to be edited
+    :type server_id: str
+    :param db: The current database
+    :type db: Session
+    :param auth: Authentication details
+    :type auth: Auth
+    :param body: The new data for the server
+    :type body: EditServer
+    :return: server object of updated server
+    :rtype: AddServerResponse
     """
     return await _edit_server_by_id(auth=auth, db=db, server_id=server_id, body=body)
 
