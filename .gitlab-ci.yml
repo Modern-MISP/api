@@ -1,6 +1,7 @@
 default:
   tags:
-      - kgr1-instance-mini
+      - concurrent
+      - any-image-allowed
 
 variables:
   LIB_REPO_URL: https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.kit.edu/${CI_PROJECT_NAMESPACE}/lib.git
@@ -23,8 +24,8 @@ build_image:
   needs: []
   before_script: []
   stage: build_image
-  tags:
-    - kgr1-instance-standard
+  #  tags:
+  #    - kgr1-instance-standard
   image:
     name: gcr.io/kaniko-project/executor:debug
     entrypoint: [""]
@@ -125,8 +126,8 @@ mypy:
 
 legacy_misp:
   parallel: 12
-  tags:
-      - kgr1-instance-standard
+  #  tags:
+  #   - kgr1-instance-standard
   stage: test
   image: ${REGISTRY_DOMAIN}/${REGISTRY_PROJECT}/api:${CI_COMMIT_SHA}
   script:
