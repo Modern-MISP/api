@@ -10,7 +10,6 @@ requires-python = ">=3.11.0"
 dependencies = [
   "mmisp-lib==0.9.0",
   "fastapi==0.115.11",
-  "pydantic==1.10.13",
   "uvicorn[standard]==0.24.0.post1",
   "python-dotenv==1.0.0",
   "PyJWT==2.8.0",
