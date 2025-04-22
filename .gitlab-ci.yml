@@ -106,22 +106,11 @@ pytest_coverage_combine:
         coverage_format: cobertura
         path: coverage.xml
 
-# also run pytest with sqlalchemy v2
-pytest_sa2:
-  needs:
-    - pytest
-  parallel: 16
-  stage: test
-  image: ${REGISTRY_DOMAIN}/${REGISTRY_PROJECT}/api:${CI_COMMIT_SHA}
-  script:
-    - pip install "sqlalchemy>=2.0"
-    - ENV_FILE=.env.test.lite pytest --test-group-count $CI_NODE_TOTAL --test-group=$CI_NODE_INDEX  tests/api/routers
-
 mypy:
   stage: test
   image: ${REGISTRY_DOMAIN}/${REGISTRY_PROJECT}/api:${CI_COMMIT_SHA}
   script:
-    - pip install "ruff>=0.3.7" "mypy==1.10.0" "sqlalchemy>=2.0"
+    - pip install "ruff>=0.3.7" "mypy==1.10.0"
     - MYPYPATH=src mypy --explicit-package-bases src/mmisp/api
 
 legacy_misp:
