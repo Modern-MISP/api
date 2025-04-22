@@ -7,7 +7,6 @@ from importlib.metadata import version
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import ORJSONResponse
 
 import mmisp.db.all_models  # noqa: F401
 from mmisp.api.config import config
@@ -57,7 +56,7 @@ def init_app(*, init_db: bool = False) -> FastAPI:
         title="Modern MISP API",
         version=version("mmisp-api"),
         lifespan=lifespan,
-        default_response_class=ORJSONResponse,
+        #        default_response_class=ORJSONResponse,
         debug=config.DEBUG,
     )
 

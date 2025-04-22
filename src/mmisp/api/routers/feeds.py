@@ -414,7 +414,7 @@ async def update_feed_depr(
 
 @alog
 async def _add_feed(db: Session, body: FeedCreateBody) -> FeedResponse:
-    feed: Feed = Feed(**body.dict())
+    feed: Feed = Feed(**body.model_dump())
 
     db.add(feed)
     await db.flush()
@@ -452,7 +452,7 @@ async def _update_feed(db: Session, feed_id: int, body: FeedUpdateBody) -> FeedR
     if not feed:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Feed not found.")
 
-    update_record(feed, body.dict())
+    update_record(feed, body.model_dump())
 
     await db.flush()
     await db.refresh(feed)

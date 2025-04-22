@@ -120,7 +120,6 @@ async def test_add_tag_invalid_data(invalid_tag_data: Any, site_admin_user_token
     headers = {"authorization": site_admin_user_token}
     response = client.post("/tags", json=invalid_tag_data, headers=headers)
     assert response.status_code == 422
-    assert response.json()["detail"][0]["msg"] == "field required" or "none is not an allowed value"
 
 
 @pytest.mark.asyncio

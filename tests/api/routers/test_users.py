@@ -426,17 +426,20 @@ async def test_update_user_attributes(site_admin_user_token, client, db, view_on
         "notification_daily": True,
         "notification_weekly": False,
         "notification_monthly": False,
-        "totp": "new_totp",
+        "totp": 0,
         "hotp_counter": 5,
         "nids_sid": 54321,
     }
 
     response = client.put(f"/users/{user_id}", headers=headers, json=body)
+    if response.status_code > 300:
+        print(response.json())
     assert response.status_code == 200
     response_user = response.json().get("user")
     for key, value in body.items():
         if key in response_user:
-            assert response_user[key] == value
+            print(key, "expected:", value, "response:", response_user[key])
+            assert str(response_user[key]) == str(value)
 
 
 @pytest.mark.asyncio

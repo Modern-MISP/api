@@ -1,10 +1,8 @@
 import logging
 import uuid
-from calendar import timegm
 from collections import defaultdict
 from collections.abc import Sequence
 from datetime import date, datetime
-from time import gmtime
 from typing import Annotated
 
 import httpx
@@ -372,7 +370,7 @@ async def start_freeTextImport(
         dict
     """
 
-    body_dict = body.dict()
+    body_dict = body.model_dump()
     if body_dict["returnMetaAttributes"] is False:
         raise HTTPException(
             status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="returnMetaAttributes = false is not implemented"
@@ -384,7 +382,7 @@ async def start_freeTextImport(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="no user")
 
     data = FreeTextImportWorkerData(data=body_dict["value"])
-    worker_body = FreeTextImportWorkerBody(user=user, data=data).dict()
+    worker_body = FreeTextImportWorkerBody(user=user, data=data).model_dump()
 
     async with httpx.AsyncClient() as client:
         response = await client.post(
@@ -540,12 +538,12 @@ async def _add_event(auth: Auth, db: Session, body: AddEventBody) -> AddEditGetE
 
     new_event = Event(
         **{
-            **body.dict(),
+            **body.model_dump(),
             "org_id": int(body.org_id) if body.org_id is not None else auth.org_id,
             "orgc_id": int(body.orgc_id) if body.orgc_id is not None else auth.org_id,
             "date": body.date if body.date else date.today(),
             "analysis": body.analysis if body.analysis is not None else "0",
-            "timestamp": int(body.timestamp) if body.timestamp is not None else timegm(gmtime()),
+            "timestamp": body.timestamp if body.timestamp is not None else datetime.now(),
             "threat_level_id": int(body.threat_level_id) if body.threat_level_id is not None else 4,
             "user_id": user.id,
         }
@@ -605,8 +603,8 @@ async def _update_event(
     if not event.can_edit(user):
         raise HTTPException(status.HTTP_403_FORBIDDEN)
 
-    update_record(event, body.dict())
-    event.timestamp = int(datetime.now().timestamp())
+    update_record(event, body.model_dump())
+    event.timestamp = datetime.now()
     await execute_blocking_workflow("event-before-save", db, event)
     await db.flush()
     await db.refresh(event)
@@ -633,7 +631,7 @@ async def _delete_event(db: Session, event_id: int | uuid.UUID, user: User | Non
                     message="Could not delete Event",
                     url=f"/events/delete/{event_id}",
                     id=event_id,
-                ).dict()
+                ).model_dump()
             ),
         )
 
@@ -647,7 +645,7 @@ async def _delete_event(db: Session, event_id: int | uuid.UUID, user: User | Non
                     message="Invalid permissions",
                     url=f"/events/delete/{event_id}",
                     id=event_id,
-                ).dict()
+                ).model_dump()
             ),
         )
 

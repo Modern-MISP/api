@@ -247,7 +247,7 @@ async def _get_galaxy_details(db: Session, galaxy_id: str) -> GetGalaxyResponse:
 
 @alog
 async def _prepare_galaxy_response(db: Session, galaxy: Galaxy) -> GetAllSearchGalaxiesAttributes:
-    galaxy_dict = galaxy.__dict__.copy()
+    galaxy_dict = galaxy.asdict()
 
     result = await db.execute(select(GalaxyCluster).filter(GalaxyCluster.galaxy_id == galaxy.id).limit(1))
     galaxy_cluster = result.scalars().first()
@@ -298,7 +298,7 @@ async def _prepare_galaxy_cluster_response(db: Session, galaxy: Galaxy) -> list[
 
             if len(galaxy_element_list) > 0:
                 for galaxy_element in galaxy_element_list:
-                    galaxy_element_dict = galaxy_element.__dict__.copy()
+                    galaxy_element_dict = galaxy_element.asdict()
                     galaxy_cluster_dict["GalaxyElement"].append(ExportGalaxyGalaxyElement(**galaxy_element_dict))
 
             response_list.append(GetGalaxyClusterResponse(**galaxy_cluster_dict))
@@ -315,7 +315,7 @@ async def _delete_galaxy(db: Session, galaxy_id: str, request: Request) -> Delet
             status_code=status.HTTP_404_NOT_FOUND,
             detail=DeleteForceUpdateImportGalaxyResponse(
                 saved=False, success=False, name="Invalid galaxy.", message="Invalid galaxy.", url=str(request.url.path)
-            ).dict(),
+            ).model_dump(),
         )
 
     await db.execute(delete(GalaxyCluster).filter(GalaxyCluster.galaxy_id == galaxy.id))
@@ -360,7 +360,7 @@ async def _search_galaxies(db: Session, body: SearchGalaxiesbyValue) -> list[Get
     response_list = []
 
     for galaxy in galaxies:
-        galaxy_dict = galaxy.__dict__
+        galaxy_dict = galaxy.asdict()
         response_list.append(GetAllSearchGalaxiesResponse(Galaxy=GetAllSearchGalaxiesAttributes(**galaxy_dict)))
 
     return response_list

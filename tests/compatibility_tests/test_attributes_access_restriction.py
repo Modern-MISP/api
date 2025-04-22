@@ -64,8 +64,12 @@ async def test_get_existing_attribute_fail(
 @pytest.mark.asyncio
 async def test_edit_existing_attribute(access_test_objects, client, user_key, attribute_key) -> None:
     def preprocessor(modern, legacy):
-        del modern["Attribute"]["timestamp"]
-        del legacy["Attribute"]["timestamp"]
+        try:
+            if abs(int(modern["Attribute"]["timestamp"]) - int(legacy["Attribute"]["timestamp"])) < 10:
+                del modern["Attribute"]["timestamp"]
+                del legacy["Attribute"]["timestamp"]
+        except KeyError:
+            pass
 
     clear_key = access_test_objects[f"{user_key}_clear_key"]
     auth_key = access_test_objects[f"{user_key}_auth_key"]

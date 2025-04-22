@@ -33,14 +33,26 @@ async def check_counts_stay_constant(db):
 
 @pytest.fixture(
     params=[
-        generate_valid_object_data().dict(),
-        generate_valid_random_object_data().dict(),
-        generate_valid_random_object_data().dict(),
-        generate_valid_random_object_data().dict(),
-        generate_valid_random_object_data().dict(),
+        generate_valid_object_data().model_dump(mode="json"),
+        generate_valid_random_object_data().model_dump(mode="json"),
+        generate_valid_random_object_data().model_dump(mode="json"),
+        generate_valid_random_object_data().model_dump(mode="json"),
+        generate_valid_random_object_data().model_dump(mode="json"),
     ]
 )
 def object_data(request: Any) -> dict[str, Any]:
+    return request.param
+
+
+@pytest.fixture(
+    params=[
+        generate_specific_search_query().model_dump(mode="json"),
+        generate_search_query().model_dump(mode="json"),
+        generate_random_search_query().model_dump(mode="json"),
+        generate_random_search_query().model_dump(mode="json"),
+    ]
+)
+def search_data(request: Any) -> dict[str, Any]:
     return request.param
 
 
@@ -117,18 +129,6 @@ async def test_add_object_response_format(
 
     response_data = response.json()
     await delete_attributes_from_object_resp(db, response_data)
-
-
-@pytest.fixture(
-    params=[
-        generate_specific_search_query().dict(),
-        generate_search_query().dict(),
-        generate_random_search_query().dict(),
-        generate_random_search_query().dict(),
-    ]
-)
-def search_data(request: Any) -> dict[str, Any]:
-    return request.param
 
 
 @pytest.mark.asyncio

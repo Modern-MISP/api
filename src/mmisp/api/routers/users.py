@@ -27,7 +27,6 @@ from mmisp.db.models.user import User
 from mmisp.db.models.user_setting import UserSetting
 from mmisp.lib.logger import alog
 from mmisp.util.crypto import hash_secret
-from mmisp.util.partial import partial
 
 router = APIRouter(tags=["users"])
 
@@ -58,8 +57,8 @@ async def add_user(
     return await _add_user(auth=auth, db=db, body=body)
 
 
-@router.get("/users/view/me.json", response_model=partial(GetUsersElement))
-@router.get("/users/view/me", response_model=partial(GetUsersElement))
+@router.get("/users/view/me.json")
+@router.get("/users/view/me")
 @alog
 async def get_logged_in_user_info(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))], db: Annotated[Session, Depends(get_db)]

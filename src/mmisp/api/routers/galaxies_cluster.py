@@ -296,10 +296,10 @@ async def _import_galaxy_cluster(
     failed_imports_counter = 0
 
     for element in body:
-        element_dict = element.__dict__.copy()
+        element_dict = element.model_dump()
 
         galaxy_cluster = element_dict["GalaxyCluster"]
-        galaxy_cluster_dict = galaxy_cluster.dict()
+        galaxy_cluster_dict = galaxy_cluster
 
         galaxy_elements = galaxy_cluster_dict["GalaxyElement"]
 
@@ -318,7 +318,7 @@ async def _import_galaxy_cluster(
                     url=str(request.url.path),
                     errors=f"Could not import galaxy clusters. {successfully_imported_counter} imported, 0 ignored,"
                     f"{failed_imports_counter} failed. Only non-default clusters can be saved",
-                ).dict(),
+                ).model_dump(),
             )
         elif len(galaxies_with_given_type) == 0:
             raise HTTPException(
@@ -330,30 +330,30 @@ async def _import_galaxy_cluster(
                     url=str(request.url.path),
                     errors=f"Could not import galaxy clusters. {successfully_imported_counter} imported, 0 ignored,"
                     f"{failed_imports_counter} failed. Galaxy not found",
-                ).dict(),
+                ).model_dump(),
             )
         else:
             del galaxy_cluster_dict["GalaxyElement"]
 
             new_galaxy_cluster = GalaxyCluster(
-                type=galaxy_cluster.type,
-                value=galaxy_cluster.value,
-                tag_name=galaxy_cluster.tag_name,
-                description=galaxy_cluster.description,
-                galaxy_id=galaxy_cluster.galaxy_id,
-                source=galaxy_cluster.source,
-                authors=galaxy_cluster.authors,
-                version=galaxy_cluster.version,
-                distribution=galaxy_cluster.distribution,
-                sharing_group_id=galaxy_cluster.sharing_group_id,
-                org_id=galaxy_cluster.org_id,
-                orgc_id=galaxy_cluster.orgc_id,
-                default=galaxy_cluster.default,
-                locked=galaxy_cluster.locked,
-                extends_uuid=galaxy_cluster.extends_uuid,
-                extends_version=galaxy_cluster.extends_version,
-                published=galaxy_cluster.published,
-                deleted=galaxy_cluster.deleted,
+                type=galaxy_cluster["type"],
+                value=galaxy_cluster["value"],
+                tag_name=galaxy_cluster["tag_name"],
+                description=galaxy_cluster["description"],
+                galaxy_id=galaxy_cluster["galaxy_id"],
+                source=galaxy_cluster["source"],
+                authors=galaxy_cluster["authors"],
+                version=galaxy_cluster["version"],
+                distribution=galaxy_cluster["distribution"],
+                sharing_group_id=galaxy_cluster["sharing_group_id"],
+                org_id=galaxy_cluster["org_id"],
+                orgc_id=galaxy_cluster["orgc_id"],
+                default=galaxy_cluster["default"],
+                locked=galaxy_cluster["locked"],
+                extends_uuid=galaxy_cluster["extends_uuid"],
+                extends_version=galaxy_cluster["extends_version"],
+                published=galaxy_cluster["published"],
+                deleted=galaxy_cluster["deleted"],
             )
 
             db.add(new_galaxy_cluster)
@@ -441,7 +441,7 @@ async def _get_galaxy_cluster(db: Session, galaxy_cluster: GalaxyCluster | None)
     galaxy_cluster_dict["Galaxy"] = await _prepare_galaxy_response(db, galaxy)
     # Get the GalaxyElements
     galaxy_cluster_dict["GalaxyElement"] = [
-        ExportGalaxyGalaxyElement(**ge.__dict__.copy()) for ge in galaxy_cluster.galaxy_elements
+        ExportGalaxyGalaxyElement(**ge.asdict()).model_dump() for ge in galaxy_cluster.galaxy_elements
     ]
 
     # Get the Organisations
@@ -620,7 +620,7 @@ async def _prepare_galaxy_cluster_relation_response(
     galaxy_cluster_relation_response_list = []
 
     for galaxy_cluster_relation in galaxy_cluster_relation_list:
-        galaxy_cluster_relation_dict = galaxy_cluster_relation.__dict__.copy()
+        galaxy_cluster_relation_dict = galaxy_cluster_relation.asdict()
 
         result = await db.execute(
             select(GalaxyCluster).filter(GalaxyCluster.id == galaxy_cluster_relation.galaxy_cluster_id).limit(1)
@@ -655,7 +655,7 @@ def _prepare_tag_response(tag_list: Sequence[Any]) -> list[AddEditGetEventGalaxy
     tag_response_list = []
 
     for tag in tag_list:
-        tag_dict = tag.__dict__.copy()
+        tag_dict = tag.asdict()
         tag_dict["org_id"] = tag.org_id if tag.org_id is not None else "0"
         tag_dict["user_id"] = tag.user_id if tag.user_id is not None else "0"
         tag_response_list.append(AddEditGetEventGalaxyClusterRelationTag(**tag_dict))

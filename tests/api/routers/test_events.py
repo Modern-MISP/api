@@ -35,7 +35,7 @@ async def test_freetext_import(client, site_admin_user_token):
     )
 
     assert response.status_code == 303
-    assert response.headers['location'] == "/jobs/777"
+    assert response.headers["location"] == "/jobs/777"
 
 
 async def get_max_event_id(db):
@@ -118,7 +118,7 @@ async def test_get_existing_event(
     assert response_json["Event"]["id"] == event_id
     assert response_json["Event"]["org_id"] == org_id
     assert response_json["Event"]["orgc_id"] == org_id
-    assert response_json["Event"]["attribute_count"] == "1"
+    assert response_json["Event"]["attribute_count"] == 1
     assert response_json["Event"]["Attribute"][0]["id"] == attribute_id
     assert response_json["Event"]["Tag"][0]["id"] == tag_id
     assert response_json["Event"]["Galaxy"][0]["id"] == galaxy_id
@@ -175,7 +175,7 @@ async def test_get_existing_event_by_uuid(
     assert response_json["Event"]["uuid"] == str(event_uuid)
     assert response_json["Event"]["org_id"] == org_id
     assert response_json["Event"]["orgc_id"] == org_id
-    assert response_json["Event"]["attribute_count"] == "1"
+    assert response_json["Event"]["attribute_count"] == 1
     assert response_json["Event"]["Attribute"][0]["id"] == attribute_id
     assert response_json["Event"]["Tag"][0]["id"] == tag_id
     assert response_json["Event"]["Galaxy"][0]["id"] == galaxy_id

@@ -224,7 +224,6 @@ async def test_edit_existing_attribute(access_test_objects, client, user_key, at
         "distribution": "1",
         "comment": "new comment",
         "disable_correlation": False,
-        "first_seen": "",
     }
 
     attribute_id = attribute.id

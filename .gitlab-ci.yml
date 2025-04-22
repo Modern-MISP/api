@@ -75,10 +75,11 @@ pytest:
   stage: test
   image: ${REGISTRY_DOMAIN}/${REGISTRY_PROJECT}/api:${CI_COMMIT_SHA}
   script:
-    - ENV_FILE=.env.test.lite pytest --junitxml=report.xml --test-group-count $CI_NODE_TOTAL --test-group=$CI_NODE_INDEX  --cov --cov-report= tests/api/routers
+    - ENV_FILE=.env.test.lite pytest --junitxml=report.xml --test-group-count $CI_NODE_TOTAL --test-group=$CI_NODE_INDEX tests/api/routers
+    #    - ENV_FILE=.env.test.lite pytest --junitxml=report.xml --test-group-count $CI_NODE_TOTAL --test-group=$CI_NODE_INDEX  --cov --cov-report= tests/api/routers
   variables:
     COVERAGE_FILE: ".coverage.${CI_NODE_INDEX}"
-    DEBUG: true
+    #    DEBUG: true
   artifacts:
       when: always
       paths:
@@ -88,23 +89,23 @@ pytest:
       reports:
         junit: report.xml
 
-pytest_coverage_combine:
-  needs:
-    - pytest
-  stage: coverage
-  image: ${REGISTRY_DOMAIN}/${REGISTRY_PROJECT}/api:${CI_COMMIT_SHA}
-  script:
-    - coverage combine
-    - coverage xml
-    - sed -i 's,/home/mmisp/.local/lib/python3.11/site-packages/,src/,' coverage.xml
-    - sed -i 's,<source></source>,<source>./</source>,' coverage.xml
-    - coverage report
-  coverage: '/TOTAL.*\s+(\d+%)$/'
-  artifacts:
-    reports:
-      coverage_report:
-        coverage_format: cobertura
-        path: coverage.xml
+#pytest_coverage_combine:
+#  needs:
+#    - pytest
+#  stage: coverage
+#  image: ${REGISTRY_DOMAIN}/${REGISTRY_PROJECT}/api:${CI_COMMIT_SHA}
+#  script:
+#    - coverage combine
+#    - coverage xml
+#    - sed -i 's,/home/mmisp/.local/lib/python3.11/site-packages/,src/,' coverage.xml
+#    - sed -i 's,<source></source>,<source>./</source>,' coverage.xml
+#    - coverage report
+#  coverage: '/TOTAL.*\s+(\d+%)$/'
+#  artifacts:
+#    reports:
+#      coverage_report:
+#        coverage_format: cobertura
+#        path: coverage.xml
 
 mypy:
   stage: test

@@ -1,6 +1,7 @@
 import logging
 import uuid
 from collections.abc import Sequence
+from datetime import datetime
 from typing import Annotated, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Path, status
@@ -499,7 +500,7 @@ async def _add_attribute(
 
     new_attribute = Attribute(
         **{
-            **body.dict(),
+            **body.model_dump(),
             "event_id": int(event.id),
             "category": body.category
             if body.category is not None
@@ -555,7 +556,7 @@ async def _update_attribute(
 
     # first_seen/last_seen being an empty string is accepted by legacy MISP
     # and implies "field is not set".
-    payload = body.dict()
+    payload = body.model_dump()
     for seen in ["first_seen", "last_seen"]:
         if seen in payload and not payload[seen]:
             payload[seen] = None
@@ -585,6 +586,7 @@ async def _update_attribute(
             payload["sharing_group_id"] = 0
 
     update_record(attribute, payload)
+    attribute.timestamp = datetime.now()
 
     await execute_workflow("attribute-after-save", db, attribute)
 
@@ -640,7 +642,7 @@ async def _rest_search_attributes(
     if body.returnFormat != "json":
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid output format.")
 
-    filter = get_search_filters(**body.dict())
+    filter = get_search_filters(**body.model_dump())
     qry = (
         select(Attribute)
         .filter(filter)
@@ -662,9 +664,9 @@ async def _rest_search_attributes(
 
     response_list = []
     for attribute in attributes:
-        attribute_dict = attribute.asdict().copy()
+        attribute_dict = attribute.asdict()
         if attribute.event_id is not None:
-            event_dict = attribute.event.__dict__.copy()
+            event_dict = attribute.event.asdict()
             event_dict["date"] = str(event_dict["date"])
             attribute_dict["Event"] = SearchAttributesEvent(**event_dict)
         if attribute.object_id != 0 and attribute.object_id is not None:
@@ -685,7 +687,7 @@ async def _rest_search_attributes(
                 attribute_dict["Tag"].append(GetAttributeTag(**tag_dict))
 
         response_list.append(attribute_dict)
-    return SearchAttributesResponse.parse_obj({"response": {"Attribute": response_list}})
+    return SearchAttributesResponse.model_validate({"response": {"Attribute": response_list}})
 
 
 @alog
@@ -781,7 +783,7 @@ async def _remove_tag_from_attribute(
 
 @log
 def _prepare_attribute_response_add(attribute: Attribute) -> AddAttributeAttributes:
-    attribute_dict = attribute.asdict().copy()
+    attribute_dict = attribute.asdict()
 
     fields_to_convert = ["object_id", "sharing_group_id"]
     for field in fields_to_convert:
@@ -792,7 +794,7 @@ def _prepare_attribute_response_add(attribute: Attribute) -> AddAttributeAttribu
 
 @log
 def _prepare_attribute_response_get_all(attribute: Attribute) -> GetAllAttributesResponse:
-    attribute_dict = attribute.asdict().copy()
+    attribute_dict = attribute.asdict()
 
     fields_to_convert = ["object_id", "sharing_group_id"]
     for field in fields_to_convert:
@@ -805,7 +807,7 @@ def _prepare_attribute_response_get_all(attribute: Attribute) -> GetAllAttribute
 async def _prepare_get_attribute_details_response(
     db: Session, attribute_id: int | uuid.UUID, attribute: Attribute
 ) -> GetAttributeAttributes:
-    attribute_dict = attribute.asdict().copy()
+    attribute_dict = attribute.asdict()
 
     if "event_uuid" not in attribute_dict.keys():
         attribute_dict["event_uuid"] = attribute.event_uuid
@@ -840,7 +842,7 @@ async def _prepare_get_attribute_details_response(
 async def _prepare_edit_attribute_response(
     db: Session, attribute_id: int | uuid.UUID, attribute: Attribute
 ) -> EditAttributeAttributes:
-    attribute_dict = attribute.asdict().copy()
+    attribute_dict = attribute.asdict()
 
     fields_to_convert = ["object_id", "sharing_group_id", "timestamp"]
     for field in fields_to_convert:

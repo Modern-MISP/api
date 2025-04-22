@@ -31,11 +31,11 @@ async def check_counts_stay_constant(db):
 
 @pytest.fixture(
     params=[
-        generate_valid_random_sighting_data().dict(),
-        generate_valid_random_sighting_data().dict(),
-        generate_valid_random_sighting_data().dict(),
-        generate_valid_random_sighting_with_filter_data().dict(),
-        generate_valid_random_sighting_with_filter_data().dict(),
+        generate_valid_random_sighting_data().model_dump(),
+        generate_valid_random_sighting_data().model_dump(),
+        generate_valid_random_sighting_data().model_dump(),
+        generate_valid_random_sighting_with_filter_data().model_dump(),
+        generate_valid_random_sighting_with_filter_data().model_dump(),
     ]
 )
 def sighting_data(request: Any) -> dict[str, Any]:
@@ -157,7 +157,7 @@ async def test_add_sighting_missing_required_fields(
     headers = {"authorization": site_admin_user_token}
     response = client.post("/sightings", json=incomplete_data, headers=headers)
     assert response.status_code == 422
-    assert response.json()["detail"][0]["msg"] == "field required"
+    assert response.json()["detail"][0]["msg"] == "Field required"
 
 
 @pytest.mark.asyncio

@@ -6,7 +6,7 @@ from uuid import uuid4
 import pytest
 import pytest_asyncio
 import sqlalchemy as sa
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import text
 
 from mmisp.db.models.event import Event
@@ -48,10 +48,10 @@ def cach_feed_test_data() -> Generator:
 
 @pytest.fixture(
     params=[
-        generate_valid_required_feed_data().dict(),
-        generate_valid_feed_data().dict(),
-        generate_random_valid_feed_data().dict(),
-        generate_random_valid_feed_data().dict(),
+        generate_valid_required_feed_data().model_dump(),
+        generate_valid_feed_data().model_dump(),
+        generate_random_valid_feed_data().model_dump(),
+        generate_random_valid_feed_data().model_dump(),
     ]
 )
 def feed_data(request: Any) -> dict[str, Any]:
@@ -76,7 +76,7 @@ async def check_counts_stay_constant(db):
 @pytest.mark.asyncio
 async def test_add_feed(
     feed_data: dict[str, Any],
-    db: Session,
+    db: AsyncSession,
     instance_owner_org,
     instance_owner_org_admin_user,
     sharing_group,
@@ -118,6 +118,10 @@ async def test_add_feed(
     headers = {"authorization": site_admin_user_token}
     response = client.post("/feeds", json=feed_data, headers=headers)
 
+    response_json = response.json()
+    if response.status_code > 300:
+        print(response_json)
+
     assert response.status_code == 201
     assert response.json()["Feed"]["name"] == feed_data["name"]
 
@@ -131,14 +135,14 @@ async def test_feed_error_handling(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.post("/feeds", json=invalid_data, headers=headers)
     assert response.status_code == 422
-    assert response.json()["detail"][0]["msg"] == "field required"
-    assert response.json()["detail"][0]["type"] == "value_error.missing"
+    assert response.json()["detail"][0]["msg"] == "Field required"
+    assert response.json()["detail"][0]["type"] == "missing"
 
 
 @pytest.mark.asyncio
 async def test_feed_response_format(
     feed_data: dict[str, Any],
-    db: Session,
+    db: AsyncSession,
     site_admin_user_token,
     instance_owner_org,
     instance_owner_org_admin_user,
@@ -166,6 +170,12 @@ async def test_feed_response_format(
 
     headers = {"authorization": site_admin_user_token}
     response = client.post("/feeds", json=feed_data, headers=headers)
+
+    if response.status_code > 300:
+        print(response.json())
+
+    assert response.status_code < 300
+
     assert response.headers["Content-Type"] == "application/json"
     assert response.json()["Feed"]["name"] == feed_data["name"]
     assert response.json()["Feed"]["id"] is not None
@@ -215,7 +225,7 @@ async def test_feed_enable_response_format(
 async def test_disable_feed(
     feed_test_ids: dict[str, Any],
     feed_data: dict[str, Any],
-    db: Session,
+    db: AsyncSession,
     sharing_group,
     tag,
     event,
@@ -243,7 +253,7 @@ async def test_disable_feed(
 
 @pytest.mark.asyncio
 async def test_disable_feed_response_format(
-    feed_data: dict[str, Any], db: Session, sharing_group, tag, event, site_admin_user_token, client
+    feed_data: dict[str, Any], db: AsyncSession, sharing_group, tag, event, site_admin_user_token, client
 ) -> None:
     feed_data["sharing_group_id"] = sharing_group.id
     feed_data["tag_id"] = tag.id
@@ -260,7 +270,7 @@ async def test_disable_feed_response_format(
 
 @pytest.mark.asyncio
 async def test_get_existing_feed_details(
-    feed_data: dict[str, Any], db: Session, sharing_group, tag, event, site_admin_user_token, client
+    feed_data: dict[str, Any], db: AsyncSession, sharing_group, tag, event, site_admin_user_token, client
 ) -> None:
     feed_data["sharing_group_id"] = sharing_group.id
     feed_data["tag_id"] = tag.id
