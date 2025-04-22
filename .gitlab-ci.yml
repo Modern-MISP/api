@@ -127,6 +127,7 @@ legacy_misp:
       alias: db
       variables:
         HEALTHCHECK_TCP_PORT: 3306
+        KUBERNETES_SERVICE_CPU_LIMIT: "200m"
     - name: registry.cert.kit.edu/public-gitlab-ci/misp-core:latest
       alias: misp-core
       variables:
@@ -136,11 +137,14 @@ legacy_misp:
         HEALTHCHECK_TCP_PORT: 80
         ENABLE_DB_SETTINGS: "false"
         DEBUG: 1
-    - name: valkey/valkey:7.2
+        KUBERNETES_SERVICE_CPU_REQUEST: "700m"
+        KUBERNETES_SERVICE_CPU_LIMIT: "1000m"
+    - name: registry.cert.kit.edu/hub/valkey/valkey:7.2
       command: ["--requirepass 1CA9kMhX6mcuhRlRAptZdQieSX6u25SJ"]
       alias: redis
       variables:
         HEALTHCHECK_TCP_PORT: 6379
+        KUBERNETES_SERVICE_CPU_LIMIT: "200m"
   variables:
     MARIADB_ROOT_PASSWORD: misp
     MARIADB_DATABASE: misp
