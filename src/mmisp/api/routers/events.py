@@ -1416,6 +1416,7 @@ async def _get_event(
                     selectinload(GalaxyCluster.galaxy),
                     selectinload(GalaxyCluster.galaxy_elements),
                 ),
+                selectinload(Attribute.attributetags),
             ),
             with_loader_criteria(Attribute, Attribute.can_access(user)),
             selectinload(Event.sharing_group).options(
