@@ -563,7 +563,7 @@ async def access_test_objects(db, site_admin_user, site_admin_role, auth_key):
         - if the distributionlevel is sharing_group the sharing group is appended.
         - sharing groups have the pattern `sg_<org1>_<org2>`
     """
-    instance_id = f"{''.join(random.choices(string.ascii_letters, k = 15))}"
+    instance_id = f"{''.join(random.choices(string.ascii_letters, k=15))}"
 
     site_admin_user_clear_key, site_admin_user_auth_key = auth_key
 

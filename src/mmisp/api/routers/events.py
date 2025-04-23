@@ -66,16 +66,7 @@ from mmisp.lib.actions import action_publish_event
 from mmisp.lib.galaxies import parse_galaxy_authors
 from mmisp.lib.logger import alog, log
 from mmisp.util.models import update_record
-from mmisp.util.partial import partial
-from mmisp.util.uuid import is_uuid
-from sqlalchemy.future import select
-from sqlalchemy.orm import selectinload
-from sqlalchemy.sql import Select
-from starlette import status
-from starlette.requests import Request
 
-from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
-from mmisp.api.config import config
 from ..workflow import execute_blocking_workflow, execute_workflow
 
 logger = logging.getLogger("mmisp")
@@ -548,8 +539,9 @@ async def _add_event(auth: Auth, db: AsyncSession, body: AddEventBody) -> AddEdi
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="user not available")
 
     if body.uuid:
-        existing_event: Event | None = (await db.execute(
-            select(Event).where(Event.uuid == body.uuid))).scalars().one_or_none()
+        existing_event: Event | None = (
+            (await db.execute(select(Event).where(Event.uuid == body.uuid))).scalars().one_or_none()
+        )
         if existing_event:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Event with this UUID already exists.")
 

@@ -2,6 +2,10 @@ from importlib.metadata import version
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Path, status
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
+
+from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize, check_permissions
 from mmisp.api_schemas.organisations import BaseOrganisation
 from mmisp.api_schemas.responses.standard_status_response import StandardStatusIdentifiedResponse
 from mmisp.api_schemas.server import ServerVersion
@@ -16,10 +20,6 @@ from mmisp.api_schemas.servers import (
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.server import Server
 from mmisp.lib.logger import alog, log
-from sqlalchemy import select
-from sqlalchemy.orm import selectinload
-
-from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize, check_permissions
 
 router = APIRouter(tags=["servers"])
 
@@ -154,6 +154,7 @@ async def get_version(
         request_encoding=[],
         filter_sightings=True,
     )
+
 
 @router.post(
     "/servers/remote/edit/{server_id}",

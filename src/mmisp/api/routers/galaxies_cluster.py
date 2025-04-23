@@ -5,6 +5,12 @@ from enum import StrEnum
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Path
+from sqlalchemy import select
+from sqlalchemy.orm import joinedload, selectinload
+from starlette import status
+from starlette.requests import Request
+
+from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
 from mmisp.api_schemas.events import (
     AddEditGetEventGalaxyClusterRelation,
     AddEditGetEventGalaxyClusterRelationTag,
@@ -17,17 +23,17 @@ from mmisp.api_schemas.galaxies import (
     ExportGalaxyGalaxyElement,
     GetAllSearchGalaxiesAttributes,
     ImportGalaxyBody,
+    RestSearchGalaxyBody,
 )
-from mmisp.api_schemas.galaxies import RestSearchGalaxyBody
 from mmisp.api_schemas.galaxy_clusters import (
     AddGalaxyClusterRequest,
     ExportGalaxyClusterResponse,
     GalaxyClusterResponse,
+    GalaxyClusterSearchBody,
+    GalaxyClusterSearchResponse,
     GetGalaxyClusterResponse,
     IndexGalaxyCluster,
     PutGalaxyClusterRequest,
-    GalaxyClusterSearchResponse,
-    GalaxyClusterSearchBody,
     SearchGalaxyClusterGalaxyClusters,
     SearchGalaxyClusterGalaxyClustersDetails,
 )
@@ -200,7 +206,7 @@ async def galaxies_attachCluster(
 async def get_galaxy_cluster_view(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-        cluster_id: Annotated[int | str, Path(alias="galaxyClusterId")],
+    cluster_id: Annotated[int | str, Path(alias="galaxyClusterId")],
 ) -> GalaxyClusterResponse:
     """Deprecated
     Returns information from a galaxy cluster selected by its id.
@@ -226,7 +232,7 @@ async def get_galaxy_cluster_view(
 async def put_galaxy_cluster(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
-        galaxy_cluster_id: Annotated[int | str, Path(alias="galaxy_cluster_id")],
+    galaxy_cluster_id: Annotated[int | str, Path(alias="galaxy_cluster_id")],
     body: PutGalaxyClusterRequest,
 ) -> GalaxyClusterResponse:
     if isinstance(galaxy_cluster_id, int) or galaxy_cluster_id.isdigit():
@@ -237,11 +243,7 @@ async def put_galaxy_cluster(
         raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="Invalid cluster ID")
 
     # get galaxy
-    qry = (
-        select(GalaxyCluster)
-        .filter(filter_rule)
-        .options(selectinload(GalaxyCluster.galaxy_elements))
-    )
+    qry = select(GalaxyCluster).filter(filter_rule).options(selectinload(GalaxyCluster.galaxy_elements))
 
     result = await db.execute(qry)
     galaxy_cluster = result.scalar_one_or_none()
@@ -265,7 +267,7 @@ async def put_galaxy_cluster(
 async def add_galaxy_cluster(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
-        galaxy_id: Annotated[int | str, Path(alias="galaxyId")],
+    galaxy_id: Annotated[int | str, Path(alias="galaxyId")],
     body: AddGalaxyClusterRequest,
 ) -> GalaxyClusterResponse:
     if isinstance(galaxy_id, int) or galaxy_id.isdigit():
@@ -344,9 +346,9 @@ async def index_galaxy_cluster_by_galaxy_id(
     summary="Search galaxy_clusters",
 )
 async def restsearch(
-        auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
-        db: Annotated[Session, Depends(get_db)],
-        body: GalaxyClusterSearchBody,
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    db: Annotated[Session, Depends(get_db)],
+    body: GalaxyClusterSearchBody,
 ) -> GalaxyClusterSearchResponse:
     # TODO not right implemented
     """Search for galaxy_clusters based on various filters.
@@ -386,9 +388,11 @@ async def _restsearch(db: Session, body: GalaxyClusterSearchBody) -> GalaxyClust
 async def _load_galaxy_clusters_with_filters(db: Session, filters: GalaxyClusterSearchBody) -> Sequence[GalaxyCluster]:
     search_body: GalaxyClusterSearchBody = filters
 
-    query = select(GalaxyCluster).options(joinedload(GalaxyCluster.galaxy),
-                                          joinedload(GalaxyCluster.galaxy_elements),
-                                          joinedload(GalaxyCluster.org), )
+    query = select(GalaxyCluster).options(
+        joinedload(GalaxyCluster.galaxy),
+        joinedload(GalaxyCluster.galaxy_elements),
+        joinedload(GalaxyCluster.org),
+    )
 
     if search_body.id:
         query = query.filter(GalaxyCluster.id.in_(search_body.id))
@@ -439,14 +443,15 @@ async def _load_galaxy_clusters_with_filters(db: Session, filters: GalaxyCluster
     return result.unique().scalars().all()
 
 
-async def _get_minimal_galaxy_cluster_search_response(db: Session,
-                                                      galaxy_cluster: GalaxyCluster) -> SearchGalaxyClusterGalaxyClusters:
+async def _get_minimal_galaxy_cluster_search_response(
+    db: Session, galaxy_cluster: GalaxyCluster
+) -> SearchGalaxyClusterGalaxyClusters:
     if galaxy_cluster.galaxy is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Galaxy not found")
 
     galaxy_dict: dict = (await _prepare_galaxy_response(db, galaxy_cluster.galaxy)).dict()
-    galaxy_dict['created'] = str(galaxy_dict['created'])
-    galaxy_dict['modified'] = str(galaxy_dict['modified'])
+    galaxy_dict["created"] = str(galaxy_dict["created"])
+    galaxy_dict["modified"] = str(galaxy_dict["modified"])
 
     parsed_cluster: SearchGalaxyClusterGalaxyClustersDetails = SearchGalaxyClusterGalaxyClustersDetails(
         uuid=galaxy_cluster.uuid,
@@ -456,8 +461,9 @@ async def _get_minimal_galaxy_cluster_search_response(db: Session,
     return SearchGalaxyClusterGalaxyClusters(GalaxyCluster=parsed_cluster)
 
 
-async def _get_galaxy_cluster_search_response(db: Session,
-                                              galaxy_cluster: GalaxyCluster) -> SearchGalaxyClusterGalaxyClusters:
+async def _get_galaxy_cluster_search_response(
+    db: Session, galaxy_cluster: GalaxyCluster
+) -> SearchGalaxyClusterGalaxyClusters:
     if galaxy_cluster is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Galaxy cluster not found")
 
@@ -484,7 +490,8 @@ async def _get_galaxy_cluster_search_response(db: Session,
     galaxy_cluster_dict["Orgc"] = await _get_organisation_for_cluster(db, orgc)
 
     return SearchGalaxyClusterGalaxyClusters(
-        GalaxyCluster=SearchGalaxyClusterGalaxyClustersDetails(**galaxy_cluster_dict))
+        GalaxyCluster=SearchGalaxyClusterGalaxyClustersDetails(**galaxy_cluster_dict)
+    )
 
 
 async def _import_galaxy_cluster(

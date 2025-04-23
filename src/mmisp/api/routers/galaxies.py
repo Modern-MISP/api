@@ -2,6 +2,11 @@ from collections.abc import Sequence
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Path
+from sqlalchemy import delete, select
+from starlette import status
+from starlette.requests import Request
+
+from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
 from mmisp.api_schemas.galaxies import (
     DeleteForceUpdateImportGalaxyResponse,
     ExportGalaxyGalaxyElement,
@@ -241,7 +246,7 @@ async def _get_galaxy_details(db: Session, galaxy_id: str) -> GetGalaxyResponse:
     else:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="Invalid galaxy ID")
 
-    qry = (select(Galaxy).filter(filter_rule))
+    qry = select(Galaxy).filter(filter_rule)
 
     result = await db.execute(qry)
     galaxy: Galaxy | None = result.scalars().one_or_none()

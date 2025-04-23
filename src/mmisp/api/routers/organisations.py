@@ -3,14 +3,17 @@ from datetime import datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Path, status
+from sqlalchemy.future import select
+
+from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize, check_permissions
 from mmisp.api_schemas.organisations import (
     AddOrganisation,
     DeleteForceUpdateOrganisationResponse,
     EditOrganisation,
     GetAllOrganisationResponse,
     GetAllOrganisationsOrganisation,
-    GetOrganisationResponse,
     GetOrganisationElement,
+    GetOrganisationResponse,
 )
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.organisation import Organisation
@@ -28,9 +31,9 @@ router = APIRouter(tags=["organisations"])
 )
 @alog
 async def add_organisation(
-        auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
-        db: Annotated[Session, Depends(get_db)],
-        body: AddOrganisation,
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    db: Annotated[Session, Depends(get_db)],
+    body: AddOrganisation,
 ) -> GetOrganisationElement:
     """
     Adds a new organisation.
@@ -54,8 +57,8 @@ async def add_organisation(
 )
 @alog
 async def get_organisations(
-        auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
-        db: Annotated[Session, Depends(get_db)],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    db: Annotated[Session, Depends(get_db)],
 ) -> list[GetAllOrganisationResponse]:
     """
     Gets all organisations as a list.
@@ -110,9 +113,9 @@ async def get_organisations_deprecated(
 )
 @alog
 async def get_organisation(
-        auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
-        db: Annotated[Session, Depends(get_db)],
-        organisation_id: Annotated[str, Path(alias="orgId")],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    db: Annotated[Session, Depends(get_db)],
+    organisation_id: Annotated[str, Path(alias="orgId")],
 ) -> GetOrganisationElement:
     """
     Gets an organisation by its ID.
@@ -134,9 +137,9 @@ async def get_organisation(
 
 @router.get("/organisations/view/{orgId}", summary="Gets an organisation by its ID or UUID")
 async def get_organisation_depr(
-        auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
-        db: Annotated[Session, Depends(get_db)],
-        organisation_id: Annotated[str, Path(alias="orgId")],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    db: Annotated[Session, Depends(get_db)],
+    organisation_id: Annotated[str, Path(alias="orgId")],
 ) -> GetOrganisationResponse:
     """
     Gets an organisation by its ID or UUID.
@@ -155,15 +158,14 @@ async def get_organisation_depr(
 
 
 @router.delete(
-
     "/organisations/delete/{orgId}",
     summary="Deletes an organisation by its ID",
 )
 @alog
 async def delete_organisation(
-        auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
-        db: Annotated[Session, Depends(get_db)],
-        organisation_id: Annotated[str, Path(alias="orgId")],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    db: Annotated[Session, Depends(get_db)],
+    organisation_id: Annotated[str, Path(alias="orgId")],
 ) -> DeleteForceUpdateOrganisationResponse:
     """
     Deletes an organisation by its ID.
@@ -187,10 +189,10 @@ async def delete_organisation(
 )
 @alog
 async def update_organisation(
-        auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
-        db: Annotated[Session, Depends(get_db)],
-        organisation_id: Annotated[str, Path(alias="orgId")],
-        body: EditOrganisation,
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    db: Annotated[Session, Depends(get_db)],
+    organisation_id: Annotated[str, Path(alias="orgId")],
+    body: EditOrganisation,
 ) -> GetOrganisationElement:
     """
     Updates an organisation by its ID.
@@ -220,8 +222,8 @@ async def update_organisation(
 )
 @alog
 async def get_organisations_deprecated(
-        auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
-        db: Annotated[Session, Depends(get_db)],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    db: Annotated[Session, Depends(get_db)],
 ) -> list[GetAllOrganisationResponse]:
     """
     Gets all organisations as a list.
@@ -381,7 +383,7 @@ async def _delete_organisation(auth: Auth, db: Session, organisationID: str) -> 
 
 @alog
 async def _update_organisation(
-        auth: Auth, db: Session, organisationID: str, body: EditOrganisation
+    auth: Auth, db: Session, organisationID: str, body: EditOrganisation
 ) -> GetOrganisationElement:
     if not (check_permissions(auth, [Permission.SITE_ADMIN]) and check_permissions(auth, [Permission.ADMIN])):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)

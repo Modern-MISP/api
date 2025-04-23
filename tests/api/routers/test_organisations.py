@@ -2,8 +2,9 @@ from time import time
 
 import pytest
 import pytest_asyncio
-from mmisp.tests.generators.model_generators.organisation_generator import generate_organisation
 from sqlalchemy.orm import Session
+
+from mmisp.tests.generators.model_generators.organisation_generator import generate_organisation
 
 
 @pytest_asyncio.fixture
@@ -80,6 +81,7 @@ async def test_get_organisation_by_id_depr(db: Session, site_admin_user_token, c
     assert response.status_code == 200
     response_json = response.json()["Organisation"]
     assert response_json["id"] == org_id
+
 
 @pytest.mark.asyncio
 async def test_get_all_organisations(db: Session, site_admin_user_token, client, organisation, organisation2) -> None:
