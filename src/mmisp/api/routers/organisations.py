@@ -258,7 +258,7 @@ async def _add_organisation(auth: Auth, db: Session, body: AddOrganisation) -> G
         uuid=uuid.uuid4().hex,
         contacts=body.contacts,
         local=body.local,
-        restricted_to_domain=str(body.restricted_to_domain),
+        restricted_to_domain=body.restricted_to_domain,
         landingpage=body.landingpage,
     )
     db.add(org)
