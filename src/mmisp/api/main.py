@@ -1,4 +1,3 @@
-import importlib
 import importlib.resources
 import itertools
 from collections.abc import AsyncGenerator
