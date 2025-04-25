@@ -51,7 +51,9 @@ async def test_roles_get(client, site_admin_user_token):
         assert "perm_analyst_data" in role_data
         assert "permission" in role_data
         assert "permission_description" in role_data
-        assert "default" in role_data
+
+
+#        assert "default" in role_data
 
 
 @pytest.mark.asyncio

@@ -75,7 +75,12 @@ pytest:
   stage: test
   image: ${REGISTRY_DOMAIN}/${REGISTRY_PROJECT}/api:${CI_COMMIT_SHA}
   script:
-    - ENV_FILE=.env.test.lite pytest --junitxml=report.xml --test-group-count $CI_NODE_TOTAL --test-group=$CI_NODE_INDEX tests/api/routers
+    - ENV_FILE=.env.test.lite
+      pytest --junitxml=report.xml
+      -o junit_suite_name=runner_$CI_NODE_INDEX
+      --test-group-count $CI_NODE_TOTAL
+      --test-group=$CI_NODE_INDEX
+      tests/api/routers
     #    - ENV_FILE=.env.test.lite pytest --junitxml=report.xml --test-group-count $CI_NODE_TOTAL --test-group=$CI_NODE_INDEX  --cov --cov-report= tests/api/routers
   variables:
     COVERAGE_FILE: ".coverage.${CI_NODE_INDEX}"
@@ -122,7 +127,12 @@ legacy_misp:
   image: ${REGISTRY_DOMAIN}/${REGISTRY_PROJECT}/api:${CI_COMMIT_SHA}
   script:
     - while [ ! -f "$MISP_READY_FILE" ]; do sleep 10; done
-    - pytest --test-group-count $CI_NODE_TOTAL --test-group=$CI_NODE_INDEX --junitxml=report.xml tests/compatibility_tests
+    - pytest
+      -o junit_suite_name=runner_$CI_NODE_INDEX
+      --test-group-count $CI_NODE_TOTAL
+      --test-group=$CI_NODE_INDEX
+      --junitxml=report.xml
+      tests/compatibility_tests
   services:
     - name: registry.cert.kit.edu/hub/library/mariadb:11.5
       alias: db

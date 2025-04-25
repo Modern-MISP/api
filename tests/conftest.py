@@ -10,8 +10,10 @@ from typing import Self, Tuple
 
 import pytest
 import pytest_asyncio
+from _pytest.config import create_terminal_writer
 from fastapi.testclient import TestClient
 from icecream import ic
+from pytest import Config, Item, hookimpl
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import mmisp.lib.standard_roles as standard_roles
@@ -46,6 +48,33 @@ from mmisp.workflows.modules import (
     TriggerEventPublish,
     workflow_node,
 )
+
+
+def pytest_addoption(parser):
+    group = parser.getgroup("split your tests into groups and run them")
+    group.addoption(
+        "--test-group-count", dest="test-group-count", type=int, help="The number of groups to split the tests into"
+    )
+    group.addoption("--test-group", dest="test-group", type=int, help="The group of tests that should be executed")
+
+
+@hookimpl(trylast=True)
+def pytest_collection_modifyitems(config: Config, items: list[Item]) -> None:
+    group_count: int = config.getoption("test-group-count")  # type: ignore
+    group_id: int = config.getoption("test-group")  # type: ignore
+
+    if not group_count or not group_id:
+        return
+
+    items.sort(key=lambda x: x.nodeid)
+
+    start = group_id - 1
+    items[:] = items[start::group_count]
+
+    terminal_reporter = config.pluginmanager.get_plugin("terminalreporter")
+    terminal_writer = create_terminal_writer(config)
+    message = terminal_writer.markup("Running test group #{0} ({1} tests)\n".format(group_id, len(items)), yellow=True)
+    terminal_reporter.write(message)
 
 
 @pytest.fixture(autouse=True)
