@@ -131,7 +131,7 @@ async def add_galaxy_cluster_body3(db, galaxy3, tag, organisation):
         galaxy_id=galaxy3.id,
         authors=["Me"],
         version="1.0",
-        distribution="187",
+        distribution=1,
         sharing_group_id="777",
         org_id=organisation.id,
         orgc_id=organisation.id,
