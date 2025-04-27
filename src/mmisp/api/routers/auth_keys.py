@@ -642,14 +642,10 @@ async def _auth_keys_edit(auth: Auth, db: Session, auth_key_id: int, body: EditA
     if user is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
-    update = body.dict()
+    update = body.model_dump()
     update["allowed_ips"] = json.dumps(body.allowed_ips) if body.allowed_ips else None
 
     if body.expiration == "":
-        update["expiration"] = None
-    elif body.expiration:
-        update["expiration"] = parse_date(body.expiration)
-    else:
         update["expiration"] = None
 
     update_record(auth_key, update)

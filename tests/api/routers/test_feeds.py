@@ -83,6 +83,7 @@ async def test_add_feed(
     site_admin_user_token,
     client,
 ) -> None:
+    feed_data["distribution"] = 4
     feed_data["sharing_group_id"] = sharing_group.id
 
     tag = Tag(
@@ -106,6 +107,7 @@ async def test_add_feed(
         date=datetime.utcnow(),
         analysis=0,
         sharing_group_id=feed_data["sharing_group_id"],
+        distribution=4,
         threat_level_id=0,
     )
     db.add(event)

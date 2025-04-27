@@ -77,6 +77,7 @@ pytest:
   script:
     - ENV_FILE=.env.test.lite
       pytest --junitxml=report.xml
+      -W error::pydantic.warnings.PydanticDeprecationWarning
       -o junit_suite_name=runner_$CI_NODE_INDEX
       --test-group-count $CI_NODE_TOTAL
       --test-group=$CI_NODE_INDEX

@@ -228,7 +228,7 @@ async def index_events(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[AsyncSession, Depends(get_db)],
     body: IndexEventsBody,
-) -> list[GetAllEventsResponse]:
+) -> list[IndexEventsAttributes]:
     """Search for events based on various filters, which are more general than the ones in 'rest search'.
 
     args:
@@ -694,7 +694,7 @@ async def _get_events(db: AsyncSession, user: User | None) -> list[GetAllEventsR
     # if not events:
     # raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No events found.")
 
-    event_responses = [_prepare_all_events_response(event, "get_all", user) for event in events]
+    event_responses = [_prepare_all_events_response(event, user) for event in events]
 
     return event_responses
 
@@ -754,7 +754,7 @@ async def _rest_search_events(db: AsyncSession, body: SearchEventsBody, user: Us
 
 
 @alog
-async def _index_events(db: AsyncSession, body: IndexEventsBody, user: User | None) -> list[GetAllEventsResponse]:
+async def _index_events(db: AsyncSession, body: IndexEventsBody, user: User | None) -> list[IndexEventsAttributes]:
     limit = 25
     offset = 0
 
@@ -802,7 +802,7 @@ async def _index_events(db: AsyncSession, body: IndexEventsBody, user: User | No
     result = await db.execute(query)
     events: Sequence[Event] = result.scalars().all()
 
-    response_list = [_prepare_all_events_response(event, "index", user) for event in events]
+    response_list = [_prepare_all_events_response_index(event, user) for event in events]
 
     return response_list
 
@@ -1230,11 +1230,11 @@ def _prepare_event_report_response(event_report_list: Sequence[EventReport]) -> 
         event_report_dict = event_report.__dict__.copy()
         response_event_report_list.append(AddEditGetEventEventReport(**event_report_dict))
 
-    return AddEditGetEventEventReport.parse_obj(response_event_report_list)
+    return AddEditGetEventEventReport.model_validate(response_event_report_list)
 
 
 @log
-def _prepare_all_events_response(event: Event, request_type: str, user: User | None) -> GetAllEventsResponse:
+def _prepare_all_events_response_index(event: Event, user: User | None) -> IndexEventsAttributes:
     event_dict = event.asdict()
 
     org_dict = event.org.asdict()
@@ -1248,25 +1248,31 @@ def _prepare_all_events_response(event: Event, request_type: str, user: User | N
     event_dict["GalaxyCluster"] = _prepare_all_events_galaxy_cluster_response(event.eventtags_galaxy)
     event_dict["date"] = str(event_dict["date"])
 
-    # if event.creator is not None and user is not None:
-    #    if (
-    #        user.role.check_permission(Permission.SITE_ADMIN)
-    #        or event.orgc_id == user.org_id
-    #        and user.role.check_permission(Permission.AUDIT)
-    #    ):
-    #        event_dict["event_creator_email"] = event.creator.email
+    if event.sharing_group is not None:
+        event_dict["SharingGroup"] = event.sharing_group.asdict()
+
+    return IndexEventsAttributes(**event_dict)
+
+
+@log
+def _prepare_all_events_response(event: Event, user: User | None) -> GetAllEventsResponse:
+    event_dict = event.asdict()
+
+    org_dict = event.org.asdict()
+    orgc_dict = event.orgc.asdict()
+
+    event_dict["Org"] = GetAllEventsOrg(**org_dict)
+    event_dict["Orgc"] = GetAllEventsOrg(**orgc_dict)
+
+    event_dict["EventTag"] = _prepare_all_events_event_tag_response(event.eventtags)
+
+    event_dict["GalaxyCluster"] = _prepare_all_events_galaxy_cluster_response(event.eventtags_galaxy)
+    event_dict["date"] = str(event_dict["date"])
 
     if event.sharing_group is not None:
         event_dict["SharingGroup"] = event.sharing_group.asdict()
 
-    response_strategy = {"get_all": GetAllEventsResponse, "index": IndexEventsAttributes}
-
-    response_class = response_strategy.get(request_type)
-
-    if response_class:
-        return response_class(**event_dict).dict()
-
-    raise ValueError(f"Unknown request_type: {request_type}")
+    return GetAllEventsResponse(**event_dict)
 
 
 @log
