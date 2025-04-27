@@ -19,12 +19,15 @@ from mmisp.api_schemas.roles import (
     GetRoleResponse,
     GetRolesResponse,
     GetUserRoleResponse,
+    IndexRole,
+    IndexRolesResponse,
     ReinstateRoleResponse,
     RoleAttributeResponse,
 )
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.role import Role
 from mmisp.db.models.user import User
+from mmisp.lib.admin_settings import get_admin_setting
 from mmisp.lib.logger import alog
 from mmisp.lib.permissions import Permission
 from mmisp.lib.standard_roles import get_standard_roles
@@ -33,6 +36,10 @@ router = APIRouter(tags=["roles"])
 
 
 @router.get(
+    "/roles/index",
+    summary="Get all roles",
+)
+@router.get(
     "/roles",
     summary="Get all roles",
 )
@@ -40,7 +47,7 @@ router = APIRouter(tags=["roles"])
 async def get_all_roles(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-) -> list[GetRolesResponse]:
+) -> list[IndexRolesResponse]:
     """
     Get all roles and their details.
 
@@ -50,7 +57,7 @@ async def get_all_roles(
     returns:
         information about all roles
     """
-    return await _get_roles(db)
+    return await _get_roles_index(db)
 
 
 @router.get(
@@ -316,6 +323,25 @@ async def _get_roles(db: Session) -> list[GetRolesResponse]:
     for role in roles:
         role_list.append(GetRolesResponse(Role=RoleAttributeResponse(**role.asdict())))
     return role_list
+
+
+@alog
+async def _get_roles_index(db: Session) -> list[IndexRolesResponse]:
+    db_entry = await get_admin_setting(db, "default_role")
+    if db_entry is not None:
+        try:
+            default_role_id = int(db_entry)
+        except ValueError:
+            default_role_id = None
+    else:
+        default_role_id = None
+
+    query = select(Role)
+
+    result = await db.execute(query)
+    roles = result.scalars().all()
+
+    return [IndexRolesResponse(Role=IndexRole(**role.asdict(), default=(role.id == default_role_id))) for role in roles]
 
 
 async def _get_role(db: Session, role_id: int) -> GetRoleResponse:
