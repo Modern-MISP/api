@@ -29,7 +29,6 @@ from mmisp.db.models.organisation import Organisation
 from mmisp.db.models.server import Server
 from mmisp.db.models.sharing_group import SharingGroup, SharingGroupOrg, SharingGroupServer
 from mmisp.lib.logger import alog
-from mmisp.util.models import update_record
 
 router = APIRouter(tags=["sharing_groups"])
 
@@ -592,8 +591,10 @@ async def _get_sharing_group(auth: Auth, db: Session, id: int | uuid.UUID) -> di
     sharing_group_server: SharingGroupServer | None = None
     user_org: Organisation | None = await db.get(Organisation, auth.org_id)
 
+    del result
+
     if user_org and user_org.local:
-        result = await db.execute(
+        result2 = await db.execute(
             select(SharingGroupServer)
             .filter(
                 SharingGroupServer.sharing_group_id == id,
@@ -602,7 +603,7 @@ async def _get_sharing_group(auth: Auth, db: Session, id: int | uuid.UUID) -> di
             )
             .limit(1)
         )
-        sharing_group_server = result.scalars().first()
+        sharing_group_server = result2.scalars().first()
 
     if sharing_group_server:
         return sharing_group.asdict()
@@ -620,7 +621,7 @@ async def _update_sharing_group(auth: Auth, db: Session, id: int, body: UpdateSh
     if sharing_group.org_id != auth.org_id and not check_permissions(auth, [Permission.SITE_ADMIN]):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
-    update_record(sharing_group, body.model_dump())
+    sharing_group.patch(**body.model_dump(exclude_unset=True))
 
     await db.flush()
     await db.refresh(sharing_group)
@@ -710,7 +711,7 @@ async def _get_sharing_group_info(auth: Auth, db: Session, id: int) -> dict:
         user_org: Organisation | None = await db.get(Organisation, auth.org_id)
 
         if user_org and user_org.local:
-            result = await db.execute(
+            result2 = await db.execute(
                 select(SharingGroupServer)
                 .filter(
                     SharingGroupServer.sharing_group_id == id,
@@ -719,20 +720,20 @@ async def _get_sharing_group_info(auth: Auth, db: Session, id: int) -> dict:
                 )
                 .limit(1)
             )
-            sharing_group_server = result.scalars().first()
+            sharing_group_server = result2.scalars().first()
 
         if not sharing_group_org and not sharing_group_server:
             raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     organisation: Organisation | None = await db.get(Organisation, sharing_group.org_id)
 
-    result = await db.execute(select(SharingGroupOrg).filter(SharingGroupOrg.sharing_group_id == sharing_group.id))
-    sharing_group_orgs: Sequence[SharingGroupOrg] = result.scalars().all()
+    result3 = await db.execute(select(SharingGroupOrg).filter(SharingGroupOrg.sharing_group_id == sharing_group.id))
+    sharing_group_orgs: Sequence[SharingGroupOrg] = result3.scalars().all()
 
-    result = await db.execute(
+    result4 = await db.execute(
         select(SharingGroupServer).filter(SharingGroupServer.sharing_group_id == sharing_group.id)
     )
-    sharing_group_servers: Sequence[SharingGroupServer] = result.scalars().all()
+    sharing_group_servers: Sequence[SharingGroupServer] = result4.scalars().all()
 
     sharing_group_orgs_computed: list[dict] = []
 
@@ -798,10 +799,10 @@ async def _add_org_to_sharing_group(
 
         db.add(sharing_group_org)
 
-    update = body.model_dump()
+    update = body.model_dump(exclude_unset=True)
     update.pop("organisationId")
 
-    update_record(sharing_group_org, update)
+    sharing_group_org.patch(**update)
 
     await db.flush()
     await db.refresh(sharing_group_org)
@@ -859,10 +860,10 @@ async def _add_server_to_sharing_group(auth: Auth, db: Session, id: int, body: A
 
         db.add(sharing_group_server)
 
-    update = body.model_dump()
+    update = body.model_dump(exclude_unset=True)
     update.pop("serverId")
 
-    update_record(sharing_group_server, update)
+    sharing_group_server.patch(**update)
 
     await db.flush()
     await db.refresh(sharing_group_server)
@@ -985,8 +986,10 @@ async def _update_sharing_group_legacy(
     if sharing_group.org_id != auth.org_id and not check_permissions(auth, [Permission.SITE_ADMIN]):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
-    update = body.model_dump(include={"name", "description", "releasability", "local", "active", "roaming"})
-    update_record(sharing_group, update)
+    update = body.model_dump(
+        include={"name", "description", "releasability", "local", "active", "roaming"}, exclude_unset=True
+    )
+    sharing_group.patch(**update)
 
     await db.flush()
     await db.refresh(sharing_group)
@@ -996,10 +999,10 @@ async def _update_sharing_group_legacy(
     result = await db.execute(select(SharingGroupOrg).filter(SharingGroupOrg.sharing_group_id == sharing_group.id))
     sharing_group_orgs: Sequence[SharingGroupOrg] = result.scalars().all()
 
-    result = await db.execute(
+    result2 = await db.execute(
         select(SharingGroupServer).filter(SharingGroupServer.sharing_group_id == sharing_group.id)
     )
-    sharing_group_servers: Sequence[SharingGroupServer] = result.scalars().all()
+    sharing_group_servers: Sequence[SharingGroupServer] = result2.scalars().all()
 
     sharing_group_orgs_computed: list[dict] = []
 
@@ -1095,7 +1098,7 @@ async def _add_org_to_sharing_group_legacy(
 
         db.add(sharing_group_org)
 
-    update_record(sharing_group_org, body.model_dump())
+    sharing_group_org.patch(**body.model_dump(exclude_unset=True))
 
     await db.flush()
     await db.refresh(sharing_group_org)
@@ -1169,7 +1172,7 @@ async def _add_server_to_sharing_group_legacy(
 
         db.add(sharing_group_server)
 
-    update_record(sharing_group_server, body.model_dump())
+    sharing_group_server.patch(**body.model_dump(exclude_unset=True))
 
     await db.flush()
     await db.refresh(sharing_group_server)

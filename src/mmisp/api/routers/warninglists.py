@@ -331,7 +331,7 @@ async def _add_warninglist(
     db: Session,
     body: CreateWarninglistBody,
 ) -> WarninglistResponse:
-    create = body.dict()
+    create = body.model_dump()
     create.pop("values")
     create.pop("valid_attributes")
 
@@ -421,6 +421,7 @@ async def _delete_warninglist(
     result = await db.execute(select(WarninglistEntry).filter(WarninglistEntry.warninglist_id == warninglist_id))
     warninglist_entries = result.scalars().all()
 
+    del result
     result = await db.execute(select(WarninglistType).filter(WarninglistType.warninglist_id == warninglist_id))
     warninglist_types = result.scalars().all()
 
@@ -465,6 +466,7 @@ async def _get_warninglists_by_value(
 
     result = await db.execute(select(WarninglistEntry).filter(WarninglistEntry.value == value))
     warninglist_entries: Sequence[WarninglistEntry] = result.scalars().all()
+    del result
 
     name_warninglists: list[NameWarninglist] = []
     for warninglist_entry in warninglist_entries:

@@ -152,7 +152,7 @@ async def test_add_sighting_missing_required_fields(
     if sighting_data["filters"]:
         sighting_data["filters"]["value1"] = attributes[-1].value1
 
-    incomplete_data = generate_valid_random_sighting_data().dict()
+    incomplete_data = generate_valid_random_sighting_data().model_dump(exclude_unset=True)
     del incomplete_data["values"]
     headers = {"authorization": site_admin_user_token}
     response = client.post("/sightings", json=incomplete_data, headers=headers)

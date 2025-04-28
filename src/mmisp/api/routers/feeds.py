@@ -18,7 +18,6 @@ from mmisp.db.database import Session, get_db
 from mmisp.db.models.feed import Feed
 from mmisp.lib.logger import alog
 from mmisp.lib.permissions import Permission
-from mmisp.util.models import update_record
 
 router = APIRouter(tags=["feeds"])
 
@@ -452,7 +451,7 @@ async def _update_feed(db: Session, feed_id: int, body: FeedUpdateBody) -> FeedR
     if not feed:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Feed not found.")
 
-    update_record(feed, body.model_dump())
+    feed.patch(**body.model_dump(exclude_unset=True))
 
     await db.flush()
     await db.refresh(feed)

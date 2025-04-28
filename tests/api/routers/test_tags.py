@@ -25,7 +25,7 @@ from tests.api.helpers.tags_helper import (
     ]
 )
 def tag_data(request: Any, organisation, site_admin_user) -> Dict[str, Any]:
-    return request.param(organisation, site_admin_user).model_dump()
+    return request.param(organisation, site_admin_user).model_dump(exclude_unset=True)
 
 
 @pytest_asyncio.fixture
@@ -100,7 +100,7 @@ async def test_add_tag_with_existing_name_deprecated(db: AsyncSession, add_tags,
     tag_data = generate_valid_required_tag_data()
     tag_data.name = (await db.get(Tag, tag_id[0])).name
     headers = {"authorization": site_admin_user_token}
-    response = client.post("/tags/add", json=tag_data.dict(), headers=headers)
+    response = client.post("/tags/add", json=tag_data.model_dump(), headers=headers)
     assert response.status_code == 403
 
     await remove_tags(db, tag_id)

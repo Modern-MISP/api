@@ -27,9 +27,9 @@ from mmisp.api_schemas.roles import (
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.role import Role
 from mmisp.db.models.user import User
-from mmisp.lib.admin_settings import get_admin_setting
 from mmisp.lib.logger import alog
 from mmisp.lib.permissions import Permission
+from mmisp.lib.settings import get_admin_setting
 from mmisp.lib.standard_roles import get_standard_roles
 
 router = APIRouter(tags=["roles"])
@@ -461,71 +461,13 @@ async def _update_role(db: Session, role_id: int, body: EditRoleBody) -> EditRol
             detail={"message": "Invalid Role", "name": "Invalid Role", "url": f"/admin/roles/edit/{role_id}"},
         )
 
-    if all(value is None for value in body.dict().values()):
+    if all(value is None for value in body.model_dump().values()):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="At least one new attribute must be provided to update the role.",
         )
 
-    if body.name is not None:
-        role.name = body.name
-    if body.perm_add is not None:
-        role.perm_add = body.perm_add
-    if body.perm_modify is not None:
-        role.perm_modify = body.perm_modify
-    if body.perm_modify_org is not None:
-        role.perm_modify_org = body.perm_modify_org
-    if body.perm_publish is not None:
-        role.perm_publish = body.perm_publish
-    if body.perm_delegate is not None:
-        role.perm_delegate = body.perm_delegate
-    if body.perm_sync is not None:
-        role.perm_sync = body.perm_sync
-    if body.perm_admin is not None:
-        role.perm_admin = body.perm_admin
-    if body.perm_audit is not None:
-        role.perm_audit = body.perm_audit
-    if body.perm_auth is not None:
-        role.perm_auth = body.perm_auth
-    if body.perm_site_admin is not None:
-        role.perm_site_admin = body.perm_site_admin
-    if body.perm_regexp_access is not None:
-        role.perm_regexp_access = body.perm_regexp_access
-    if body.perm_tagger is not None:
-        role.perm_tagger = body.perm_tagger
-    if body.perm_template is not None:
-        role.perm_template = body.perm_template
-    if body.perm_sharing_group is not None:
-        role.perm_sharing_group = body.perm_sharing_group
-    if body.perm_tag_editor is not None:
-        role.perm_tag_editor = body.perm_tag_editor
-    if body.perm_sighting is not None:
-        role.perm_sighting = body.perm_sighting
-    if body.perm_object_template is not None:
-        role.perm_object_template = body.perm_object_template
-    if body.default_role is not None:
-        role.default_role = body.default_role
-    if body.memory_limit is not None:
-        role.memory_limit = body.memory_limit
-    if body.max_execution_time is not None:
-        role.max_execution_time = body.max_execution_time
-    if body.restricted_to_site_admin is not None:
-        role.restricted_to_site_admin = body.restricted_to_site_admin
-    if body.perm_publish_zmq is not None:
-        role.perm_publish_zmq = body.perm_publish_zmq
-    if body.perm_publish_kafka is not None:
-        role.perm_publish_kafka = body.perm_publish_kafka
-    if body.perm_decaying is not None:
-        role.perm_decaying = body.perm_decaying
-    if body.enforce_rate_limit is not None:
-        role.enforce_rate_limit = body.enforce_rate_limit
-    if body.perm_galaxy_editor is not None:
-        role.perm_galaxy_editor = body.perm_galaxy_editor
-    if body.perm_warninglist is not None:
-        role.perm_warninglist = body.perm_warninglist
-    if body.perm_view_feed_correlations is not None:
-        role.perm_view_feed_correlations = body.perm_view_feed_correlations
-
+    role.patch(**body.model_dump(exclude_unset=True))
     role.modified = datetime.now(timezone.utc)
 
     await db.commit()

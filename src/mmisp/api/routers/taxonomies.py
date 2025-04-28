@@ -389,22 +389,22 @@ async def _get_all_taxonomies(db: Session) -> list[ViewTaxonomyResponse]:
     taxonomy_entries_predicates = []
     taxonomy_entries_builder = []
 
-    result = await db.execute(select(Tag.name))
-    tag_names_retrieve: Sequence[str] = result.scalars().all()
+    result2 = await db.execute(select(Tag.name))
+    tag_names_retrieve: Sequence[str] = result2.scalars().all()
 
-    result = await db.execute(
+    result3 = await db.execute(
         select(TaxonomyPredicate.taxonomy_id, TaxonomyPredicate.value, TaxonomyEntry.value)
         .outerjoin(TaxonomyEntry, TaxonomyPredicate.id == TaxonomyEntry.taxonomy_predicate_id)
         .order_by(TaxonomyPredicate.taxonomy_id)
     )
-    taxonomy_entries_predicates_db = result.all()
+    taxonomy_entries_predicates_db = result3.all()
 
-    result = await db.execute(
+    result4 = await db.execute(
         select(TaxonomyPredicate.taxonomy_id, func.count(TaxonomyPredicate.taxonomy_id))
         .outerjoin(TaxonomyEntry, TaxonomyPredicate.id == TaxonomyEntry.taxonomy_predicate_id)
         .group_by(TaxonomyPredicate.taxonomy_id)
     )
-    total_count_db = result.all()
+    total_count_db = result4.all()
 
     for tag in tag_names_retrieve:
         if ":" in tag:

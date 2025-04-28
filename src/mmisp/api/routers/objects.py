@@ -350,10 +350,10 @@ async def _get_object_details(db: Session, object_id: int) -> ObjectResponse:
     result = await db.execute(select(Attribute).filter(Attribute.object_id == object.id))
     attributes: Sequence[Attribute] = result.scalars().all()
 
-    result = await db.execute(
+    result2 = await db.execute(
         select(Event).join(Object, Event.id == Object.event_id).filter(Object.id == object_id).limit(1)
     )
-    event: Event = result.scalars().one()
+    event: Event = result2.scalars().one()
 
     event_response: ObjectEventResponse = ObjectEventResponse(
         id=event.id, info=event.info, org_id=event.org_id, orgc_id=event.orgc_id

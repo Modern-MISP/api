@@ -24,7 +24,6 @@ from mmisp.db.models.galaxy_cluster import GalaxyCluster
 from mmisp.db.models.tag import Tag
 from mmisp.db.models.taxonomy import Taxonomy, TaxonomyPredicate
 from mmisp.lib.logger import alog, log
-from mmisp.util.models import update_record
 
 router = APIRouter(tags=["tags"])
 
@@ -366,12 +365,12 @@ async def _search_tags(db: Session, tag_search_term: str) -> dict:
 
     tag_datas = []
     for tag in tags:
-        result = await db.execute(select(Taxonomy).filter(Taxonomy.namespace == tag.name.split(":", 1)[0]))
-        taxonomies: Sequence[Taxonomy] = result.scalars().all()
+        result2 = await db.execute(select(Taxonomy).filter(Taxonomy.namespace == tag.name.split(":", 1)[0]))
+        taxonomies: Sequence[Taxonomy] = result2.scalars().all()
 
         for taxonomy in taxonomies:
-            result = await db.execute(select(TaxonomyPredicate).filter_by(taxonomy_id=taxonomy.id))
-            taxonomy_predicates: Sequence[TaxonomyPredicate] = result.scalars().all()
+            result3 = await db.execute(select(TaxonomyPredicate).filter_by(taxonomy_id=taxonomy.id))
+            taxonomy_predicates: Sequence[TaxonomyPredicate] = result3.scalars().all()
 
             for taxonomy_predicate in taxonomy_predicates:
                 tag_datas.append(
@@ -401,7 +400,7 @@ async def _update_tag(db: Session, body: TagUpdateBody, tag_id: int) -> TagRespo
     if body.colour:
         _check_type_hex_colour(body.colour)
 
-    update_record(tag, body.model_dump())
+    tag.patch(**body.model_dump(exclude_unset=True))
 
     await db.flush()
     await db.refresh(tag)

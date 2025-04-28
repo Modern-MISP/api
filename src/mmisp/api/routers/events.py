@@ -65,7 +65,6 @@ from mmisp.db.models.user import User
 from mmisp.lib.actions import action_publish_event
 from mmisp.lib.galaxies import parse_galaxy_authors
 from mmisp.lib.logger import alog, log
-from mmisp.util.models import update_record
 
 from ..workflow import execute_blocking_workflow, execute_workflow
 
@@ -604,7 +603,7 @@ async def _update_event(
     if not event.can_edit(user):
         raise HTTPException(status.HTTP_403_FORBIDDEN)
 
-    update_record(event, body.model_dump())
+    event.patch(**body.model_dump(exclude_unset=True))
     event.timestamp = datetime.now()
     await execute_blocking_workflow("event-before-save", db, event)
     await db.flush()

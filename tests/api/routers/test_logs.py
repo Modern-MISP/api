@@ -11,7 +11,7 @@ from mmisp.db.models.log import Log
 
 @pytest.mark.asyncio
 async def test_logs_index(site_admin_user_token, client, log_entry, db) -> None:
-    json_req = LogsRequest(model="Workflow", model_id=12345678).dict()
+    json_req = LogsRequest(model="Workflow", model_id=12345678).model_dump()
     headers = {"authorization": site_admin_user_token}
     response = client.post("/logs/index", headers=headers, json=json_req)
 
@@ -25,7 +25,7 @@ async def test_logs_index(site_admin_user_token, client, log_entry, db) -> None:
 
 @pytest.mark.asyncio
 async def test_logs_noresult(site_admin_user_token, client, log_entry, db) -> None:
-    json_req = LogsRequest(model="User", model_id=12345678).dict()
+    json_req = LogsRequest(model="User", model_id=12345678).model_dump()
     headers = {"authorization": site_admin_user_token}
     response = client.post("/logs/index", headers=headers, json=json_req)
 

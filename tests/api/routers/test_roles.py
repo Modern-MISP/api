@@ -3,8 +3,8 @@ from sqlalchemy import delete
 from sqlalchemy.future import select
 
 from mmisp.db.models.role import Role
-from mmisp.lib.admin_settings import get_admin_setting, set_admin_setting
 from mmisp.lib.permissions import Permission
+from mmisp.lib.settings import get_admin_setting, set_admin_setting
 
 
 @pytest.mark.asyncio

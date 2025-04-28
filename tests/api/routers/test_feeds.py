@@ -11,6 +11,7 @@ from sqlalchemy.sql import text
 
 from mmisp.db.models.event import Event
 from mmisp.db.models.tag import Tag
+from mmisp.lib.distribution import EventDistributionLevels
 from mmisp.tests.generators.feed_generator import (
     generate_random_valid_feed_data,
     generate_valid_feed_data,
@@ -48,10 +49,10 @@ def cach_feed_test_data() -> Generator:
 
 @pytest.fixture(
     params=[
-        generate_valid_required_feed_data().model_dump(),
-        generate_valid_feed_data().model_dump(),
-        generate_random_valid_feed_data().model_dump(),
-        generate_random_valid_feed_data().model_dump(),
+        generate_valid_required_feed_data().model_dump(exclude_unset=True),
+        generate_valid_feed_data().model_dump(exclude_unset=True),
+        generate_random_valid_feed_data().model_dump(exclude_unset=True),
+        generate_random_valid_feed_data().model_dump(exclude_unset=True),
     ]
 )
 def feed_data(request: Any) -> dict[str, Any]:
@@ -83,7 +84,7 @@ async def test_add_feed(
     site_admin_user_token,
     client,
 ) -> None:
-    feed_data["distribution"] = 4
+    feed_data["distribution"] = EventDistributionLevels.SHARING_GROUP
     feed_data["sharing_group_id"] = sharing_group.id
 
     tag = Tag(
@@ -107,7 +108,7 @@ async def test_add_feed(
         date=datetime.utcnow(),
         analysis=0,
         sharing_group_id=feed_data["sharing_group_id"],
-        distribution=4,
+        distribution=EventDistributionLevels.SHARING_GROUP,
         threat_level_id=0,
     )
     db.add(event)
@@ -153,6 +154,7 @@ async def test_feed_response_format(
     client,
 ) -> None:
     feed_data["sharing_group_id"] = sharing_group.id
+    feed_data["distribution"] = EventDistributionLevels.SHARING_GROUP
 
     tag = Tag(
         name=str(time()) + uuid4().hex,
@@ -188,6 +190,7 @@ async def test_enable_feed(
     feed_test_ids: dict[str, Any], feed_data: dict[str, Any], sharing_group, tag, event, site_admin_user_token, client
 ) -> None:
     feed_data["sharing_group_id"] = sharing_group.id
+    feed_data["distribution"] = EventDistributionLevels.SHARING_GROUP
     feed_data["tag_id"] = tag.id
     feed_data["event_id"] = event.id
 
@@ -211,6 +214,7 @@ async def test_feed_enable_response_format(
     feed_data: dict[str, Any], sharing_group, tag, event, site_admin_user_token, client
 ) -> None:
     feed_data["sharing_group_id"] = sharing_group.id
+    feed_data["distribution"] = EventDistributionLevels.SHARING_GROUP
     feed_data["tag_id"] = tag.id
     feed_data["event_id"] = event.id
 
@@ -235,6 +239,7 @@ async def test_disable_feed(
     client,
 ) -> None:
     feed_data["sharing_group_id"] = sharing_group.id
+    feed_data["distribution"] = EventDistributionLevels.SHARING_GROUP
     feed_data["tag_id"] = tag.id
     feed_data["event_id"] = event.id
 
@@ -258,6 +263,7 @@ async def test_disable_feed_response_format(
     feed_data: dict[str, Any], db: AsyncSession, sharing_group, tag, event, site_admin_user_token, client
 ) -> None:
     feed_data["sharing_group_id"] = sharing_group.id
+    feed_data["distribution"] = EventDistributionLevels.SHARING_GROUP
     feed_data["tag_id"] = tag.id
     feed_data["event_id"] = event.id
 
@@ -275,6 +281,7 @@ async def test_get_existing_feed_details(
     feed_data: dict[str, Any], db: AsyncSession, sharing_group, tag, event, site_admin_user_token, client
 ) -> None:
     feed_data["sharing_group_id"] = sharing_group.id
+    feed_data["distribution"] = EventDistributionLevels.SHARING_GROUP
     feed_data["tag_id"] = tag.id
     feed_data["event_id"] = event.id
 
@@ -310,6 +317,7 @@ async def test_get_feed_response_format(
     feed_data: dict[str, Any], sharing_group, tag, event, site_admin_user_token, client
 ) -> None:
     feed_data["sharing_group_id"] = sharing_group.id
+    feed_data["distribution"] = EventDistributionLevels.SHARING_GROUP
     feed_data["tag_id"] = tag.id
     feed_data["event_id"] = event.id
 
@@ -331,6 +339,7 @@ async def test_update_existing_feed(
     feed_data: dict[str, Any], sharing_group, tag, event, site_admin_user_token, client
 ) -> None:
     feed_data["sharing_group_id"] = sharing_group.id
+    feed_data["distribution"] = EventDistributionLevels.SHARING_GROUP
     feed_data["tag_id"] = tag.id
     feed_data["event_id"] = event.id
 
@@ -361,6 +370,7 @@ async def test_update_feed_response_format(
     feed_data: dict[str, Any], sharing_group, tag, event, site_admin_user_token, client
 ) -> None:
     feed_data["sharing_group_id"] = sharing_group.id
+    feed_data["distribution"] = EventDistributionLevels.SHARING_GROUP
     feed_data["tag_id"] = tag.id
     feed_data["event_id"] = event.id
 
@@ -381,6 +391,7 @@ async def test_toggle_existing_feed(
     feed_data: dict[str, Any], sharing_group, tag, event, site_admin_user_token, client
 ) -> None:
     feed_data["sharing_group_id"] = sharing_group.id
+    feed_data["distribution"] = EventDistributionLevels.SHARING_GROUP
     feed_data["tag_id"] = tag.id
     feed_data["event_id"] = event.id
 
@@ -419,6 +430,7 @@ async def test_toggle_feed_response_format(
     feed_data: dict[str, Any], sharing_group, tag, event, site_admin_user_token, client
 ) -> None:
     feed_data["sharing_group_id"] = sharing_group.id
+    feed_data["distribution"] = EventDistributionLevels.SHARING_GROUP
     feed_data["tag_id"] = tag.id
     feed_data["event_id"] = event.id
 
@@ -473,6 +485,7 @@ async def test_get_all_feeds(
     feed_data: dict[str, Any], sharing_group, tag, event, site_admin_user_token, client
 ) -> None:
     feed_data["sharing_group_id"] = sharing_group.id
+    feed_data["distribution"] = EventDistributionLevels.SHARING_GROUP
     feed_data["tag_id"] = tag.id
     feed_data["event_id"] = event.id
 
@@ -489,6 +502,7 @@ async def test_get_feeds_response_format(
     feed_data: dict[str, Any], sharing_group, tag, event, site_admin_user_token, client
 ) -> None:
     feed_data["sharing_group_id"] = sharing_group.id
+    feed_data["distribution"] = EventDistributionLevels.SHARING_GROUP
     feed_data["tag_id"] = tag.id
     feed_data["event_id"] = event.id
 

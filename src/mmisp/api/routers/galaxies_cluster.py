@@ -230,7 +230,7 @@ async def put_galaxy_cluster(
     if galaxy_cluster is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Galaxy Cluster not found")
 
-    galaxy_cluster.patch(**body.dict())
+    galaxy_cluster.patch(**body.model_dump(exclude_unset=True))
     await update_galaxy_cluster_elements(db, galaxy_cluster, body.GalaxyElement)
     await db.flush()
     db.expire(galaxy_cluster)
@@ -484,7 +484,7 @@ async def _export_galaxy(db: Session, galaxy_id: str, body: ExportGalaxyBody) ->
     if not galaxy:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
-    body_dict = body.dict()
+    body_dict = body.model_dump()
 
     missing_information_in_body = False
 

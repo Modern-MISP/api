@@ -43,7 +43,6 @@ from mmisp.db.database import Session, get_db
 from mmisp.db.models.admin_setting import AdminSetting
 from mmisp.db.models.workflow import Workflow
 from mmisp.lib.logger import alog, log
-from mmisp.util.models import update_record
 from mmisp.workflows.fastapi import (
     module_entity_to_json_dict,
     trigger_entity_to_json_dict,
@@ -163,7 +162,7 @@ async def edit_workflow(
         "data": data,
     }
 
-    update_record(workflow, new_data)
+    workflow.patch(**new_data)
     await workflow.data.initialize_graph_modules(db)
     result = workflow.data.check()
     if not result.is_valid():
@@ -199,7 +198,7 @@ async def delete(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=StandartResponse(
                 name="Invalid Workflow.", message="Invalid Workflow.", url=f"/workflows/delete/{workflow_id}"
-            ).dict(),
+            ).model_dump(),
         )
 
     return StandardStatusIdentifiedResponse(
@@ -251,7 +250,7 @@ async def view(
                 name="Invalid Workflow.",
                 message="Invalid Workflow.",
                 url=f"/workflows/view/{workflow_id}",
-            ).dict(),
+            ).model_dump(),
         )
 
     await workflow.data.initialize_graph_modules(db)
@@ -509,7 +508,7 @@ async def moduleView(
             name="Invalid trigger ID",
             message="Invalid trigger ID",
             url=f"/workflows/moduleView/{module_id}",
-        ).dict(),
+        ).model_dump(),
     )
 
 
@@ -553,7 +552,7 @@ async def toggleModule(
                 name="Invalid trigger ID",
                 message="Invalid trigger ID",
                 url=f"/workflows/toggleModule/{node_id}/{enable}/{is_trigger}",
-            ).dict(),
+            ).model_dump(),
         )
 
     # probaby a stupid way to create a new graph but whitout this (the code below) it won't work
