@@ -3,7 +3,7 @@ from typing import Any, Dict
 
 import pytest
 import pytest_asyncio
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from mmisp.db.models.tag import Tag
 from mmisp.tests.generators.model_generators.organisation_generator import generate_organisation
@@ -25,7 +25,7 @@ from tests.api.helpers.tags_helper import (
     ]
 )
 def tag_data(request: Any, organisation, site_admin_user) -> Dict[str, Any]:
-    return request.param(organisation, site_admin_user).dict()
+    return request.param(organisation, site_admin_user).model_dump()
 
 
 @pytest_asyncio.fixture
@@ -39,7 +39,7 @@ async def add_tags(db, site_admin_user):
             db.add(org)
             await db.commit()
             orgs.append(org)
-            new_tag = Tag(**generate_valid_tag_data(org, site_admin_user).dict())
+            new_tag = Tag(**generate_valid_tag_data(org, site_admin_user).model_dump())
             tags.append(new_tag)
             db.add(new_tag)
             await db.commit()
@@ -83,19 +83,19 @@ async def test_add_tag_deprecated(db, tag_data: Dict[str, Any], site_admin_user_
 
 
 @pytest.mark.asyncio
-async def test_add_tag_with_existing_name(db: Session, add_tags, site_admin_user_token, client) -> None:
+async def test_add_tag_with_existing_name(db: AsyncSession, add_tags, site_admin_user_token, client) -> None:
     tag_id = await add_tags(1)
     tag_data = generate_valid_required_tag_data()
     tag_data.name = (await db.get(Tag, tag_id[0])).name
     headers = {"authorization": site_admin_user_token}
-    response = client.post("/tags", json=tag_data.dict(), headers=headers)
+    response = client.post("/tags", json=tag_data.model_dump(), headers=headers)
     assert response.status_code == 403
 
     await remove_tags(db, tag_id)
 
 
 @pytest.mark.asyncio
-async def test_add_tag_with_existing_name_deprecated(db: Session, add_tags, site_admin_user_token, client) -> None:
+async def test_add_tag_with_existing_name_deprecated(db: AsyncSession, add_tags, site_admin_user_token, client) -> None:
     tag_id = await add_tags(1)
     tag_data = generate_valid_required_tag_data()
     tag_data.name = (await db.get(Tag, tag_id[0])).name
@@ -111,7 +111,7 @@ async def test_add_tag_with_invalid_colour(site_admin_user_token, client) -> Non
     tag_data = generate_valid_required_tag_data()
     tag_data.colour = "#12345,"
     headers = {"authorization": site_admin_user_token}
-    response = client.post("/tags", json=tag_data.dict(), headers=headers)
+    response = client.post("/tags", json=tag_data.model_dump(), headers=headers)
     assert response.status_code == 400
 
 
@@ -221,7 +221,7 @@ async def test_view_tag_response_format_deprecated(db, site_admin_user_token, ad
 
 
 @pytest.mark.asyncio
-async def test_search_tag(db: Session, site_admin_user_token, add_tags, client) -> None:
+async def test_search_tag(db: AsyncSession, site_admin_user_token, add_tags, client) -> None:
     headers = {"authorization": site_admin_user_token}
 
     tags = await add_tags()
@@ -245,7 +245,7 @@ async def test_search_tag(db: Session, site_admin_user_token, add_tags, client) 
 
 
 @pytest.mark.asyncio
-async def test_search_tag_response_format(db: Session, site_admin_user_token, add_tags, client) -> None:
+async def test_search_tag_response_format(db: AsyncSession, site_admin_user_token, add_tags, client) -> None:
     headers = {"authorization": site_admin_user_token}
     tag = await add_tags(1)
     tag_name = (await db.get(Tag, tag[0])).name
@@ -307,7 +307,7 @@ async def test_edit_tag_deprecated(db, tag_data: Dict[str, Any], site_admin_user
 
 
 @pytest.mark.asyncio
-async def test_edit_tag_same_name(db: Session, site_admin_user_token, add_tags, client) -> None:
+async def test_edit_tag_same_name(db: AsyncSession, site_admin_user_token, add_tags, client) -> None:
     headers = {"authorization": site_admin_user_token}
 
     tags = await add_tags(2)
@@ -320,7 +320,7 @@ async def test_edit_tag_same_name(db: Session, site_admin_user_token, add_tags, 
 
 
 @pytest.mark.asyncio
-async def test_edit_tag_same_name_deprecated(db: Session, site_admin_user_token, add_tags, client) -> None:
+async def test_edit_tag_same_name_deprecated(db: AsyncSession, site_admin_user_token, add_tags, client) -> None:
     headers = {"authorization": site_admin_user_token}
 
     tags = await add_tags(2)

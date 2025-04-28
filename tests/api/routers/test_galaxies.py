@@ -2,7 +2,7 @@ import pytest
 import pytest_asyncio
 import sqlalchemy as sa
 from icecream import ic
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import text
 
 from mmisp.api_schemas.galaxies import ExportGalaxyAttributes, ExportGalaxyBody
@@ -132,7 +132,7 @@ async def add_galaxy_cluster_body3(db, galaxy3, tag, organisation):
         authors=["Me"],
         version="1.0",
         distribution=1,
-        sharing_group_id="777",
+        sharing_group_id=0,
         org_id=organisation.id,
         orgc_id=organisation.id,
         default=True,
@@ -227,7 +227,7 @@ async def test_import_galaxy_cluster_invalid_data(site_admin_user_token, galaxy,
 
 @pytest.mark.asyncio
 async def test_get_existing_galaxy_cluster(
-    db: Session, site_admin_user_token, galaxy3, add_galaxy_cluster_body3, client
+    db: AsyncSession, site_admin_user_token, galaxy3, add_galaxy_cluster_body3, client
 ) -> None:
     galaxy_id = galaxy3.id
     galaxy_cluster_id = add_galaxy_cluster_body3.id
@@ -249,7 +249,7 @@ async def test_get_existing_galaxy_cluster(
 
 
 @pytest.mark.asyncio
-async def test_get_default_galaxy_cluster(db: Session, site_admin_user_token, test_default_galaxy, client) -> None:
+async def test_get_default_galaxy_cluster(db: AsyncSession, site_admin_user_token, test_default_galaxy, client) -> None:
     galaxy_cluster = test_default_galaxy["galaxy_cluster"]
     path = f"/galaxy_clusters/view/{galaxy_cluster.id}"
 
@@ -273,7 +273,7 @@ async def test_get_default_galaxy_cluster(db: Session, site_admin_user_token, te
 
 
 @pytest.mark.asyncio
-async def test_put_galaxy_cluster(db: Session, site_admin_user_token, test_galaxy, client) -> None:
+async def test_put_galaxy_cluster(db: AsyncSession, site_admin_user_token, test_galaxy, client) -> None:
     galaxy_cluster = test_galaxy["galaxy_cluster"]
     galaxy_element = test_galaxy["galaxy_element"]
     path = f"/galaxy_clusters/edit/{galaxy_cluster.id}"
@@ -329,7 +329,7 @@ async def test_get_non_existing_galaxy_cluster(site_admin_user_token, client) ->
 
 @pytest.mark.asyncio
 async def test_get_existing_galaxy_details(
-    db: Session, site_admin_user_token, galaxy, add_galaxy_cluster_body, add_galaxy_element, client
+    db: AsyncSession, site_admin_user_token, galaxy, add_galaxy_cluster_body, add_galaxy_element, client
 ) -> None:
     galaxy_id = galaxy.id
     galaxy_cluster_id = add_galaxy_cluster_body.id
@@ -360,7 +360,14 @@ async def test_get_non_existing_galaxy_details(site_admin_user_token, client) ->
 
 @pytest.mark.asyncio
 async def test_delete_existing_galaxy(
-    db: Session, site_admin_user_token, galaxy, organisation, tag, add_galaxy_cluster_body, add_galaxy_element, client
+    db: AsyncSession,
+    site_admin_user_token,
+    galaxy,
+    organisation,
+    tag,
+    add_galaxy_cluster_body,
+    add_galaxy_element,
+    client,
 ) -> None:
     galaxy_id = galaxy.id
 
@@ -386,7 +393,7 @@ async def test_delete_non_existing_galaxy(site_admin_user_token, galaxy, organis
 
 @pytest.mark.asyncio
 async def test_get_all_galaxies(
-    db: Session, site_admin_user_token, add_galaxy_cluster_body, add_galaxy_cluster_body2, client
+    db: AsyncSession, site_admin_user_token, add_galaxy_cluster_body, add_galaxy_cluster_body2, client
 ) -> None:
     headers = {"authorization": site_admin_user_token}
     response = client.get("/galaxies", headers=headers)
@@ -412,7 +419,7 @@ async def test_search_galaxies(site_admin_user_token, organisation, tag, galaxy,
 
 @pytest.mark.asyncio
 async def test_export_existing_galaxy(
-    db: Session,
+    db: AsyncSession,
     site_admin_user_token,
     galaxy,
     organisation,
@@ -441,7 +448,7 @@ async def test_export_existing_galaxy(
     await db.refresh(galaxy_reference)
 
     body = ExportGalaxyBody(Galaxy=ExportGalaxyAttributes(default=False, distribution="1"))
-    request_body = body.dict()
+    request_body = body.model_dump()
 
     headers = {"authorization": site_admin_user_token}
     response = client.post(f"/galaxies/export/{galaxy_id}", json=request_body, headers=headers)
@@ -452,7 +459,7 @@ async def test_export_existing_galaxy(
 
 @pytest.mark.asyncio
 async def test_export_non_existing_galaxy(
-    db: Session,
+    db: AsyncSession,
     site_admin_user_token,
     galaxy,
     organisation,
@@ -477,7 +484,7 @@ async def test_export_non_existing_galaxy(
     await db.refresh(galaxy_reference)
 
     body = ExportGalaxyBody(Galaxy=ExportGalaxyAttributes(default=False, distribution="1"))
-    request_body = body.dict()
+    request_body = body.model_dump()
     headers = {"authorization": site_admin_user_token}
     response = client.post("/galaxies/export/0", json=request_body, headers=headers)
 

@@ -542,7 +542,7 @@ async def _create_sharing_group(auth: Auth, db: Session, body: CreateSharingGrou
 
     sharing_group = SharingGroup(
         **{
-            **body.dict(),
+            **body.model_dump(),
             # overwrite organisation_uuid with the correct one if not site admin
             "organisation_uuid": organisation.uuid,
             "org_id": organisation.id,
@@ -620,7 +620,7 @@ async def _update_sharing_group(auth: Auth, db: Session, id: int, body: UpdateSh
     if sharing_group.org_id != auth.org_id and not check_permissions(auth, [Permission.SITE_ADMIN]):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
-    update_record(sharing_group, body.dict())
+    update_record(sharing_group, body.model_dump())
 
     await db.flush()
     await db.refresh(sharing_group)
@@ -688,7 +688,7 @@ async def _get_all_sharing_groups(auth: Auth, db: Session) -> GetSharingGroupsIn
     result = await db.execute(qry)
     sharing_groups = result.scalars().all()
 
-    return GetSharingGroupsIndex.parse_obj({"response": [_process_sharing_group(sg) for sg in sharing_groups]})
+    return GetSharingGroupsIndex.model_validate({"response": [_process_sharing_group(sg) for sg in sharing_groups]})
 
 
 @alog
@@ -798,7 +798,7 @@ async def _add_org_to_sharing_group(
 
         db.add(sharing_group_org)
 
-    update = body.dict()
+    update = body.model_dump()
     update.pop("organisationId")
 
     update_record(sharing_group_org, update)
@@ -806,7 +806,7 @@ async def _add_org_to_sharing_group(
     await db.flush()
     await db.refresh(sharing_group_org)
 
-    return SharingGroupOrgSchema.parse_obj(sharing_group_org.asdict())
+    return SharingGroupOrgSchema.model_validate(sharing_group_org.asdict())
 
 
 @alog
@@ -859,7 +859,7 @@ async def _add_server_to_sharing_group(auth: Auth, db: Session, id: int, body: A
 
         db.add(sharing_group_server)
 
-    update = body.dict()
+    update = body.model_dump()
     update.pop("serverId")
 
     update_record(sharing_group_server, update)
@@ -912,7 +912,7 @@ async def _create_sharing_group_legacy(auth: Auth, db: Session, body: CreateShar
     if organisation is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
-    create = body.dict(exclude={"org_count", "created", "modified", "sync_user_id"})
+    create = body.model_dump(exclude={"org_count", "created", "modified", "sync_user_id"})
 
     sharing_group = SharingGroup(
         **{
@@ -968,7 +968,7 @@ async def _view_sharing_group_legacy(auth: Auth, db: Session, id: int | uuid.UUI
 
     res = _process_sharing_group(sharing_group)
 
-    return SingleSharingGroupResponse.parse_obj(res)
+    return SingleSharingGroupResponse.model_validate(res)
 
 
 @alog
@@ -985,7 +985,7 @@ async def _update_sharing_group_legacy(
     if sharing_group.org_id != auth.org_id and not check_permissions(auth, [Permission.SITE_ADMIN]):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
-    update = body.dict(include={"name", "description", "releasability", "local", "active", "roaming"})
+    update = body.model_dump(include={"name", "description", "releasability", "local", "active", "roaming"})
     update_record(sharing_group, update)
 
     await db.flush()

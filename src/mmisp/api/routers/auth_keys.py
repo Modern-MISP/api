@@ -506,9 +506,9 @@ async def _search_auth_keys(
     if body.authkey_end:
         query = query.filter(AuthKey.authkey_end == body.authkey_end)
     if body.created:
-        query = query.filter(AuthKey.created == int(body.created))
+        query = query.filter(AuthKey.created == body.created)
     if body.expiration:
-        query = query.filter(AuthKey.expiration == int(body.expiration))
+        query = query.filter(AuthKey.expiration == body.expiration)
     if body.read_only:
         query = query.filter(AuthKey.read_only.is_(body.read_only))
     if body.user_id:
@@ -577,9 +577,9 @@ async def _search_auth_keys_depr(
     if body.authkey_end:
         query = query.filter(AuthKey.authkey_end == body.authkey_end)
     if body.created:
-        query = query.filter(AuthKey.created == int(body.created))
+        query = query.filter(AuthKey.created == body.created)
     if body.expiration:
-        query = query.filter(AuthKey.expiration == int(body.expiration))
+        query = query.filter(AuthKey.expiration == body.expiration)
     if body.read_only:
         query = query.filter(AuthKey.read_only.is_(body.read_only))
     if body.user_id:
