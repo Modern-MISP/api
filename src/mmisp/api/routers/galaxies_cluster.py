@@ -298,8 +298,8 @@ async def add_galaxy_cluster(
         authors=body.authors,
         tag_name=tag_name,
         type=galaxy.type,
-        org_id=auth.org_id,
-        orgc_id=auth.org_id,
+        org_id=body.org_id if body.org_id else auth.org_id,
+        orgc_id=body.orgc_id if body.orgc_id else auth.orgc_id,
         version=int(time.time()),
         locked=body.locked,
     )
