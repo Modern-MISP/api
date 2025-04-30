@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Path, status
+from mmisp.lib.uuid import is_uuid
 from sqlalchemy.future import select
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize, check_permissions
@@ -255,7 +256,7 @@ async def _add_organisation(auth: Auth, db: Session, body: AddOrganisation) -> G
         nationality=body.nationality,
         sector=body.sector,
         created_by=body.created_by,
-        uuid=uuid.uuid4().hex,
+        uuid=body.uuid if is_uuid(body.uuid) else uuid.uuid4().hex,
         contacts=body.contacts,
         local=body.local,
         restricted_to_domain=body.restricted_to_domain,
