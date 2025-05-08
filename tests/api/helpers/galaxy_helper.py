@@ -34,7 +34,7 @@ def get_valid_import_galaxy_body(tag_name: str, galaxy_id: int, org_id: int, gal
         ),
         Galaxy=ImportGalaxyGalaxy(uuid=galaxy_uuid),
     )
-    response_list = [body.model_dump()]
+    response_list = [body.model_dump(mode="json")]
     return response_list
 
 
@@ -66,5 +66,5 @@ def get_invalid_import_galaxy_body(tag_name: str, galaxy_id: int, org_id: int) -
         ),
         Galaxy=ImportGalaxyGalaxy(uuid=""),
     )
-    response_list = [body.model_dump()]
+    response_list = [body.model_dump(mode="json")]
     return response_list
