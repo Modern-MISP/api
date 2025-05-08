@@ -1250,7 +1250,8 @@ def _prepare_all_events_response_index(event: Event, user: User | None) -> Index
     if event.sharing_group is not None:
         event_dict["SharingGroup"] = event.sharing_group.asdict()
 
-    return IndexEventsAttributes(**event_dict)
+    print(event_dict)
+    return IndexEventsAttributes.model_validate(event_dict)
 
 
 @log
@@ -1315,10 +1316,10 @@ def _prepare_all_events_event_tag_response(event_tag_list: Sequence[EventTag]) -
     event_tag_response_list = []
 
     for event_tag in event_tag_list:
-        event_tag_dict = event_tag.__dict__.copy()
+        event_tag_dict = event_tag.asdict()
         event_tag_dict["relationship_type"] = ""
         tag = event_tag.tag
-        tag_dict = tag.__dict__.copy()
+        tag_dict = tag.asdict()
         event_tag_dict["Tag"] = GetAllEventsEventTagTag(**tag_dict)
         event_tag_response_list.append(GetAllEventsEventTag(**event_tag_dict))
 
