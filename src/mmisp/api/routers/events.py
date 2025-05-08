@@ -394,7 +394,7 @@ async def start_freeTextImport(
     response_data = response.json()
     job_id = response_data["job_id"]
 
-    return RedirectResponse(f"/jobs/{job_id}", status_code=status.HTTP_303_SEE_OTHER)
+    return RedirectResponse(f"/jobs/processFreeText/{job_id}", status_code=status.HTTP_303_SEE_OTHER)
 
 
 # --- deprecated ---

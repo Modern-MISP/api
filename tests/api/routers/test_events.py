@@ -35,7 +35,7 @@ async def test_freetext_import(client, site_admin_user_token):
     )
 
     assert response.status_code == 303
-    assert response.headers["location"] == "/jobs/777"
+    assert response.headers["location"] == "/jobs/processFreeText/777"
 
 
 async def get_max_event_id(db):
