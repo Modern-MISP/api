@@ -255,7 +255,7 @@ async def eventtag(db, event, tag):
 @pytest_asyncio.fixture
 async def galaxy_cluster(db, tag, galaxy):
     galaxy_cluster = GalaxyCluster(
-        collection_uuid="uuid",
+        collection_uuid="da4b7a8d-d314-42e8-9c85-2eb476e90dbf",
         type="test type",
         value="test",
         tag_name=tag.name,

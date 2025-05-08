@@ -123,7 +123,7 @@ async def add_galaxy_cluster_body3(db, galaxy3, tag, organisation):
     add_galaxy_cluster_body = GalaxyCluster(
         id="777",
         uuid="01ff063f-42de-49d7-9bbb-ef783d99fde9",
-        collection_uuid="777",
+        collection_uuid="3e85809f-de15-47f9-b261-0aad6b4bde59",
         type="test",
         value="test",
         tag_name=tag.name,
@@ -137,7 +137,7 @@ async def add_galaxy_cluster_body3(db, galaxy3, tag, organisation):
         orgc_id=organisation.id,
         default=True,
         locked=False,
-        extends_uuid="777",
+        extends_uuid="",
         extends_version="777",
         published=True,
         deleted=False,
