@@ -384,7 +384,7 @@ async def start_freeTextImport(
     data = FreeTextImportWorkerData(data=body_dict["value"])
     worker_body = FreeTextImportWorkerBody(user=user, data=data).model_dump()
 
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=10) as client:
         response = await client.post(
             f"{config.WORKER_URL}/job/processFreeText",
             json=worker_body,
