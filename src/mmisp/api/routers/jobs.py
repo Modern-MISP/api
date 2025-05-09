@@ -27,7 +27,7 @@ async def get_job(  # noqa
     Returns:
       the job result
     """
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=10.0) as client:
         response = await client.get(
             f"{config.WORKER_URL}/job/{job_type}/{id}", headers={"Authorization": f"Bearer {config.WORKER_KEY}"}
         )
