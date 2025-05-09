@@ -12,8 +12,6 @@ from mmisp.api_schemas.roles import (
     DeleteRoleResponse,
     EditRoleBody,
     EditRoleResponse,
-    EditUserRoleBody,
-    EditUserRoleResponse,
     FilterRoleBody,
     FilterRoleResponse,
     GetRoleResponse,
@@ -273,41 +271,6 @@ async def set_default_role(
 
 
 # --- deprecated ---
-
-
-# For updating the role of a user simply user PUT /users/{user_id} (async def update_user)
-# and use the new role ID as part of the request body
-@router.put(
-    "/admin/users/edit/{user_id}",
-    deprecated=True,
-    status_code=status.HTTP_200_OK,
-    summary="Assign or reassign a user to a specific role (Deprecated)",
-)
-async def edit_user_role_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
-    db: Annotated[Session, Depends(get_db)],
-    user_id: Annotated[str, Path(alias="userId")],
-    body: EditUserRoleBody,
-) -> EditUserRoleResponse:
-    """Assign or reassign a user to a specific role.
-
-    args:
-        auth: authentication details
-        db: database session
-        user_id: ID of the user for whom the setting is to be updated
-        body: new role for updating the users roles
-
-    returns:
-        the updated user
-
-    raises:
-        200: Successful Response
-        422: Validation Error
-        403: Forbidden Error
-        404: Not Found Error
-    """
-    return await _edit_user_role_depr(auth, db, user_id, body)
-
 
 # --- endpoint logic ---
 
@@ -584,41 +547,4 @@ async def _set_default_role(auth: Auth, db: Session, role_id: int) -> DefaultRol
         message=f"The default role has been changed to {role.name}.",
         url="/admin/roles/setDefault/{role_id}",
         id=role_id,
-    )
-
-
-# --- deprecated endpoint logic ---
-
-
-async def _edit_user_role_depr(auth: Auth, db: Session, user_id: str, body: EditUserRoleBody) -> EditUserRoleResponse:
-    if body is None:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Request body cannot be None.")
-
-    if not body.role_id:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="value 'role_id' is required")
-    if not isinstance(body.role_id, int):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="invalid 'role_id'")
-
-    user = await db.get(User, auth.user_id)
-    if user is None:
-        # this should never happen, it would mean, the user disappeared between auth and processing the request
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="user not available")
-
-    result = await db.execute(select(Role).where(Role.id == body.role_id))
-    role = result.scalar_one_or_none()
-
-    if role is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Role with ID {body.role_id} not found.")
-
-    user.role_id = body.role_id
-    await db.commit()
-
-    return EditUserRoleResponse(
-        saved=True,
-        success=True,
-        name="User role updated",
-        message=f"User's role has been updated to {role.name}.",
-        url=f"/admin/users/edit/{user_id}",
-        id=user.id,
-        Role=role.name,
     )
