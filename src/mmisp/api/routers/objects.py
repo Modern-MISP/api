@@ -267,7 +267,7 @@ async def _add_object(db: Session, event_id: int, object_template_id: int, body:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Event not found.")
 
     object: Object = Object(
-        **body.dict(exclude={"Attribute"}),
+        **body.model_dump(exclude={"Attribute"}),
         template_uuid=template.uuid,
         template_version=template.version,
         event_id=int(event_id),
@@ -280,7 +280,7 @@ async def _add_object(db: Session, event_id: int, object_template_id: int, body:
 
     for attr in body.Attribute or []:
         attribute: Attribute = Attribute(
-            **attr.dict(exclude={"event_id", "object_id", "timestamp"}),
+            **attr.model_dump(exclude={"event_id", "object_id", "timestamp"}),
             event_id=int(event_id),
             object_id=object.id,
             timestamp=int(time()) if not attr.timestamp else attr.timestamp,
@@ -328,7 +328,7 @@ async def _restsearch(db: Session, body: ObjectSearchBody) -> ObjectSearchRespon
     objects_data = []
     for obj in objects:
         obj_attributes = attributes_by_object_id.get(obj.id, [])
-        attributes_data = [GetAllAttributesResponse.from_orm(attr) for attr in obj_attributes]
+        attributes_data = [GetAllAttributesResponse.model_validate(attr.asdict()) for attr in obj_attributes]
 
         obj_data = ObjectWithAttributesResponse(
             **obj.__dict__,
@@ -350,13 +350,13 @@ async def _get_object_details(db: Session, object_id: int) -> ObjectResponse:
     result = await db.execute(select(Attribute).filter(Attribute.object_id == object.id))
     attributes: Sequence[Attribute] = result.scalars().all()
 
-    result = await db.execute(
+    result2 = await db.execute(
         select(Event).join(Object, Event.id == Object.event_id).filter(Object.id == object_id).limit(1)
     )
-    event: Event = result.scalars().one()
+    event: Event = result2.scalars().one()
 
     event_response: ObjectEventResponse = ObjectEventResponse(
-        id=str(event.id), info=event.info, org_id=str(event.org_id), orgc_id=str(event.orgc_id)
+        id=event.id, info=event.info, org_id=event.org_id, orgc_id=event.orgc_id
     )
 
     attributes_response: list[GetAllAttributesResponse] = [

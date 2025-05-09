@@ -31,10 +31,11 @@ async def test_freetext_import(client, site_admin_user_token):
         "/events/freeTextImport/123",
         json={"value": "security leak at website.com", "returnMetaAttributes": True},
         headers={"Authorization": site_admin_user_token},
+        follow_redirects=False,
     )
 
-    assert response.status_code == 307
-    assert response.json() == {"id": "777"}
+    assert response.status_code == 303
+    assert response.headers["location"] == "/jobs/processFreeText/777"
 
 
 async def get_max_event_id(db):
@@ -117,7 +118,7 @@ async def test_get_existing_event(
     assert response_json["Event"]["id"] == event_id
     assert response_json["Event"]["org_id"] == org_id
     assert response_json["Event"]["orgc_id"] == org_id
-    assert response_json["Event"]["attribute_count"] == "1"
+    assert response_json["Event"]["attribute_count"] == 1
     assert response_json["Event"]["Attribute"][0]["id"] == attribute_id
     assert response_json["Event"]["Tag"][0]["id"] == tag_id
     assert response_json["Event"]["Galaxy"][0]["id"] == galaxy_id
@@ -174,7 +175,7 @@ async def test_get_existing_event_by_uuid(
     assert response_json["Event"]["uuid"] == str(event_uuid)
     assert response_json["Event"]["org_id"] == org_id
     assert response_json["Event"]["orgc_id"] == org_id
-    assert response_json["Event"]["attribute_count"] == "1"
+    assert response_json["Event"]["attribute_count"] == 1
     assert response_json["Event"]["Attribute"][0]["id"] == attribute_id
     assert response_json["Event"]["Tag"][0]["id"] == tag_id
     assert response_json["Event"]["Galaxy"][0]["id"] == galaxy_id

@@ -12,13 +12,13 @@ from mmisp.api_schemas.roles import (
     DeleteRoleResponse,
     EditRoleBody,
     EditRoleResponse,
-    EditUserRoleBody,
-    EditUserRoleResponse,
     FilterRoleBody,
     FilterRoleResponse,
     GetRoleResponse,
     GetRolesResponse,
     GetUserRoleResponse,
+    IndexRole,
+    IndexRolesResponse,
     ReinstateRoleResponse,
     RoleAttributeResponse,
 )
@@ -27,11 +27,16 @@ from mmisp.db.models.role import Role
 from mmisp.db.models.user import User
 from mmisp.lib.logger import alog
 from mmisp.lib.permissions import Permission
+from mmisp.lib.settings import get_admin_setting
 from mmisp.lib.standard_roles import get_standard_roles
 
 router = APIRouter(tags=["roles"])
 
 
+@router.get(
+    "/roles/index",
+    summary="Get all roles",
+)
 @router.get(
     "/roles",
     summary="Get all roles",
@@ -40,7 +45,7 @@ router = APIRouter(tags=["roles"])
 async def get_all_roles(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-) -> list[GetRolesResponse]:
+) -> list[IndexRolesResponse]:
     """
     Get all roles and their details.
 
@@ -50,7 +55,7 @@ async def get_all_roles(
     returns:
         information about all roles
     """
-    return await _get_roles(db)
+    return await _get_roles_index(db)
 
 
 @router.get(
@@ -267,41 +272,6 @@ async def set_default_role(
 
 # --- deprecated ---
 
-
-# For updating the role of a user simply user PUT /users/{user_id} (async def update_user)
-# and use the new role ID as part of the request body
-@router.put(
-    "/admin/users/edit/{user_id}",
-    deprecated=True,
-    status_code=status.HTTP_200_OK,
-    summary="Assign or reassign a user to a specific role (Deprecated)",
-)
-async def edit_user_role_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
-    db: Annotated[Session, Depends(get_db)],
-    user_id: Annotated[str, Path(alias="userId")],
-    body: EditUserRoleBody,
-) -> EditUserRoleResponse:
-    """Assign or reassign a user to a specific role.
-
-    args:
-        auth: authentication details
-        db: database session
-        user_id: ID of the user for whom the setting is to be updated
-        body: new role for updating the users roles
-
-    returns:
-        the updated user
-
-    raises:
-        200: Successful Response
-        422: Validation Error
-        403: Forbidden Error
-        404: Not Found Error
-    """
-    return await _edit_user_role_depr(auth, db, user_id, body)
-
-
 # --- endpoint logic ---
 
 
@@ -316,6 +286,25 @@ async def _get_roles(db: Session) -> list[GetRolesResponse]:
     for role in roles:
         role_list.append(GetRolesResponse(Role=RoleAttributeResponse(**role.asdict())))
     return role_list
+
+
+@alog
+async def _get_roles_index(db: Session) -> list[IndexRolesResponse]:
+    db_entry = await get_admin_setting(db, "default_role")
+    if db_entry is not None:
+        try:
+            default_role_id = int(db_entry)
+        except ValueError:
+            default_role_id = None
+    else:
+        default_role_id = None
+
+    query = select(Role)
+
+    result = await db.execute(query)
+    roles = result.scalars().all()
+
+    return [IndexRolesResponse(Role=IndexRole(**role.asdict(), default=(role.id == default_role_id))) for role in roles]
 
 
 async def _get_role(db: Session, role_id: int) -> GetRoleResponse:
@@ -435,71 +424,13 @@ async def _update_role(db: Session, role_id: int, body: EditRoleBody) -> EditRol
             detail={"message": "Invalid Role", "name": "Invalid Role", "url": f"/admin/roles/edit/{role_id}"},
         )
 
-    if all(value is None for value in body.dict().values()):
+    if all(value is None for value in body.model_dump().values()):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="At least one new attribute must be provided to update the role.",
         )
 
-    if body.name is not None:
-        role.name = body.name
-    if body.perm_add is not None:
-        role.perm_add = body.perm_add
-    if body.perm_modify is not None:
-        role.perm_modify = body.perm_modify
-    if body.perm_modify_org is not None:
-        role.perm_modify_org = body.perm_modify_org
-    if body.perm_publish is not None:
-        role.perm_publish = body.perm_publish
-    if body.perm_delegate is not None:
-        role.perm_delegate = body.perm_delegate
-    if body.perm_sync is not None:
-        role.perm_sync = body.perm_sync
-    if body.perm_admin is not None:
-        role.perm_admin = body.perm_admin
-    if body.perm_audit is not None:
-        role.perm_audit = body.perm_audit
-    if body.perm_auth is not None:
-        role.perm_auth = body.perm_auth
-    if body.perm_site_admin is not None:
-        role.perm_site_admin = body.perm_site_admin
-    if body.perm_regexp_access is not None:
-        role.perm_regexp_access = body.perm_regexp_access
-    if body.perm_tagger is not None:
-        role.perm_tagger = body.perm_tagger
-    if body.perm_template is not None:
-        role.perm_template = body.perm_template
-    if body.perm_sharing_group is not None:
-        role.perm_sharing_group = body.perm_sharing_group
-    if body.perm_tag_editor is not None:
-        role.perm_tag_editor = body.perm_tag_editor
-    if body.perm_sighting is not None:
-        role.perm_sighting = body.perm_sighting
-    if body.perm_object_template is not None:
-        role.perm_object_template = body.perm_object_template
-    if body.default_role is not None:
-        role.default_role = body.default_role
-    if body.memory_limit is not None:
-        role.memory_limit = body.memory_limit
-    if body.max_execution_time is not None:
-        role.max_execution_time = body.max_execution_time
-    if body.restricted_to_site_admin is not None:
-        role.restricted_to_site_admin = body.restricted_to_site_admin
-    if body.perm_publish_zmq is not None:
-        role.perm_publish_zmq = body.perm_publish_zmq
-    if body.perm_publish_kafka is not None:
-        role.perm_publish_kafka = body.perm_publish_kafka
-    if body.perm_decaying is not None:
-        role.perm_decaying = body.perm_decaying
-    if body.enforce_rate_limit is not None:
-        role.enforce_rate_limit = body.enforce_rate_limit
-    if body.perm_galaxy_editor is not None:
-        role.perm_galaxy_editor = body.perm_galaxy_editor
-    if body.perm_warninglist is not None:
-        role.perm_warninglist = body.perm_warninglist
-    if body.perm_view_feed_correlations is not None:
-        role.perm_view_feed_correlations = body.perm_view_feed_correlations
-
+    role.patch(**body.model_dump(exclude_unset=True))
     role.modified = datetime.now(timezone.utc)
 
     await db.commit()
@@ -616,41 +547,4 @@ async def _set_default_role(auth: Auth, db: Session, role_id: int) -> DefaultRol
         message=f"The default role has been changed to {role.name}.",
         url="/admin/roles/setDefault/{role_id}",
         id=role_id,
-    )
-
-
-# --- deprecated endpoint logic ---
-
-
-async def _edit_user_role_depr(auth: Auth, db: Session, user_id: str, body: EditUserRoleBody) -> EditUserRoleResponse:
-    if body is None:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Request body cannot be None.")
-
-    if not body.role_id:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="value 'role_id' is required")
-    if not isinstance(body.role_id, int):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="invalid 'role_id'")
-
-    user = await db.get(User, auth.user_id)
-    if user is None:
-        # this should never happen, it would mean, the user disappeared between auth and processing the request
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="user not available")
-
-    result = await db.execute(select(Role).where(Role.id == body.role_id))
-    role = result.scalar_one_or_none()
-
-    if role is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Role with ID {body.role_id} not found.")
-
-    user.role_id = body.role_id
-    await db.commit()
-
-    return EditUserRoleResponse(
-        saved=True,
-        success=True,
-        name="User role updated",
-        message=f"User's role has been updated to {role.name}.",
-        url=f"/admin/users/edit/{user_id}",
-        id=user.id,
-        Role=role.name,
     )

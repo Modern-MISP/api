@@ -1,6 +1,7 @@
 default:
   tags:
-      - kgr1-instance-mini
+      - concurrent
+      - any-image-allowed
 
 variables:
   LIB_REPO_URL: https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.kit.edu/${CI_PROJECT_NAMESPACE}/lib.git
@@ -23,8 +24,8 @@ build_image:
   needs: []
   before_script: []
   stage: build_image
-  tags:
-    - kgr1-instance-standard
+  #  tags:
+  #    - kgr1-instance-standard
   image:
     name: gcr.io/kaniko-project/executor:debug
     entrypoint: [""]
@@ -41,7 +42,7 @@ build_image:
       --build-arg LIB_REPO_URL=${LIB_REPO_URL}
       --build-arg BRANCH=${CI_COMMIT_BRANCH}
       --build-arg INSTALL_LIB=true
-      --destination ${REGISTRY_DOMAIN}/${REGISTRY_PROJECT}/api:$(echo $CI_COMMIT_BRANCH | tr -c '[:alnum:]_' '_')
+      --destination ${REGISTRY_DOMAIN}/${REGISTRY_PROJECT}/api:$(echo -n $CI_COMMIT_BRANCH | tr -c '[:alnum:]_' '_')
       --destination ${REGISTRY_DOMAIN}/${REGISTRY_PROJECT}/api:${CI_COMMIT_SHA}
 
 
@@ -74,10 +75,17 @@ pytest:
   stage: test
   image: ${REGISTRY_DOMAIN}/${REGISTRY_PROJECT}/api:${CI_COMMIT_SHA}
   script:
-    - ENV_FILE=.env.test.lite pytest --junitxml=report.xml --test-group-count $CI_NODE_TOTAL --test-group=$CI_NODE_INDEX  --cov --cov-report= tests/api/routers
+    - ENV_FILE=.env.test.lite
+      pytest --junitxml=report.xml
+      -W error::pydantic.warnings.PydanticDeprecationWarning
+      -o junit_suite_name=runner_$CI_NODE_INDEX
+      --test-group-count $CI_NODE_TOTAL
+      --test-group=$CI_NODE_INDEX
+      tests/api/routers
+    #    - ENV_FILE=.env.test.lite pytest --junitxml=report.xml --test-group-count $CI_NODE_TOTAL --test-group=$CI_NODE_INDEX  --cov --cov-report= tests/api/routers
   variables:
     COVERAGE_FILE: ".coverage.${CI_NODE_INDEX}"
-    DEBUG: true
+    #    DEBUG: true
   artifacts:
       when: always
       paths:
@@ -87,56 +95,51 @@ pytest:
       reports:
         junit: report.xml
 
-pytest_coverage_combine:
-  needs:
-    - pytest
-  stage: coverage
-  image: ${REGISTRY_DOMAIN}/${REGISTRY_PROJECT}/api:${CI_COMMIT_SHA}
-  script:
-    - coverage combine
-    - coverage xml
-    - sed -i 's,/home/mmisp/.local/lib/python3.11/site-packages/,src/,' coverage.xml
-    - sed -i 's,<source></source>,<source>./</source>,' coverage.xml
-    - coverage report
-  coverage: '/TOTAL.*\s+(\d+%)$/'
-  artifacts:
-    reports:
-      coverage_report:
-        coverage_format: cobertura
-        path: coverage.xml
-
-# also run pytest with sqlalchemy v2
-pytest_sa2:
-  needs:
-    - pytest
-  parallel: 16
-  stage: test
-  image: ${REGISTRY_DOMAIN}/${REGISTRY_PROJECT}/api:${CI_COMMIT_SHA}
-  script:
-    - pip install "sqlalchemy>=2.0"
-    - ENV_FILE=.env.test.lite pytest --test-group-count $CI_NODE_TOTAL --test-group=$CI_NODE_INDEX  tests/api/routers
+#pytest_coverage_combine:
+#  needs:
+#    - pytest
+#  stage: coverage
+#  image: ${REGISTRY_DOMAIN}/${REGISTRY_PROJECT}/api:${CI_COMMIT_SHA}
+#  script:
+#    - coverage combine
+#    - coverage xml
+#    - sed -i 's,/home/mmisp/.local/lib/python3.11/site-packages/,src/,' coverage.xml
+#    - sed -i 's,<source></source>,<source>./</source>,' coverage.xml
+#    - coverage report
+#  coverage: '/TOTAL.*\s+(\d+%)$/'
+#  artifacts:
+#    reports:
+#      coverage_report:
+#        coverage_format: cobertura
+#        path: coverage.xml
 
 mypy:
   stage: test
   image: ${REGISTRY_DOMAIN}/${REGISTRY_PROJECT}/api:${CI_COMMIT_SHA}
   script:
-    - pip install "ruff>=0.3.7" "mypy==1.10.0" "sqlalchemy>=2.0"
+    - pip install "ruff>=0.3.7" "mypy==1.10.0"
     - MYPYPATH=src mypy --explicit-package-bases src/mmisp/api
 
 legacy_misp:
   parallel: 12
-  tags:
-      - kgr1-instance-standard
+  #  tags:
+  #   - kgr1-instance-standard
   stage: test
   image: ${REGISTRY_DOMAIN}/${REGISTRY_PROJECT}/api:${CI_COMMIT_SHA}
   script:
     - while [ ! -f "$MISP_READY_FILE" ]; do sleep 10; done
-    - pytest --test-group-count $CI_NODE_TOTAL --test-group=$CI_NODE_INDEX --junitxml=report.xml tests/compatibility_tests
+    - pytest
+      -o junit_suite_name=runner_$CI_NODE_INDEX
+      --test-group-count $CI_NODE_TOTAL
+      --test-group=$CI_NODE_INDEX
+      --junitxml=report.xml
+      tests/compatibility_tests
   services:
     - name: registry.cert.kit.edu/hub/library/mariadb:11.5
       alias: db
       variables:
         HEALTHCHECK_TCP_PORT: 3306
+        KUBERNETES_SERVICE_CPU_LIMIT: "200m"
     - name: registry.cert.kit.edu/public-gitlab-ci/misp-core:latest
       alias: misp-core
       variables:
@@ -146,11 +149,14 @@ legacy_misp:
         HEALTHCHECK_TCP_PORT: 80
         ENABLE_DB_SETTINGS: "false"
         DEBUG: 1
-    - name: valkey/valkey:7.2
+        KUBERNETES_SERVICE_CPU_REQUEST: "700m"
+        KUBERNETES_SERVICE_CPU_LIMIT: "1000m"
+    - name: registry.cert.kit.edu/hub/valkey/valkey:7.2
       command: ["--requirepass 1CA9kMhX6mcuhRlRAptZdQieSX6u25SJ"]
       alias: redis
       variables:
         HEALTHCHECK_TCP_PORT: 6379
+        KUBERNETES_SERVICE_CPU_LIMIT: "200m"
   variables:
     MARIADB_ROOT_PASSWORD: misp
     MARIADB_DATABASE: misp

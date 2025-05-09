@@ -7,6 +7,7 @@ from icecream import ic
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mmisp.db.models.object import ObjectTemplate
+from mmisp.lib.distribution import AttributeDistributionLevels
 from mmisp.tests.generators.object_generator import (
     generate_random_search_query,
     generate_search_query,
@@ -33,14 +34,26 @@ async def check_counts_stay_constant(db):
 
 @pytest.fixture(
     params=[
-        generate_valid_object_data().dict(),
-        generate_valid_random_object_data().dict(),
-        generate_valid_random_object_data().dict(),
-        generate_valid_random_object_data().dict(),
-        generate_valid_random_object_data().dict(),
+        generate_valid_object_data().model_dump(mode="json"),
+        generate_valid_random_object_data().model_dump(mode="json"),
+        generate_valid_random_object_data().model_dump(mode="json"),
+        generate_valid_random_object_data().model_dump(mode="json"),
+        generate_valid_random_object_data().model_dump(mode="json"),
     ]
 )
 def object_data(request: Any) -> dict[str, Any]:
+    return request.param
+
+
+@pytest.fixture(
+    params=[
+        generate_specific_search_query().model_dump(mode="json"),
+        generate_search_query().model_dump(mode="json"),
+        generate_random_search_query().model_dump(mode="json"),
+        generate_random_search_query().model_dump(mode="json"),
+    ]
+)
+def search_data(request: Any) -> dict[str, Any]:
     return request.param
 
 
@@ -78,9 +91,11 @@ async def test_add_object_to_event(
     object_data: dict[str, Any], sharing_group, object_template, event, site_admin_user_token, db, client
 ) -> None:
     object_data["sharing_group_id"] = sharing_group.id
+    object_data["distribution"] = AttributeDistributionLevels.SHARING_GROUP
     if object_data["Attribute"]:
         for attribute in object_data["Attribute"]:
             attribute["sharing_group_id"] = sharing_group.id
+            attribute["distribution"] = AttributeDistributionLevels.SHARING_GROUP
     object_data["event_id"] = event.id
 
     object_template_id = object_template.id
@@ -102,9 +117,11 @@ async def test_add_object_response_format(
     object_data: dict[str, Any], db: AsyncSession, event, site_admin_user_token, object_template, sharing_group, client
 ) -> None:
     object_data["sharing_group_id"] = sharing_group.id
+    object_data["distribution"] = AttributeDistributionLevels.SHARING_GROUP
     if object_data["Attribute"]:
         for attribute in object_data["Attribute"]:
             attribute["sharing_group_id"] = sharing_group.id
+            attribute["distribution"] = AttributeDistributionLevels.SHARING_GROUP
 
     object_data["event_id"] = event.id
     object_template_id = object_template.id
@@ -117,18 +134,6 @@ async def test_add_object_response_format(
 
     response_data = response.json()
     await delete_attributes_from_object_resp(db, response_data)
-
-
-@pytest.fixture(
-    params=[
-        generate_specific_search_query().dict(),
-        generate_search_query().dict(),
-        generate_random_search_query().dict(),
-        generate_random_search_query().dict(),
-    ]
-)
-def search_data(request: Any) -> dict[str, Any]:
-    return request.param
 
 
 @pytest.mark.asyncio
@@ -175,9 +180,11 @@ async def test_get_object_details_valid_id(
     object_data: dict[str, Any], db: AsyncSession, sharing_group, object_template, event, site_admin_user_token, client
 ) -> None:
     object_data["sharing_group_id"] = sharing_group.id
+    object_data["distribution"] = AttributeDistributionLevels.SHARING_GROUP
     if object_data["Attribute"]:
         for attribute in object_data["Attribute"]:
             attribute["sharing_group_id"] = sharing_group.id
+            attribute["distribution"] = AttributeDistributionLevels.SHARING_GROUP
 
     object_data["event_id"] = event.id
 
@@ -218,9 +225,11 @@ async def test_get_object_details_response_format(
     client,
 ) -> None:
     object_data["sharing_group_id"] = sharing_group.id
+    object_data["distribution"] = AttributeDistributionLevels.SHARING_GROUP
     if object_data["Attribute"]:
         for attribute in object_data["Attribute"]:
             attribute["sharing_group_id"] = sharing_group.id
+            attribute["distribution"] = AttributeDistributionLevels.SHARING_GROUP
 
     object_data["event_id"] = event.id
 
@@ -255,9 +264,11 @@ async def test_get_object_details_data_integrity(
     object_data: dict[str, Any], db: AsyncSession, sharing_group, event, object_template, site_admin_user_token, client
 ) -> None:
     object_data["sharing_group_id"] = sharing_group.id
+    object_data["distribution"] = AttributeDistributionLevels.SHARING_GROUP
     if object_data["Attribute"]:
         for attribute in object_data["Attribute"]:
             attribute["sharing_group_id"] = sharing_group.id
+            attribute["distribution"] = AttributeDistributionLevels.SHARING_GROUP
 
     object_data["event_id"] = event.id
     await db.commit()
@@ -293,9 +304,11 @@ async def test_delete_object_hard_delete(
     client,
 ) -> None:
     object_data["sharing_group_id"] = sharing_group.id
+    object_data["distribution"] = AttributeDistributionLevels.SHARING_GROUP
     if object_data["Attribute"]:
         for attribute in object_data["Attribute"]:
             attribute["sharing_group_id"] = sharing_group.id
+            attribute["distribution"] = AttributeDistributionLevels.SHARING_GROUP
 
     object_data["event_id"] = event.id
 
@@ -325,9 +338,11 @@ async def test_delete_object_soft_delete(
     object_data: dict[str, Any], db: AsyncSession, sharing_group, object_template, event, site_admin_user_token, client
 ) -> None:
     object_data["sharing_group_id"] = sharing_group.id
+    object_data["distribution"] = AttributeDistributionLevels.SHARING_GROUP
     if object_data["Attribute"]:
         for attribute in object_data["Attribute"]:
             attribute["sharing_group_id"] = sharing_group.id
+            attribute["distribution"] = AttributeDistributionLevels.SHARING_GROUP
     object_data["event_id"] = event.id
 
     await db.commit()
@@ -366,9 +381,11 @@ async def test_delete_object_invalid_hard_delete(
     db, object_data: dict[str, Any], sharing_group, object_template, event, site_admin_user_token, client
 ) -> None:
     object_data["sharing_group_id"] = sharing_group.id
+    object_data["distribution"] = AttributeDistributionLevels.SHARING_GROUP
     if object_data["Attribute"]:
         for attribute in object_data["Attribute"]:
             attribute["sharing_group_id"] = sharing_group.id
+            attribute["distribution"] = AttributeDistributionLevels.SHARING_GROUP
     object_data["event_id"] = event.id
 
     object_template_id = object_template.id

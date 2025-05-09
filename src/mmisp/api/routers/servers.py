@@ -54,7 +54,7 @@ async def get_remote_servers(
 async def get_remote_server_by_id(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    server_Id: Annotated[str, Path(alias="serverId")],
+    server_Id: Annotated[int, Path(alias="serverId")],
 ) -> GetRemoteServer:
     """
     Returns information for a specific remote server chosen by its id.
@@ -106,7 +106,7 @@ async def add_remote_server(
 async def delete_remote_server(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    server_id: Annotated[str, Path(alias="server_id")],
+    server_id: Annotated[int, Path(alias="server_id")],
 ) -> StandardStatusIdentifiedResponse:
     """
     Deletes a remote server if the given id is valid.
@@ -163,7 +163,7 @@ async def get_version(
 async def update_remote_server(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    server_id: Annotated[str, Path(alias="server_id")],
+    server_id: Annotated[int, Path(alias="server_id")],
     body: EditServer,
 ) -> AddServerResponse:
     """
@@ -282,7 +282,7 @@ def get_remote_server_answer(server: Server) -> GetRemoteServer:
 
 
 @alog
-async def _get_remote_server_by_id(auth: Auth, db: Session, serverId: str) -> GetRemoteServer:
+async def _get_remote_server_by_id(auth: Auth, db: Session, serverId: int) -> GetRemoteServer:
     if not (check_permissions(auth, [Permission.SITE_ADMIN]) or check_permissions(auth, [Permission.ADMIN])):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
@@ -321,8 +321,8 @@ async def _add_remote_server(auth: Auth, db: Session, body: AddServer) -> AddSer
         internal=body.internal,
         push=body.push,
         pull=body.pull,
-        pull_rules=body.pull_rules.json().replace(" ", ""),
-        push_rules=body.push_rules.json().replace(" ", ""),
+        pull_rules=body.pull_rules.model_dump_json().replace(" ", ""),
+        push_rules=body.push_rules.model_dump_json().replace(" ", ""),
         push_galaxy_clusters=body.push_galaxy_clusters,
         caching_enabled=body.caching_enabled,
         unpublish_event=body.unpublish_event,
@@ -340,7 +340,7 @@ async def _add_remote_server(auth: Auth, db: Session, body: AddServer) -> AddSer
 
 
 @alog
-async def _delete_remote_server(auth: Auth, db: Session, server_id: str) -> StandardStatusIdentifiedResponse:
+async def _delete_remote_server(auth: Auth, db: Session, server_id: int) -> StandardStatusIdentifiedResponse:
     if not (check_permissions(auth, [Permission.SITE_ADMIN]) or check_permissions(auth, [Permission.ADMIN])):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
@@ -364,7 +364,7 @@ async def _delete_remote_server(auth: Auth, db: Session, server_id: str) -> Stan
 
 
 @alog
-async def _edit_server_by_id(auth: Auth, db: Session, server_id: str, body: EditServer) -> AddServerResponse:
+async def _edit_server_by_id(auth: Auth, db: Session, server_id: int, body: EditServer) -> AddServerResponse:
     if not (check_permissions(auth, [Permission.SITE_ADMIN]) or check_permissions(auth, [Permission.ADMIN])):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
@@ -383,8 +383,8 @@ async def _edit_server_by_id(auth: Auth, db: Session, server_id: str, body: Edit
     server.internal = body.internal
     server.push = body.push
     server.pull = body.pull
-    server.pull_rules = body.pull_rules.json().replace(" ", "")
-    server.push_rules = body.push_rules.json().replace(" ", "")
+    server.pull_rules = body.pull_rules.model_dump_json().replace(" ", "")
+    server.push_rules = body.push_rules.model_dump_json().replace(" ", "")
     server.push_galaxy_clusters = body.push_galaxy_clusters
     server.caching_enabled = body.caching_enabled
     server.unpublish_event = body.unpublish_event

@@ -21,7 +21,7 @@ def get_valid_import_galaxy_body(tag_name: str, galaxy_id: int, org_id: int, gal
             authors=["Me"],
             version="1",
             distribution=1,
-            sharing_group_id="1",
+            sharing_group_id=0,
             org_id=org_id,
             orgc_id=org_id,
             default=False,
@@ -34,7 +34,7 @@ def get_valid_import_galaxy_body(tag_name: str, galaxy_id: int, org_id: int, gal
         ),
         Galaxy=ImportGalaxyGalaxy(uuid=galaxy_uuid),
     )
-    response_list = [body.dict()]
+    response_list = [body.model_dump(mode="json")]
     return response_list
 
 
@@ -53,7 +53,7 @@ def get_invalid_import_galaxy_body(tag_name: str, galaxy_id: int, org_id: int) -
             authors=["Me"],
             version="1",
             distribution=1,
-            sharing_group_id="1",
+            sharing_group_id=0,
             org_id=org_id,
             orgc_id=org_id,
             default=False,
@@ -66,5 +66,5 @@ def get_invalid_import_galaxy_body(tag_name: str, galaxy_id: int, org_id: int) -
         ),
         Galaxy=ImportGalaxyGalaxy(uuid=""),
     )
-    response_list = [body.dict()]
+    response_list = [body.model_dump(mode="json")]
     return response_list

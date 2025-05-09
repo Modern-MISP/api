@@ -7,13 +7,11 @@ from importlib.metadata import version
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import ORJSONResponse
 
 import mmisp.db.all_models  # noqa: F401
 from mmisp.api.config import config
-from mmisp.api.dry_run_middleware import DryRunMiddleware
 from mmisp.api.exception_handler import register_exception_handler
-from mmisp.api.logging_middleware import LogMiddleware
+from mmisp.api.middleware import DryRunMiddleware, LogMiddleware
 from mmisp.db.config import config as db_config
 from mmisp.db.database import sessionmanager
 
@@ -55,7 +53,11 @@ def init_app(*, init_db: bool = False) -> FastAPI:
         lifespan = None  # type: ignore
 
     app = FastAPI(
-        title="Modern MISP API", version=version("mmisp-api"), lifespan=lifespan, default_response_class=ORJSONResponse
+        title="Modern MISP API",
+        version=version("mmisp-api"),
+        lifespan=lifespan,
+        #        default_response_class=ORJSONResponse,
+        debug=config.DEBUG,
     )
 
     app.add_middleware(
@@ -64,7 +66,7 @@ def init_app(*, init_db: bool = False) -> FastAPI:
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
-        expose_headers=["x-result-count"],
+        expose_headers=["x-result-count", "x-worker-name-header", "x-queue-name-header"],
     )
     app.add_middleware(DryRunMiddleware)
     app.add_middleware(LogMiddleware)

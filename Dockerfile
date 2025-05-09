@@ -1,4 +1,4 @@
-FROM python:3.11-alpine
+FROM python:3.12.3-alpine
 #FROM python:3.11-slim
 RUN apk --no-cache upgrade && apk --no-cache add git
 
@@ -24,6 +24,7 @@ ENV PYTHONUNBUFFERED 1
 ENV PATH="/home/${DOCKER_USER}/.local/bin:${PATH}"
 # set to empty if you dont want a db setup
 ENV SETUP_DB="1"
+#ENV COVERAGE_CORE=sysmon
 
 ADD --chown=$DOCKER_USER:$DOCKER_USER . ./
 RUN pip install --no-cache-dir '.[dev]'

@@ -336,6 +336,14 @@ async def _get_taxonomy_details(db: Session, taxonomy_id: int) -> GetIdTaxonomyR
         taxonomy_entries_of_taxonomy_predicate = result.scalars().all()
 
         for taxonomy_entry_of_taxonomy_predicate in taxonomy_entries_of_taxonomy_predicate:
+            tp_expanded = taxonomy_predicate.expanded
+            tpe_expanded = taxonomy_entry_of_taxonomy_predicate.expanded
+            if tp_expanded is None:
+                tp_expanded = taxonomy_predicate.value
+            if tpe_expanded is None:
+                tpe_expanded = taxonomy_entry_of_taxonomy_predicate.value
+            expanded = tp_expanded + ":" + tpe_expanded
+
             tag_name = await _get_tag_name(db, taxonomy_entry_of_taxonomy_predicate)
 
             result = await db.execute(select(Tag).filter(Tag.name == tag_name).limit(1))
@@ -348,7 +356,7 @@ async def _get_taxonomy_details(db: Session, taxonomy_id: int) -> GetIdTaxonomyR
             taxonomy_entries.append(
                 TaxonomyEntrySchema(
                     tag=tag_name,
-                    expanded=taxonomy_predicate.expanded + ":" + taxonomy_entry_of_taxonomy_predicate.expanded,
+                    expanded=expanded,
                     exclusive_predicate=taxonomy_predicate.exclusive,
                     description=taxonomy_entry_of_taxonomy_predicate.description,
                     existing_tag=existing_tag,
@@ -381,22 +389,22 @@ async def _get_all_taxonomies(db: Session) -> list[ViewTaxonomyResponse]:
     taxonomy_entries_predicates = []
     taxonomy_entries_builder = []
 
-    result = await db.execute(select(Tag.name))
-    tag_names_retrieve: Sequence[str] = result.scalars().all()
+    result2 = await db.execute(select(Tag.name))
+    tag_names_retrieve: Sequence[str] = result2.scalars().all()
 
-    result = await db.execute(
+    result3 = await db.execute(
         select(TaxonomyPredicate.taxonomy_id, TaxonomyPredicate.value, TaxonomyEntry.value)
         .outerjoin(TaxonomyEntry, TaxonomyPredicate.id == TaxonomyEntry.taxonomy_predicate_id)
         .order_by(TaxonomyPredicate.taxonomy_id)
     )
-    taxonomy_entries_predicates_db = result.all()
+    taxonomy_entries_predicates_db = result3.all()
 
-    result = await db.execute(
+    result4 = await db.execute(
         select(TaxonomyPredicate.taxonomy_id, func.count(TaxonomyPredicate.taxonomy_id))
         .outerjoin(TaxonomyEntry, TaxonomyPredicate.id == TaxonomyEntry.taxonomy_predicate_id)
         .group_by(TaxonomyPredicate.taxonomy_id)
     )
-    total_count_db = result.all()
+    total_count_db = result4.all()
 
     for tag in tag_names_retrieve:
         if ":" in tag:
@@ -465,6 +473,13 @@ async def _get_taxonomy_details_extended(db: Session, taxonomy_id: int) -> GetTa
         taxonomy_entries_of_taxonomy_predicate = result.scalars().all()
 
         for taxonomy_entry_of_taxonomy_predicate in taxonomy_entries_of_taxonomy_predicate:
+            tp_expanded = taxonomy_predicate.expanded
+            tpe_expanded = taxonomy_entry_of_taxonomy_predicate.expanded
+            if tp_expanded is None:
+                tp_expanded = taxonomy_predicate.value
+            if tpe_expanded is None:
+                tpe_expanded = taxonomy_entry_of_taxonomy_predicate.value
+            expanded = tp_expanded + ":" + tpe_expanded
             events = 0
             attributes = 0
             tag_name = await _get_tag_name(db, taxonomy_entry_of_taxonomy_predicate)
@@ -488,7 +503,7 @@ async def _get_taxonomy_details_extended(db: Session, taxonomy_id: int) -> GetTa
             taxonomy_entries.append(
                 TaxonomyTagEntrySchema(
                     tag=tag_name,
-                    expanded=taxonomy_predicate.expanded + ":" + taxonomy_entry_of_taxonomy_predicate.expanded,
+                    expanded=expanded,
                     exclusive_predicate=taxonomy_predicate.exclusive,
                     description=taxonomy_entry_of_taxonomy_predicate.description,
                     existing_tag=existing_tag,

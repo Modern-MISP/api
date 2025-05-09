@@ -17,17 +17,14 @@ from mmisp.api_schemas.users import (
     UserAttributesBody,
     UserWithName,
 )
-from mmisp.api_schemas.users import (
-    User as UserSchema,
-)
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.organisation import Organisation
 from mmisp.db.models.role import Role
 from mmisp.db.models.user import User
 from mmisp.db.models.user_setting import UserSetting
 from mmisp.lib.logger import alog
+from mmisp.lib.settings import get_user_setting, set_user_setting
 from mmisp.util.crypto import hash_secret
-from mmisp.util.partial import partial
 
 router = APIRouter(tags=["users"])
 
@@ -58,8 +55,8 @@ async def add_user(
     return await _add_user(auth=auth, db=db, body=body)
 
 
-@router.get("/users/view/me.json", response_model=partial(GetUsersElement))
-@router.get("/users/view/me", response_model=partial(GetUsersElement))
+@router.get("/users/view/me.json")
+@router.get("/users/view/me")
 @alog
 async def get_logged_in_user_info(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))], db: Annotated[Session, Depends(get_db)]
@@ -395,16 +392,7 @@ async def _add_user(auth: Auth, db: Session, body: AddUserBody) -> AddUserRespon
     await db.flush()
     await db.refresh(user)
 
-    user_setting = UserSetting(
-        user_id=user.id,
-        setting="user_name",
-        value=json.dumps({"name": str(body.name)}),
-    )
-
-    db.add(user_setting)
-
-    await db.flush()
-    await db.refresh(user_setting)
+    await set_user_setting(db, "user_name", user.id, json.dumps({"name": str(body.name)}))
 
     return AddUserResponse(User=AddUserResponseData(**user.__dict__))
 
@@ -641,115 +629,21 @@ async def _update_user(auth: Auth, db: Session, userID: str, body: UserAttribute
     if not user:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="User not found")
 
-    name_result = await db.execute(
-        select(UserSetting).where(UserSetting.setting == "user_name" and UserSetting.user_id == user.id)
-    )
-
-    name = name_result.scalars().first()
-
-    if not name:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="User name not found")
-
-    settings = body.dict()
-
-    if settings.get("name") is not None:
-        name.value = json.dumps({"name": str(settings["name"])})
-        await db.flush()
-        await db.refresh(name)
-    if settings.get("org_id") is not None:
-        user.org_id = settings["org_id"]
-    if settings.get("role_id") is not None:
-        user.role_id = settings["role_id"]
-    if settings.get("authkey") is not None:
-        user.authkey = settings["authkey"]
-    if settings.get("email") is not None:
-        user.email = settings["email"]
-    if settings.get("autoalert") is not None:
-        user.autoalert = settings["autoalert"]
-    if settings.get("invited_by") is not None:
-        user.invited_by = settings["invited_by"]
-    if settings.get("gpgkey") is not None:
-        user.gpgkey = settings["gpgkey"]
-    if settings.get("certif_public") is not None:
-        user.certif_public = settings["certif_public"]
-    if settings.get("termsaccepted") is not None:
-        user.termsaccepted = settings["termsaccepted"]
-    if settings.get("role") is not None:
-        user.role_id = settings["role"]
-    if settings.get("change_pw") is not None:
-        user.change_pw = settings["change_pw"]
-    if settings.get("contactalert") is not None:
-        user.contactalert = settings["contactalert"]
-    if settings.get("disabled") is not None:
-        user.disabled = settings["disabled"]
-    if settings.get("expiration") is not None:
-        user.expiration = settings["expiration"]
-    if settings.get("current_login") is not None:
-        user.current_login = settings["current_login"]
-    if settings.get("last_login") is not None:
-        user.last_login = settings["last_login"]
-    if settings.get("force_logout") is not None:
-        user.force_logout = settings["force_logout"]
-    if settings.get("date_created") is not None:
-        user.date_created = settings["date_created"]
-    if settings.get("date_modified") is not None:
-        user.date_modified = settings["date_modified"]
-    if settings.get("external_auth_required") is not None:
-        user.external_auth_required = settings["external_auth_required"]
-    if settings.get("external_auth_key") is not None:
-        user.external_auth_key = settings["external_auth_key"]
-    if settings.get("last_api_access") is not None:
-        user.last_api_access = settings["last_api_access"]
-    if settings.get("notification_daily") is not None:
-        user.notification_daily = settings["notification_daily"]
-    if settings.get("notification_weekly") is not None:
-        user.notification_weekly = settings["notification_weekly"]
-    if settings.get("notification_monthly") is not None:
-        user.notification_monthly = settings["notification_monthly"]
-    if settings.get("totp") is not None:
-        user.totp = settings["totp"]
-    if settings.get("hotp_counter") is not None:
-        user.hotp_counter = settings["hotp_counter"]
-    if settings.get("last_pw_change") is not None:
-        user.last_pw_change = settings["last_pw_change"]
-    if settings.get("nids_sid") is not None:
-        user.nids_sid = settings["nids_sid"]
+    settings = body.model_dump(exclude_unset=True)
+    setting_name = settings.pop("name", None)
+    if setting_name is not None:
+        await set_user_setting(db, "user_name", user.id, json.dumps({"name": str(setting_name)}))
+    user.patch(**settings)
 
     await db.flush()
     await db.refresh(user)
 
-    user_schema = UserSchema(
-        authkey=user.authkey,
-        id=user.id,
-        org_id=user.org_id,
-        email=user.email,
-        autoalert=user.autoalert,
-        invited_by=user.invited_by,
-        gpgkey=user.gpgkey,
-        certif_public=user.certif_public,
-        termsaccepted=user.termsaccepted,
-        role_id=user.role_id,
-        change_pw=user.change_pw == 1,
-        contactalert=user.contactalert,
-        disabled=user.disabled,
-        expiration=user.expiration,
-        current_login=user.current_login,
-        last_login=user.last_login,
-        force_logout=user.force_logout,
-        date_created=user.date_created,
-        date_modified=user.date_modified,
-        external_auth_required=user.external_auth_required,
-        external_auth_key=user.external_auth_key,
-        last_api_access=user.last_api_access,
-        notification_daily=user.notification_daily,
-        notification_weekly=user.notification_weekly,
-        notification_monthly=user.notification_monthly,
-        totp=user.totp,
-        hotp_counter=user.hotp_counter,
-        last_pw_change=user.last_pw_change,
-        nids_sid=user.nids_sid,
-    )
+    user_name = await get_user_setting(db, "user_name", user.id)
+    if user_name is None:
+        user_name = ""
+    else:
+        user_name = json.loads(user_name)["name"]
 
-    user_return = UserWithName(user=user_schema, name=json.loads(name.value)["name"])
+    user_return = UserWithName(user=user.asdict(), name=user_name)
 
     return user_return

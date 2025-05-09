@@ -10,8 +10,10 @@ from typing import Self, Tuple
 
 import pytest
 import pytest_asyncio
+from _pytest.config import create_terminal_writer
 from fastapi.testclient import TestClient
 from icecream import ic
+from pytest import Config, Item, hookimpl
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import mmisp.lib.standard_roles as standard_roles
@@ -32,7 +34,6 @@ from mmisp.lib.attributes import AttributeCategories
 from mmisp.lib.distribution import AttributeDistributionLevels, EventDistributionLevels
 from mmisp.tests.fixtures import *  # noqa
 from mmisp.tests.generators.model_generators.attribute_generator import generate_attribute
-from mmisp.tests.generators.model_generators.event_generator import generate_event
 from mmisp.tests.generators.model_generators.tag_generator import generate_tag
 from mmisp.tests.generators.model_generators.user_generator import generate_user
 from mmisp.tests.generators.model_generators.user_setting_generator import generate_user_name
@@ -47,6 +48,33 @@ from mmisp.workflows.modules import (
     TriggerEventPublish,
     workflow_node,
 )
+
+
+def pytest_addoption(parser):
+    group = parser.getgroup("split your tests into groups and run them")
+    group.addoption(
+        "--test-group-count", dest="test-group-count", type=int, help="The number of groups to split the tests into"
+    )
+    group.addoption("--test-group", dest="test-group", type=int, help="The group of tests that should be executed")
+
+
+@hookimpl(trylast=True)
+def pytest_collection_modifyitems(config: Config, items: list[Item]) -> None:
+    group_count: int = config.getoption("test-group-count")  # type: ignore
+    group_id: int = config.getoption("test-group")  # type: ignore
+
+    if not group_count or not group_id:
+        return
+
+    items.sort(key=lambda x: x.nodeid)
+
+    start = group_id - 1
+    items[:] = items[start::group_count]
+
+    terminal_reporter = config.pluginmanager.get_plugin("terminalreporter")
+    terminal_writer = create_terminal_writer(config)
+    message = terminal_writer.markup("Running test group #{0} ({1} tests)\n".format(group_id, len(items)), yellow=True)
+    terminal_reporter.write(message)
 
 
 @pytest.fixture(autouse=True)
@@ -97,10 +125,18 @@ async def sharing_group_server(db, sharing_group, server):
 @pytest_asyncio.fixture
 async def event3(db, organisation, site_admin_user):
     org_id = organisation.id
-    event = generate_event()
-    event.org_id = org_id
-    event.orgc_id = org_id
-    event.user_id = site_admin_user.id
+    event = Event(
+        org_id=org_id,
+        orgc_id=org_id,
+        user_id=site_admin_user.id,
+        uuid=libuuid.uuid4(),
+        sharing_group_id=0,
+        threat_level_id=1,
+        info="test event",
+        date=date(year=2024, month=2, day=13),
+        analysis=1,
+        distribution=EventDistributionLevels.ALL_COMMUNITIES,
+    )
 
     db.add(event)
     await db.commit()
@@ -115,10 +151,18 @@ async def event3(db, organisation, site_admin_user):
 @pytest_asyncio.fixture
 async def event4(db, organisation, site_admin_user):
     org_id = organisation.id
-    event = generate_event()
-    event.org_id = org_id
-    event.orgc_id = org_id
-    event.user_id = site_admin_user.id
+    event = Event(
+        org_id=org_id,
+        orgc_id=org_id,
+        user_id=site_admin_user.id,
+        uuid=libuuid.uuid4(),
+        sharing_group_id=0,
+        threat_level_id=1,
+        info="test event",
+        date=date(year=2024, month=2, day=13),
+        analysis=1,
+        distribution=EventDistributionLevels.ALL_COMMUNITIES,
+    )
 
     db.add(event)
     await db.commit()
@@ -133,10 +177,18 @@ async def event4(db, organisation, site_admin_user):
 @pytest_asyncio.fixture
 async def event5(db, organisation, site_admin_user):
     org_id = organisation.id
-    event = generate_event()
-    event.org_id = org_id
-    event.orgc_id = org_id
-    event.user_id = site_admin_user.id
+    event = Event(
+        org_id=org_id,
+        orgc_id=org_id,
+        user_id=site_admin_user.id,
+        uuid=libuuid.uuid4(),
+        sharing_group_id=0,
+        threat_level_id=1,
+        info="test event",
+        date=date(year=2024, month=2, day=13),
+        analysis=1,
+        distribution=EventDistributionLevels.ALL_COMMUNITIES,
+    )
 
     db.add(event)
     await db.commit()
@@ -203,7 +255,7 @@ async def eventtag(db, event, tag):
 @pytest_asyncio.fixture
 async def galaxy_cluster(db, tag, galaxy):
     galaxy_cluster = GalaxyCluster(
-        collection_uuid="uuid",
+        collection_uuid="da4b7a8d-d314-42e8-9c85-2eb476e90dbf",
         type="test type",
         value="test",
         tag_name=tag.name,

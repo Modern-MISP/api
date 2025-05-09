@@ -29,7 +29,6 @@ from mmisp.db.models.organisation import Organisation
 from mmisp.db.models.server import Server
 from mmisp.db.models.sharing_group import SharingGroup, SharingGroupOrg, SharingGroupServer
 from mmisp.lib.logger import alog
-from mmisp.util.models import update_record
 
 router = APIRouter(tags=["sharing_groups"])
 
@@ -542,7 +541,7 @@ async def _create_sharing_group(auth: Auth, db: Session, body: CreateSharingGrou
 
     sharing_group = SharingGroup(
         **{
-            **body.dict(),
+            **body.model_dump(),
             # overwrite organisation_uuid with the correct one if not site admin
             "organisation_uuid": organisation.uuid,
             "org_id": organisation.id,
@@ -560,7 +559,7 @@ async def _create_sharing_group(auth: Auth, db: Session, body: CreateSharingGrou
     await db.flush()
     await db.refresh(sharing_group)
 
-    return sharing_group.__dict__
+    return sharing_group.asdict()
 
 
 @alog
@@ -577,7 +576,7 @@ async def _get_sharing_group(auth: Auth, db: Session, id: int | uuid.UUID) -> di
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     if sharing_group.org_id == auth.org_id or check_permissions(auth, [Permission.SITE_ADMIN]):
-        return sharing_group.__dict__
+        return sharing_group.asdict()
 
     result = await db.execute(
         select(SharingGroupOrg)
@@ -587,13 +586,15 @@ async def _get_sharing_group(auth: Auth, db: Session, id: int | uuid.UUID) -> di
     sharing_group_org: SharingGroupOrg | None = result.scalars().first()
 
     if sharing_group_org:
-        return sharing_group.__dict__
+        return sharing_group.asdict()
 
     sharing_group_server: SharingGroupServer | None = None
     user_org: Organisation | None = await db.get(Organisation, auth.org_id)
 
+    del result
+
     if user_org and user_org.local:
-        result = await db.execute(
+        result2 = await db.execute(
             select(SharingGroupServer)
             .filter(
                 SharingGroupServer.sharing_group_id == id,
@@ -602,10 +603,10 @@ async def _get_sharing_group(auth: Auth, db: Session, id: int | uuid.UUID) -> di
             )
             .limit(1)
         )
-        sharing_group_server = result.scalars().first()
+        sharing_group_server = result2.scalars().first()
 
     if sharing_group_server:
-        return sharing_group.__dict__
+        return sharing_group.asdict()
 
     raise HTTPException(status.HTTP_404_NOT_FOUND)
 
@@ -620,12 +621,12 @@ async def _update_sharing_group(auth: Auth, db: Session, id: int, body: UpdateSh
     if sharing_group.org_id != auth.org_id and not check_permissions(auth, [Permission.SITE_ADMIN]):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
-    update_record(sharing_group, body.dict())
+    sharing_group.patch(**body.model_dump(exclude_unset=True))
 
     await db.flush()
     await db.refresh(sharing_group)
 
-    return sharing_group.__dict__
+    return sharing_group.asdict()
 
 
 @alog
@@ -644,7 +645,7 @@ async def _delete_sharing_group(auth: Auth, db: Session, id: int) -> dict:
     await db.delete(sharing_group)
     await db.flush()
 
-    return sharing_group.__dict__
+    return sharing_group.asdict()
 
 
 def _process_sharing_group(sharing_group: SharingGroup) -> dict:
@@ -688,7 +689,7 @@ async def _get_all_sharing_groups(auth: Auth, db: Session) -> GetSharingGroupsIn
     result = await db.execute(qry)
     sharing_groups = result.scalars().all()
 
-    return GetSharingGroupsIndex.parse_obj({"response": [_process_sharing_group(sg) for sg in sharing_groups]})
+    return GetSharingGroupsIndex.model_validate({"response": [_process_sharing_group(sg) for sg in sharing_groups]})
 
 
 @alog
@@ -710,7 +711,7 @@ async def _get_sharing_group_info(auth: Auth, db: Session, id: int) -> dict:
         user_org: Organisation | None = await db.get(Organisation, auth.org_id)
 
         if user_org and user_org.local:
-            result = await db.execute(
+            result2 = await db.execute(
                 select(SharingGroupServer)
                 .filter(
                     SharingGroupServer.sharing_group_id == id,
@@ -719,20 +720,20 @@ async def _get_sharing_group_info(auth: Auth, db: Session, id: int) -> dict:
                 )
                 .limit(1)
             )
-            sharing_group_server = result.scalars().first()
+            sharing_group_server = result2.scalars().first()
 
         if not sharing_group_org and not sharing_group_server:
             raise HTTPException(status.HTTP_404_NOT_FOUND)
 
     organisation: Organisation | None = await db.get(Organisation, sharing_group.org_id)
 
-    result = await db.execute(select(SharingGroupOrg).filter(SharingGroupOrg.sharing_group_id == sharing_group.id))
-    sharing_group_orgs: Sequence[SharingGroupOrg] = result.scalars().all()
+    result3 = await db.execute(select(SharingGroupOrg).filter(SharingGroupOrg.sharing_group_id == sharing_group.id))
+    sharing_group_orgs: Sequence[SharingGroupOrg] = result3.scalars().all()
 
-    result = await db.execute(
+    result4 = await db.execute(
         select(SharingGroupServer).filter(SharingGroupServer.sharing_group_id == sharing_group.id)
     )
-    sharing_group_servers: Sequence[SharingGroupServer] = result.scalars().all()
+    sharing_group_servers: Sequence[SharingGroupServer] = result4.scalars().all()
 
     sharing_group_orgs_computed: list[dict] = []
 
@@ -740,7 +741,12 @@ async def _get_sharing_group_info(auth: Auth, db: Session, id: int) -> dict:
         sharing_group_org_organisation: Organisation | None = await db.get(Organisation, sharing_group_org.org_id)
 
         sharing_group_orgs_computed.append(
-            {**sharing_group_org.__dict__, "Organisation": getattr(sharing_group_org_organisation, "__dict__", None)}
+            {
+                **sharing_group_org.asdict(),
+                "Organisation": sharing_group_org_organisation.asdict()
+                if sharing_group_org_organisation is not None
+                else None,
+            }
         )
 
     sharing_group_servers_computed: list[dict] = []
@@ -752,13 +758,15 @@ async def _get_sharing_group_info(auth: Auth, db: Session, id: int) -> dict:
             sharing_group_server_server = LOCAL_INSTANCE_SERVER
         else:
             sharing_group_server_server = await db.get(Server, sharing_group_server.server_id)
-            sharing_group_server_server = getattr(sharing_group_server_server, "__dict__", None)
+            sharing_group_server_server = (
+                sharing_group_server_server.asdict() if sharing_group_server_server is not None else None
+            )
 
-        sharing_group_servers_computed.append({**sharing_group_server.__dict__, "Server": sharing_group_server_server})
+        sharing_group_servers_computed.append({**sharing_group_server.asdict(), "Server": sharing_group_server_server})
 
     return {
-        "SharingGroup": {**sharing_group.__dict__, "org_count": len(sharing_group_orgs)},
-        "Organisation": organisation.__dict__,
+        "SharingGroup": {**sharing_group.asdict(), "org_count": len(sharing_group_orgs)},
+        "Organisation": organisation.asdict() if organisation is not None else None,
         "SharingGroupOrg": sharing_group_orgs_computed,
         "SharingGroupServer": sharing_group_servers_computed,
     }
@@ -791,15 +799,15 @@ async def _add_org_to_sharing_group(
 
         db.add(sharing_group_org)
 
-    update = body.dict()
+    update = body.model_dump(exclude_unset=True)
     update.pop("organisationId")
 
-    update_record(sharing_group_org, update)
+    sharing_group_org.patch(**update)
 
     await db.flush()
     await db.refresh(sharing_group_org)
 
-    return SharingGroupOrgSchema.parse_obj(sharing_group_org.asdict())
+    return SharingGroupOrgSchema.model_validate(sharing_group_org.asdict())
 
 
 @alog
@@ -852,15 +860,15 @@ async def _add_server_to_sharing_group(auth: Auth, db: Session, id: int, body: A
 
         db.add(sharing_group_server)
 
-    update = body.dict()
+    update = body.model_dump(exclude_unset=True)
     update.pop("serverId")
 
-    update_record(sharing_group_server, update)
+    sharing_group_server.patch(**update)
 
     await db.flush()
     await db.refresh(sharing_group_server)
 
-    return sharing_group_server.__dict__
+    return sharing_group_server.asdict()
 
 
 @alog
@@ -885,7 +893,7 @@ async def _remove_server_from_sharing_group(auth: Auth, db: Session, id: int, se
     await db.delete(sharing_group_server)
     await db.flush()
 
-    return sharing_group_server.__dict__
+    return sharing_group_server.asdict()
 
 
 @alog
@@ -905,7 +913,7 @@ async def _create_sharing_group_legacy(auth: Auth, db: Session, body: CreateShar
     if organisation is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
-    create = body.dict(exclude={"org_count", "created", "modified", "sync_user_id"})
+    create = body.model_dump(exclude={"org_count", "created", "modified", "sync_user_id"})
 
     sharing_group = SharingGroup(
         **{
@@ -931,10 +939,10 @@ async def _create_sharing_group_legacy(auth: Auth, db: Session, body: CreateShar
     await db.refresh(organisation)
 
     return {
-        "SharingGroup": sharing_group.__dict__,
-        "Organisation": organisation.__dict__,
-        "SharingGroupOrg": [sharing_group_org.__dict__],
-        "SharingGroupServer": [sharing_group_server.__dict__],
+        "SharingGroup": sharing_group.asdict(),
+        "Organisation": organisation.asdict(),
+        "SharingGroupOrg": [sharing_group_org.asdict()],
+        "SharingGroupServer": [sharing_group_server.asdict()],
     }
 
 
@@ -961,7 +969,7 @@ async def _view_sharing_group_legacy(auth: Auth, db: Session, id: int | uuid.UUI
 
     res = _process_sharing_group(sharing_group)
 
-    return SingleSharingGroupResponse.parse_obj(res)
+    return SingleSharingGroupResponse.model_validate(res)
 
 
 @alog
@@ -978,8 +986,10 @@ async def _update_sharing_group_legacy(
     if sharing_group.org_id != auth.org_id and not check_permissions(auth, [Permission.SITE_ADMIN]):
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
-    update = body.dict(include={"name", "description", "releasability", "local", "active", "roaming"})
-    update_record(sharing_group, update)
+    update = body.model_dump(
+        include={"name", "description", "releasability", "local", "active", "roaming"}, exclude_unset=True
+    )
+    sharing_group.patch(**update)
 
     await db.flush()
     await db.refresh(sharing_group)
@@ -989,10 +999,10 @@ async def _update_sharing_group_legacy(
     result = await db.execute(select(SharingGroupOrg).filter(SharingGroupOrg.sharing_group_id == sharing_group.id))
     sharing_group_orgs: Sequence[SharingGroupOrg] = result.scalars().all()
 
-    result = await db.execute(
+    result2 = await db.execute(
         select(SharingGroupServer).filter(SharingGroupServer.sharing_group_id == sharing_group.id)
     )
-    sharing_group_servers: Sequence[SharingGroupServer] = result.scalars().all()
+    sharing_group_servers: Sequence[SharingGroupServer] = result2.scalars().all()
 
     sharing_group_orgs_computed: list[dict] = []
 
@@ -1000,7 +1010,12 @@ async def _update_sharing_group_legacy(
         sharing_group_org_organisation: Organisation | None = await db.get(Organisation, sharing_group_org.org_id)
 
         sharing_group_orgs_computed.append(
-            {**sharing_group_org.__dict__, "Organisation": getattr(sharing_group_org_organisation, "__dict__", None)}
+            {
+                **sharing_group_org.asdict(),
+                "Organisation": sharing_group_org_organisation.asdict()
+                if sharing_group_org_organisation is not None
+                else None,
+            }
         )
 
     sharing_group_servers_computed: list[dict] = []
@@ -1012,14 +1027,16 @@ async def _update_sharing_group_legacy(
             sharing_group_server_server = LOCAL_INSTANCE_SERVER
         else:
             sharing_group_server_server = await db.get(Server, sharing_group_server.server_id)
-            sharing_group_server_server = getattr(sharing_group_server_server, "__dict__", None)
+            sharing_group_server_server = (
+                sharing_group_server_server.asdict() if sharing_group_server_server is not None else None
+            )
 
-        sharing_group_servers_computed.append({**sharing_group_server.__dict__, "Server": sharing_group_server_server})
+        sharing_group_servers_computed.append({**sharing_group_server.asdict(), "Server": sharing_group_server_server})
 
-    return ViewUpdateSharingGroupLegacyResponse.parse_obj(
+    return ViewUpdateSharingGroupLegacyResponse.model_validate(
         {
-            "SharingGroup": sharing_group.__dict__,
-            "Organisation": organisation.__dict__,
+            "SharingGroup": sharing_group.asdict(),
+            "Organisation": organisation.asdict() if organisation is not None else None,
             "SharingGroupOrg": sharing_group_orgs_computed,
             "SharingGroupServer": sharing_group_servers_computed,
         }
@@ -1081,7 +1098,7 @@ async def _add_org_to_sharing_group_legacy(
 
         db.add(sharing_group_org)
 
-    update_record(sharing_group_org, body.dict())
+    sharing_group_org.patch(**body.model_dump(exclude_unset=True))
 
     await db.flush()
     await db.refresh(sharing_group_org)
@@ -1155,7 +1172,7 @@ async def _add_server_to_sharing_group_legacy(
 
         db.add(sharing_group_server)
 
-    update_record(sharing_group_server, body.dict())
+    sharing_group_server.patch(**body.model_dump(exclude_unset=True))
 
     await db.flush()
     await db.refresh(sharing_group_server)

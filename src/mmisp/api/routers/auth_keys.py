@@ -37,7 +37,6 @@ from mmisp.db.database import Session, get_db
 from mmisp.db.models.auth_key import AuthKey
 from mmisp.db.models.user import User
 from mmisp.util.crypto import hash_secret
-from mmisp.util.models import update_record
 from mmisp.util.uuid import is_uuid
 
 router = APIRouter(tags=["auth_keys"])
@@ -506,9 +505,9 @@ async def _search_auth_keys(
     if body.authkey_end:
         query = query.filter(AuthKey.authkey_end == body.authkey_end)
     if body.created:
-        query = query.filter(AuthKey.created == int(body.created))
+        query = query.filter(AuthKey.created == body.created)
     if body.expiration:
-        query = query.filter(AuthKey.expiration == int(body.expiration))
+        query = query.filter(AuthKey.expiration == body.expiration)
     if body.read_only:
         query = query.filter(AuthKey.read_only.is_(body.read_only))
     if body.user_id:
@@ -577,9 +576,9 @@ async def _search_auth_keys_depr(
     if body.authkey_end:
         query = query.filter(AuthKey.authkey_end == body.authkey_end)
     if body.created:
-        query = query.filter(AuthKey.created == int(body.created))
+        query = query.filter(AuthKey.created == body.created)
     if body.expiration:
-        query = query.filter(AuthKey.expiration == int(body.expiration))
+        query = query.filter(AuthKey.expiration == body.expiration)
     if body.read_only:
         query = query.filter(AuthKey.read_only.is_(body.read_only))
     if body.user_id:
@@ -642,17 +641,13 @@ async def _auth_keys_edit(auth: Auth, db: Session, auth_key_id: int, body: EditA
     if user is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
-    update = body.dict()
+    update = body.model_dump(exclude_unset=True)
     update["allowed_ips"] = json.dumps(body.allowed_ips) if body.allowed_ips else None
 
     if body.expiration == "":
         update["expiration"] = None
-    elif body.expiration:
-        update["expiration"] = parse_date(body.expiration)
-    else:
-        update["expiration"] = None
 
-    update_record(auth_key, update)
+    auth_key.patch(**update)
 
     await db.flush()
     await db.refresh(auth_key)

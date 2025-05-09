@@ -4,10 +4,13 @@ from sqlalchemy.future import select
 
 from mmisp.db.models.role import Role
 from mmisp.lib.permissions import Permission
+from mmisp.lib.settings import get_admin_setting, set_admin_setting
 
 
 @pytest.mark.asyncio
-async def test_roles_get(client, site_admin_user_token):
+async def test_roles_get(db, client, site_admin_user_token):
+    await set_admin_setting(db, "default_role", "1")
+    assert await get_admin_setting(db, "default_role") == "1"
     headers = {"authorization": site_admin_user_token}
     response = client.get("/roles", headers=headers)
     assert response.status_code == 200

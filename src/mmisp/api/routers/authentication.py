@@ -548,7 +548,7 @@ async def _edit_openID_Connect_provider(
     if not oidc_provider:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
-    settings = body.dict(exclude_unset=True)
+    settings = body.model_dump(exclude_unset=True)
     settings["client_secret"] = body.client_secret.get_secret_value() if body.client_secret is not None else None
 
     for key in settings.keys():

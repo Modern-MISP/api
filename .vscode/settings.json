@@ -1,12 +1,15 @@
 {
-    "editor.defaultFormatter": "charliermarsh.ruff",
-    // "python.formatting.provider": "ruff",
-    "editor.formatOnSave": true,
-    "editor.tabSize": 4,
-    "editor.detectIndentation": false,
-    "python.testing.pytestArgs": [
-        "tests"
-    ],
-    "python.testing.unittestEnabled": false,
-    "python.testing.pytestEnabled": true,
+  "editor.defaultFormatter": "charliermarsh.ruff",
+  "editor.formatOnSave": true,
+  "editor.tabSize": 4,
+  "editor.detectIndentation": false,
+  "python.testing.pytestArgs": [
+    "tests"
+  ],
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestEnabled": true,
+  "makefile.configureOnOpen": false,
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff"
+  }
 }

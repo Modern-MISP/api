@@ -24,8 +24,6 @@ from mmisp.db.models.galaxy_cluster import GalaxyCluster
 from mmisp.db.models.tag import Tag
 from mmisp.db.models.taxonomy import Taxonomy, TaxonomyPredicate
 from mmisp.lib.logger import alog, log
-from mmisp.util.models import update_record
-from mmisp.util.partial import partial
 
 router = APIRouter(tags=["tags"])
 
@@ -91,7 +89,7 @@ async def view_tag(
 @router.get(
     "/tags/search/{tagSearchTerm}",
     status_code=status.HTTP_200_OK,
-    response_model=partial(TagSearchResponse),
+    response_model=TagSearchResponse,
     summary="Search tags",
 )
 @alog
@@ -334,7 +332,7 @@ async def delete_tag_depr(
 @alog
 async def _add_tag(db: Session, body: TagCreateBody) -> TagResponse:
     _check_type_hex_colour(body.colour)
-    tag: Tag = Tag(**body.dict())
+    tag: Tag = Tag(**body.model_dump())
 
     result = await db.execute(select(Tag).filter(Tag.name == body.name).limit(1))
     existing_tag = result.scalars().first()
@@ -344,7 +342,7 @@ async def _add_tag(db: Session, body: TagCreateBody) -> TagResponse:
     db.add(tag)
     await db.flush()
 
-    return TagResponse.parse_obj({"Tag": tag.__dict__})
+    return TagResponse.model_validate({"Tag": tag.asdict()})
 
 
 @alog
@@ -357,7 +355,7 @@ async def _view_tag(db: Session, tag_id: int) -> TagViewResponse:
     result = await db.execute(select(func.count()).filter(EventTag.tag_id == tag.id))
     count = result.scalar()
 
-    return TagViewResponse(**{**tag.__dict__, "attribute_count": 0, "count": count})
+    return TagViewResponse(**{**tag.asdict(), "attribute_count": 0, "count": count})
 
 
 @alog
@@ -367,17 +365,17 @@ async def _search_tags(db: Session, tag_search_term: str) -> dict:
 
     tag_datas = []
     for tag in tags:
-        result = await db.execute(select(Taxonomy).filter(Taxonomy.namespace == tag.name.split(":", 1)[0]))
-        taxonomies: Sequence[Taxonomy] = result.scalars().all()
+        result2 = await db.execute(select(Taxonomy).filter(Taxonomy.namespace == tag.name.split(":", 1)[0]))
+        taxonomies: Sequence[Taxonomy] = result2.scalars().all()
 
         for taxonomy in taxonomies:
-            result = await db.execute(select(TaxonomyPredicate).filter_by(taxonomy_id=taxonomy.id))
-            taxonomy_predicates: Sequence[TaxonomyPredicate] = result.scalars().all()
+            result3 = await db.execute(select(TaxonomyPredicate).filter_by(taxonomy_id=taxonomy.id))
+            taxonomy_predicates: Sequence[TaxonomyPredicate] = result3.scalars().all()
 
             for taxonomy_predicate in taxonomy_predicates:
                 tag_datas.append(
                     {
-                        "Tag": tag.__dict__,
+                        "Tag": tag.asdict(),
                         "Taxonomy": taxonomy.__dict__,
                         "TaxonomyPredicate": taxonomy_predicate.__dict__,
                     }
@@ -402,12 +400,12 @@ async def _update_tag(db: Session, body: TagUpdateBody, tag_id: int) -> TagRespo
     if body.colour:
         _check_type_hex_colour(body.colour)
 
-    update_record(tag, body.dict())
+    tag.patch(**body.model_dump(exclude_unset=True))
 
     await db.flush()
     await db.refresh(tag)
 
-    return TagResponse.parse_obj({"Tag": tag.__dict__})
+    return TagResponse.model_validate({"Tag": tag.__dict__})
 
 
 @alog
@@ -436,7 +434,7 @@ async def _delete_tag(db: Session, tag_id: int) -> TagDeleteResponse:
 
     message = "Tag deleted."
 
-    return TagDeleteResponse.parse_obj({"name": message, "message": message, "url": f"/tags/{tag_id}"})
+    return TagDeleteResponse.model_validate({"name": message, "message": message, "url": f"/tags/{tag_id}"})
 
 
 @alog
@@ -444,7 +442,7 @@ async def _get_tags(db: Session) -> TagGetResponse:
     result = await db.execute(select(Tag))
     tags: Sequence[Tag] = result.scalars().all()
 
-    return TagGetResponse(Tag=[tag.__dict__ for tag in tags])
+    return TagGetResponse(Tag=[tag.asdict() for tag in tags])
 
 
 @log

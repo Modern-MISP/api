@@ -2,7 +2,7 @@ from time import time
 
 import pytest
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from mmisp.api_schemas.warninglists import (
     CheckValueWarninglistsBody,
@@ -32,7 +32,7 @@ async def test_add_warninglists(db, site_admin_user_token, client) -> None:
         category=WarninglistCategory.KNOWN_IDENTIFIER.value,
         valid_attributes=["md5"],
         values="a b c",
-    ).dict()
+    ).model_dump()
 
     headers = {"authorization": site_admin_user_token}
     response = client.post("/warninglists/new", json=data, headers=headers)
@@ -46,7 +46,7 @@ async def test_add_warninglists(db, site_admin_user_token, client) -> None:
 @pytest.mark.asyncio
 async def test_toggleEnable_warninglist(db, site_admin_user_token, client) -> None:
     warninglist_ids = await add_warninglists(db)
-    toggle_data = generate_enable_warning_lists_body(warninglist_ids).dict()
+    toggle_data = generate_enable_warning_lists_body(warninglist_ids).model_dump(exclude_unset=True)
 
     headers = {"authorization": site_admin_user_token}
     response = client.post("/warninglists/toggleEnable", json=toggle_data, headers=headers)
@@ -62,7 +62,7 @@ async def test_toggleEnable_missing_warninglist(db, site_admin_user_token, clien
         id=["-1"],
         name="",
         enabled=False,
-    ).dict()
+    ).model_dump(exclude_unset=True)
 
     headers = {"authorization": site_admin_user_token}
     response = client.post("/warninglists/toggleEnable", json=invalid_toggle_data, headers=headers)
@@ -234,25 +234,25 @@ async def test_get_selected_warninglists(db, site_admin_user_token, client) -> N
 
 
 @pytest.mark.asyncio
-async def test_get_selected_warninglists_deprecated(db: Session, site_admin_user_token, client) -> None:
+async def test_get_selected_warninglists_deprecated(db: AsyncSession, site_admin_user_token, client) -> None:
     warninglist_id = await add_warninglists(db, 1)
 
     warninglist: Warninglist = await db.get(Warninglist, warninglist_id)
 
-    data = GetSelectedWarninglistsBody(value=warninglist.name, enabled=warninglist.enabled).dict()
+    data = GetSelectedWarninglistsBody(value=warninglist.name, enabled=warninglist.enabled).model_dump()
     headers = {"authorization": site_admin_user_token}
     response = client.post("/warninglists", json=data, headers=headers)
     assert response.status_code == 200
 
-    data = GetSelectedWarninglistsBody(value=warninglist.name).dict()
+    data = GetSelectedWarninglistsBody(value=warninglist.name).model_dump()
     response = client.post("/warninglists", json=data, headers=headers)
     assert response.status_code == 200
 
-    data = GetSelectedWarninglistsBody(enabled=warninglist.enabled).dict()
+    data = GetSelectedWarninglistsBody(enabled=warninglist.enabled).model_dump()
     response = client.post("/warninglists", json=data, headers=headers)
     assert response.status_code == 200
 
-    data = GetSelectedWarninglistsBody().dict()
+    data = GetSelectedWarninglistsBody().model_dump()
     response = client.post("/warninglists", json=data, headers=headers)
     assert response.status_code == 200
 
@@ -260,7 +260,7 @@ async def test_get_selected_warninglists_deprecated(db: Session, site_admin_user
 
 
 @pytest.mark.asyncio
-async def test_get_all_warninglist_response_format(db: Session, site_admin_user_token, client) -> None:
+async def test_get_all_warninglist_response_format(db: AsyncSession, site_admin_user_token, client) -> None:
     warninglist_ids = await add_warninglists(db, 1)
 
     warninglist_name = (await db.get(Warninglist, warninglist_ids[0])).name
@@ -274,7 +274,7 @@ async def test_get_all_warninglist_response_format(db: Session, site_admin_user_
 
 
 @pytest.mark.asyncio
-async def test_get_warninglist_by_value(db: Session, site_admin_user_token, client) -> None:
+async def test_get_warninglist_by_value(db: AsyncSession, site_admin_user_token, client) -> None:
     warninglist_id = await add_warninglists(db, 1)
 
     warninglist_entry: WarninglistEntry = (
@@ -284,7 +284,7 @@ async def test_get_warninglist_by_value(db: Session, site_admin_user_token, clie
     )
 
     headers = {"authorization": site_admin_user_token}
-    value_data = CheckValueWarninglistsBody(value=warninglist_entry.value).dict()
+    value_data = CheckValueWarninglistsBody(value=warninglist_entry.value).model_dump()
 
     response = client.post("/warninglists/checkValue", json=value_data, headers=headers)
 
@@ -294,7 +294,7 @@ async def test_get_warninglist_by_value(db: Session, site_admin_user_token, clie
 
 
 @pytest.mark.asyncio
-async def test_get_warninglist_by_value_response_format(db: Session, site_admin_user_token, client) -> None:
+async def test_get_warninglist_by_value_response_format(db: AsyncSession, site_admin_user_token, client) -> None:
     warninglist_ids = await add_warninglists(db, 1)
 
     warninglist_entry: WarninglistEntry = (
@@ -305,7 +305,7 @@ async def test_get_warninglist_by_value_response_format(db: Session, site_admin_
 
     headers = {"authorization": site_admin_user_token}
     value = warninglist_entry.value
-    value_data = CheckValueWarninglistsBody(value=value).dict()
+    value_data = CheckValueWarninglistsBody(value=value).model_dump()
 
     response = client.post("/warninglists/checkValue", json=value_data, headers=headers)
 
