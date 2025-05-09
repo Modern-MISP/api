@@ -37,6 +37,7 @@ dev = [
   "types-passlib",
   "deepdiff==8.4.2",
   "pyinstrument",
+  "twine",
   "build",
 ]
 lint = [
