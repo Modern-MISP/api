@@ -37,6 +37,7 @@ dev = [
   "types-passlib",
   "deepdiff==8.4.2",
   "pyinstrument",
+  "build",
 ]
 lint = [
   "ruff>=0.3.7",
