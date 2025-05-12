@@ -69,7 +69,6 @@ async def _index_object_templates(auth: Auth, db: AsyncSession) -> list[RespItem
     res = await db.execute(qry)
 
     all_object_templates = list(res.scalars().all())
-    print(all_object_templates[0].asdict())
 
     return [RespItemObjectTemplateIndex(ObjectTemplate=x.asdict()) for x in all_object_templates]
 
