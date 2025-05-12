@@ -4,38 +4,39 @@ Database related settings are part of mmisp.db of the lib repository.
 """
 
 import logging
+from enum import StrEnum
 from os import getenv
 
 from dotenv import load_dotenv
-from pydantic.dataclasses import dataclass
+from pydantic_settings import BaseSettings
 
 
-@dataclass
-class APIConfig:
+class Runner(StrEnum):
+    GUNICORN = "gunicorn"
+    GRANIAN = "granian"
+
+
+class APIConfig(BaseSettings):
     HASH_SECRET: str
     WORKER_KEY: str
-    OWN_URL: str
     WORKER_URL: str
-    DASHBOARD_URL: str
-    READONLY_MODE: bool
-    ENABLE_PROFILE: bool
-    DEBUG: bool
-    ENABLE_TEST_ENDPOINTS: bool
+    OWN_URL: str = ""
+    DASHBOARD_URL: str = ""
+    READONLY_MODE: bool = False
+    ENABLE_PROFILE: bool = False
+    DEBUG: bool = False
+    ENABLE_TEST_ENDPOINTS: bool = False
+
+    RUNNER: Runner = Runner.GUNICORN
+    PORT: int = 4000
+    BIND_HOST: str = "0.0.0.0"
+    WORKER_COUNT: int = 4
 
 
 load_dotenv(getenv("ENV_FILE", ".env"))
 
-config: APIConfig = APIConfig(
-    HASH_SECRET=getenv("HASH_SECRET", ""),
-    WORKER_KEY=getenv("WORKER_KEY", ""),
-    OWN_URL=getenv("OWN_URL", ""),
-    WORKER_URL=getenv("WORKER_URL", ""),
-    DASHBOARD_URL=getenv("DASHBOARD_URL", ""),
-    READONLY_MODE=bool(getenv("READONLY_MODE", False)),
-    ENABLE_PROFILE=bool(getenv("ENABLE_PROFILE", False)),
-    ENABLE_TEST_ENDPOINTS=bool(getenv("ENABLE_TEST_ENDPOINTS", False)),
-    DEBUG=bool(getenv("DEBUG", False)),
-)
+config: APIConfig = APIConfig()
+
 logger = logging.getLogger("mmisp")
 logger.setLevel(logging.INFO)
 if config.DEBUG:

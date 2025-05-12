@@ -193,6 +193,9 @@ create_api_spec:
         - "openapi.yaml"
   variables:
     CONNECTION_INIT: False
+    HASH_SECRET: "abcdef"
+    WORKER_KEY: "abcdef"
+    WORKER_URL: "http://worker.example.com"
 
 generate_mkdocs:
   before_script: []

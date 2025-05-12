@@ -1038,7 +1038,6 @@ async def _prepare_attribute_response(
     for attribute in attribute_list:
         attribute_dict = attribute.asdict()
 
-        print("attribute sharing group", attribute.sharing_group)
         if attribute.sharing_group is not None:
             sgos = list(_compute_sgos_dict(x) for x in attribute.sharing_group.sharing_group_orgs)
 
@@ -1049,7 +1048,6 @@ async def _prepare_attribute_response(
                 SharingGroupServer=[],
             )
             #            attribute_dict["SharingGroup"] = attribute.sharing_group.asdict()
-            #            print(attribute_dict["SharingGroup"])
 
         attribute_tag_list = attribute.attributetags
 
@@ -1250,7 +1248,6 @@ def _prepare_all_events_response_index(event: Event, user: User | None) -> Index
     if event.sharing_group is not None:
         event_dict["SharingGroup"] = event.sharing_group.asdict()
 
-    print(event_dict)
     return IndexEventsAttributes.model_validate(event_dict)
 
 
