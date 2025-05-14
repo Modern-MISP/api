@@ -302,11 +302,11 @@ async def index_galaxy_cluster_by_galaxy_id(
     if galaxy is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Galaxy not found")
 
-    result = []
+    response = []
     for gc in galaxy.galaxy_clusters:
-        result.append({"Galaxy": galaxy.asdict(), "GalaxyCluster": gc.asdict()})
+        response.append({"Galaxy": galaxy.asdict(), "GalaxyCluster": gc.asdict()})
 
-    return result
+    return response
 
 
 # --- endpoint logic ---
