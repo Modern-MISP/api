@@ -303,8 +303,17 @@ async def index_galaxy_cluster_by_galaxy_id(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Galaxy not found")
 
     response = []
+    galaxy_resp = galaxy.asdict()
+    del galaxy_resp["created"]
+    del galaxy_resp["distribution"]
+    del galaxy_resp["enabled"]
+    del galaxy_resp["icon"]
+    del galaxy_resp["local_only"]
+    del galaxy_resp["modified"]
+    del galaxy_resp["org_id"]
+    del galaxy_resp["orgc_id"]
     for gc in galaxy.galaxy_clusters:
-        response.append({"Galaxy": galaxy.asdict(), "GalaxyCluster": gc.asdict()})
+        response.append({"Galaxy": galaxy_resp, "GalaxyCluster": gc.asdict()})
 
     return response
 
