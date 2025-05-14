@@ -66,7 +66,9 @@ async def test_add_galaxy_cluster(
 
 
 @pytest.mark.asyncio
-async def test_get_all_galaxy_cluster(db, auth_key, client, site_admin_user_token, instance_owner_org, server) -> None:
+async def test_get_all_galaxy_cluster(
+    db, auth_key, client, test_galaxy, site_admin_user_token, instance_owner_org, server
+) -> None:
     path = "/galaxy_clusters/index/"
     request_body = None
 
