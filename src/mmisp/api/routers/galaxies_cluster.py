@@ -39,10 +39,12 @@ from mmisp.db.models.galaxy import Galaxy
 from mmisp.db.models.galaxy_cluster import GalaxyCluster, GalaxyElement, GalaxyReference
 from mmisp.db.models.organisation import Organisation
 from mmisp.db.models.tag import Tag
+from mmisp.db.models.user import User
 from mmisp.lib.fallbacks import GENERIC_MISP_ORGANISATION
 from mmisp.lib.galaxies import galaxy_tag_name, parse_galaxy_authors
 from mmisp.lib.galaxy_clusters import update_galaxy_cluster_elements
 from mmisp.lib.logger import alog, log
+from mmisp.lib.tags import get_or_create_instance_tag
 from mmisp.util.uuid import uuid
 
 router = APIRouter(tags=["galaxy_clusters"])
@@ -155,24 +157,17 @@ async def galaxies_attachCluster(
     """Attach a Galaxy Cluster to given Galaxy.
 
     args:
-
-    - the user's authentification status
-
-    - the current database
-
-    - the id of the attach target
-
-    - the type of the attach target
-
-    - the request body
-
-    - local
+      auth: the user's authentification status
+      db: the current database
+      attach_target_id: the id of the attach target
+      attach_target_type: the type of the attach target
+      body: the request body
+      local: local
 
     returns:
-
-    - the attached galaxy cluster and the attach target
+      the attached galaxy cluster and the attach target
     """
-    return await _attach_cluster_to_galaxy(db, attach_target_id, attach_target_type, local, body)
+    return await _attach_cluster_to_galaxy(db, auth.user, attach_target_id, attach_target_type, local, body)
 
 
 # --- deprecated ---
@@ -535,7 +530,7 @@ async def _export_galaxy(db: Session, galaxy_id: str, body: ExportGalaxyBody) ->
 
 @alog
 async def _attach_cluster_to_galaxy(
-    db: Session, attach_target_id: str, attach_target_type: str, local: str, body: AttachClusterGalaxyBody
+    db: Session, user: User, attach_target_id: str, attach_target_type: str, local: str, body: AttachClusterGalaxyBody
 ) -> AttachClusterGalaxyResponse:
     galaxy_cluster_id = body.Galaxy.target_id
     galaxy_cluster: GalaxyCluster | None = await db.get(GalaxyCluster, galaxy_cluster_id)
@@ -546,8 +541,10 @@ async def _attach_cluster_to_galaxy(
     if local not in ["0", "1"]:
         local = "0"
 
-    result = await db.execute(select(Tag).filter(Tag.name == galaxy_cluster.tag_name).limit(1))
-    tag_id = result.scalars().one().id
+    tag = await get_or_create_instance_tag(
+        db, user, galaxy_cluster.tag_name, ignore_permissions=True, new_tag_local_only=False
+    )
+    tag_id = tag.id
 
     if attach_target_type == "event":
         event: Event | None = await db.get(Event, attach_target_id)
