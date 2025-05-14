@@ -194,9 +194,7 @@ async def get_galaxy_cluster_view(
     args:
 
     - the user's authentification status
-
     - the current database
-
     - the galaxy id
 
     returns:
@@ -283,6 +281,32 @@ async def add_galaxy_cluster(
     await db.flush()
 
     return await _get_galaxy_cluster(db, await _load_galaxy_cluster(db, new_galaxy_cluster.id))
+
+
+@router.get(
+    "/galaxy_clusters/index/{galaxyId}",
+    status_code=status.HTTP_200_OK,
+    summary="Add new galaxy cluster",
+)
+@alog
+async def index_galaxy_cluster_by_galaxy_id(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
+    db: Annotated[Session, Depends(get_db)],
+    galaxy_id: Annotated[int, Path(alias="galaxyId")],
+) -> list:
+    # get galaxy
+    query = select(Galaxy).filter(Galaxy.id == galaxy_id).options(selectinload(Galaxy.galaxy_clusters))
+    result = await db.execute(query)
+    galaxy = result.scalar_one_or_none()
+
+    if galaxy is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Galaxy not found")
+
+    result = []
+    for gc in galaxy.galaxy_clusters:
+        result.append({"Galaxy": galaxy.asdict(), "GalaxyCluster": gc.asdict()})
+
+    return result
 
 
 # --- endpoint logic ---
