@@ -74,4 +74,3 @@ async def test_get_all_galaxy_cluster(
     request_body = None
 
     assert get_legacy_modern_diff("get", path, request_body, auth_key, client) == {}
-    assert False

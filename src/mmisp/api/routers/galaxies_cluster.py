@@ -27,8 +27,10 @@ from mmisp.api_schemas.galaxy_clusters import (
     ExportGalaxyClusterResponse,
     GalaxyClusterResponse,
     GetGalaxyClusterResponse,
+    IndexGalaxyCluster,
     PutGalaxyClusterRequest,
 )
+from mmisp.api_schemas.galaxy_common import ShortCommonGalaxy, ShortCommonGalaxyCluster
 from mmisp.api_schemas.organisations import GetOrganisationResponse
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.attribute import Attribute, AttributeTag
@@ -293,7 +295,7 @@ async def index_galaxy_cluster_by_galaxy_id(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     galaxy_id: Annotated[int, Path(alias="galaxyId")],
-) -> list:
+) -> list[IndexGalaxyCluster]:
     # get galaxy
     query = select(Galaxy).filter(Galaxy.id == galaxy_id).options(selectinload(Galaxy.galaxy_clusters))
     result = await db.execute(query)
@@ -303,17 +305,9 @@ async def index_galaxy_cluster_by_galaxy_id(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Galaxy not found")
 
     response = []
-    galaxy_resp = galaxy.asdict()
-    del galaxy_resp["created"]
-    del galaxy_resp["distribution"]
-    del galaxy_resp["enabled"]
-    del galaxy_resp["icon"]
-    del galaxy_resp["local_only"]
-    del galaxy_resp["modified"]
-    del galaxy_resp["org_id"]
-    del galaxy_resp["orgc_id"]
+    galaxy_resp = ShortCommonGalaxy(**galaxy.asdict())
     for gc in galaxy.galaxy_clusters:
-        response.append({"Galaxy": galaxy_resp, "GalaxyCluster": gc.asdict()})
+        response.append(IndexGalaxyCluster(Galaxy=galaxy_resp, GalaxyCluster=ShortCommonGalaxyCluster(**gc.asdict())))
 
     return response
 
