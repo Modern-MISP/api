@@ -1,5 +1,6 @@
 import time
 from collections.abc import Sequence
+from enum import StrEnum
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Path
@@ -140,6 +141,12 @@ async def export_galaxy(
     return await _export_galaxy(db, galaxy_id, body)
 
 
+class AttachTargetTypes(StrEnum):
+    EVENT = "event"
+    ATTRIBUTE = "attribute"
+    TAG_COLLECTION = "tag_collection"
+
+
 @router.post(
     "/galaxies/attachCluster/{attachTargetId}/{attachTargetType}/local:{local}",
     status_code=status.HTTP_200_OK,
@@ -150,9 +157,9 @@ async def galaxies_attachCluster(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
     attach_target_id: Annotated[str, Path(alias="attachTargetId")],
-    attach_target_type: Annotated[str, Path(alias="attachTargetType")],
+    attach_target_type: Annotated[AttachTargetTypes, Path(alias="attachTargetType")],
     body: AttachClusterGalaxyBody,
-    local: str,
+    local: bool,
 ) -> AttachClusterGalaxyResponse:
     """Attach a Galaxy Cluster to given Galaxy.
 
@@ -530,7 +537,12 @@ async def _export_galaxy(db: Session, galaxy_id: str, body: ExportGalaxyBody) ->
 
 @alog
 async def _attach_cluster_to_galaxy(
-    db: Session, user: User, attach_target_id: str, attach_target_type: str, local: str, body: AttachClusterGalaxyBody
+    db: Session,
+    user: User,
+    attach_target_id: str,
+    attach_target_type: AttachTargetTypes,
+    local: bool,
+    body: AttachClusterGalaxyBody,
 ) -> AttachClusterGalaxyResponse:
     galaxy_cluster_id = body.Galaxy.target_id
     galaxy_cluster: GalaxyCluster | None = await db.get(GalaxyCluster, galaxy_cluster_id)
@@ -538,15 +550,12 @@ async def _attach_cluster_to_galaxy(
     if not galaxy_cluster:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Invalid Galaxy cluster.")
 
-    if local not in ["0", "1"]:
-        local = "0"
-
     tag = await get_or_create_instance_tag(
-        db, user, galaxy_cluster.tag_name, ignore_permissions=True, new_tag_local_only=False
+        db, user, galaxy_cluster.tag_name, ignore_permissions=True, new_tag_local_only=False, is_galaxy_tag=True
     )
     tag_id = tag.id
 
-    if attach_target_type == "event":
+    if attach_target_type == AttachTargetTypes.EVENT:
         event: Event | None = await db.get(Event, attach_target_id)
 
         if not event:
@@ -554,7 +563,7 @@ async def _attach_cluster_to_galaxy(
         new_event_tag = EventTag(event_id=event.id, tag_id=tag_id, local=True if int(local) == 1 else False)
         db.add(new_event_tag)
         await db.flush()
-    elif attach_target_type == "attribute":
+    elif attach_target_type == AttachTargetTypes.ATTRIBUTE:
         attribute: Attribute | None = await db.get(Attribute, attach_target_id)
 
         if not attribute:
@@ -567,12 +576,10 @@ async def _attach_cluster_to_galaxy(
         )
         db.add(new_attribute_tag)
         await db.flush()
-    elif attach_target_type == "tag_collection":
+    elif attach_target_type == AttachTargetTypes.TAG_COLLECTION:
         raise HTTPException(
             status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Attachment to tag_collection is not available yet."
         )
-    else:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal error occurred.")
 
     return AttachClusterGalaxyResponse(saved=True, success="Cluster attached.", check_publish=True)
 
