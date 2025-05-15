@@ -440,7 +440,7 @@ async def add_event_depr(
 async def get_event_details_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[AsyncSession, Depends(get_db)],
-    event_id: Annotated[int, Path(alias="eventId")],
+    event_id: Annotated[int | uuid.UUID, Path(alias="eventId")],
 ) -> AddEditGetEventResponse:
     """Deprecated. Retrieve details of a specific attribute by its ID.
 
@@ -470,7 +470,7 @@ async def get_event_details_depr(
 async def update_event_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[AsyncSession, Depends(get_db)],
-    event_id: Annotated[int, Path(alias="eventId")],
+    event_id: Annotated[int | uuid.UUID, Path(alias="eventId")],
     body: EditEventBody,
 ) -> AddEditGetEventResponse:
     """Deprecated. Update an existing event by its ID.
@@ -502,7 +502,7 @@ async def update_event_depr(
 async def delete_event_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[AsyncSession, Depends(get_db)],
-    event_id: Annotated[int, Path(..., alias="eventId")],
+    event_id: Annotated[int | uuid.UUID, Path(..., alias="eventId")],
 ) -> DeleteEventResponse:
     """Deprecated. Delete an existing event by its ID.
 
