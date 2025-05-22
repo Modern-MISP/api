@@ -2,6 +2,7 @@ from collections.abc import Sequence
 from datetime import datetime
 from time import time
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Path, status
 from sqlalchemy import delete, or_, select
@@ -164,27 +165,21 @@ async def delete_object(
 async def add_object_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[Session, Depends(get_db)],
-    event_id: Annotated[int, Path(alias="eventId")],
-    object_template_id: Annotated[int, Path(alias="objectTemplateId")],
+    event_id: Annotated[int | UUID, Path(alias="eventId")],
+    object_template_id: Annotated[int | UUID, Path(alias="objectTemplateId")],
     body: ObjectCreateBody,
 ) -> ObjectResponse:
     """Deprecated. Add an object to an event using the old route.
 
-    args:
+    Args:
+      auth: user's authentification status
+      db: the current database
+      event_id: event id
+      object_template_id: the object template id
+      body: the request body
 
-    - the user's authentification status
-
-    - the current database
-
-    - the event id
-
-    - the object template id
-
-    - the request body
-
-    returns:
-
-    - the added object
+    Returns:
+      the added object
     """
     return await _add_object(db, event_id, object_template_id, body)
 
@@ -258,19 +253,40 @@ async def delete_object_depr(
 
 
 @alog
-async def _add_object(db: Session, event_id: int, object_template_id: int, body: ObjectCreateBody) -> ObjectResponse:
-    template: ObjectTemplate | None = await db.get(ObjectTemplate, object_template_id)
+async def _add_object(
+    db: Session, event_id: int | UUID, object_template_id: int | UUID, body: ObjectCreateBody
+) -> ObjectResponse:
+    query_template = select(ObjectTemplate)
+    if isinstance(object_template_id, int):
+        query_template = query_template.filter(ObjectTemplate.id == object_template_id)
+    else:
+        query_template = query_template.filter(ObjectTemplate.uuid == object_template_id)
 
-    if not template:
+    result_template = await db.execute(query_template)
+    template = result_template.scalars().one_or_none()
+
+    query_event = select(Event)
+    if isinstance(event_id, int):
+        query_event = query_event.filter(Event.id == event_id)
+    else:
+        query_event = query_event.filter(Event.uuid == event_id)
+
+    result_event = await db.execute(query_event)
+    event = result_event.scalars().one_or_none()
+
+    if template is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Object template not found.")
-    if not await db.get(Event, event_id):
+    if event is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Event not found.")
+
+    if body.name is None:
+        body.name = template.name
 
     object: Object = Object(
         **body.model_dump(exclude={"Attribute"}),
         template_uuid=template.uuid,
         template_version=template.version,
-        event_id=int(event_id),
+        event_id=event.id,
         timestamp=int(time()),
     )
 
