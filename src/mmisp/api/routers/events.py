@@ -1192,7 +1192,7 @@ async def _prepare_object_response(db: AsyncSession, object_list: Sequence[Objec
     response_object_list = []
 
     for object in object_list:
-        object_dict = object.__dict__.copy()
+        object_dict = object.asdict()
 
         result = await db.execute(
             select(Attribute)

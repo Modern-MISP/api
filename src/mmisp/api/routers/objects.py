@@ -281,6 +281,10 @@ async def _add_object(
 
     if body.name is None:
         body.name = template.name
+    if body.meta_category is None:
+        body.meta_category = template.meta_category
+    if body.description is None:
+        body.description = template.description
 
     object: Object = Object(
         **body.model_dump(exclude={"Attribute"}),
