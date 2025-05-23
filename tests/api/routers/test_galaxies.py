@@ -7,6 +7,7 @@ from sqlalchemy.sql import text
 
 from mmisp.api_schemas.galaxies import ExportGalaxyAttributes, ExportGalaxyBody
 from mmisp.db.models.galaxy_cluster import GalaxyCluster, GalaxyElement, GalaxyReference
+from mmisp.lib.distribution import GalaxyDistributionLevels
 from mmisp.tests.generators.model_generators.galaxy_generator import generate_galaxy
 from mmisp.tests.generators.model_generators.organisation_generator import generate_organisation
 
@@ -82,6 +83,8 @@ async def add_galaxy_cluster_body(db, galaxy, tag, organisation):
         org_id=organisation.id,
         orgc_id=organisation.id,
         uuid="01ff063f-42de-49d7-9bbb-ef783d99fde7",
+        sharing_group_id=0,
+        extends_uuid="",
     )
 
     db.add(add_galaxy_cluster_body)
@@ -106,6 +109,8 @@ async def add_galaxy_cluster_body2(db, galaxy2, tag, organisation):
         org_id=organisation.id,
         orgc_id=organisation.id,
         uuid="01ff063f-42de-49d7-9bbb-ef783d99fde8",
+        sharing_group_id=0,
+        extends_uuid="",
     )
 
     db.add(add_galaxy_cluster_body)
@@ -447,7 +452,9 @@ async def test_export_existing_galaxy(
     await db.commit()
     await db.refresh(galaxy_reference)
 
-    body = ExportGalaxyBody(Galaxy=ExportGalaxyAttributes(default=False, distribution="1"))
+    body = ExportGalaxyBody(
+        Galaxy=ExportGalaxyAttributes(default=False, distribution=GalaxyDistributionLevels.OWN_ORGANIZATION)
+    )
     request_body = body.model_dump()
 
     headers = {"authorization": site_admin_user_token}
