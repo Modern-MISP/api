@@ -649,7 +649,7 @@ async def _get_galaxy_cluster(db: Session, galaxy_cluster: GalaxyCluster | None)
     if galaxy is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Galaxy not found")
 
-    galaxy_cluster_dict["Galaxy"] = await _prepare_galaxy_response(db, galaxy)
+    galaxy_cluster_dict["Galaxy"] = (await _prepare_galaxy_response(db, galaxy)).model_dump()
     # Get the GalaxyElements
     galaxy_cluster_dict["GalaxyElement"] = [
         ExportGalaxyGalaxyElement(**ge.asdict()).model_dump() for ge in galaxy_cluster.galaxy_elements
@@ -662,7 +662,7 @@ async def _get_galaxy_cluster(db: Session, galaxy_cluster: GalaxyCluster | None)
     galaxy_cluster_dict["Org"] = await _get_organisation_for_cluster(db, org)
     galaxy_cluster_dict["Orgc"] = await _get_organisation_for_cluster(db, orgc)
 
-    return GalaxyClusterResponse(GalaxyCluster=GetGalaxyClusterResponse(**galaxy_cluster_dict))
+    return GalaxyClusterResponse(GalaxyCluster=GetGalaxyClusterResponse.model_validate(galaxy_cluster_dict))
 
 
 @alog

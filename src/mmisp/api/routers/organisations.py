@@ -241,7 +241,7 @@ async def get_organisations_deprecated(
 
 
 @alog
-async def _add_organisation(auth: Auth, db: Session, body: AddOrganisation) -> GetOrganisationResponse:
+async def _add_organisation(auth: Auth, db: Session, body: AddOrganisation) -> GetOrganisationElement:
     if not (check_permissions(auth, [Permission.SITE_ADMIN])):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
@@ -265,7 +265,7 @@ async def _add_organisation(auth: Auth, db: Session, body: AddOrganisation) -> G
     )
     db.add(org)
     await db.flush()
-    return GetOrganisationResponse(
+    org = GetOrganisationElement(
         id=org.id,
         name=org.name,
         date_created=org.date_created,
@@ -281,6 +281,7 @@ async def _add_organisation(auth: Auth, db: Session, body: AddOrganisation) -> G
         restricted_to_domain=org.restricted_to_domain,
         landingpage=org.landingpage,
     )
+    return org
 
 
 @alog

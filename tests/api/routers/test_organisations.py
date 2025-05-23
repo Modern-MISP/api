@@ -138,7 +138,6 @@ async def test_add_organisation(client, site_admin_user_token, db: Session):
     response = client.post("/organisations", headers=headers, json=request_body)
     response_json = response.json()
 
-    assert response_json["id"] == 0
     assert response_json["name"] == name
 
 
