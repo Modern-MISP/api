@@ -252,7 +252,8 @@ async def put_galaxy_cluster(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Galaxy Cluster not found")
 
     galaxy_cluster.patch(**body.model_dump(exclude_unset=True))
-    await update_galaxy_cluster_elements(db, galaxy_cluster, body.GalaxyElement)
+    if body.GalaxyElement is not None:
+        await update_galaxy_cluster_elements(db, galaxy_cluster, body.GalaxyElement)
     await db.flush()
     db.expire(galaxy_cluster)
     return await _get_galaxy_cluster(db, await _load_galaxy_cluster(db, galaxy_cluster_id))
@@ -370,7 +371,7 @@ async def restsearch(
 
 # --- endpoint logic ---
 async def _restsearch(db: Session, body: GalaxyClusterSearchBody) -> GalaxyClusterSearchResponse:
-    minimal: bool = body.minimal
+    minimal = body.minimal
 
     galaxy_clusters = await _load_galaxy_clusters_with_filters(db=db, filters=body)
 

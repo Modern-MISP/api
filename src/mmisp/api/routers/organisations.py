@@ -265,7 +265,7 @@ async def _add_organisation(auth: Auth, db: Session, body: AddOrganisation) -> G
     )
     db.add(org)
     await db.flush()
-    org = GetOrganisationElement(
+    return GetOrganisationElement(
         id=org.id,
         name=org.name,
         date_created=org.date_created,
@@ -281,7 +281,6 @@ async def _add_organisation(auth: Auth, db: Session, body: AddOrganisation) -> G
         restricted_to_domain=org.restricted_to_domain,
         landingpage=org.landingpage,
     )
-    return org
 
 
 @alog

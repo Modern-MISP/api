@@ -129,7 +129,7 @@ async def delete_remote_server(
 @alog
 async def get_version(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))], db: Annotated[Session, Depends(get_db)]
-) -> dict:
+) -> ServerVersion:
     """
     Gets the Version of the server.
 
