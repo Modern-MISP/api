@@ -65,7 +65,6 @@ from mmisp.db.models.user import User
 from mmisp.lib.actions import action_publish_event
 from mmisp.lib.galaxies import parse_galaxy_authors
 from mmisp.lib.logger import alog, log
-from mmisp.util.models import update_record
 
 from ..workflow import execute_blocking_workflow, execute_workflow
 

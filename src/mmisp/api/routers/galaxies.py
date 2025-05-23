@@ -19,12 +19,8 @@ from mmisp.api_schemas.galaxies import (
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.galaxy import Galaxy
 from mmisp.db.models.galaxy_cluster import GalaxyCluster, GalaxyElement
+from mmisp.lib.logger import alog
 from mmisp.util.uuid import is_uuid
-from sqlalchemy import delete, select
-from starlette import status
-from starlette.requests import Request
-
-from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
 
 router = APIRouter(tags=["galaxies"])
 

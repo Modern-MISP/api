@@ -243,7 +243,7 @@ async def test_update_own_sharing_group(
     assert response.status_code == status.HTTP_200_OK
     json = response.json()
     assert json["id"] == sharing_group.id
-    assert json["uuid"] == sharing_group.uuid
+    assert json["uuid"] == str(sharing_group.uuid)
     assert json["name"] == sharing_group.name
     assert json["description"] == new_description
 
@@ -263,7 +263,7 @@ async def test_update_sharing_group_with_access_through_site_admin(
     assert response.status_code == status.HTTP_200_OK
     json = response.json()
     assert json["id"] == sharing_group.id
-    assert json["uuid"] == sharing_group.uuid
+    assert json["uuid"] == str(sharing_group.uuid)
     assert json["name"] == sharing_group.name
     assert json["description"] == new_description
 
@@ -805,7 +805,7 @@ async def test_update_own_sharing_group_legacy(
     assert response.status_code == status.HTTP_200_OK
     json = response.json()
     assert json["SharingGroup"]["id"] == sharing_group.id
-    assert json["SharingGroup"]["uuid"] == sharing_group.uuid
+    assert json["SharingGroup"]["uuid"] == str(sharing_group.uuid)
     assert json["SharingGroup"]["name"] == sharing_group.name
     assert json["SharingGroup"]["description"] == new_description
 
@@ -830,7 +830,7 @@ async def test_update_sharing_group_legacy_with_access_through_site_admin(
     assert response.status_code == status.HTTP_200_OK
     json = response.json()
     assert json["SharingGroup"]["id"] == sharing_group.id
-    assert json["SharingGroup"]["uuid"] == sharing_group.uuid
+    assert json["SharingGroup"]["uuid"] == str(sharing_group.uuid)
     assert json["SharingGroup"]["name"] == sharing_group.name
     assert json["SharingGroup"]["description"] == new_description
 

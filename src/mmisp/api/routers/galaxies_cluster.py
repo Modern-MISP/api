@@ -20,6 +20,7 @@ from mmisp.api_schemas.galaxies import (
     AttachClusterGalaxyResponse,
     DeleteForceUpdateImportGalaxyResponse,
     ExportGalaxyBody,
+    ExportGalaxyClusterResponse,
     ExportGalaxyGalaxyElement,
     GetAllSearchGalaxiesAttributes,
     ImportGalaxyBody,
@@ -27,7 +28,6 @@ from mmisp.api_schemas.galaxies import (
 )
 from mmisp.api_schemas.galaxy_clusters import (
     AddGalaxyClusterRequest,
-    ExportGalaxyClusterResponse,
     GalaxyClusterResponse,
     GalaxyClusterSearchBody,
     GalaxyClusterSearchResponse,
@@ -299,7 +299,7 @@ async def add_galaxy_cluster(
         tag_name=tag_name,
         type=galaxy.type,
         org_id=body.org_id if body.org_id else auth.org_id,
-        orgc_id=body.orgc_id if body.orgc_id else auth.orgc_id,
+        orgc_id=body.orgc_id if body.orgc_id else auth.org_id,
         version=int(time.time()),
         locked=body.locked,
     )
@@ -666,7 +666,7 @@ async def _get_galaxy_cluster(db: Session, galaxy_cluster: GalaxyCluster | None)
 
 
 @alog
-async def _get_organisation_for_cluster(db: Session, org: Organisation) -> GetOrganisationResponse:
+async def _get_organisation_for_cluster(db: Session, org: Organisation) -> GetOrganisationElement:
     if org is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Organisation not found")
 

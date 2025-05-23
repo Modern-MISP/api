@@ -3,7 +3,6 @@ from datetime import datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Path, status
-from mmisp.lib.uuid import is_uuid
 from sqlalchemy.future import select
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize, check_permissions
@@ -19,9 +18,6 @@ from mmisp.api_schemas.organisations import (
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.organisation import Organisation
 from mmisp.lib.logger import alog
-from sqlalchemy.future import select
-
-from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize, check_permissions
 
 router = APIRouter(tags=["organisations"])
 
@@ -155,7 +151,8 @@ async def get_organisation_depr(
 
     - Data of the searched organisation
     """
-    return await _get_organisation_depr(auth, db, organisation_id)
+    org = await _get_organisation(auth, db, organisation_id)
+    return GetOrganisationResponse(Organisation=org)
 
 
 @router.delete(
@@ -245,8 +242,12 @@ async def get_organisations_deprecated(
 
 @alog
 async def _add_organisation(auth: Auth, db: Session, body: AddOrganisation) -> GetOrganisationResponse:
-    if not (check_permissions(auth, [Permission.SITE_ADMIN]) or check_permissions(auth, [Permission.ADMIN])):
+    if not (check_permissions(auth, [Permission.SITE_ADMIN])):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
+
+    if body.uuid is None:
+        body.uuid = uuid.uuid4()
+
     org = Organisation(
         name=body.name,
         date_created=datetime.now(),
@@ -256,7 +257,7 @@ async def _add_organisation(auth: Auth, db: Session, body: AddOrganisation) -> G
         nationality=body.nationality,
         sector=body.sector,
         created_by=body.created_by,
-        uuid=body.uuid if is_uuid(body.uuid) else uuid.uuid4().hex,
+        uuid=body.uuid,
         contacts=body.contacts,
         local=body.local,
         restricted_to_domain=body.restricted_to_domain,
