@@ -22,7 +22,6 @@ from mmisp.api_schemas.galaxies import (
     ExportGalaxyBody,
     ExportGalaxyClusterResponse,
     ExportGalaxyGalaxyElement,
-    GetAllSearchGalaxiesAttributes,
     ImportGalaxyBody,
     RestSearchGalaxyBody,
 )
@@ -768,7 +767,7 @@ async def _attach_cluster_to_galaxy(
 
 
 @alog
-async def _prepare_galaxy_response(db: Session, galaxy: Galaxy) -> GetAllSearchGalaxiesAttributes:
+async def _prepare_galaxy_response(db: Session, galaxy: Galaxy) -> RestSearchGalaxyBody:
     galaxy_dict = galaxy.asdict()
     result = await db.execute(select(GalaxyCluster).filter(GalaxyCluster.galaxy_id == galaxy.id).limit(1))
     galaxy_cluster = result.scalars().first()
@@ -776,7 +775,7 @@ async def _prepare_galaxy_response(db: Session, galaxy: Galaxy) -> GetAllSearchG
     if galaxy_cluster is None:
         galaxy_dict["local_only"] = True
 
-    return GetAllSearchGalaxiesAttributes(**galaxy_dict)
+    return RestSearchGalaxyBody(**galaxy_dict)
 
 
 @alog
@@ -812,7 +811,7 @@ async def _prepare_export_galaxy_response(
             continue
         elif galaxy_cluster.default != body_dict_information["default"]:
             continue
-        galaxy_cluster_dict = galaxy_cluster.dict()
+        galaxy_cluster_dict = galaxy_cluster.model_dump()
 
         result = await db.execute(
             select(GalaxyReference).filter(GalaxyReference.galaxy_cluster_id == galaxy_cluster.id)

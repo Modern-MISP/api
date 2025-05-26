@@ -10,10 +10,10 @@ from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
 from mmisp.api_schemas.galaxies import (
     DeleteForceUpdateImportGalaxyResponse,
     ExportGalaxyGalaxyElement,
-    GetAllSearchGalaxiesAttributes,
     GetAllSearchGalaxiesResponse,
     GetGalaxyClusterResponse,
     GetGalaxyResponse,
+    RestSearchGalaxyBody,
     SearchGalaxiesbyValue,
 )
 from mmisp.db.database import Session, get_db
@@ -257,7 +257,7 @@ async def _get_galaxy_details(db: Session, galaxy_id: str) -> GetGalaxyResponse:
 
 
 @alog
-async def _prepare_galaxy_response(db: Session, galaxy: Galaxy) -> GetAllSearchGalaxiesAttributes:
+async def _prepare_galaxy_response(db: Session, galaxy: Galaxy) -> RestSearchGalaxyBody:
     galaxy_dict = galaxy.asdict()
 
     result = await db.execute(select(GalaxyCluster).filter(GalaxyCluster.galaxy_id == galaxy.id).limit(1))
@@ -266,7 +266,7 @@ async def _prepare_galaxy_response(db: Session, galaxy: Galaxy) -> GetAllSearchG
     if galaxy_cluster is None:
         galaxy_dict["local_only"] = True
 
-    return GetAllSearchGalaxiesAttributes(**galaxy_dict)
+    return RestSearchGalaxyBody(**galaxy_dict)
 
 
 @alog
@@ -372,6 +372,6 @@ async def _search_galaxies(db: Session, body: SearchGalaxiesbyValue) -> list[Get
 
     for galaxy in galaxies:
         galaxy_dict = galaxy.asdict()
-        response_list.append(GetAllSearchGalaxiesResponse(Galaxy=GetAllSearchGalaxiesAttributes(**galaxy_dict)))
+        response_list.append(GetAllSearchGalaxiesResponse(Galaxy=RestSearchGalaxyBody(**galaxy_dict)))
 
     return response_list
