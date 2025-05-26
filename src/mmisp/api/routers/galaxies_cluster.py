@@ -450,7 +450,7 @@ async def _get_minimal_galaxy_cluster_search_response(
     if galaxy_cluster.galaxy is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Galaxy not found")
 
-    galaxy_dict: dict = (await _prepare_galaxy_response(db, galaxy_cluster.galaxy)).dict()
+    galaxy_dict: dict = (await _prepare_galaxy_response(db, galaxy_cluster.galaxy)).model_dump()
     galaxy_dict["created"] = str(galaxy_dict["created"])
     galaxy_dict["modified"] = str(galaxy_dict["modified"])
 
