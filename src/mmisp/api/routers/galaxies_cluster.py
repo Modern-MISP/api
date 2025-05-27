@@ -289,7 +289,7 @@ async def add_galaxy_cluster(
     tag_name = galaxy_tag_name(galaxy.type, new_uuid)
 
     new_galaxy_cluster = GalaxyCluster(
-        uuid=body.uuid,
+        uuid=new_uuid,
         value=body.value,
         description=body.description,
         source=body.source,
@@ -871,6 +871,7 @@ def _prepare_tag_response(tag_list: Sequence[Any]) -> list[AddEditGetEventGalaxy
         tag_dict = tag.asdict()
         tag_dict["org_id"] = tag.org_id if tag.org_id is not None else "0"
         tag_dict["user_id"] = tag.user_id if tag.user_id is not None else "0"
+        tag_dict["numerical_value"] = int(tag.numerical_value) if tag.numerical_value is not None else 0
         tag_response_list.append(AddEditGetEventGalaxyClusterRelationTag(**tag_dict))
 
     return tag_response_list
