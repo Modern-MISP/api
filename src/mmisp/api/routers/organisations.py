@@ -104,15 +104,11 @@ async def get_organisations_deprecated(
     "/organisations/{orgId}",
     summary="Gets an organisation by its ID",
 )
-@router.get(
-    "/organisations/view/{orgId}",
-    summary="Gets an organisation by its ID",
-)
 @alog
 async def get_organisation(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    organisation_id: Annotated[str, Path(alias="orgId")],
+    organisation_id: Annotated[int | uuid.UUID, Path(alias="orgId")],
 ) -> GetOrganisationElement:
     """
     Gets an organisation by its ID.
@@ -136,20 +132,17 @@ async def get_organisation(
 async def get_organisation_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    organisation_id: Annotated[str, Path(alias="orgId")],
+    organisation_id: Annotated[int | uuid.UUID, Path(alias="orgId")],
 ) -> GetOrganisationResponse:
     """
     Gets an organisation by its ID or UUID.
 
-    Input:
+    Args:
+      organisation_id: ID or UUID of the organisation to get
+      db: The current database
 
-    - ID or UUID of the organisation to get
-
-    - The current database
-
-    Output:
-
-    - Data of the searched organisation
+    Returns:
+      Data of the searched organisation
     """
     org = await _get_organisation(auth, db, organisation_id)
     return GetOrganisationResponse(Organisation=org)
@@ -211,31 +204,6 @@ async def update_organisation(
 
 
 # --- deprecated ---
-
-
-@router.get(
-    "/organisations",
-    summary="Gets a list of all organisations",
-    deprecated=True,
-)
-@alog
-async def get_organisations_deprecated(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
-    db: Annotated[Session, Depends(get_db)],
-) -> list[GetAllOrganisationResponse]:
-    """
-    Gets all organisations as a list.
-
-    args:
-
-    - The current database
-
-    returns:
-
-    - List of all organisations
-    """
-    return await _get_organisations(auth, db)
-
 
 # --- endpoint logic ---
 
@@ -318,7 +286,7 @@ async def _get_organisations(auth: Auth, db: Session) -> list[GetAllOrganisation
 
 
 @alog
-async def _get_organisation(auth: Auth, db: Session, organisation_id: int | uuid.UUID) -> GetOrganisationResponse:
+async def _get_organisation(auth: Auth, db: Session, organisation_id: int | uuid.UUID) -> GetOrganisationElement:
     if not (check_permissions(auth, [Permission.SITE_ADMIN]) or check_permissions(auth, [Permission.ADMIN])):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 

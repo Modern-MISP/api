@@ -3,6 +3,7 @@ import time
 from collections.abc import Sequence
 from enum import StrEnum
 from typing import Annotated, Any
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Path
 from sqlalchemy import select
@@ -37,7 +38,6 @@ from mmisp.api_schemas.galaxy_clusters import (
     SearchGalaxyClusterGalaxyClustersDetails,
 )
 from mmisp.api_schemas.galaxy_common import ShortCommonGalaxy, ShortCommonGalaxyCluster
-from mmisp.api_schemas.organisations import GetOrganisationResponse
 from mmisp.api_schemas.organisations import GetOrganisationElement
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.attribute import Attribute, AttributeTag
@@ -53,12 +53,6 @@ from mmisp.lib.galaxy_clusters import update_galaxy_cluster_elements
 from mmisp.lib.logger import alog, log
 from mmisp.lib.tags import get_or_create_instance_tag
 from mmisp.util.uuid import uuid
-from sqlalchemy import select
-from sqlalchemy.orm import selectinload, joinedload
-from starlette import status
-from starlette.requests import Request
-
-from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
 
 router = APIRouter(tags=["galaxy_clusters"])
 _log = logging.getLogger(__name__)
@@ -205,7 +199,7 @@ async def galaxies_attachCluster(
 async def get_galaxy_cluster_view(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    cluster_id: Annotated[int | str, Path(alias="galaxyClusterId")],
+    cluster_id: Annotated[int | UUID, Path(alias="galaxyClusterId")],
 ) -> GalaxyClusterResponse:
     """Deprecated
     Returns information from a galaxy cluster selected by its id.
@@ -231,15 +225,13 @@ async def get_galaxy_cluster_view(
 async def put_galaxy_cluster(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
-    galaxy_cluster_id: Annotated[int | str, Path(alias="galaxy_cluster_id")],
+    galaxy_cluster_id: Annotated[int | UUID, Path(alias="galaxy_cluster_id")],
     body: PutGalaxyClusterRequest,
 ) -> GalaxyClusterResponse:
-    if isinstance(galaxy_cluster_id, int) or galaxy_cluster_id.isdigit():
-        filter_rule = GalaxyCluster.id == int(galaxy_cluster_id)
-    elif is_uuid(galaxy_cluster_id):
-        filter_rule = GalaxyCluster.uuid == galaxy_cluster_id
+    if isinstance(galaxy_cluster_id, int):
+        filter_rule = GalaxyCluster.id == galaxy_cluster_id
     else:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="Invalid cluster ID")
+        filter_rule = GalaxyCluster.uuid == galaxy_cluster_id
 
     # get galaxy
     qry = select(GalaxyCluster).filter(filter_rule).options(selectinload(GalaxyCluster.galaxy_elements))
@@ -267,15 +259,13 @@ async def put_galaxy_cluster(
 async def add_galaxy_cluster(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SITE_ADMIN]))],
     db: Annotated[Session, Depends(get_db)],
-    galaxy_id: Annotated[int | str, Path(alias="galaxyId")],
+    galaxy_id: Annotated[int | UUID, Path(alias="galaxyId")],
     body: AddGalaxyClusterRequest,
 ) -> GalaxyClusterResponse:
-    if isinstance(galaxy_id, int) or galaxy_id.isdigit():
-        filter_rule = Galaxy.id == int(galaxy_id)
-    elif is_uuid(galaxy_id):
-        filter_rule = Galaxy.uuid == galaxy_id
+    if isinstance(galaxy_id, int):
+        filter_rule = Galaxy.id == galaxy_id
     else:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="Invalid galaxy ID. Has to be an int or uuid.")
+        filter_rule = Galaxy.uuid == galaxy_id
 
     # get galaxy
     result = await db.execute(select(Galaxy).filter(filter_rule))
@@ -340,6 +330,7 @@ async def index_galaxy_cluster_by_galaxy_id(
         response.append(IndexGalaxyCluster(Galaxy=galaxy_resp, GalaxyCluster=ShortCommonGalaxyCluster(**gc.asdict())))
 
     return response
+
 
 @router.post(
     "/galaxy_clusters/restsearch",
@@ -615,13 +606,11 @@ async def _process_galaxy_cluster_dict(cluster_dict: dict) -> dict:
     return cluster_dict
 
 
-async def _load_galaxy_cluster(db: Session, cluster_id: int | str) -> GalaxyCluster | None:
-    if isinstance(cluster_id, int) or cluster_id.isdigit():
-        filter_rule = GalaxyCluster.id == int(cluster_id)
-    elif is_uuid(cluster_id):
-        filter_rule = GalaxyCluster.uuid == cluster_id
+async def _load_galaxy_cluster(db: Session, cluster_id: int | UUID) -> GalaxyCluster | None:
+    if isinstance(cluster_id, int):
+        filter_rule = GalaxyCluster.id == cluster_id
     else:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="Invalid cluster ID")
+        filter_rule = GalaxyCluster.uuid == cluster_id
 
     result = await db.execute(
         select(GalaxyCluster)
