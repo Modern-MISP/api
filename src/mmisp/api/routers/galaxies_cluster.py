@@ -284,12 +284,13 @@ async def add_galaxy_cluster(
     if galaxy is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Galaxy not found")
     # get new uuid
-    new_uuid = uuid()
+    if body.uuid is None:
+        body.uuid = uuid()
 
-    tag_name = galaxy_tag_name(galaxy.type, new_uuid)
+    tag_name = galaxy_tag_name(galaxy.type, body.uuid)
 
     new_galaxy_cluster = GalaxyCluster(
-        uuid=new_uuid,
+        uuid=body.uuid,
         value=body.value,
         description=body.description,
         source=body.source,
