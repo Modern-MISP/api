@@ -439,7 +439,7 @@ async def add_event_depr(
 )
 @alog
 async def get_event_details_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL))],
     db: Annotated[AsyncSession, Depends(get_db)],
     event_id: Annotated[int | uuid.UUID, Path(alias="eventId")],
 ) -> AddEditGetEventResponse:
