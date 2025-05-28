@@ -224,7 +224,7 @@ async def rest_search_events(
 )
 @alog
 async def index_events(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL))],
     db: Annotated[AsyncSession, Depends(get_db)],
     body: IndexEventsBody,
 ) -> list[IndexEventsAttributes]:
