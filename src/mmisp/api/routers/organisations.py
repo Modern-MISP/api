@@ -255,10 +255,10 @@ async def _add_organisation(auth: Auth, db: Session, body: AddOrganisation) -> G
 async def _get_organisations(auth: Auth, db: Session) -> list[GetAllOrganisationResponse]:
     query = select(Organisation)
     result = await db.execute(query)
-    organisations = result.fetchall()
+    organisations = result.scalars().all()
     org_list_computed: list[GetAllOrganisationResponse] = []
 
-    for organisation in organisations[0]:
+    for organisation in organisations:
         org_list_computed.append(
             GetAllOrganisationResponse(
                 Organisation=GetAllOrganisationsOrganisation(
