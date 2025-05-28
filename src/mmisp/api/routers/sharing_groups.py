@@ -47,7 +47,7 @@ LOCAL_INSTANCE_SERVER = {"id": 0, "name": "Local instance", "url": config.OWN_UR
 )
 @alog
 async def get_all_sharing_groups(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, [Permission.SHARING_GROUP]))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL, [Permission.SHARING_GROUP]))],
     db: Annotated[Session, Depends(get_db)],
 ) -> GetSharingGroupsIndex:
     """
