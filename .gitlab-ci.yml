@@ -141,6 +141,7 @@ legacy_misp:
         HEALTHCHECK_TCP_PORT: 3306
         KUBERNETES_SERVICE_CPU_LIMIT: "200m"
     - name: registry.cert.kit.edu/public-gitlab-ci/misp-core:latest
+      pull_policy: always
       alias: misp-core
       variables:
         MYSQL_PASSWORD: misp
