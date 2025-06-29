@@ -41,21 +41,15 @@ async def set_user_settings(
     Create or Update a UserSetting by user ID and UserSettingName. \
     If specified UserSetting doesn't exist, it is created.
 
-    args:
-
-    - auth: Authentication details
-
-    - db: Database session
-
-    - user_id: ID of the user for whom setting is to be set
-
-    - user_setting_name: Name of the user setting to
-
-    - body: SetUserSettingBody, Data for setting the user setting
+    Args:
+      auth: Authentication details
+      db: Database session
+      user_id: ID of the user for whom setting is to be set
+      user_setting_name: Name of the user setting to
+      body: SetUserSettingBody, Data for setting the user setting
 
     returns:
-
-    - SetUserSettingResponse: Response indicating success or failure
+      Response indicating success or failure
     """
     if auth.user_id is not None:
         return await _set_user_settings(

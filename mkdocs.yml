@@ -47,7 +47,7 @@ plugins:
             separate_signature: true
             show_signature_annotations: true
 
-            
+
   - plantuml:
       puml_url: http://plantuml:8080/
       num_workers: 4
@@ -56,7 +56,7 @@ plugins:
       server: http://plantuml:8080/
       output_format: svg
       diagram_root: docs/plantuml
-  - with-pdf:
+  - to-pdf:
       # See https://github.com/orzih/mkdocs-with-pdf
       cover_subtitle: Design Phase
       # NOTE: There's a zero width space in these parentheses because I couldn't make the copyright not show up otherwise.

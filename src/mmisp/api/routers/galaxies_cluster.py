@@ -1,4 +1,3 @@
-import logging
 import time
 from collections.abc import Sequence
 from enum import StrEnum
@@ -55,9 +54,6 @@ from mmisp.lib.tags import get_or_create_instance_tag
 from mmisp.util.uuid import uuid
 
 router = APIRouter(tags=["galaxy_clusters"])
-_log = logging.getLogger(__name__)
-# TODO: Remove this later
-_log.setLevel(logging.DEBUG)
 
 
 @router.post(
