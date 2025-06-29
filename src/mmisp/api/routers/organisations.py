@@ -12,6 +12,7 @@ from mmisp.api_schemas.organisations import (
     EditOrganisation,
     GetAllOrganisationResponse,
     GetAllOrganisationsOrganisation,
+    GetOrganisationElement,
     GetOrganisationResponse,
 )
 from mmisp.db.database import Session, get_db
@@ -30,7 +31,7 @@ async def add_organisation(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
     body: AddOrganisation,
-) -> GetOrganisationResponse:
+) -> GetOrganisationElement:
     """
     Adds a new organisation.
 
@@ -71,6 +72,35 @@ async def get_organisations(
 
 
 @router.get(
+    "/organisations",
+    summary="Gets a list of all organisations",
+    deprecated=True,
+)
+@router.get(
+    "/organisations/index",
+    summary="Gets a list of all organisations",
+    deprecated=True,
+)
+@alog
+async def get_organisations_deprecated(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    db: Annotated[Session, Depends(get_db)],
+) -> list[GetAllOrganisationResponse]:
+    """
+    Gets all organisations as a list.
+
+    args:
+
+    - The current database
+
+    returns:
+
+    - List of all organisations
+    """
+    return await _get_organisations(auth, db)
+
+
+@router.get(
     "/organisations/{orgId}",
     summary="Gets an organisation by its ID",
 )
@@ -78,8 +108,8 @@ async def get_organisations(
 async def get_organisation(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
     db: Annotated[Session, Depends(get_db)],
-    organisation_id: Annotated[str, Path(alias="orgId")],
-) -> GetOrganisationResponse:
+    organisation_id: Annotated[int | uuid.UUID, Path(alias="orgId")],
+) -> GetOrganisationElement:
     """
     Gets an organisation by its ID.
 
@@ -96,6 +126,26 @@ async def get_organisation(
     - Data of the searched organisation
     """
     return await _get_organisation(auth, db, organisation_id)
+
+
+@router.get("/organisations/view/{orgId}", summary="Gets an organisation by its ID or UUID")
+async def get_organisation_depr(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    db: Annotated[Session, Depends(get_db)],
+    organisation_id: Annotated[int | uuid.UUID, Path(alias="orgId")],
+) -> GetOrganisationResponse:
+    """
+    Gets an organisation by its ID or UUID.
+
+    Args:
+      organisation_id: ID or UUID of the organisation to get
+      db: The current database
+
+    Returns:
+      Data of the searched organisation
+    """
+    org = await _get_organisation(auth, db, organisation_id)
+    return GetOrganisationResponse(Organisation=org)
 
 
 @router.delete(
@@ -134,7 +184,7 @@ async def update_organisation(
     db: Annotated[Session, Depends(get_db)],
     organisation_id: Annotated[str, Path(alias="orgId")],
     body: EditOrganisation,
-) -> GetOrganisationResponse:
+) -> GetOrganisationElement:
     """
     Updates an organisation by its ID.
 
@@ -155,40 +205,18 @@ async def update_organisation(
 
 # --- deprecated ---
 
-
-@router.get(
-    "/organisations",
-    summary="Gets a list of all organisations",
-    deprecated=True,
-)
-@alog
-async def get_organisations_deprecated(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
-    db: Annotated[Session, Depends(get_db)],
-) -> list[GetAllOrganisationResponse]:
-    """
-    Gets all organisations as a list.
-
-    args:
-
-    - The current database
-
-    returns:
-
-    - List of all organisations
-    """
-    return await _get_organisations(auth, db)
-
-
 # --- endpoint logic ---
 
 
 @alog
-async def _add_organisation(auth: Auth, db: Session, body: AddOrganisation) -> GetOrganisationResponse:
-    if not (check_permissions(auth, [Permission.SITE_ADMIN]) or check_permissions(auth, [Permission.ADMIN])):
+async def _add_organisation(auth: Auth, db: Session, body: AddOrganisation) -> GetOrganisationElement:
+    if not (check_permissions(auth, [Permission.SITE_ADMIN])):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
+
+    if body.uuid is None:
+        body.uuid = uuid.uuid4()
+
     org = Organisation(
-        id=body.id,
         name=body.name,
         date_created=datetime.now(),
         date_modified=datetime.now(),
@@ -197,7 +225,7 @@ async def _add_organisation(auth: Auth, db: Session, body: AddOrganisation) -> G
         nationality=body.nationality,
         sector=body.sector,
         created_by=body.created_by,
-        uuid=uuid.uuid4().hex,
+        uuid=body.uuid,
         contacts=body.contacts,
         local=body.local,
         restricted_to_domain=body.restricted_to_domain,
@@ -205,7 +233,7 @@ async def _add_organisation(auth: Auth, db: Session, body: AddOrganisation) -> G
     )
     db.add(org)
     await db.flush()
-    return GetOrganisationResponse(
+    return GetOrganisationElement(
         id=org.id,
         name=org.name,
         date_created=org.date_created,
@@ -227,10 +255,10 @@ async def _add_organisation(auth: Auth, db: Session, body: AddOrganisation) -> G
 async def _get_organisations(auth: Auth, db: Session) -> list[GetAllOrganisationResponse]:
     query = select(Organisation)
     result = await db.execute(query)
-    organisations = result.fetchall()
+    organisations = result.scalars().all()
     org_list_computed: list[GetAllOrganisationResponse] = []
 
-    for organisation in organisations[0]:
+    for organisation in organisations:
         org_list_computed.append(
             GetAllOrganisationResponse(
                 Organisation=GetAllOrganisationsOrganisation(
@@ -258,11 +286,15 @@ async def _get_organisations(auth: Auth, db: Session) -> list[GetAllOrganisation
 
 
 @alog
-async def _get_organisation(auth: Auth, db: Session, organisationID: str) -> GetOrganisationResponse:
+async def _get_organisation(auth: Auth, db: Session, organisation_id: int | uuid.UUID) -> GetOrganisationElement:
     if not (check_permissions(auth, [Permission.SITE_ADMIN]) or check_permissions(auth, [Permission.ADMIN])):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
-    query = select(Organisation).where(Organisation.id == organisationID)
+    query = select(Organisation)
+    if isinstance(organisation_id, int):
+        query = query.where(Organisation.id == organisation_id)
+    else:
+        query = query.where(Organisation.uuid == organisation_id)
 
     result = await db.execute(query)
     organisation = result.scalar_one_or_none()
@@ -270,7 +302,7 @@ async def _get_organisation(auth: Auth, db: Session, organisationID: str) -> Get
     if organisation is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Organisation not found")
 
-    return GetOrganisationResponse(
+    return GetOrganisationElement(
         id=organisation.id,
         name=organisation.name,
         date_created=organisation.date_created,
@@ -322,7 +354,7 @@ async def _delete_organisation(auth: Auth, db: Session, organisationID: str) -> 
 @alog
 async def _update_organisation(
     auth: Auth, db: Session, organisationID: str, body: EditOrganisation
-) -> GetOrganisationResponse:
+) -> GetOrganisationElement:
     if not (check_permissions(auth, [Permission.SITE_ADMIN]) and check_permissions(auth, [Permission.ADMIN])):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
 
@@ -357,7 +389,7 @@ async def _update_organisation(
 
     await db.flush()
     await db.refresh(org)
-    return GetOrganisationResponse(
+    return GetOrganisationElement(
         id=org.id,
         name=org.name,
         date_created=org.date_created,

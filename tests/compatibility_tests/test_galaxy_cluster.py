@@ -63,3 +63,14 @@ async def test_add_galaxy_cluster(
     await db.execute(delete(GalaxyElement).filter(GalaxyElement.value == "test value"))
     await db.execute(delete(GalaxyCluster).filter(GalaxyCluster.value == "test add"))
     await db.commit()
+
+
+@pytest.mark.asyncio
+async def test_get_all_galaxy_cluster(
+    db, auth_key, client, test_galaxy, site_admin_user_token, instance_owner_org, server
+) -> None:
+    galaxy = test_galaxy["galaxy"]
+    path = f"/galaxy_clusters/index/{galaxy.id}"
+    request_body = None
+
+    assert get_legacy_modern_diff("get", path, request_body, auth_key, client) == {}

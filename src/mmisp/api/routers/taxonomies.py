@@ -4,6 +4,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Path, status
 from sqlalchemy import func, select
+from sqlalchemy.orm import selectinload
 
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize
 from mmisp.api_schemas.responses.standard_status_response import (
@@ -62,6 +63,37 @@ async def update_taxonomies(
 
 
 @router.get(
+    "/taxonomies",
+    status_code=status.HTTP_200_OK,
+    summary="Get all taxonomies",
+)
+@router.get(
+    "/taxonomies/index",
+    status_code=status.HTTP_200_OK,
+    summary="Get all taxonomies",
+)
+@alog
+async def get_taxonomies(
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    db: Annotated[Session, Depends(get_db)],
+) -> list[ViewTaxonomyResponse]:
+    """
+    Retrieve a list of all taxonomies.
+
+    args:
+
+    - auth: Authentication details
+
+    - db: Database session
+
+    returns:
+
+    - list[ViewTaxonomyResponse]: List of taxonomies
+    """
+    return await _get_all_taxonomies(db)
+
+
+@router.get(
     "/taxonomies/{taxonomyId}",
     status_code=status.HTTP_200_OK,
     response_model=GetIdTaxonomyResponseWrapper,
@@ -89,32 +121,6 @@ async def get_taxonomy_details(
     - GetIdTaxonomyResponseWrapper: Wrapper containing taxonomy details
     """
     return await _get_taxonomy_details(db, taxonomy_id)
-
-
-@router.get(
-    "/taxonomies",
-    status_code=status.HTTP_200_OK,
-    summary="Get all taxonomies",
-)
-@alog
-async def get_taxonomies(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
-    db: Annotated[Session, Depends(get_db)],
-) -> list[ViewTaxonomyResponse]:
-    """
-    Retrieve a list of all taxonomies.
-
-    args:
-
-    - auth: Authentication details
-
-    - db: Database session
-
-    returns:
-
-    - list[ViewTaxonomyResponse]: List of taxonomies
-    """
-    return await _get_all_taxonomies(db)
 
 
 @router.get(
@@ -381,58 +387,65 @@ async def _get_taxonomy_details(db: Session, taxonomy_id: int) -> GetIdTaxonomyR
 
 @alog
 async def _get_all_taxonomies(db: Session) -> list[ViewTaxonomyResponse]:
-    result = await db.execute(select(Taxonomy))
+    query = select(Taxonomy).options(selectinload(Taxonomy.predicates).selectinload(TaxonomyPredicate.entries))
+    result = await db.execute(query)
     taxonomies: Sequence[Taxonomy] = result.scalars().all()
 
     response: list[ViewTaxonomyResponse] = []
-    tag_names = []
-    taxonomy_entries_predicates = []
-    taxonomy_entries_builder = []
+    #    tag_names = []
+    #    taxonomy_entries_predicates = []
+    #    taxonomy_entries_builder = []
 
-    result2 = await db.execute(select(Tag.name))
-    tag_names_retrieve: Sequence[str] = result2.scalars().all()
-
-    result3 = await db.execute(
-        select(TaxonomyPredicate.taxonomy_id, TaxonomyPredicate.value, TaxonomyEntry.value)
-        .outerjoin(TaxonomyEntry, TaxonomyPredicate.id == TaxonomyEntry.taxonomy_predicate_id)
-        .order_by(TaxonomyPredicate.taxonomy_id)
-    )
-    taxonomy_entries_predicates_db = result3.all()
-
-    result4 = await db.execute(
-        select(TaxonomyPredicate.taxonomy_id, func.count(TaxonomyPredicate.taxonomy_id))
-        .outerjoin(TaxonomyEntry, TaxonomyPredicate.id == TaxonomyEntry.taxonomy_predicate_id)
-        .group_by(TaxonomyPredicate.taxonomy_id)
-    )
-    total_count_db = result4.all()
-
-    for tag in tag_names_retrieve:
-        if ":" in tag:
-            tag_names.append(tag)
-
-    current_taxonomy_id = 1
-
-    for taxonomy_entry in taxonomy_entries_predicates_db:
-        if taxonomy_entry[0] == current_taxonomy_id:
-            taxonomy_entries_builder.append(taxonomy_entry)
-            continue
-
-        current_taxonomy_id = taxonomy_entry[0]
-        taxonomy_entries_predicates.append(taxonomy_entries_builder[:])
-        taxonomy_entries_builder.clear()
-        taxonomy_entries_builder.append(taxonomy_entry)
-
-    taxonomy_entries_predicates.append(taxonomy_entries_builder)
+    #    result2 = await db.execute(select(Tag.name))
+    #    tag_names_retrieve: Sequence[str] = result2.scalars().all()
+    #
+    #    result3 = await db.execute(
+    #        select(TaxonomyPredicate.taxonomy_id, TaxonomyPredicate.value, TaxonomyEntry.value)
+    #        .outerjoin(TaxonomyEntry, TaxonomyPredicate.id == TaxonomyEntry.taxonomy_predicate_id)
+    #        .order_by(TaxonomyPredicate.taxonomy_id)
+    #    )
+    #    taxonomy_entries_predicates_db = result3.all()
+    #
+    #    result4 = await db.execute(
+    #        select(TaxonomyPredicate.taxonomy_id, func.count(TaxonomyPredicate.taxonomy_id))
+    #        .outerjoin(TaxonomyEntry, TaxonomyPredicate.id == TaxonomyEntry.taxonomy_predicate_id)
+    #        .group_by(TaxonomyPredicate.taxonomy_id)
+    #    )
+    #    total_count_db = result4.all()
+    #
+    #    for tag in tag_names_retrieve:
+    #        if ":" in tag:
+    #            tag_names.append(tag)
+    #
+    #    current_taxonomy_id = 1
+    #
+    #    for taxonomy_entry in taxonomy_entries_predicates_db:
+    #        if taxonomy_entry[0] == current_taxonomy_id:
+    #            taxonomy_entries_builder.append(taxonomy_entry)
+    #            continue
+    #
+    #        current_taxonomy_id = taxonomy_entry[0]
+    #        taxonomy_entries_predicates.append(taxonomy_entries_builder[:])
+    #        taxonomy_entries_builder.clear()
+    #        taxonomy_entries_builder.append(taxonomy_entry)
+    #
+    #    taxonomy_entries_predicates.append(taxonomy_entries_builder)
 
     for taxonomy in taxonomies:
-        total_count = total_count_db[taxonomy.id - 1][1]
+        #        total_count = total_count_db[taxonomy.id - 1][1]
+        for predicate in taxonomy.predicates:
+            for taxonomy_entry in predicate.entries:
+                tag_name = str(taxonomy.namespace) + ":" + predicate.value
+                tag_name_entry = f'{tag_name}="{taxonomy_entry.value}"'
+                assert tag_name_entry
 
-        current_count = 0
-        for taxonomy_entry in taxonomy_entries_predicates[taxonomy.id - 1]:
-            tag_name = str(taxonomy.namespace) + ":" + taxonomy_entry[1]
-            entry_val = taxonomy_entry[2] if taxonomy_entry[2] is not None else ""
-            if tag_name in tag_names or tag_name + '="' + entry_val + '"' in tag_names:
-                current_count += 1
+        total_count = len(taxonomy.predicates)
+        current_count = 0  # TODO: recalculate tag exist count
+        #        for taxonomy_entry in taxonomy_entries_predicates[taxonomy.id - 1]:
+        #            tag_name = str(taxonomy.namespace) + ":" + taxonomy_entry[1]
+        #            entry_val = taxonomy_entry[2] if taxonomy_entry[2] is not None else ""
+        #            if tag_name in tag_names or tag_name + '="' + entry_val + '"' in tag_names:
+        #                current_count += 1
 
         taxonomy_response = ViewTaxonomyResponse(
             Taxonomy=TaxonomyView(

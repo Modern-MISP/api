@@ -224,7 +224,7 @@ async def rest_search_events(
 )
 @alog
 async def index_events(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL))],
     db: Annotated[AsyncSession, Depends(get_db)],
     body: IndexEventsBody,
 ) -> list[IndexEventsAttributes]:
@@ -427,6 +427,7 @@ async def add_event_depr(
 
     - the new event
     """
+
     return await _add_event(auth, db, body)
 
 
@@ -438,9 +439,9 @@ async def add_event_depr(
 )
 @alog
 async def get_event_details_depr(
-    auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))],
+    auth: Annotated[Auth, Depends(authorize(AuthStrategy.ALL))],
     db: Annotated[AsyncSession, Depends(get_db)],
-    event_id: Annotated[int, Path(alias="eventId")],
+    event_id: Annotated[int | uuid.UUID, Path(alias="eventId")],
 ) -> AddEditGetEventResponse:
     """Deprecated. Retrieve details of a specific attribute by its ID.
 
@@ -470,7 +471,7 @@ async def get_event_details_depr(
 async def update_event_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[AsyncSession, Depends(get_db)],
-    event_id: Annotated[int, Path(alias="eventId")],
+    event_id: Annotated[int | uuid.UUID, Path(alias="eventId")],
     body: EditEventBody,
 ) -> AddEditGetEventResponse:
     """Deprecated. Update an existing event by its ID.
@@ -481,7 +482,7 @@ async def update_event_depr(
 
     - the current database
 
-    - the event id
+    - the event id or uuid
 
     - the request body
 
@@ -502,7 +503,7 @@ async def update_event_depr(
 async def delete_event_depr(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID, []))],
     db: Annotated[AsyncSession, Depends(get_db)],
-    event_id: Annotated[int, Path(..., alias="eventId")],
+    event_id: Annotated[int | uuid.UUID, Path(..., alias="eventId")],
 ) -> DeleteEventResponse:
     """Deprecated. Delete an existing event by its ID.
 
@@ -535,6 +536,13 @@ async def _add_event(auth: Auth, db: AsyncSession, body: AddEventBody) -> AddEdi
     if user is None:
         # this should never happen, it would mean, the user disappeared between auth and processing the request
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="user not available")
+
+    if body.uuid:
+        existing_event: Event | None = (
+            (await db.execute(select(Event).where(Event.uuid == body.uuid))).scalars().one_or_none()
+        )
+        if existing_event:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Event with this UUID already exists.")
 
     new_event = Event(
         **{
@@ -1192,7 +1200,7 @@ async def _prepare_object_response(db: AsyncSession, object_list: Sequence[Objec
     response_object_list = []
 
     for object in object_list:
-        object_dict = object.__dict__.copy()
+        object_dict = object.asdict()
 
         result = await db.execute(
             select(Attribute)
@@ -1407,6 +1415,7 @@ async def _get_event(
                     selectinload(GalaxyCluster.galaxy),
                     selectinload(GalaxyCluster.galaxy_elements),
                 ),
+                selectinload(Attribute.attributetags),
             ),
             with_loader_criteria(Attribute, Attribute.can_access(user)),
             selectinload(Event.sharing_group).options(

@@ -1,4 +1,4 @@
-import importlib
+from importlib.metadata import version
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Path, status
@@ -8,6 +8,7 @@ from sqlalchemy.orm import selectinload
 from mmisp.api.auth import Auth, AuthStrategy, Permission, authorize, check_permissions
 from mmisp.api_schemas.organisations import BaseOrganisation
 from mmisp.api_schemas.responses.standard_status_response import StandardStatusIdentifiedResponse
+from mmisp.api_schemas.server import ServerVersion
 from mmisp.api_schemas.servers import (
     AddServer,
     AddServerResponse,
@@ -128,7 +129,7 @@ async def delete_remote_server(
 @alog
 async def get_version(
     auth: Annotated[Auth, Depends(authorize(AuthStrategy.HYBRID))], db: Annotated[Session, Depends(get_db)]
-) -> dict:
+) -> ServerVersion:
     """
     Gets the Version of the server.
 
@@ -145,19 +146,19 @@ async def get_version(
     - Request encoding
     - Filter sightings flag
     """
-    return {
-        "version": importlib.metadata.version("mmisp-api"),
-        "perm_sync": check_permissions(auth, [Permission.SYNC]),
-        "perm_sighting": check_permissions(auth, [Permission.SIGHTING]),
-        "perm_galaxy_editor": check_permissions(auth, [Permission.GALAXY_EDITOR]),
-        "request_encoding": [],
-        "filter_sightings": True,
-    }
+    return ServerVersion(
+        version=version("mmisp-api"),
+        perm_sync=check_permissions(auth, [Permission.SYNC]),
+        perm_sighting=check_permissions(auth, [Permission.SIGHTING]),
+        perm_galaxy_editor=check_permissions(auth, [Permission.GALAXY_EDITOR]),
+        request_encoding=[],
+        filter_sightings=True,
+    )
 
 
 @router.post(
     "/servers/remote/edit/{server_id}",
-    summary="Edits remote servers",
+    summary="Edits remote server",
 )
 @alog
 async def update_remote_server(
@@ -167,19 +168,18 @@ async def update_remote_server(
     body: EditServer,
 ) -> AddServerResponse:
     """
-    Edits servers given by org_id.
+    Edits server given by server_id.
 
-    args:
-
-    - org_id
-
-    - The current database
-
-    - auth: Authentication details
-
-    returns:
-
-    - Updated servers as a list
+    :param server_id: The id of the server to be edited
+    :type server_id: str
+    :param db: The current database
+    :type db: Session
+    :param auth: Authentication details
+    :type auth: Auth
+    :param body: The new data for the server
+    :type body: EditServer
+    :return: server object of updated server
+    :rtype: AddServerResponse
     """
     return await _edit_server_by_id(auth=auth, db=db, server_id=server_id, body=body)
 

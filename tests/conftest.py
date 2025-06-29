@@ -2,13 +2,11 @@ import atexit
 import logging
 import random
 import string
-import uuid as libuuid
-from contextlib import AsyncExitStack, ExitStack
+from contextlib import ExitStack
 from dataclasses import dataclass
-from datetime import date, datetime, timezone
-from typing import Self, Tuple
+from datetime import timezone
+from typing import Tuple
 
-import pytest
 import pytest_asyncio
 from _pytest.config import create_terminal_writer
 from fastapi.testclient import TestClient
@@ -16,22 +14,17 @@ from icecream import ic
 from pytest import Config, Item, hookimpl
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import mmisp.lib.standard_roles as standard_roles
 import mmisp.util.crypto
 from mmisp.api.auth import encode_token
 from mmisp.api.main import init_app
 from mmisp.db.models.admin_setting import AdminSetting
-from mmisp.db.models.attribute import Attribute
-from mmisp.db.models.auth_key import AuthKey
-from mmisp.db.models.event import EventTag
-from mmisp.db.models.galaxy_cluster import GalaxyCluster
 from mmisp.db.models.organisation import Organisation
 from mmisp.db.models.role import Role
-from mmisp.db.models.sharing_group import SharingGroup, SharingGroupOrg, SharingGroupServer
+from mmisp.db.models.sharing_group import SharingGroup, SharingGroupServer
 from mmisp.db.models.user import User
 from mmisp.db.models.workflow import Workflow
 from mmisp.lib.attributes import AttributeCategories
-from mmisp.lib.distribution import AttributeDistributionLevels, EventDistributionLevels
+from mmisp.lib.distribution import AttributeDistributionLevels
 from mmisp.tests.fixtures import *  # noqa
 from mmisp.tests.generators.model_generators.attribute_generator import generate_attribute
 from mmisp.tests.generators.model_generators.tag_generator import generate_tag
@@ -563,7 +556,7 @@ async def access_test_objects(db, site_admin_user, site_admin_role, auth_key):
         - if the distributionlevel is sharing_group the sharing group is appended.
         - sharing groups have the pattern `sg_<org1>_<org2>`
     """
-    instance_id = f"{''.join(random.choices(string.ascii_letters, k = 15))}"
+    instance_id = f"{''.join(random.choices(string.ascii_letters, k=15))}"
 
     site_admin_user_clear_key, site_admin_user_auth_key = auth_key
 
