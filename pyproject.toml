@@ -1,6 +1,6 @@
 [project]
 name = "mmisp-api"
-version = "0.9.1"
+version = "0.10.0"
 description = ""
 authors = []
 readme = "README.md"
@@ -8,7 +8,7 @@ requires-python = ">=3.11.0"
 
 
 dependencies = [
-  "mmisp-lib==0.10.1",
+  "mmisp-lib==0.11.0",
   "fastapi==0.115.11",
   "uvicorn[standard]==0.24.0.post1",
   "python-dotenv==1.0.0",

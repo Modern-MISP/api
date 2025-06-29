@@ -9,13 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changed
+
+### Removed
+
+### Fixed
+
+
+## 0.10.0
+
+### Added
+
 * Endpoints to enable synchronisation jobs
 
 ### Changed
 
 * Many functions for compliance with pydantic v2
 * Use mkdocs to-pdf plugin
-
-### Removed
-
-### Fixed
