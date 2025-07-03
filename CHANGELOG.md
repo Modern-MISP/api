@@ -15,11 +15,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+
+## 0.10.2
+
+### Changed
+
+* Dependency Update for mmisp-lib
+
+
 ## 0.10.1
 
 ### Changed
 
 * Dependency Update for mmisp-lib
+
 
 ## 0.10.0
 
