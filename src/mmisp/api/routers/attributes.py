@@ -517,7 +517,7 @@ async def _add_attribute(
 
     await execute_workflow("attribute-after-save", db, new_attribute)
 
-    setattr(event, "attribute_count", event.attribute_count + 1)
+    setattr(event, "attribute_count", (event.attribute_count or 0) + 1)
 
     attribute_data = _prepare_attribute_response_add(new_attribute)
 
@@ -611,7 +611,7 @@ async def _delete_attribute(
     if not attribute.can_edit(user):
         raise HTTPException(status.HTTP_403_FORBIDDEN)
 
-    attribute.event.attribute_count -= 1
+    attribute.event.attribute_count = (attribute.event.attribute_count or 0) - 1
     if hard:
         await db.delete(attribute)
         await db.flush()

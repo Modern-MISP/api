@@ -116,7 +116,7 @@ async def _get_statistics(db: Session) -> UsageDataResponseModel:
 
     eventAttribute_count = 0
     for event in events_list:
-        eventAttribute_count = eventAttribute_count + event[0].attribute_count
+        eventAttribute_count = eventAttribute_count + (event[0].attribute_count or 0)
 
     localOrg_count = 0
     for org in org_list:
@@ -188,7 +188,7 @@ async def _get_statistics_by_org(db: Session, orgID: str) -> OrgDataResponseMode
     for event in events_list:
         if event[0].org_id == int_orgId:
             event_count = event_count + 1
-            attribute_count = attribute_count + event[0].attribute_count
+            attribute_count = attribute_count + (event[0].attribute_count or 0)
 
     response = OrgDataResponseModel(
         users=user_count,

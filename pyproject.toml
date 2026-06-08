@@ -8,7 +8,7 @@ requires-python = ">=3.11.0"
 
 
 dependencies = [
-  "mmisp-lib==0.11.3",
+  "mmisp-lib==0.12.0",
   "fastapi==0.115.11",
   "uvicorn[standard]==0.24.0.post1",
   "python-dotenv==1.0.0",
