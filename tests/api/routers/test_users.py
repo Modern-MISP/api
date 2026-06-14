@@ -284,7 +284,7 @@ async def test_delete_user(site_admin_user_token, site_admin_role, site_admin_us
 @pytest.mark.asyncio
 async def test_users_me_unauthorized(client) -> None:
     response = client.get("/users/view/me")
-    assert response.status_code == 403
+    assert response.status_code == 401
 
 
 @pytest.mark.asyncio

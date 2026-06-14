@@ -221,7 +221,7 @@ async def test_delete_non_existing_auth_key(site_admin_user_token, client) -> No
 async def test_view_own_auth_keys_no_auth(client) -> None:
     response = client.get("/auth_keys/viewOwn")
 
-    assert response.status_code == 403
+    assert response.status_code == 401
 
 
 @pytest.mark.asyncio
