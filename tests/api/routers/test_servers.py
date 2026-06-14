@@ -219,7 +219,7 @@ async def test_delete_remote_server_generated(site_admin_user_token, client, db,
 @pytest.mark.asyncio
 async def test_unauthorized_access(client, server) -> None:
     response = client.get(f"/servers/remote/{server.id}")
-    assert response.status_code == 403
+    assert response.status_code == 401
 
 
 @pytest.mark.asyncio
