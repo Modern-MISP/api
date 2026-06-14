@@ -186,7 +186,7 @@ async def test_get_all_auth_keys_with_params(site_admin_user_token, client) -> N
 async def test_view_auth_key_details_unauthorized(auth_key, client) -> None:
     response = client.get(f"/auth_keys/view/{auth_key.id}")
 
-    assert response.status_code == 403
+    assert response.status_code == 401
 
 
 @pytest.mark.asyncio
