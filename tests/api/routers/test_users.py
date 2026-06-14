@@ -349,7 +349,7 @@ async def test_users_edit_unauthorized(client, view_only_user) -> None:
     email = view_only_user.email
 
     response = client.put(f"users/{user_id}", json={"email": email + "test"})
-    assert response.status_code == 403
+    assert response.status_code == 401
 
 
 @pytest.mark.asyncio
