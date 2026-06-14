@@ -193,7 +193,7 @@ async def event5(db, organisation, site_admin_user):
     await db.commit()
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def attribute3(db, event):
     event_id = event.id
     attribute = generate_attribute(event_id)
