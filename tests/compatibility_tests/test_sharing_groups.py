@@ -10,7 +10,7 @@ async def test_get_single_sharing_group(
     path = f"/sharing_groups/view/{sharing_group.id}"
     request_body = None
 
-    assert get_legacy_modern_diff("get", path, request_body, auth_key, client) == {}
+    assert await get_legacy_modern_diff("get", path, request_body, auth_key, client) == {}
 
 
 @pytest.mark.asyncio
@@ -20,4 +20,4 @@ async def test_get_all_sharing_groups(
     path = "/sharing_groups/index"
     request_body = None
 
-    assert get_legacy_modern_diff("get", path, request_body, auth_key, client) == {}
+    assert await get_legacy_modern_diff("get", path, request_body, auth_key, client) == {}

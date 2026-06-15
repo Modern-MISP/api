@@ -40,7 +40,7 @@ async def test_get_server(db, auth_key, client, site_admin_user_token, instance_
     path = "/servers"
     request_body = None
 
-    assert get_legacy_modern_diff("get", path, request_body, auth_key, client) == {}
+    assert await get_legacy_modern_diff("get", path, request_body, auth_key, client) == {}
 
 
 @pytest.mark.asyncio
@@ -59,4 +59,4 @@ async def test_add_remote_server_minimal(site_admin_user_token, auth_key, client
         del modern["Server"]["priority"]
         del legacy["Server"]["priority"]
 
-    assert get_legacy_modern_diff("post", path, request_body, auth_key, client, preprocessor=preprocessor) == {}
+    assert await get_legacy_modern_diff("post", path, request_body, auth_key, client, preprocessor=preprocessor) == {}

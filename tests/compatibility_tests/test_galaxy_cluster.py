@@ -13,7 +13,7 @@ async def test_get_galaxy_cluster(
     path = f"/galaxy_clusters/view/{galaxy_cluster.id}"
     request_body = None
 
-    assert get_legacy_modern_diff("get", path, request_body, auth_key, client) == {}
+    assert await get_legacy_modern_diff("get", path, request_body, auth_key, client) == {}
 
 
 @pytest.mark.asyncio
@@ -24,7 +24,7 @@ async def test_get_default_galaxy_cluster(
     path = f"/galaxy_clusters/view/{galaxy_cluster.id}"
     request_body = None
 
-    assert get_legacy_modern_diff("get", path, request_body, auth_key, client) == {}
+    assert await get_legacy_modern_diff("get", path, request_body, auth_key, client) == {}
 
 
 @pytest.mark.asyncio
@@ -58,7 +58,7 @@ async def test_add_galaxy_cluster(
         "distribution": 3,
         "GalaxyElement": [{"key": "test key", "value": "test value"}],
     }
-    assert get_legacy_modern_diff("post", path, request_body, auth_key, client, preprocessor=preprocessor) == {}
+    assert await get_legacy_modern_diff("post", path, request_body, auth_key, client, preprocessor=preprocessor) == {}
 
     await db.execute(delete(GalaxyElement).filter(GalaxyElement.value == "test value"))
     await db.execute(delete(GalaxyCluster).filter(GalaxyCluster.value == "test add"))
@@ -73,4 +73,4 @@ async def test_get_all_galaxy_cluster(
     path = f"/galaxy_clusters/index/{galaxy.id}"
     request_body = None
 
-    assert get_legacy_modern_diff("get", path, request_body, auth_key, client) == {}
+    assert await get_legacy_modern_diff("get", path, request_body, auth_key, client) == {}

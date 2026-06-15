@@ -38,7 +38,7 @@ async def test_get_existing_attribute_success(access_test_objects, user_key, att
     clear_key = access_test_objects[f"{user_key}_clear_key"]
     auth_key = access_test_objects[f"{user_key}_auth_key"]
 
-    assert get_legacy_modern_diff("get", path, request_body, (clear_key, auth_key), client) == {}
+    assert await get_legacy_modern_diff("get", path, request_body, (clear_key, auth_key), client) == {}
 
 
 @pytest.mark.parametrize("user_key, attribute_key", access_test_objects_user_attribute_access_expect_denied)
@@ -57,7 +57,7 @@ async def test_get_existing_attribute_fail(
     clear_key = access_test_objects[f"{user_key}_clear_key"]
     auth_key = access_test_objects[f"{user_key}_auth_key"]
 
-    assert get_legacy_modern_diff("get", path, request_body, (clear_key, auth_key), client) == {}
+    assert await get_legacy_modern_diff("get", path, request_body, (clear_key, auth_key), client) == {}
 
 
 @pytest.mark.parametrize("user_key, attribute_key", access_test_objects_user_attribute_edit_expect_granted)
@@ -87,7 +87,9 @@ async def test_edit_existing_attribute(access_test_objects, client, user_key, at
     }
     path = f"/attributes/{attribute_id}"
     assert (
-        get_legacy_modern_diff("put", path, request_body, (clear_key, auth_key), client, preprocessor, dry_run=True)
+        await get_legacy_modern_diff(
+            "put", path, request_body, (clear_key, auth_key), client, preprocessor, dry_run=True
+        )
         == {}
     )
 
@@ -110,7 +112,7 @@ async def test_edit_existing_attribute_fail(access_test_objects, client, user_ke
         "first_seen": "",
     }
     path = f"/attributes/{attribute_id}"
-    assert get_legacy_modern_diff("put", path, request_body, (clear_key, auth_key), client, dry_run=True) == {}
+    assert await get_legacy_modern_diff("put", path, request_body, (clear_key, auth_key), client, dry_run=True) == {}
 
 
 @pytest.mark.parametrize("user_key, attribute_key", access_test_objects_user_attribute_edit_expect_granted)
@@ -123,7 +125,7 @@ async def test_delete_existing_attribute(access_test_objects, client, user_key, 
     request_body = None
 
     path = f"/attributes/{attribute_id}"
-    assert get_legacy_modern_diff("delete", path, request_body, (clear_key, auth_key), client, dry_run=True) == {}
+    assert await get_legacy_modern_diff("delete", path, request_body, (clear_key, auth_key), client, dry_run=True) == {}
 
 
 @pytest.mark.parametrize("user_key, attribute_key", access_test_objects_user_attribute_edit_expect_denied)
@@ -136,7 +138,7 @@ async def test_delete_existing_attribute_fail(access_test_objects, client, user_
     request_body = None
 
     path = f"/attributes/{attribute_id}"
-    assert get_legacy_modern_diff("delete", path, request_body, (clear_key, auth_key), client, dry_run=True) == {}
+    assert await get_legacy_modern_diff("delete", path, request_body, (clear_key, auth_key), client, dry_run=True) == {}
 
 
 @pytest.mark.parametrize("user_key, event_key", access_test_objects_user_event_edit_expect_granted)
@@ -157,7 +159,7 @@ async def test_add_attribute(db, access_test_objects, client, user_key, event_ke
     }
     event_id = access_test_objects[event_key].id
     path = f"/attributes/{event_id}"
-    assert get_legacy_modern_diff("post", path, request_body, (clear_key, auth_key), client, dry_run=True) == {}
+    assert await get_legacy_modern_diff("post", path, request_body, (clear_key, auth_key), client, dry_run=True) == {}
 
     stmt = sa.sql.text("DELETE FROM attributes WHERE value1=:val")
     #    stmt.bindparams(id=response_json["Attribute"]["id"])
@@ -182,7 +184,7 @@ async def test_add_attribute_fail(access_test_objects, client, user_key, event_k
     }
     event_id = access_test_objects[event_key].id
     path = f"/attributes/{event_id}"
-    assert get_legacy_modern_diff("post", path, request_body, (clear_key, auth_key), client) == {}
+    assert await get_legacy_modern_diff("post", path, request_body, (clear_key, auth_key), client) == {}
 
 
 # @pytest.mark.asyncio
@@ -211,7 +213,7 @@ async def test_delete_existing_attribute(access_test_objects, client) -> None:
     request_body = {}
     clear_key = access_test_objects["default_user_clear_key"]
     auth_key = access_test_objects["default_user_auth_key"]
-    assert get_legacy_modern_diff("delete", path, request_body, (clear_key, auth_key), client, preprocessor) == {}
+    assert await get_legacy_modern_diff("delete", path, request_body, (clear_key, auth_key), client, preprocessor) == {}
 """
 
 
@@ -352,7 +354,7 @@ async def test_restore_attribute(
     path = f"/attributes/restore/{attribute_id}"
     clear_key = access_test_objects["default_user_clear_key"]
     auth_key = access_test_objects["default_user_auth_key"]
-    assert get_legacy_modern_diff("post", path, request_body, (clear_key, auth_key), client) == {}
+    assert await get_legacy_modern_diff("post", path, request_body, (clear_key, auth_key), client) == {}
 """
 
 
@@ -393,7 +395,7 @@ async def test_edit_existing_attribute(
     path = f"/attributes/{attribute.id}"
     clear_key = access_test_objects["default_user_clear_key"]
     auth_key = access_test_objects["default_user_auth_key"]
-    assert get_legacy_modern_diff("put", path, request_body, (clear_key, auth_key), client) == {}
+    assert await get_legacy_modern_diff("put", path, request_body, (clear_key, auth_key), client) == {}
 """
 
 

@@ -9,7 +9,7 @@ async def test_valid_search_attribute_data(db: AsyncSession, attribute, auth_key
     request_body = {"returnFormat": "json", "limit": 100, "value": attribute.value}
     path = "/attributes/restSearch"
 
-    assert get_legacy_modern_diff("post", path, request_body, auth_key, client) == {}
+    assert await get_legacy_modern_diff("post", path, request_body, auth_key, client) == {}
 
 
 @pytest.mark.asyncio
@@ -20,7 +20,7 @@ async def test_valid_search_multi_attribute_data(
     request_body = {"returnFormat": "json", "limit": 100, "value": attribute_multi.value1}
     path = "/attributes/restSearch"
 
-    assert get_legacy_modern_diff("post", path, request_body, auth_key, client) == {}
+    assert await get_legacy_modern_diff("post", path, request_body, auth_key, client) == {}
 
 
 @pytest.mark.asyncio
@@ -29,7 +29,7 @@ async def test_valid_search_tag_attribute_data(db: AsyncSession, attribute_with_
     request_body = {"returnFormat": "json", "limit": 100, "value": attribute.value}
     path = "/attributes/restSearch"
 
-    assert get_legacy_modern_diff("post", path, request_body, auth_key, client) == {}
+    assert await get_legacy_modern_diff("post", path, request_body, auth_key, client) == {}
 
 
 @pytest.mark.asyncio
@@ -39,7 +39,7 @@ async def test_valid_search_local_tag_attribute_data(
     request_body = {"returnFormat": "json", "limit": 100, "value": attribute_with_local_tag.value}
     path = "/attributes/restSearch"
 
-    assert get_legacy_modern_diff("post", path, request_body, auth_key, client) == {}
+    assert await get_legacy_modern_diff("post", path, request_body, auth_key, client) == {}
 
 
 @pytest.mark.asyncio
@@ -49,7 +49,7 @@ async def test_valid_search_non_exportable_local_tag_attribute_data(
     request_body = {"returnFormat": "json", "limit": 100, "value": attribute_with_non_exportable_local_tag.value}
     path = "/attributes/restSearch"
 
-    assert get_legacy_modern_diff("post", path, request_body, auth_key, client) == {}
+    assert await get_legacy_modern_diff("post", path, request_body, auth_key, client) == {}
 
 
 @pytest.mark.asyncio
@@ -59,7 +59,7 @@ async def test_valid_search_galaxy_tag_attribute_data(
     request_body = {"returnFormat": "json", "limit": 100, "value": attribute_with_galaxy_cluster_one_tag.value}
     path = "/attributes/restSearch"
 
-    assert get_legacy_modern_diff("post", path, request_body, auth_key, client) == {}
+    assert await get_legacy_modern_diff("post", path, request_body, auth_key, client) == {}
 
 
 @pytest.mark.asyncio
@@ -70,4 +70,4 @@ async def test_valid_search_attribute_data_site_admin(db: AsyncSession, auth_key
 
     path = "/events/restSearch"
     request_body = {"returnFormat": "json", "limit": 100, "distribution": 0}
-    assert get_legacy_modern_diff("post", path, request_body, auth_key, client) == {}
+    assert await get_legacy_modern_diff("post", path, request_body, auth_key, client) == {}

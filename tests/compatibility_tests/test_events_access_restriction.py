@@ -15,7 +15,9 @@ async def test_get_all_events(access_test_objects, user_key, events, client) -> 
     clear_key = access_test_objects[f"{user_key}_clear_key"]
     auth_key = access_test_objects[f"{user_key}_auth_key"]
     request_body = None
-    assert get_legacy_modern_diff("get", path, request_body, (clear_key, auth_key), client, ignore_order=False) == {}
+    assert (
+        await get_legacy_modern_diff("get", path, request_body, (clear_key, auth_key), client, ignore_order=False) == {}
+    )
 
 
 @pytest.mark.parametrize("user_key, event_key", access_test_objects_user_event_access_expect_granted)
@@ -25,7 +27,9 @@ async def test_get_event_success(access_test_objects, user_key, event_key, clien
     request_body = None
     clear_key = access_test_objects[f"{user_key}_clear_key"]
     auth_key = access_test_objects[f"{user_key}_auth_key"]
-    assert get_legacy_modern_diff("get", path, request_body, (clear_key, auth_key), client, ignore_order=False) == {}
+    assert (
+        await get_legacy_modern_diff("get", path, request_body, (clear_key, auth_key), client, ignore_order=False) == {}
+    )
 
 
 @pytest.mark.parametrize("user_key, event_key", access_test_objects_user_event_access_expect_denied)
@@ -35,7 +39,7 @@ async def test_get_event_fail(access_test_objects, user_key, event_key, client) 
     request_body = None
     clear_key = access_test_objects[f"{user_key}_clear_key"]
     auth_key = access_test_objects[f"{user_key}_auth_key"]
-    assert get_legacy_modern_diff("get", path, request_body, (clear_key, auth_key), client) == {}
+    assert await get_legacy_modern_diff("get", path, request_body, (clear_key, auth_key), client) == {}
 
 
 # @pytest.mark.asyncio

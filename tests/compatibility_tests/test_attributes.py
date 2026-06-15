@@ -10,7 +10,7 @@ from mmisp.tests.maps import (
 async def test_valid_search_attribute_data(access_test_objects, auth_key, client) -> None:
     request_body = {"returnFormat": "json", "limit": 100}
     path = "/attributes/restSearch"
-    assert get_legacy_modern_diff("get", path, request_body, auth_key, client) == {}
+    assert await get_legacy_modern_diff("get", path, request_body, auth_key, client) == {}
 
 
 @pytest.mark.parametrize("user_key, attribute_key", access_test_objects_user_attribute_edit_expect_granted)
@@ -27,7 +27,7 @@ async def test_remove_existing_tag_from_attribute(access_test_objects, client, u
     auth_key = access_test_objects[f"{user_key}_auth_key"]
 
     path = f"/attributes/removeTag/{attribute_id}/{tag_id}"
-    assert get_legacy_modern_diff("post", path, request_body, (clear_key, auth_key), client, dry_run=True) == {}
+    assert await get_legacy_modern_diff("post", path, request_body, (clear_key, auth_key), client, dry_run=True) == {}
 
 
 @pytest.mark.asyncio
@@ -36,4 +36,4 @@ async def test_update_non_existing_event(db, auth_key, client) -> None:
 
     request_body = {"info": "updated info"}
 
-    assert get_legacy_modern_diff("put", path, request_body, auth_key, client) == {}
+    assert await get_legacy_modern_diff("put", path, request_body, auth_key, client) == {}

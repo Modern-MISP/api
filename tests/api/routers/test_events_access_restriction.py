@@ -37,7 +37,7 @@ async def test_get_event_success(access_test_objects, user_key, event_key, clien
 @pytest.mark.asyncio
 async def test_get_all_events(access_test_objects, user_key, events, client) -> None:
     headers = {"authorization": access_test_objects[f"{user_key}_token"]}
-    response = await client.get("/events/", headers=headers)
+    response = await client.get("/events", headers=headers)
 
     assert response.status_code == 200
     response_json = response.json()
