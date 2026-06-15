@@ -110,7 +110,7 @@ async def auth_environment(password, password_auth_user, external_auth_user, ide
 async def test_start_login_password(instance_owner_org_admin_user, client) -> None:
     user = instance_owner_org_admin_user
 
-    response = client.post("/auth/login/start", json={"email": user.email})
+    response = await client.post("/auth/login/start", json={"email": user.email})
 
     assert response.status_code == status.HTTP_200_OK
     json: dict = response.json()
@@ -121,7 +121,7 @@ async def test_start_login_password(instance_owner_org_admin_user, client) -> No
 
 @pytest.mark.asyncio
 async def test_start_login_idp(auth_environment: AuthEnvironment, client) -> None:
-    response = client.post("/auth/login/start", json={"email": auth_environment.external_auth_user.email})
+    response = await client.post("/auth/login/start", json={"email": auth_environment.external_auth_user.email})
 
     assert response.status_code == status.HTTP_200_OK
     json: dict = response.json()
@@ -133,7 +133,7 @@ async def test_start_login_idp(auth_environment: AuthEnvironment, client) -> Non
 
 @pytest.mark.asyncio
 async def test_start_login_unknown(client) -> None:
-    response = client.post("/auth/login/start", json={"email": f"doesnotexist{time_ns()}@test.com"})
+    response = await client.post("/auth/login/start", json={"email": f"doesnotexist{time_ns()}@test.com"})
 
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
@@ -145,7 +145,7 @@ async def test_password_login(auth_environment: AuthEnvironment, client, capsys)
     - The Password is not in stdout/stderr, even in debug mode
     """
     capsys.readouterr()
-    response = client.post(
+    response = await client.post(
         "/auth/login/password",
         json={"email": auth_environment.password_auth_user.email, "password": auth_environment.password},
     )
@@ -162,7 +162,7 @@ async def test_password_login(auth_environment: AuthEnvironment, client, capsys)
 
 @pytest.mark.asyncio
 async def test_password_login_wrong_email(auth_environment: AuthEnvironment, client) -> None:
-    response = client.post(
+    response = await client.post(
         "/auth/login/password",
         json={"email": f"random{time_ns()}@random.com", "password": auth_environment.password},
     )
@@ -172,7 +172,7 @@ async def test_password_login_wrong_email(auth_environment: AuthEnvironment, cli
 
 @pytest.mark.asyncio
 async def test_password_login_wrong_password(auth_environment: AuthEnvironment, client) -> None:
-    response = client.post(
+    response = await client.post(
         "/auth/login/password",
         json={
             "email": auth_environment.password_auth_user.email,
@@ -185,7 +185,7 @@ async def test_password_login_wrong_password(auth_environment: AuthEnvironment, 
 
 @pytest.mark.asyncio
 async def test_password_login_idp_user(auth_environment: AuthEnvironment, client) -> None:
-    response = client.post(
+    response = await client.post(
         "/auth/login/password",
         json={"email": auth_environment.external_auth_user.email, "password": auth_environment.password},
     )
@@ -195,7 +195,7 @@ async def test_password_login_idp_user(auth_environment: AuthEnvironment, client
 
 @pytest.mark.asyncio
 async def test_add_open_id_provider(db: Session, site_admin_user_token, client) -> None:
-    response = client.post(
+    response = await client.post(
         "/auth/openID/addOpenIDConnectProvider",
         headers={"authorization": site_admin_user_token},
         json={
@@ -228,7 +228,7 @@ async def test_get_open_id_providers_info(auth_environment: AuthEnvironment, cli
         return_value=Response(200, json=auth_environment.well_known_oidc_config)
     )
 
-    response = client.get("/auth/openID/getAllOpenIDConnectProvidersInfo")
+    response = await client.get("/auth/openID/getAllOpenIDConnectProvidersInfo")
 
     assert response.status_code == 200
     response = response.json()
@@ -258,7 +258,7 @@ async def test_redirect_to_frontend_correct(auth_environment: AuthEnvironment, c
         )
     )
 
-    response = client.post(
+    response = await client.post(
         f"/auth/login/idp/{auth_environment.identity_provider.name}/callback",
         json={
             "code": "test-code",
@@ -279,7 +279,7 @@ async def test_redirect_to_frontend_correct(auth_environment: AuthEnvironment, c
 
 @pytest.mark.asyncio
 async def test_redirect_to_frontend_idp_does_not_exist(client) -> None:
-    response = client.post(
+    response = await client.post(
         "/auth/login/idp/-1/callback",
         json={"code": "test-code", "redirect_uri": f"{config.DASHBOARD_URL}/login/oidc/-1/callback"},
         follow_redirects=False,
@@ -299,7 +299,7 @@ async def test_redirect_to_frontend_no_access_token(auth_environment: AuthEnviro
         return_value=Response(200, json={})
     )
 
-    response = client.post(
+    response = await client.post(
         f"/auth/login/idp/{auth_environment.identity_provider.name}/callback",
         json={
             "code": "",
@@ -334,7 +334,7 @@ async def test_redirect_to_frontend_invalid_sub(auth_environment: AuthEnvironmen
         )
     )
 
-    response = client.post(
+    response = await client.post(
         f"/auth/login/idp/{auth_environment.identity_provider.name}/callback",
         json={
             "code": "test-code",
@@ -351,7 +351,7 @@ async def test_redirect_to_frontend_invalid_sub(auth_environment: AuthEnvironmen
 
 @pytest.mark.asyncio
 async def test_exchange_token_login_valid(auth_environment: AuthEnvironment, client) -> None:
-    response = client.post(
+    response = await client.post(
         "/auth/login/token",
         json={"exchangeToken": encode_exchange_token(str(auth_environment.external_auth_user.id))},
     )
@@ -363,7 +363,7 @@ async def test_exchange_token_login_valid(auth_environment: AuthEnvironment, cli
 
 @pytest.mark.asyncio
 async def test_exchange_token_login_regular_token(auth_environment: AuthEnvironment, client) -> None:
-    response = client.post(
+    response = await client.post(
         "/auth/login/token",
         json={"exchangeToken": encode_token(str(auth_environment.external_auth_user.id))},
     )
@@ -375,7 +375,7 @@ async def test_exchange_token_login_regular_token(auth_environment: AuthEnvironm
 async def test_change_password_userID(db: Session, site_admin_user_token, client, view_only_user) -> None:
     newPassword = "TEST"
 
-    response = client.put(
+    response = await client.put(
         "/auth/setPassword/%s" % view_only_user.id,
         headers={"authorization": site_admin_user_token},
         json={"password": newPassword},
@@ -391,7 +391,7 @@ async def test_change_password_userID(db: Session, site_admin_user_token, client
 async def test_openid_edit_provider(
     db: Session, site_admin_user_token, client, auth_environment: AuthEnvironment
 ) -> None:
-    response = client.post(
+    response = await client.post(
         f"/auth/openID/editOpenIDConnectProvider/{auth_environment.identity_provider.id}",
         headers={"authorization": site_admin_user_token},
         json={
@@ -418,7 +418,7 @@ async def test_openid_edit_provider(
 async def test_openid_delete_provider(
     db: Session, site_admin_user_token, client, auth_environment: AuthEnvironment
 ) -> None:
-    response = client.delete(
+    response = await client.delete(
         f"/auth/openID/delete/{auth_environment.identity_provider.id}",
         headers={"authorization": site_admin_user_token},
     )
@@ -434,7 +434,7 @@ async def test_openid_delete_provider(
 
 @pytest.mark.asyncio
 async def test_openid_add_provider(db: Session, site_admin_user_token, client) -> None:
-    response = client.post(
+    response = await client.post(
         "/auth/openID/addOpenIDConnectProvider",
         headers={"authorization": site_admin_user_token},
         json={
@@ -468,7 +468,7 @@ async def test_openid_add_provider(db: Session, site_admin_user_token, client) -
 async def test_set_own_password(db: Session, client, password_auth_user, password) -> None:
     password_auth_user.password = hash_secret("testPw")
     await db.commit()
-    response = client.post(
+    response = await client.post(
         "/auth/login/setOwnPassword",
         json={"email": password_auth_user.email, "password": password, "oldPassword": "testPw"},
     )
@@ -482,7 +482,7 @@ async def test_set_own_password(db: Session, client, password_auth_user, passwor
 
 @pytest.mark.asyncio
 async def test_get_all_open_id_connect_providers(db: Session, client, site_admin_user_token) -> None:
-    response = client.post(
+    response = await client.post(
         "/auth/openID/addOpenIDConnectProvider",
         headers={"authorization": site_admin_user_token},
         json={
@@ -509,7 +509,9 @@ async def test_get_all_open_id_connect_providers(db: Session, client, site_admin
     assert oidc_provider.active is True
     assert oidc_provider.base_url == "http://test.com"
     assert oidc_provider.client_id == "test"
-    response = client.get("/auth/openID/getAllOpenIDConnectProviders", headers={"authorization": site_admin_user_token})
+    response = await client.get(
+        "/auth/openID/getAllOpenIDConnectProviders", headers={"authorization": site_admin_user_token}
+    )
 
     assert response.status_code == status.HTTP_200_OK
     result = response.json()
@@ -529,7 +531,7 @@ async def test_get_all_open_id_connect_providers(db: Session, client, site_admin
 
 @pytest.mark.asyncio
 async def test_get_open_id_connect_provider_by_id(db: Session, client, site_admin_user_token) -> None:
-    response = client.post(
+    response = await client.post(
         "/auth/openID/addOpenIDConnectProvider",
         headers={"authorization": site_admin_user_token},
         json={
@@ -557,7 +559,7 @@ async def test_get_open_id_connect_provider_by_id(db: Session, client, site_admi
     assert oidc_provider.base_url == "http://test.com"
     assert oidc_provider.client_id == "test"
     provider_id = oidc_provider.id
-    response = client.get(
+    response = await client.get(
         f"/auth/openID/getOpenIDConnectProvider/{provider_id}", headers={"authorization": site_admin_user_token}
     )
 

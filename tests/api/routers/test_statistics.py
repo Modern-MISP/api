@@ -18,7 +18,7 @@ async def test_get_statistics(
     site_admin_user_token,
 ) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.get("/statistics/getUsageData", headers=headers)
+    response = await client.get("/statistics/getUsageData", headers=headers)
     response_json = response.json()
     assert response_json["users"] == 2
     assert response_json["eventCreatorOrgs"] == 1
@@ -34,7 +34,7 @@ async def test_get_statistics(
 @pytest.mark.asyncio
 async def test_get_statistics_by_org_users(client, site_admin_user, site_admin_user_token):
     headers = {"authorization": site_admin_user_token}
-    response = client.get(f"/statistics/getAttributes/{site_admin_user.org_id}", headers=headers)
+    response = await client.get(f"/statistics/getAttributes/{site_admin_user.org_id}", headers=headers)
     response_json = response.json()
 
     assert response_json["users"] == 1
@@ -45,7 +45,7 @@ async def test_get_statistics_by_org_users(client, site_admin_user, site_admin_u
 @pytest.mark.asyncio
 async def test_get_statistics_by_org_event_attribute(client, attribute, event, site_admin_user_token):
     headers = {"authorization": site_admin_user_token}
-    response = client.get(f"/statistics/getAttributes/{event.org_id}", headers=headers)
+    response = await client.get(f"/statistics/getAttributes/{event.org_id}", headers=headers)
     response_json = response.json()
 
     assert response_json["users"] == 0
@@ -56,7 +56,7 @@ async def test_get_statistics_by_org_event_attribute(client, attribute, event, s
 @pytest.mark.asyncio
 async def test_get_logincount(client, site_admin_user, site_admin_user_token):
     headers = {"authorization": site_admin_user_token}
-    response = client.get(f"/statistics/logincount/{site_admin_user.org_id}", headers=headers)
+    response = await client.get(f"/statistics/logincount/{site_admin_user.org_id}", headers=headers)
     response_json = response.json()
     ic(response_json)
     assert True

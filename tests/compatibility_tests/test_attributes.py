@@ -19,7 +19,7 @@ async def test_remove_existing_tag_from_attribute(access_test_objects, client, u
     headers = {"authorization": access_test_objects[f"{user_key}_token"]}
     attribute_id = access_test_objects[attribute_key].id
     tag_id = access_test_objects["default_tag"].id
-    response = client.post(f"/attributes/addTag/{attribute_id}/{tag_id}/local:1", headers=headers)
+    response = await client.post(f"/attributes/addTag/{attribute_id}/{tag_id}/local:1", headers=headers)
     assert response.status_code == 200
 
     request_body = None

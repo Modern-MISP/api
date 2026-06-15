@@ -16,7 +16,7 @@ async def test_set_user_setting(db, site_admin_user, site_admin_user_token, clie
     setting = SettingName.DEFAULT_RESTSEARCH_PARAMETERS.value
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post(
+    response = await client.post(
         f"/user_settings/setSetting/me/{setting}",
         json=body,
         headers=headers,
@@ -50,7 +50,7 @@ async def test_set_user_setting_override_existing(
     body: dict[str, Any] = {"value": {}}
 
     headers = {"authorization": instance_owner_org_admin_user_token}
-    response = client.post(
+    response = await client.post(
         f"/user_settings/setSetting/me/{user_setting.setting}",
         json=body,
         headers=headers,
@@ -72,7 +72,7 @@ async def test_set_user_setting_no_perms(
     body: dict[str, Any] = {"value": {}}
 
     headers = {"authorization": instance_owner_org_admin_user_token}
-    response = client.post(
+    response = await client.post(
         f"/user_settings/setSetting/{instance_two_owner_org_admin_user.id}/{SettingName.EVENT_INDEX_HIDE_COLUMNS.value}",
         json=body,
         headers=headers,
@@ -96,7 +96,7 @@ async def test_get_existing_user_setting_details2(
     await db.refresh(user_setting)
 
     headers = {"authorization": site_admin_user_token}
-    response = client.get(f"/user_settings/{user_setting.id}", headers=headers)
+    response = await client.get(f"/user_settings/{user_setting.id}", headers=headers)
 
     await db.delete(user_setting)
     await db.commit()
@@ -111,7 +111,7 @@ async def test_get_existing_user_setting_details2(
 @pytest.mark.asyncio
 async def test_get_non_existing_user_setting_details2(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.get("/user_settings/-1", headers=headers)
+    response = await client.get("/user_settings/-1", headers=headers)
 
     assert response.status_code == 404
 
@@ -128,7 +128,7 @@ async def test_get_user_setting_without_perms(
     await db.refresh(user_setting)
 
     headers = {"authorization": instance_org_two_admin_user_token}
-    response = client.get(f"/user_settings/{user_setting.id}", headers=headers)
+    response = await client.get(f"/user_settings/{user_setting.id}", headers=headers)
 
     await db.delete(user_setting)
     await db.commit()
@@ -147,7 +147,7 @@ async def test_get_existing_user_setting_details(
     await db.refresh(user_setting)
 
     headers = {"authorization": instance_owner_org_admin_user_token}
-    response = client.get(f"/user_settings/me/{user_setting.setting}", headers=headers)
+    response = await client.get(f"/user_settings/me/{user_setting.setting}", headers=headers)
 
     await db.delete(user_setting)
     await db.commit()
@@ -170,7 +170,7 @@ async def test_get_user_setting_by_invalid_us_name_uid(
     await db.commit()
 
     headers = {"authorization": instance_owner_org_admin_user_token}
-    response = client.get("/user_settings/me/invalid", headers=headers)
+    response = await client.get("/user_settings/me/invalid", headers=headers)
 
     await db.delete(user_setting)
     await db.commit()
@@ -181,7 +181,7 @@ async def test_get_user_setting_by_invalid_us_name_uid(
 @pytest.mark.asyncio
 async def test_get_non_existing_user_setting_details(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.get(f"/user_settings/-1/{SettingName.TAG_NUMERICAL_VALUE_OVERRIDE.value}", headers=headers)
+    response = await client.get(f"/user_settings/-1/{SettingName.TAG_NUMERICAL_VALUE_OVERRIDE.value}", headers=headers)
 
     assert response.status_code == 404
 
@@ -197,7 +197,7 @@ async def test_get_user_setting_without_perms2(
     await db.commit()
 
     headers = {"authorization": instance_org_two_admin_user_token}
-    response = client.get(f"/user_settings/me/{user_setting.setting}", headers=headers)
+    response = await client.get(f"/user_settings/me/{user_setting.setting}", headers=headers)
 
     await db.delete(user_setting)
     await db.commit()
@@ -208,7 +208,7 @@ async def test_get_user_setting_without_perms2(
 @pytest.mark.asyncio
 async def test_search_existing_user_setting_details(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.post("/user_settings", headers=headers, json={})
+    response = await client.post("/user_settings", headers=headers, json={})
 
     assert response.status_code == 200
 
@@ -218,7 +218,7 @@ async def test_search_non_existing_user_setting_details(instance_owner_org_admin
     body = {"setting": "doesnt exist"}
 
     headers = {"authorization": instance_owner_org_admin_user_token}
-    response = client.post("/user_settings", headers=headers, json=body)
+    response = await client.post("/user_settings", headers=headers, json=body)
 
     assert response.status_code == 200
     json = response.json()
@@ -240,7 +240,7 @@ async def test_search_user_setting_using_ids(
     body = {"id": user_setting.id, "user_id": user_setting.user_id}
 
     headers = {"authorization": instance_owner_org_admin_user_token}
-    response = client.post("/user_settings", json=body, headers=headers)
+    response = await client.post("/user_settings", json=body, headers=headers)
 
     await db.delete(user_setting)
     await db.commit()
@@ -254,7 +254,7 @@ async def test_search_user_setting_using_ids(
 @pytest.mark.asyncio
 async def test_get_all_user_settings(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.get("/user_settings", headers=headers)
+    response = await client.get("/user_settings", headers=headers)
 
     assert response.status_code == 200
     json = response.json()
@@ -274,7 +274,7 @@ async def test_get_all_user_settings_using_site_admin(
     await db.refresh(user_setting)
 
     headers = {"authorization": site_admin_user_token}
-    response = client.get("/user_settings", headers=headers)
+    response = await client.get("/user_settings", headers=headers)
 
     await db.delete(user_setting)
     await db.commit()
@@ -297,7 +297,7 @@ async def test_delete_user_setting(
     await db.refresh(user_setting)
 
     headers = {"authorization": instance_owner_org_admin_user_token}
-    response = client.delete(f"/user_settings/{user_setting.id}", headers=headers)
+    response = await client.delete(f"/user_settings/{user_setting.id}", headers=headers)
 
     assert response.status_code == 200
     json = response.json()
@@ -320,7 +320,7 @@ async def test_delete_user_setting_depr(
     await db.refresh(user_setting)
 
     headers = {"authorization": instance_owner_org_admin_user_token}
-    response = client.delete(f"/user_settings/delete/{user_setting.id}", headers=headers)
+    response = await client.delete(f"/user_settings/delete/{user_setting.id}", headers=headers)
 
     assert response.status_code == 200
     json = response.json()
@@ -343,7 +343,7 @@ async def test_delete_user_setting_lesser_perms(
     await db.refresh(user_setting)
 
     headers = {"authorization": instance_owner_org_admin_user_token}
-    response = client.delete(f"/user_settings/{user_setting.id}", headers=headers)
+    response = await client.delete(f"/user_settings/{user_setting.id}", headers=headers)
 
     await db.delete(user_setting)
     await db.commit()
@@ -363,7 +363,7 @@ async def test_get_user_setting_depr(
     await db.refresh(user_setting)
 
     headers = {"authorization": instance_owner_org_admin_user_token}
-    response = client.get(f"/user_settings/view/{user_setting.id}", headers=headers)
+    response = await client.get(f"/user_settings/view/{user_setting.id}", headers=headers)
 
     await db.delete(user_setting)
     await db.commit()

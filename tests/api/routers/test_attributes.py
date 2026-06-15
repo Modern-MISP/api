@@ -44,7 +44,7 @@ async def test_add_attribute_valid_data(site_admin_user_token, event, db, client
     assert event.id is not None
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post(f"/attributes/{event_id}", json=request_body, headers=headers)
+    response = await client.post(f"/attributes/{event_id}", json=request_body, headers=headers)
 
     assert response.status_code == 200
     response_json = response.json()
@@ -79,7 +79,7 @@ async def test_add_attribute_valid_data_by_event_uuid(site_admin_user_token, eve
     assert event_uuid is not None
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post(f"/attributes/{event_uuid}", json=request_body, headers=headers)
+    response = await client.post(f"/attributes/{event_uuid}", json=request_body, headers=headers)
 
     assert response.status_code == 200
     response_json = response.json()
@@ -113,7 +113,7 @@ async def test_add_attribute_invalid_event_id(site_admin_user_token, client) -> 
         "disable_correlation": False,
     }
     headers = {"authorization": site_admin_user_token}
-    response = client.post(
+    response = await client.post(
         "/attributes/0",
         json=request_body,
         headers=headers,
@@ -121,7 +121,7 @@ async def test_add_attribute_invalid_event_id(site_admin_user_token, client) -> 
     ic(response)
     assert response.status_code == 404
 
-    response = client.post(
+    response = await client.post(
         "/attributes/999999999",
         json=request_body,
         headers=headers,
@@ -129,7 +129,7 @@ async def test_add_attribute_invalid_event_id(site_admin_user_token, client) -> 
     ic(response)
     assert response.status_code == 404
 
-    response = client.post(
+    response = await client.post(
         "/attributes/a469325efe2f4f32a6854579f415ec6a",
         json=request_body,
         headers=headers,
@@ -151,7 +151,7 @@ async def test_add_attribute_invalid_data(
     event_id = event.id
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post(f"/attributes/{event_id}", json=request_body, headers=headers)
+    response = await client.post(f"/attributes/{event_id}", json=request_body, headers=headers)
     ic(response.json())
     assert response.status_code == 422
 
@@ -170,7 +170,7 @@ async def test_get_existing_attribute(
     ic(attribute.asdict())
 
     headers = {"authorization": site_admin_user_token}
-    response = client.get(f"/attributes/{attribute_id}", headers=headers)
+    response = await client.get(f"/attributes/{attribute_id}", headers=headers)
 
     assert response.status_code == 200
     response_json = response.json()
@@ -215,7 +215,7 @@ async def test_get_existing_attribute_by_uuid(
     ic(attribute.asdict())
 
     headers = {"authorization": site_admin_user_token}
-    response = client.get(f"/attributes/{attribute_uuid}", headers=headers)
+    response = await client.get(f"/attributes/{attribute_uuid}", headers=headers)
 
     assert response.status_code == 200
     response_json = response.json()
@@ -248,13 +248,13 @@ async def test_get_existing_attribute_by_uuid(
 @pytest.mark.asyncio
 async def test_get_invalid_or_non_existing_attribute(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.get("/attributes/0", headers=headers)
+    response = await client.get("/attributes/0", headers=headers)
     assert response.status_code == 404
 
-    response = client.get("/attributes/a469325efe2f4f32a6854579f415ec6a", headers=headers)
+    response = await client.get("/attributes/a469325efe2f4f32a6854579f415ec6a", headers=headers)
     assert response.status_code == 404
 
-    response = client.get("/attributes/invalid_id", headers=headers)
+    response = await client.get("/attributes/invalid_id", headers=headers)
     assert response.status_code == 422
 
 
@@ -284,7 +284,7 @@ async def test_edit_existing_attribute(
     assert attribute.id is not None
 
     headers = {"authorization": site_admin_user_token}
-    response = client.put(f"/attributes/{attribute_id}", json=request_body, headers=headers)
+    response = await client.put(f"/attributes/{attribute_id}", json=request_body, headers=headers)
 
     if response.status_code != 200:
         print(response.json())
@@ -343,7 +343,7 @@ async def test_edit_existing_attribute_by_uuid(
     assert attribute.id is not None
 
     headers = {"authorization": site_admin_user_token}
-    response = client.put(f"/attributes/{attribute_uuid}", json=request_body, headers=headers)
+    response = await client.put(f"/attributes/{attribute_uuid}", json=request_body, headers=headers)
 
     assert response.status_code == 200
     response_json = response.json()
@@ -384,11 +384,11 @@ async def test_edit_non_existing_attribute(site_admin_user_token, client) -> Non
         "disable_correlation": False,
     }
     headers = {"authorization": site_admin_user_token}
-    response = client.put("/attributes/0", json=request_body, headers=headers)
+    response = await client.put("/attributes/0", json=request_body, headers=headers)
     assert response.status_code == 404
-    response = client.put("/attributes/999999999", json=request_body, headers=headers)
+    response = await client.put("/attributes/999999999", json=request_body, headers=headers)
     assert response.status_code == 404
-    response = client.get("/attributes/a469325efe2f4f32a6854579f415ec6a", headers=headers)
+    response = await client.get("/attributes/a469325efe2f4f32a6854579f415ec6a", headers=headers)
     assert response.status_code == 404
 
 
@@ -406,7 +406,7 @@ async def test_delete_existing_attribute(
     attribute_id = attribute.id
 
     headers = {"authorization": site_admin_user_token}
-    response = client.delete(f"/attributes/{attribute_id}", headers=headers)
+    response = await client.delete(f"/attributes/{attribute_id}", headers=headers)
 
     assert response.status_code == 200
 
@@ -426,7 +426,7 @@ async def test_delete_existing_attribute_by_uuid(
     attribute_uuid = attribute.uuid
 
     headers = {"authorization": site_admin_user_token}
-    response = client.delete(f"/attributes/{attribute_uuid}", headers=headers)
+    response = await client.delete(f"/attributes/{attribute_uuid}", headers=headers)
 
     assert response.status_code == 200
 
@@ -434,11 +434,11 @@ async def test_delete_existing_attribute_by_uuid(
 @pytest.mark.asyncio
 async def test_delete_invalid_or_non_existing_attribute(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.delete("/attributes/0", headers=headers)
+    response = await client.delete("/attributes/0", headers=headers)
     assert response.status_code == 404
-    response = client.delete("/attributes/invalid_id", headers=headers)
+    response = await client.delete("/attributes/invalid_id", headers=headers)
     assert response.status_code == 422
-    response = client.get("/attributes/a469325efe2f4f32a6854579f415ec6a", headers=headers)
+    response = await client.get("/attributes/a469325efe2f4f32a6854579f415ec6a", headers=headers)
     assert response.status_code == 404
 
 
@@ -456,7 +456,7 @@ async def test_get_all_attributes(
     await db.commit()
 
     headers = {"authorization": site_admin_user_token}
-    response = client.get("/attributes", headers=headers)
+    response = await client.get("/attributes", headers=headers)
 
     assert response.status_code == 200
     response_json = response.json()
@@ -489,7 +489,7 @@ async def test_get_all_attributes(
 @pytest.mark.asyncio
 async def test_attribute_type_absolute_statistics(event, attribute, site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.get("/attributes/attributeStatistics/type/0", headers=headers)
+    response = await client.get("/attributes/attributeStatistics/type/0", headers=headers)
     assert response.status_code == 200
     response_json = response.json()
 
@@ -499,7 +499,7 @@ async def test_attribute_type_absolute_statistics(event, attribute, site_admin_u
 @pytest.mark.asyncio
 async def test_attribute_type_relative_statistics(event, attribute, site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.get("/attributes/attributeStatistics/type/1", headers=headers)
+    response = await client.get("/attributes/attributeStatistics/type/1", headers=headers)
     assert response.status_code == 200
     response_json = response.json()
 
@@ -511,7 +511,7 @@ async def test_attribute_type_relative_statistics(event, attribute, site_admin_u
 @pytest.mark.asyncio
 async def test_attribute_category_absolute_statistics(event, attribute, site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.get("/attributes/attributeStatistics/category/0", headers=headers)
+    response = await client.get("/attributes/attributeStatistics/category/0", headers=headers)
     assert response.status_code == 200
     response_json = response.json()
 
@@ -521,7 +521,7 @@ async def test_attribute_category_absolute_statistics(event, attribute, site_adm
 @pytest.mark.asyncio
 async def test_attribute_category_relative_statistics(event, attribute, site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.get("/attributes/attributeStatistics/category/1", headers=headers)
+    response = await client.get("/attributes/attributeStatistics/category/1", headers=headers)
     assert response.status_code == 200
     response_json = response.json()
 
@@ -533,7 +533,7 @@ async def test_attribute_category_relative_statistics(event, attribute, site_adm
 @pytest.mark.asyncio
 async def test_invalid_parameters_attribute_statistics(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.get("/attributes/attributeStatistics/type/non_boolean", headers=headers)
+    response = await client.get("/attributes/attributeStatistics/type/non_boolean", headers=headers)
     assert response.status_code == 422
 
 
@@ -543,7 +543,7 @@ async def test_invalid_parameters_attribute_statistics(site_admin_user_token, cl
 @pytest.mark.asyncio
 async def test_attribute_describe_types(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.get("/attributes/describeTypes", headers=headers)
+    response = await client.get("/attributes/describeTypes", headers=headers)
     assert response.status_code == 200
 
 
@@ -567,7 +567,7 @@ async def test_restore_existing_attribute(
     attribute_id = attribute.id
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post(f"/attributes/restore/{attribute_id}", headers=headers)
+    response = await client.post(f"/attributes/restore/{attribute_id}", headers=headers)
     assert response.status_code == 200
 
 
@@ -588,18 +588,18 @@ async def test_restore_existing_attribute_by_uuid(
     attribute_uuid = attribute.uuid
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post(f"/attributes/restore/{attribute_uuid}", headers=headers)
+    response = await client.post(f"/attributes/restore/{attribute_uuid}", headers=headers)
     assert response.status_code == 200
 
 
 @pytest.mark.asyncio
 async def test_restore_invalid_attribute(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.post("/attributes/restore/0", headers=headers)
+    response = await client.post("/attributes/restore/0", headers=headers)
     assert response.status_code == 404
-    response = client.post("/attributes/restore/invalid_id", headers=headers)
+    response = await client.post("/attributes/restore/invalid_id", headers=headers)
     assert response.status_code == 422
-    response = client.post("/attributes/restore/a469325efe2f4f32a6854579f415ec6a", headers=headers)
+    response = await client.post("/attributes/restore/a469325efe2f4f32a6854579f415ec6a", headers=headers)
     assert response.status_code == 404
 
 
@@ -629,7 +629,7 @@ async def test_add_existing_tag_to_attribute(
     tag_id = tag.id
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post(
+    response = await client.post(
         f"/attributes/addTag/{attribute_id}/{tag_id}/local:1",
         headers=headers,
     )
@@ -667,7 +667,7 @@ async def test_add_existing_tag_to_attribute_by_uuid(
     tag_id = tag.id
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post(
+    response = await client.post(
         f"/attributes/addTag/{attribute_uuid}/{tag_id}/local:1",
         headers=headers,
     )
@@ -693,14 +693,14 @@ async def test_add_invalid_or_non_existing_tag_to_attribute(
     attribute_id = attribute.id
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post(
+    response = await client.post(
         f"/attributes/addTag/{attribute_id}/0/local:0",
         headers=headers,
     )
     assert response.status_code == 200
     response_json = response.json()
     assert response_json["saved"] is False
-    response = client.post(
+    response = await client.post(
         f"/attributes/addTag/{attribute_id}/invalid_id/local:1",
         headers=headers,
     )
@@ -721,14 +721,14 @@ async def test_add_invalid_or_non_existing_tag_to_attribute_by_uuid(
     attribute_uuid = attribute.uuid
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post(
+    response = await client.post(
         f"/attributes/addTag/{attribute_uuid}/0/local:0",
         headers=headers,
     )
     assert response.status_code == 200
     response_json = response.json()
     assert response_json["saved"] is False
-    response = client.post(
+    response = await client.post(
         f"/attributes/addTag/{attribute_uuid}/invalid_id/local:1",
         headers=headers,
     )
@@ -745,7 +745,7 @@ async def test_remove_existing_tag_from_attribute(
     tag_id = attributetag.tag_id
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post(f"/attributes/removeTag/{attribute_id}/{tag_id}", headers=headers)
+    response = await client.post(f"/attributes/removeTag/{attribute_id}/{tag_id}", headers=headers)
 
     assert response.status_code == 200
     response_json = response.json()
@@ -762,7 +762,7 @@ async def test_remove_existing_tag_from_attribute_by_uuid(
     tag_id = attributetag.tag_id
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post(f"/attributes/removeTag/{attribute_uuid}/{tag_id}", headers=headers)
+    response = await client.post(f"/attributes/removeTag/{attribute_uuid}/{tag_id}", headers=headers)
 
     assert response.status_code == 200
     response_json = response.json()

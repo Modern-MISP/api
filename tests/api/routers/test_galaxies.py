@@ -199,7 +199,7 @@ async def test_import_galaxy_cluster_valid_data(db, site_admin_user_token, galax
     request_body = get_valid_import_galaxy_body(tag_name, galaxy_id, org_id, galaxy.uuid)
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post("/galaxies/import", json=request_body, headers=headers)
+    response = await client.post("/galaxies/import", json=request_body, headers=headers)
     response_json = response.json()
     assert response.status_code == 200
     assert response_json["name"] == "Galaxy clusters imported. 1 imported, 0 ignored, 0 failed."
@@ -225,7 +225,7 @@ async def test_import_galaxy_cluster_invalid_data(site_admin_user_token, galaxy,
     request_body = get_invalid_import_galaxy_body(tag_name, galaxy_id, org_id)
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post("/galaxies/import", json=request_body, headers=headers)
+    response = await client.post("/galaxies/import", json=request_body, headers=headers)
 
     assert response.status_code == 403
 
@@ -238,7 +238,7 @@ async def test_get_existing_galaxy_cluster(
     galaxy_cluster_id = add_galaxy_cluster_body3.id
 
     headers = {"authorization": site_admin_user_token}
-    response = client.get(f"/galaxies/clusters/{galaxy_cluster_id}", headers=headers)
+    response = await client.get(f"/galaxies/clusters/{galaxy_cluster_id}", headers=headers)
     ic(response.text)
 
     assert response.status_code == 200
@@ -259,7 +259,7 @@ async def test_get_default_galaxy_cluster(db: AsyncSession, site_admin_user_toke
     path = f"/galaxy_clusters/view/{galaxy_cluster.id}"
 
     headers = {"authorization": site_admin_user_token}
-    response = client.get(path, headers=headers)
+    response = await client.get(path, headers=headers)
     ic(response.text)
 
     assert response.status_code == 200
@@ -300,7 +300,7 @@ async def test_put_galaxy_cluster(db: AsyncSession, site_admin_user_token, test_
     }
 
     headers = {"authorization": site_admin_user_token}
-    response = client.put(path, json=body, headers=headers)
+    response = await client.put(path, json=body, headers=headers)
     ic(response.text)
 
     assert response.status_code == 200
@@ -325,10 +325,10 @@ async def test_put_galaxy_cluster(db: AsyncSession, site_admin_user_token, test_
 @pytest.mark.asyncio
 async def test_get_non_existing_galaxy_cluster(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.get("/galaxies/clusters/0", headers=headers)
+    response = await client.get("/galaxies/clusters/0", headers=headers)
     assert response.status_code == 404
     # todo: write fixture to get highest event_id, then use it here
-    response = client.get("/events/500", headers=headers)
+    response = await client.get("/events/500", headers=headers)
     assert response.status_code == 404
 
 
@@ -340,7 +340,7 @@ async def test_get_existing_galaxy_details(
     galaxy_cluster_id = add_galaxy_cluster_body.id
 
     headers = {"authorization": site_admin_user_token}
-    response = client.get(f"/galaxies/{galaxy_id}", headers=headers)
+    response = await client.get(f"/galaxies/{galaxy_id}", headers=headers)
 
     assert response.status_code == 200
 
@@ -358,7 +358,7 @@ async def test_get_existing_galaxy_details(
 @pytest.mark.asyncio
 async def test_get_non_existing_galaxy_details(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.get("/galaxies/0", headers=headers)
+    response = await client.get("/galaxies/0", headers=headers)
 
     assert response.status_code == 404
 
@@ -377,7 +377,7 @@ async def test_delete_existing_galaxy(
     galaxy_id = galaxy.id
 
     headers = {"authorization": site_admin_user_token}
-    response = client.delete(f"/galaxies/{galaxy_id}", headers=headers)
+    response = await client.delete(f"/galaxies/{galaxy_id}", headers=headers)
 
     assert response.status_code == 200
     response_json = response.json()
@@ -388,7 +388,7 @@ async def test_delete_existing_galaxy(
 @pytest.mark.asyncio
 async def test_delete_non_existing_galaxy(site_admin_user_token, galaxy, organisation, tag, client) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.delete("/galaxies/0", headers=headers)
+    response = await client.delete("/galaxies/0", headers=headers)
 
     assert response.status_code == 404
     response_json = response.json()
@@ -401,7 +401,7 @@ async def test_get_all_galaxies(
     db: AsyncSession, site_admin_user_token, add_galaxy_cluster_body, add_galaxy_cluster_body2, client
 ) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.get("/galaxies", headers=headers)
+    response = await client.get("/galaxies", headers=headers)
 
     assert response.status_code == 200
     response_json = response.json()
@@ -413,7 +413,7 @@ async def test_search_galaxies(site_admin_user_token, organisation, tag, galaxy,
     request_body = {"value": "test galaxy single name abcdefghijklmnopqrstuvwxyz"}
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post("/galaxies", json=request_body, headers=headers)
+    response = await client.post("/galaxies", json=request_body, headers=headers)
 
     assert response.status_code == 200
     response_json = response.json()
@@ -458,7 +458,7 @@ async def test_export_existing_galaxy(
     request_body = body.model_dump()
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post(f"/galaxies/export/{galaxy_id}", json=request_body, headers=headers)
+    response = await client.post(f"/galaxies/export/{galaxy_id}", json=request_body, headers=headers)
     ic(response.text)
 
     assert response.status_code == 200
@@ -493,7 +493,7 @@ async def test_export_non_existing_galaxy(
     body = ExportGalaxyBody(Galaxy=ExportGalaxyAttributes(default=False, distribution="1"))
     request_body = body.model_dump()
     headers = {"authorization": site_admin_user_token}
-    response = client.post("/galaxies/export/0", json=request_body, headers=headers)
+    response = await client.post("/galaxies/export/0", json=request_body, headers=headers)
 
     assert response.status_code == 404
 
@@ -506,7 +506,9 @@ async def test_attach_cluster(site_admin_user_token, organisation, add_galaxy_cl
     headers = {"authorization": site_admin_user_token}
 
     request_body = {"Galaxy": {"target_id": galaxy_cluster_id1}}
-    response = client.post(f"/galaxies/attachCluster/{event_id}/event/local:0", json=request_body, headers=headers)
+    response = await client.post(
+        f"/galaxies/attachCluster/{event_id}/event/local:0", json=request_body, headers=headers
+    )
 
     assert response.status_code == 200
     assert response.json()["success"] == "Cluster attached."
@@ -516,7 +518,7 @@ async def test_attach_cluster(site_admin_user_token, organisation, add_galaxy_cl
 async def test_attach_cluster_non_existing_cluster(site_admin_user_token, client) -> None:
     request_body = {"Galaxy": {"target_id": 0}}
     headers = {"authorization": site_admin_user_token}
-    response = client.post("/galaxies/attachCluster/1/event/local:0", json=request_body, headers=headers)
+    response = await client.post("/galaxies/attachCluster/1/event/local:0", json=request_body, headers=headers)
 
     assert response.status_code == 404
     assert response.json()["detail"] == "Invalid Galaxy cluster."

@@ -25,7 +25,7 @@ async def server(db, instance_owner_org):
 
 @pytest.mark.asyncio
 async def test_get_server(site_admin_user_token, instance_owner_org, server, client) -> None:
-    result = client.get(f"/servers/remote/{server.id}", headers={"authorization": site_admin_user_token})
+    result = await client.get(f"/servers/remote/{server.id}", headers={"authorization": site_admin_user_token})
 
     assert result.status_code == 200
     response = result.json()
@@ -52,7 +52,7 @@ async def test_get_server(site_admin_user_token, instance_owner_org, server, cli
 
 @pytest.mark.asyncio
 async def test_get_servers(site_admin_user_token, instance_owner_org, server, client) -> None:
-    result = client.get("/servers/remote/getAll", headers={"authorization": site_admin_user_token})
+    result = await client.get("/servers/remote/getAll", headers={"authorization": site_admin_user_token})
 
     assert result.status_code == 200
     response = result.json()
@@ -83,7 +83,7 @@ async def test_get_servers(site_admin_user_token, instance_owner_org, server, cl
 async def test_add_remote_server(site_admin_user_token, client, db) -> None:
     name = "test_user" + str(time())
 
-    response = client.post(
+    response = await client.post(
         "/servers/remote/add",
         headers={"authorization": site_admin_user_token},
         json={
@@ -125,7 +125,7 @@ async def test_add_remote_server(site_admin_user_token, client, db) -> None:
 async def test_delete_remote_server(site_admin_user_token, client, db) -> None:
     name = "test_user" + str(time())
 
-    response = client.post(
+    response = await client.post(
         "/servers/remote/add",
         headers={"authorization": site_admin_user_token},
         json={
@@ -159,7 +159,7 @@ async def test_delete_remote_server(site_admin_user_token, client, db) -> None:
 
     # delete api call
     server_id = server.id
-    response_delete = client.delete(
+    response_delete = await client.delete(
         f"/servers/remote/delete/{server_id}",
         headers={"authorization": site_admin_user_token},
     )
@@ -198,7 +198,7 @@ async def test_delete_remote_server_generated(site_admin_user_token, client, db,
 
     # delete api call
     server_id = server.id
-    response_delete = client.delete(
+    response_delete = await client.delete(
         f"/servers/remote/delete/{server_id}",
         headers={"authorization": site_admin_user_token},
     )
@@ -218,20 +218,20 @@ async def test_delete_remote_server_generated(site_admin_user_token, client, db,
 
 @pytest.mark.asyncio
 async def test_unauthorized_access(client, server) -> None:
-    response = client.get(f"/servers/remote/{server.id}")
+    response = await client.get(f"/servers/remote/{server.id}")
     assert response.status_code == 401
 
 
 @pytest.mark.asyncio
 async def test_invalid_server_id(site_admin_user_token, client) -> None:
     invalid_id = 99999
-    response = client.get(f"/servers/remote/{invalid_id}", headers={"authorization": site_admin_user_token})
+    response = await client.get(f"/servers/remote/{invalid_id}", headers={"authorization": site_admin_user_token})
     assert response.status_code == 404
 
 
 @pytest.mark.asyncio
 async def test_create_server_with_missing_fields(site_admin_user_token, client) -> None:
-    response = client.post(
+    response = await client.post(
         "/servers/remote/add",
         headers={"authorization": site_admin_user_token},
         json={
@@ -259,7 +259,7 @@ async def test_edit_server(db, site_admin_user_token, client, instance_two_serve
         "self_signed": False,
         "skip_proxy": True,
     }
-    edit_response = client.post(
+    edit_response = await client.post(
         f"/servers/remote/edit/{instance_two_server.id}",
         headers={"authorization": site_admin_user_token},
         json=request,

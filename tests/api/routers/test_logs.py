@@ -13,7 +13,7 @@ from mmisp.db.models.log import Log
 async def test_logs_index(site_admin_user_token, client, log_entry, db) -> None:
     json_req = LogsRequest(model="Workflow", model_id=12345678).model_dump()
     headers = {"authorization": site_admin_user_token}
-    response = client.post("/logs/index", headers=headers, json=json_req)
+    response = await client.post("/logs/index", headers=headers, json=json_req)
 
     assert response.status_code == 200
     json_dict = json.loads(response.content.decode())
@@ -27,7 +27,7 @@ async def test_logs_index(site_admin_user_token, client, log_entry, db) -> None:
 async def test_logs_noresult(site_admin_user_token, client, log_entry, db) -> None:
     json_req = LogsRequest(model="User", model_id=12345678).model_dump()
     headers = {"authorization": site_admin_user_token}
-    response = client.post("/logs/index", headers=headers, json=json_req)
+    response = await client.post("/logs/index", headers=headers, json=json_req)
 
     assert response.status_code == 200
     json_dict = json.loads(response.content.decode())

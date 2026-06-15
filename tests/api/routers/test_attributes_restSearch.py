@@ -8,7 +8,7 @@ async def test_restsearch_no_return_format(db: AsyncSession, event, site_admin_u
     request_body = {"page": 1, "limit": 100}
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post("/attributes/restSearch", json=request_body, headers=headers)
+    response = await client.post("/attributes/restSearch", json=request_body, headers=headers)
     if response.status_code > 300:
         print(response.json())
     assert response.status_code == 200
@@ -27,7 +27,7 @@ async def test_valid_search_attribute_data(
     await db.commit()
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post("/attributes/restSearch", json=request_body, headers=headers)
+    response = await client.post("/attributes/restSearch", json=request_body, headers=headers)
     if response.status_code > 300:
         print(response.json())
     assert response.status_code == 200
@@ -46,7 +46,7 @@ async def test_not_implemented_restsearch(
     await db.commit()
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post("/attributes/restSearch", json=request_body, headers=headers)
+    response = await client.post("/attributes/restSearch", json=request_body, headers=headers)
     response_json = response.json()
     ic(response_json)
     assert response.status_code == 501
@@ -56,5 +56,5 @@ async def test_not_implemented_restsearch(
 async def test_invalid_search_attribute_data(site_admin_user_token, client) -> None:
     request_body = {"returnFormat": "invalid format"}
     headers = {"authorization": site_admin_user_token}
-    response = client.post("/attributes/restSearch", json=request_body, headers=headers)
+    response = await client.post("/attributes/restSearch", json=request_body, headers=headers)
     assert response.status_code == 404

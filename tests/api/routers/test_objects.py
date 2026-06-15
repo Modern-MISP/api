@@ -102,7 +102,7 @@ async def test_add_object_to_event(
     event_id = event.id
     ic(object_data)
     headers = {"authorization": site_admin_user_token}
-    response = client.post(f"/objects/{event_id}/{object_template_id}", json=object_data, headers=headers)
+    response = await client.post(f"/objects/{event_id}/{object_template_id}", json=object_data, headers=headers)
     assert response.status_code == 201
 
     response_data = response.json()
@@ -128,7 +128,7 @@ async def test_add_object_response_format(
     event_id = event.id
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post(f"/objects/{event_id}/{object_template_id}", json=object_data, headers=headers)
+    response = await client.post(f"/objects/{event_id}/{object_template_id}", json=object_data, headers=headers)
     assert response.headers["Content-Type"] == "application/json"
     assert "Object" in response.json()
 
@@ -139,7 +139,7 @@ async def test_add_object_response_format(
 @pytest.mark.asyncio
 async def test_search_objects_with_filters(search_data: dict[str, Any], site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.post("/objects/restsearch", json=search_data, headers=headers)
+    response = await client.post("/objects/restsearch", json=search_data, headers=headers)
     assert response.status_code == 200
 
     response_data = response.json()
@@ -156,7 +156,7 @@ async def test_search_objects_with_filters(search_data: dict[str, Any], site_adm
 @pytest.mark.asyncio
 async def test_search_objects_response_format(search_data: dict[str, Any], site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.post("/objects/restsearch", json=search_data, headers=headers)
+    response = await client.post("/objects/restsearch", json=search_data, headers=headers)
     assert response.headers["Content-Type"] == "application/json"
     response_data = response.json()
     assert "response" in response_data
@@ -166,7 +166,7 @@ async def test_search_objects_response_format(search_data: dict[str, Any], site_
 @pytest.mark.asyncio
 async def test_search_objects_data_integrity(search_data: dict[str, Any], site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.post("/objects/restsearch", json=search_data, headers=headers)
+    response = await client.post("/objects/restsearch", json=search_data, headers=headers)
     response_data = response.json()
     for obj in response_data["response"]:
         assert "id" in obj["object"] != ""
@@ -192,12 +192,12 @@ async def test_get_object_details_valid_id(
     event_id = event.id
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post(f"/objects/{event_id}/{object_template_id}", json=object_data, headers=headers)
+    response = await client.post(f"/objects/{event_id}/{object_template_id}", json=object_data, headers=headers)
     assert response.status_code == 201
 
     response_data = response.json()
     object_id = response_data["Object"]["id"]
-    response = client.get(f"/objects/{object_id}", headers=headers)
+    response = await client.get(f"/objects/{object_id}", headers=headers)
     assert response.status_code == 200
 
     response_data = response.json()
@@ -239,12 +239,12 @@ async def test_get_object_details_response_format(
     event_id = event.id
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post(f"/objects/{event_id}/{object_template_id}", json=object_data, headers=headers)
+    response = await client.post(f"/objects/{event_id}/{object_template_id}", json=object_data, headers=headers)
     assert response.status_code == 201
 
     response_data = response.json()
     object_id = response_data["Object"]["id"]
-    response = client.get(f"/objects/{object_id}", headers=headers)
+    response = await client.get(f"/objects/{object_id}", headers=headers)
     assert response.headers["Content-Type"] == "application/json"
     response_data = response.json()
     assert "Object" in response_data
@@ -255,7 +255,7 @@ async def test_get_object_details_response_format(
 async def test_get_object_details_invalid_id(site_admin_user_token, client) -> None:
     object_id: str = "invalid_id"
     headers = {"authorization": site_admin_user_token}
-    response = client.get(f"/objects/{object_id}", headers=headers)
+    response = await client.get(f"/objects/{object_id}", headers=headers)
     assert response.status_code == 422
 
 
@@ -278,13 +278,13 @@ async def test_get_object_details_data_integrity(
     event_id = event.id
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post(f"/objects/{event_id}/{object_template_id}", json=object_data, headers=headers)
+    response = await client.post(f"/objects/{event_id}/{object_template_id}", json=object_data, headers=headers)
     ic(response.json())
     assert response.status_code == 201
 
     response_data = response.json()
     object_id = response_data["Object"]["id"]
-    response = client.get(f"/objects/{object_id}", headers=headers)
+    response = await client.get(f"/objects/{object_id}", headers=headers)
     response_data = response.json()
     object_data = response_data["Object"]
     assert isinstance(object_data["id"], int)
@@ -318,12 +318,12 @@ async def test_delete_object_hard_delete(
     event_id = event.id
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post(f"/objects/{event_id}/{object_template_id}", json=object_data, headers=headers)
+    response = await client.post(f"/objects/{event_id}/{object_template_id}", json=object_data, headers=headers)
     assert response.status_code == 201
 
     response_data = response.json()
     object_id = response_data["Object"]["id"]
-    response = client.delete(f"/objects/{object_id}/true", headers=headers)
+    response = await client.delete(f"/objects/{object_id}/true", headers=headers)
     assert response.status_code == 200
 
     response_data = response.json()
@@ -351,12 +351,12 @@ async def test_delete_object_soft_delete(
     event_id = event.id
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post(f"/objects/{event_id}/{object_template_id}", json=object_data, headers=headers)
+    response = await client.post(f"/objects/{event_id}/{object_template_id}", json=object_data, headers=headers)
     assert response.status_code == 201
 
     response_data = response.json()
     object_id = response_data["Object"]["id"]
-    response_delete = client.delete(f"/objects/{object_id}/false", headers=headers)
+    response_delete = await client.delete(f"/objects/{object_id}/false", headers=headers)
     assert response_delete.status_code == 200
 
     response_delete_data = response_delete.json()
@@ -371,7 +371,7 @@ async def test_delete_object_soft_delete(
 async def test_delete_object_invalid_id(site_admin_user_token, client) -> None:
     object_id = "invalid_id"
     headers = {"authorization": site_admin_user_token}
-    response_delete = client.delete(f"/objects/{object_id}/true", headers=headers)
+    response_delete = await client.delete(f"/objects/{object_id}/true", headers=headers)
     assert response_delete.status_code == 422
     assert "detail" in response_delete.json()
 
@@ -392,12 +392,12 @@ async def test_delete_object_invalid_hard_delete(
     event_id = event.id
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post(f"/objects/{event_id}/{object_template_id}", json=object_data, headers=headers)
+    response = await client.post(f"/objects/{event_id}/{object_template_id}", json=object_data, headers=headers)
     assert response.status_code == 201
 
     response_data = response.json()
     object_id = response_data["Object"]["id"]
-    response_delete = client.delete(f"/objects/{object_id}/invalid_value", headers=headers)
+    response_delete = await client.delete(f"/objects/{object_id}/invalid_value", headers=headers)
     assert response_delete.status_code == 422
     assert "detail" in response_delete.json()
     await delete_attributes_from_object_resp(db, response_data)

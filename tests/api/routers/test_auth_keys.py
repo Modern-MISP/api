@@ -41,7 +41,7 @@ async def test_add_auth_key(db, site_admin_user_token, site_admin_user, client) 
     body = {"comment": f"test key {time()}"}
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post(f"/auth_keys/{site_admin_user.id}", json=body, headers=headers)
+    response = await client.post(f"/auth_keys/{site_admin_user.id}", json=body, headers=headers)
 
     assert response.status_code == 201
     response_json = response.json()
@@ -57,7 +57,7 @@ async def test_add_auth_key_depr(db, site_admin_user_token, site_admin_user, cli
     body = {"comment": f"test key {time()}"}
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post(f"/auth_keys/add/{site_admin_user.id}", json=body, headers=headers)
+    response = await client.post(f"/auth_keys/add/{site_admin_user.id}", json=body, headers=headers)
 
     assert response.status_code == 201
     response_json = response.json()
@@ -69,7 +69,7 @@ async def test_add_auth_key_depr(db, site_admin_user_token, site_admin_user, cli
 @pytest.mark.asyncio
 async def test_search_existing_auth_key_details(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.post("/auth_keys", json={}, headers=headers)
+    response = await client.post("/auth_keys", json={}, headers=headers)
 
     assert response.status_code == 200
 
@@ -79,7 +79,7 @@ async def test_search_non_existing_auth_key_details(site_admin_user_token, clien
     body = {"id": "-1"}
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post("/auth_keys", json=body, headers=headers)
+    response = await client.post("/auth_keys", json=body, headers=headers)
 
     assert response.status_code == 200
     json = response.json()
@@ -90,7 +90,7 @@ async def test_search_non_existing_auth_key_details(site_admin_user_token, clien
 @pytest.mark.asyncio
 async def test_get_existing_auth_key_details(auth_key, site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.get(f"/auth_keys/view/{auth_key.id}", headers=headers)
+    response = await client.get(f"/auth_keys/view/{auth_key.id}", headers=headers)
 
     assert response.status_code == 200
     json = response.json()
@@ -101,7 +101,7 @@ async def test_get_existing_auth_key_details(auth_key, site_admin_user_token, cl
 @pytest.mark.asyncio
 async def test_get_non_existing_auth_key_details(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.get("/auth_keys/view/-1", headers=headers)
+    response = await client.get("/auth_keys/view/-1", headers=headers)
 
     assert response.status_code == 404
 
@@ -111,7 +111,7 @@ async def test_edit_auth_key(auth_key, instance_owner_org_admin_user_token, clie
     body = {"comment": f"updated {time()}"}
 
     headers = {"authorization": instance_owner_org_admin_user_token}
-    response = client.put(f"/auth_keys/{auth_key.id}", headers=headers, json=body)
+    response = await client.put(f"/auth_keys/{auth_key.id}", headers=headers, json=body)
 
     assert response.status_code == 200
     json = response.json()
@@ -125,7 +125,7 @@ async def test_edit_auth_key_depr(auth_key, instance_owner_org_admin_user_token,
     body = {"comment": f"updated {time()}"}
 
     headers = {"authorization": instance_owner_org_admin_user_token}
-    response = client.post(f"/auth_keys/edit/{auth_key.id}", headers=headers, json=body)
+    response = await client.post(f"/auth_keys/edit/{auth_key.id}", headers=headers, json=body)
 
     assert response.status_code == 200
     json = response.json()
@@ -137,7 +137,7 @@ async def test_edit_auth_key_depr(auth_key, instance_owner_org_admin_user_token,
 @pytest.mark.asyncio
 async def test_get_all_auth_keys(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.get("/auth_keys", headers=headers)
+    response = await client.get("/auth_keys", headers=headers)
 
     assert response.status_code == 200
     assert isinstance(response.json(), list)
@@ -146,7 +146,7 @@ async def test_get_all_auth_keys(site_admin_user_token, client) -> None:
 @pytest.mark.asyncio
 async def test_view_own_auth_keys(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.get("/auth_keys/viewOwn", headers=headers)
+    response = await client.get("/auth_keys/viewOwn", headers=headers)
 
     ic(response.json())
 
@@ -161,7 +161,7 @@ async def test_view_own_auth_keys(site_admin_user_token, client) -> None:
 @pytest.mark.asyncio
 async def test_view_own_auth_keys_depr(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.get("/auth_keys/index/{userId}", headers=headers)
+    response = await client.get("/auth_keys/index/{userId}", headers=headers)
 
     ic(response.json())
 
@@ -176,7 +176,7 @@ async def test_view_own_auth_keys_depr(site_admin_user_token, client) -> None:
 @pytest.mark.asyncio
 async def test_get_all_auth_keys_with_params(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.get("/auth_keys?limit=10&page=2", headers=headers)
+    response = await client.get("/auth_keys?limit=10&page=2", headers=headers)
 
     assert response.status_code == 200
     assert isinstance(response.json(), list)
@@ -184,7 +184,7 @@ async def test_get_all_auth_keys_with_params(site_admin_user_token, client) -> N
 
 @pytest.mark.asyncio
 async def test_view_auth_key_details_unauthorized(auth_key, client) -> None:
-    response = client.get(f"/auth_keys/view/{auth_key.id}")
+    response = await client.get(f"/auth_keys/view/{auth_key.id}")
 
     assert response.status_code == 401
 
@@ -194,7 +194,7 @@ async def test_add_auth_key_invalid_uuid(db, site_admin_user_token, site_admin_u
     body = {"uuid": "invalid-uuid", "comment": f"test key {time()}"}
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post(f"/auth_keys/{site_admin_user.id}", json=body, headers=headers)
+    response = await client.post(f"/auth_keys/{site_admin_user.id}", json=body, headers=headers)
 
     assert response.status_code == 400
 
@@ -204,7 +204,7 @@ async def test_edit_auth_key_invalid_id(instance_owner_org_admin_user_token, cli
     body = {"comment": f"updated {time()}"}
 
     headers = {"authorization": instance_owner_org_admin_user_token}
-    response = client.put("/auth_keys/invalid-id", headers=headers, json=body)
+    response = await client.put("/auth_keys/invalid-id", headers=headers, json=body)
 
     assert response.status_code == 422
 
@@ -212,14 +212,14 @@ async def test_edit_auth_key_invalid_id(instance_owner_org_admin_user_token, cli
 @pytest.mark.asyncio
 async def test_delete_non_existing_auth_key(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.delete("/auth_keys/-1", headers=headers)
+    response = await client.delete("/auth_keys/-1", headers=headers)
 
     assert response.status_code == 404
 
 
 @pytest.mark.asyncio
 async def test_view_own_auth_keys_no_auth(client) -> None:
-    response = client.get("/auth_keys/viewOwn")
+    response = await client.get("/auth_keys/viewOwn")
 
     assert response.status_code == 401
 
@@ -228,32 +228,32 @@ async def test_view_own_auth_keys_no_auth(client) -> None:
 async def test_search_auth_keys_invalid_input(client, site_admin_user_token) -> None:
     headers = {"authorization": site_admin_user_token}
     body = {"limit": 1000}  # Invalid limit > 500
-    response = client.post("/auth_keys", json=body, headers=headers)
+    response = await client.post("/auth_keys", json=body, headers=headers)
     assert response.status_code == 422  # Unprocessable Entity
 
     body = {"page": 0}  # Invalid page < 1
-    response = client.post("/auth_keys", json=body, headers=headers)
+    response = await client.post("/auth_keys", json=body, headers=headers)
     assert response.status_code == 422
 
 
 @pytest.mark.asyncio
 async def test_view_own_auth_keys_deprecated_route(client, instance_owner_org_admin_user_token) -> None:
     headers = {"authorization": instance_owner_org_admin_user_token}
-    response = client.get("/auth_keys/index/{userId}", headers=headers)
+    response = await client.get("/auth_keys/index/{userId}", headers=headers)
     assert response.status_code == 200
 
 
 @pytest.mark.asyncio
 async def test_auth_keys_delete_not_found(client, site_admin_user_token) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.delete("/auth_keys/0", headers=headers)
+    response = await client.delete("/auth_keys/0", headers=headers)
     assert response.status_code == 404
 
 
 @pytest.mark.asyncio
 async def test_auth_keys_view_own(client, instance_owner_org_admin_user_token) -> None:
     headers = {"authorization": instance_owner_org_admin_user_token}
-    response = client.get("/auth_keys/viewOwn", headers=headers)
+    response = await client.get("/auth_keys/viewOwn", headers=headers)
     assert response.status_code == 200
     assert isinstance(response.json(), list)
 
@@ -263,7 +263,7 @@ async def test_auth_keys_view_unauthorized_user(auth_key, client, read_only_user
     ic(read_only_user_token)
     ic(auth_key)
     headers = {"authorization": read_only_user_token}
-    response = client.get(f"/auth_keys/view/{auth_key.id}", headers=headers)
+    response = await client.get(f"/auth_keys/view/{auth_key.id}", headers=headers)
     assert response.status_code == 404
 
 
@@ -271,14 +271,14 @@ async def test_auth_keys_view_unauthorized_user(auth_key, client, read_only_user
 async def test_auth_keys_edit_unauthorized_user(auth_key, client, read_only_user_token) -> None:
     body = {"comment": f"updated {time()}"}
     headers = {"authorization": read_only_user_token}
-    response = client.put(f"/auth_keys/{auth_key.id}", json=body, headers=headers)
+    response = await client.put(f"/auth_keys/{auth_key.id}", json=body, headers=headers)
     assert response.status_code == 404
 
 
 @pytest.mark.asyncio
 async def test_delete_auth_key(auth_key, site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.delete(f"/auth_keys/{auth_key.id}", headers=headers)
+    response = await client.delete(f"/auth_keys/{auth_key.id}", headers=headers)
 
     assert response.status_code == 200
     json = response.json()
@@ -292,7 +292,7 @@ async def test_delete_auth_key(auth_key, site_admin_user_token, client) -> None:
 @pytest.mark.asyncio
 async def test_delete_auth_key_depr(auth_key, site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.post(f"/auth_keys/delete/{auth_key.id}", headers=headers)
+    response = await client.post(f"/auth_keys/delete/{auth_key.id}", headers=headers)
 
     assert response.status_code == 200
     json = response.json()

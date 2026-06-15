@@ -364,7 +364,7 @@ async def test_restore_attribute(
 #    attribute_Id = access_test_objects["default_attribute"].id
 #    tag_Id = access_test_objects["default_tag"].id
 #    headers = {"authorization": access_test_objects["default_user_token"]}
-#    client.post(f"/attributes/addTag/{attribute_Id}/{tag_Id}", headers=headers)
+#    await client.post(f"/attributes/addTag/{attribute_Id}/{tag_Id}", headers=headers)
 #
 #    request_body = None
 #    path = f"/attributes/removeTag/{attribute_Id}/{tag_Id}"

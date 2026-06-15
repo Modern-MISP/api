@@ -39,7 +39,7 @@ async def workflows(db):
 @pytest.mark.asyncio
 async def test_workflows_index(db, site_admin_user_token, client, workflows) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.get("/workflows/index", headers=headers)
+    response = await client.get("/workflows/index", headers=headers)
 
     result = await db.execute(select(Workflow))
     workflows: Sequence[Workflow] = result.scalars().all()
@@ -72,7 +72,7 @@ async def test_workflow_edit_edit_existing(db, site_admin_user_token, client) ->
         "data[Workflow][description]": "new workflow description",
         "data[Workflow][data]": data,
     }
-    response = client.post(f"/workflows/edit/{id}", headers=headers, data=payload)
+    response = await client.post(f"/workflows/edit/{id}", headers=headers, data=payload)
 
     assert response.status_code == 200
 
@@ -110,7 +110,7 @@ async def test_check_graph(db, site_admin_user_token, client):
     payload = {
         "graph": data,
     }
-    response = client.post("/workflows/checkGraph", headers=headers, data=payload)
+    response = await client.post("/workflows/checkGraph", headers=headers, data=payload)
 
     assert response.status_code == 200
     check_graph_json = json.loads(response.text)
@@ -143,7 +143,7 @@ async def test_edit_workflow_invalid(site_admin_user_token, client, workflows) -
         "data[Workflow][description]": "new workflow description",
         "data[Workflow][data]": data_enc,
     }
-    response = client.post(f"/workflows/edit/{id}", headers=headers, data=payload)
+    response = await client.post(f"/workflows/edit/{id}", headers=headers, data=payload)
 
     assert response.status_code == 400
 
@@ -152,7 +152,7 @@ async def test_edit_workflow_invalid(site_admin_user_token, client, workflows) -
 async def test_workflow_view(client, site_admin_user_token, workflows) -> None:
     id: int = 50
     headers = {"authorization": site_admin_user_token}
-    response = client.get(f"/workflows/view/{id}", headers=headers)
+    response = await client.get(f"/workflows/view/{id}", headers=headers)
 
     assert response.status_code == 200
     workflow_dict = json.loads(response.content.decode())["Workflow"]
@@ -165,7 +165,7 @@ async def test_workflow_view(client, site_admin_user_token, workflows) -> None:
 async def test_workflow_view_invalid_id(db, client, site_admin_user_token) -> None:
     id: int = 200
     headers = {"authorization": site_admin_user_token}
-    response = client.get(f"/workflows/view/{id}", headers=headers)
+    response = await client.get(f"/workflows/view/{id}", headers=headers)
 
     db_result = await db.execute(select(Workflow).where(Workflow.id == id))
     workflow: Workflow = db_result.scalars().first()
@@ -191,7 +191,7 @@ async def test_workflow_delete_success(client, site_admin_user_token, db) -> Non
     assert workflow.id == id
 
     headers = {"authorization": site_admin_user_token}
-    response = client.delete(f"/workflows/delete/{id}", headers=headers)
+    response = await client.delete(f"/workflows/delete/{id}", headers=headers)
 
     db.expire(workflow)
     workflow2 = await db.get(Workflow, id)
@@ -216,7 +216,7 @@ async def test_workflow_delete_invalid_id(client, site_admin_user_token, db) -> 
     assert workflow is None
 
     headers = {"authorization": site_admin_user_token}
-    response = client.delete(f"/workflows/delete/{id}", headers=headers)
+    response = await client.delete(f"/workflows/delete/{id}", headers=headers)
 
     await db.commit()
 
@@ -236,7 +236,7 @@ async def test_workflow_delete_invalid_id(client, site_admin_user_token, db) -> 
 async def test_workflow_editor_create_new_workflow(client, site_admin_user_token, db) -> None:
     trigger_id = "attribute-after-save"
     headers = {"authorization": site_admin_user_token}
-    response = client.post(f"/workflows/editor/{trigger_id}", headers=headers)
+    response = await client.post(f"/workflows/editor/{trigger_id}", headers=headers)
 
     assert response.status_code == 200
 
@@ -253,7 +253,7 @@ async def test_workflow_editor_create_new_workflow(client, site_admin_user_token
 @pytest.mark.asyncio
 async def test_workflow_triggers_get_all(client, site_admin_user_token) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.get("/workflows/triggers", headers=headers)
+    response = await client.get("/workflows/triggers", headers=headers)
 
     assert response.status_code == 200
 
@@ -268,7 +268,7 @@ async def test_workflow_triggers_get_all(client, site_admin_user_token) -> None:
 @pytest.mark.asyncio
 async def test_workflow_moduleIndex_get_all(client, site_admin_user_token) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.get("/workflows/moduleIndex/type:all", headers=headers)
+    response = await client.get("/workflows/moduleIndex/type:all", headers=headers)
 
     assert response.status_code == 200
 
@@ -286,7 +286,7 @@ async def test_workflow_moduleView(client, site_admin_user_token) -> None:
     name = "stop-execution"
 
     headers = {"authorization": site_admin_user_token}
-    response = client.get(f"/workflows/moduleView/{name}", headers=headers)
+    response = await client.get(f"/workflows/moduleView/{name}", headers=headers)
 
     assert response.status_code == 200
 
@@ -297,7 +297,7 @@ async def test_workflow_moduleView(client, site_admin_user_token) -> None:
 async def test_workflow_toggleModule(client, site_admin_user_token, db, workflows) -> None:
     name = "attribute-after-save"
     headers = {"authorization": site_admin_user_token}
-    response = client.post(f"/workflows/toggleModule/{name}/1/1", headers=headers)
+    response = await client.post(f"/workflows/toggleModule/{name}/1/1", headers=headers)
 
     assert response.status_code == 200
 
@@ -311,7 +311,7 @@ async def test_workflow_toggleModule(client, site_admin_user_token, db, workflow
     assert not graph.root.disabled
 
     headers = {"authorization": site_admin_user_token}
-    response2 = client.post(f"/workflows/toggleModule/{name}/0/1", headers=headers)
+    response2 = await client.post(f"/workflows/toggleModule/{name}/0/1", headers=headers)
 
     assert response2.status_code == 200
 
@@ -328,7 +328,7 @@ async def test_workflow_toggleModule(client, site_admin_user_token, db, workflow
 @pytest.mark.asyncio
 async def test_workflow_toggleWorkflows(client, site_admin_user_token, db) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.post("/workflows/toggleWorkflows/1", headers=headers)
+    response = await client.post("/workflows/toggleWorkflows/1", headers=headers)
 
     assert response.status_code == 200
     workflow_setting_name = "workflow_feature_enabled"
@@ -336,7 +336,7 @@ async def test_workflow_toggleWorkflows(client, site_admin_user_token, db) -> No
     admin_setting_enabled = await get_admin_setting(workflow_setting_name, db)
     assert admin_setting_enabled == "True"
 
-    response2 = client.post("/workflows/toggleWorkflows/0", headers=headers)
+    response2 = await client.post("/workflows/toggleWorkflows/0", headers=headers)
     assert response2.status_code == 200
     await db.commit()
     admin_setting_disabled = await get_admin_setting(workflow_setting_name, db)
@@ -346,16 +346,18 @@ async def test_workflow_toggleWorkflows(client, site_admin_user_token, db) -> No
 @pytest.mark.asyncio
 async def test_workflow_workflowSetting(client, site_admin_user_token) -> None:
     headers = {"authorization": site_admin_user_token}
-    assert client.post("/workflows/toggleWorkflows/0", headers=headers).status_code == 200
+    response = await client.post("/workflows/toggleWorkflows/0", headers=headers)
+    assert response.status_code == 200
 
-    response_false = client.get("/workflows/workflowsSetting", headers=headers)
+    response_false = await client.get("/workflows/workflowsSetting", headers=headers)
     assert response_false.status_code == 200
     assert response_false.text == "false"
 
     headers = {"authorization": site_admin_user_token}
-    assert client.post("/workflows/toggleWorkflows/1", headers=headers).status_code == 200
+    response = await client.post("/workflows/toggleWorkflows/1", headers=headers)
+    assert response.status_code == 200
 
-    response_true = client.get("/workflows/workflowsSetting", headers=headers)
+    response_true = await client.get("/workflows/workflowsSetting", headers=headers)
     assert response_true.status_code == 200
     assert response_true.text == "true"
 
@@ -364,14 +366,16 @@ async def test_workflow_workflowSetting(client, site_admin_user_token) -> None:
 async def test_workflow_debugToggle(client, site_admin_user_token, db, workflows) -> None:
     id: int = 50
     headers = {"authorization": site_admin_user_token}
-    assert client.post(f"/workflows/debugToggleField/{id}/0", headers=headers).status_code == 200
+    response = await client.post(f"/workflows/debugToggleField/{id}/0", headers=headers)
+    assert response.status_code == 200
 
     workflow_disabled: Workflow | None = await db.get(Workflow, id)
     assert workflow_disabled is not None
     assert not workflow_disabled.debug_enabled
 
     headers = {"authorization": site_admin_user_token}
-    assert client.post(f"/workflows/debugToggleField/{id}/1", headers=headers).status_code == 200
+    response = await client.post(f"/workflows/debugToggleField/{id}/1", headers=headers)
+    assert response.status_code == 200
 
     await db.commit()
     workflow_enabled: Workflow | None = await db.get(Workflow, id)
