@@ -59,6 +59,8 @@ pytest_mariadb:
     - name: registry.cert.kit.edu/hub/library/mariadb:11.5
       alias: db
   variables:
+    KUBERNETES_SERVICE_CPU_REQUEST: "700m"
+    KUBERNETES_SERVICE_CPU_LIMIT: "1000m"
     MARIADB_ROOT_PASSWORD: misp
     MARIADB_DATABASE: mmisp-tests
     DATABASE_URL: "mysql+aiomysql://root:misp@db:3306/mmisp-tests"
@@ -130,6 +132,7 @@ legacy_misp:
   image: ${REGISTRY_DOMAIN}/${REGISTRY_PROJECT}/api:${CI_COMMIT_SHA}
   script:
     - while [ ! -f "$MISP_READY_FILE" ]; do sleep 10; done
+    - mmisp-db db-stamp
     - pytest
       -o junit_suite_name=runner_$CI_NODE_INDEX
       --test-group-count $CI_NODE_TOTAL
