@@ -158,6 +158,7 @@ legacy_misp:
         DEBUG: 1
         KUBERNETES_SERVICE_CPU_REQUEST: "700m"
         KUBERNETES_SERVICE_CPU_LIMIT: "1000m"
+        CHECK_MIGRATION: false
     - name: registry.cert.kit.edu/hub/valkey/valkey:7.2
       command: ["--requirepass 1CA9kMhX6mcuhRlRAptZdQieSX6u25SJ"]
       alias: redis
