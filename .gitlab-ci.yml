@@ -70,6 +70,7 @@ pytest_mariadb:
     WORKER_URL: https://worker.mmisp.service
     DASHBOARD_URL: https://dashboard.mmisp.service
     DEBUG: true
+    CHECK_MIGRATION: false
 
 
 pytest:
