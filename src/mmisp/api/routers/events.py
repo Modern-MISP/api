@@ -951,6 +951,13 @@ async def _prepare_event_response(db: AsyncSession, event: Event, user: User | N
             event_dict[field] = "0"
 
     event_dict["date"] = str(event_dict["date"])
+    # Remove first_publication if value is 0, '0', or None for legacy compatibility
+    if "first_publication" in event_dict and (
+        event_dict["first_publication"] == 0
+        or event_dict["first_publication"] is None
+        or event_dict["first_publication"] == "0"
+    ):
+        del event_dict["first_publication"]
 
     org = event.org
     orgc = event.orgc
@@ -1252,6 +1259,13 @@ def _prepare_all_events_response_index(event: Event, user: User | None) -> Index
 
     event_dict["GalaxyCluster"] = _prepare_all_events_galaxy_cluster_response(event.eventtags_galaxy)
     event_dict["date"] = str(event_dict["date"])
+    # Remove first_publication if value is 0, '0', or None for legacy compatibility
+    if "first_publication" in event_dict and (
+        event_dict["first_publication"] == 0
+        or event_dict["first_publication"] is None
+        or event_dict["first_publication"] == "0"
+    ):
+        del event_dict["first_publication"]
 
     if event.sharing_group is not None:
         event_dict["SharingGroup"] = event.sharing_group.asdict()
@@ -1273,6 +1287,13 @@ def _prepare_all_events_response(event: Event, user: User | None) -> GetAllEvent
 
     event_dict["GalaxyCluster"] = _prepare_all_events_galaxy_cluster_response(event.eventtags_galaxy)
     event_dict["date"] = str(event_dict["date"])
+    # Remove first_publication if value is 0, '0', or None for legacy compatibility
+    if "first_publication" in event_dict and (
+        event_dict["first_publication"] == 0
+        or event_dict["first_publication"] is None
+        or event_dict["first_publication"] == "0"
+    ):
+        del event_dict["first_publication"]
 
     if event.sharing_group is not None:
         event_dict["SharingGroup"] = event.sharing_group.asdict()
