@@ -15,11 +15,15 @@ async def test_get_all_roles(db, auth_key, client, site_admin_user_token) -> Non
 async def test_edit_role(db, auth_key, client, site_admin_user_token) -> None:
     path = "/admin/roles/edit/5"
 
+    request_body = {"perm_add": False, "perm_modify": False, "perm_modify_org": False, "perm_publish": False}
+
     def preprocessor(modern, legacy):
         del modern["Role"]["modified"]
         del legacy["Role"]["modified"]
-
-    request_body = {"perm_add": False, "perm_modify": False, "perm_modify_org": False, "perm_publish": False}
+        # Legacy MISP serializes the perm fields sent in the request body as "0"/"1" strings,
+        # while Modern MISP returns JSON booleans. Align the Modern response to the legacy format.
+        for field, value in request_body.items():
+            modern["Role"][field] = str(int(value))
 
     assert await get_legacy_modern_diff("put", path, request_body, auth_key, client, preprocessor=preprocessor) == {}
 

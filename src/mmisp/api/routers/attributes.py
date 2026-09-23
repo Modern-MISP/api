@@ -29,8 +29,10 @@ from mmisp.api_schemas.attributes import (
     GetDescribeTypesResponse,
     SearchAttributesBody,
     SearchAttributesEvent,
+    SearchAttributesEventOrganisation,
     SearchAttributesObject,
     SearchAttributesResponse,
+    SearchAttributesThreatLevel,
 )
 from mmisp.db.database import Session, get_db
 from mmisp.db.models.attribute import Attribute, AttributeTag
@@ -40,6 +42,7 @@ from mmisp.db.models.user import User
 from mmisp.lib.attribute_search_filter import get_search_filters
 from mmisp.lib.distribution import AttributeDistributionLevels
 from mmisp.lib.logger import alog, log
+from mmisp.lib.standard_threat_levels import get_standard_threat_level
 
 from ..workflow import execute_workflow
 
@@ -650,6 +653,8 @@ async def _rest_search_attributes(
             selectinload(Attribute.local_tags),
             selectinload(Attribute.nonlocal_tags),
             selectinload(Attribute.mispobject),
+            selectinload(Attribute.event).selectinload(Event.org),
+            selectinload(Attribute.event).selectinload(Event.orgc),
         )
     )
 
@@ -667,6 +672,16 @@ async def _rest_search_attributes(
         if attribute.event_id is not None:
             event_dict = attribute.event.asdict()
             event_dict["date"] = str(event_dict["date"])
+            if attribute.event.org is not None:
+                event_dict["Org"] = SearchAttributesEventOrganisation(**attribute.event.org.asdict())
+            if attribute.event.orgc is not None:
+                event_dict["Orgc"] = SearchAttributesEventOrganisation(**attribute.event.orgc.asdict())
+            threat_level_id = event_dict.get("threat_level_id")
+            tl_id = threat_level_id + 1 if threat_level_id is not None else 4
+            threat_level = next((tl for tl in get_standard_threat_level() if tl.id == tl_id), None)
+            event_dict["ThreatLevel"] = SearchAttributesThreatLevel(
+                id=tl_id, name=threat_level.name if threat_level else "Undefined"
+            )
             attribute_dict["Event"] = SearchAttributesEvent(**event_dict)
         if attribute.object_id != 0 and attribute.object_id is not None:
             object_dict = attribute.mispobject.__dict__.copy()
