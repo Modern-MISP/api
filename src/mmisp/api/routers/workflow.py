@@ -163,10 +163,15 @@ async def edit_workflow(
     }
 
     workflow.patch(**new_data)
-    await workflow.data.initialize_graph_modules(db)
-    result = workflow.data.check()
+
+    workflow_data = workflow.data
+    if workflow_data is None:
+        return None
+
+    await workflow_data.initialize_graph_modules(db)
+    result = workflow_data.check()
     if not result.is_valid():
-        report = GraphValidation.report_as_str(result, workflow.data)
+        report = GraphValidation.report_as_str(result, workflow_data)
         raise LegacyMISPCompatibleHTTPException(
             status=status.HTTP_400_BAD_REQUEST,
             message=f"Refusing to save invalid graph:\n{report}",
@@ -253,7 +258,8 @@ async def view(
             ).model_dump(),
         )
 
-    await workflow.data.initialize_graph_modules(db)
+    if workflow.data is not None:
+        await workflow.data.initialize_graph_modules(db)
 
     return workflow_entity_to_json_dict(workflow)
 
