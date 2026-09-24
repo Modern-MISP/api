@@ -58,5 +58,7 @@ async def test_add_remote_server_minimal(site_admin_user_token, auth_key, client
         del legacy["Server"]["id"]
         del modern["Server"]["priority"]
         del legacy["Server"]["priority"]
+        del modern["Server"]["pull_collections"]
+        del modern["Server"]["push_collections"]
 
     assert await get_legacy_modern_diff("post", path, request_body, auth_key, client, preprocessor=preprocessor) == {}
