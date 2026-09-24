@@ -6,7 +6,7 @@ default:
 variables:
   LIB_REPO_URL: https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.kit.edu/${CI_PROJECT_NAMESPACE}/lib.git
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
-  # CI_DEBUG_SERVICES: true
+  #  CI_DEBUG_SERVICES: true
   PYTHONUNBUFFERED: true
 
 stages:
@@ -53,12 +53,14 @@ pytest_mariadb:
   stage: test
   image: ${REGISTRY_DOMAIN}/${REGISTRY_PROJECT}/api:${CI_COMMIT_SHA}
   script:
-    - mmisp-db setup --create_init_values=False
+    - mmisp-db db-upgrade
     - pytest --test-group-count $CI_NODE_TOTAL --test-group=$CI_NODE_INDEX tests/api/routers
   services:
     - name: registry.cert.kit.edu/hub/library/mariadb:11.5
       alias: db
   variables:
+    KUBERNETES_SERVICE_CPU_REQUEST: "700m"
+    KUBERNETES_SERVICE_CPU_LIMIT: "1000m"
     MARIADB_ROOT_PASSWORD: misp
     MARIADB_DATABASE: mmisp-tests
     DATABASE_URL: "mysql+aiomysql://root:misp@db:3306/mmisp-tests"
@@ -68,6 +70,7 @@ pytest_mariadb:
     WORKER_URL: https://worker.mmisp.service
     DASHBOARD_URL: https://dashboard.mmisp.service
     DEBUG: true
+    CHECK_MIGRATION: false
 
 
 pytest:
@@ -75,6 +78,7 @@ pytest:
   stage: test
   image: ${REGISTRY_DOMAIN}/${REGISTRY_PROJECT}/api:${CI_COMMIT_SHA}
   script:
+    - mmisp-db db-upgrade
     - ENV_FILE=.env.test.lite
       pytest --junitxml=report.xml
       -W error::pydantic.warnings.PydanticDeprecationWarning
@@ -85,6 +89,7 @@ pytest:
     #    - ENV_FILE=.env.test.lite pytest --junitxml=report.xml --test-group-count $CI_NODE_TOTAL --test-group=$CI_NODE_INDEX  --cov --cov-report= tests/api/routers
   variables:
     COVERAGE_FILE: ".coverage.${CI_NODE_INDEX}"
+    DATABASE_URL: "sqlite+aiosqlite:///mmisp-tests.db?check_same_thread=False"
     #    DEBUG: true
   artifacts:
       when: always
@@ -128,6 +133,7 @@ legacy_misp:
   image: ${REGISTRY_DOMAIN}/${REGISTRY_PROJECT}/api:${CI_COMMIT_SHA}
   script:
     - while [ ! -f "$MISP_READY_FILE" ]; do sleep 10; done
+    - mmisp-db db-stamp
     - pytest
       -o junit_suite_name=runner_$CI_NODE_INDEX
       --test-group-count $CI_NODE_TOTAL
@@ -170,6 +176,7 @@ legacy_misp:
     DASHBOARD_URL: https://dashboard.mmisp.service
     DEBUG: true
     MISP_READY_FILE: '${CI_PROJECT_DIR}/misp_ready'
+    CHECK_MIGRATION: false
   artifacts:
       when: always
       paths:
@@ -204,7 +211,7 @@ generate_mkdocs:
   needs: []
   image: registry.cert.kit.edu/public-gitlab-ci/mkdocs
   script:
-    - source /root/.venv/bin/activate; PYTHONPATH=src mkdocs build
+    - PYTHONPATH=src mkdocs build
   artifacts:
     paths:
       - site

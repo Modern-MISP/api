@@ -12,7 +12,7 @@ async def test_roles_get(db, client, site_admin_user_token):
     await set_admin_setting(db, "default_role", "1")
     assert await get_admin_setting(db, "default_role") == "1"
     headers = {"authorization": site_admin_user_token}
-    response = client.get("/roles", headers=headers)
+    response = await client.get("/roles", headers=headers)
     assert response.status_code == 200
     assert isinstance(response.json(), list)
     response_json = response.json()
@@ -61,7 +61,7 @@ async def test_roles_get(db, client, site_admin_user_token):
 async def test_role_get_with_specific_data(client, site_admin_user_token, random_test_role):
     headers = {"authorization": site_admin_user_token}
 
-    response = client.get(f"/roles/{42}", headers=headers)
+    response = await client.get(f"/roles/{42}", headers=headers)
     role_id = random_test_role.id
 
     assert response.status_code == 200
@@ -106,7 +106,7 @@ async def test_role_get_with_specific_data(client, site_admin_user_token, random
 @pytest.mark.asyncio
 async def test_role_not_found(client, site_admin_user_token):
     headers = {"authorization": site_admin_user_token}
-    response = client.get(f"/roles/{999999}", headers=headers)
+    response = await client.get(f"/roles/{999999}", headers=headers)
 
     assert response.status_code == 404
 
@@ -148,7 +148,7 @@ async def test_add_role_success(client, site_admin_user_token, db):
         "perm_view_feed_correlations": False,
     }
 
-    response = client.post("/admin/roles/add", json=role_data, headers=headers)
+    response = await client.post("/admin/roles/add", json=role_data, headers=headers)
 
     assert response.status_code == 200
     response_json = response.json()
@@ -168,7 +168,7 @@ async def test_add_role_success(client, site_admin_user_token, db):
 async def test_add_role_missing_body(client, site_admin_user_token):
     headers = {"authorization": site_admin_user_token}
 
-    response = client.post("/admin/roles/add", headers=headers, json=None)
+    response = await client.post("/admin/roles/add", headers=headers, json=None)
 
     assert response.status_code == 422
 
@@ -178,7 +178,7 @@ async def test_delete_role_success(client, site_admin_user_token, random_test_ro
     role_id = random_test_role.id
     headers = {"authorization": site_admin_user_token}
 
-    response = client.delete(f"/admin/roles/delete/{42}", headers=headers)
+    response = await client.delete(f"/admin/roles/delete/{42}", headers=headers)
 
     assert response.status_code == 200
 
@@ -200,7 +200,7 @@ async def test_delete_role_success(client, site_admin_user_token, random_test_ro
 async def test_delete_role_not_found(client, site_admin_user_token):
     headers = {"authorization": site_admin_user_token}
 
-    response = client.delete(f"/admin/roles/delete/{999999}", headers=headers)
+    response = await client.delete(f"/admin/roles/delete/{999999}", headers=headers)
 
     assert response.status_code == 404
 
@@ -210,7 +210,7 @@ async def test_delete_default_role(client, site_admin_user_token, role_read_only
     role_id = role_read_only.id  # ID of read only - default role
     headers = {"authorization": site_admin_user_token}
 
-    response = client.delete(f"/admin/roles/delete/{6}", headers=headers)
+    response = await client.delete(f"/admin/roles/delete/{6}", headers=headers)
 
     assert response.status_code == 400
 
@@ -229,7 +229,7 @@ async def test_delete_role_in_use(client, site_admin_user_token, random_test_use
 
     headers = {"authorization": site_admin_user_token}
 
-    response = client.delete(f"/admin/roles/delete/{42}", headers=headers)
+    response = await client.delete(f"/admin/roles/delete/{42}", headers=headers)
 
     assert response.status_code == 400
 
@@ -283,7 +283,7 @@ async def test_update_role_success(client, site_admin_user_token, random_test_ro
         "perm_view_feed_correlations": False,
     }
 
-    response = client.put(f"/admin/roles/edit/{role_id}", json=update_data, headers=headers)
+    response = await client.put(f"/admin/roles/edit/{role_id}", json=update_data, headers=headers)
 
     assert response.status_code == 200
     response_json = response.json()
@@ -325,7 +325,7 @@ async def test_update_role_not_found(client, site_admin_user_token):
 
     update_data = {"name": "updated_role_name"}
 
-    response = client.put(f"/admin/roles/edit/{999999}", json=update_data, headers=headers)
+    response = await client.put(f"/admin/roles/edit/{999999}", json=update_data, headers=headers)
 
     assert response.status_code == 404
 
@@ -338,7 +338,7 @@ async def test_update_role_no_changes(client, site_admin_user_token, random_test
         "name": None,
     }
 
-    response = client.put(f"/admin/roles/edit/{42}", json=update_data, headers=headers)
+    response = await client.put(f"/admin/roles/edit/{42}", json=update_data, headers=headers)
 
     assert response.status_code == 400
     response_json = response.json()
@@ -349,7 +349,7 @@ async def test_update_role_no_changes(client, site_admin_user_token, random_test
 async def test_update_role_missing_body(client, site_admin_user_token, role_read_only):
     headers = {"authorization": site_admin_user_token}
 
-    response = client.put(f"/admin/roles/edit/{6}", json=None, headers=headers)
+    response = await client.put(f"/admin/roles/edit/{6}", json=None, headers=headers)
 
     assert response.status_code == 422
 
@@ -362,7 +362,7 @@ async def test_reinstate_role_success(client, site_admin_user_token, db, role_re
     await db.execute(delete(Role).where(Role.id == role_id))
     await db.commit()
 
-    response = client.post(f"/roles/reinstate/{6}", headers=headers)
+    response = await client.post(f"/roles/reinstate/{6}", headers=headers)
 
     assert response.status_code == 200
 
@@ -385,7 +385,7 @@ async def test_reinstate_role_already_exists(client, site_admin_user_token, db, 
     role = role.scalar_one_or_none()
     assert role is not None
 
-    response = client.post(f"/roles/reinstate/{5}", headers=headers)
+    response = await client.post(f"/roles/reinstate/{5}", headers=headers)
     assert response.status_code == 400
 
     response_json = response.json()
@@ -397,7 +397,7 @@ async def test_reinstate_role_not_standard_role(client, site_admin_user_token, r
     role_id = random_test_role.id
     headers = {"authorization": site_admin_user_token}
 
-    response = client.post(f"/roles/reinstate/{42}", headers=headers)
+    response = await client.post(f"/roles/reinstate/{42}", headers=headers)
     assert response.status_code == 400
 
     response_json = response.json()
@@ -412,7 +412,7 @@ async def test_reinstate_role_former_default_role(client, site_admin_user_token,
     await db.execute(delete(Role).where(Role.id == role_id))
     await db.commit()
 
-    response = client.post(f"/roles/reinstate/{6}", headers=headers)
+    response = await client.post(f"/roles/reinstate/{6}", headers=headers)
 
     assert response.status_code == 200
 
@@ -432,7 +432,7 @@ async def test_filter_roles_success(client, site_admin_user_token, role_read_onl
 
     filter_data = {"permissions": [Permission.ADD, Permission.SYNC]}
 
-    response = client.post("/roles/restSearch", json=filter_data, headers=headers)
+    response = await client.post("/roles/restSearch", json=filter_data, headers=headers)
 
     assert response.status_code == 200
 
@@ -447,7 +447,7 @@ async def test_filter_roles_no_results(client, site_admin_user_token, role_read_
 
     filter_data = {"permissions": [Permission.ADMIN]}
 
-    response = client.post("/roles/restSearch", json=filter_data, headers=headers)
+    response = await client.post("/roles/restSearch", json=filter_data, headers=headers)
 
     assert response.status_code == 200
 
@@ -461,7 +461,7 @@ async def test_filter_roles_no_permissions(client, site_admin_user_token, role_r
 
     body = {"permissions": []}
 
-    response = client.post("/roles/restSearch", json=body, headers=headers)
+    response = await client.post("/roles/restSearch", json=body, headers=headers)
 
     assert response.status_code == 400
 
@@ -473,7 +473,7 @@ async def test_filter_roles_no_permissions(client, site_admin_user_token, role_r
 async def test_get_users_by_role_success(client, site_admin_user_token, random_test_user, random_test_role):
     headers = {"authorization": site_admin_user_token}
 
-    response = client.post(f"/admin/roles/users/{42}", headers=headers)
+    response = await client.post(f"/admin/roles/users/{42}", headers=headers)
 
     assert response.status_code == 200
     users = response.json()
@@ -486,7 +486,7 @@ async def test_get_users_by_role_success(client, site_admin_user_token, random_t
 async def test_get_users_by_role_no_users(client, site_admin_user_token, random_test_role):
     headers = {"authorization": site_admin_user_token}
 
-    response = client.post(f"/admin/roles/users/{42}", headers=headers)
+    response = await client.post(f"/admin/roles/users/{42}", headers=headers)
 
     assert response.status_code == 200
 
@@ -497,7 +497,7 @@ async def test_get_users_by_role_no_users(client, site_admin_user_token, random_
 async def test_get_users_by_role_not_found(client, site_admin_user_token):
     headers = {"authorization": site_admin_user_token}
 
-    response = client.post(f"/admin/roles/users/{999999}", headers=headers)
+    response = await client.post(f"/admin/roles/users/{999999}", headers=headers)
 
     assert response.status_code == 404
 
@@ -507,7 +507,7 @@ async def test_set_default_role_success(client, site_admin_user_token, random_te
     role_id = random_test_role.id
     headers = {"authorization": site_admin_user_token}
 
-    response = client.put(f"/admin/roles/setDefault/{role_id}", headers=headers)
+    response = await client.put(f"/admin/roles/setDefault/{role_id}", headers=headers)
 
     assert response.status_code == 200
 
@@ -523,7 +523,7 @@ async def test_set_default_role_role_not_found(client, site_admin_user_token):
     non_existent_role_id = 999999
     headers = {"authorization": site_admin_user_token}
 
-    response = client.put(f"/admin/roles/setDefault/{999999}", headers=headers)
+    response = await client.put(f"/admin/roles/setDefault/{999999}", headers=headers)
 
     assert response.status_code == 404
 
@@ -535,7 +535,7 @@ async def test_set_default_role_role_not_found(client, site_admin_user_token):
 async def test_set_default_role_already_set(client, site_admin_user_token, role_read_only):
     headers = {"authorization": site_admin_user_token}
 
-    response = client.put(f"/admin/roles/setDefault/{6}", headers=headers)
+    response = await client.put(f"/admin/roles/setDefault/{6}", headers=headers)
 
     assert response.status_code == 400
 
@@ -549,7 +549,7 @@ async def test_edit_user_role_success(client, site_admin_user_token, role_read_o
     headers = {"authorization": site_admin_user_token}
     body = {"role_id": 6}
 
-    response = client.put(f"/admin/users/edit/{user_id}", json=body, headers=headers)
+    response = await client.put(f"/admin/users/edit/{user_id}", json=body, headers=headers)
 
     assert response.status_code == 200
     response_json = response.json()
@@ -565,7 +565,7 @@ async def test_edit_user_role_missing_role_id(client, site_admin_user_token, ran
     headers = {"authorization": site_admin_user_token}
     body = {}
 
-    response = client.put(f"/admin/users/edit/{user_id}", json=body, headers=headers)
+    response = await client.put(f"/admin/users/edit/{user_id}", json=body, headers=headers)
 
     assert response.status_code == 422
 
@@ -576,7 +576,7 @@ async def test_edit_user_role_nonexistent_role(client, site_admin_user_token, ra
     headers = {"authorization": site_admin_user_token}
     body = {"role_id": 31415}
 
-    response = client.put(f"/admin/users/edit/{user_id}", json=body, headers=headers)
+    response = await client.put(f"/admin/users/edit/{user_id}", json=body, headers=headers)
 
     assert response.status_code == 404
     assert response.json()["detail"] == "Role with ID 31415 not found."

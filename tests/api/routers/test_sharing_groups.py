@@ -66,7 +66,7 @@ async def check_counts_stay_constant(db):
 async def test_create_valid_sharing_group(db: Session, site_admin_user_token, instance_owner_org, client) -> None:
     body = {"name": f"Test Sharing Group {uuid()}{time_ns()}", "description": "description", "releasability": "yes"}
 
-    response = client.post("/sharing_groups", headers={"authorization": site_admin_user_token}, json=body)
+    response = await client.post("/sharing_groups", headers={"authorization": site_admin_user_token}, json=body)
 
     assert response.status_code == status.HTTP_201_CREATED
     json: dict = response.json()
@@ -103,7 +103,7 @@ async def test_create_valid_sharing_group_with_org_id_overwrite(
         "organisation_uuid": instance_two_owner_org.uuid,
     }
 
-    response = client.post("/sharing_groups", headers={"authorization": site_admin_user_token}, json=body)
+    response = await client.post("/sharing_groups", headers={"authorization": site_admin_user_token}, json=body)
 
     assert response.status_code == status.HTTP_201_CREATED
     json: dict = response.json()
@@ -139,7 +139,9 @@ async def test_create_sharing_group_with_org_id_overwrite_but_not_enough_permiss
         "organisation_uuid": instance_two_owner_org.uuid,
     }
 
-    response = client.post("/sharing_groups", headers={"authorization": instance_owner_org_admin_user_token}, json=body)
+    response = await client.post(
+        "/sharing_groups", headers={"authorization": instance_owner_org_admin_user_token}, json=body
+    )
 
     assert response.status_code == status.HTTP_201_CREATED
     json: dict = response.json()
@@ -155,7 +157,7 @@ async def test_create_sharing_group_with_org_id_overwrite_but_not_enough_permiss
 async def test_get_own_created_sharing_group(
     db: Session, sharing_group, instance_owner_org, instance_owner_org_admin_user_token, client
 ) -> None:
-    response = client.get(
+    response = await client.get(
         f"/sharing_groups/{sharing_group.id}",
         headers={"authorization": instance_owner_org_admin_user_token},
     )
@@ -172,7 +174,7 @@ async def test_get_sharing_group_with_access_through_sharing_group_org(
 ) -> None:
     assert sharing_group_org_two
 
-    response = client.get(
+    response = await client.get(
         f"/sharing_groups/{sharing_group.id}",
         headers={"authorization": instance_org_two_admin_user_token},
     )
@@ -190,7 +192,7 @@ async def test_get_sharing_group_with_access_through_sharing_group_server(
     assert sharing_group_server_all_orgs
     sharing_group_server_all_orgs.server_id = 0
     await db.commit()
-    response = client.get(
+    response = await client.get(
         f"/sharing_groups/{sharing_group.id}",
         headers={"authorization": instance_org_two_admin_user_token},
     )
@@ -204,7 +206,7 @@ async def test_get_sharing_group_with_access_through_sharing_group_server(
 async def test_get_sharing_group_with_access_through_site_admin(
     db: Session, sharing_group, site_admin_user_token, client
 ) -> None:
-    response = client.get(
+    response = await client.get(
         f"/sharing_groups/{sharing_group.id}",
         headers={"authorization": site_admin_user_token},
     )
@@ -218,7 +220,7 @@ async def test_get_sharing_group_with_access_through_site_admin(
 async def test_get_sharing_group_with_no_access(
     db: Session, sharing_group, sharing_group_server, instance_org_two, instance_org_two_admin_user_token, client
 ) -> None:
-    response = client.get(
+    response = await client.get(
         f"/sharing_groups/{sharing_group.id}",
         headers={"authorization": instance_org_two_admin_user_token},
     )
@@ -234,7 +236,7 @@ async def test_update_own_sharing_group(
 ) -> None:
     new_description = f"this is a new description + {datetime.utcnow()}"
 
-    response = client.put(
+    response = await client.put(
         f"/sharing_groups/{sharing_group.id}",
         headers={"authorization": instance_owner_org_admin_user_token},
         json={"description": new_description},
@@ -254,7 +256,7 @@ async def test_update_sharing_group_with_access_through_site_admin(
 ) -> None:
     new_description = f"this is a new description + {datetime.utcnow()}"
 
-    response = client.put(
+    response = await client.put(
         f"/sharing_groups/{sharing_group.id}",
         headers={"authorization": site_admin_user_token},
         json={"description": new_description, "organisation_uuid": str(uuid4())},
@@ -274,7 +276,7 @@ async def test_update_sharing_group_no_access_although_sharing_group_org_exists(
 ) -> None:
     new_description = f"this is a new description + {datetime.utcnow()}"
 
-    response = client.put(
+    response = await client.put(
         f"/sharing_groups/{sharing_group.id}",
         headers={"authorization": instance_org_two_admin_user_token},
         json={"description": new_description},
@@ -290,7 +292,7 @@ async def test_delete_own_sharing_group(
     sharing_group_id = sharing_group.id
     sharing_group_server_id = sharing_group_server.id
 
-    response = client.delete(
+    response = await client.delete(
         f"/sharing_groups/{sharing_group_id}",
         headers={"authorization": instance_owner_org_admin_user_token},
     )
@@ -307,7 +309,7 @@ async def test_delete_own_sharing_group(
     assert not db_sharing_group
     assert not db_sharing_group_server
 
-    second_response = client.delete(
+    second_response = await client.delete(
         f"/sharing_groups/{sharing_group_id}",
         headers={"authorization": instance_owner_org_admin_user_token},
     )
@@ -319,7 +321,7 @@ async def test_delete_own_sharing_group(
 async def test_delete_sharing_group_with_access_through_site_admin(
     db: Session, sharing_group, instance_org_two, site_admin_user_token, client
 ) -> None:
-    response = client.delete(
+    response = await client.delete(
         f"/sharing_groups/{sharing_group.id}",
         headers={"authorization": site_admin_user_token},
     )
@@ -328,7 +330,7 @@ async def test_delete_sharing_group_with_access_through_site_admin(
     json = response.json()
     assert json["id"] == sharing_group.id
 
-    second_response = client.delete(
+    second_response = await client.delete(
         f"/sharing_groups/{sharing_group.id}",
         headers={"authorization": site_admin_user_token},
     )
@@ -346,7 +348,7 @@ async def test_delete_sharing_group_no_access_although_sharing_group_org_exists(
     instance_org_two_admin_user_token,
     client,
 ) -> None:
-    response = client.delete(
+    response = await client.delete(
         f"/sharing_groups/{sharing_group.id}",
         headers={"authorization": instance_org_two_admin_user_token},
     )
@@ -356,7 +358,7 @@ async def test_delete_sharing_group_no_access_although_sharing_group_org_exists(
 
 @pytest.mark.asyncio
 async def test_list_own_sharing_group(db: Session, sharing_group, instance_owner_org_admin_user_token, client) -> None:
-    response = client.get(
+    response = await client.get(
         "/sharing_groups",
         headers={"authorization": instance_owner_org_admin_user_token},
     )
@@ -376,7 +378,7 @@ async def test_list_own_sharing_group(db: Session, sharing_group, instance_owner
 async def test_list_own_sharing_group_site_admin(
     db: Session, sharing_group, instance_owner_org, site_admin_user_token, client
 ) -> None:
-    response = client.get(
+    response = await client.get(
         "/sharing_groups",
         headers={"authorization": site_admin_user_token},
     )
@@ -397,7 +399,7 @@ async def test_list_own_sharing_group_site_admin(
 async def test_get_own_created_sharing_group_info(
     db: Session, sharing_group, instance_owner_org_admin_user_token, client
 ) -> None:
-    response = client.get(
+    response = await client.get(
         f"/sharing_groups/{sharing_group.id}/info",
         headers={"authorization": instance_owner_org_admin_user_token},
     )
@@ -414,7 +416,7 @@ async def test_get_sharing_group_info_with_access_through_sharing_group_org(
     sharing_group, sharing_group_org_two, instance_org_two_admin_user_token, client
 ) -> None:
     assert sharing_group_org_two
-    response = client.get(
+    response = await client.get(
         f"/sharing_groups/{sharing_group.id}/info",
         headers={"authorization": instance_org_two_admin_user_token},
     )
@@ -434,7 +436,7 @@ async def test_get_sharing_group_info_with_access_through_sharing_group_server(
     await db.commit()
 
     assert sharing_group_server_all_orgs
-    response = client.get(
+    response = await client.get(
         f"/sharing_groups/{sharing_group.id}/info",
         headers={"authorization": instance_org_two_admin_user_token},
     )
@@ -450,7 +452,7 @@ async def test_get_sharing_group_info_with_access_through_sharing_group_server(
 async def test_get_sharing_group_info_with_access_through_site_admin(
     db: Session, site_admin_user_token, sharing_group, client
 ) -> None:
-    response = client.get(
+    response = await client.get(
         f"/sharing_groups/{sharing_group.id}/info",
         headers={"authorization": site_admin_user_token},
     )
@@ -466,7 +468,7 @@ async def test_get_sharing_group_info_with_access_through_site_admin(
 async def test_get_sharing_group_info_with_no_access(
     db: Session, sharing_group_server, sharing_group, instance_org_two, instance_org_two_admin_user_token, client
 ) -> None:
-    response = client.get(
+    response = await client.get(
         f"/sharing_groups/{sharing_group.id}/info",
         headers={"authorization": instance_org_two_admin_user_token},
     )
@@ -478,7 +480,7 @@ async def test_get_sharing_group_info_with_no_access(
 async def test_add_org_to_own_sharing_group(
     db: Session, sharing_group, instance_owner_org, instance_owner_org_admin_user_token, client
 ) -> None:
-    response = client.patch(
+    response = await client.patch(
         f"/sharing_groups/{sharing_group.id}/organisations",
         headers={"authorization": instance_owner_org_admin_user_token},
         json={"organisationId": "999"},
@@ -495,7 +497,7 @@ async def test_add_org_to_own_sharing_group(
 async def test_patch_org_to_own_sharing_group(
     db: Session, instance_owner_org, instance_owner_org_admin_user_token, sharing_group, client
 ) -> None:
-    response = client.patch(
+    response = await client.patch(
         f"/sharing_groups/{sharing_group.id}/organisations",
         headers={"authorization": instance_owner_org_admin_user_token},
         json={"organisationId": "999", "extend": True},
@@ -513,7 +515,7 @@ async def test_patch_org_to_own_sharing_group(
 async def test_add_org_to_sharing_group_using_site_admin(
     db: Session, instance_org_two, site_admin_user_token, sharing_group, client
 ) -> None:
-    response = client.patch(
+    response = await client.patch(
         f"/sharing_groups/{sharing_group.id}/organisations",
         headers={"authorization": site_admin_user_token},
         json={"organisationId": "999"},
@@ -530,7 +532,7 @@ async def test_add_org_to_sharing_group_using_site_admin(
 async def test_add_org_to_sharing_group_with_no_access(
     db: Session, sharing_group2, instance_owner_org, instance_owner_org_admin_user_token, client
 ) -> None:
-    response = client.patch(
+    response = await client.patch(
         f"/sharing_groups/{sharing_group2.id}/organisations",
         headers={"authorization": instance_owner_org_admin_user_token},
         json={"organisationId": "999"},
@@ -543,7 +545,7 @@ async def test_add_org_to_sharing_group_with_no_access(
 async def test_remove_org_from_own_sharing_group(
     db: Session, instance_owner_org, sharing_group, instance_owner_org_admin_user_token, client
 ) -> None:
-    response = client.delete(
+    response = await client.delete(
         f"/sharing_groups/{sharing_group.id}/organisations/{instance_owner_org.id}",
         headers={"authorization": instance_owner_org_admin_user_token},
     )
@@ -559,7 +561,7 @@ async def test_remove_org_from_own_sharing_group(
 
 @pytest.mark.asyncio
 async def test_add_server_to_own_sharing_group(db, sharing_group, instance_owner_org_admin_user_token, client) -> None:
-    response = client.patch(
+    response = await client.patch(
         f"/sharing_groups/{sharing_group.id}/servers",
         headers={"authorization": instance_owner_org_admin_user_token},
         json={"serverId": "999"},
@@ -576,7 +578,7 @@ async def test_add_server_to_own_sharing_group(db, sharing_group, instance_owner
 async def test_patch_server_to_own_sharing_group(
     db, sharing_group_server, sharing_group, instance_owner_org_admin_user_token, client
 ) -> None:
-    response = client.patch(
+    response = await client.patch(
         f"/sharing_groups/{sharing_group.id}/servers",
         headers={"authorization": instance_owner_org_admin_user_token},
         json={"serverId": "999", "all_orgs": True},
@@ -595,7 +597,7 @@ async def test_patch_server_to_own_sharing_group(
 async def test_add_server_to_sharing_group_using_site_admin(
     db: Session, sharing_group, site_admin_user_token, client
 ) -> None:
-    response = client.patch(
+    response = await client.patch(
         f"/sharing_groups/{sharing_group.id}/servers",
         headers={"authorization": site_admin_user_token},
         json={"serverId": "999"},
@@ -611,7 +613,7 @@ async def test_add_server_to_sharing_group_using_site_admin(
 async def test_add_server_to_sharing_group_with_no_access(
     db: Session, sharing_group, instance_owner_org, instance_org_two_admin_user_token, client
 ) -> None:
-    response = client.patch(
+    response = await client.patch(
         f"/sharing_groups/{sharing_group.id}/servers",
         headers={"authorization": instance_org_two_admin_user_token},
         json={"serverId": "999"},
@@ -629,7 +631,7 @@ async def test_remove_server_from_own_sharing_group(
     ic(sharing_group_server.asdict())
     url = f"/sharing_groups/{sharing_group.id}/servers/{sharing_group_server.server_id}"
     ic(url)
-    response = client.delete(
+    response = await client.delete(
         url,
         headers={"authorization": instance_owner_org_admin_user_token},
     )
@@ -647,7 +649,7 @@ async def test_remove_server_from_own_sharing_group(
 async def test_create_valid_sharing_group_legacy(db, instance_owner_org, site_admin_user_token, client) -> None:
     body = {"name": f"Test Sharing Group {uuid()}{time_ns()}", "description": "description", "releasability": "yes"}
 
-    response = client.post("/sharing_groups/add", headers={"authorization": site_admin_user_token}, json=body)
+    response = await client.post("/sharing_groups/add", headers={"authorization": site_admin_user_token}, json=body)
 
     assert response.status_code == status.HTTP_201_CREATED
     json: dict = response.json()
@@ -683,7 +685,7 @@ async def test_create_valid_sharing_group_legacy_with_org_id_overwrite(
         "organisation_uuid": instance_two_owner_org.uuid,
     }
 
-    response = client.post("/sharing_groups/add", headers={"authorization": site_admin_user_token}, json=body)
+    response = await client.post("/sharing_groups/add", headers={"authorization": site_admin_user_token}, json=body)
 
     assert response.status_code == status.HTTP_201_CREATED
     json: dict = response.json()
@@ -708,7 +710,7 @@ async def test_create_sharing_group_legacy_with_org_id_overwrite_but_not_enough_
         "organisation_uuid": instance_two_owner_org.uuid,
     }
 
-    response = client.post(
+    response = await client.post(
         "/sharing_groups/add", headers={"authorization": instance_owner_org_admin_user_token}, json=body
     )
 
@@ -728,7 +730,7 @@ async def test_create_sharing_group_legacy_with_org_id_overwrite_but_not_enough_
 async def test_get_own_created_sharing_group_legacy(
     db: Session, sharing_group, instance_owner_org_admin_user_token, client
 ) -> None:
-    response = client.get(
+    response = await client.get(
         f"/sharing_groups/view/{sharing_group.id}",
         headers={"authorization": instance_owner_org_admin_user_token},
     )
@@ -744,7 +746,7 @@ async def test_get_sharing_group_legacy_with_access_through_sharing_group_org(
 ) -> None:
     assert sharing_group_org_two
 
-    response = client.get(
+    response = await client.get(
         f"/sharing_groups/view/{sharing_group.id}",
         headers={"authorization": instance_org_two_admin_user_token},
     )
@@ -762,7 +764,7 @@ async def test_get_sharing_group_legacy_with_access_through_sharing_group_server
     sharing_group_server_all_orgs.server_id = 0
     await db.commit()
 
-    response = client.get(
+    response = await client.get(
         f"/sharing_groups/view/{sharing_group.id}",
         headers={"authorization": instance_org_two_admin_user_token},
     )
@@ -776,7 +778,7 @@ async def test_get_sharing_group_legacy_with_access_through_sharing_group_server
 async def test_get_sharing_group_legacy_with_access_through_site_admin(
     db: Session, sharing_group, instance_org_two, site_admin_user_token, client
 ) -> None:
-    response = client.get(
+    response = await client.get(
         f"/sharing_groups/view/{sharing_group.id}",
         headers={"authorization": site_admin_user_token},
     )
@@ -792,7 +794,7 @@ async def test_update_own_sharing_group_legacy(
 ) -> None:
     new_description = f"this is a new description + {datetime.utcnow()}"
 
-    response = client.post(
+    response = await client.post(
         f"/sharing_groups/edit/{sharing_group.id}",
         headers={"authorization": instance_owner_org_admin_user_token},
         json={
@@ -816,7 +818,7 @@ async def test_update_sharing_group_legacy_with_access_through_site_admin(
 ) -> None:
     new_description = f"this is a new description + {datetime.utcnow()}"
 
-    response = client.post(
+    response = await client.post(
         f"/sharing_groups/edit/{sharing_group.id}",
         headers={"authorization": site_admin_user_token},
         json={
@@ -841,7 +843,7 @@ async def test_update_sharing_group_legacy_no_access_although_sharing_group_org_
 ) -> None:
     new_description = f"this is a new description + {datetime.utcnow()}"
 
-    response = client.post(
+    response = await client.post(
         f"/sharing_groups/edit/{sharing_group.id}",
         headers={"authorization": instance_org_two_admin_user_token},
         json={
@@ -866,7 +868,7 @@ async def test_delete_own_sharing_group_legacy(
     sharing_group_id = sharing_group.id
     sharing_group_server_id = sharing_group_server.id
 
-    response = client.delete(
+    response = await client.delete(
         f"/sharing_groups/delete/{sharing_group_id}",
         headers={"authorization": instance_owner_org_admin_user_token},
     )
@@ -885,7 +887,7 @@ async def test_delete_own_sharing_group_legacy(
     assert not db_sharing_group
     assert not db_sharing_group_server
 
-    second_response = client.delete(
+    second_response = await client.delete(
         f"/sharing_groups/delete/{sharing_group_id}",
         headers={"authorization": instance_owner_org_admin_user_token},
     )
@@ -897,7 +899,7 @@ async def test_delete_own_sharing_group_legacy(
 async def test_delete_sharing_group_legacy_with_access_through_site_admin(
     db: Session, sharing_group, instance_org_two, site_admin_user_token, client
 ) -> None:
-    response = client.delete(
+    response = await client.delete(
         f"/sharing_groups/delete/{sharing_group.id}",
         headers={"authorization": site_admin_user_token},
     )
@@ -908,7 +910,7 @@ async def test_delete_sharing_group_legacy_with_access_through_site_admin(
     assert json["saved"]
     assert json["success"]
 
-    second_response = client.delete(
+    second_response = await client.delete(
         f"/sharing_groups/delete/{sharing_group.id}",
         headers={"authorization": site_admin_user_token},
     )
@@ -920,7 +922,7 @@ async def test_delete_sharing_group_legacy_with_access_through_site_admin(
 async def test_delete_sharing_group_legacy_no_access_although_sharing_group_org_exists(
     db: Session, sharing_group, instance_owner_org, instance_org_two_admin_user_token, client
 ) -> None:
-    response = client.delete(
+    response = await client.delete(
         f"/sharing_groups/delete/{sharing_group.id}",
         headers={"authorization": instance_org_two_admin_user_token},
     )
@@ -932,7 +934,7 @@ async def test_delete_sharing_group_legacy_no_access_although_sharing_group_org_
 async def test_add_org_to_own_sharing_group_legacy(
     db: Session, sharing_group, instance_owner_org_admin_user_token, client
 ) -> None:
-    response = client.post(
+    response = await client.post(
         f"/sharing_groups/addOrg/{sharing_group.id}/999",
         headers={"authorization": instance_owner_org_admin_user_token},
     )
@@ -953,7 +955,7 @@ async def test_add_org_to_own_sharing_group_legacy(
 #    await db.commit()
 #    sharing_group_org_id = sharing_group_org.id
 #
-#    response = client.post(
+#    response = await client.post(
 #        f"/sharing_groups/addOrg/{sharing_group.id}/999",
 #        headers={"authorization": instance_owner_org_admin_user_token},
 #        json={"extend": True},
@@ -979,7 +981,7 @@ async def test_add_org_to_own_sharing_group_legacy(
 async def test_add_org_to_sharing_group_legacy_using_site_admin(
     db: Session, sharing_group, site_admin_user_token, client
 ) -> None:
-    response = client.post(
+    response = await client.post(
         f"/sharing_groups/addOrg/{sharing_group.id}/999",
         headers={"authorization": site_admin_user_token},
     )
@@ -1001,7 +1003,7 @@ async def test_add_org_to_sharing_group_legacy_with_no_access(
     instance_owner_org,
     client,
 ) -> None:
-    response = client.post(
+    response = await client.post(
         f"/sharing_groups/addOrg/{sharing_group.id}/999",
         headers={"authorization": instance_org_two_admin_user_token},
     )
@@ -1013,7 +1015,7 @@ async def test_add_org_to_sharing_group_legacy_with_no_access(
 async def test_remove_org_from_own_sharing_group_legacy(
     db: Session, sharing_group, instance_owner_org, instance_owner_org_admin_user_token, client
 ) -> None:
-    response = client.post(
+    response = await client.post(
         f"/sharing_groups/removeOrg/{sharing_group.id}/{instance_owner_org.id}",
         headers={"authorization": instance_owner_org_admin_user_token},
     )
@@ -1030,7 +1032,7 @@ async def test_remove_org_from_own_sharing_group_legacy(
 async def test_add_server_to_own_sharing_group_legacy(
     db: Session, sharing_group, instance_owner_org_admin_user_token, client
 ) -> None:
-    response = client.post(
+    response = await client.post(
         f"/sharing_groups/addServer/{sharing_group.id}/999",
         headers={"authorization": instance_owner_org_admin_user_token},
     )
@@ -1049,7 +1051,7 @@ async def test_patch_server_to_own_sharing_group_legacy(
 ) -> None:
     sharing_group_server_id = sharing_group_server_all_orgs.id
 
-    response = client.post(
+    response = await client.post(
         f"/sharing_groups/addServer/{sharing_group.id}/999",
         headers={"authorization": instance_owner_org_admin_user_token},
         json={"all_orgs": True},
@@ -1072,7 +1074,7 @@ async def test_patch_server_to_own_sharing_group_legacy(
 async def test_add_server_to_sharing_group_legeacy_using_site_admin(
     db: Session, sharing_group, site_admin_user_token, client
 ) -> None:
-    response = client.post(
+    response = await client.post(
         f"/sharing_groups/addServer/{sharing_group.id}/999",
         headers={"authorization": site_admin_user_token},
     )
@@ -1089,7 +1091,7 @@ async def test_add_server_to_sharing_group_legeacy_using_site_admin(
 async def test_add_server_to_sharing_group_legacy_with_no_access(
     db: Session, sharing_group, instance_owner_org, instance_org_two_admin_user_token, client
 ) -> None:
-    response = client.post(
+    response = await client.post(
         f"/sharing_groups/addServer/{sharing_group.id}/999",
         headers={"authorization": instance_org_two_admin_user_token},
     )
@@ -1103,7 +1105,7 @@ async def test_remove_server_from_own_sharing_group_legacy(
 ) -> None:
     sharing_group_server_id = sharing_group_server.id
 
-    response = client.post(
+    response = await client.post(
         f"/sharing_groups/removeServer/{sharing_group.id}/{sharing_group_server.server_id}",
         headers={"authorization": instance_owner_org_admin_user_token},
     )

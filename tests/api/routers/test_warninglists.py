@@ -35,7 +35,7 @@ async def test_add_warninglists(db, site_admin_user_token, client) -> None:
     ).model_dump()
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post("/warninglists/new", json=data, headers=headers)
+    response = await client.post("/warninglists/new", json=data, headers=headers)
 
     assert response.status_code == 201
 
@@ -49,7 +49,7 @@ async def test_toggleEnable_warninglist(db, site_admin_user_token, client) -> No
     toggle_data = generate_enable_warning_lists_body(warninglist_ids).model_dump(exclude_unset=True)
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post("/warninglists/toggleEnable", json=toggle_data, headers=headers)
+    response = await client.post("/warninglists/toggleEnable", json=toggle_data, headers=headers)
 
     assert response.status_code == 200
 
@@ -65,7 +65,7 @@ async def test_toggleEnable_missing_warninglist(db, site_admin_user_token, clien
     ).model_dump(exclude_unset=True)
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post("/warninglists/toggleEnable", json=invalid_toggle_data, headers=headers)
+    response = await client.post("/warninglists/toggleEnable", json=invalid_toggle_data, headers=headers)
 
     assert response.status_code == 200
     json = response.json()
@@ -74,7 +74,7 @@ async def test_toggleEnable_missing_warninglist(db, site_admin_user_token, clien
     warninglist_test_ids = await add_warninglists(db)
 
     for warninglist_id in warninglist_test_ids:
-        response = client.get(f"/warninglists/{warninglist_id}", headers=headers)
+        response = await client.get(f"/warninglists/{warninglist_id}", headers=headers)
 
         assert response.status_code == 200
         assert response.json()["Warninglist"]["id"] == warninglist_id
@@ -88,7 +88,7 @@ async def test_get_existing_warninglist_details_deprecated(db, site_admin_user_t
     warninglist_test_ids = await add_warninglists(db)
 
     for warninglist_id in warninglist_test_ids:
-        response = client.get(f"/warninglists/view/{warninglist_id}", headers=headers)
+        response = await client.get(f"/warninglists/view/{warninglist_id}", headers=headers)
 
         assert response.status_code == 200
         assert response.json()["Warninglist"]["id"] == warninglist_id
@@ -99,14 +99,14 @@ async def test_get_existing_warninglist_details_deprecated(db, site_admin_user_t
 @pytest.mark.asyncio
 async def test_get_invalid_warninglist_by_id(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.get("/warninglists/text", headers=headers)
+    response = await client.get("/warninglists/text", headers=headers)
     assert response.status_code == 422
 
 
 @pytest.mark.asyncio
 async def test_get_invalid_warninglist_by_id_deprecated(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.get("/warninglists/view/text", headers=headers)
+    response = await client.get("/warninglists/view/text", headers=headers)
     assert response.status_code == 422
 
 
@@ -115,7 +115,7 @@ async def test_get_non_existing_warninglist_details(db, site_admin_user_token, c
     non_existing_warninglist_id = (await get_largest_id(db)) * 10
 
     headers = {"authorization": site_admin_user_token}
-    response = client.get(f"/warninglists/{non_existing_warninglist_id}", headers=headers)
+    response = await client.get(f"/warninglists/{non_existing_warninglist_id}", headers=headers)
     assert response.status_code == 404
 
 
@@ -124,7 +124,7 @@ async def test_get_non_existing_warninglist_details_deprecated(db, site_admin_us
     non_existing_warninglist_id = (await get_largest_id(db)) * 10
 
     headers = {"authorization": site_admin_user_token}
-    response = client.get(f"/warninglists/view/{non_existing_warninglist_id}", headers=headers)
+    response = await client.get(f"/warninglists/view/{non_existing_warninglist_id}", headers=headers)
     assert response.status_code == 404
 
 
@@ -133,7 +133,7 @@ async def test_get_warninglist_response_format(db, site_admin_user_token, client
     warninglist_id = await add_warninglists(db, 1)
 
     headers = {"authorization": site_admin_user_token}
-    response = client.get(f"/warninglists/{warninglist_id[0]}", headers=headers)
+    response = await client.get(f"/warninglists/{warninglist_id[0]}", headers=headers)
 
     assert response.status_code == 200
     json = response.json()
@@ -150,7 +150,7 @@ async def test_get_warninglist_response_format_deprecated(db, site_admin_user_to
     warninglist_id = await add_warninglists(db, 1)
 
     headers = {"authorization": site_admin_user_token}
-    response = client.get(f"/warninglists/view/{warninglist_id[0]}", headers=headers)
+    response = await client.get(f"/warninglists/view/{warninglist_id[0]}", headers=headers)
 
     assert response.status_code == 200
     json = response.json()
@@ -167,14 +167,14 @@ async def test_delete_existing_warninglist(db, site_admin_user_token, client) ->
     warninglist_test_ids = await add_warninglists(db)
 
     for warninglist_test_id in warninglist_test_ids:
-        response = client.delete(f"/warninglists/{warninglist_test_id}", headers=headers)
+        response = await client.delete(f"/warninglists/{warninglist_test_id}", headers=headers)
         assert response.status_code == 200
 
 
 @pytest.mark.asyncio
 async def test_delete_invalid_warninglist_by_id(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.delete("/warninglists/text", headers=headers)
+    response = await client.delete("/warninglists/text", headers=headers)
     assert response.status_code == 422
 
 
@@ -183,7 +183,7 @@ async def test_delete_non_existing_warninglist(db, site_admin_user_token, client
     non_existing_warninglist_id = (await get_largest_id(db)) * 10
 
     headers = {"authorization": site_admin_user_token}
-    response = client.delete(f"/warninglists/{non_existing_warninglist_id}", headers=headers)
+    response = await client.delete(f"/warninglists/{non_existing_warninglist_id}", headers=headers)
     assert response.status_code == 404
 
 
@@ -193,7 +193,7 @@ async def test_delete_warninglist_response_format(db, site_admin_user_token, cli
     warninglist_test_ids = await add_warninglists(db)
 
     for warninglist_id in warninglist_test_ids:
-        response = client.delete(f"/warninglists/{warninglist_id}", headers=headers)
+        response = await client.delete(f"/warninglists/{warninglist_id}", headers=headers)
 
         assert response.status_code == 200
         json = response.json()
@@ -206,7 +206,7 @@ async def test_delete_warninglist_response_format(db, site_admin_user_token, cli
 async def test_get_all_warninglist(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
 
-    response = client.get("/warninglists", headers=headers)
+    response = await client.get("/warninglists", headers=headers)
 
     assert response.status_code == 200
 
@@ -218,16 +218,16 @@ async def test_get_selected_warninglists(db, site_admin_user_token, client) -> N
     warninglist: Warninglist = await db.get(Warninglist, warninglist_id)
 
     headers = {"authorization": site_admin_user_token}
-    response = client.get(f"/warninglists?value={warninglist.name}&enabled=True", headers=headers)
+    response = await client.get(f"/warninglists?value={warninglist.name}&enabled=True", headers=headers)
     assert response.status_code == 200
 
-    response = client.get(f"/warninglists?value={warninglist.name}", headers=headers)
+    response = await client.get(f"/warninglists?value={warninglist.name}", headers=headers)
     assert response.status_code == 200
 
-    response = client.get("/warninglists?enabled=True", headers=headers)
+    response = await client.get("/warninglists?enabled=True", headers=headers)
     assert response.status_code == 200
 
-    response = client.get("/warninglists?enabled=False", headers=headers)
+    response = await client.get("/warninglists?enabled=False", headers=headers)
     assert response.status_code == 200
 
     await remove_warninglists(db, warninglist_id)
@@ -241,19 +241,19 @@ async def test_get_selected_warninglists_deprecated(db: AsyncSession, site_admin
 
     data = GetSelectedWarninglistsBody(value=warninglist.name, enabled=warninglist.enabled).model_dump()
     headers = {"authorization": site_admin_user_token}
-    response = client.post("/warninglists", json=data, headers=headers)
+    response = await client.post("/warninglists", json=data, headers=headers)
     assert response.status_code == 200
 
     data = GetSelectedWarninglistsBody(value=warninglist.name).model_dump()
-    response = client.post("/warninglists", json=data, headers=headers)
+    response = await client.post("/warninglists", json=data, headers=headers)
     assert response.status_code == 200
 
     data = GetSelectedWarninglistsBody(enabled=warninglist.enabled).model_dump()
-    response = client.post("/warninglists", json=data, headers=headers)
+    response = await client.post("/warninglists", json=data, headers=headers)
     assert response.status_code == 200
 
     data = GetSelectedWarninglistsBody().model_dump()
-    response = client.post("/warninglists", json=data, headers=headers)
+    response = await client.post("/warninglists", json=data, headers=headers)
     assert response.status_code == 200
 
     await remove_warninglists(db, warninglist_id)
@@ -266,7 +266,7 @@ async def test_get_all_warninglist_response_format(db: AsyncSession, site_admin_
     warninglist_name = (await db.get(Warninglist, warninglist_ids[0])).name
 
     headers = {"authorization": site_admin_user_token}
-    response = client.get(f"/warninglists?value={warninglist_name}", headers=headers)
+    response = await client.get(f"/warninglists?value={warninglist_name}", headers=headers)
     json = response.json()
     assert isinstance(json["Warninglists"], list)
 
@@ -286,7 +286,7 @@ async def test_get_warninglist_by_value(db: AsyncSession, site_admin_user_token,
     headers = {"authorization": site_admin_user_token}
     value_data = CheckValueWarninglistsBody(value=warninglist_entry.value).model_dump()
 
-    response = client.post("/warninglists/checkValue", json=value_data, headers=headers)
+    response = await client.post("/warninglists/checkValue", json=value_data, headers=headers)
 
     assert response.status_code == 200
 
@@ -307,7 +307,7 @@ async def test_get_warninglist_by_value_response_format(db: AsyncSession, site_a
     value = warninglist_entry.value
     value_data = CheckValueWarninglistsBody(value=value).model_dump()
 
-    response = client.post("/warninglists/checkValue", json=value_data, headers=headers)
+    response = await client.post("/warninglists/checkValue", json=value_data, headers=headers)
 
     assert response.status_code == 200
     json = response.json()
@@ -320,14 +320,14 @@ async def test_get_warninglist_by_value_response_format(db: AsyncSession, site_a
 @pytest.mark.asyncio
 async def test_update_warninglist(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.put("/warninglists", headers=headers)
+    response = await client.put("/warninglists", headers=headers)
     assert response.status_code == 200
 
 
 @pytest.mark.asyncio
 async def test_update_warninglist_deprecated(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.post("/warninglists/update", headers=headers)
+    response = await client.post("/warninglists/update", headers=headers)
     assert response.status_code == 200
 
 
@@ -335,7 +335,7 @@ async def test_update_warninglist_deprecated(site_admin_user_token, client) -> N
 async def test_update_warninglist_response_format(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
 
-    response = client.put("/warninglists", headers=headers)
+    response = await client.put("/warninglists", headers=headers)
 
     assert response.status_code == 200
     json = response.json()
@@ -347,7 +347,7 @@ async def test_update_warninglist_response_format(site_admin_user_token, client)
 async def test_update_warninglist_response_format_deprecated(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
 
-    response = client.post("/warninglists/update", headers=headers)
+    response = await client.post("/warninglists/update", headers=headers)
 
     assert response.status_code == 200
     json = response.json()

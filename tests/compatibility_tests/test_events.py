@@ -14,14 +14,14 @@ async def delete_event(db, id):
 
 @pytest.mark.asyncio
 async def test_view_event_normal_attribute_tag(db, event, attribute_with_normal_tag, auth_key, client) -> None:
-    assert get_legacy_modern_diff("get", f"/events/view/{event.id}?extended=true", {}, auth_key, client) == {}
+    assert await get_legacy_modern_diff("get", f"/events/view/{event.id}?extended=true", {}, auth_key, client) == {}
 
 
 @pytest.mark.asyncio
 async def test_view_event_galaxy_cluster_tag(
     db: AsyncSession, event, attribute_with_galaxy_cluster_one_tag, auth_key, client
 ) -> None:
-    assert get_legacy_modern_diff("get", f"/events/view/{event.id}", {}, auth_key, client) == {}
+    assert await get_legacy_modern_diff("get", f"/events/view/{event.id}", {}, auth_key, client) == {}
 
 
 """
@@ -79,7 +79,7 @@ async def test_get_existing_event(db, auth_key, client, event) -> None:
 
     request_body = {}
 
-    assert get_legacy_modern_diff("get", path, request_body, auth_key, client) == {}
+    assert await get_legacy_modern_diff("get", path, request_body, auth_key, client) == {}
 
 
 @pytest.mark.asyncio
@@ -88,7 +88,7 @@ async def test_get_non_existing_event(db, auth_key, client) -> None:
 
     request_body = {}
 
-    assert get_legacy_modern_diff("get", path, request_body, auth_key, client) == {}
+    assert await get_legacy_modern_diff("get", path, request_body, auth_key, client) == {}
 
 
 @pytest.mark.asyncio
@@ -101,7 +101,7 @@ async def test_update_existing_event(db, auth_key, client, event) -> None:
 
     request_body = {"info": "updated info"}
 
-    assert get_legacy_modern_diff("put", path, request_body, auth_key, client, preprocessor) == {}
+    assert await get_legacy_modern_diff("put", path, request_body, auth_key, client, preprocessor) == {}
 
 
 @pytest.mark.asyncio
@@ -110,7 +110,7 @@ async def test_update_non_existing_event(db, auth_key, client) -> None:
 
     request_body = {"info": "updated info"}
 
-    assert get_legacy_modern_diff("put", path, request_body, auth_key, client) == {}
+    assert await get_legacy_modern_diff("put", path, request_body, auth_key, client) == {}
 
 
 # @pytest.mark.asyncio
@@ -129,4 +129,4 @@ async def test_delete_non_existing_event(db, auth_key, client) -> None:
 
     request_body = None
 
-    assert get_legacy_modern_diff("delete", path, request_body, auth_key, client) == {}
+    assert await get_legacy_modern_diff("delete", path, request_body, auth_key, client) == {}

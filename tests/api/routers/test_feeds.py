@@ -119,7 +119,7 @@ async def test_add_feed(
     await db.commit()
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post("/feeds", json=feed_data, headers=headers)
+    response = await client.post("/feeds", json=feed_data, headers=headers)
 
     response_json = response.json()
     if response.status_code > 300:
@@ -136,7 +136,7 @@ async def test_add_feed(
 async def test_feed_error_handling(site_admin_user_token, client) -> None:
     invalid_data = {"name": "Test Feed"}
     headers = {"authorization": site_admin_user_token}
-    response = client.post("/feeds", json=invalid_data, headers=headers)
+    response = await client.post("/feeds", json=invalid_data, headers=headers)
     assert response.status_code == 422
     assert response.json()["detail"][0]["msg"] == "Field required"
     assert response.json()["detail"][0]["type"] == "missing"
@@ -173,7 +173,7 @@ async def test_feed_response_format(
     await db.commit()
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post("/feeds", json=feed_data, headers=headers)
+    response = await client.post("/feeds", json=feed_data, headers=headers)
 
     if response.status_code > 300:
         print(response.json())
@@ -195,17 +195,17 @@ async def test_enable_feed(
     feed_data["event_id"] = event.id
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post("/feeds", json=feed_data, headers=headers)
+    response = await client.post("/feeds", json=feed_data, headers=headers)
     feed_id = response.json()["Feed"]["id"]
     assert response.status_code == 201
 
-    response = client.post(f"feeds/enable/{feed_id}", headers=headers)
+    response = await client.post(f"feeds/enable/{feed_id}", headers=headers)
     assert response.status_code == 200
 
-    response = client.post(f"feeds/enable/{feed_test_ids['non_existing_feed_id']}", headers=headers)
+    response = await client.post(f"feeds/enable/{feed_test_ids['non_existing_feed_id']}", headers=headers)
     assert response.status_code == 404
 
-    response = client.post(f"feeds/enable/{feed_test_ids['invalid_feed_id']}", headers=headers)
+    response = await client.post(f"feeds/enable/{feed_test_ids['invalid_feed_id']}", headers=headers)
     assert response.status_code == 422
 
 
@@ -219,11 +219,11 @@ async def test_feed_enable_response_format(
     feed_data["event_id"] = event.id
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post("/feeds", json=feed_data, headers=headers)
+    response = await client.post("/feeds", json=feed_data, headers=headers)
     feed_id = response.json()["Feed"]["id"]
     assert response.status_code == 201
 
-    response = client.post(f"feeds/enable/{feed_id}", headers=headers)
+    response = await client.post(f"feeds/enable/{feed_id}", headers=headers)
     assert response.headers["Content-Type"] == "application/json"
 
 
@@ -244,17 +244,17 @@ async def test_disable_feed(
     feed_data["event_id"] = event.id
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post("/feeds", json=feed_data, headers=headers)
+    response = await client.post("/feeds", json=feed_data, headers=headers)
     feed_id = response.json()["Feed"]["id"]
     assert response.status_code == 201
 
-    response = client.post(f"feeds/disable/{feed_id}", headers=headers)
+    response = await client.post(f"feeds/disable/{feed_id}", headers=headers)
     assert response.status_code == 200
 
-    response = client.post(f"feeds/disable/{feed_test_ids['non_existing_feed_id']}", headers=headers)
+    response = await client.post(f"feeds/disable/{feed_test_ids['non_existing_feed_id']}", headers=headers)
     assert response.status_code == 404
 
-    response = client.post(f"feeds/disable/{feed_test_ids['invalid_feed_id']}", headers=headers)
+    response = await client.post(f"feeds/disable/{feed_test_ids['invalid_feed_id']}", headers=headers)
     assert response.status_code == 422
 
 
@@ -268,11 +268,11 @@ async def test_disable_feed_response_format(
     feed_data["event_id"] = event.id
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post("/feeds", json=feed_data, headers=headers)
+    response = await client.post("/feeds", json=feed_data, headers=headers)
     feed_id = response.json()["Feed"]["id"]
     assert response.status_code == 201
 
-    response = client.post(f"feeds/disable/{feed_id}", headers=headers)
+    response = await client.post(f"feeds/disable/{feed_id}", headers=headers)
     assert response.headers["Content-Type"] == "application/json"
 
 
@@ -288,11 +288,11 @@ async def test_get_existing_feed_details(
     await db.commit()
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post("/feeds", json=feed_data, headers=headers)
+    response = await client.post("/feeds", json=feed_data, headers=headers)
     feed_id = response.json()["Feed"]["id"]
     assert response.status_code == 201
 
-    response = client.get(f"/feeds/{feed_id}", headers=headers)
+    response = await client.get(f"/feeds/{feed_id}", headers=headers)
     assert response.status_code == 200
     assert response.json()["Feed"]["id"] == feed_id
     assert response.json()["Feed"]["name"] == feed_data["name"]
@@ -301,14 +301,14 @@ async def test_get_existing_feed_details(
 @pytest.mark.asyncio
 async def test_get_invalid_feed_by_id(feed_test_ids: dict[str, Any], site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.get(f"/feeds/{feed_test_ids['invalid_feed_id']}", headers=headers)
+    response = await client.get(f"/feeds/{feed_test_ids['invalid_feed_id']}", headers=headers)
     assert response.status_code == 422
 
 
 @pytest.mark.asyncio
 async def test_get_non_existing_feed_details(feed_test_ids: dict[str, Any], site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.get(f"/feeds/{feed_test_ids['non_existing_feed_id']}", headers=headers)
+    response = await client.get(f"/feeds/{feed_test_ids['non_existing_feed_id']}", headers=headers)
     assert response.status_code == 404
 
 
@@ -322,11 +322,11 @@ async def test_get_feed_response_format(
     feed_data["event_id"] = event.id
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post("/feeds", json=feed_data, headers=headers)
+    response = await client.post("/feeds", json=feed_data, headers=headers)
     feed_id = response.json()["Feed"]["id"]
     assert response.status_code == 201
 
-    response = client.get(f"/feeds/{feed_id}", headers=headers)
+    response = await client.get(f"/feeds/{feed_id}", headers=headers)
     assert response.headers["Content-Type"] == "application/json"
     data = response.json()
     assert "Feed" in data
@@ -344,12 +344,12 @@ async def test_update_existing_feed(
     feed_data["event_id"] = event.id
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post("/feeds", json=feed_data, headers=headers)
+    response = await client.post("/feeds", json=feed_data, headers=headers)
     feed_id = response.json()["Feed"]["id"]
     assert response.status_code == 201
 
     headers = {"authorization": site_admin_user_token}
-    response = client.put(f"/feeds/{feed_id}", json=feed_data, headers=headers)
+    response = await client.put(f"/feeds/{feed_id}", json=feed_data, headers=headers)
     assert response.status_code == 200
     response_data = response.json()
     assert response_data["Feed"]["name"] == feed_data["name"]
@@ -361,7 +361,7 @@ async def test_update_non_existing_feed(
     feed_test_ids: dict[str, Any], feed_data: dict[str, Any], site_admin_user_token, client
 ) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.put(f"/feeds/{feed_test_ids['non_existing_feed_id']}", json=feed_data, headers=headers)
+    response = await client.put(f"/feeds/{feed_test_ids['non_existing_feed_id']}", json=feed_data, headers=headers)
     assert response.status_code == 404
 
 
@@ -375,11 +375,11 @@ async def test_update_feed_response_format(
     feed_data["event_id"] = event.id
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post("/feeds", json=feed_data, headers=headers)
+    response = await client.post("/feeds", json=feed_data, headers=headers)
     feed_id = response.json()["Feed"]["id"]
     assert response.status_code == 201
 
-    response = client.put(f"/feeds/{feed_id}", json=feed_data, headers=headers)
+    response = await client.put(f"/feeds/{feed_id}", json=feed_data, headers=headers)
     assert response.headers["Content-Type"] == "application/json"
     assert "Feed" in response.json()
     assert response.json()["Feed"]["id"] == feed_id
@@ -396,24 +396,24 @@ async def test_toggle_existing_feed(
     feed_data["event_id"] = event.id
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post("/feeds", json=feed_data, headers=headers)
+    response = await client.post("/feeds", json=feed_data, headers=headers)
     feed_id = response.json()["Feed"]["id"]
     assert response.status_code == 201
 
     toggle_data = {"enable": False}
-    response = client.patch(f"feeds/{feed_id}", json=toggle_data, headers=headers)
+    response = await client.patch(f"feeds/{feed_id}", json=toggle_data, headers=headers)
     assert response.status_code == 200
 
     toggle_data = {"enable": False}
-    response = client.patch(f"feeds/{feed_id}", json=toggle_data, headers=headers)
+    response = await client.patch(f"feeds/{feed_id}", json=toggle_data, headers=headers)
     assert response.status_code == 200
 
     toggle_data = {"enable": True}
-    response = client.patch(f"feeds/{feed_id}", json=toggle_data, headers=headers)
+    response = await client.patch(f"feeds/{feed_id}", json=toggle_data, headers=headers)
     assert response.status_code == 200
 
     toggle_data = {"enable": False}
-    response = client.patch(f"feeds/{feed_id}", json=toggle_data, headers=headers)
+    response = await client.patch(f"feeds/{feed_id}", json=toggle_data, headers=headers)
     assert response.status_code == 200
 
 
@@ -421,7 +421,7 @@ async def test_toggle_existing_feed(
 async def test_toggle_non_existing_feed(feed_test_ids: dict[str, Any], site_admin_user_token, client) -> None:
     toggle_data = {"enable": True}
     headers = {"authorization": site_admin_user_token}
-    response = client.patch(f"feeds/{feed_test_ids['non_existing_feed_id']}", json=toggle_data, headers=headers)
+    response = await client.patch(f"feeds/{feed_test_ids['non_existing_feed_id']}", json=toggle_data, headers=headers)
     assert response.status_code == 404
 
 
@@ -435,12 +435,12 @@ async def test_toggle_feed_response_format(
     feed_data["event_id"] = event.id
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post("/feeds", json=feed_data, headers=headers)
+    response = await client.post("/feeds", json=feed_data, headers=headers)
     feed_id = response.json()["Feed"]["id"]
     assert response.status_code == 201
 
     toggle_data = {"enable": True}
-    response = client.patch(f"feeds/{feed_id}", json=toggle_data, headers=headers)
+    response = await client.patch(f"feeds/{feed_id}", json=toggle_data, headers=headers)
     assert response.headers["Content-Type"] == "application/json"
     data = response.json()
     assert "name" in data
@@ -448,7 +448,7 @@ async def test_toggle_feed_response_format(
     assert "url" in data
 
     toggle_data = {"enable": False}
-    response = client.patch(f"feeds/{feed_id}", json=toggle_data, headers=headers)
+    response = await client.patch(f"feeds/{feed_id}", json=toggle_data, headers=headers)
     assert response.headers["Content-Type"] == "application/json"
     data = response.json()
     assert "name" in data
@@ -456,7 +456,7 @@ async def test_toggle_feed_response_format(
     assert "url" in data
 
     toggle_data = {"enable": False}
-    response = client.patch(f"feeds/{feed_id}", json=toggle_data, headers=headers)
+    response = await client.patch(f"feeds/{feed_id}", json=toggle_data, headers=headers)
     assert response.headers["Content-Type"] == "application/json"
     data = response.json()
     assert "name" in data
@@ -464,7 +464,7 @@ async def test_toggle_feed_response_format(
     assert "url" in data
 
     toggle_data = {"enable": True}
-    response = client.patch(f"feeds/{feed_id}", json=toggle_data, headers=headers)
+    response = await client.patch(f"feeds/{feed_id}", json=toggle_data, headers=headers)
     assert response.headers["Content-Type"] == "application/json"
     data = response.json()
     assert "name" in data
@@ -472,7 +472,7 @@ async def test_toggle_feed_response_format(
     assert "url" in data
 
     toggle_data = {"enable": True}
-    response = client.patch(f"feeds/{feed_id}", json=toggle_data, headers=headers)
+    response = await client.patch(f"feeds/{feed_id}", json=toggle_data, headers=headers)
     assert response.headers["Content-Type"] == "application/json"
     data = response.json()
     assert "name" in data
@@ -490,10 +490,10 @@ async def test_get_all_feeds(
     feed_data["event_id"] = event.id
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post("/feeds", json=feed_data, headers=headers)
+    response = await client.post("/feeds", json=feed_data, headers=headers)
     assert response.status_code == 201
 
-    response = client.get("/feeds", headers=headers)
+    response = await client.get("/feeds", headers=headers)
     assert response.status_code == 200
 
 
@@ -507,10 +507,10 @@ async def test_get_feeds_response_format(
     feed_data["event_id"] = event.id
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post("/feeds", json=feed_data, headers=headers)
+    response = await client.post("/feeds", json=feed_data, headers=headers)
     assert response.status_code == 201
 
-    response = client.get("/feeds", headers=headers)
+    response = await client.get("/feeds", headers=headers)
     assert response.headers["Content-Type"] == "application/json"
     response_data = response.json()
 

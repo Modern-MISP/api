@@ -41,7 +41,7 @@ async def test_get_organisation_by_id(db: Session, site_admin_user_token, client
     org_uuid = organisation.uuid
 
     headers = {"authorization": site_admin_user_token}
-    response = client.get(f"organisations/{org_id}", headers=headers)
+    response = await client.get(f"organisations/{org_id}", headers=headers)
 
     assert response.status_code == 200
 
@@ -53,7 +53,7 @@ async def test_get_organisation_by_id(db: Session, site_admin_user_token, client
     assert response_json["nationality"] == organisation.nationality
     assert response_json["sector"] == organisation.sector
 
-    response = client.get(f"organisations/{org_uuid}", headers=headers)
+    response = await client.get(f"organisations/{org_uuid}", headers=headers)
     assert response.status_code == 200
     response_json = response.json()
     assert response_json["id"] == org_id
@@ -65,7 +65,7 @@ async def test_get_organisation_by_id_depr(db: Session, site_admin_user_token, c
     org_uuid = organisation.uuid
 
     headers = {"authorization": site_admin_user_token}
-    response = client.get(f"organisations/view/{org_id}", headers=headers)
+    response = await client.get(f"organisations/view/{org_id}", headers=headers)
 
     assert response.status_code == 200
 
@@ -77,7 +77,7 @@ async def test_get_organisation_by_id_depr(db: Session, site_admin_user_token, c
     assert response_json["nationality"] == organisation.nationality
     assert response_json["sector"] == organisation.sector
 
-    response = client.get(f"organisations/view/{org_uuid}", headers=headers)
+    response = await client.get(f"organisations/view/{org_uuid}", headers=headers)
     assert response.status_code == 200
     response_json = response.json()["Organisation"]
     assert response_json["id"] == org_id
@@ -86,7 +86,7 @@ async def test_get_organisation_by_id_depr(db: Session, site_admin_user_token, c
 @pytest.mark.asyncio
 async def test_get_all_organisations(db: Session, site_admin_user_token, client, organisation, organisation2) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.get("/organisations/all", headers=headers)
+    response = await client.get("/organisations/all", headers=headers)
 
     assert response.status_code == 200
     response_json = response.json()
@@ -109,7 +109,7 @@ async def test_delete_organisation(db: Session, site_admin_user_token, client, o
     org_id = organisation.id
 
     headers = {"authorization": site_admin_user_token}
-    response = client.delete(f"/organisations/delete/{org_id}", headers=headers)
+    response = await client.delete(f"/organisations/delete/{org_id}", headers=headers)
 
     assert response.status_code == 200
     response_json = response.json()
@@ -135,7 +135,7 @@ async def test_add_organisation(client, site_admin_user_token, db: Session):
         "landingpage": "page",
     }
 
-    response = client.post("/organisations", headers=headers, json=request_body)
+    response = await client.post("/organisations", headers=headers, json=request_body)
     response_json = response.json()
 
     assert response_json["name"] == name
@@ -156,6 +156,6 @@ async def test_edit_organisation(client, site_admin_user_token, organisation):
         "landingpage": "page1",
     }
 
-    response = client.post(f"/organisations/update/{organisation.id}", headers=headers, json=request_body)
+    response = await client.post(f"/organisations/update/{organisation.id}", headers=headers, json=request_body)
     response_json = response.json()
     assert response_json["name"] == "test1"

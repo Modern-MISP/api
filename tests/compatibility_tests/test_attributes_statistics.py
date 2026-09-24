@@ -60,7 +60,7 @@ async def test_attribute_statistics_category_absolute(
     path = "/attributes/attributeStatistics/category/0"
     request_body = None
 
-    assert get_legacy_modern_diff("get", path, request_body, auth_key, client) == {}
+    assert await get_legacy_modern_diff("get", path, request_body, auth_key, client) == {}
 
 
 @pytest.mark.asyncio
@@ -70,7 +70,7 @@ async def test_attribute_statistics_category_relative(
     path = "/attributes/attributeStatistics/category/1"
     request_body = None
 
-    assert get_legacy_modern_diff("get", path, request_body, auth_key, client) == {}
+    assert await get_legacy_modern_diff("get", path, request_body, auth_key, client) == {}
 
 
 @pytest.mark.asyncio
@@ -78,7 +78,7 @@ async def test_attribute_statistics_type_absolute(db: AsyncSession, attribute_fo
     path = "/attributes/attributeStatistics/type/0"
     request_body = None
 
-    assert get_legacy_modern_diff("get", path, request_body, auth_key, client) == {}
+    assert await get_legacy_modern_diff("get", path, request_body, auth_key, client) == {}
 
 
 @pytest.mark.asyncio
@@ -86,7 +86,7 @@ async def test_attribute_statistics_type_relative(db: AsyncSession, attribute_fo
     path = "/attributes/attributeStatistics/type/1"
     request_body = None
 
-    assert get_legacy_modern_diff("get", path, request_body, auth_key, client) == {}
+    assert await get_legacy_modern_diff("get", path, request_body, auth_key, client) == {}
 
 
 @pytest.mark.parametrize("user_key, attributes", user_to_attributes)
@@ -97,7 +97,7 @@ async def test_attribute_type_absolute_statistics(access_test_objects, user_key,
     auth_key = access_test_objects[f"{user_key}_auth_key"]
     path = "/attributes/attributeStatistics/type/0"
 
-    assert get_legacy_modern_diff("get", path, request_body, (clear_key, auth_key), client) == {}
+    assert await get_legacy_modern_diff("get", path, request_body, (clear_key, auth_key), client) == {}
 
 
 @pytest.mark.parametrize("user_key, attributes", user_to_attributes)
@@ -108,7 +108,7 @@ async def test_attribute_type_relative_statistics(access_test_objects, user_key,
     auth_key = access_test_objects[f"{user_key}_auth_key"]
     path = "/attributes/attributeStatistics/type/1"
 
-    assert get_legacy_modern_diff("get", path, request_body, (clear_key, auth_key), client) == {}
+    assert await get_legacy_modern_diff("get", path, request_body, (clear_key, auth_key), client) == {}
 
 
 @pytest.mark.parametrize("user_key, attributes", user_to_attributes)
@@ -119,7 +119,7 @@ async def test_attribute_category_absolute_statistics(access_test_objects, user_
     auth_key = access_test_objects[f"{user_key}_auth_key"]
     path = "/attributes/attributeStatistics/category/0"
 
-    assert get_legacy_modern_diff("get", path, request_body, (clear_key, auth_key), client) == {}
+    assert await get_legacy_modern_diff("get", path, request_body, (clear_key, auth_key), client) == {}
 
 
 @pytest.mark.parametrize("user_key, attributes", user_to_attributes)
@@ -130,4 +130,4 @@ async def test_attribute_category_relative_statistics(access_test_objects, user_
     auth_key = access_test_objects[f"{user_key}_auth_key"]
     path = "/attributes/attributeStatistics/category/1"
 
-    assert get_legacy_modern_diff("get", path, request_body, (clear_key, auth_key), client) == {}
+    assert await get_legacy_modern_diff("get", path, request_body, (clear_key, auth_key), client) == {}

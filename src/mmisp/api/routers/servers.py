@@ -188,6 +188,10 @@ async def update_remote_server(
 
 
 @router.get(
+    "/servers",
+    summary="Requests a list of all remote servers",
+)
+@router.get(
     "/servers/",
     deprecated=True,
     summary="Requests a list of all remote servers",

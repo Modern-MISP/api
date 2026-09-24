@@ -28,7 +28,7 @@ async def test_get_attribute_success(access_test_objects, user_key, attribute_ke
     attribute_id = attribute.id
     print(attribute.asdict())
 
-    response = client.get(f"/attributes/view/{attribute_id}", headers=headers)
+    response = await client.get(f"/attributes/view/{attribute_id}", headers=headers)
     print(response.json())
     assert response.status_code == 200
     response_json = response.json()
@@ -40,7 +40,7 @@ async def test_get_attribute_success(access_test_objects, user_key, attribute_ke
 async def test_get_attribute_fail(access_test_objects, user_key, attribute_key, client) -> None:
     headers = {"authorization": access_test_objects[f"{user_key}_token"]}
     attribute_id = access_test_objects[attribute_key].id
-    response = client.get(f"/attributes/view/{attribute_id}", headers=headers)
+    response = await client.get(f"/attributes/view/{attribute_id}", headers=headers)
 
     assert response.status_code == 403
 
@@ -55,7 +55,7 @@ async def test_get_all_attributes(
     client,
 ) -> None:
     headers = {"authorization": access_test_objects[f"{user_key}_token"]}
-    response = client.get("/attributes?limit=1000", headers=headers)
+    response = await client.get("/attributes?limit=1000", headers=headers)
 
     assert response.status_code == 200
     response_json = response.json()
@@ -75,7 +75,7 @@ async def test_delete_existing_attribute(access_test_objects, client, user_key, 
     attribute = access_test_objects[attribute_key]
     attribute_id = attribute.id
 
-    response = client.delete(f"/attributes/{attribute_id}", headers=headers)
+    response = await client.delete(f"/attributes/{attribute_id}", headers=headers)
     assert response.status_code == 200
 
 
@@ -86,7 +86,7 @@ async def test_delete_existing_attribute_fail(access_test_objects, client, user_
     attribute = access_test_objects[attribute_key]
     attribute_id = attribute.id
 
-    response = client.delete(f"/attributes/{attribute_id}", headers=headers)
+    response = await client.delete(f"/attributes/{attribute_id}", headers=headers)
     assert response.status_code == 403
 
 
@@ -104,7 +104,7 @@ async def test_add_attribute(db, access_test_objects, client, user_key, event_ke
         "disable_correlation": False,
     }
     event_id = access_test_objects[event_key].id
-    response = client.post(f"/attributes/{event_id}", json=request_body, headers=headers)
+    response = await client.post(f"/attributes/{event_id}", json=request_body, headers=headers)
 
     assert response.status_code == 200
 
@@ -128,7 +128,7 @@ async def test_add_attribute_fail(access_test_objects, client, user_key, event_k
         "disable_correlation": False,
     }
     event_id = access_test_objects[event_key].id
-    response = client.post(f"/attributes/{event_id}", json=request_body, headers=headers)
+    response = await client.post(f"/attributes/{event_id}", json=request_body, headers=headers)
 
     assert response.status_code == 403
 
@@ -139,7 +139,7 @@ async def test_add_existing_tag_to_attribute(access_test_objects, user_key, attr
     headers = {"authorization": access_test_objects[f"{user_key}_token"]}
     attribute_id = access_test_objects[attribute_key].id
     tag_id = access_test_objects["default_tag"].id
-    response = client.post(f"/attributes/addTag/{attribute_id}/{tag_id}/local:1", headers=headers)
+    response = await client.post(f"/attributes/addTag/{attribute_id}/{tag_id}/local:1", headers=headers)
     assert response.status_code == 200
 
     await remove_attribute_tag(db, attribute_id, tag_id)
@@ -151,10 +151,10 @@ async def test_remove_existing_tag_from_attribute(access_test_objects, client, u
     headers = {"authorization": access_test_objects[f"{user_key}_token"]}
     attribute_id = access_test_objects[attribute_key].id
     tag_id = access_test_objects["default_tag"].id
-    response = client.post(f"/attributes/addTag/{attribute_id}/{tag_id}/local:1", headers=headers)
+    response = await client.post(f"/attributes/addTag/{attribute_id}/{tag_id}/local:1", headers=headers)
     assert response.status_code == 200
 
-    response = client.post(f"/attributes/removeTag/{attribute_id}/{tag_id}", headers=headers)
+    response = await client.post(f"/attributes/removeTag/{attribute_id}/{tag_id}", headers=headers)
     assert response.status_code == 200
 
 
@@ -167,10 +167,10 @@ async def test_remove_existing_tag_from_attribute_fail(
     tag_id = access_test_objects["default_tag"].id
 
     headers = {"authorization": access_test_objects["site_admin_user_token"]}
-    response = client.post(f"/attributes/addTag/{attribute_id}/{tag_id}/local:1", headers=headers)
+    response = await client.post(f"/attributes/addTag/{attribute_id}/{tag_id}/local:1", headers=headers)
 
     headers = {"authorization": access_test_objects[f"{user_key}_token"]}
-    response = client.post(f"/attributes/removeTag/{attribute_id}/{tag_id}", headers=headers)
+    response = await client.post(f"/attributes/removeTag/{attribute_id}/{tag_id}", headers=headers)
     print(response.json())
     assert response.status_code == 403
 
@@ -183,12 +183,12 @@ async def test_restore_attribute(db, access_test_objects, client, user_key, attr
     attribute = access_test_objects[attribute_key]
     attribute_id = attribute.id
     headers = {"authorization": access_test_objects[f"{user_key}_token"]}
-    response = client.delete(f"/attributes/{attribute_id}", headers=headers)
+    response = await client.delete(f"/attributes/{attribute_id}", headers=headers)
 
     await db.refresh(attribute)
     assert attribute.deleted
 
-    response = client.post(f"/attributes/restore/{attribute_id}", headers=headers)
+    response = await client.post(f"/attributes/restore/{attribute_id}", headers=headers)
 
     assert response.status_code == 200
     response_json = response.json()
@@ -202,8 +202,8 @@ async def test_remove_tag_from_attribute(access_test_objects, client, user_key, 
     attribute_Id = access_test_objects[attribute_key].id
     tag_Id = access_test_objects["default_tag"].id
     headers = {"authorization": access_test_objects[f"{user_key}_token"]}
-    response2 = client.post(f"/attributes/addTag/{attribute_Id}/{tag_Id}", headers=headers)
-    response = client.post(f"/attributes/removeTag/{attribute_Id}/{tag_Id}", headers=headers)
+    response2 = await client.post(f"/attributes/addTag/{attribute_Id}/{tag_Id}", headers=headers)
+    response = await client.post(f"/attributes/removeTag/{attribute_Id}/{tag_Id}", headers=headers)
     # Der status code liefert immer 200 zurück egal, ob klappt oder wie in diesem Fall fehlschlägt.
     assert response.status_code == 200
     response_json = response.json()
@@ -230,7 +230,7 @@ async def test_edit_existing_attribute(access_test_objects, client, user_key, at
     assert attribute.id is not None
 
     headers = {"authorization": access_test_objects[f"{user_key}_token"]}
-    response = client.put(f"/attributes/{attribute_id}", json=request_body, headers=headers)
+    response = await client.put(f"/attributes/{attribute_id}", json=request_body, headers=headers)
 
     assert response.status_code == 200
     response_json = response.json()
@@ -263,7 +263,7 @@ async def test_edit_existing_attribute(access_test_objects, client, user_key, at
 @pytest.mark.asyncio
 async def test_attribute_type_absolute_statistics(access_test_objects, user_key, attributes, client) -> None:
     headers = {"authorization": access_test_objects[f"{user_key}_token"]}
-    response = client.get("/attributes/attributeStatistics/type/0", headers=headers)
+    response = await client.get("/attributes/attributeStatistics/type/0", headers=headers)
     assert response.status_code == 200
 
 
@@ -271,7 +271,7 @@ async def test_attribute_type_absolute_statistics(access_test_objects, user_key,
 @pytest.mark.asyncio
 async def test_attribute_type_relative_statistics(access_test_objects, user_key, attributes, client) -> None:
     headers = {"authorization": access_test_objects[f"{user_key}_token"]}
-    response = client.get("/attributes/attributeStatistics/type/1", headers=headers)
+    response = await client.get("/attributes/attributeStatistics/type/1", headers=headers)
     assert response.status_code == 200
 
 
@@ -279,7 +279,7 @@ async def test_attribute_type_relative_statistics(access_test_objects, user_key,
 @pytest.mark.asyncio
 async def test_attribute_category_absolute_statistics(access_test_objects, user_key, attributes, client) -> None:
     headers = {"authorization": access_test_objects[f"{user_key}_token"]}
-    response = client.get("/attributes/attributeStatistics/category/0", headers=headers)
+    response = await client.get("/attributes/attributeStatistics/category/0", headers=headers)
     assert response.status_code == 200
 
 
@@ -287,5 +287,5 @@ async def test_attribute_category_absolute_statistics(access_test_objects, user_
 @pytest.mark.asyncio
 async def test_attribute_category_relative_statistics(access_test_objects, user_key, attributes, client) -> None:
     headers = {"authorization": access_test_objects[f"{user_key}_token"]}
-    response = client.get("/attributes/attributeStatistics/category/1", headers=headers)
+    response = await client.get("/attributes/attributeStatistics/category/1", headers=headers)
     assert response.status_code == 200

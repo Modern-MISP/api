@@ -9,7 +9,7 @@ from typing import Tuple
 
 import pytest_asyncio
 from _pytest.config import create_terminal_writer
-from fastapi.testclient import TestClient
+from httpx import ASGITransport, AsyncClient
 from icecream import ic
 from pytest import Config, Item, hookimpl
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -193,7 +193,7 @@ async def event5(db, organisation, site_admin_user):
     await db.commit()
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def attribute3(db, event):
     event_id = event.id
     attribute = generate_attribute(event_id)
@@ -210,9 +210,10 @@ async def attribute3(db, event):
     await db.commit()
 
 
-@pytest.fixture
-def client(app):
-    with TestClient(app) as c:
+@pytest_asyncio.fixture
+async def client(app):
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://testserver") as c:
         yield c
 
 

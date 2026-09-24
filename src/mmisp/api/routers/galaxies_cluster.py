@@ -648,6 +648,12 @@ async def _get_galaxy_cluster(db: Session, galaxy_cluster: GalaxyCluster | None)
     galaxy_cluster_dict["Org"] = await _get_organisation_for_cluster(db, org)
     galaxy_cluster_dict["Orgc"] = await _get_organisation_for_cluster(db, orgc)
 
+    tag_id = None
+    if galaxy_cluster.tag_name:
+        tag_result = await db.execute(select(Tag.id).where(Tag.name == galaxy_cluster.tag_name))
+        tag_id = tag_result.scalar_one_or_none()
+    galaxy_cluster_dict["tag_id"] = tag_id
+
     return GalaxyClusterResponse(GalaxyCluster=GetGalaxyClusterResponse.model_validate(galaxy_cluster_dict))
 
 

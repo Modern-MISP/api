@@ -413,7 +413,7 @@ async def update_feed_depr(
 
 @alog
 async def _add_feed(db: Session, body: FeedCreateBody) -> FeedResponse:
-    feed: Feed = Feed(**body.model_dump())
+    feed: Feed = Feed(**body.model_dump(), lock_events=False)
 
     db.add(feed)
     await db.flush()

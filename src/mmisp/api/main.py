@@ -37,7 +37,7 @@ for m in router_module_names:
 def init_app(*, init_db: bool = False) -> FastAPI:
     if db_config.CONNECTION_INIT:
         assert sessionmanager is not None
-        sessionmanager.init()
+        sessionmanager.init(check_migration=db_config.CHECK_MIGRATION)
 
     if init_db:
 

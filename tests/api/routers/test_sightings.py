@@ -103,7 +103,7 @@ async def test_add_sighting(
         sighting_data["filters"]["value1"] = sighting_data["values"][-1]
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post("/sightings", json=sighting_data, headers=headers)
+    response = await client.post("/sightings", json=sighting_data, headers=headers)
     response_data = response.json()
     ic(response_data)
     response_attribute_ids = [x["attribute_id"] for x in response_data]
@@ -129,11 +129,11 @@ async def test_add_sighting_with_invalid_data(
         sighting_data["filters"]["value1"] = attributes[-1].value1
 
     headers = {"authorization": site_admin_user_token}
-    response_first = client.post("/sightings", json=sighting_data, headers=headers)
+    response_first = await client.post("/sightings", json=sighting_data, headers=headers)
     assert response_first.status_code == 201
-    response_second = client.post("/sightings", json=sighting_data, headers=headers)
+    response_second = await client.post("/sightings", json=sighting_data, headers=headers)
     assert response_second.status_code == 201
-    response_third = client.post("/sightings", json=sighting_data, headers=headers)
+    response_third = await client.post("/sightings", json=sighting_data, headers=headers)
     assert response_third.status_code == 201
 
     for sighting in response_first.json():
@@ -155,7 +155,7 @@ async def test_add_sighting_missing_required_fields(
     incomplete_data = generate_valid_random_sighting_data().model_dump(exclude_unset=True)
     del incomplete_data["values"]
     headers = {"authorization": site_admin_user_token}
-    response = client.post("/sightings", json=incomplete_data, headers=headers)
+    response = await client.post("/sightings", json=incomplete_data, headers=headers)
     assert response.status_code == 422
     assert response.json()["detail"][0]["msg"] == "Field required"
 
@@ -175,7 +175,7 @@ async def test_add_sightings_at_index_success(
         sighting_data["filters"]["value1"] = attribute.value1
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post(f"/sightings/{attribute.id}", headers=headers)
+    response = await client.post(f"/sightings/{attribute.id}", headers=headers)
     assert response.status_code == 201
     response_data = response.json()
     assert "id" in response_data
@@ -200,7 +200,7 @@ async def test_add_sightings_at_uuid_index_success(
         sighting_data["filters"]["value1"] = attribute.value1
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post(f"/sightings/{attribute.uuid}", headers=headers)
+    response = await client.post(f"/sightings/{attribute.uuid}", headers=headers)
     assert response.status_code == 201
     response_data = response.json()
     assert "id" in response_data
@@ -227,13 +227,13 @@ async def test_add_sighting_at_index_invalid_attribute(
 
     non_existent_attribute_id = "0"
     headers = {"authorization": site_admin_user_token}
-    response = client.post(f"/sightings/{non_existent_attribute_id}", headers=headers)
+    response = await client.post(f"/sightings/{non_existent_attribute_id}", headers=headers)
     assert response.status_code == 404
     assert response.json()["detail"] == "Attribute not found."
 
     unused_uuid = "a469325efe2f4f32a6854579f415ec6a"  # Just a random UUID -> mostlikely unused
     headers = {"authorization": site_admin_user_token}
-    response = client.post(f"/sightings/{unused_uuid}", headers=headers)
+    response = await client.post(f"/sightings/{unused_uuid}", headers=headers)
     assert response.status_code == 404
     assert response.json()["detail"] == "Attribute not found."
 
@@ -248,7 +248,7 @@ async def test_get_sighting_success(
         sighting_data["filters"]["value1"] = attribute.value1
 
     headers = {"authorization": site_admin_user_token}
-    response = client.get(f"/sightings/{event.id}", headers=headers)
+    response = await client.get(f"/sightings/{event.id}", headers=headers)
     assert response.status_code == 200
 
 
@@ -262,7 +262,7 @@ async def test_get_sighting_by_uuid_success(
         sighting_data["filters"]["value1"] = attribute.value1
 
     headers = {"authorization": site_admin_user_token}
-    response = client.get(f"/sightings/{event.uuid}", headers=headers)
+    response = await client.get(f"/sightings/{event.uuid}", headers=headers)
     assert response.status_code == 200
 
 
@@ -275,13 +275,13 @@ async def test_delete_sighting_success(
         sighting_data["filters"]["value1"] = attribute.value1
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post(f"/sightings/{attribute.id}", headers=headers)
+    response = await client.post(f"/sightings/{attribute.id}", headers=headers)
     assert response.status_code == 201
 
     sighting_id = response.json()["id"]
 
     headers = {"authorization": site_admin_user_token}
-    response = client.delete(f"/sightings/{sighting_id}", headers=headers)
+    response = await client.delete(f"/sightings/{sighting_id}", headers=headers)
     response_data = response.json()
     assert response.status_code == 200
     assert response_data["saved"]
@@ -299,14 +299,14 @@ async def test_delete_sighting_invalid_id(
         sighting_data["filters"]["value1"] = attribute.value1
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post(f"/sightings/{attribute.id}", headers=headers)
+    response = await client.post(f"/sightings/{attribute.id}", headers=headers)
     assert response.status_code == 201
 
     real_sighting_id = response.json()["id"]
     sighting_id = "0"
 
     headers = {"authorization": site_admin_user_token}
-    response = client.delete(f"/sightings/{sighting_id}", headers=headers)
+    response = await client.delete(f"/sightings/{sighting_id}", headers=headers)
     response_data = response.json()
     assert response.status_code == 404
     assert "detail" in response_data
@@ -324,11 +324,11 @@ async def test_get_all_sightings_success(
         sighting_data["filters"]["value1"] = attribute.value1
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post(f"/sightings/{attribute.id}", headers=headers)
+    response = await client.post(f"/sightings/{attribute.id}", headers=headers)
     real_sighting_id = response.json()["id"]
     assert response.status_code == 201
 
-    response = client.get("/sightings", headers=headers)
+    response = await client.get("/sightings", headers=headers)
     assert response.status_code == 200
     assert isinstance(response.json()["sightings"], list)
     await delete_sighting(db, real_sighting_id)
@@ -343,10 +343,10 @@ async def test_get_sightings_response_format(
         sighting_data["filters"]["value1"] = attribute.value1
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post(f"/sightings/{attribute.id}", headers=headers)
+    response = await client.post(f"/sightings/{attribute.id}", headers=headers)
     assert response.status_code == 201
 
-    response = client.get("/sightings", headers=headers)
+    response = await client.get("/sightings", headers=headers)
     assert response.headers["Content-Type"] == "application/json"
     response_data = response.json()
     assert isinstance(response_data["sightings"], list)

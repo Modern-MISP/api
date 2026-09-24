@@ -67,7 +67,7 @@ def invalid_tag_data(request: Any) -> Dict[str, Any]:
 @pytest.mark.asyncio
 async def test_add_tag(db, tag_data: Dict[str, Any], site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.post("/tags", json=tag_data, headers=headers)
+    response = await client.post("/tags", json=tag_data, headers=headers)
     assert response.status_code == 201
 
     await remove_tags(db, [response.json()["Tag"]["id"]])
@@ -76,7 +76,7 @@ async def test_add_tag(db, tag_data: Dict[str, Any], site_admin_user_token, clie
 @pytest.mark.asyncio
 async def test_add_tag_deprecated(db, tag_data: Dict[str, Any], site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.post("/tags/add", json=tag_data, headers=headers)
+    response = await client.post("/tags/add", json=tag_data, headers=headers)
     assert response.status_code == 201
 
     await remove_tags(db, [response.json()["Tag"]["id"]])
@@ -88,7 +88,7 @@ async def test_add_tag_with_existing_name(db: AsyncSession, add_tags, site_admin
     tag_data = generate_valid_required_tag_data()
     tag_data.name = (await db.get(Tag, tag_id[0])).name
     headers = {"authorization": site_admin_user_token}
-    response = client.post("/tags", json=tag_data.model_dump(), headers=headers)
+    response = await client.post("/tags", json=tag_data.model_dump(), headers=headers)
     assert response.status_code == 403
 
     await remove_tags(db, tag_id)
@@ -100,7 +100,7 @@ async def test_add_tag_with_existing_name_deprecated(db: AsyncSession, add_tags,
     tag_data = generate_valid_required_tag_data()
     tag_data.name = (await db.get(Tag, tag_id[0])).name
     headers = {"authorization": site_admin_user_token}
-    response = client.post("/tags/add", json=tag_data.model_dump(), headers=headers)
+    response = await client.post("/tags/add", json=tag_data.model_dump(), headers=headers)
     assert response.status_code == 403
 
     await remove_tags(db, tag_id)
@@ -111,21 +111,21 @@ async def test_add_tag_with_invalid_colour(site_admin_user_token, client) -> Non
     tag_data = generate_valid_required_tag_data()
     tag_data.colour = "#12345,"
     headers = {"authorization": site_admin_user_token}
-    response = client.post("/tags", json=tag_data.model_dump(), headers=headers)
+    response = await client.post("/tags", json=tag_data.model_dump(), headers=headers)
     assert response.status_code == 400
 
 
 @pytest.mark.asyncio
 async def test_add_tag_invalid_data(invalid_tag_data: Any, site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.post("/tags", json=invalid_tag_data, headers=headers)
+    response = await client.post("/tags", json=invalid_tag_data, headers=headers)
     assert response.status_code == 422
 
 
 @pytest.mark.asyncio
 async def test_add_tag_response_format(db, tag_data: Dict[str, Any], site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.post("/tags", json=tag_data, headers=headers)
+    response = await client.post("/tags", json=tag_data, headers=headers)
 
     json = response.json()
     assert json["Tag"]["name"] == tag_data["name"]
@@ -138,7 +138,7 @@ async def test_add_tag_response_format(db, tag_data: Dict[str, Any], site_admin_
 @pytest.mark.asyncio
 async def test_add_tag_response_format_deprecated(db, tag_data: Dict[str, Any], site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.post("/tags/add", json=tag_data, headers=headers)
+    response = await client.post("/tags/add", json=tag_data, headers=headers)
 
     json = response.json()
     assert json["Tag"]["name"] == tag_data["name"]
@@ -156,15 +156,15 @@ async def test_view_tag(db, add_tags, site_admin_user_token, client) -> None:
     invalid_tags = get_invalid_tags()
 
     for tag in tags:
-        response = client.get(f"/tags/{tag}", headers=headers)
+        response = await client.get(f"/tags/{tag}", headers=headers)
         assert response.status_code == 200
 
     for non_existing_tag in non_existing_tags:
-        response = client.get(f"/tags/{non_existing_tag}", headers=headers)
+        response = await client.get(f"/tags/{non_existing_tag}", headers=headers)
         assert response.status_code == 404
 
     for invalid_tag in invalid_tags:
-        response = client.get(f"/tags/{invalid_tag}", headers=headers)
+        response = await client.get(f"/tags/{invalid_tag}", headers=headers)
         assert response.status_code == 422
 
     await remove_tags(db, tags)
@@ -178,15 +178,15 @@ async def test_view_tag_deprecated(db, add_tags, site_admin_user_token, client) 
     invalid_tags = get_invalid_tags()
 
     for tag in tags:
-        response = client.get(f"/tags/view/{tag}", headers=headers)
+        response = await client.get(f"/tags/view/{tag}", headers=headers)
         assert response.status_code == 200
 
     for non_existing_tag in non_existing_tags:
-        response = client.get(f"/tags/view/{non_existing_tag}", headers=headers)
+        response = await client.get(f"/tags/view/{non_existing_tag}", headers=headers)
         assert response.status_code == 404
 
     for invalid_tag in invalid_tags:
-        response = client.get(f"/tags/view/{invalid_tag}", headers=headers)
+        response = await client.get(f"/tags/view/{invalid_tag}", headers=headers)
         assert response.status_code == 422
 
     await remove_tags(db, tags)
@@ -198,7 +198,7 @@ async def test_view_tag_response_format(db, site_admin_user_token, add_tags, cli
 
     tag = await add_tags(1)
 
-    response = client.get(f"tags/{tag[0]}", headers=headers)
+    response = await client.get(f"tags/{tag[0]}", headers=headers)
     assert response.status_code == 200
     json = response.json()
     assert json["id"] == tag[0]
@@ -212,7 +212,7 @@ async def test_view_tag_response_format_deprecated(db, site_admin_user_token, ad
 
     tag = await add_tags(1)
 
-    response = client.get(f"tags/view/{tag[0]}", headers=headers)
+    response = await client.get(f"tags/view/{tag[0]}", headers=headers)
     assert response.status_code == 200
     json = response.json()
     assert json["id"] == tag[0]
@@ -231,11 +231,11 @@ async def test_search_tag(db: AsyncSession, site_admin_user_token, add_tags, cli
         substring_start = random.randint(0, len(tag_name) - 1)
         substring_end = random.randint(substring_start + 1, len(tag_name))
         substring = tag_name[substring_start:substring_end]
-        response = client.get(f"/tags/search/{substring}", headers=headers)
+        response = await client.get(f"/tags/search/{substring}", headers=headers)
         assert response.status_code == 200
 
     name = random_string_with_punctuation(4)
-    response = client.get(f"/tags/search/{name}", headers=headers)
+    response = await client.get(f"/tags/search/{name}", headers=headers)
     assert response.status_code == 200
     json = response.json()
     assert isinstance(json["response"], list)
@@ -253,7 +253,7 @@ async def test_search_tag_response_format(db: AsyncSession, site_admin_user_toke
     substring_end = random.randint(substring_start + 1, len(tag_name))
     substring = tag_name[substring_start:substring_end]
 
-    response = client.get(f"tags/search/{substring}", headers=headers)
+    response = await client.get(f"tags/search/{substring}", headers=headers)
     assert response.status_code == 200
     json = response.json()
     assert isinstance(json["response"], list)
@@ -268,17 +268,17 @@ async def test_edit_tag(db, tag_data: Dict[str, Any], site_admin_user_token, add
     tags = await add_tags()
     tag_data.pop("name")
     for tag in tags:
-        response = client.put(f"/tags/{tag}", json=tag_data, headers=headers)
+        response = await client.put(f"/tags/{tag}", json=tag_data, headers=headers)
         assert response.status_code == 200
 
     non_existing_tags = await get_non_existing_tags(db)
     for non_existing_tag in non_existing_tags:
-        response = client.put(f"/tags/{non_existing_tag}", json=tag_data, headers=headers)
+        response = await client.put(f"/tags/{non_existing_tag}", json=tag_data, headers=headers)
         assert response.status_code == 404
 
     invalid_tags = get_invalid_tags()
     for invalid_tag in invalid_tags:
-        response = client.put(f"/tags/{invalid_tag}", json=tag_data, headers=headers)
+        response = await client.put(f"/tags/{invalid_tag}", json=tag_data, headers=headers)
         assert response.status_code == 422
 
     await remove_tags(db, tags)
@@ -290,17 +290,17 @@ async def test_edit_tag_deprecated(db, tag_data: Dict[str, Any], site_admin_user
 
     tags = await add_tags(1)
     for tag in tags:
-        response = client.post(f"/tags/edit/{tag}", json=tag_data, headers=headers)
+        response = await client.post(f"/tags/edit/{tag}", json=tag_data, headers=headers)
         assert response.status_code == 200
 
     non_existing_tags = await get_non_existing_tags(db)
     for non_existing_tag in non_existing_tags:
-        response = client.post(f"/tags/edit/{non_existing_tag}", json=tag_data, headers=headers)
+        response = await client.post(f"/tags/edit/{non_existing_tag}", json=tag_data, headers=headers)
         assert response.status_code == 404
 
     invalid_tags = get_invalid_tags()
     for invalid_tag in invalid_tags:
-        response = client.post(f"/tags/edit/{invalid_tag}", json=tag_data, headers=headers)
+        response = await client.post(f"/tags/edit/{invalid_tag}", json=tag_data, headers=headers)
         assert response.status_code == 422
 
     await remove_tags(db, tags)
@@ -313,7 +313,7 @@ async def test_edit_tag_same_name(db: AsyncSession, site_admin_user_token, add_t
     tags = await add_tags(2)
     name = (await db.get(Tag, tags[0])).name
 
-    response = client.put(f"/tags/{tags[1]}", json={"name": name}, headers=headers)
+    response = await client.put(f"/tags/{tags[1]}", json={"name": name}, headers=headers)
     assert response.status_code == 403
 
     await remove_tags(db, tags)
@@ -326,7 +326,7 @@ async def test_edit_tag_same_name_deprecated(db: AsyncSession, site_admin_user_t
     tags = await add_tags(2)
     name = (await db.get(Tag, tags[0])).name
 
-    response = client.post(f"/tags/edit/{tags[1]}", json={"name": name}, headers=headers)
+    response = await client.post(f"/tags/edit/{tags[1]}", json={"name": name}, headers=headers)
     assert response.status_code == 403
 
     await remove_tags(db, tags)
@@ -337,7 +337,7 @@ async def test_edit_tag_response_format(db, tag_data: Dict[str, Any], site_admin
     tag = await add_tags(1)
 
     headers = {"authorization": site_admin_user_token}
-    response = client.put(f"tags/{tag[0]}", json=tag_data, headers=headers)
+    response = await client.put(f"tags/{tag[0]}", json=tag_data, headers=headers)
     assert response.status_code == 200
     assert response.headers["Content-Type"] == "application/json"
     json = response.json()
@@ -354,17 +354,17 @@ async def test_delete_tag(db, site_admin_user_token, add_tags, client) -> None:
     tags = await add_tags()
 
     for tag in tags:
-        response = client.delete(f"/tags/{tag}", headers=headers)
+        response = await client.delete(f"/tags/{tag}", headers=headers)
         assert response.status_code == 200
 
     non_existing_tags = await get_non_existing_tags(db)
     for non_existing_tag in non_existing_tags:
-        response = client.delete(f"/tags/{non_existing_tag}", headers=headers)
+        response = await client.delete(f"/tags/{non_existing_tag}", headers=headers)
         assert response.status_code == 404
 
     invalid_tags = get_invalid_tags()
     for invalid_tag in invalid_tags:
-        response = client.delete(f"/tags/{invalid_tag}", headers=headers)
+        response = await client.delete(f"/tags/{invalid_tag}", headers=headers)
         assert response.status_code == 422
 
 
@@ -375,7 +375,7 @@ async def test_delete_tag_deprecated(site_admin_user_token, add_tags, client) ->
     tags = await add_tags()
 
     for tag in tags:
-        response = client.post(f"/tags/delete/{tag}", headers=headers)
+        response = await client.post(f"/tags/delete/{tag}", headers=headers)
         assert response.status_code == 200
 
 
@@ -383,7 +383,7 @@ async def test_delete_tag_deprecated(site_admin_user_token, add_tags, client) ->
 async def test_edit_delete_response_format(site_admin_user_token, add_tags, client) -> None:
     headers = {"authorization": site_admin_user_token}
     tag = await add_tags(1)
-    response = client.delete(f"tags/{tag[0]}", headers=headers)
+    response = await client.delete(f"tags/{tag[0]}", headers=headers)
     assert response.headers["Content-Type"] == "application/json"
     json = response.json()
     assert json["name"] == "Tag deleted."
@@ -393,7 +393,7 @@ async def test_edit_delete_response_format(site_admin_user_token, add_tags, clie
 async def test_edit_delete_response_format_deprecated(site_admin_user_token, add_tags, client) -> None:
     headers = {"authorization": site_admin_user_token}
     tag = await add_tags(1)
-    response = client.post(f"tags/delete/{tag[0]}", headers=headers)
+    response = await client.post(f"tags/delete/{tag[0]}", headers=headers)
     assert response.headers["Content-Type"] == "application/json"
     json = response.json()
     assert json["name"] == "Tag deleted."
@@ -402,7 +402,7 @@ async def test_edit_delete_response_format_deprecated(site_admin_user_token, add
 @pytest.mark.asyncio
 async def test_get_all_tags(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.get("/tags", headers=headers)
+    response = await client.get("/tags", headers=headers)
     assert response.status_code == 200
 
 
@@ -411,7 +411,7 @@ async def test_get_all_tags_response_format(db, site_admin_user_token, add_tags,
     tags = await add_tags(1)
 
     headers = {"authorization": site_admin_user_token}
-    response = client.get("/tags", headers=headers)
+    response = await client.get("/tags", headers=headers)
     assert response.headers["Content-Type"] == "application/json"
 
     json = response.json()

@@ -13,7 +13,7 @@ from mmisp.db.models.log import Log
 @respx.mock
 @pytest.mark.asyncio
 async def test_freetext_import_stub(client, site_admin_user_token):
-    response = client.post(
+    response = await client.post(
         "/events/freeTextImport/123",
         json={"value": "I spilled my coffee fuuuuu", "returnMetaAttributes": False},
         headers={"Authorization": site_admin_user_token},
@@ -27,7 +27,7 @@ async def test_freetext_import_stub(client, site_admin_user_token):
 async def test_freetext_import(client, site_admin_user_token):
     respx.post(f"{config.WORKER_URL}/job/processFreeText").mock(return_value=Response(200, json={"job_id": "777"}))
 
-    response = client.post(
+    response = await client.post(
         "/events/freeTextImport/123",
         json={"value": "security leak at website.com", "returnMetaAttributes": True},
         headers={"Authorization": site_admin_user_token},
@@ -59,7 +59,7 @@ async def delete_event(db, id):
 async def test_add_event_valid_data(db, site_admin_user_token, client) -> None:
     request_body = {"info": "test event"}
     headers = {"authorization": site_admin_user_token}
-    response = client.post("/events", json=request_body, headers=headers)
+    response = await client.post("/events", json=request_body, headers=headers)
 
     assert response.status_code == 200
     response_json = response.json()
@@ -78,7 +78,7 @@ async def test_add_event_valid_data(db, site_admin_user_token, client) -> None:
 async def test_add_event_date_empty_string(db, site_admin_user_token, client) -> None:
     request_body = {"info": "test event", "date": ""}
     headers = {"authorization": site_admin_user_token}
-    response = client.post("/events", json=request_body, headers=headers)
+    response = await client.post("/events", json=request_body, headers=headers)
 
     assert response.status_code == 200
     response_json = response.json()
@@ -110,7 +110,7 @@ async def test_get_existing_event(
     headers = {"authorization": site_admin_user_token}
     ic("event_id", event_id)
 
-    response = client.get(f"/events/{event_id}", headers=headers)
+    response = await client.get(f"/events/{event_id}", headers=headers)
     ic("response", response)
 
     assert response.status_code == 200
@@ -134,7 +134,7 @@ async def test_get_event_sharing_group(event_unpublished_sharing_group, site_adm
     headers = {"authorization": site_admin_user_token}
     ic("event_id", event_id)
 
-    response = client.get(f"/events/{event_id}", headers=headers)
+    response = await client.get(f"/events/{event_id}", headers=headers)
     ic("response", response)
 
     assert response.status_code == 200
@@ -166,7 +166,7 @@ async def test_get_existing_event_by_uuid(
     headers = {"authorization": site_admin_user_token}
     ic("event_id", event_id)
 
-    response = client.get(f"/events/{event_uuid}", headers=headers)
+    response = await client.get(f"/events/{event_uuid}", headers=headers)
     ic("response", response)
 
     assert response.status_code == 200
@@ -187,7 +187,7 @@ async def test_get_existing_event_by_uuid(
 async def test_get_non_existing_event(db, site_admin_user_token, client) -> None:
     unused_event_id = await get_max_event_id(db) + 1
     headers = {"authorization": site_admin_user_token}
-    response = client.get(f"/events/{unused_event_id}", headers=headers)
+    response = await client.get(f"/events/{unused_event_id}", headers=headers)
     assert response.status_code == 404
 
 
@@ -195,7 +195,7 @@ async def test_get_non_existing_event(db, site_admin_user_token, client) -> None
 async def test_get_non_existing_event_by_uuid(db, site_admin_user_token, client) -> None:
     unused_event_id = "a469325efe2f4f32a6854579f415ec6a"  # just a random, valid uuid. Extremely unlikely,
     headers = {"authorization": site_admin_user_token}  # that this one is already used in the db
-    response = client.get(f"/events/{unused_event_id}", headers=headers)
+    response = await client.get(f"/events/{unused_event_id}", headers=headers)
     assert response.status_code == 404
 
 
@@ -205,7 +205,7 @@ async def test_update_existing_event(event, site_admin_user_token, client) -> No
     event_id = event.id
 
     headers = {"authorization": site_admin_user_token}
-    response = client.put(f"events/{event_id}", json=request_body, headers=headers)
+    response = await client.put(f"events/{event_id}", json=request_body, headers=headers)
 
     assert response.status_code == 200
     response_json = response.json()
@@ -218,7 +218,7 @@ async def test_update_existing_event_by_uuid(event, site_admin_user_token, clien
     event_uuid = event.uuid
 
     headers = {"authorization": site_admin_user_token}
-    response = client.put(f"events/{event_uuid}", json=request_body, headers=headers)
+    response = await client.put(f"events/{event_uuid}", json=request_body, headers=headers)
 
     assert response.status_code == 200
     response_json = response.json()
@@ -233,7 +233,7 @@ async def test_update_existing_event_has_rolled_back_transaction(
     event_id = event.id
 
     headers = {"authorization": site_admin_user_token}
-    response = client.put(f"events/{event_id}", json=request_body, headers=headers)
+    response = await client.put(f"events/{event_id}", json=request_body, headers=headers)
 
     assert response.status_code == 400
     await db.refresh(event)
@@ -254,14 +254,14 @@ async def test_update_existing_event_has_rolled_back_transaction(
 async def test_update_non_existing_event(site_admin_user_token, client) -> None:
     request_body = {"info": "updated event"}
     headers = {"authorization": site_admin_user_token}
-    response = client.put("/events/0", json=request_body, headers=headers)
+    response = await client.put("/events/0", json=request_body, headers=headers)
     assert response.status_code == 404
 
     # Test random UUID
-    response = client.put("/events/a469325efe2f4f32a6854579f415ec6a", json=request_body, headers=headers)
+    response = await client.put("/events/a469325efe2f4f32a6854579f415ec6a", json=request_body, headers=headers)
     assert response.status_code == 404
 
-    response = client.put("/events/invalid_id", json=request_body, headers=headers)
+    response = await client.put("/events/invalid_id", json=request_body, headers=headers)
     assert response.status_code == 422
 
 
@@ -270,7 +270,7 @@ async def test_delete_existing_event(event, site_admin_user_token, client) -> No
     event_id = event.id
 
     headers = {"authorization": site_admin_user_token}
-    response = client.delete(f"events/{event_id}", headers=headers)
+    response = await client.delete(f"events/{event_id}", headers=headers)
 
     assert response.status_code == 200
 
@@ -279,7 +279,7 @@ async def test_delete_existing_event(event, site_admin_user_token, client) -> No
 async def test_delete_existing_event_by_uuid(event, site_admin_user_token, client) -> None:
     event_uuid = event.uuid
     headers = {"authorization": site_admin_user_token}
-    response = client.delete(f"events/{event_uuid}", headers=headers)
+    response = await client.delete(f"events/{event_uuid}", headers=headers)
 
     assert response.status_code == 200
 
@@ -287,20 +287,20 @@ async def test_delete_existing_event_by_uuid(event, site_admin_user_token, clien
 @pytest.mark.asyncio
 async def test_delete_invalid_or_non_existing_event(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.delete("/events/0", headers=headers)
+    response = await client.delete("/events/0", headers=headers)
     assert response.status_code == 404
 
-    response = client.delete("/events/a469325efe2f4f32a6854579f415ec6a", headers=headers)
+    response = await client.delete("/events/a469325efe2f4f32a6854579f415ec6a", headers=headers)
     assert response.status_code == 404
 
-    response = client.delete("/events/invalid_id", headers=headers)
+    response = await client.delete("/events/invalid_id", headers=headers)
     assert response.status_code == 422
 
 
 @pytest.mark.asyncio
 async def test_get_all_events(event, event2, site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.get("/events", headers=headers)
+    response = await client.get("/events", headers=headers)
 
     assert response.status_code == 200
     response_json = response.json()
@@ -311,7 +311,7 @@ async def test_get_all_events(event, event2, site_admin_user_token, client) -> N
 async def test_valid_search_attribute_data(organisation, event, attribute, site_admin_user_token, client) -> None:
     json = {"returnFormat": "json", "limit": 100}
     headers = {"authorization": site_admin_user_token}
-    response = client.post("/events/restSearch", json=json, headers=headers)
+    response = await client.post("/events/restSearch", json=json, headers=headers)
     assert response.status_code == 200
     response_json = response.json()
     assert "response" in response_json
@@ -324,7 +324,7 @@ async def test_valid_search_attribute_data(organisation, event, attribute, site_
 async def test_invalid_search_attribute_data(site_admin_user_token, client) -> None:
     json = {"returnFormat": "invalid format"}
     headers = {"authorization": site_admin_user_token}
-    response = client.post("/events/restSearch", json=json, headers=headers)
+    response = await client.post("/events/restSearch", json=json, headers=headers)
     assert response.status_code == 404
 
 
@@ -332,7 +332,7 @@ async def test_invalid_search_attribute_data(site_admin_user_token, client) -> N
 async def test_index_events_valid_data(organisation, event, site_admin_user_token, client) -> None:
     json = {"distribution": 1}
     headers = {"authorization": site_admin_user_token}
-    response = client.post("/events/index", json=json, headers=headers)
+    response = await client.post("/events/index", json=json, headers=headers)
     assert response.status_code == 200
     response_json = response.json()
     assert isinstance(response_json, list)
@@ -345,7 +345,7 @@ async def test_publish_existing_event(organisation, event, site_admin_user_token
     event_id = event.id
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post(f"/events/publish/{event_id}", headers=headers)
+    response = await client.post(f"/events/publish/{event_id}", headers=headers)
 
     assert response.status_code == 200
     response_json = response.json()
@@ -363,7 +363,7 @@ async def test_publish_existing_event_by_uuid(organisation, event, site_admin_us
     event_uuid = event.uuid
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post(f"/events/publish/{event_uuid}", headers=headers)
+    response = await client.post(f"/events/publish/{event_uuid}", headers=headers)
 
     assert response.status_code == 200
     response_json = response.json()
@@ -390,7 +390,7 @@ async def test_publish_existing_event_workflow_blocked(
     assert len((await db.execute(sa.select(Log).where(Log.model == "Workflow"))).scalars().all()) == 0
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post(f"/events/publish/{event_id}", headers=headers)
+    response = await client.post(f"/events/publish/{event_id}", headers=headers)
 
     assert response.status_code == 400
     assert response.json() == {
@@ -426,7 +426,7 @@ async def test_unsupported_module_breaks_publish(
     event_id = event.id
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post(f"/events/publish/{event_id}", headers=headers)
+    response = await client.post(f"/events/publish/{event_id}", headers=headers)
 
     assert response.status_code == 400
     assert response.json() == {
@@ -451,21 +451,21 @@ async def test_unsupported_module_breaks_publish(
 @pytest.mark.asyncio
 async def test_publish_invalid_event(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.post("/events/publish/0", headers=headers)
+    response = await client.post("/events/publish/0", headers=headers)
     assert response.status_code == 200
     response_json = response.json()
     assert response_json["name"] == "You do not have the permission to do that."
     assert response_json["message"] == "You do not have the permission to do that."
     assert response_json["url"] == "/events/publish/0"
 
-    response = client.post("/events/publish/999999999", headers=headers)
+    response = await client.post("/events/publish/999999999", headers=headers)
     assert response.status_code == 200
     response_json = response.json()
     assert response_json["name"] == "You do not have the permission to do that."
     assert response_json["message"] == "You do not have the permission to do that."
     assert response_json["url"] == "/events/publish/999999999"
 
-    response = client.post("/events/publish/a469325efe2f4f32a6854579f415ec6a", headers=headers)
+    response = await client.post("/events/publish/a469325efe2f4f32a6854579f415ec6a", headers=headers)
     assert response.status_code == 200
     response_json = response.json()
     assert response_json["name"] == "You do not have the permission to do that."
@@ -478,7 +478,7 @@ async def test_unpublish_existing_event(event, site_admin_user_token, client) ->
     event_id = event.id
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post(f"/events/unpublish/{event_id}", headers=headers)
+    response = await client.post(f"/events/unpublish/{event_id}", headers=headers)
 
     assert response.status_code == 200
     response_json = response.json()
@@ -496,7 +496,7 @@ async def test_unpublish_existing_event_by_uuid(event, site_admin_user_token, cl
     event_uuid = event.uuid
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post(f"/events/unpublish/{event_uuid}", headers=headers)
+    response = await client.post(f"/events/unpublish/{event_uuid}", headers=headers)
 
     assert response.status_code == 200
     response_json = response.json()
@@ -513,21 +513,21 @@ async def test_unpublish_existing_event_by_uuid(event, site_admin_user_token, cl
 async def test_unpublish_invalid_event(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
 
-    response = client.post("/events/unpublish/0", headers=headers)
+    response = await client.post("/events/unpublish/0", headers=headers)
     assert response.status_code == 200
     response_json = response.json()
     assert response_json["name"] == "Invalid event."
     assert response_json["message"] == "Invalid event."
     assert response_json["url"] == "/events/unpublish/0"
 
-    response = client.post("/events/unpublish/999999999", headers=headers)
+    response = await client.post("/events/unpublish/999999999", headers=headers)
     assert response.status_code == 200
     response_json = response.json()
     assert response_json["name"] == "Invalid event."
     assert response_json["message"] == "Invalid event."
     assert response_json["url"] == "/events/unpublish/999999999"
 
-    response = client.post("/events/unpublish/a469325efe2f4f32a6854579f415ec6a", headers=headers)
+    response = await client.post("/events/unpublish/a469325efe2f4f32a6854579f415ec6a", headers=headers)
     assert response.status_code == 200
     response_json = response.json()
     assert response_json["name"] == "Invalid event."
@@ -541,7 +541,7 @@ async def test_add_existing_tag_to_event(event, tag, site_admin_user_token, clie
     event_id = event.id
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post(
+    response = await client.post(
         f"/events/addTag/{event_id}/{tag_id}/local:1",
         headers=headers,
     )
@@ -559,7 +559,7 @@ async def test_add_existing_tag_to_event_by_uuid(event, tag, site_admin_user_tok
     event_uuid = event.uuid
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post(
+    response = await client.post(
         f"/events/addTag/{event_uuid}/{tag_id}/local:1",
         headers=headers,
     )
@@ -576,14 +576,14 @@ async def test_add_invalid_or_non_existing_tag_to_event(event, site_admin_user_t
     event_id = event.id
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post(
+    response = await client.post(
         f"/events/addTag/{event_id}/0/local:1",
         headers=headers,
     )
     assert response.status_code == 200
     response_json = response.json()
     assert response_json["saved"] is False
-    response = client.post(
+    response = await client.post(
         f"/events/addTag/{event_id}/invalid_id/local:1",
         headers=headers,
     )
@@ -598,7 +598,7 @@ async def test_remove_existing_tag_from_event(event, tag, eventtag, site_admin_u
     event_id = event.id
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post(f"/events/removeTag/{event_id}/{tag_id}", headers=headers)
+    response = await client.post(f"/events/removeTag/{event_id}/{tag_id}", headers=headers)
 
     assert response.status_code == 200
     response_json = response.json()
@@ -612,7 +612,7 @@ async def test_remove_existing_tag_from_event_by_uuid(event, tag, eventtag, site
     event_uuid = event.uuid
 
     headers = {"authorization": site_admin_user_token}
-    response = client.post(f"/events/removeTag/{event_uuid}/{tag_id}", headers=headers)
+    response = await client.post(f"/events/removeTag/{event_uuid}/{tag_id}", headers=headers)
 
     assert response.status_code == 200
     response_json = response.json()

@@ -12,7 +12,7 @@ from mmisp.db.models.user_setting import UserSetting
 
 @pytest.mark.asyncio
 async def test_users_me(site_admin_user_token, site_admin_user, client) -> None:
-    response = client.get("/users/view/me", headers={"authorization": site_admin_user_token})
+    response = await client.get("/users/view/me", headers={"authorization": site_admin_user_token})
 
     assert response.status_code == 200
     json = response.json()
@@ -24,7 +24,7 @@ async def test_users_create(site_admin_user_token, site_admin_user, site_admin_r
     email = "test@automated.com" + str(time())
     name = "test_user" + str(time())
 
-    response = client.post(
+    response = await client.post(
         "/users",
         headers={"authorization": site_admin_user_token},
         json={
@@ -90,7 +90,7 @@ async def test_users_edit(db: Session, site_admin_user_token, client, site_admin
         "termsaccepted": not terms_accepted,
         "gpgkey": gpg_key + "test",
     }
-    response = client.put(f"users/{user_id}", headers=headers, json=body)
+    response = await client.put(f"users/{user_id}", headers=headers, json=body)
 
     assert response.status_code == 200
     response_json = response.json()
@@ -110,7 +110,7 @@ async def test_user_view_by_ID(db: Session, site_admin_user_token, client) -> No
     assert user_id is not None
 
     headers = {"authorization": site_admin_user_token}
-    response = client.get(f"/users/view/{user_id}", headers=headers)
+    response = await client.get(f"/users/view/{user_id}", headers=headers)
 
     assert response.status_code == 200
     user = response.json()
@@ -164,7 +164,7 @@ async def test_user_view_by_ID(db: Session, site_admin_user_token, client) -> No
 @pytest.mark.asyncio
 async def test_users_view_all(db: Session, site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.get("/users/view/all", headers=headers)
+    response = await client.get("/users/view/all", headers=headers)
 
     assert response.status_code == 200
     response_json = response.json()
@@ -225,7 +225,7 @@ async def test_delete_user(site_admin_user_token, site_admin_role, site_admin_us
     name = "test_user" + str(time())
 
     # Creates a new user
-    create_response = client.post(
+    create_response = await client.post(
         "/users",
         headers={"authorization": site_admin_user_token},
         json={
@@ -264,7 +264,7 @@ async def test_delete_user(site_admin_user_token, site_admin_role, site_admin_us
     assert user.email == email
 
     # Api delete call
-    delete_response = client.delete(f"/users/{user_id}", headers={"authorization": site_admin_user_token})
+    delete_response = await client.delete(f"/users/{user_id}", headers={"authorization": site_admin_user_token})
 
     # Shows the error message if the status code is not 200
     if delete_response.status_code != 200:
@@ -283,13 +283,13 @@ async def test_delete_user(site_admin_user_token, site_admin_role, site_admin_us
 
 @pytest.mark.asyncio
 async def test_users_me_unauthorized(client) -> None:
-    response = client.get("/users/view/me")
-    assert response.status_code == 403
+    response = await client.get("/users/view/me")
+    assert response.status_code == 401
 
 
 @pytest.mark.asyncio
 async def test_users_create_missing_fields(site_admin_user_token, client) -> None:
-    response = client.post(
+    response = await client.post(
         "/users",
         headers={"authorization": site_admin_user_token},
         json={
@@ -319,7 +319,7 @@ async def test_users_create_duplicate_email(
     email = site_admin_user.email
     name = "test_user" + str(time())
 
-    response = client.post(
+    response = await client.post(
         "/users",
         headers={"authorization": site_admin_user_token},
         json={
@@ -348,21 +348,21 @@ async def test_users_edit_unauthorized(client, view_only_user) -> None:
     user_id = view_only_user.id
     email = view_only_user.email
 
-    response = client.put(f"users/{user_id}", json={"email": email + "test"})
-    assert response.status_code == 403
+    response = await client.put(f"users/{user_id}", json={"email": email + "test"})
+    assert response.status_code == 401
 
 
 @pytest.mark.asyncio
 async def test_user_view_by_invalid_ID(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.get("/users/view/invalid_id", headers=headers)
+    response = await client.get("/users/view/invalid_id", headers=headers)
     assert response.status_code == 404
 
 
 @pytest.mark.asyncio
 async def test_user_view_non_existent_ID(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.get("/users/view/999999999999", headers=headers)
+    response = await client.get("/users/view/999999999999", headers=headers)
     assert response.status_code == 404
     assert response.json().get("detail") == "User not found"
 
@@ -370,7 +370,7 @@ async def test_user_view_non_existent_ID(site_admin_user_token, client) -> None:
 @pytest.mark.asyncio
 async def test_users_delete_non_existent_user(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.delete("/users/999999999999", headers=headers)
+    response = await client.delete("/users/999999999999", headers=headers)
     assert response.status_code == 404
     assert response.json().get("detail") == "User not found"
 
@@ -378,7 +378,7 @@ async def test_users_delete_non_existent_user(site_admin_user_token, client) -> 
 @pytest.mark.asyncio
 async def test_delete_user_token_stub(site_admin_user_token, client) -> None:
     headers = {"authorization": site_admin_user_token}
-    response = client.delete("/users/tokens/1", headers=headers)
+    response = await client.delete("/users/tokens/1", headers=headers)
     assert response.status_code == 200
 
 
@@ -386,7 +386,7 @@ async def test_delete_user_token_stub(site_admin_user_token, client) -> None:
 async def test_get_user_not_found(site_admin_user_token, client, db) -> None:
     user_id = "non_existent_user_id"
 
-    response = client.get(
+    response = await client.get(
         f"/users/view/{user_id}",
         headers={"authorization": site_admin_user_token},
     )
@@ -398,7 +398,7 @@ async def test_get_user_not_found(site_admin_user_token, client, db) -> None:
 async def test_update_user_not_found(site_admin_user_token, client, db) -> None:
     user_id = "non_existent_user_id"
 
-    response = client.put(
+    response = await client.put(
         f"/users/{user_id}", headers={"authorization": site_admin_user_token}, json={"email": "new_email@test.com"}
     )
     assert response.status_code == 404
@@ -431,7 +431,7 @@ async def test_update_user_attributes(site_admin_user_token, client, db, view_on
         "nids_sid": 54321,
     }
 
-    response = client.put(f"/users/{user_id}", headers=headers, json=body)
+    response = await client.put(f"/users/{user_id}", headers=headers, json=body)
     if response.status_code > 300:
         print(response.json())
     assert response.status_code == 200
@@ -447,7 +447,7 @@ async def test_users_create_no_permission(read_only_user_token, site_admin_user,
     email = "test@automated.com" + str(time())
     name = "test_user" + str(time())
 
-    response = client.post(
+    response = await client.post(
         "/users",
         headers={"authorization": read_only_user_token},
         json={
@@ -489,7 +489,7 @@ async def test_users_edit_no_permission(
         "termsaccepted": not terms_accepted,
         "gpgkey": gpg_key + "test",
     }
-    response = client.put(f"users/{user_id}", headers=headers, json=body)
+    response = await client.put(f"users/{user_id}", headers=headers, json=body)
 
     assert response.status_code == 401
 
@@ -497,7 +497,7 @@ async def test_users_edit_no_permission(
 @pytest.mark.asyncio
 async def test_user_view_by_ID_no_permission(db: Session, read_only_user_token, client) -> None:
     headers = {"authorization": read_only_user_token}
-    response = client.get(f"/users/view/{2}", headers=headers)
+    response = await client.get(f"/users/view/{2}", headers=headers)
 
     assert response.status_code == 401
 
@@ -505,6 +505,6 @@ async def test_user_view_by_ID_no_permission(db: Session, read_only_user_token, 
 @pytest.mark.asyncio
 async def test_users_view_all_unauthorized(db: Session, read_only_user_token, client) -> None:
     headers = {"authorization": read_only_user_token}
-    response = client.get("/users/view/all", headers=headers)
+    response = await client.get("/users/view/all", headers=headers)
 
     assert response.status_code == 401

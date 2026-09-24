@@ -1,4 +1,4 @@
-FROM python:3.12.3-alpine
+FROM python:3.13.5-alpine
 #FROM python:3.11-slim
 RUN apk --no-cache upgrade && apk --no-cache add git
 

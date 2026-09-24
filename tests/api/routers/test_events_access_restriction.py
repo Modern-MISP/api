@@ -16,7 +16,7 @@ from mmisp.tests.maps import (
 async def test_get_event_fail(access_test_objects, user_key, event_key, client) -> None:
     headers = {"authorization": access_test_objects[f"{user_key}_token"]}
     event_id = access_test_objects[event_key].id
-    response = client.get(f"/events/{event_id}", headers=headers)
+    response = await client.get(f"/events/{event_id}", headers=headers)
 
     assert response.status_code == 403
 
@@ -26,7 +26,7 @@ async def test_get_event_fail(access_test_objects, user_key, event_key, client) 
 async def test_get_event_success(access_test_objects, user_key, event_key, client) -> None:
     headers = {"authorization": access_test_objects[f"{user_key}_token"]}
     event_id = access_test_objects[event_key].id
-    response = client.get(f"/events/{event_id}", headers=headers)
+    response = await client.get(f"/events/{event_id}", headers=headers)
 
     assert response.status_code == 200
     response_json = response.json()
@@ -37,7 +37,7 @@ async def test_get_event_success(access_test_objects, user_key, event_key, clien
 @pytest.mark.asyncio
 async def test_get_all_events(access_test_objects, user_key, events, client) -> None:
     headers = {"authorization": access_test_objects[f"{user_key}_token"]}
-    response = client.get("/events/", headers=headers)
+    response = await client.get("/events", headers=headers)
 
     assert response.status_code == 200
     response_json = response.json()
@@ -54,7 +54,7 @@ async def test_get_all_events(access_test_objects, user_key, events, client) -> 
 # async def test_valid_search_attribute_data_read_only_user(access_test_objects, client) -> None:
 #    headers = {"authorization": access_test_objects["default_read_only_user_token"]}
 #    json = {"returnFormat": "json", "limit": 100}
-#    response = client.post("/events/restSearch", json=json, headers=headers)
+#    response = await client.post("/events/restSearch", json=json, headers=headers)
 #    assert response.status_code == 200
 #    response_json = response.json()
 #    assert isinstance(response_json["response"], list)
@@ -65,7 +65,7 @@ async def test_get_all_events(access_test_objects, user_key, events, client) -> 
 # async def test_valid_search_attribute_data(access_test_objects, client) -> None:
 #    headers = {"authorization": access_test_objects["default_user_token"]}
 #    json = {"returnFormat": "json", "limit": 100}
-#    response = client.post("/events/restSearch", json=json, headers=headers)
+#    response = await client.post("/events/restSearch", json=json, headers=headers)
 #    assert response.status_code == 200
 #    response_json = response.json()
 #    assert isinstance(response_json["response"], list)
@@ -76,7 +76,7 @@ async def test_get_all_events(access_test_objects, user_key, events, client) -> 
 # async def test_valid_search_attribute_data_site_admin(access_test_objects, client) -> None:
 #    headers = {"authorization": access_test_objects["site_admin_user_token"]}
 #    json = {"returnFormat": "json", "limit": 100}
-#    response = client.post("/events/restSearch", json=json, headers=headers)
+#    response = await client.post("/events/restSearch", json=json, headers=headers)
 #    assert response.status_code == 200
 #    response_json = response.json()
 #    assert isinstance(response_json["response"], list)
@@ -88,7 +88,7 @@ async def test_get_all_events(access_test_objects, user_key, events, client) -> 
 async def test_publish_event_success(access_test_objects, user_key, event_key, client) -> None:
     headers = {"authorization": access_test_objects[f"{user_key}_token"]}
     event_id = access_test_objects[event_key].id
-    response = client.post(f"/events/publish/{event_id}", headers=headers)
+    response = await client.post(f"/events/publish/{event_id}", headers=headers)
     assert response.status_code == 200
 
 
@@ -97,7 +97,7 @@ async def test_publish_event_success(access_test_objects, user_key, event_key, c
 async def test_publish_event_fail(access_test_objects, user_key, event_key, client) -> None:
     headers = {"authorization": access_test_objects[f"{user_key}_token"]}
     event_id = access_test_objects[event_key].id
-    response = client.post(f"/events/publish/{event_id}", headers=headers)
+    response = await client.post(f"/events/publish/{event_id}", headers=headers)
     assert response.status_code == 403
 
 
@@ -109,7 +109,7 @@ async def test_publish_event_fail(access_test_objects, user_key, event_key, clie
 #    event_id = access_test_objects["default_event"].id
 #
 #    headers = {"authorization": access_test_objects["default_user_token"]}
-#    response = client.post(f"/events/addTag/{event_id}/{tag_id}/local:1", headers=headers)
+#    response = await client.post(f"/events/addTag/{event_id}/{tag_id}/local:1", headers=headers)
 #    assert response.status_code == 200
 #
 #
@@ -118,7 +118,7 @@ async def test_publish_event_fail(access_test_objects, user_key, event_key, clie
 #    tag_id = access_test_objects["default_tag"].id
 #    event_id = access_test_objects["default_event"].id
 #    headers = {"authorization": access_test_objects["default_read_only_user_token"]}
-#    response = client.post(
+#    response = await client.post(
 #        f"/events/addTag/{event_id}/{tag_id}/local:1",
 #        headers=headers,
 #    )
@@ -134,7 +134,7 @@ async def test_publish_event_fail(access_test_objects, user_key, event_key, clie
 #    event_id = access_test_objects["default_event"].id
 #
 #    headers = {"authorization": access_test_objects["default_user_token"]}
-#    response = client.post(f"/events/removeTag/{event_id}/{tag_id}", headers=headers)
+#    response = await client.post(f"/events/removeTag/{event_id}/{tag_id}", headers=headers)
 #    assert response.status_code == 200
 #
 #
@@ -143,7 +143,7 @@ async def test_publish_event_fail(access_test_objects, user_key, event_key, clie
 #    tag_id = access_test_objects["default_tag"].id
 #    event_id = access_test_objects["default_event"].id
 #    headers = {"authorization": access_test_objects["default_read_only_user_token"]}
-#    response = client.post(f"/events/removeTag/{event_id}/{tag_id}", headers=headers)
+#    response = await client.post(f"/events/removeTag/{event_id}/{tag_id}", headers=headers)
 #    assert response.status_code == 403
 
 # EDIT event
@@ -153,7 +153,7 @@ async def test_publish_event_fail(access_test_objects, user_key, event_key, clie
 #    request_body = {"info": "updated info"}
 #    event_id = access_test_objects["default_event"].id
 #    headers = {"authorization": access_test_objects["default_user_token"]}
-#    response = client.put(f"events/{event_id}", json=request_body, headers=headers)
+#    response = await client.put(f"events/{event_id}", json=request_body, headers=headers)
 #    assert response.status_code == 200
 #
 #
@@ -162,7 +162,7 @@ async def test_publish_event_fail(access_test_objects, user_key, event_key, clie
 #    request_body = {"info": "updated info"}
 #    event_id = access_test_objects["event_no_access"].id
 #    headers = {"authorization": access_test_objects["default_user_token"]}
-#    response = client.put(f"events/{event_id}", json=request_body, headers=headers)
+#    response = await client.put(f"events/{event_id}", json=request_body, headers=headers)
 #    assert response.status_code == 404
 #
 ## Delete event
@@ -172,7 +172,7 @@ async def test_publish_event_fail(access_test_objects, user_key, event_key, clie
 #    event_id = access_test_objects["default_event_published"].id
 #
 #    headers = {"authorization": access_test_objects["default_user_token"]}
-#    response = client.delete(f"events/{event_id}", headers=headers)
+#    response = await client.delete(f"events/{event_id}", headers=headers)
 #    assert response.status_code == 200
 #
 #
@@ -180,7 +180,7 @@ async def test_publish_event_fail(access_test_objects, user_key, event_key, clie
 # async def test_delete_event_fail(access_test_objects, client) -> None:
 #    event_id = access_test_objects["default_event"].id
 #    headers = {"authorization": access_test_objects["default_read_only_user_token"]}
-#    response = client.delete(f"events/{event_id}", headers=headers)
+#    response = await client.delete(f"events/{event_id}", headers=headers)
 #    assert response.status_code == 403
 #
 ## Add Event
@@ -188,5 +188,5 @@ async def test_publish_event_fail(access_test_objects, user_key, event_key, clie
 # async def test_add_event_valid_data_fail_read_only_user(access_test_objects, client) -> None:
 #    request_body = {"info": "test event"}
 #    headers = {"authorization": access_test_objects["default_read_only_user_token"]}
-#    response = client.post("/events", json=request_body, headers=headers)
+#    response = await client.post("/events", json=request_body, headers=headers)
 #    assert response.status_code == 403
