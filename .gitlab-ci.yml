@@ -211,7 +211,7 @@ generate_mkdocs:
   needs: []
   image: registry.cert.kit.edu/public-gitlab-ci/mkdocs
   script:
-    - source /root/.venv/bin/activate; PYTHONPATH=src mkdocs build
+    - PYTHONPATH=src mkdocs build
   artifacts:
     paths:
       - site
